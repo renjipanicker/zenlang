@@ -12,13 +12,13 @@ private:
     int _col;
     char _text[Size];
     char* _lvalue;
-private:
-    static inline void init(TokenData& self) {
-        self._id = 0;
-        self._row = 0;
-        self._col = 0;
-        self._text[0] = 0;
-        self._lvalue = 0;
+public:
+    inline void init() {
+        _id = 0;
+        _row = 0;
+        _col = 0;
+        _text[0] = 0;
+        _lvalue = 0;
     }
 
 public:
@@ -30,7 +30,7 @@ public:
 public:
     static TokenData createT(const int& id, const int& row, const int& col, const char* start, const char* end) {
         TokenData td;
-        init(td);
+        td.init();
         td._id = id;
         td._row = row;
         td._col = col;

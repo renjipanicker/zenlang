@@ -10,7 +10,7 @@ int main(int argc, char* argv[]) {
 
     Project project;
     project.addInclude(".");
-    project.addInclude("../../zen/lib");
+    project.addInclude("../../zenlang/lib");
     project.addSource(argv[1]);
 
     Compiler compiler(project);

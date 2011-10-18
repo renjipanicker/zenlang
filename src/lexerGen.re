@@ -22,7 +22,7 @@ static size_t fill(Scanner *s, size_t len)
 {
     size_t got = ~0, cnt;
 
-    if (!s->eof && s->lim - s->tok < len)
+    if ((!(s->eof)) && ((s->lim - s->tok) < (int)len))
     {
         if (s->tok > s->buffer)
         {

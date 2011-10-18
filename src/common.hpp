@@ -53,6 +53,8 @@ inline ToT& refX(FromT* from) {
     return *to;
 }
 
+typedef std::string string;
+
 /// \brief Namespace to hold all types intrinsic within zen
 namespace z {
 }

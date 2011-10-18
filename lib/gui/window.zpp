@@ -1,11 +1,21 @@
 namespace Window;
 
+public struct Position {
+    int x;
+    int y;
+    int w;
+    int h;
+};
+
 public struct Definition {
+    string title;
+    Position position;
     int x;
 };
 
-public function ()Delete(const int& window);
-//public function ()Delete(const Instance& window);
+protected struct Instance native;
+
+public function ()Delete(const Instance& window);
 
 /*
 // function xx reimplements function yy

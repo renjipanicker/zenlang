@@ -58,6 +58,7 @@ namespace Ast {
     public:
         inline TypeSpec& accessType(const AccessType::T& val) {_accessType = val; return ref(this);}
         inline const Token& name() const {return _name;}
+        inline const AccessType::T& accessType() const {return _accessType;}
 
     public:
         inline void addChild(TypeSpec& typeSpec) {_childTypeSpecList[typeSpec.name().text()] = ptr(typeSpec);}
@@ -79,15 +80,20 @@ namespace Ast {
     class QualifiedTypeSpec : public Node {
     public:
         inline QualifiedTypeSpec(const bool& isConst, const TypeSpec& typeSpec, const bool& isRef) : _isConst(isConst), _typeSpec(typeSpec), _isRef(isRef) {}
+        inline const bool& isConst() const {return _isConst;}
+        inline const TypeSpec& typeSpec() const {return _typeSpec;}
+        inline const bool& isRef() const {return _isRef;}
     private:
-        const bool& _isConst;
+        const bool _isConst;
         const TypeSpec& _typeSpec;
-        const bool& _isRef;
+        const bool _isRef;
     };
 
     class VariableDef : public Node {
     public:
         inline VariableDef(const QualifiedTypeSpec& qualifiedTypeSpec, const Token& name) : _qualifiedTypeSpec(qualifiedTypeSpec), _name(name) {}
+        inline const QualifiedTypeSpec& qualifiedTypeSpec() const {return _qualifiedTypeSpec;}
+        inline const Token& name() const {return _name;}
     private:
         const QualifiedTypeSpec& _qualifiedTypeSpec;
         const Token _name;
@@ -95,10 +101,12 @@ namespace Ast {
 
     class VariableDefList : public Node {
     public:
+        typedef std::list<const VariableDef*> List;
+    public:
         inline VariableDefList() {}
         inline VariableDefList& addVariableDef(const VariableDef& variableDef) {_list.push_back(ptr(variableDef)); return ref(this);}
+        inline const List& list() const {return _list;}
     private:
-        typedef std::list<const VariableDef*> List;
         List _list;
     };
 
@@ -132,6 +140,7 @@ namespace Ast {
     class StructDef : public UserDefinedTypeSpec {
     public:
         inline StructDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::VariableDefList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
+        inline const Ast::VariableDefList::List& list() const {return _list.list();}
     private:
         const Ast::VariableDefList& _list;
     };
@@ -147,6 +156,11 @@ namespace Ast {
     class Namespace : public ChildTypeSpec {
     public:
         inline Namespace(const TypeSpec& parent, const Token& name) : ChildTypeSpec(parent, name) {}
+    };
+
+    class Root : public RootTypeSpec {
+    public:
+        inline Root(const std::string& name) : RootTypeSpec(Token(0, 0, name)) {}
     };
 
     class Statement : public Node {
@@ -194,9 +208,9 @@ namespace Ast {
         typedef std::list<const Statement*> StatementList;
         typedef std::list<Token> UnitNS;
     public:
-        inline Unit(const Token& name) : RootTypeSpec(name), _importNS(ref(this), Token(0, 0, "*import*")), _rootNS(ref(this), Token(0, 0, "*root*")) {}
+        inline Unit(const Token& name) : RootTypeSpec(name), _importNS("*import*"), _rootNS("*root*") {}
     private:
-        inline Unit(const Unit& src) : RootTypeSpec(src.name()), _importNS(ref(this), Token(0, 0, "*import*")), _rootNS(ref(this), Token(0, 0, "*root*")) {}
+        inline Unit(const Unit& src) : RootTypeSpec(src.name()), _importNS("*import*"), _rootNS("*root*") {}
 
     public:
         /// \brief Return the import statement list
@@ -211,12 +225,12 @@ namespace Ast {
     public:
         /// \brief Return the root namespace
         /// \return The root namespace
-        inline Namespace& rootNS() {return _rootNS;}
+        inline Root& rootNS() {return _rootNS;}
 
     public:
         /// \brief Return the import namespace
         /// \return The import namespace
-        inline Namespace& importNS() {return _importNS;}
+        inline Root& importNS() {return _importNS;}
 
     public:
         /// \brief Return the namespace list
@@ -248,10 +262,10 @@ namespace Ast {
     private:
         /// \brief This NS contains all imported typespec's.
         /// It is not used for source file generation, only for reference.
-        Ast::Namespace _importNS;
+        Ast::Root _importNS;
 
         /// \brief This NS contains all types defined in the current compilation unit.
-        Ast::Namespace _rootNS;
+        Ast::Root _rootNS;
 
         /// \brief The namespace of the current unit.
         UnitNS _unitNS;

@@ -3,7 +3,17 @@
 #include "exception.hpp"
 #include "context.hpp"
 
-Ast::VariableDefList & Context::addVariableDefList() {
+Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level) : _compiler(compiler), _unit(unit), _level(level) {
+    Ast::TypeSpec* currentTypeSpec = ptr((_level == 0)?_unit.rootNS():_unit.importNS());
+    _typeSpecStack.push_back(currentTypeSpec);
+}
+
+Context::~Context() {
+    //assert(_typeSpecStack.size() == 1);
+    _typeSpecStack.pop_back();
+}
+
+Ast::VariableDefList& Context::addVariableDefList() {
     Ast::VariableDefList& paramDefList = _unit.addNode(new Ast::VariableDefList());
     return paramDefList;
 }
@@ -19,14 +29,14 @@ Ast::QualifiedTypeSpec & Context::addQualifiedTypeSpec(const bool &isConst, cons
 }
 
 Ast::TypeDef& Context::addTypeDefSpec(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
-    Ast::TypeDef& typeDef = _unit.addNode(new Ast::TypeDef(ref(_currentTypeSpec), name, defType));
-    ref(_currentTypeSpec).addChild(typeDef);
+    Ast::TypeDef& typeDef = _unit.addNode(new Ast::TypeDef(currentTypeSpec(), name, defType));
+    currentTypeSpec().addChild(typeDef);
     return typeDef;
 }
 
 Ast::StructDef& Context::addStructDefSpec(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::VariableDefList& list) {
-    Ast::StructDef& structDef = _unit.addNode(new Ast::StructDef(ref(_currentTypeSpec), name, defType, list));
-    ref(_currentTypeSpec).addChild(structDef);
+    Ast::StructDef& structDef = _unit.addNode(new Ast::StructDef(currentTypeSpec(), name, defType, list));
+    currentTypeSpec().addChild(structDef);
     return structDef;
 }
 
@@ -36,16 +46,16 @@ Ast::StructDef& Context::addStructDefSpecEmpty(const Ast::Token& name, const Ast
 }
 
 Ast::FunctionDef& Context::addFunctionDefSpec(const Ast::VariableDefList& out, const Ast::Token& name, const Ast::VariableDefList& in, const Ast::DefinitionType::T& defType) {
-    Ast::FunctionDef& functionDef = _unit.addNode(new Ast::FunctionDef(ref(_currentTypeSpec), out, name, in, defType));
-    ref(_currentTypeSpec).addChild(functionDef);
+    Ast::FunctionDef& functionDef = _unit.addNode(new Ast::FunctionDef(currentTypeSpec(), out, name, in, defType));
+    currentTypeSpec().addChild(functionDef);
     return functionDef;
 }
 
 Ast::Namespace& Context::addNamespace(const Ast::Token& name) {
     _unit.addNamespace(name);
-    Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(ref(_currentTypeSpec), name));
-    ref(_currentTypeSpec).addChild(ns);
-    _currentTypeSpec = ptr(ns);
+    Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(currentTypeSpec(), name));
+    currentTypeSpec().addChild(ns);
+    _typeSpecStack.push_back(ptr(ns));
     return ns;
 }
 
@@ -92,7 +102,7 @@ const Ast::TypeSpec* Context::findTypeSpec(const Ast::TypeSpec &parent, const As
 }
 
 const Ast::TypeSpec& Context::getRootTypeSpec(const Ast::Token &name) const {
-    const Ast::TypeSpec* typeSpec = findTypeSpec(ref(_currentTypeSpec), name);
+    const Ast::TypeSpec* typeSpec = findTypeSpec(currentTypeSpec(), name);
     if(!typeSpec) {
         if(_level == 0) {
             typeSpec = _unit.importNS().hasChild(name.text());

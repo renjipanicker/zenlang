@@ -1,0 +1,4 @@
+*.user
+src/lexerGen.c
+src/parserGen.c
+src/parserGen.h

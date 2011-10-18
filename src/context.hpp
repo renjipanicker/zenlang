@@ -5,9 +5,8 @@
 
 class Context {
 public:
-    inline Context(Compiler& compiler, Ast::Unit& unit, const int& level) : _compiler(compiler), _unit(unit), _level(level), _currentTypeSpec(0) {
-        _currentTypeSpec = ptr((_level == 0)?_unit.rootNS():_unit.importNS());
-    }
+    Context(Compiler& compiler, Ast::Unit& unit, const int& level);
+    ~Context();
 
 public:
     const Ast::TypeSpec& getRootTypeSpec(const Ast::Token& name) const;
@@ -35,10 +34,12 @@ public:
 
 private:
     const Ast::TypeSpec* findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
+    inline Ast::TypeSpec& currentTypeSpec() const {assert(_typeSpecStack.size() > 0); return ref(_typeSpecStack.back());}
+
 private:
     Compiler& _compiler;
     Ast::Unit& _unit;
     const int _level;
 private:
-    Ast::ChildTypeSpec* _currentTypeSpec;
+    std::list<Ast::TypeSpec*> _typeSpecStack;
 };

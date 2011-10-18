@@ -21,5 +21,6 @@ void Parser::feed(const TokenData& td) {
 
 void Parser::done() {
     TokenData td;
+    td.init();
     ZenParser(_parser, 0, td, ptr(_context));
 }

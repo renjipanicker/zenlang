@@ -1,12 +1,18 @@
 #ifndef PCH_HPP
 #define PCH_HPP
 
-#if defined(GUI)
 #if defined(WIN32)
 #undef UNICODE
 #undef _UNICODE
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#endif
+
+#if defined(GUI)
+#if defined(WIN32)
+#undef UNICODE
+#undef _UNICODE
+#define WIN32_LEAN_AND_MEAN
 #include <Commctrl.h>
 #include <Shlwapi.h>
 #include <shellapi.h>
@@ -28,6 +34,7 @@
 #if defined(WIN32)
 #define snprintf _snprintf_s
 #define sprintf sprintf_s
+#pragma warning (disable:4355) // this used in base ctor initialization.
 #endif
 
 #if defined __cplusplus

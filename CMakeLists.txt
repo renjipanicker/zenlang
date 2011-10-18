@@ -16,11 +16,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${parser_odir})
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} "src/")
 
 add_custom_target(lemon_parser
-    COMMAND lemon -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
+    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tools/lemon.exe" -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
 )
 
 add_custom_target(re2c_scanner
-    COMMAND re2c -c -i -u -o "${parser_odir}/lexerGen.c" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
+    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tools/re2c.exe" -c -i -u -o "${parser_odir}/lexerGen.c" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
 )
 
 ADD_EXECUTABLE(zen ${zen_SOURCES})

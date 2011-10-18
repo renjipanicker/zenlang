@@ -147,8 +147,8 @@ params_list(L) ::= LBRACKET variabledef_list_comma(R) RBRACKET. {L = R;}
 //-------------------------------------------------
 // variable lists
 %type variabledef_list_semi {Ast::VariableDefList*}
-variabledef_list_semi(L) ::= variabledef_list_semi(P) variable_def(D). {L = P; ref(L).addVariableDef(ref(D));}
-variabledef_list_semi(L) ::= variable_def(D) SEMI.                     {L = ptr(ref(pctx).addVariableDefList()); ref(L).addVariableDef(ref(D));}
+variabledef_list_semi(L) ::= variabledef_list_semi(P) variable_def(D) SEMI. {L = P; ref(L).addVariableDef(ref(D));}
+variabledef_list_semi(L) ::= variable_def(D) SEMI.                          {L = ptr(ref(pctx).addVariableDefList()); ref(L).addVariableDef(ref(D));}
 
 %type variabledef_list_comma {Ast::VariableDefList*}
 variabledef_list_comma(L) ::= variabledef_list_comma(P) COMMA variable_def(D). {L = P; ref(L).addVariableDef(ref(D));}
