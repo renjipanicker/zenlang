@@ -1,0 +1,14 @@
+namespace Window;
+
+public struct Definition {
+    int x;
+};
+
+public function ()Delete(const int& window);
+//public function ()Delete(const Instance& window);
+
+/*
+// function xx reimplements function yy
+function xx::yy {
+}
+*/

@@ -1,0 +1,11 @@
+include window;
+namespace Button;
+
+public function (int window)Create(const string& parent, const int& def);
+
+//public function (Window::Instance window)Create(const Window::Instance& parent, const Definition& def);
+
+/*
+private function (int x, string y)MyFunction(int a, string b) {
+}
+*/
