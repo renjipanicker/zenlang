@@ -1,6 +1,6 @@
-#include "pch.hpp"
-#include "common.hpp"
-#include "exception.hpp"
+#include "base/pch.hpp"
+#include "base/common.hpp"
+#include "base/exception.hpp"
 #include "context.hpp"
 
 Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level) : _compiler(compiler), _unit(unit), _level(level) {
@@ -14,8 +14,8 @@ Context::~Context() {
 }
 
 Ast::VariableDefList& Context::addVariableDefList() {
-    Ast::VariableDefList& paramDefList = _unit.addNode(new Ast::VariableDefList());
-    return paramDefList;
+    Ast::VariableDefList& variableDefList = _unit.addNode(new Ast::VariableDefList());
+    return variableDefList;
 }
 
 Ast::VariableDef& Context::addVariableDef(const Ast::QualifiedTypeSpec &qualifiedTypeSpec, const Ast::Token &name) {
@@ -34,6 +34,27 @@ Ast::TypeDef& Context::addTypeDefSpec(const Ast::Token& name, const Ast::Definit
     return typeDef;
 }
 
+Ast::EnumMemberDef& Context::addEnumMemberDef(const Ast::Token &name) {
+    Ast::EnumMemberDef& enumMemberDef = _unit.addNode(new Ast::EnumMemberDef(name));
+    return enumMemberDef;
+}
+
+Ast::EnumMemberDefList& Context::addEnumMemberDefList() {
+    Ast::EnumMemberDefList& enumMemberDefList = _unit.addNode(new Ast::EnumMemberDefList());
+    return enumMemberDefList;
+}
+
+Ast::EnumDef& Context::addEnumDefSpec(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::EnumMemberDefList& list) {
+    Ast::EnumDef& enumDef = _unit.addNode(new Ast::EnumDef(currentTypeSpec(), name, defType, list));
+    currentTypeSpec().addChild(enumDef);
+    return enumDef;
+}
+
+Ast::EnumDef& Context::addEnumDefSpecEmpty(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    const Ast::EnumMemberDefList& list = addEnumMemberDefList();
+    return addEnumDefSpec(name, defType, list);
+}
+
 Ast::StructDef& Context::addStructDefSpec(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::VariableDefList& list) {
     Ast::StructDef& structDef = _unit.addNode(new Ast::StructDef(currentTypeSpec(), name, defType, list));
     currentTypeSpec().addChild(structDef);
@@ -41,14 +62,27 @@ Ast::StructDef& Context::addStructDefSpec(const Ast::Token& name, const Ast::Def
 }
 
 Ast::StructDef& Context::addStructDefSpecEmpty(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
-    const Ast::VariableDefList list;
-    return addStructDefSpec(name, defType, list);
+    Ast::VariableDefList& variableDefList = addVariableDefList();
+    return addStructDefSpec(name, defType, variableDefList);
+}
+
+Ast::RoutineDef& Context::addRoutineDefSpec(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::VariableDefList& in, const Ast::DefinitionType::T& defType) {
+    Ast::RoutineDef& routineDef = _unit.addNode(new Ast::RoutineDef(currentTypeSpec(), outType, name, in, defType));
+    currentTypeSpec().addChild(routineDef);
+    return routineDef;
 }
 
 Ast::FunctionDef& Context::addFunctionDefSpec(const Ast::VariableDefList& out, const Ast::Token& name, const Ast::VariableDefList& in, const Ast::DefinitionType::T& defType) {
     Ast::FunctionDef& functionDef = _unit.addNode(new Ast::FunctionDef(currentTypeSpec(), out, name, in, defType));
     currentTypeSpec().addChild(functionDef);
     return functionDef;
+}
+
+Ast::EventDef & Context::addEventDefSpec(const Ast::VariableDef& in, const Ast::FunctionDef& functionDef, const Ast::DefinitionType::T& defType) {
+    const Ast::Token& name = functionDef.name();
+    Ast::EventDef& eventDef = _unit.addNode(new Ast::EventDef(currentTypeSpec(), name, in, functionDef, defType));
+    currentTypeSpec().addChild(eventDef);
+    return eventDef;
 }
 
 Ast::Namespace& Context::addNamespace(const Ast::Token& name) {

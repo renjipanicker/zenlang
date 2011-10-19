@@ -8,19 +8,33 @@ SET(zen_SOURCES ${zen_SOURCES} src/compiler.cpp)
 SET(zen_SOURCES ${zen_SOURCES} src/context.cpp)
 SET(zen_SOURCES ${zen_SOURCES} src/generator.cpp)
 SET(zen_SOURCES ${zen_SOURCES} src/project.cpp)
-SET(zen_SOURCES ${zen_SOURCES} src/common.cpp)
-SET(zen_SOURCES ${zen_SOURCES} src/exception.cpp)
+SET(zen_SOURCES ${zen_SOURCES} lib/base/common.cpp)
+SET(zen_SOURCES ${zen_SOURCES} lib/base/exception.cpp)
 
 set(parser_odir "${CMAKE_CURRENT_SOURCE_DIR}/src")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${parser_odir})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} "lib/")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} "src/")
 
+# add debug definitions
+IF( CMAKE_BUILD_TYPE STREQUAL "Debug")
+    ADD_DEFINITIONS( "-DDEBUG" )
+ENDIF()
+
+IF(WIN32)
+    SET(lemon_cc "${CMAKE_CURRENT_SOURCE_DIR}/tools/lemon.exe")
+    SET(re2c_cc "${CMAKE_CURRENT_SOURCE_DIR}/tools/re2c.exe")
+ELSE(WIN32)
+    SET(lemon_cc "lemon")
+    SET(re2c_cc "re2c")
+ENDIF(WIN32)
+
 add_custom_target(lemon_parser
-    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tools/lemon.exe" -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
+        COMMAND "${lemon_cc}" -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
 )
 
 add_custom_target(re2c_scanner
-    COMMAND "${CMAKE_CURRENT_SOURCE_DIR}/tools/re2c.exe" -c -i -u -o "${parser_odir}/lexerGen.c" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
+        COMMAND "${re2c_cc}" -c -i -u -o "${parser_odir}/lexerGen.c" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
 )
 
 ADD_EXECUTABLE(zen ${zen_SOURCES})

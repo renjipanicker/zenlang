@@ -117,6 +117,7 @@ re2c:condenumprefix          = EState;
 <Normal>	","        := _parser.feed(token(s, ZENTOK_COMMA)); continue;
 <Normal>	";"        := _parser.feed(token(s, ZENTOK_SEMI)); continue;
 <Normal>	"::"       := _parser.feed(token(s, ZENTOK_SCOPE)); continue;
+<Normal>	"=>"       := _parser.feed(token(s, ZENTOK_LINK)); continue;
 
 <Normal>	"import"    := _parser.feed(token(s, ZENTOK_IMPORT)); continue;
 <Normal>	"include"   := _parser.feed(token(s, ZENTOK_INCLUDE)); continue;
@@ -129,8 +130,11 @@ re2c:condenumprefix          = EState;
 <Normal>	"export"    := _parser.feed(token(s, ZENTOK_EXPORT)); continue;
 
 <Normal>	"typedef"  := _parser.feed(token(s, ZENTOK_TYPEDEF)); continue;
+<Normal>	"enum"     := _parser.feed(token(s, ZENTOK_ENUM)); continue;
 <Normal>	"struct"   := _parser.feed(token(s, ZENTOK_STRUCT)); continue;
+<Normal>	"routine"  := _parser.feed(token(s, ZENTOK_ROUTINE)); continue;
 <Normal>	"function" := _parser.feed(token(s, ZENTOK_FUNCTION)); continue;
+<Normal>	"event"    := _parser.feed(token(s, ZENTOK_EVENT)); continue;
 
 <Normal>	"native"   := _parser.feed(token(s, ZENTOK_NATIVE)); continue;
 <Normal>	"const"    := _parser.feed(token(s, ZENTOK_CONST)); continue;

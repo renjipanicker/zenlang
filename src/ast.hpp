@@ -137,6 +137,33 @@ namespace Ast {
         inline TypeDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType) {}
     };
 
+    class EnumMemberDef : public Node {
+    public:
+        inline EnumMemberDef(const Token& name) : _name(name) {}
+        inline const Token& name() const {return _name;}
+    private:
+        const Token _name;
+    };
+
+    class EnumMemberDefList : public Node {
+    public:
+        typedef std::list<const EnumMemberDef*> List;
+    public:
+        inline EnumMemberDefList() {}
+        inline EnumMemberDefList& addEnumMemberDef(const EnumMemberDef& enumMemberDef) {_list.push_back(ptr(enumMemberDef)); return ref(this);}
+        inline const List& list() const {return _list;}
+    private:
+        List _list;
+    };
+
+    class EnumDef : public UserDefinedTypeSpec {
+    public:
+        inline EnumDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const EnumMemberDefList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
+        inline const EnumMemberDefList::List& list() const {return _list.list();}
+    private:
+        const EnumMemberDefList& _list;
+    };
+
     class StructDef : public UserDefinedTypeSpec {
     public:
         inline StructDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::VariableDefList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
@@ -145,12 +172,34 @@ namespace Ast {
         const Ast::VariableDefList& _list;
     };
 
+    class RoutineDef : public UserDefinedTypeSpec {
+    public:
+        inline RoutineDef(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::VariableDefList& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _outType(outType), _in(in) {}
+        inline const Ast::QualifiedTypeSpec& outType() const {return _outType;}
+        inline const Ast::VariableDefList::List& in()  const {return _in.list();}
+    private:
+        const Ast::QualifiedTypeSpec& _outType;
+        const Ast::VariableDefList& _in;
+    };
+
     class FunctionDef : public UserDefinedTypeSpec {
     public:
         inline FunctionDef(const TypeSpec& parent, const Ast::VariableDefList& out, const Ast::Token& name, const Ast::VariableDefList& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _out(out), _in(in) {}
+        inline const Ast::VariableDefList::List& out() const {return _out.list();}
+        inline const Ast::VariableDefList::List& in()  const {return _in.list();}
     private:
         const Ast::VariableDefList& _out;
         const Ast::VariableDefList& _in;
+    };
+
+    class EventDef : public UserDefinedTypeSpec {
+    public:
+        inline EventDef(const TypeSpec& parent, const Ast::Token& name, const Ast::VariableDef& in, const FunctionDef& functionDef, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _in(in), _functionDef(functionDef) {}
+        inline const Ast::VariableDef& in()  const {return _in;}
+        inline const Ast::FunctionDef& functionDef() const {return _functionDef;}
+    private:
+        const Ast::VariableDef& _in;
+        const FunctionDef& _functionDef;
     };
 
     class Namespace : public ChildTypeSpec {

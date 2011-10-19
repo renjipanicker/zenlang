@@ -1,5 +1,5 @@
-#include "pch.hpp"
-#include "common.hpp"
+#include "base/pch.hpp"
+#include "base/common.hpp"
 #include "compiler.hpp"
 
 int main(int argc, char* argv[]) {

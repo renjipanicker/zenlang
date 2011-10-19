@@ -7,7 +7,7 @@
 %token_prefix ZENTOK_
 
 %syntax_error {
-    throw Exception("(%d, %d) Syntax error at token: %d\n", TOKEN.row(), TOKEN.col(), TOKEN.id());
+    throw Exception("(%d, %d) Syntax error at token: %d (%s)\n", TOKEN.row(), TOKEN.col(), TOKEN.id(), TOKEN.text());
 }
 
 %parse_accept {
@@ -113,14 +113,32 @@ definition_type(A) ::= .       {A = Ast::DefinitionType::Direct;}
 
 //-------------------------------------------------
 %type typespec_def {Ast::UserDefinedTypeSpec*}
-typespec_def(L) ::= typedef_def(R).   {L = R;}
-typespec_def(L) ::= struct_def(R).    {L = R;}
+typespec_def(L) ::= typedef_def(R).  {L = R;}
+typespec_def(L) ::= enum_def(R).     {L = R;}
+typespec_def(L) ::= struct_def(R).   {L = R;}
+typespec_def(L) ::= routine_def(R).  {L = R;}
 typespec_def(L) ::= function_def(R). {L = R;}
+typespec_def(L) ::= event_def(R).    {L = R;}
 
 //-------------------------------------------------
 // typedef declarations
 %type typedef_def {Ast::TypeDef*}
 typedef_def(T) ::= TYPEDEF ID(N) NATIVE SEMI. {T = ptr(ref(pctx).addTypeDefSpec(N, Ast::DefinitionType::Native));}
+
+//-------------------------------------------------
+// enum declarations
+%type enum_def {Ast::EnumDef*}
+enum_def(T) ::= ENUM ID(N) NATIVE SEMI. {T = ptr(ref(pctx).addEnumDefSpecEmpty(N, Ast::DefinitionType::Native));}
+enum_def(T) ::= ENUM ID(N) LCURLY enum_member_def_list(L) RCURLY SEMI. {T = ptr(ref(pctx).addEnumDefSpec(N, Ast::DefinitionType::Direct, ref(L)));}
+
+//-------------------------------------------------
+%type enum_member_def_list {Ast::EnumMemberDefList*}
+enum_member_def_list(L) ::= enum_member_def_list(R) enum_member_def(D). {L = R; ref(L).addEnumMemberDef(ref(D));}
+enum_member_def_list(L) ::= enum_member_def(D). {L = ptr(ref(pctx).addEnumMemberDefList()); ref(L).addEnumMemberDef(ref(D));}
+
+//-------------------------------------------------
+%type enum_member_def {Ast::EnumMemberDef*}
+enum_member_def(L) ::= ID(N) SEMI. {L = ptr(ref(pctx).addEnumMemberDef(N));}
 
 //-------------------------------------------------
 // struct declarations
@@ -132,7 +150,17 @@ struct_def(T) ::= STRUCT ID(N) LCURLY                          RCURLY SEMI. {T =
 //-------------------------------------------------
 // function declarations
 %type function_def {Ast::FunctionDef*}
-function_def(F) ::= function_sig(S) SEMI. {F = S;}
+function_def(L) ::= function_sig(R) SEMI. {L = R;}
+
+//-------------------------------------------------
+// routine declarations
+%type routine_def {Ast::RoutineDef*}
+routine_def(L) ::= ROUTINE qtyperef(O) ID(N) params_list(I) NATIVE SEMI. {L = ptr(ref(pctx).addRoutineDefSpec(ref(O), N, ref(I), Ast::DefinitionType::Native));}
+
+//-------------------------------------------------
+// event declarations
+%type event_def {Ast::EventDef*}
+event_def(L) ::= EVENT LBRACKET variable_def(I) RBRACKET LINK function_sig(F) SEMI. {L = ptr(ref(pctx).addEventDefSpec(ref(I), ref(F), Ast::DefinitionType::Direct));}
 
 //-------------------------------------------------
 // function signature.
