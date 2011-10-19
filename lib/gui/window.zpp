@@ -6,10 +6,10 @@ public enum Style {
 };
 
 public struct Position {
-    int x;
-    int y;
-    int w;
-    int h;
+    int x = -1;
+    int y = -1;
+    int w = -1;
+    int h = -1;
 };
 
 protected struct Instance native;
@@ -17,17 +17,17 @@ protected struct Instance native;
 public struct Definition {
     string title;
     Position position;
-    Style style;
+    Style style = Style.Normal;
 };
 
 public routine Position getWindowPosition(const Instance& window) native;
 
-public function ()Delete(const Instance& window);
-public function ()SetTitle(const Instance& window, const string& title);
-public function ()Show(const Instance& window);
-public function ()Hide(const Instance& window);
-public function ()Move(const Instance& window, const Position& position);
-public function ()Size(const Instance& window, const int& w, const int& h);
+public function ()Delete(const Instance& window) native;
+public function ()SetTitle(const Instance& window, const string& title) native;
+public function ()Show(const Instance& window) native;
+public function ()Hide(const Instance& window) native;
+public function ()Move(const Instance& window, const Position& position) native;
+public function ()Size(const Instance& window, const int& w, const int& h) native;
 
 public event(const Instance& window) => function ()OnResize();
 public event(const Instance& window) => function ()OnClose();
@@ -36,5 +36,4 @@ public event(const Instance& window) => function ()OnClose();
 //123456
 /*
 Socket::OnRecv(const Instance& socket) <= function ()OnRecv(const string& data);
-
 */

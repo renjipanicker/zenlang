@@ -28,10 +28,19 @@ public:
     Ast::RoutineDef& addRoutineDefSpec(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::VariableDefList& in, const Ast::DefinitionType::T& defType);
     Ast::FunctionDef& addFunctionDefSpec(const Ast::VariableDefList& out, const Ast::Token& name, const Ast::VariableDefList& in, const Ast::DefinitionType::T& defType);
     Ast::EventDef& addEventDefSpec(const Ast::VariableDef& in, const Ast::FunctionDef& functionDef, const Ast::DefinitionType::T& defType);
+    Ast::Namespace& addNamespace(const Ast::Token& name);
+
+public:
+    Ast::TernaryOpExpr& addTernaryOpExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2);
+    Ast::BinaryOpExpr& addBinaryOpExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::PostfixOpExpr& addPostfixOpExpr(const Ast::Token& op, const Ast::Expr& lhs);
+    Ast::PrefixOpExpr& addPrefixOpExpr(const Ast::Token& op, const Ast::Expr& rhs);
+    Ast::StructMemberRefExpr& addStructMemberRefExpr(const Ast::StructDef& structDef, const Ast::Token& name);
+    Ast::EnumMemberRefExpr& addEnumMemberRefExpr(const Ast::EnumDef& enumDef, const Ast::Token& name);
+    Ast::ConstantExpr& addConstantExpr(const std::string& type, const Ast::Token& value);
 
 public:
     Ast::UserDefinedTypeSpecStatement& addUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec);
-    Ast::Namespace& addNamespace(const Ast::Token& name);
     Ast::ImportStatement& addImportStatement();
 
 public:

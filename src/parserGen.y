@@ -33,15 +33,31 @@
 
 //-------------------------------------------------
 // All keywords, etc
-%nonassoc ERR EOF EOL WS COMMENT.
-%nonassoc SEMI.
-%nonassoc LOCAL SHARED.
-%nonassoc LIST DICT TREE.
-%nonassoc ENUM.
-%nonassoc SUBTYPE.
-%nonassoc RUN LOOP.
-%nonassoc FLOAT_CONST STRING_CONST.
-%nonassoc SWITCH.
+%nonassoc ERR EOF.
+%nonassoc OCTINT_CONST DECINT_CONST HEXINT_CONST DOUBLE_CONST FLOAT_CONST STRING_CONST.
+%nonassoc JOIN LINK.
+
+//-------------------------------------------------
+// All operators, in increasing order of precedence
+%left DEFINEEQUAL.
+%left ASSIGNEQUAL TIMESEQUAL DIVIDEEQUAL MINUSEQUAL PLUSEQUAL MODEQUAL SHIFTLEFTEQUAL SHIFTRIGHTEQUAL BITWISEANDEQUAL BITWISEXOREQUAL BITWISEOREQUAL.
+%left LSQUARE RSQUARE.
+%left LBRACKET RBRACKET.
+%left QUESTION.
+%left AND OR.
+%left BITWISEAND BITWISEXOR BITWISEOR.
+%left EQUAL NOTEQUAL.
+%left LT GT LTE GTE HAS.
+%left SHL SHR.
+%left PLUS MINUS MOD.
+%left DIVIDE STAR.
+%left INC DEC BITWISENOT NOT.
+%left AMP.
+%left DOT.
+%left KEY.
+%left QUERY_SCOPE.
+%left TYPE_SCOPE.
+%left COLON.
 
 %start_symbol start
 
@@ -187,6 +203,7 @@ variabledef_list_comma(L) ::= .                                                {
 // variable def
 %type variable_def {const Ast::VariableDef*}
 variable_def(L) ::= qtyperef(Q) ID(N).  {L = ptr(ref(pctx).addVariableDef(ref(Q), N));}
+variable_def(L) ::= qtyperef(Q) ID(N) ASSIGNEQUAL expr.  {L = ptr(ref(pctx).addVariableDef(ref(Q), N));}
 
 //-------------------------------------------------
 // qualified types
@@ -201,3 +218,86 @@ qtyperef(L) ::= CONST typeref(T) BITWISEAND.    {L = ptr(ref(pctx).addQualifiedT
 %type typeref {const Ast::TypeSpec*}
 typeref(R) ::= typeref(T) SCOPE ID(N). {R = ptr(ref(pctx).getChildTypeSpec(ref(T), N));}
 typeref(R) ::= ID(N).                  {R = ptr(ref(pctx).getRootTypeSpec(N));}
+
+//-------------------------------------------------
+// expressions
+%type expr {const Ast::Expr*}
+
+//-------------------------------------------------
+// binary operators
+
+// It could be possible to implement creating local variables inline within expressions.
+// Not sure how to implement it in the generated code. Not a priority, so on hold for now.
+//expr(E) ::= ID(L) DEFINEEQUAL       expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(ref(L), z::string("="), ref(R)));}
+
+expr(E) ::= expr(L) ASSIGNEQUAL(O)     expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) TIMESEQUAL(O)      expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) DIVIDEEQUAL(O)     expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) MINUSEQUAL(O)      expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) PLUSEQUAL(O)       expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) MODEQUAL(O)        expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) SHIFTLEFTEQUAL(O)  expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) SHIFTRIGHTEQUAL(O) expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) BITWISEANDEQUAL(O) expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) BITWISEXOREQUAL(O) expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) BITWISEOREQUAL(O)  expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+
+expr(E) ::= expr(L) QUESTION(O) expr(T) COLON expr(F). {E = ptr(ref(pctx).addTernaryOpExpr(O, ref(L), ref(T), ref(F)));}
+
+expr(E) ::= expr(L) BITWISEAND(O) expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) BITWISEXOR(O) expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) BITWISEOR(O)  expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) BITWISENOT(O) expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+
+expr(E) ::= expr(L) AND(O) expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) OR(O)  expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::=         NOT(O) expr(R). {E = ptr(ref(pctx).addPrefixOpExpr(O, ref(R)));}
+
+expr(E) ::= expr(L) EQUAL(O)    expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) NOTEQUAL(O) expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) LT(O)       expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) GT(O)       expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) LTE(O)      expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) GTE(O)      expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) HAS(O)      expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+
+expr(E) ::= expr(L) SHL(O) expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) SHR(O) expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+
+expr(E) ::= expr(L) PLUS(O)   expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) MINUS(O)  expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) STAR(O)   expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) DIVIDE(O) expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+expr(E) ::= expr(L) MOD(O)    expr(R). {E = ptr(ref(pctx).addBinaryOpExpr(O, ref(L), ref(R)));}
+
+expr(E) ::= PLUS(O)       expr(R). {E = ptr(ref(pctx).addPrefixOpExpr(O,  ref(R)));}
+expr(E) ::= MINUS(O)      expr(R). {E = ptr(ref(pctx).addPrefixOpExpr(O,  ref(R)));}
+expr(E) ::= INC(O)        expr(R). {E = ptr(ref(pctx).addPrefixOpExpr(O, ref(R)));}
+expr(E) ::= DEC(O)        expr(R). {E = ptr(ref(pctx).addPrefixOpExpr(O, ref(R)));}
+expr(E) ::= BITWISENOT(O) expr(R). {E = ptr(ref(pctx).addPrefixOpExpr(O,  ref(R)));}
+
+expr(E) ::= expr(L) INC(O). {E = ptr(ref(pctx).addPostfixOpExpr(O, ref(L)));}
+expr(E) ::= expr(L) DEC(O). {E = ptr(ref(pctx).addPostfixOpExpr(O, ref(L)));}
+
+//-------------------------------------------------
+// member expressions
+expr(L) ::= typeref DOT ID(R). {L;R;}
+
+//-------------------------------------------------
+// constant expressions
+expr(L) ::= constant_expr(R). {L = R;}
+
+%type constant_expr {const Ast::ConstantExpr*}
+constant_expr(E) ::= FLOAT_CONST(A).   {E = ptr(ref(pctx).addConstantExpr("float", A));}
+constant_expr(E) ::= DOUBLE_CONST(A).  {E = ptr(ref(pctx).addConstantExpr("double", A));}
+constant_expr(E) ::= TRUE_CONST(A).    {E = ptr(ref(pctx).addConstantExpr("bool", A));}
+constant_expr(E) ::= FALSE_CONST(A).   {E = ptr(ref(pctx).addConstantExpr("bool", A));}
+constant_expr(E) ::= KEY_CONST(A).     {E = ptr(ref(pctx).addConstantExpr("string", A));}
+constant_expr(E) ::= STRING_CONST(A).  {E = ptr(ref(pctx).addConstantExpr("string", A));}
+constant_expr(E) ::= CHAR_CONST(A).    {E = ptr(ref(pctx).addConstantExpr("char", A));}
+constant_expr(E) ::= HEXINT_CONST(A).  {E = ptr(ref(pctx).addConstantExpr("int", A));}
+constant_expr(E) ::= DECINT_CONST(A).  {E = ptr(ref(pctx).addConstantExpr("int", A));}
+constant_expr(E) ::= OCTINT_CONST(A).  {E = ptr(ref(pctx).addConstantExpr("int", A));}
+constant_expr(E) ::= LHEXINT_CONST(A). {E = ptr(ref(pctx).addConstantExpr("long", A));}
+constant_expr(E) ::= LDECINT_CONST(A). {E = ptr(ref(pctx).addConstantExpr("long", A));}
+constant_expr(E) ::= LOCTINT_CONST(A). {E = ptr(ref(pctx).addConstantExpr("long", A));}

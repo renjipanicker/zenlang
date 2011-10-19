@@ -37,6 +37,8 @@ namespace Ast {
     public:
         inline Token(const int row, const int col, const std::string& text) : _row(row), _col(col), _text(text) {}
         inline Token(const ::TokenData& token) : _row(token.row()), _col(token.col()), _text(token.text()) {}
+        inline const int& row() const {return _row;}
+        inline const int& col() const {return _col;}
         inline const char* text() const {return _text.c_str();}
         inline const std::string& string() const {return _text;}
     private:
@@ -50,6 +52,8 @@ namespace Ast {
         virtual ~Node(){}
     };
 
+    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
     class TypeSpec : public Node {
     private:
         typedef std::map<std::string, TypeSpec*> ChildTypeSpecList;
@@ -212,6 +216,77 @@ namespace Ast {
         inline Root(const std::string& name) : RootTypeSpec(Token(0, 0, name)) {}
     };
 
+    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
+    class Expr : public Node {
+    protected:
+        inline Expr(const TypeSpec& typeSpec) : _typeSpec(typeSpec) {}
+    public:
+        inline const TypeSpec& typeSpec() const {return _typeSpec;}
+    private:
+        const TypeSpec& _typeSpec;
+    };
+
+    class TernaryOpExpr : public Expr {
+    public:
+        inline TernaryOpExpr(const TypeSpec& typeSpec, const Token& op, const Expr& lhs, const Expr& rhs1, const Expr& rhs2) : Expr(typeSpec), _op(op), _lhs(lhs), _rhs1(rhs1), _rhs2(rhs2) {}
+    private:
+        const Token _op;
+        const Expr& _lhs;
+        const Expr& _rhs1;
+        const Expr& _rhs2;
+    };
+
+    class BinaryOpExpr : public Expr {
+    public:
+        inline BinaryOpExpr(const TypeSpec& typeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : Expr(typeSpec), _op(op), _lhs(lhs), _rhs(rhs) {}
+    private:
+        const Token _op;
+        const Expr& _lhs;
+        const Expr& _rhs;
+    };
+
+    class PostfixOpExpr : public Expr {
+    public:
+        inline PostfixOpExpr(const TypeSpec& typeSpec, const Token& op, const Expr& lhs) : Expr(typeSpec), _op(op), _lhs(lhs) {}
+    private:
+        const Token _op;
+        const Expr& _lhs;
+    };
+
+    class PrefixOpExpr : public Expr {
+    public:
+        inline PrefixOpExpr(const TypeSpec& typeSpec, const Token& op, const Expr& rhs) : Expr(typeSpec), _op(op), _rhs(rhs) {}
+    private:
+        const Token _op;
+        const Expr& _rhs;
+    };
+
+    class StructMemberRefExpr : public Expr {
+    public:
+        inline StructMemberRefExpr(const TypeSpec& typeSpec, const StructDef& structDef, const Token& name) : Expr(typeSpec), _structDef(structDef), _name(name) {}
+    private:
+        const StructDef& _structDef;
+        const Token _name;
+    };
+
+    class EnumMemberRefExpr : public Expr {
+    public:
+        inline EnumMemberRefExpr(const TypeSpec& typeSpec, const EnumDef& enumDef, const Token& name) : Expr(typeSpec), _enumDef(enumDef), _name(name) {}
+    private:
+        const EnumDef& _enumDef;
+        const Token _name;
+    };
+
+    class ConstantExpr : public Expr {
+    public:
+        inline ConstantExpr(const TypeSpec& typeSpec, const Token& value) : Expr(typeSpec), _value(value) {}
+    private:
+        const Token _value;
+    };
+
+    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
     class Statement : public Node {
     public:
         inline Statement() {}
@@ -245,6 +320,8 @@ namespace Ast {
         const UserDefinedTypeSpec& _typeSpec;
     };
 
+    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
     /*! \brief AST Node for a compilation unit
       The Unit AST node is the owner for all AST nodes in the unit.
       This node maintains two namespace hierarchies

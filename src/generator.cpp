@@ -178,6 +178,19 @@ inline void Generator::Impl::generateTypeSpec(const Ast::TypeSpec* typeSpec) {
         return;
     }
 
+    for(const Ast::RoutineDef* t = dynamic_cast<const Ast::RoutineDef*>(typeSpec); t != 0; ) {
+        fprintf(_fpHdr, "%s%s %s(", Indent::get(), getName(ref(t).outType()).c_str(), ref(t).name().text());
+        std::string sep;
+        for(Ast::VariableDefList::List::const_iterator it = ref(t).in().begin(); it != ref(t).in().end(); ++it) {
+            const Ast::VariableDef& vdef = ref(*it);
+            fprintf(_fpHdr, "%s%s %s", sep.c_str(), getName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
+            sep = ", ";
+        }
+        fprintf(_fpHdr, ");\n");
+        fprintf(_fpHdr, "\n");
+        return;
+    }
+
     for(const Ast::FunctionDef* t = dynamic_cast<const Ast::FunctionDef*>(typeSpec); t != 0; ) {
         fprintf(_fpHdr, "%sclass %s : public Function<%s> {\n", Indent::get(), ref(t).name().text(), ref(t).name().text());
         fprintf(_fpHdr, "%s    static void impl(%s& This);\n", Indent::get(), ref(t).name().text());
@@ -216,7 +229,7 @@ inline void Generator::Impl::generateTypeSpec(const Ast::TypeSpec* typeSpec) {
             fprintf(_fpHdr, "%spublic:\n", Indent::get());
             fprintf(_fpHdr, "%s    inline Add(", Indent::get(), ref(t).name().text());
             fprintf(_fpHdr, "const %s& %s, Handler* handler", getName(ref(t).in().qualifiedTypeSpec().typeSpec()).c_str(), ref(t).in().name().text());
-            fprintf(_fpHdr, ") : AddHandler(&impl, add(handler)),  _%s(%s) {}\n", ref(t).in().name().text(), ref(t).in().name().text());
+            fprintf(_fpHdr, ") : AddHandler(&impl, add(handler)), _%s(%s) {}\n", ref(t).in().name().text(), ref(t).in().name().text());
             fprintf(_fpHdr, "%s};\n", Indent::get());
         }
         fprintf(_fpHdr, "%s};\n", Indent::get());

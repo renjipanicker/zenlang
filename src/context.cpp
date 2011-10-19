@@ -148,10 +148,58 @@ const Ast::TypeSpec& Context::getRootTypeSpec(const Ast::Token &name) const {
     return ref(typeSpec);
 }
 
-const Ast::TypeSpec & Context::getChildTypeSpec(const Ast::TypeSpec &parent, const Ast::Token &name) const {
+const Ast::TypeSpec& Context::getChildTypeSpec(const Ast::TypeSpec &parent, const Ast::Token &name) const {
     const Ast::TypeSpec* typeSpec = parent.hasChild(name.text());
     if(!typeSpec) {
         throw Exception("Unknown child type '%s'\n", name.text());
     }
     return ref(typeSpec);
+}
+
+inline const Ast::TypeSpec& coerce(const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    /// \todo
+    return lhs.typeSpec();
+}
+
+Ast::TernaryOpExpr& Context::addTernaryOpExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2) {
+    const Ast::TypeSpec& typeSpec = coerce(rhs1, rhs2);
+    Ast::TernaryOpExpr& expr = _unit.addNode(new Ast::TernaryOpExpr(typeSpec, op, lhs, rhs1, rhs2));
+    return expr;
+}
+
+Ast::BinaryOpExpr& Context::addBinaryOpExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    const Ast::TypeSpec& typeSpec = coerce(lhs, rhs);
+    Ast::BinaryOpExpr& expr = _unit.addNode(new Ast::BinaryOpExpr(typeSpec, op, lhs, rhs));
+    return expr;
+}
+
+Ast::PostfixOpExpr& Context::addPostfixOpExpr(const Ast::Token& op, const Ast::Expr& lhs) {
+    const Ast::TypeSpec& typeSpec = lhs.typeSpec();
+    Ast::PostfixOpExpr& expr = _unit.addNode(new Ast::PostfixOpExpr(typeSpec, op, lhs));
+    return expr;
+}
+
+Ast::PrefixOpExpr& Context::addPrefixOpExpr(const Ast::Token& op, const Ast::Expr& rhs) {
+    const Ast::TypeSpec& typeSpec = rhs.typeSpec();
+    Ast::PrefixOpExpr& expr = _unit.addNode(new Ast::PrefixOpExpr(typeSpec, op, rhs));
+    return expr;
+}
+
+Ast::StructMemberRefExpr& Context::addStructMemberRefExpr(const Ast::StructDef& structDef, const Ast::Token& name) {
+    const Ast::TypeSpec& typeSpec = structDef;
+    Ast::StructMemberRefExpr& expr = _unit.addNode(new Ast::StructMemberRefExpr(typeSpec, structDef, name));
+    return expr;
+}
+
+Ast::EnumMemberRefExpr& Context::addEnumMemberRefExpr(const Ast::EnumDef& enumDef, const Ast::Token& name) {
+    const Ast::TypeSpec& typeSpec = enumDef;
+    Ast::EnumMemberRefExpr& expr = _unit.addNode(new Ast::EnumMemberRefExpr(typeSpec, enumDef, name));
+    return expr;
+}
+
+Ast::ConstantExpr& Context::addConstantExpr(const std::string& type, const Ast::Token& value) {
+    Ast::Token token(value.row(), value.col(), type);
+    const Ast::TypeSpec& typeSpec = getRootTypeSpec(token);
+    Ast::ConstantExpr& expr = _unit.addNode(new Ast::ConstantExpr(typeSpec, value));
+    return expr;
 }
