@@ -1,5 +1,71 @@
 #pragma once
 
+#define unused(x) ((void)x)
+
+template <typename T>
+inline T& ref(T* t) {
+    assert(t);
+    return *t;
+}
+
+template <typename T>
+inline T* ptr(T& t) {
+    assert(&t);
+    return &t;
+}
+
+typedef std::string string;
+
+inline void _trace(const std::string& txt) {
+#if defined(WIN32)
+    OutputDebugStringA(txt.c_str());
+#else
+    std::cout << txt.c_str() << std::flush;
+#endif
+}
+
+inline std::string ssprintfv(const char* txt, va_list vlist) {
+    const int len = 1024;
+    char buf[len];
+#if defined(WIN32)
+    vsnprintf_s(buf, len, _TRUNCATE, txt, vlist);
+#else
+    vsnprintf(buf, len, txt, vlist);
+#endif
+    va_end(vlist);
+    return buf;
+}
+
+inline std::string ssprintf(const char* txt, ...) {
+    va_list vlist;
+    va_start(vlist, txt);
+    return ssprintfv(txt, vlist);
+}
+
+inline void trace(const char* txt, ...) {
+#if defined(DEBUG)
+    va_list vlist;
+    va_start(vlist, txt);
+    std::string buf = ssprintfv(txt, vlist);
+    _trace(buf);
+#else
+    unused(txt);
+#endif
+}
+
+class Exception {
+public:
+    inline Exception(const char* txt, ...) {
+        va_list vlist;
+        va_start(vlist, txt);
+        _msg = ssprintfv(txt, vlist);
+        printf("Error: %s\n", _msg.c_str());
+    }
+
+private:
+    std::string _msg;
+};
+
 template <typename ImplT>
 struct MethodX {
     typedef ImplT Impl;

@@ -1,6 +1,5 @@
 #include "base/pch.hpp"
-#include "base/common.hpp"
-#include "base/exception.hpp"
+#include "base/zenlang.hpp"
 #include "generator.hpp"
 
 inline bool getName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name) {
@@ -103,6 +102,9 @@ struct Generator::Impl {
     inline void generateImportStatement();
     inline void run();
 private:
+    inline FILE* fpDecl(const Ast::TypeSpec* typeSpec);
+    inline FILE* fpDefn(const Ast::TypeSpec* typeSpec);
+private:
     const Project& _project;
     const Ast::Unit& _unit;
 private:
@@ -111,129 +113,134 @@ private:
     FILE* _fpImp;
 };
 
+inline FILE* Generator::Impl::fpDecl(const Ast::TypeSpec* typeSpec) {
+    //if(ref(t).accessType() == Ast::AccessType::Protected) {
+    return _fpHdr;
+}
+
+inline FILE* Generator::Impl::fpDefn(const Ast::TypeSpec* typeSpec) {
+    return _fpSrc;
+}
+
 inline void Generator::Impl::generateTypeSpec(const Ast::TypeSpec* typeSpec) {
     for(const Ast::TypeDef* t = dynamic_cast<const Ast::TypeDef*>(typeSpec); t != 0; ) {
         if(ref(t).defType() == Ast::DefinitionType::Native) {
-            fprintf(_fpHdr, "%s// typedef %s native;\n", Indent::get(), ref(t).name().text());
+            fprintf(fpDecl(typeSpec), "%s// typedef %s native;\n", Indent::get(), ref(t).name().text());
         }
         return;
     }
 
     for(const Ast::EnumDef* t = dynamic_cast<const Ast::EnumDef*>(typeSpec); t != 0; ) {
         if(ref(t).defType() != Ast::DefinitionType::Native) {
-            fprintf(_fpHdr, "%sstruct %s {\n", Indent::get(), ref(t).name().text());
-            fprintf(_fpHdr, "%s  enum T {\n", Indent::get(), ref(t).name().text());
+            fprintf(fpDecl(typeSpec), "%sstruct %s {\n", Indent::get(), ref(t).name().text());
+            fprintf(fpDecl(typeSpec), "%s  enum T {\n", Indent::get(), ref(t).name().text());
             std::string sep = " ";
             for(Ast::EnumMemberDefList::List::const_iterator it = ref(t).list().begin(); it != ref(t).list().end(); ++it) {
                 INDENT;
                 const Ast::EnumMemberDef& def = ref(*it);
-                fprintf(_fpHdr, "%s%s %s\n", Indent::get(), sep.c_str(), def.name().text());
+                fprintf(fpDecl(typeSpec), "%s%s %s\n", Indent::get(), sep.c_str(), def.name().text());
                 sep = ",";
             }
-            fprintf(_fpHdr, "%s  };\n", Indent::get());
-            fprintf(_fpHdr, "%s};\n", Indent::get());
-            fprintf(_fpHdr, "\n");
+            fprintf(fpDecl(typeSpec), "%s  };\n", Indent::get());
+            fprintf(fpDecl(typeSpec), "%s};\n", Indent::get());
+            fprintf(fpDecl(typeSpec), "\n");
         }
         return;
     }
 
     for(const Ast::StructDef* t = dynamic_cast<const Ast::StructDef*>(typeSpec); t != 0; ) {
-        FILE* fp = 0;
         std::string impl;
         if(ref(t).accessType() == Ast::AccessType::Protected) {
-            fprintf(_fpHdr, "%sstruct %s {\n", Indent::get(), ref(t).name().text());
+            fprintf(fpDecl(typeSpec), "%sstruct %s {\n", Indent::get(), ref(t).name().text());
             {
                 INDENT;
-                fprintf(_fpHdr, "%sstruct Impl;\n", Indent::get());
-                fprintf(_fpHdr, "%sImpl* _impl;\n", Indent::get());
+                fprintf(fpDecl(typeSpec), "%sstruct Impl;\n", Indent::get());
+                fprintf(fpDecl(typeSpec), "%sImpl* _impl;\n", Indent::get());
             }
-            fprintf(_fpHdr, "%s};\n", Indent::get());
-            fprintf(_fpHdr, "\n");
-            fp = _fpSrc;
+            fprintf(fpDecl(typeSpec), "%s};\n", Indent::get());
+            fprintf(fpDecl(typeSpec), "\n");
             impl = "::Impl";
-        } else {
-            fp = (ref(t).accessType() == Ast::AccessType::Private)?_fpSrc:_fpHdr;
         }
 
         if(ref(t).defType() != Ast::DefinitionType::Native) {
-            fprintf(fp, "%sstruct %s%s {\n", Indent::get(), ref(t).name().text(), impl.c_str());
-            fprintf(fp, "%sprivate:\n", Indent::get());
+            fprintf(fpDefn(typeSpec), "%sstruct %s%s {\n", Indent::get(), ref(t).name().text(), impl.c_str());
+            fprintf(fpDefn(typeSpec), "%sprivate:\n", Indent::get());
             for(Ast::VariableDefList::List::const_iterator it = ref(t).list().begin(); it != ref(t).list().end(); ++it) {
                 INDENT;
                 const Ast::VariableDef& vdef = ref(*it);
-                fprintf(fp, "%s%s _%s;\n", Indent::get(), getName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
+                fprintf(fpDefn(typeSpec), "%s%s _%s;\n", Indent::get(), getName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
             }
-            fprintf(fp, "%spublic:\n", Indent::get());
+            fprintf(fpDefn(typeSpec), "%spublic:\n", Indent::get());
             for(Ast::VariableDefList::List::const_iterator it = ref(t).list().begin(); it != ref(t).list().end(); ++it) {
                 INDENT;
                 const Ast::VariableDef& vdef = ref(*it);
-                fprintf(fp, "%sinline %s& %s(const %s& val) {_%s = val; return ref(this);}\n",
+                fprintf(fpDefn(typeSpec), "%sinline %s& %s(const %s& val) {_%s = val; return ref(this);}\n",
                         Indent::get(), ref(t).name().text(), vdef.name().text(), getName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
-                fprintf(fp, "%sinline const %s& %s() const {return _%s;}\n",
+                fprintf(fpDefn(typeSpec), "%sinline const %s& %s() const {return _%s;}\n",
                         Indent::get(), getName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text(), vdef.name().text());
             }
-            fprintf(fp, "%s};\n", Indent::get());
-            fprintf(_fpHdr, "\n");
+            fprintf(fpDefn(typeSpec), "%s};\n", Indent::get());
+            fprintf(fpDefn(typeSpec), "\n");
         }
         return;
     }
 
     for(const Ast::RoutineDef* t = dynamic_cast<const Ast::RoutineDef*>(typeSpec); t != 0; ) {
-        fprintf(_fpHdr, "%s%s %s(", Indent::get(), getName(ref(t).outType()).c_str(), ref(t).name().text());
+        fprintf(fpDecl(typeSpec), "%s%s %s(", Indent::get(), getName(ref(t).outType()).c_str(), ref(t).name().text());
         std::string sep;
         for(Ast::VariableDefList::List::const_iterator it = ref(t).in().begin(); it != ref(t).in().end(); ++it) {
             const Ast::VariableDef& vdef = ref(*it);
-            fprintf(_fpHdr, "%s%s %s", sep.c_str(), getName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
+            fprintf(fpDecl(typeSpec), "%s%s %s", sep.c_str(), getName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
             sep = ", ";
         }
-        fprintf(_fpHdr, ");\n");
-        fprintf(_fpHdr, "\n");
+        fprintf(fpDecl(typeSpec), ");\n");
+        fprintf(fpDecl(typeSpec), "\n");
         return;
     }
 
     for(const Ast::FunctionDef* t = dynamic_cast<const Ast::FunctionDef*>(typeSpec); t != 0; ) {
-        fprintf(_fpHdr, "%sclass %s : public Function<%s> {\n", Indent::get(), ref(t).name().text(), ref(t).name().text());
-        fprintf(_fpHdr, "%s    static void impl(%s& This);\n", Indent::get(), ref(t).name().text());
+        fprintf(fpDecl(typeSpec), "%sclass %s : public Function<%s> {\n", Indent::get(), ref(t).name().text(), ref(t).name().text());
+        fprintf(fpDecl(typeSpec), "%s    static void impl(%s& This);\n", Indent::get(), ref(t).name().text());
         for(Ast::VariableDefList::List::const_iterator it = ref(t).in().begin(); it != ref(t).in().end(); ++it) {
             INDENT;
             const Ast::VariableDef& vdef = ref(*it);
-            fprintf(_fpHdr, "%sconst %s _%s;\n", Indent::get(), getName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
+            fprintf(fpDecl(typeSpec), "%sconst %s _%s;\n", Indent::get(), getName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
         }
-        fprintf(_fpHdr, "%spublic:\n", Indent::get());
-        fprintf(_fpHdr, "%s    inline %s(", Indent::get(), ref(t).name().text());
+        fprintf(fpDecl(typeSpec), "%spublic:\n", Indent::get());
+        fprintf(fpDecl(typeSpec), "%s    inline %s(", Indent::get(), ref(t).name().text());
         std::string sep = "";
         for(Ast::VariableDefList::List::const_iterator it = ref(t).in().begin(); it != ref(t).in().end(); ++it) {
             const Ast::VariableDef& vdef = ref(*it);
-            fprintf(_fpHdr, "%sconst %s& %s", sep.c_str(), getName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
+            fprintf(fpDecl(typeSpec), "%sconst %s& %s", sep.c_str(), getName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
             sep = ", ";
         }
-        fprintf(_fpHdr, ") : Function(&impl)");
+        fprintf(fpDecl(typeSpec), ") : Function(&impl)");
         for(Ast::VariableDefList::List::const_iterator it = ref(t).in().begin(); it != ref(t).in().end(); ++it) {
             const Ast::VariableDef& vdef = ref(*it);
-            fprintf(_fpHdr, ", _%s(%s)", vdef.name().text(), vdef.name().text());
+            fprintf(fpDecl(typeSpec), ", _%s(%s)", vdef.name().text(), vdef.name().text());
         }
-        fprintf(_fpHdr, " {}\n");
+        fprintf(fpDecl(typeSpec), " {}\n");
 
-        fprintf(_fpHdr, "%s};\n", Indent::get());
-        fprintf(_fpHdr, "\n");
+        fprintf(fpDecl(typeSpec), "%s};\n", Indent::get());
+        fprintf(fpDecl(typeSpec), "\n");
         return;
     }
 
     for(const Ast::EventDef* t = dynamic_cast<const Ast::EventDef*>(typeSpec); t != 0; ) {
-        fprintf(_fpHdr, "%sstruct %s : public Event<%s> {\n", Indent::get(), ref(t).name().text(), ref(t).name().text());
+        fprintf(fpDecl(typeSpec), "%sstruct %s : public Event<%s> {\n", Indent::get(), ref(t).name().text(), ref(t).name().text());
         {
             INDENT;
-            fprintf(_fpHdr, "%sclass Add : public AddHandler<Add> {\n", Indent::get());
-            fprintf(_fpHdr, "%s    static void impl(Add& This);\n", Indent::get());
-            fprintf(_fpHdr, "%s    const %s _%s;\n", Indent::get(), getName(ref(t).in().qualifiedTypeSpec().typeSpec()).c_str(), ref(t).in().name().text());
-            fprintf(_fpHdr, "%spublic:\n", Indent::get());
-            fprintf(_fpHdr, "%s    inline Add(", Indent::get(), ref(t).name().text());
-            fprintf(_fpHdr, "const %s& %s, Handler* handler", getName(ref(t).in().qualifiedTypeSpec().typeSpec()).c_str(), ref(t).in().name().text());
-            fprintf(_fpHdr, ") : AddHandler(&impl, add(handler)), _%s(%s) {}\n", ref(t).in().name().text(), ref(t).in().name().text());
-            fprintf(_fpHdr, "%s};\n", Indent::get());
+            fprintf(fpDecl(typeSpec), "%sclass Add : public AddHandler<Add> {\n", Indent::get());
+            fprintf(fpDecl(typeSpec), "%s    static void impl(Add& This);\n", Indent::get());
+            fprintf(fpDecl(typeSpec), "%s    const %s _%s;\n", Indent::get(), getName(ref(t).in().qualifiedTypeSpec().typeSpec()).c_str(), ref(t).in().name().text());
+            fprintf(fpDecl(typeSpec), "%spublic:\n", Indent::get());
+            fprintf(fpDecl(typeSpec), "%s    inline Add(", Indent::get(), ref(t).name().text());
+            fprintf(fpDecl(typeSpec), "const %s& %s, Handler* handler", getName(ref(t).in().qualifiedTypeSpec().typeSpec()).c_str(), ref(t).in().name().text());
+            fprintf(fpDecl(typeSpec), ") : AddHandler(&impl, add(handler)), _%s(%s) {}\n", ref(t).in().name().text(), ref(t).in().name().text());
+            fprintf(fpDecl(typeSpec), "%s};\n", Indent::get());
         }
-        fprintf(_fpHdr, "%s};\n", Indent::get());
-        fprintf(_fpHdr, "\n");
+        fprintf(fpDecl(typeSpec), "%s};\n", Indent::get());
+        fprintf(fpDecl(typeSpec), "\n");
         return;
     }
 
@@ -257,20 +264,26 @@ inline void Generator::Impl::generateGlobalStatementList() {
 
 inline void Generator::Impl::enterNamespace() {
     fprintf(_fpHdr, "%s", Indent::get());
+    fprintf(_fpSrc, "%s", Indent::get());
     for(Ast::Unit::UnitNS::const_iterator it = _unit.unitNS().begin(); it != _unit.unitNS().end(); ++it) {
         const Ast::Token& name = *it;
         fprintf(_fpHdr, "namespace %s {", name.text());
+        fprintf(_fpSrc, "namespace %s {", name.text());
     }
     fprintf(_fpHdr, "\n");
+    fprintf(_fpSrc, "\n");
 }
 
 inline void Generator::Impl::leaveNamespace() {
     fprintf(_fpHdr, "%s", Indent::get());
+    fprintf(_fpSrc, "%s", Indent::get());
     for(Ast::Unit::UnitNS::const_iterator it = _unit.unitNS().begin(); it != _unit.unitNS().end(); ++it) {
         const Ast::Token& name = *it;
         fprintf(_fpHdr, "} /* %s */ ", name.text());
+        fprintf(_fpSrc, "} /* %s */ ", name.text());
     }
     fprintf(_fpHdr, "\n");
+    fprintf(_fpSrc, "\n");
 }
 
 inline void Generator::Impl::generateImportStatement() {
@@ -299,9 +312,11 @@ inline void Generator::Impl::run() {
     fprintf(_fpHdr, "#pragma once\n\n");
     fprintf(_fpHdr, "#include \"base/function.hpp\"\n");
 
-    fprintf(_fpSrc, "#include \"base/pch.hpp\"\n");
-    fprintf(_fpSrc, "#include \"base/common.hpp\"\n");
-    fprintf(_fpSrc, "#include \"base/exception.hpp\"\n");
+    for(Project::PathList::const_iterator it = _project.sourceList().begin(); it != _project.sourceList().end(); ++it) {
+        const std::string& filename = *it;
+        fprintf(_fpSrc, "#include \"%s\"\n", filename.c_str());
+    }
+
     fprintf(_fpSrc, "#include \"%shpp\"\n", basename.c_str());
 
     generateImportStatement();

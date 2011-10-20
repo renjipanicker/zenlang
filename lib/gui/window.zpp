@@ -22,6 +22,11 @@ public struct Definition {
 
 public routine Position getWindowPosition(const Instance& window) native;
 
+public function ()Test(const Instance& window) {
+    1 + 2 * 3;
+}
+
+
 public function ()Delete(const Instance& window) native;
 public function ()SetTitle(const Instance& window, const string& title) native;
 public function ()Show(const Instance& window) native;

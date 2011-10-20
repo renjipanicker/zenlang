@@ -106,6 +106,15 @@ global_statement ::= statement(S). {ref(pctx).addGlobalStatement(ref(S));}
 //-------------------------------------------------
 %type statement {Ast::Statement*}
 statement(R) ::= typespec_statement(S). {R = S;}
+statement(R) ::= expr(E) SEMI. {R = ptr(ref(pctx).addExprStatement(ref(E)));}
+statement(R) ::= compound_statement(S). {R;S;}
+
+%type compound_statement {Ast::CompoundStatement*}
+compound_statement ::= LCURLY statement_list RCURLY.
+
+%type statement_list {Ast::CompoundStatement*}
+statement_list(L) ::= statement_list(R) statement(S). {L = R; ref(L).addStatement(ref(S));}
+statement_list(L) ::= . {L = ptr(ref(pctx).addCompoundStatement());}
 
 //-------------------------------------------------
 %type typespec_statement {Ast::Statement*}
@@ -167,11 +176,13 @@ struct_def(T) ::= STRUCT ID(N) LCURLY                          RCURLY SEMI. {T =
 // function declarations
 %type function_def {Ast::FunctionDef*}
 function_def(L) ::= function_sig(R) SEMI. {L = R;}
+function_def(L) ::= function_sig(R) compound_statement(S). {L = R;S;}
 
 //-------------------------------------------------
 // routine declarations
 %type routine_def {Ast::RoutineDef*}
 routine_def(L) ::= ROUTINE qtyperef(O) ID(N) params_list(I) NATIVE SEMI. {L = ptr(ref(pctx).addRoutineDefSpec(ref(O), N, ref(I), Ast::DefinitionType::Native));}
+routine_def(L) ::= ROUTINE qtyperef(O) ID(N) params_list(I) compound_statement(S). {L = ptr(ref(pctx).addRoutineDefSpec(ref(O), N, ref(I), Ast::DefinitionType::Direct));S;}
 
 //-------------------------------------------------
 // event declarations
@@ -280,7 +291,7 @@ expr(E) ::= expr(L) INC(O). {E = ptr(ref(pctx).addPostfixOpExpr(O, ref(L)));}
 expr(E) ::= expr(L) DEC(O). {E = ptr(ref(pctx).addPostfixOpExpr(O, ref(L)));}
 
 //-------------------------------------------------
-// member expressions
+// enum member expressions
 expr(L) ::= typeref DOT ID(R). {L;R;}
 
 //-------------------------------------------------

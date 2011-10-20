@@ -41,6 +41,8 @@ public:
 
 public:
     Ast::UserDefinedTypeSpecStatement& addUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec);
+    Ast::ExprStatement& addExprStatement(const Ast::Expr& expr);
+    Ast::CompoundStatement& addCompoundStatement();
     Ast::ImportStatement& addImportStatement();
 
 public:

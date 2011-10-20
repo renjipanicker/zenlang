@@ -1,5 +1,5 @@
 #include "base/pch.hpp"
-#include "base/common.hpp"
+#include "base/zenlang.hpp"
 #include "compiler.hpp"
 
 int main(int argc, char* argv[]) {
@@ -11,6 +11,9 @@ int main(int argc, char* argv[]) {
     Project project;
     project.addInclude(".");
     project.addInclude("../../zenlang/lib");
+    project.addIncludeFile("base/pch.hpp");
+    project.addIncludeFile("base/common.hpp");
+    project.addIncludeFile("base/exception.hpp");
     project.addSource(argv[1]);
 
     Compiler compiler(project);

@@ -1,6 +1,5 @@
 #include "base/pch.hpp"
-#include "base/common.hpp"
-#include "base/exception.hpp"
+#include "base/zenlang.hpp"
 #include "parser.hpp"
 #include "parserGen.c"
 

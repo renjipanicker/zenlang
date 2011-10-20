@@ -1,6 +1,5 @@
 #include "base/pch.hpp"
-#include "base/common.hpp"
-#include "base/exception.hpp"
+#include "base/zenlang.hpp"
 #include "context.hpp"
 
 Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level) : _compiler(compiler), _unit(unit), _level(level) {
@@ -98,6 +97,15 @@ Ast::UserDefinedTypeSpecStatement& Context::addUserDefinedTypeSpecStatement(cons
     return userDefinedTypeSpecStatement;
 }
 
+Ast::ExprStatement & Context::addExprStatement(const Ast::Expr &expr) {
+    Ast::ExprStatement& exprStatement = _unit.addNode(new Ast::ExprStatement(expr));
+    return exprStatement;
+}
+
+Ast::CompoundStatement& Context::addCompoundStatement() {
+    Ast::CompoundStatement& statement = _unit.addNode(new Ast::CompoundStatement());
+    return statement;
+}
 Ast::ImportStatement& Context::addImportStatement() {
     Ast::ImportStatement& importStatement = _unit.addNode(new Ast::ImportStatement());
     _unit.addImportStatement(importStatement);

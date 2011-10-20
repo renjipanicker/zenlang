@@ -320,6 +320,25 @@ namespace Ast {
         const UserDefinedTypeSpec& _typeSpec;
     };
 
+    class ExprStatement : public Statement {
+    public:
+        inline ExprStatement(const Expr& expr) : _expr(expr) {}
+        inline const Expr& expr() const {return _expr;}
+    private:
+        const Expr& _expr;
+    };
+
+    class CompoundStatement : public Statement {
+    public:
+        typedef std::list<const Statement*> List;
+    public:
+        inline CompoundStatement() {}
+        inline CompoundStatement& addStatement(const Statement& statement) {_list.push_back(ptr(statement)); return ref(this);}
+        inline const List& list() const {return _list;}
+    private:
+        List _list;
+    };
+
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
     /*! \brief AST Node for a compilation unit

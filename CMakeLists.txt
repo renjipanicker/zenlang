@@ -8,8 +8,6 @@ SET(zen_SOURCES ${zen_SOURCES} src/compiler.cpp)
 SET(zen_SOURCES ${zen_SOURCES} src/context.cpp)
 SET(zen_SOURCES ${zen_SOURCES} src/generator.cpp)
 SET(zen_SOURCES ${zen_SOURCES} src/project.cpp)
-SET(zen_SOURCES ${zen_SOURCES} lib/base/common.cpp)
-SET(zen_SOURCES ${zen_SOURCES} lib/base/exception.cpp)
 
 set(parser_odir "${CMAKE_CURRENT_SOURCE_DIR}/src")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${parser_odir})
