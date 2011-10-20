@@ -55,6 +55,8 @@ namespace Ast {
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
     class TypeSpec : public Node {
+    public:
+        struct Visitor;
     private:
         typedef std::map<std::string, TypeSpec*> ChildTypeSpecList;
     public:
@@ -63,10 +65,8 @@ namespace Ast {
         inline TypeSpec& accessType(const AccessType::T& val) {_accessType = val; return ref(this);}
         inline const Token& name() const {return _name;}
         inline const AccessType::T& accessType() const {return _accessType;}
-
     public:
         inline void addChild(TypeSpec& typeSpec) {_childTypeSpecList[typeSpec.name().text()] = ptr(typeSpec);}
-
         inline const TypeSpec* hasChild(const std::string& name) const {
             ChildTypeSpecList::const_iterator it = _childTypeSpecList.find(name);
             if(it == _childTypeSpecList.end())
@@ -74,6 +74,8 @@ namespace Ast {
             return it->second;
         }
 
+    public:
+        virtual void visit(Visitor& visitor) = 0;
     private:
         AccessType::T _accessType;
         const Token _name;
@@ -139,6 +141,8 @@ namespace Ast {
     class TypeDef : public UserDefinedTypeSpec {
     public:
         inline TypeDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType) {}
+    private:
+        virtual void visit(Visitor& visitor);
     };
 
     class EnumMemberDef : public Node {
@@ -165,6 +169,8 @@ namespace Ast {
         inline EnumDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const EnumMemberDefList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
         inline const EnumMemberDefList::List& list() const {return _list.list();}
     private:
+        virtual void visit(Visitor& visitor);
+    private:
         const EnumMemberDefList& _list;
     };
 
@@ -172,6 +178,8 @@ namespace Ast {
     public:
         inline StructDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::VariableDefList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
         inline const Ast::VariableDefList::List& list() const {return _list.list();}
+    private:
+        virtual void visit(Visitor& visitor);
     private:
         const Ast::VariableDefList& _list;
     };
@@ -181,6 +189,8 @@ namespace Ast {
         inline RoutineDef(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::VariableDefList& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _outType(outType), _in(in) {}
         inline const Ast::QualifiedTypeSpec& outType() const {return _outType;}
         inline const Ast::VariableDefList::List& in()  const {return _in.list();}
+    private:
+        virtual void visit(Visitor& visitor);
     private:
         const Ast::QualifiedTypeSpec& _outType;
         const Ast::VariableDefList& _in;
@@ -192,6 +202,8 @@ namespace Ast {
         inline const Ast::VariableDefList::List& out() const {return _out.list();}
         inline const Ast::VariableDefList::List& in()  const {return _in.list();}
     private:
+        virtual void visit(Visitor& visitor);
+    private:
         const Ast::VariableDefList& _out;
         const Ast::VariableDefList& _in;
     };
@@ -202,6 +214,8 @@ namespace Ast {
         inline const Ast::VariableDef& in()  const {return _in;}
         inline const Ast::FunctionDef& functionDef() const {return _functionDef;}
     private:
+        virtual void visit(Visitor& visitor);
+    private:
         const Ast::VariableDef& _in;
         const FunctionDef& _functionDef;
     };
@@ -209,12 +223,36 @@ namespace Ast {
     class Namespace : public ChildTypeSpec {
     public:
         inline Namespace(const TypeSpec& parent, const Token& name) : ChildTypeSpec(parent, name) {}
+    private:
+        virtual void visit(Visitor& visitor);
     };
 
     class Root : public RootTypeSpec {
     public:
         inline Root(const std::string& name) : RootTypeSpec(Token(0, 0, name)) {}
+    private:
+        virtual void visit(Visitor& visitor);
     };
+
+    struct TypeSpec::Visitor {
+        virtual void visit(const TypeDef& node) = 0;
+        virtual void visit(const EnumDef& node) = 0;
+        virtual void visit(const StructDef& node) = 0;
+        virtual void visit(const RoutineDef& node) = 0;
+        virtual void visit(const FunctionDef& node) = 0;
+        virtual void visit(const EventDef& node) = 0;
+        virtual void visit(const Namespace& node) = 0;
+        virtual void visit(const Root& node) = 0;
+    };
+
+    inline void TypeDef::visit(Visitor& visitor) {visitor.visit(ref(this));}
+    inline void EnumDef::visit(Visitor& visitor) {visitor.visit(ref(this));}
+    inline void StructDef::visit(Visitor& visitor) {visitor.visit(ref(this));}
+    inline void RoutineDef::visit(Visitor& visitor) {visitor.visit(ref(this));}
+    inline void FunctionDef::visit(Visitor& visitor) {visitor.visit(ref(this));}
+    inline void EventDef::visit(Visitor& visitor) {visitor.visit(ref(this));}
+    inline void Namespace::visit(Visitor& visitor) {visitor.visit(ref(this));}
+    inline void Root::visit(Visitor& visitor) {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
@@ -347,15 +385,20 @@ namespace Ast {
       - the root namespace is the namespace for all types defined in this unit
       - the import namespace is the namespace for all types imported into the unit from other modules.
     */
-    class Unit : public RootTypeSpec {
+    class Unit {
     public:
         typedef std::list<const ImportStatement*> ImportStatementList;
         typedef std::list<const Statement*> StatementList;
         typedef std::list<Token> UnitNS;
     public:
-        inline Unit(const Token& name) : RootTypeSpec(name), _importNS("*import*"), _rootNS("*root*") {}
+        inline Unit(const std::string& filename) : _filename(filename), _importNS("*import*"), _rootNS("*root*") {}
     private:
-        inline Unit(const Unit& src) : RootTypeSpec(src.name()), _importNS("*import*"), _rootNS("*root*") {}
+        inline Unit(const Unit& src) : _filename(src._filename), _importNS("*import*"), _rootNS("*root*") {}
+
+    public:
+        /// \brief Return the filename
+        /// \return The filename
+        inline const std::string& filename() const {return _filename;}
 
     public:
         /// \brief Return the import statement list
@@ -403,6 +446,10 @@ namespace Ast {
         /// \return A reference to the newly added node
         template<typename T>
         inline T& addNode(T* node) {_nodeList.push_back(node); return ref(node);}
+
+    private:
+        /// \brief Unit Filename
+        const std::string& _filename;
 
     private:
         /// \brief This NS contains all imported typespec's.

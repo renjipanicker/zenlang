@@ -25,7 +25,7 @@ void Compiler::compile() {
     for(Project::PathList::const_iterator it = _project.sourceList().begin(); it != _project.sourceList().end(); ++it) {
         const std::string& filename = *it;
         trace("compiling %s\n", filename.c_str());
-        Ast::Unit unit(Ast::Token(0, 0, filename));
+        Ast::Unit unit(filename);
         import(unit, "core/core.ipp", 0);
         if(!parseFile(unit, filename, 0))
             throw Exception("Cannot open source file '%s'\n", filename.c_str());

@@ -92,6 +92,32 @@ struct OutputFile {
     FILE*& _fp;
 };
 
+struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
+    void visit(const Ast::TypeDef& node) {
+    }
+
+    void visit(const Ast::EnumDef& node) {
+    }
+
+    void visit(const Ast::StructDef& node) {
+    }
+
+    void visit(const Ast::RoutineDef& node) {
+    }
+
+    void visit(const Ast::FunctionDef& node) {
+    }
+
+    void visit(const Ast::EventDef& node) {
+    }
+
+    void visit(const Ast::Namespace& node) {
+    }
+
+    void visit(const Ast::Root& node) {
+    }
+};
+
 struct Generator::Impl {
     inline Impl(const Project& project, const Ast::Unit& unit) : _project(project), _unit(unit), _fpHdr(0), _fpSrc(0), _fpImp(0) {}
     inline void generateTypeSpec(const Ast::TypeSpec* typeSpec);
@@ -304,14 +330,12 @@ inline void Generator::Impl::generateImportStatement() {
 
 inline void Generator::Impl::run() {
     Indent::init();
-    std::string basename = getBaseName(_unit.name().string());
+    std::string basename = getBaseName(_unit.filename());
     OutputFile ofImp(_fpImp, basename + "ipp");
     OutputFile ofHdr(_fpHdr, basename + "hpp");
     OutputFile ofSrc(_fpSrc, basename + "cpp");
 
     fprintf(_fpHdr, "#pragma once\n\n");
-    fprintf(_fpHdr, "#include \"base/function.hpp\"\n");
-
     for(Project::PathList::const_iterator it = _project.sourceList().begin(); it != _project.sourceList().end(); ++it) {
         const std::string& filename = *it;
         fprintf(_fpSrc, "#include \"%s\"\n", filename.c_str());
@@ -320,7 +344,6 @@ inline void Generator::Impl::run() {
     fprintf(_fpSrc, "#include \"%shpp\"\n", basename.c_str());
 
     generateImportStatement();
-
     enterNamespace();
     generateGlobalStatementList();
     leaveNamespace();

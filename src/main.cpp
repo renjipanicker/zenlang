@@ -12,8 +12,7 @@ int main(int argc, char* argv[]) {
     project.addInclude(".");
     project.addInclude("../../zenlang/lib");
     project.addIncludeFile("base/pch.hpp");
-    project.addIncludeFile("base/common.hpp");
-    project.addIncludeFile("base/exception.hpp");
+    project.addIncludeFile("base/zenlang.hpp");
     project.addSource(argv[1]);
 
     Compiler compiler(project);
