@@ -58,29 +58,36 @@ namespace Ast {
     public:
         struct Visitor;
     private:
-        typedef std::map<std::string, TypeSpec*> ChildTypeSpecList;
+        typedef std::list<TypeSpec*> ChildTypeSpecList;
+        typedef std::map<std::string, TypeSpec*> ChildTypeSpecMap;
     public:
         inline TypeSpec(const Token& name) : _accessType(AccessType::Parent), _name(name) {}
     public:
         inline TypeSpec& accessType(const AccessType::T& val) {_accessType = val; return ref(this);}
         inline const Token& name() const {return _name;}
         inline const AccessType::T& accessType() const {return _accessType;}
+        inline const ChildTypeSpecList& childTypeSpecList() const {return _childTypeSpecList;}
     public:
-        inline void addChild(TypeSpec& typeSpec) {_childTypeSpecList[typeSpec.name().text()] = ptr(typeSpec);}
+        inline void addChild(TypeSpec& typeSpec) {
+            _childTypeSpecList.push_back(ptr(typeSpec));
+            _childTypeSpecMap[typeSpec.name().text()] = ptr(typeSpec);
+        }
+
         inline const TypeSpec* hasChild(const std::string& name) const {
-            ChildTypeSpecList::const_iterator it = _childTypeSpecList.find(name);
-            if(it == _childTypeSpecList.end())
+            ChildTypeSpecMap::const_iterator it = _childTypeSpecMap.find(name);
+            if(it == _childTypeSpecMap.end())
                 return 0;
             return it->second;
         }
 
     public:
-        virtual void visit(Visitor& visitor) = 0;
+        virtual void visit(Visitor& visitor) const = 0;
     private:
         AccessType::T _accessType;
         const Token _name;
     private:
         ChildTypeSpecList _childTypeSpecList;
+        ChildTypeSpecMap _childTypeSpecMap;
     };
 
     class QualifiedTypeSpec : public Node {
@@ -142,7 +149,7 @@ namespace Ast {
     public:
         inline TypeDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType) {}
     private:
-        virtual void visit(Visitor& visitor);
+        virtual void visit(Visitor& visitor) const;
     };
 
     class EnumMemberDef : public Node {
@@ -169,7 +176,7 @@ namespace Ast {
         inline EnumDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const EnumMemberDefList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
         inline const EnumMemberDefList::List& list() const {return _list.list();}
     private:
-        virtual void visit(Visitor& visitor);
+        virtual void visit(Visitor& visitor) const;
     private:
         const EnumMemberDefList& _list;
     };
@@ -179,7 +186,7 @@ namespace Ast {
         inline StructDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::VariableDefList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
         inline const Ast::VariableDefList::List& list() const {return _list.list();}
     private:
-        virtual void visit(Visitor& visitor);
+        virtual void visit(Visitor& visitor) const;
     private:
         const Ast::VariableDefList& _list;
     };
@@ -190,7 +197,7 @@ namespace Ast {
         inline const Ast::QualifiedTypeSpec& outType() const {return _outType;}
         inline const Ast::VariableDefList::List& in()  const {return _in.list();}
     private:
-        virtual void visit(Visitor& visitor);
+        virtual void visit(Visitor& visitor) const;
     private:
         const Ast::QualifiedTypeSpec& _outType;
         const Ast::VariableDefList& _in;
@@ -202,7 +209,7 @@ namespace Ast {
         inline const Ast::VariableDefList::List& out() const {return _out.list();}
         inline const Ast::VariableDefList::List& in()  const {return _in.list();}
     private:
-        virtual void visit(Visitor& visitor);
+        virtual void visit(Visitor& visitor) const;
     private:
         const Ast::VariableDefList& _out;
         const Ast::VariableDefList& _in;
@@ -214,7 +221,7 @@ namespace Ast {
         inline const Ast::VariableDef& in()  const {return _in;}
         inline const Ast::FunctionDef& functionDef() const {return _functionDef;}
     private:
-        virtual void visit(Visitor& visitor);
+        virtual void visit(Visitor& visitor) const;
     private:
         const Ast::VariableDef& _in;
         const FunctionDef& _functionDef;
@@ -224,17 +231,24 @@ namespace Ast {
     public:
         inline Namespace(const TypeSpec& parent, const Token& name) : ChildTypeSpec(parent, name) {}
     private:
-        virtual void visit(Visitor& visitor);
+        virtual void visit(Visitor& visitor) const;
     };
 
     class Root : public RootTypeSpec {
     public:
         inline Root(const std::string& name) : RootTypeSpec(Token(0, 0, name)) {}
     private:
-        virtual void visit(Visitor& visitor);
+        virtual void visit(Visitor& visitor) const;
     };
 
     struct TypeSpec::Visitor {
+        inline void visitChildren(const TypeSpec& typeSpec) {
+            for(TypeSpec::ChildTypeSpecList::const_iterator it = typeSpec.childTypeSpecList().begin(); it != typeSpec.childTypeSpecList().end(); ++it) {
+                const TypeSpec& childTypeSpec = ref(*it);
+                childTypeSpec.visit(ref(this));
+            }
+        }
+
         virtual void visit(const TypeDef& node) = 0;
         virtual void visit(const EnumDef& node) = 0;
         virtual void visit(const StructDef& node) = 0;
@@ -245,14 +259,14 @@ namespace Ast {
         virtual void visit(const Root& node) = 0;
     };
 
-    inline void TypeDef::visit(Visitor& visitor) {visitor.visit(ref(this));}
-    inline void EnumDef::visit(Visitor& visitor) {visitor.visit(ref(this));}
-    inline void StructDef::visit(Visitor& visitor) {visitor.visit(ref(this));}
-    inline void RoutineDef::visit(Visitor& visitor) {visitor.visit(ref(this));}
-    inline void FunctionDef::visit(Visitor& visitor) {visitor.visit(ref(this));}
-    inline void EventDef::visit(Visitor& visitor) {visitor.visit(ref(this));}
-    inline void Namespace::visit(Visitor& visitor) {visitor.visit(ref(this));}
-    inline void Root::visit(Visitor& visitor) {visitor.visit(ref(this));}
+    inline void TypeDef::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void EnumDef::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void StructDef::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void RoutineDef::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void FunctionDef::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void EventDef::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void Namespace::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void Root::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
@@ -414,6 +428,7 @@ namespace Ast {
         /// \brief Return the root namespace
         /// \return The root namespace
         inline Root& rootNS() {return _rootNS;}
+        inline const Root& rootNS() const {return _rootNS;}
 
     public:
         /// \brief Return the import namespace
