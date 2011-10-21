@@ -71,15 +71,21 @@ Ast::RoutineDef& Context::addRoutineDefSpec(const Ast::QualifiedTypeSpec& outTyp
     return routineDef;
 }
 
-Ast::FunctionDef& Context::addFunctionDefSpec(const Ast::VariableDefList& out, const Ast::Token& name, const Ast::VariableDefList& in, const Ast::DefinitionType::T& defType) {
-    Ast::FunctionDef& functionDef = _unit.addNode(new Ast::FunctionDef(currentTypeSpec(), out, name, in, defType));
+Ast::FunctionSig& Context::addFunctionSig(const Ast::VariableDefList& out, const Ast::Token& name, const Ast::VariableDefList& in) {
+    Ast::FunctionSig& functionSig = _unit.addNode(new Ast::FunctionSig(out, name, in));
+    return functionSig;
+}
+
+Ast::FunctionDef& Context::addFunctionDefSpec(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
+    const Ast::Token& name = functionSig.name();
+    Ast::FunctionDef& functionDef = _unit.addNode(new Ast::FunctionDef(currentTypeSpec(), name, defType, functionSig));
     currentTypeSpec().addChild(functionDef);
     return functionDef;
 }
 
-Ast::EventDef & Context::addEventDefSpec(const Ast::VariableDef& in, const Ast::FunctionDef& functionDef, const Ast::DefinitionType::T& defType) {
-    const Ast::Token& name = functionDef.name();
-    Ast::EventDef& eventDef = _unit.addNode(new Ast::EventDef(currentTypeSpec(), name, in, functionDef, defType));
+Ast::EventDef & Context::addEventDefSpec(const Ast::VariableDef& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
+    const Ast::Token& name = functionSig.name();
+    Ast::EventDef& eventDef = _unit.addNode(new Ast::EventDef(currentTypeSpec(), name, in, functionSig, defType));
     currentTypeSpec().addChild(eventDef);
     return eventDef;
 }
@@ -162,6 +168,11 @@ const Ast::TypeSpec& Context::getChildTypeSpec(const Ast::TypeSpec &parent, cons
         throw Exception("Unknown child type '%s'\n", name.text());
     }
     return ref(typeSpec);
+}
+
+Ast::ExprList& Context::addExprList() {
+    Ast::ExprList& exprList = _unit.addNode(new Ast::ExprList());
+    return exprList;
 }
 
 inline const Ast::TypeSpec& coerce(const Ast::Expr& lhs, const Ast::Expr& rhs) {

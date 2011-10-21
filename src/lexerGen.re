@@ -181,7 +181,7 @@ re2c:condenumprefix          = EState;
 <Normal>   "native"   := _parser.feed(token(s, ZENTOK_NATIVE)); continue;
 <Normal>   "const"    := _parser.feed(token(s, ZENTOK_CONST)); continue;
 
-<Normal>   "switch"   := _parser.feed(token(s, ZENTOK_STRUCT)); continue;
+<Normal>   "return"   := _parser.feed(token(s, ZENTOK_RETURN)); continue;
 
 <Normal>   "@" [a-zA-Z][a-zA-Z0-9_]* := _parser.feed(token(s, ZENTOK_KEY)); continue;
 <Normal>   [a-zA-Z][a-zA-Z0-9_]* := _parser.feed(token(s, ZENTOK_ID)); continue;

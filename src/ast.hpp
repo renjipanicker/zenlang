@@ -203,28 +203,38 @@ namespace Ast {
         const Ast::VariableDefList& _in;
     };
 
+    class FunctionSig : public Node {
+    public:
+        inline FunctionSig(const Ast::VariableDefList& out, const Ast::Token& name, const Ast::VariableDefList& in) : _out(out), _name(name), _in(in) {}
+        inline const Ast::VariableDefList::List& out() const {return _out.list();}
+        inline const Token& name() const {return _name;}
+        inline const Ast::VariableDefList::List& in()  const {return _in.list();}
+    private:
+        const Ast::VariableDefList& _out;
+        const Token _name;
+        const Ast::VariableDefList& _in;
+    };
+
     class FunctionDef : public UserDefinedTypeSpec {
     public:
-        inline FunctionDef(const TypeSpec& parent, const Ast::VariableDefList& out, const Ast::Token& name, const Ast::VariableDefList& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _out(out), _in(in) {}
-        inline const Ast::VariableDefList::List& out() const {return _out.list();}
-        inline const Ast::VariableDefList::List& in()  const {return _in.list();}
+        inline FunctionDef(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig) : UserDefinedTypeSpec(parent, name, defType), _sig(sig) {}
+        inline const Ast::FunctionSig& sig() const {return _sig;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Ast::VariableDefList& _out;
-        const Ast::VariableDefList& _in;
+        const Ast::FunctionSig& _sig;
     };
 
     class EventDef : public UserDefinedTypeSpec {
     public:
-        inline EventDef(const TypeSpec& parent, const Ast::Token& name, const Ast::VariableDef& in, const FunctionDef& functionDef, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _in(in), _functionDef(functionDef) {}
+        inline EventDef(const TypeSpec& parent, const Ast::Token& name, const Ast::VariableDef& in, const FunctionSig& functionSig, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _in(in), _functionSig(functionSig) {}
         inline const Ast::VariableDef& in()  const {return _in;}
-        inline const Ast::FunctionDef& functionDef() const {return _functionDef;}
+        inline const Ast::FunctionSig& functionSig() const {return _functionSig;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const Ast::VariableDef& _in;
-        const FunctionDef& _functionDef;
+        const FunctionSig& _functionSig;
     };
 
     class Namespace : public ChildTypeSpec {
@@ -277,6 +287,17 @@ namespace Ast {
         inline const TypeSpec& typeSpec() const {return _typeSpec;}
     private:
         const TypeSpec& _typeSpec;
+    };
+
+    class ExprList : public Node {
+    public:
+        typedef std::list<const Expr*> List;
+    public:
+        inline ExprList() {}
+        inline ExprList& addExpr(const Expr& expr) {_list.push_back(ptr(expr)); return ref(this);}
+        inline const List& list() const {return _list;}
+    private:
+        List _list;
     };
 
     class TernaryOpExpr : public Expr {

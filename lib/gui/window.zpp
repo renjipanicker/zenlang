@@ -24,6 +24,7 @@ public routine Position getWindowPosition(const Instance& window) native;
 
 public function ()Test(const Instance& window) {
     1 + 2 * 3;
+    return (1);
 }
 
 

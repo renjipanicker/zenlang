@@ -101,24 +101,11 @@ global_statement_list ::= global_statement_list global_statement.
 global_statement_list ::= .
 
 //-------------------------------------------------
-global_statement ::= statement(S). {ref(pctx).addGlobalStatement(ref(S));}
+global_statement ::= global_typespec_statement(S). {ref(pctx).addGlobalStatement(ref(S));}
 
 //-------------------------------------------------
-%type statement {Ast::Statement*}
-statement(R) ::= typespec_statement(S). {R = S;}
-statement(R) ::= expr(E) SEMI. {R = ptr(ref(pctx).addExprStatement(ref(E)));}
-statement(R) ::= compound_statement(S). {R;S;}
-
-%type compound_statement {Ast::CompoundStatement*}
-compound_statement ::= LCURLY statement_list RCURLY.
-
-%type statement_list {Ast::CompoundStatement*}
-statement_list(L) ::= statement_list(R) statement(S). {L = R; ref(L).addStatement(ref(S));}
-statement_list(L) ::= . {L = ptr(ref(pctx).addCompoundStatement());}
-
-//-------------------------------------------------
-%type typespec_statement {Ast::Statement*}
-typespec_statement(S) ::= access_type(A) typespec_def(T). {ref(T).accessType(A); S = ptr(ref(pctx).addUserDefinedTypeSpecStatement(ref(T)));}
+%type global_typespec_statement {Ast::Statement*}
+global_typespec_statement(S) ::= access_type(A) typespec_def(T). {ref(T).accessType(A); S = ptr(ref(pctx).addUserDefinedTypeSpecStatement(ref(T)));}
 
 //-------------------------------------------------
 // access specifiers
@@ -173,16 +160,16 @@ struct_def(T) ::= STRUCT ID(N) LCURLY variabledef_list_semi(D) RCURLY SEMI. {T =
 struct_def(T) ::= STRUCT ID(N) LCURLY                          RCURLY SEMI. {T = ptr(ref(pctx).addStructDefSpecEmpty(N, Ast::DefinitionType::Direct));}
 
 //-------------------------------------------------
-// function declarations
-%type function_def {Ast::FunctionDef*}
-function_def(L) ::= function_sig(R) SEMI. {L = R;}
-function_def(L) ::= function_sig(R) compound_statement(S). {L = R;S;}
-
-//-------------------------------------------------
 // routine declarations
 %type routine_def {Ast::RoutineDef*}
 routine_def(L) ::= ROUTINE qtyperef(O) ID(N) params_list(I) NATIVE SEMI. {L = ptr(ref(pctx).addRoutineDefSpec(ref(O), N, ref(I), Ast::DefinitionType::Native));}
 routine_def(L) ::= ROUTINE qtyperef(O) ID(N) params_list(I) compound_statement(S). {L = ptr(ref(pctx).addRoutineDefSpec(ref(O), N, ref(I), Ast::DefinitionType::Direct));S;}
+
+//-------------------------------------------------
+// function declarations
+%type function_def {Ast::FunctionDef*}
+function_def(L) ::= function_sig(R) definition_type(D) SEMI. {L = ptr(ref(pctx).addFunctionDefSpec(ref(R), D));}
+function_def(L) ::= function_sig(R) definition_type(D) compound_statement(S). {L = ptr(ref(pctx).addFunctionDefSpec(ref(R), D));S;}
 
 //-------------------------------------------------
 // event declarations
@@ -191,8 +178,8 @@ event_def(L) ::= EVENT LBRACKET variable_def(I) RBRACKET LINK function_sig(F) SE
 
 //-------------------------------------------------
 // function signature.
-%type function_sig {Ast::FunctionDef*}
-function_sig(T) ::= FUNCTION params_list(O) ID(N) params_list(I) definition_type(D). {T = ptr(ref(pctx).addFunctionDefSpec(ref(O), N, ref(I), D));}
+%type function_sig {Ast::FunctionSig*}
+function_sig(T) ::= FUNCTION params_list(O) ID(N) params_list(I). {T = ptr(ref(pctx).addFunctionSig(ref(O), N, ref(I)));}
 
 //-------------------------------------------------
 // parameter lists
@@ -229,6 +216,40 @@ qtyperef(L) ::= CONST typeref(T) BITWISEAND.    {L = ptr(ref(pctx).addQualifiedT
 %type typeref {const Ast::TypeSpec*}
 typeref(R) ::= typeref(T) SCOPE ID(N). {R = ptr(ref(pctx).getChildTypeSpec(ref(T), N));}
 typeref(R) ::= ID(N).                  {R = ptr(ref(pctx).getRootTypeSpec(N));}
+
+//-------------------------------------------------
+// statements
+%type local_statement {Ast::Statement*}
+local_statement(R) ::= local_typespec_statement(S). {R = S;}
+local_statement(R) ::= expr(E) SEMI. {R = ptr(ref(pctx).addExprStatement(ref(E)));}
+local_statement(R) ::= compound_statement(S). {R;S;}
+local_statement(R) ::= RETURN exprs_list(S). {R;S;}
+
+//-------------------------------------------------
+%type local_typespec_statement {Ast::Statement*}
+local_typespec_statement(S) ::= typespec_def(T). {S = ptr(ref(pctx).addUserDefinedTypeSpecStatement(ref(T)));}
+
+%type compound_statement {Ast::CompoundStatement*}
+compound_statement ::= enter_compound_statement statement_list leave_compound_statement.
+
+enter_compound_statement ::= LCURLY.
+leave_compound_statement ::= RCURLY.
+
+%type statement_list {Ast::CompoundStatement*}
+statement_list(L) ::= statement_list(R) local_statement(S). {L = R; ref(L).addStatement(ref(S));}
+statement_list(L) ::= . {L = ptr(ref(pctx).addCompoundStatement());}
+
+//-------------------------------------------------
+// expression list in brackets
+%type exprs_list {Ast::ExprList*}
+exprs_list(R) ::= LBRACKET expr_list(L) RBRACKET. {R = L;}
+
+//-------------------------------------------------
+// comma-separated list of expressions
+%type expr_list {Ast::ExprList*}
+expr_list(R) ::= expr_list(L) COMMA expr(E). {R = L;                            ref(R).addExpr(ref(E));}
+expr_list(R) ::=                    expr(E). {R = ptr(ref(pctx).addExprList()); ref(R).addExpr(ref(E));}
+expr_list(R) ::= .                           {R = ptr(ref(pctx).addExprList());}
 
 //-------------------------------------------------
 // expressions
@@ -291,13 +312,18 @@ expr(E) ::= expr(L) INC(O). {E = ptr(ref(pctx).addPostfixOpExpr(O, ref(L)));}
 expr(E) ::= expr(L) DEC(O). {E = ptr(ref(pctx).addPostfixOpExpr(O, ref(L)));}
 
 //-------------------------------------------------
-// enum member expressions
-expr(L) ::= typeref DOT ID(R). {L;R;}
+// variable member expressions
+expr(L) ::= expr(R) DOT expr(M). {L;R;M;}
+
+//-------------------------------------------------
+// type member expressions
+expr(L) ::= typeref(R) DOT ID(M). {L;R;M;}
 
 //-------------------------------------------------
 // constant expressions
 expr(L) ::= constant_expr(R). {L = R;}
 
+//-------------------------------------------------
 %type constant_expr {const Ast::ConstantExpr*}
 constant_expr(E) ::= FLOAT_CONST(A).   {E = ptr(ref(pctx).addConstantExpr("float", A));}
 constant_expr(E) ::= DOUBLE_CONST(A).  {E = ptr(ref(pctx).addConstantExpr("double", A));}

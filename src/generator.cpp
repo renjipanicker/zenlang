@@ -97,16 +97,13 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         if(node.accessType() == Ast::AccessType::Public) {
             return _fpHdr;
         }
-        if(node.accessType() == Ast::AccessType::Private) {
-            return _fpSrc;
-        }
         if(node.accessType() == Ast::AccessType::Parent) {
             const Ast::ChildTypeSpec* childTypeSpec = dynamic_cast<const Ast::ChildTypeSpec*>(ptr(node));
             if(childTypeSpec) {
                 return fpDecl(ref(childTypeSpec).parent());
             }
         }
-        throw Exception("Invalid access state: %d for %s\n", node.accessType(), node.name().text());
+        return _fpSrc;
     }
 
     void visit(const Ast::TypeDef& node) {
@@ -189,7 +186,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     void visit(const Ast::FunctionDef& node) {
         fprintf(fpDecl(node), "%sclass %s : public Function<%s> {\n", Indent::get(), node.name().text(), node.name().text());
         fprintf(fpDecl(node), "%s    static void impl(%s& This);\n", Indent::get(), node.name().text());
-        for(Ast::VariableDefList::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
+        for(Ast::VariableDefList::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
             INDENT;
             const Ast::VariableDef& vdef = ref(*it);
             fprintf(fpDecl(node), "%sconst %s _%s;\n", Indent::get(), getName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
@@ -197,13 +194,13 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
         fprintf(fpDecl(node), "%s    inline %s(", Indent::get(), node.name().text());
         std::string sep = "";
-        for(Ast::VariableDefList::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
+        for(Ast::VariableDefList::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
             const Ast::VariableDef& vdef = ref(*it);
             fprintf(fpDecl(node), "%sconst %s& %s", sep.c_str(), getName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
             sep = ", ";
         }
         fprintf(fpDecl(node), ") : Function(&impl)");
-        for(Ast::VariableDefList::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
+        for(Ast::VariableDefList::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
             const Ast::VariableDef& vdef = ref(*it);
             fprintf(fpDecl(node), ", _%s(%s)", vdef.name().text(), vdef.name().text());
         }
@@ -274,8 +271,9 @@ private:
 };
 
 inline void Generator::Impl::generateGlobalStatement(const Ast::Statement* statement) {
+    TypeDeclarationGenerator gen(_fpHdr, _fpSrc, _fpImp);
     for(const Ast::UserDefinedTypeSpecStatement* s = dynamic_cast<const Ast::UserDefinedTypeSpecStatement*>(statement); s != 0; ) {
-        return ref(s).typeSpec().visit(TypeDeclarationGenerator(_fpHdr, _fpSrc, _fpImp));
+        return ref(s).typeSpec().visit(gen);
     }
     throw Exception("Unknown statement\n");
 }
@@ -336,7 +334,7 @@ inline void Generator::Impl::run() {
     OutputFile ofSrc(_fpSrc, basename + "cpp");
 
     fprintf(_fpHdr, "#pragma once\n\n");
-    for(Project::PathList::const_iterator it = _project.sourceList().begin(); it != _project.sourceList().end(); ++it) {
+    for(Project::PathList::const_iterator it = _project.includeFileList().begin(); it != _project.includeFileList().end(); ++it) {
         const std::string& filename = *it;
         fprintf(_fpSrc, "#include \"%s\"\n", filename.c_str());
     }
@@ -345,6 +343,8 @@ inline void Generator::Impl::run() {
 
     generateImportStatement();
     TypeDeclarationGenerator(_fpHdr, _fpSrc, _fpImp).visitChildren(_unit.rootNS());
+    fprintf(_fpHdr, "\n");
+    fprintf(_fpSrc, "\n");
 }
 
 //////////////////////////////////////////////

@@ -18,6 +18,8 @@ public:
     Ast::VariableDefList& addVariableDefList();
 
 public:
+    Ast::FunctionSig& addFunctionSig(const Ast::VariableDefList& out, const Ast::Token& name, const Ast::VariableDefList& in);
+public:
     Ast::TypeDef& addTypeDefSpec(const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::EnumDef& addEnumDefSpec(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::EnumMemberDefList& list);
     Ast::EnumDef& addEnumDefSpecEmpty(const Ast::Token& name, const Ast::DefinitionType::T& defType);
@@ -26,10 +28,12 @@ public:
     Ast::StructDef& addStructDefSpec(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::VariableDefList& list);
     Ast::StructDef& addStructDefSpecEmpty(const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::RoutineDef& addRoutineDefSpec(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::VariableDefList& in, const Ast::DefinitionType::T& defType);
-    Ast::FunctionDef& addFunctionDefSpec(const Ast::VariableDefList& out, const Ast::Token& name, const Ast::VariableDefList& in, const Ast::DefinitionType::T& defType);
-    Ast::EventDef& addEventDefSpec(const Ast::VariableDef& in, const Ast::FunctionDef& functionDef, const Ast::DefinitionType::T& defType);
+    Ast::FunctionDef& addFunctionDefSpec(const Ast::FunctionSig& sig, const Ast::DefinitionType::T& defType);
+    Ast::EventDef& addEventDefSpec(const Ast::VariableDef& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
     Ast::Namespace& addNamespace(const Ast::Token& name);
 
+public:
+    Ast::ExprList& addExprList();
 public:
     Ast::TernaryOpExpr& addTernaryOpExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2);
     Ast::BinaryOpExpr& addBinaryOpExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
