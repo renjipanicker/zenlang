@@ -10,57 +10,57 @@ struct Scanner {
     char* eof;
     char buffer[BSIZE];
     char yych;
-    enum ScanContition  cond;
+    enum ScanContition cond;
     int state;
 
+    char* sol; // start of line
     int row;
-    int col;
     char* text;
 };
 
-static size_t fill(Scanner *s, size_t len)
-{
+inline void newLine(Scanner *s) {
+    s->row++;
+    s->sol = s->cur;
+}
+
+static size_t fill(Scanner *s, size_t len) {
     size_t got = ~0, cnt;
 
-    if ((!(s->eof)) && ((s->lim - s->tok) < (int)len))
-    {
-        if (s->tok > s->buffer)
-        {
+    if ((!(s->eof)) && ((s->lim - s->tok) < (int)len)) {
+        if (s->tok > s->buffer) {
             cnt = s->tok - s->buffer;
             memcpy(s->buffer, s->tok, s->lim - s->tok);
             s->tok -= cnt;
             s->cur -= cnt;
             s->lim -= cnt;
+            s->sol -= cnt;
             if(s->text > 0) {
                 assert(s->text >= (s->buffer + cnt));
                 s->text -= cnt;
             }
             cnt = &s->buffer[BSIZE] - s->lim;
-        }
-        else
-        {
+        } else {
             cnt = BSIZE;
         }
-        if ((got = fread(s->lim, 1, cnt, s->fp)) != cnt)
-        {
+
+        if ((got = fread(s->lim, 1, cnt, s->fp)) != cnt) {
             s->eof = &s->lim[got];
         }
         s->lim += got;
     }
-    if (s->eof && s->cur + len > s->eof)
-    {
+    if (s->eof && s->cur + len > s->eof) {
         return ~0; /* not enough input data */
     }
     return got;
 }
 
-size_t Lexer::Impl::init(Scanner *s)
-{
-    s->cur = s->tok = s->lim = s->buffer;
+size_t Lexer::Impl::init(Scanner *s) {
+    s->sol = s->cur = s->tok = s->lim = s->buffer;
     s->text = 0;
     s->eof = 0;
     s->cond = EStateNormal;
     s->state = -1;
+    s->row = 1;
 
     return fill(s, 0);
 }
@@ -69,14 +69,14 @@ static inline TokenData token(Scanner* s, const int& id) {
     if(s->text > 0) {
         char* t = s->text;
         s->text = 0;
-        return TokenData::createT(id, s->row, s->col, t, s->cur - 1);
+        return TokenData::createT(id, s->row, s->cur-s->sol, t, s->cur - 1);
     }
-    return TokenData::createT(id, s->row, s->col, s->tok, s->cur);
+    return TokenData::createT(id, s->row, s->cur-s->sol, s->tok, s->cur);
 }
 
-void Lexer::Impl::scan(Scanner *s)
-{
+void Lexer::Impl::scan(Scanner *s) {
     s->tok = s->cur;
+
 /*!re2c
 re2c:define:YYGETSTATE       = "s->state";
 re2c:define:YYGETSTATE:naked = 1;
@@ -87,8 +87,7 @@ re2c:cond:goto               = "continue;";
 
 /*!getstate:re2c */
 
-    for(;;)
-    {
+    for(;;) {
         s->tok = s->cur;
 /*!re2c
 
@@ -212,11 +211,14 @@ re2c:condenumprefix          = EState;
 
 <Normal>   "//" :=> Skiptoeol
 <Skiptoeol>   "\\" "\r"? "\n" :=> Skiptoeol
-<Skiptoeol>   "\r" "\n" => Normal := continue;
-<Skiptoeol>   "\n" => Normal := continue;
+<Skiptoeol>   "\r" "\n" => Normal := newLine(s); continue;
+<Skiptoeol>   "\n" => Normal := newLine(s); continue;
 <Skiptoeol>   [^] :=> Skiptoeol
 
-<Normal>   ((" ")|("\r"? "\n")) := continue;
+<Normal>   "\r" "\n" := newLine(s); continue;
+<Normal>   "\n" := newLine(s); continue;
+<Normal>   " " := continue;
+
 <Normal>   "\000" := _parser.feed(token(s, ZENTOK_EOF)); continue;
 <Normal>   [^] := _parser.feed(token(s, ZENTOK_ERR)); continue;
 */

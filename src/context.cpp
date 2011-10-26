@@ -108,6 +108,17 @@ Ast::ExprStatement & Context::addExprStatement(const Ast::Expr &expr) {
     return exprStatement;
 }
 
+Ast::ReturnStatement& Context::addReturnStatement(const Ast::ExprList& exprList) {
+    Ast::ReturnStatement& returnStatement = _unit.addNode(new Ast::ReturnStatement(exprList));
+    return returnStatement;
+}
+
+Ast::ReturnStatement& Context::addReturnStatement(const Ast::Expr& expr) {
+    Ast::ExprList& exprList = addExprList();
+    exprList.addExpr(expr);
+    return addReturnStatement(exprList);
+}
+
 Ast::CompoundStatement& Context::addCompoundStatement() {
     Ast::CompoundStatement& statement = _unit.addNode(new Ast::CompoundStatement());
     return statement;
@@ -221,4 +232,9 @@ Ast::ConstantExpr& Context::addConstantExpr(const std::string& type, const Ast::
     const Ast::TypeSpec& typeSpec = getRootTypeSpec(token);
     Ast::ConstantExpr& expr = _unit.addNode(new Ast::ConstantExpr(typeSpec, value));
     return expr;
+}
+
+Ast::FunctionImpl& Context::addFunctionImpl(const Ast::FunctionDef& functionDef, const Ast::CompoundStatement& body) {
+    Ast::FunctionImpl& functionImpl = _unit.addNode(new Ast::FunctionImpl(functionDef, body));
+    return functionImpl;
 }

@@ -46,8 +46,13 @@ public:
 public:
     Ast::UserDefinedTypeSpecStatement& addUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec);
     Ast::ExprStatement& addExprStatement(const Ast::Expr& expr);
+    Ast::ReturnStatement& addReturnStatement(const Ast::Expr& expr);
+    Ast::ReturnStatement& addReturnStatement(const Ast::ExprList& exprList);
     Ast::CompoundStatement& addCompoundStatement();
     Ast::ImportStatement& addImportStatement();
+
+public:
+    Ast::FunctionImpl& addFunctionImpl(const Ast::FunctionDef& functionDef, const Ast::CompoundStatement& body);
 
 public:
     void importHeader(const Ast::ImportStatement& statement);

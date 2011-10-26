@@ -169,7 +169,7 @@ routine_def(L) ::= ROUTINE qtyperef(O) ID(N) params_list(I) compound_statement(S
 // function declarations
 %type function_def {Ast::FunctionDef*}
 function_def(L) ::= function_sig(R) definition_type(D) SEMI. {L = ptr(ref(pctx).addFunctionDefSpec(ref(R), D));}
-function_def(L) ::= function_sig(R) definition_type(D) compound_statement(S). {L = ptr(ref(pctx).addFunctionDefSpec(ref(R), D));S;}
+function_def(L) ::= function_sig(R) definition_type(D) compound_statement(S). {L = ptr(ref(pctx).addFunctionDefSpec(ref(R), D)); ref(pctx).addFunctionImpl(ref(L), ref(S));}
 
 //-------------------------------------------------
 // event declarations
@@ -222,8 +222,9 @@ typeref(R) ::= ID(N).                  {R = ptr(ref(pctx).getRootTypeSpec(N));}
 %type local_statement {Ast::Statement*}
 local_statement(R) ::= local_typespec_statement(S). {R = S;}
 local_statement(R) ::= expr(E) SEMI. {R = ptr(ref(pctx).addExprStatement(ref(E)));}
-local_statement(R) ::= compound_statement(S). {R;S;}
-local_statement(R) ::= RETURN exprs_list(S). {R;S;}
+local_statement(R) ::= compound_statement(S). {R = S;}
+local_statement(R) ::= RETURN expr_list(S). {R = ptr(ref(pctx).addReturnStatement(ref(S)));}
+local_statement(R) ::= RETURN expr(S) SEMI. {R;S;}
 
 //-------------------------------------------------
 %type local_typespec_statement {Ast::Statement*}
@@ -241,15 +242,15 @@ statement_list(L) ::= . {L = ptr(ref(pctx).addCompoundStatement());}
 
 //-------------------------------------------------
 // expression list in brackets
-%type exprs_list {Ast::ExprList*}
-exprs_list(R) ::= LBRACKET expr_list(L) RBRACKET. {R = L;}
+%type expr_list {Ast::ExprList*}
+expr_list(R) ::= LBRACKET expr_list_comma(L) RBRACKET. {R = L;}
 
 //-------------------------------------------------
 // comma-separated list of expressions
-%type expr_list {Ast::ExprList*}
-expr_list(R) ::= expr_list(L) COMMA expr(E). {R = L;                            ref(R).addExpr(ref(E));}
-expr_list(R) ::=                    expr(E). {R = ptr(ref(pctx).addExprList()); ref(R).addExpr(ref(E));}
-expr_list(R) ::= .                           {R = ptr(ref(pctx).addExprList());}
+%type expr_list_comma {Ast::ExprList*}
+expr_list_comma(R) ::= expr_list_comma(L) COMMA expr(E). {R = L;                      ref(R).addExpr(ref(E));}
+expr_list_comma(R) ::=                    expr(E). {R = ptr(ref(pctx).addExprList()); ref(R).addExpr(ref(E));}
+expr_list_comma(R) ::= .                           {R = ptr(ref(pctx).addExprList());}
 
 //-------------------------------------------------
 // expressions

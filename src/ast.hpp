@@ -401,6 +401,14 @@ namespace Ast {
         const Expr& _expr;
     };
 
+    class ReturnStatement : public Statement {
+    public:
+        inline ReturnStatement(const ExprList& exprList) : _exprList(exprList) {}
+        inline const ExprList& exprList() const {return _exprList;}
+    private:
+        const ExprList& _exprList;
+    };
+
     class CompoundStatement : public Statement {
     public:
         typedef std::list<const Statement*> List;
@@ -410,6 +418,15 @@ namespace Ast {
         inline const List& list() const {return _list;}
     private:
         List _list;
+    };
+
+    //////////////////////////////////////////////////////////////////
+    class FunctionImpl : public Node {
+    public:
+        inline FunctionImpl(const FunctionDef& functionDef, const CompoundStatement& body) : _functionDef(functionDef), _body(body) {}
+    private:
+        const FunctionDef& _functionDef;
+        const CompoundStatement& _body;
     };
 
     //////////////////////////////////////////////////////////////////
