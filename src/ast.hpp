@@ -102,9 +102,9 @@ namespace Ast {
         const bool _isRef;
     };
 
-    class VariableDef : public Node {
+    class VariableDefn : public Node {
     public:
-        inline VariableDef(const QualifiedTypeSpec& qualifiedTypeSpec, const Token& name) : _qualifiedTypeSpec(qualifiedTypeSpec), _name(name) {}
+        inline VariableDefn(const QualifiedTypeSpec& qualifiedTypeSpec, const Token& name) : _qualifiedTypeSpec(qualifiedTypeSpec), _name(name) {}
         inline const QualifiedTypeSpec& qualifiedTypeSpec() const {return _qualifiedTypeSpec;}
         inline const Token& name() const {return _name;}
     private:
@@ -112,12 +112,12 @@ namespace Ast {
         const Token _name;
     };
 
-    class VariableDefList : public Node {
+    class Scope : public Node {
     public:
-        typedef std::list<const VariableDef*> List;
+        typedef std::list<const VariableDefn*> List;
     public:
-        inline VariableDefList() {}
-        inline VariableDefList& addVariableDef(const VariableDef& variableDef) {_list.push_back(ptr(variableDef)); return ref(this);}
+        inline Scope() {}
+        inline Scope& addVariableDef(const VariableDefn& variableDef) {_list.push_back(ptr(variableDef)); return ref(this);}
         inline const List& list() const {return _list;}
     private:
         List _list;
@@ -145,95 +145,130 @@ namespace Ast {
         const DefinitionType::T _defType;
     };
 
-    class TypeDef : public UserDefinedTypeSpec {
+    class TypedefDefn : public UserDefinedTypeSpec {
     public:
-        inline TypeDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType) {}
+        inline TypedefDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
-    class EnumMemberDef : public Node {
+    class EnumMemberDefn : public Node {
     public:
-        inline EnumMemberDef(const Token& name) : _name(name) {}
+        inline EnumMemberDefn(const Token& name) : _name(name) {}
         inline const Token& name() const {return _name;}
     private:
         const Token _name;
     };
 
-    class EnumMemberDefList : public Node {
+    class EnumMemberDefnList : public Node {
     public:
-        typedef std::list<const EnumMemberDef*> List;
+        typedef std::list<const EnumMemberDefn*> List;
     public:
-        inline EnumMemberDefList() {}
-        inline EnumMemberDefList& addEnumMemberDef(const EnumMemberDef& enumMemberDef) {_list.push_back(ptr(enumMemberDef)); return ref(this);}
+        inline EnumMemberDefnList() {}
+        inline EnumMemberDefnList& addEnumMemberDef(const EnumMemberDefn& enumMemberDef) {_list.push_back(ptr(enumMemberDef)); return ref(this);}
         inline const List& list() const {return _list;}
     private:
         List _list;
     };
 
-    class EnumDef : public UserDefinedTypeSpec {
+    class EnumDefn : public UserDefinedTypeSpec {
     public:
-        inline EnumDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const EnumMemberDefList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
-        inline const EnumMemberDefList::List& list() const {return _list.list();}
+        inline EnumDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const EnumMemberDefnList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
+        inline const EnumMemberDefnList::List& list() const {return _list.list();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const EnumMemberDefList& _list;
+        const EnumMemberDefnList& _list;
     };
 
-    class StructDef : public UserDefinedTypeSpec {
+    class StructDefn : public UserDefinedTypeSpec {
     public:
-        inline StructDef(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::VariableDefList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
-        inline const Ast::VariableDefList::List& list() const {return _list.list();}
+        inline StructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::Scope& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
+        inline const Ast::Scope::List& list() const {return _list.list();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Ast::VariableDefList& _list;
+        const Ast::Scope& _list;
     };
 
-    class RoutineDef : public UserDefinedTypeSpec {
+    class Routine : public UserDefinedTypeSpec {
+    protected:
+        inline Routine(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::Scope& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _outType(outType), _in(in) {}
     public:
-        inline RoutineDef(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::VariableDefList& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _outType(outType), _in(in) {}
         inline const Ast::QualifiedTypeSpec& outType() const {return _outType;}
-        inline const Ast::VariableDefList::List& in()  const {return _in.list();}
-    private:
-        virtual void visit(Visitor& visitor) const;
+        inline const Ast::Scope::List& in()  const {return _in.list();}
     private:
         const Ast::QualifiedTypeSpec& _outType;
-        const Ast::VariableDefList& _in;
+        const Ast::Scope& _in;
+    };
+
+    class RoutineDecl : public Routine {
+    public:
+        inline RoutineDecl(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::Scope& in, const DefinitionType::T& defType) : Routine(parent, outType, name, in, defType) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class CompoundStatement;
+    class RoutineDefn : public Routine {
+    public:
+        inline RoutineDefn(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::Scope& in, const DefinitionType::T& defType, const Ast::CompoundStatement& block)
+            : Routine(parent, outType, name, in, defType), _block(block) {}
+        inline const Ast::CompoundStatement& block() const {return _block;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+        const Ast::CompoundStatement& _block;
     };
 
     class FunctionSig : public Node {
     public:
-        inline FunctionSig(const Ast::VariableDefList& out, const Ast::Token& name, const Ast::VariableDefList& in) : _out(out), _name(name), _in(in) {}
-        inline const Ast::VariableDefList::List& out() const {return _out.list();}
+        inline FunctionSig(const Ast::Scope& out, const Ast::Token& name, const Ast::Scope& in) : _out(out), _name(name), _in(in) {}
+        inline const Ast::Scope::List& out() const {return _out.list();}
         inline const Token& name() const {return _name;}
-        inline const Ast::VariableDefList::List& in()  const {return _in.list();}
+        inline const Ast::Scope::List& in()  const {return _in.list();}
     private:
-        const Ast::VariableDefList& _out;
+        const Ast::Scope& _out;
         const Token _name;
-        const Ast::VariableDefList& _in;
+        const Ast::Scope& _in;
     };
 
-    class FunctionDef : public UserDefinedTypeSpec {
+    class Function : public UserDefinedTypeSpec {
     public:
-        inline FunctionDef(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig) : UserDefinedTypeSpec(parent, name, defType), _sig(sig) {}
+        inline Function(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig) : UserDefinedTypeSpec(parent, name, defType), _sig(sig) {}
         inline const Ast::FunctionSig& sig() const {return _sig;}
-    private:
-        virtual void visit(Visitor& visitor) const;
     private:
         const Ast::FunctionSig& _sig;
     };
 
-    class EventDef : public UserDefinedTypeSpec {
+    class FunctionDecl : public Function {
     public:
-        inline EventDef(const TypeSpec& parent, const Ast::Token& name, const Ast::VariableDef& in, const FunctionSig& functionSig, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _in(in), _functionSig(functionSig) {}
-        inline const Ast::VariableDef& in()  const {return _in;}
+        inline FunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig)
+            : Function(parent, name, defType, sig) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class FunctionDefn : public Function {
+    public:
+        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, const Ast::CompoundStatement& block)
+            : Function(parent, name, defType, sig), _block(block) {}
+        inline const Ast::CompoundStatement& block() const {return _block;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ast::CompoundStatement& _block;
+    };
+
+    class EventDecl : public UserDefinedTypeSpec {
+    public:
+        inline EventDecl(const TypeSpec& parent, const Ast::Token& name, const Ast::VariableDefn& in, const FunctionSig& functionSig, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _in(in), _functionSig(functionSig) {}
+    public:
+        inline const Ast::VariableDefn& in()  const {return _in;}
         inline const Ast::FunctionSig& functionSig() const {return _functionSig;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Ast::VariableDef& _in;
+        const Ast::VariableDefn& _in;
         const FunctionSig& _functionSig;
     };
 
@@ -252,39 +287,51 @@ namespace Ast {
     };
 
     struct TypeSpec::Visitor {
+        inline void visitNode(const TypeSpec& node) {
+            node.visit(ref(this));
+        }
+
         inline void visitChildren(const TypeSpec& typeSpec) {
             for(TypeSpec::ChildTypeSpecList::const_iterator it = typeSpec.childTypeSpecList().begin(); it != typeSpec.childTypeSpecList().end(); ++it) {
                 const TypeSpec& childTypeSpec = ref(*it);
-                childTypeSpec.visit(ref(this));
+                visitNode(childTypeSpec);
             }
         }
 
-        virtual void visit(const TypeDef& node) = 0;
-        virtual void visit(const EnumDef& node) = 0;
-        virtual void visit(const StructDef& node) = 0;
-        virtual void visit(const RoutineDef& node) = 0;
-        virtual void visit(const FunctionDef& node) = 0;
-        virtual void visit(const EventDef& node) = 0;
+        virtual void visit(const TypedefDefn& node) = 0;
+        virtual void visit(const EnumDefn& node) = 0;
+        virtual void visit(const StructDefn& node) = 0;
+        virtual void visit(const RoutineDecl& node) = 0;
+        virtual void visit(const RoutineDefn& node) = 0;
+        virtual void visit(const FunctionDecl& node) = 0;
+        virtual void visit(const FunctionDefn& node) = 0;
+        virtual void visit(const EventDecl& node) = 0;
         virtual void visit(const Namespace& node) = 0;
         virtual void visit(const Root& node) = 0;
     };
 
-    inline void TypeDef::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void EnumDef::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void StructDef::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void RoutineDef::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void FunctionDef::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void EventDef::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void TypedefDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void EnumDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void StructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void RoutineDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void RoutineDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void FunctionDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void FunctionDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void EventDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Namespace::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Root::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
     class Expr : public Node {
+    public:
+        struct Visitor;
     protected:
         inline Expr(const TypeSpec& typeSpec) : _typeSpec(typeSpec) {}
     public:
         inline const TypeSpec& typeSpec() const {return _typeSpec;}
+    public:
+        virtual void visit(Visitor& visitor) const = 0;
     private:
         const TypeSpec& _typeSpec;
     };
@@ -302,9 +349,18 @@ namespace Ast {
 
     class TernaryOpExpr : public Expr {
     public:
-        inline TernaryOpExpr(const TypeSpec& typeSpec, const Token& op, const Expr& lhs, const Expr& rhs1, const Expr& rhs2) : Expr(typeSpec), _op(op), _lhs(lhs), _rhs1(rhs1), _rhs2(rhs2) {}
+        inline TernaryOpExpr(const TypeSpec& typeSpec, const Token& op1, const Token& op2, const Expr& lhs, const Expr& rhs1, const Expr& rhs2)
+            : Expr(typeSpec), _op1(op1), _op2(op2), _lhs(lhs), _rhs1(rhs1), _rhs2(rhs2) {}
+        inline const Token& op1() const {return _op1;}
+        inline const Token& op2() const {return _op2;}
+        inline const Expr& lhs() const {return _lhs;}
+        inline const Expr& rhs1() const {return _rhs1;}
+        inline const Expr& rhs2() const {return _rhs2;}
     private:
-        const Token _op;
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Token _op1;
+        const Token _op2;
         const Expr& _lhs;
         const Expr& _rhs1;
         const Expr& _rhs2;
@@ -313,6 +369,11 @@ namespace Ast {
     class BinaryOpExpr : public Expr {
     public:
         inline BinaryOpExpr(const TypeSpec& typeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : Expr(typeSpec), _op(op), _lhs(lhs), _rhs(rhs) {}
+        inline const Token& op() const {return _op;}
+        inline const Expr& lhs() const {return _lhs;}
+        inline const Expr& rhs() const {return _rhs;}
+    private:
+        virtual void visit(Visitor& visitor) const;
     private:
         const Token _op;
         const Expr& _lhs;
@@ -322,6 +383,10 @@ namespace Ast {
     class PostfixOpExpr : public Expr {
     public:
         inline PostfixOpExpr(const TypeSpec& typeSpec, const Token& op, const Expr& lhs) : Expr(typeSpec), _op(op), _lhs(lhs) {}
+        inline const Token& op() const {return _op;}
+        inline const Expr& lhs() const {return _lhs;}
+    private:
+        virtual void visit(Visitor& visitor) const;
     private:
         const Token _op;
         const Expr& _lhs;
@@ -330,6 +395,10 @@ namespace Ast {
     class PrefixOpExpr : public Expr {
     public:
         inline PrefixOpExpr(const TypeSpec& typeSpec, const Token& op, const Expr& rhs) : Expr(typeSpec), _op(op), _rhs(rhs) {}
+        inline const Token& op() const {return _op;}
+        inline const Expr& rhs() const {return _rhs;}
+    private:
+        virtual void visit(Visitor& visitor) const;
     private:
         const Token _op;
         const Expr& _rhs;
@@ -337,32 +406,76 @@ namespace Ast {
 
     class StructMemberRefExpr : public Expr {
     public:
-        inline StructMemberRefExpr(const TypeSpec& typeSpec, const StructDef& structDef, const Token& name) : Expr(typeSpec), _structDef(structDef), _name(name) {}
+        inline StructMemberRefExpr(const TypeSpec& typeSpec, const StructDefn& structDef, const Token& name) : Expr(typeSpec), _structDef(structDef), _name(name) {}
+        inline const StructDefn& structDef() const {return _structDef;}
+        inline const Token& name() const {return _name;}
     private:
-        const StructDef& _structDef;
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const StructDefn& _structDef;
         const Token _name;
     };
 
     class EnumMemberRefExpr : public Expr {
     public:
-        inline EnumMemberRefExpr(const TypeSpec& typeSpec, const EnumDef& enumDef, const Token& name) : Expr(typeSpec), _enumDef(enumDef), _name(name) {}
+        inline EnumMemberRefExpr(const TypeSpec& typeSpec, const EnumDefn& enumDef, const Token& name) : Expr(typeSpec), _enumDef(enumDef), _name(name) {}
+        inline const EnumDefn& enumDef() const {return _enumDef;}
+        inline const Token& name() const {return _name;}
     private:
-        const EnumDef& _enumDef;
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const EnumDefn& _enumDef;
         const Token _name;
     };
 
     class ConstantExpr : public Expr {
     public:
         inline ConstantExpr(const TypeSpec& typeSpec, const Token& value) : Expr(typeSpec), _value(value) {}
+        inline const Token& value() const {return _value;}
+    private:
+        virtual void visit(Visitor& visitor) const;
     private:
         const Token _value;
     };
+
+    struct Expr::Visitor {
+        inline void visitNode(const Expr& node) {
+            node.visit(ref(this));
+        }
+
+        inline void visitList(const ExprList& exprList) {
+            for(ExprList::List::const_iterator it = exprList.list().begin(); it != exprList.list().end(); ++it) {
+                const Expr& expr = ref(*it);
+                visitNode(expr);
+            }
+        }
+
+        virtual void visit(const TernaryOpExpr& node) = 0;
+        virtual void visit(const BinaryOpExpr& node) = 0;
+        virtual void visit(const PostfixOpExpr& node) = 0;
+        virtual void visit(const PrefixOpExpr& node) = 0;
+        virtual void visit(const StructMemberRefExpr& node) = 0;
+        virtual void visit(const EnumMemberRefExpr& node) = 0;
+        virtual void visit(const ConstantExpr& node) = 0;
+    };
+
+    inline void TernaryOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void BinaryOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void PostfixOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void PrefixOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void StructMemberRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void EnumMemberRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void ConstantExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
     class Statement : public Node {
     public:
+        struct Visitor;
+    public:
         inline Statement() {}
+    public:
+        virtual void visit(Visitor& visitor) const = 0;
     };
 
     class ImportStatement : public Statement {
@@ -380,6 +493,8 @@ namespace Ast {
         inline ImportStatement& addPart(const Token& name) {_part.push_back(name); return ref(this);}
         inline const Part& part() const {return _part;}
     private:
+        virtual void visit(Visitor& visitor) const;
+    private:
         Part _part;
         HeaderType::T _headerType;
         DefinitionType::T _defType;
@@ -390,6 +505,8 @@ namespace Ast {
         inline UserDefinedTypeSpecStatement(const UserDefinedTypeSpec& typeSpec) : _typeSpec(typeSpec) {}
         inline const UserDefinedTypeSpec& typeSpec() const {return _typeSpec;}
     private:
+        virtual void visit(Visitor& visitor) const;
+    private:
         const UserDefinedTypeSpec& _typeSpec;
     };
 
@@ -398,15 +515,32 @@ namespace Ast {
         inline ExprStatement(const Expr& expr) : _expr(expr) {}
         inline const Expr& expr() const {return _expr;}
     private:
+        virtual void visit(Visitor& visitor) const;
+    private:
         const Expr& _expr;
     };
 
     class ReturnStatement : public Statement {
-    public:
+    protected:
         inline ReturnStatement(const ExprList& exprList) : _exprList(exprList) {}
+    public:
         inline const ExprList& exprList() const {return _exprList;}
     private:
         const ExprList& _exprList;
+    };
+
+    class RoutineReturnStatement : public ReturnStatement {
+    public:
+        inline RoutineReturnStatement(const ExprList& exprList) : ReturnStatement(exprList) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class FunctionReturnStatement : public ReturnStatement {
+    public:
+        inline FunctionReturnStatement(const ExprList& exprList) : ReturnStatement(exprList) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
     };
 
     class CompoundStatement : public Statement {
@@ -417,17 +551,30 @@ namespace Ast {
         inline CompoundStatement& addStatement(const Statement& statement) {_list.push_back(ptr(statement)); return ref(this);}
         inline const List& list() const {return _list;}
     private:
+        virtual void visit(Visitor& visitor) const;
+    private:
         List _list;
     };
 
-    //////////////////////////////////////////////////////////////////
-    class FunctionImpl : public Node {
-    public:
-        inline FunctionImpl(const FunctionDef& functionDef, const CompoundStatement& body) : _functionDef(functionDef), _body(body) {}
-    private:
-        const FunctionDef& _functionDef;
-        const CompoundStatement& _body;
+    struct Statement::Visitor {
+        inline void visitNode(const Statement& node) {
+            node.visit(ref(this));
+        }
+
+        virtual void visit(const ImportStatement& node) = 0;
+        virtual void visit(const UserDefinedTypeSpecStatement& node) = 0;
+        virtual void visit(const ExprStatement& node) = 0;
+        virtual void visit(const RoutineReturnStatement& node) = 0;
+        virtual void visit(const FunctionReturnStatement& node) = 0;
+        virtual void visit(const CompoundStatement& node) = 0;
     };
+
+    inline void ImportStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void UserDefinedTypeSpecStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void ExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void CompoundStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
@@ -440,7 +587,7 @@ namespace Ast {
     class Unit {
     public:
         typedef std::list<const ImportStatement*> ImportStatementList;
-        typedef std::list<const Statement*> StatementList;
+        typedef std::list<const UserDefinedTypeSpec*> BlockList;
         typedef std::list<Token> UnitNS;
     public:
         inline Unit(const std::string& filename) : _filename(filename), _importNS("*import*"), _rootNS("*root*") {}
@@ -460,7 +607,7 @@ namespace Ast {
     public:
         /// \brief Return the global statement list
         /// \return The global statement list
-        inline const StatementList& globalStatementList() const {return _globalStatementList;}
+        inline const BlockList& blockList() const {return _blockList;}
 
     public:
         /// \brief Return the root namespace
@@ -484,14 +631,14 @@ namespace Ast {
         inline void addNamespace(const Token& name) {_unitNS.push_back(name);}
 
     public:
-        /// \brief Add a global statement to the unit
+        /// \brief Add a import statement to the unit
         /// \param statement A pointer to the node to add
-        inline void addGlobalStatement(const Statement& statement) {_globalStatementList.push_back(ptr(statement));}
+        inline void addImportStatement(const ImportStatement& statement) {_importStatementList.push_back(ptr(statement));}
 
     public:
         /// \brief Add a import statement to the unit
         /// \param statement A pointer to the node to add
-        inline void addImportStatement(const ImportStatement& statement) {_importStatementList.push_back(ptr(statement));}
+        inline void addBlock(const UserDefinedTypeSpec& block) {_blockList.push_back(ptr(block));}
 
     public:
         /// \brief Add an AST node to the unit
@@ -520,8 +667,8 @@ namespace Ast {
         ImportStatementList _importStatementList;
 
     private:
-        /// \brief The list of all global statements in this unit
-        StatementList _globalStatementList;
+        /// \brief The list of all import statements in this unit
+        BlockList _blockList;
 
     private:
         /// \brief The owner list of all nodes in this unit

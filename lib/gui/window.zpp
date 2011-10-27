@@ -22,7 +22,12 @@ public struct Definition {
 
 public routine Position getWindowPosition(const Instance& window) native;
 
-public function ()Test(const Instance& window) {
+public routine int testRoutine(const Instance& window) {
+    (1>2)?1:2;
+    return 0;
+}
+
+public function ()testFunction(const Instance& window) {
     1 + 2 * 3;
     return (1);
 }

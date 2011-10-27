@@ -10,7 +10,7 @@ inline bool getName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::
     if(getName(ref(ctypeSpec).parent(), sep, name))
         name += sep;
     name += typeSpec.name().string();
-    if(dynamic_cast<const Ast::EnumDef*>(ptr(typeSpec)) != 0) {
+    if(dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec)) != 0) {
         name += sep;
         name += "T";
     }
@@ -106,20 +106,20 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         return _fpSrc;
     }
 
-    void visit(const Ast::TypeDef& node) {
+    void visit(const Ast::TypedefDefn& node) {
         if(node.defType() == Ast::DefinitionType::Native) {
             fprintf(fpDecl(node), "%s// typedef %s native;\n", Indent::get(), node.name().text());
         }
     }
 
-    void visit(const Ast::EnumDef& node) {
+    void visit(const Ast::EnumDefn& node) {
         if(node.defType() != Ast::DefinitionType::Native) {
             fprintf(fpDecl(node), "%sstruct %s {\n", Indent::get(), node.name().text());
             fprintf(fpDecl(node), "%s  enum T {\n", Indent::get(), node.name().text());
             std::string sep = " ";
-            for(Ast::EnumMemberDefList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+            for(Ast::EnumMemberDefnList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 INDENT;
-                const Ast::EnumMemberDef& def = ref(*it);
+                const Ast::EnumMemberDefn& def = ref(*it);
                 fprintf(fpDecl(node), "%s%s %s\n", Indent::get(), sep.c_str(), def.name().text());
                 sep = ",";
             }
@@ -129,7 +129,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         }
     }
 
-    void visit(const Ast::StructDef& node) {
+    void visit(const Ast::StructDefn& node) {
         FILE* fp = 0;
         std::string impl;
         if(node.accessType() == Ast::AccessType::Protected) {
@@ -150,15 +150,15 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         if(node.defType() != Ast::DefinitionType::Native) {
             fprintf(fp, "%sstruct %s%s {\n", Indent::get(), node.name().text(), impl.c_str());
             fprintf(fp, "%sprivate:\n", Indent::get());
-            for(Ast::VariableDefList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+            for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 INDENT;
-                const Ast::VariableDef& vdef = ref(*it);
+                const Ast::VariableDefn& vdef = ref(*it);
                 fprintf(fp, "%s%s _%s;\n", Indent::get(), getName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
             }
             fprintf(fp, "%spublic:\n", Indent::get());
-            for(Ast::VariableDefList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+            for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 INDENT;
-                const Ast::VariableDef& vdef = ref(*it);
+                const Ast::VariableDefn& vdef = ref(*it);
                 fprintf(fp, "%sinline %s& %s(const %s& val) {_%s = val; return ref(this);}\n",
                         Indent::get(), node.name().text(), vdef.name().text(), getName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
                 fprintf(fp, "%sinline const %s& %s() const {return _%s;}\n",
@@ -170,48 +170,75 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         return;
     }
 
-    void visit(const Ast::RoutineDef& node) {
-        fprintf(fpDecl(node), "%s%s %s(", Indent::get(), getName(node.outType()).c_str(), node.name().text());
+    void visitBlock(const Ast::CompoundStatement& block);
+
+    void visitRoutine(FILE* fp, const Ast::Routine& node) {
+        fprintf(fp, "%s%s %s(", Indent::get(), getName(node.outType()).c_str(), node.name().text());
         std::string sep;
-        for(Ast::VariableDefList::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
-            const Ast::VariableDef& vdef = ref(*it);
-            fprintf(fpDecl(node), "%s%s %s", sep.c_str(), getName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
+        for(Ast::Scope::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
+            const Ast::VariableDefn& vdef = ref(*it);
+            fprintf(fp, "%s%s %s", sep.c_str(), getName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
             sep = ", ";
         }
-        fprintf(fpDecl(node), ");\n");
-        fprintf(fpDecl(node), "\n");
-        return;
+        fprintf(fp, ")");
     }
 
-    void visit(const Ast::FunctionDef& node) {
+    void visit(const Ast::RoutineDecl& node) {
+        visitRoutine(fpDecl(node), node);
+        fprintf(fpDecl(node), ";\n");
+        fprintf(fpDecl(node), "\n");
+    }
+
+    void visit(const Ast::RoutineDefn& node) {
+        visitRoutine(fpDecl(node), node);
+        fprintf(fpDecl(node), ";\n");
+        fprintf(fpDecl(node), "\n");
+
+        visitRoutine(_fpSrc, node);
+        fprintf(_fpSrc, "\n");
+        visitBlock(node.block());
+    }
+
+    void visitFunction(const Ast::Function& node) {
         fprintf(fpDecl(node), "%sclass %s : public Function<%s> {\n", Indent::get(), node.name().text(), node.name().text());
-        fprintf(fpDecl(node), "%s    static void impl(%s& This);\n", Indent::get(), node.name().text());
-        for(Ast::VariableDefList::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
+        fprintf(fpDecl(node), "%s    static %s& impl(%s& This);\n", Indent::get(), node.name().text(), node.name().text());
+        for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
             INDENT;
-            const Ast::VariableDef& vdef = ref(*it);
+            const Ast::VariableDefn& vdef = ref(*it);
             fprintf(fpDecl(node), "%sconst %s _%s;\n", Indent::get(), getName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
         }
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
         fprintf(fpDecl(node), "%s    inline %s(", Indent::get(), node.name().text());
         std::string sep = "";
-        for(Ast::VariableDefList::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
-            const Ast::VariableDef& vdef = ref(*it);
+        for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
+            const Ast::VariableDefn& vdef = ref(*it);
             fprintf(fpDecl(node), "%sconst %s& %s", sep.c_str(), getName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
             sep = ", ";
         }
         fprintf(fpDecl(node), ") : Function(&impl)");
-        for(Ast::VariableDefList::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
-            const Ast::VariableDef& vdef = ref(*it);
+        for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
+            const Ast::VariableDefn& vdef = ref(*it);
             fprintf(fpDecl(node), ", _%s(%s)", vdef.name().text(), vdef.name().text());
         }
         fprintf(fpDecl(node), " {}\n");
 
         fprintf(fpDecl(node), "%s};\n", Indent::get());
-        fprintf(fpDecl(node), "\n");
-        return;
     }
 
-    void visit(const Ast::EventDef& node) {
+    void visit(const Ast::FunctionDecl& node) {
+        visitFunction(node);
+        fprintf(fpDecl(node), "\n");
+    }
+
+    void visit(const Ast::FunctionDefn& node) {
+        visitFunction(node);
+
+        fprintf(_fpSrc, "%s%s& %s::impl(%s& This)\n", Indent::get(), node.name().text(), node.name().text(), node.name().text());
+        visitBlock(node.block());
+        fprintf(fpDecl(node), "\n");
+    }
+
+    void visit(const Ast::EventDecl& node) {
         fprintf(fpDecl(node), "%sstruct %s : public Event<%s> {\n", Indent::get(), node.name().text(), node.name().text());
         {
             INDENT;
@@ -253,13 +280,109 @@ private:
     FILE* _fpImp;
 };
 
+struct ExprGenerator : public Ast::Expr::Visitor {
+public:
+    inline ExprGenerator(FILE* fp) : _fp(fp) {}
+private:
+    virtual void visit(const Ast::TernaryOpExpr& node) {
+        fprintf(_fp, "(");
+        visitNode(node.lhs());
+        fprintf(_fp, "%s", node.op1().text());
+        visitNode(node.rhs1());
+        fprintf(_fp, "%s", node.op2().text());
+        visitNode(node.rhs2());
+        fprintf(_fp, ")");
+    }
+
+    virtual void visit(const Ast::BinaryOpExpr& node) {
+    }
+
+    virtual void visit(const Ast::PostfixOpExpr& node) {
+    }
+
+    virtual void visit(const Ast::PrefixOpExpr& node) {
+    }
+
+    virtual void visit(const Ast::StructMemberRefExpr& node) {
+    }
+
+    virtual void visit(const Ast::EnumMemberRefExpr& node) {
+    }
+
+    virtual void visit(const Ast::ConstantExpr& node) {
+    }
+
+private:
+    FILE* _fp;
+};
+
+struct StatementGenerator : public Ast::Statement::Visitor {
+public:
+    inline StatementGenerator(FILE* fpHdr, FILE* fpSrc, FILE* fpImp) : _fpHdr(fpHdr), _fpSrc(fpSrc), _fpImp(fpImp) {}
+private:
+    virtual void visit(const Ast::ImportStatement& node) {
+        std::string qt = (node.headerType() == Ast::HeaderType::Import)?"<>":"\"\"";
+        fprintf(_fpHdr, "#include %c", qt.at(0));
+        std::string sep = "";
+        for(Ast::ImportStatement::Part::const_iterator it = node.part().begin(); it != node.part().end(); ++it) {
+            const Ast::Token& name = *it;
+            fprintf(_fpHdr, "%s%s", sep.c_str(), name.text());
+            sep = "/";
+        }
+        fprintf(_fpHdr, ".hpp%c\n", qt.at(1));
+    }
+
+    virtual void visit(const Ast::UserDefinedTypeSpecStatement& node) {
+        TypeDeclarationGenerator(_fpHdr, _fpSrc, _fpImp).visitNode(node.typeSpec());
+    }
+
+    virtual void visit(const Ast::ExprStatement& node) {
+    }
+
+    void visitReturnStatement(const Ast::ReturnStatement& node) {
+        fprintf(_fpSrc, "%sreturn", Indent::get());
+        if(node.exprList().list().size() > 0) {
+            fprintf(_fpSrc, " (");
+            ExprGenerator(_fpSrc).visitList(node.exprList());
+            fprintf(_fpSrc, ")");
+        }
+        fprintf(_fpSrc, ";\n");
+    }
+
+    virtual void visit(const Ast::RoutineReturnStatement& node) {
+        visitReturnStatement(node);
+    }
+
+    virtual void visit(const Ast::FunctionReturnStatement& node) {
+        visitReturnStatement(node);
+    }
+
+    virtual void visit(const Ast::CompoundStatement& node) {
+        fprintf(_fpSrc, "%s{\n", Indent::get());
+        {
+            INDENT;
+            for(Ast::CompoundStatement::List::const_iterator sit = node.list().begin(); sit != node.list().end(); ++sit) {
+                const Ast::Statement& s = ref(*sit);
+                ref(this).visitNode(s);
+            }
+        }
+        fprintf(_fpSrc, "%s}\n", Indent::get());
+    }
+
+private:
+    FILE* _fpHdr;
+    FILE* _fpSrc;
+    FILE* _fpImp;
+};
+
+void TypeDeclarationGenerator::visitBlock(const Ast::CompoundStatement& block) {
+    StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
+    gen.visitNode(block);
+}
+
 struct Generator::Impl {
     inline Impl(const Project& project, const Ast::Unit& unit) : _project(project), _unit(unit), _fpHdr(0), _fpSrc(0), _fpImp(0) {}
-    inline void generateGlobalStatement(const Ast::Statement* statement);
-    inline void generateGlobalStatementList();
-    inline void enterNamespace();
-    inline void leaveNamespace();
-    inline void generateImportStatement();
+    inline void generateHeaderIncludes(const std::string& basename);
     inline void run();
 private:
     const Project& _project;
@@ -270,58 +393,18 @@ private:
     FILE* _fpImp;
 };
 
-inline void Generator::Impl::generateGlobalStatement(const Ast::Statement* statement) {
-    TypeDeclarationGenerator gen(_fpHdr, _fpSrc, _fpImp);
-    for(const Ast::UserDefinedTypeSpecStatement* s = dynamic_cast<const Ast::UserDefinedTypeSpecStatement*>(statement); s != 0; ) {
-        return ref(s).typeSpec().visit(gen);
+inline void Generator::Impl::generateHeaderIncludes(const std::string& basename) {
+    fprintf(_fpHdr, "#pragma once\n\n");
+    for(Project::PathList::const_iterator it = _project.includeFileList().begin(); it != _project.includeFileList().end(); ++it) {
+        const std::string& filename = *it;
+        fprintf(_fpSrc, "#include \"%s\"\n", filename.c_str());
     }
-    throw Exception("Unknown statement\n");
-}
+    fprintf(_fpSrc, "#include \"%shpp\"\n", basename.c_str());
 
-inline void Generator::Impl::generateGlobalStatementList() {
-    INDENT;
-    for(Ast::Unit::StatementList::const_iterator sit = _unit.globalStatementList().begin(); sit != _unit.globalStatementList().end(); ++sit) {
-        const Ast::Statement* statement = *sit;
-        generateGlobalStatement(statement);
-    }
-}
-
-inline void Generator::Impl::enterNamespace() {
-    fprintf(_fpHdr, "%s", Indent::get());
-    fprintf(_fpSrc, "%s", Indent::get());
-    for(Ast::Unit::UnitNS::const_iterator it = _unit.unitNS().begin(); it != _unit.unitNS().end(); ++it) {
-        const Ast::Token& name = *it;
-        fprintf(_fpHdr, "namespace %s {", name.text());
-        fprintf(_fpSrc, "namespace %s {", name.text());
-    }
-    fprintf(_fpHdr, "\n");
-    fprintf(_fpSrc, "\n");
-}
-
-inline void Generator::Impl::leaveNamespace() {
-    fprintf(_fpHdr, "%s", Indent::get());
-    fprintf(_fpSrc, "%s", Indent::get());
-    for(Ast::Unit::UnitNS::const_iterator it = _unit.unitNS().begin(); it != _unit.unitNS().end(); ++it) {
-        const Ast::Token& name = *it;
-        fprintf(_fpHdr, "} /* %s */ ", name.text());
-        fprintf(_fpSrc, "} /* %s */ ", name.text());
-    }
-    fprintf(_fpHdr, "\n");
-    fprintf(_fpSrc, "\n");
-}
-
-inline void Generator::Impl::generateImportStatement() {
+    StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
     for(Ast::Unit::ImportStatementList::const_iterator sit = _unit.importStatementList().begin(); sit != _unit.importStatementList().end(); ++sit) {
-        const Ast::ImportStatement* s = *sit;
-        std::string qt = (ref(s).headerType() == Ast::HeaderType::Import)?"<>":"\"\"";
-        fprintf(_fpHdr, "#include %c", qt.at(0));
-        std::string sep = "";
-        for(Ast::ImportStatement::Part::const_iterator it = ref(s).part().begin(); it != ref(s).part().end(); ++it) {
-            const Ast::Token& name = *it;
-            fprintf(_fpHdr, "%s%s", sep.c_str(), name.text());
-            sep = "/";
-        }
-        fprintf(_fpHdr, ".hpp%c\n", qt.at(1));
+        const Ast::ImportStatement& s = ref(*sit);
+        gen.visitNode(s);
     }
     fprintf(_fpHdr, "\n");
 }
@@ -329,22 +412,15 @@ inline void Generator::Impl::generateImportStatement() {
 inline void Generator::Impl::run() {
     Indent::init();
     std::string basename = getBaseName(_unit.filename());
-    OutputFile ofImp(_fpImp, basename + "ipp");
-    OutputFile ofHdr(_fpHdr, basename + "hpp");
-    OutputFile ofSrc(_fpSrc, basename + "cpp");
+    OutputFile ofImp(_fpImp, basename + "ipp");unused(ofImp);
+    OutputFile ofHdr(_fpHdr, basename + "hpp");unused(ofHdr);
+    OutputFile ofSrc(_fpSrc, basename + "cpp");unused(ofSrc);
 
-    fprintf(_fpHdr, "#pragma once\n\n");
-    for(Project::PathList::const_iterator it = _project.includeFileList().begin(); it != _project.includeFileList().end(); ++it) {
-        const std::string& filename = *it;
-        fprintf(_fpSrc, "#include \"%s\"\n", filename.c_str());
-    }
+    generateHeaderIncludes(basename);
 
-    fprintf(_fpSrc, "#include \"%shpp\"\n", basename.c_str());
-
-    generateImportStatement();
     TypeDeclarationGenerator(_fpHdr, _fpSrc, _fpImp).visitChildren(_unit.rootNS());
     fprintf(_fpHdr, "\n");
-    fprintf(_fpSrc, "\n");
+    fprintf(_fpSrc, "\n\n");
 }
 
 //////////////////////////////////////////////
