@@ -27,11 +27,11 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 add_custom_target(lemon_parser
-        COMMAND "${lemon_cc}" -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
+    COMMAND "${lemon_cc}" -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
 )
 
 add_custom_target(re2c_scanner
-        COMMAND "${re2c_cc}" -c -i -u -o "${parser_odir}/lexerGen.c" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
+    COMMAND "${re2c_cc}" -c -i -u -o "${parser_odir}/lexerGen.c" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
 )
 
 ADD_EXECUTABLE(zen ${zen_SOURCES})

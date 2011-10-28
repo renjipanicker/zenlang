@@ -1,0 +1,16 @@
+namespace TestBasic;
+
+public routine int testNative(const string& s) native;
+
+public routine int testRoutine(const int& x) {
+    (1>2)?1:2;
+    return 12345;
+}
+
+public function (int i, string s)testFunction(const int& x) {
+    (1 + 2) * 3;
+    "xx";
+    return (67890, "yy");
+}
+
+///////////////////////

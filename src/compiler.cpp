@@ -3,6 +3,7 @@
 #include "compiler.hpp"
 #include "lexer.hpp"
 #include "generator.hpp"
+#include "progen.hpp"
 
 bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int& level) {
     Context context(ref(this), unit, level);
@@ -31,5 +32,10 @@ void Compiler::compile() {
             throw Exception("Cannot open source file '%s'\n", filename.c_str());
         Generator generator(_project, unit);
         generator.run();
+    }
+
+    if(_project.mode() != Ast::Project::Mode::Compile) {
+        ProGen progen;
+        progen.run();
     }
 }

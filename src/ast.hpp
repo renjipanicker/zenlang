@@ -669,9 +669,21 @@ namespace Ast {
 
     class Project {
     public:
+        struct Mode {
+            enum T {
+                Compile,
+                Executable,
+                Shared,
+                Static
+            };
+        };
+
         typedef std::list<std::string> PathList;
     public:
-        inline Project() {}
+        inline Project() : _mode(Mode::Executable) {}
+    public:
+        inline Project& mode(const Mode::T& val) { _mode = val; return ref(this);}
+        inline const Mode::T& mode() const {return _mode;}
     public:
         inline Project& addInclude(const std::string& dir) { _includeList.push_back(dir); return ref(this);}
         inline const PathList& includeList() const {return _includeList;}
@@ -682,6 +694,7 @@ namespace Ast {
         inline Project& addSource(const std::string& file) { _sourceList.push_back(file); return ref(this);}
         inline const PathList& sourceList() const {return _sourceList;}
     private:
+        Mode _mode;
         PathList _includeList;
         PathList _includeFileList;
         PathList _sourceList;
