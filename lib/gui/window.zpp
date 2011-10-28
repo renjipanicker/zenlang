@@ -27,10 +27,10 @@ public routine int testRoutine(const Instance& window) {
     return 12345;
 }
 
-public function (int i)testFunction(const Instance& window) {
+public function (int i, string s)testFunction(const Instance& window) {
     1 + 2 * 3;
     "xx";
-    return (67890);
+    return (67890, "yy");
 }
 
 public function ()Delete(const Instance& window) native;

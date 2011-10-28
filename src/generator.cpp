@@ -309,7 +309,7 @@ private:
 
 struct ExprGenerator : public Ast::Expr::Visitor {
 public:
-    inline ExprGenerator(FILE* fp) : _fp(fp) {}
+    inline ExprGenerator(FILE* fp, const std::string& sep2 = "", const std::string& sep1 = "") : _fp(fp), _sep2(sep2), _sep1(sep1), _sep0(sep1) {}
 private:
     virtual void visit(const Ast::TernaryOpExpr& node) {
         fprintf(_fp, "(");
@@ -355,8 +355,16 @@ private:
         fprintf(_fp, "%s", node.value().text());
     }
 
+    virtual void sep() {
+        fprintf(_fp, "%s", _sep0.c_str());
+        _sep0 = _sep2;
+    }
+
 private:
     FILE* _fp;
+    const std::string _sep2;
+    const std::string _sep1;
+    std::string _sep0;
 };
 
 struct StatementGenerator : public Ast::Statement::Visitor {
@@ -389,7 +397,7 @@ private:
         fprintf(_fpSrc, "%sreturn", Indent::get());
         if(node.exprList().list().size() > 0) {
             fprintf(_fpSrc, " (");
-            ExprGenerator(_fpSrc).visitList(node.exprList());
+            ExprGenerator(_fpSrc, ", ").visitList(node.exprList());
             fprintf(_fpSrc, ")");
         }
         fprintf(_fpSrc, ";\n");
@@ -397,7 +405,7 @@ private:
 
     virtual void visit(const Ast::FunctionReturnStatement& node) {
         fprintf(_fpSrc, "%sreturn This.ret(", Indent::get());
-        ExprGenerator(_fpSrc).visitList(node.exprList());
+        ExprGenerator(_fpSrc, ", ").visitList(node.exprList());
         fprintf(_fpSrc, ");\n");
     }
 

@@ -450,6 +450,7 @@ namespace Ast {
         inline void visitList(const ExprList& exprList) {
             for(ExprList::List::const_iterator it = exprList.list().begin(); it != exprList.list().end(); ++it) {
                 const Expr& expr = ref(*it);
+                sep();
                 visitNode(expr);
             }
         }
@@ -461,6 +462,7 @@ namespace Ast {
         virtual void visit(const StructMemberRefExpr& node) = 0;
         virtual void visit(const EnumMemberRefExpr& node) = 0;
         virtual void visit(const ConstantExpr& node) = 0;
+        virtual void sep() = 0;
     };
 
     inline void TernaryOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
