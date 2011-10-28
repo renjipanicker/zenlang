@@ -28,7 +28,7 @@ public routine int testRoutine(const Instance& window) {
 }
 
 public function (int i, string s)testFunction(const Instance& window) {
-    1 + 2 * 3;
+    (1 + 2) * 3;
     "xx";
     return (67890, "yy");
 }

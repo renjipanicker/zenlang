@@ -432,6 +432,16 @@ namespace Ast {
         const Token _name;
     };
 
+    class OrderedExpr : public Expr {
+    public:
+        inline OrderedExpr(const TypeSpec& typeSpec, const Expr& expr) : Expr(typeSpec), _expr(expr) {}
+        inline const Expr& expr() const {return _expr;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Expr& _expr;
+    };
+
     class ConstantExpr : public Expr {
     public:
         inline ConstantExpr(const TypeSpec& typeSpec, const Token& value) : Expr(typeSpec), _value(value) {}
@@ -461,6 +471,7 @@ namespace Ast {
         virtual void visit(const PrefixOpExpr& node) = 0;
         virtual void visit(const StructMemberRefExpr& node) = 0;
         virtual void visit(const EnumMemberRefExpr& node) = 0;
+        virtual void visit(const OrderedExpr& node) = 0;
         virtual void visit(const ConstantExpr& node) = 0;
         virtual void sep() = 0;
     };
@@ -471,6 +482,7 @@ namespace Ast {
     inline void PrefixOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void StructMemberRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void EnumMemberRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ConstantExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////

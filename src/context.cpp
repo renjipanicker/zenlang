@@ -350,10 +350,10 @@ Ast::ExprList* Context::aExprList() {
     return ptr(list);
 }
 
-Ast::TernaryOpExpr& Context::aTernaryExpr(const Ast::Token& op1, const Ast::Token& op2, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2) {
+Ast::TernaryOpExpr* Context::aTernaryExpr(const Ast::Token& op1, const Ast::Token& op2, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2) {
     const Ast::TypeSpec& typeSpec = coerce(rhs1, rhs2);
     Ast::TernaryOpExpr& expr = _unit.addNode(new Ast::TernaryOpExpr(typeSpec, op1, op2, lhs, rhs1, rhs2));
-    return expr;
+    return ptr(expr);
 }
 
 Ast::BinaryOpExpr& Context::aBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
@@ -384,6 +384,11 @@ Ast::EnumMemberRefExpr& Context::aEnumMemberRefExpr(const Ast::EnumDefn& enumDef
     const Ast::TypeSpec& typeSpec = enumDef;
     Ast::EnumMemberRefExpr& expr = _unit.addNode(new Ast::EnumMemberRefExpr(typeSpec, enumDef, name));
     return expr;
+}
+
+Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
+    Ast::OrderedExpr& expr = _unit.addNode(new Ast::OrderedExpr(innerExpr.typeSpec(), innerExpr));
+    return ptr(expr);
 }
 
 Ast::ConstantExpr& Context::aConstantExpr(const std::string& type, const Ast::Token& value) {

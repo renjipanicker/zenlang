@@ -343,6 +343,12 @@ private:
     virtual void visit(const Ast::EnumMemberRefExpr& node) {
     }
 
+    virtual void visit(const Ast::OrderedExpr& node) {
+        fprintf(_fp, "(");
+        visitNode(node.expr());
+        fprintf(_fp, ")");
+    }
+
     virtual void visit(const Ast::ConstantExpr& node) {
         if(getName(node.typeSpec()) == "char") {
             fprintf(_fp, "\'%s\'", node.value().text());
