@@ -2,7 +2,7 @@
 #include "base/zenlang.hpp"
 #include "context.hpp"
 
-inline Ast::TypeSpec& Context::getRootTypeSpec() const {
+inline Ast::Root& Context::getRootNamespace() const {
     return (_level == 0)?_unit.rootNS():_unit.importNS();
 }
 
@@ -34,72 +34,82 @@ inline Ast::TypeSpec& Context::leaveTypeSpec(Ast::TypeSpec& typeSpec) {
 }
 
 Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level) : _compiler(compiler), _unit(unit), _level(level) {
-    Ast::TypeSpec& rootTypeSpec = getRootTypeSpec();
+    Ast::Root& rootTypeSpec = getRootNamespace();
     enterTypeSpec(rootTypeSpec);
 }
 
 Context::~Context() {
     assert(_typeSpecStack.size() == 1);
-    Ast::TypeSpec& rootTypeSpec = getRootTypeSpec();
+    Ast::Root& rootTypeSpec = getRootNamespace();
     leaveTypeSpec(rootTypeSpec);
 }
 
-Ast::Scope& Context::addScope() {
+inline Ast::Scope& Context::addScope() {
     Ast::Scope& scope = _unit.addNode(new Ast::Scope());
     return scope;
 }
 
-Ast::Scope& Context::enterScope(Ast::Scope& scope) {
+inline Ast::Scope& Context::enterScope(Ast::Scope& scope) {
     _scopeStack.push_back(ptr(scope));
     return scope;
 }
 
-Ast::Scope& Context::enterScope() {
-    Ast::Scope& scope = addScope();
-    return enterScope(scope);
-}
-
-Ast::Scope& Context::leaveScope() {
+inline Ast::Scope& Context::leaveScope() {
     Ast::Scope* s = _scopeStack.back();
     //assert(s == ptr(scope));
+    assert(_scopeStack.size() > 0);
     _scopeStack.pop_back();
     return ref(s);
 }
 
-Ast::Namespace& Context::enterNamespace(const Ast::Token& name) {
-    _unit.addNamespace(name);
+inline const Ast::TypeSpec& Context::getRootTypeSpec(const Ast::Token &name) const {
+    const Ast::TypeSpec* typeSpec = findTypeSpec(currentTypeSpec(), name);
+    if(!typeSpec) {
+        if(_level == 0) {
+            typeSpec = _unit.importNS().hasChild(name.text());
+            if(!typeSpec) {
+                throw Exception("Unknown root type '%s'\n", name.text());
+            }
+        }
+    }
+    return ref(typeSpec);
+}
+
+inline Ast::ExprList& Context::addExprList() {
+    Ast::ExprList& exprList = _unit.addNode(new Ast::ExprList());
+    return exprList;
+}
+
+inline const Ast::TypeSpec& coerce(const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    /// \todo
+    return lhs.typeSpec();
+}
+
+inline Ast::EnumMemberDefnList& Context::addEnumMemberDefList() {
+    Ast::EnumMemberDefnList& enumMemberDefnList = _unit.addNode(new Ast::EnumMemberDefnList());
+    return enumMemberDefnList;
+}
+
+////////////////////////////////////////////////////////////
+void Context::aUnitNamespaceId(const Ast::Token &name) {
     Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(currentTypeSpec(), name));
     currentTypeSpec().addChild(ns);
     enterTypeSpec(ns);
     _namespaceStack.push_back(ptr(ns));
-    return ns;
 }
 
-Ast::RoutineReturnStatement& Context::addRoutineReturnStatement() {
-    Ast::ExprList& exprList = addExprList();
-    Ast::RoutineReturnStatement& returnStatement = _unit.addNode(new Ast::RoutineReturnStatement(exprList));
-    return returnStatement;
+void Context::aLeaveNamespace() {
+    while(_namespaceStack.size() > 0) {
+        Ast::Namespace* ns = _namespaceStack.back();
+        leaveTypeSpec(ref(ns));
+        _namespaceStack.pop_back();
+    }
 }
 
-Ast::RoutineReturnStatement& Context::addRoutineReturnStatement(const Ast::Expr& expr) {
-    Ast::ExprList& exprList = addExprList();
-    exprList.addExpr(expr);
-    Ast::RoutineReturnStatement& returnStatement = _unit.addNode(new Ast::RoutineReturnStatement(exprList));
-    return returnStatement;
-}
+void Context::aImportStatement(const Ast::HeaderType::T& headerType, Ast::ImportStatement& statement, const Ast::DefinitionType::T& defType) {
+    statement.headerType(headerType);
+    statement.defType(defType);
 
-Ast::FunctionReturnStatement& Context::addFunctionReturnStatement(const Ast::ExprList& exprList) {
-    Ast::FunctionReturnStatement& returnStatement = _unit.addNode(new Ast::FunctionReturnStatement(exprList));
-    return returnStatement;
-}
-
-Ast::ImportStatement& Context::addImportStatement() {
-    Ast::ImportStatement& importStatement = _unit.addNode(new Ast::ImportStatement());
-    _unit.addImportStatement(importStatement);
-    return importStatement;
-}
-
-void Context::importHeader(const Ast::ImportStatement &statement) {
     if(statement.defType() != Ast::DefinitionType::Native) {
         std::string filename;
         std::string sep = "";
@@ -114,61 +124,13 @@ void Context::importHeader(const Ast::ImportStatement &statement) {
     }
 }
 
-const Ast::TypeSpec& Context::getRootTypeSpec(const Ast::Token &name) const {
-    const Ast::TypeSpec* typeSpec = findTypeSpec(currentTypeSpec(), name);
-    if(!typeSpec) {
-        if(_level == 0) {
-            typeSpec = _unit.importNS().hasChild(name.text());
-            if(!typeSpec) {
-                throw Exception("Unknown root type '%s'\n", name.text());
-            }
-        }
-    }
-    return ref(typeSpec);
-}
-
-Ast::ExprList& Context::addExprList() {
-    Ast::ExprList& exprList = _unit.addNode(new Ast::ExprList());
-    return exprList;
-}
-
-inline const Ast::TypeSpec& coerce(const Ast::Expr& lhs, const Ast::Expr& rhs) {
-    /// \todo
-    return lhs.typeSpec();
-}
-
-////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////
-inline Ast::EnumMemberDefnList& Context::addEnumMemberDefList() {
-    Ast::EnumMemberDefnList& enumMemberDefnList = _unit.addNode(new Ast::EnumMemberDefnList());
-    return enumMemberDefnList;
-}
-
-////////////////////////////////////////////////////////////
-void Context::aUnitNamespaceId(const Ast::Token &name) {
-    enterNamespace(name);
-}
-
-void Context::aLeaveNamespace() {
-    while(_namespaceStack.size() > 0) {
-        Ast::Namespace* ns = _namespaceStack.back();
-        leaveTypeSpec(ref(ns));
-        _namespaceStack.pop_back();
-    }
-}
-
-void Context::aImportStatement(const Ast::HeaderType::T& headerType, Ast::ImportStatement& statement, const Ast::DefinitionType::T& defType) {
-    statement.headerType(headerType);
-    statement.defType(defType);
-    importHeader(statement);
-}
-
 Ast::ImportStatement* Context::aImportNamespaceId(Ast::ImportStatement& statement, const Ast::Token& name) {
     statement.addPart(name);
     return ptr(statement);
 }
 Ast::ImportStatement* Context::aImportNamespaceId(const Ast::Token& name) {
-    Ast::ImportStatement& statement = addImportStatement();
+    Ast::ImportStatement& statement = _unit.addNode(new Ast::ImportStatement());
+    _unit.addImportStatement(statement);
     return aImportNamespaceId(statement, name);
 }
 
@@ -234,15 +196,21 @@ Ast::Scope* Context::aStructMemberDefnList(const Ast::VariableDefn& enumMemberDe
 Ast::RoutineDecl* Context::aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::Scope& in, const Ast::DefinitionType::T& defType) {
     Ast::RoutineDecl& routineDecl = _unit.addNode(new Ast::RoutineDecl(currentTypeSpec(), outType, name, in, defType));
     currentTypeSpec().addChild(routineDecl);
-    leaveScope();
     return ptr(routineDecl);
 }
 
-Ast::RoutineDefn* Context::aRoutineDefn(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::Scope& in, const Ast::DefinitionType::T& defType, const Ast::CompoundStatement& block) {
-    Ast::RoutineDefn& routineDefn = _unit.addNode(new Ast::RoutineDefn(currentTypeSpec(), outType, name, in, defType, block));
-    currentTypeSpec().addChild(routineDefn);
-    _unit.addBlock(routineDefn);
+Ast::RoutineDefn* Context::aRoutineDefn(Ast::RoutineDefn& routineDefn, const Ast::CompoundStatement& block) {
+    routineDefn.setBlock(block);
     leaveScope();
+    leaveTypeSpec(routineDefn);
+    return ptr(routineDefn);
+}
+
+Ast::RoutineDefn* Context::aEnterRoutineDefn(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType) {
+    Ast::RoutineDefn& routineDefn = _unit.addNode(new Ast::RoutineDefn(currentTypeSpec(), outType, name, in, defType));
+    currentTypeSpec().addChild(routineDefn);
+    enterScope(in);
+    enterTypeSpec(routineDefn);
     return ptr(routineDefn);
 }
 
@@ -250,16 +218,22 @@ Ast::FunctionDecl* Context::aFunctionDecl(const Ast::FunctionSig& functionSig, c
     const Ast::Token& name = functionSig.name();
     Ast::FunctionDecl& functionDecl = _unit.addNode(new Ast::FunctionDecl(currentTypeSpec(), name, defType, functionSig));
     currentTypeSpec().addChild(functionDecl);
-    leaveScope();
     return ptr(functionDecl);
 }
 
-Ast::FunctionDefn* Context::aFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, const Ast::CompoundStatement& block) {
-    const Ast::Token& name = functionSig.name();
-    Ast::FunctionDefn& functionDefn = _unit.addNode(new Ast::FunctionDefn(currentTypeSpec(), name, defType, functionSig, block));
-    currentTypeSpec().addChild(functionDefn);
-    _unit.addBlock(functionDefn);
+Ast::FunctionDefn* Context::aFunctionDefn(Ast::FunctionDefn& functionDefn, const Ast::CompoundStatement& block) {
+    functionDefn.setBlock(block);
     leaveScope();
+    leaveTypeSpec(functionDefn);
+    return ptr(functionDefn);
+}
+
+Ast::FunctionDefn* Context::aEnterFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
+    const Ast::Token& name = functionSig.name();
+    Ast::FunctionDefn& functionDefn = _unit.addNode(new Ast::FunctionDefn(currentTypeSpec(), name, defType, functionSig));
+    currentTypeSpec().addChild(functionDefn);
+    enterScope(functionSig.inScope());
+    enterTypeSpec(functionDefn);
     return ptr(functionDefn);
 }
 
@@ -267,17 +241,15 @@ Ast::EventDecl* Context::aEventDecl(const Ast::VariableDefn& in, const Ast::Func
     const Ast::Token& name = functionSig.name();
     Ast::EventDecl& eventDef = _unit.addNode(new Ast::EventDecl(currentTypeSpec(), name, in, functionSig, defType));
     currentTypeSpec().addChild(eventDef);
-    leaveScope();
     return ptr(eventDef);
 }
 
-Ast::FunctionSig* Context::aFunctionSig(const Ast::Scope& out, const Ast::Token& name, const Ast::Scope& in) {
+Ast::FunctionSig* Context::aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in) {
     Ast::FunctionSig& functionSig = _unit.addNode(new Ast::FunctionSig(out, name, in));
     return ptr(functionSig);
 }
 
 Ast::Scope* Context::aInParamsList(Ast::Scope& scope) {
-    enterScope(scope);
     return ptr(scope);
 }
 
@@ -329,6 +301,29 @@ Ast::ExprStatement* Context::aExprStatement(const Ast::Expr& expr) {
     return ptr(exprStatement);
 }
 
+Ast::RoutineReturnStatement* Context::aRoutineReturnStatement() {
+    Ast::ExprList& exprList = addExprList();
+    Ast::RoutineReturnStatement& returnStatement = _unit.addNode(new Ast::RoutineReturnStatement(exprList));
+    return ptr(returnStatement);
+}
+
+Ast::RoutineReturnStatement* Context::aRoutineReturnStatement(const Ast::Expr& expr) {
+    Ast::ExprList& exprList = addExprList();
+    exprList.addExpr(expr);
+    Ast::RoutineReturnStatement& returnStatement = _unit.addNode(new Ast::RoutineReturnStatement(exprList));
+    return ptr(returnStatement);
+}
+
+Ast::FunctionReturnStatement* Context::aFunctionReturnStatement(const Ast::ExprList& exprList) {
+    Ast::TypeSpec& typeSpec = currentTypeSpec();
+    const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
+    if(function == 0) {
+        throw Exception("Invalid return\n");
+    }
+    Ast::FunctionReturnStatement& returnStatement = _unit.addNode(new Ast::FunctionReturnStatement(ref(function), exprList));
+    return ptr(returnStatement);
+}
+
 Ast::CompoundStatement* Context::aStatementList() {
     Ast::CompoundStatement& statement = _unit.addNode(new Ast::CompoundStatement());
     return ptr(statement);
@@ -355,43 +350,43 @@ Ast::ExprList* Context::aExprList() {
     return ptr(list);
 }
 
-Ast::TernaryOpExpr& Context::addTernaryOpExpr(const Ast::Token& op1, const Ast::Token& op2, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2) {
+Ast::TernaryOpExpr& Context::aTernaryExpr(const Ast::Token& op1, const Ast::Token& op2, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2) {
     const Ast::TypeSpec& typeSpec = coerce(rhs1, rhs2);
     Ast::TernaryOpExpr& expr = _unit.addNode(new Ast::TernaryOpExpr(typeSpec, op1, op2, lhs, rhs1, rhs2));
     return expr;
 }
 
-Ast::BinaryOpExpr& Context::addBinaryOpExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+Ast::BinaryOpExpr& Context::aBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
     const Ast::TypeSpec& typeSpec = coerce(lhs, rhs);
     Ast::BinaryOpExpr& expr = _unit.addNode(new Ast::BinaryOpExpr(typeSpec, op, lhs, rhs));
     return expr;
 }
 
-Ast::PostfixOpExpr& Context::addPostfixOpExpr(const Ast::Token& op, const Ast::Expr& lhs) {
+Ast::PostfixOpExpr& Context::aPostfixExpr(const Ast::Token& op, const Ast::Expr& lhs) {
     const Ast::TypeSpec& typeSpec = lhs.typeSpec();
     Ast::PostfixOpExpr& expr = _unit.addNode(new Ast::PostfixOpExpr(typeSpec, op, lhs));
     return expr;
 }
 
-Ast::PrefixOpExpr& Context::addPrefixOpExpr(const Ast::Token& op, const Ast::Expr& rhs) {
+Ast::PrefixOpExpr& Context::aPrefixExpr(const Ast::Token& op, const Ast::Expr& rhs) {
     const Ast::TypeSpec& typeSpec = rhs.typeSpec();
     Ast::PrefixOpExpr& expr = _unit.addNode(new Ast::PrefixOpExpr(typeSpec, op, rhs));
     return expr;
 }
 
-Ast::StructMemberRefExpr& Context::addStructMemberRefExpr(const Ast::StructDefn& structDef, const Ast::Token& name) {
+Ast::StructMemberRefExpr& Context::aStructMemberRefExpr(const Ast::StructDefn& structDef, const Ast::Token& name) {
     const Ast::TypeSpec& typeSpec = structDef;
     Ast::StructMemberRefExpr& expr = _unit.addNode(new Ast::StructMemberRefExpr(typeSpec, structDef, name));
     return expr;
 }
 
-Ast::EnumMemberRefExpr& Context::addEnumMemberRefExpr(const Ast::EnumDefn& enumDef, const Ast::Token& name) {
+Ast::EnumMemberRefExpr& Context::aEnumMemberRefExpr(const Ast::EnumDefn& enumDef, const Ast::Token& name) {
     const Ast::TypeSpec& typeSpec = enumDef;
     Ast::EnumMemberRefExpr& expr = _unit.addNode(new Ast::EnumMemberRefExpr(typeSpec, enumDef, name));
     return expr;
 }
 
-Ast::ConstantExpr& Context::addConstantExpr(const std::string& type, const Ast::Token& value) {
+Ast::ConstantExpr& Context::aConstantExpr(const std::string& type, const Ast::Token& value) {
     Ast::Token token(value.row(), value.col(), type);
     const Ast::TypeSpec& typeSpec = getRootTypeSpec(token);
     Ast::ConstantExpr& expr = _unit.addNode(new Ast::ConstantExpr(typeSpec, value));

@@ -38,7 +38,8 @@ public:
         assert(start > 0);
         assert(end > 0);
         assert(start <= end);
-        size_t len = end - start;
+
+        size_t len = end - start + 1;
         char* buf = 0;
         if(len < Size) {
             buf = td._text;

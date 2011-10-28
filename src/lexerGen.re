@@ -16,6 +16,7 @@ struct Scanner {
     char* sol; // start of line
     int row;
     char* text;
+    char* mar;
 };
 
 inline void newLine(Scanner *s) {
@@ -34,6 +35,7 @@ static size_t fill(Scanner *s, size_t len) {
             s->cur -= cnt;
             s->lim -= cnt;
             s->sol -= cnt;
+            s->mar -= cnt;
             if(s->text > 0) {
                 assert(s->text >= (s->buffer + cnt));
                 s->text -= cnt;
@@ -57,6 +59,7 @@ static size_t fill(Scanner *s, size_t len) {
 size_t Lexer::Impl::init(Scanner *s) {
     s->sol = s->cur = s->tok = s->lim = s->buffer;
     s->text = 0;
+    s->mar = 0;
     s->eof = 0;
     s->cond = EStateNormal;
     s->state = -1;
@@ -65,13 +68,13 @@ size_t Lexer::Impl::init(Scanner *s) {
     return fill(s, 0);
 }
 
-static inline TokenData token(Scanner* s, const int& id) {
+TokenData Lexer::Impl::token(Scanner* s, const int& id) {
     if(s->text > 0) {
         char* t = s->text;
         s->text = 0;
         return TokenData::createT(id, s->row, s->cur-s->sol, t, s->cur - 1);
     }
-    return TokenData::createT(id, s->row, s->cur-s->sol, s->tok, s->cur);
+    return TokenData::createT(id, s->row, s->cur-s->sol, s->mar, s->cur);
 }
 
 void Lexer::Impl::scan(Scanner *s) {
@@ -88,7 +91,7 @@ re2c:cond:goto               = "continue;";
 /*!getstate:re2c */
 
     for(;;) {
-        s->tok = s->cur;
+        s->mar = s->tok = s->cur;
 /*!re2c
 
 re2c:define:YYCTYPE          = "char";
@@ -180,7 +183,7 @@ re2c:condenumprefix          = EState;
 <Normal>   "native"   := _parser.feed(token(s, ZENTOK_NATIVE)); continue;
 <Normal>   "const"    := _parser.feed(token(s, ZENTOK_CONST)); continue;
 
-<Normal>   "return"   := _parser.feed(token(s, ZENTOK_RETURN)); continue;
+<Normal>   "return"   := sendReturn(s); continue;
 
 <Normal>   "@" [a-zA-Z][a-zA-Z0-9_]* := _parser.feed(token(s, ZENTOK_KEY)); continue;
 <Normal>   [a-zA-Z][a-zA-Z0-9_]* := _parser.feed(token(s, ZENTOK_ID)); continue;

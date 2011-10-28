@@ -24,12 +24,13 @@ public routine Position getWindowPosition(const Instance& window) native;
 
 public routine int testRoutine(const Instance& window) {
     (1>2)?1:2;
-    return 0;
+    return 12345;
 }
 
-public function ()testFunction(const Instance& window) {
+public function (int i)testFunction(const Instance& window) {
     1 + 2 * 3;
-    return (1);
+    "xx";
+    return (67890);
 }
 
 

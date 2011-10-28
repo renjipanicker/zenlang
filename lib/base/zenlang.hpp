@@ -75,8 +75,8 @@ protected:
 };
 
 template <typename MethodT>
-struct Method : public MethodX<void (*)(MethodT& This)> {
-    inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<void (*)(MethodT& This)>(impl) {}
+struct Method : public MethodX<MethodT& (*)(MethodT& This)> {
+    inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<MethodT& (*)(MethodT& This)>(impl) {}
     inline void run() {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)));}
 };
 

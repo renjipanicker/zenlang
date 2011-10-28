@@ -212,24 +212,27 @@ namespace Ast {
     class CompoundStatement;
     class RoutineDefn : public Routine {
     public:
-        inline RoutineDefn(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::Scope& in, const DefinitionType::T& defType, const Ast::CompoundStatement& block)
-            : Routine(parent, outType, name, in, defType), _block(block) {}
-        inline const Ast::CompoundStatement& block() const {return _block;}
+        inline RoutineDefn(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::Scope& in, const DefinitionType::T& defType)
+            : Routine(parent, outType, name, in, defType), _block(0) {}
+    public:
+        inline const Ast::CompoundStatement& block() const {return ref(_block);}
+        inline void setBlock(const Ast::CompoundStatement& block) {_block = ptr(block);}
     private:
         virtual void visit(Visitor& visitor) const;
-        const Ast::CompoundStatement& _block;
+        const Ast::CompoundStatement* _block;
     };
 
     class FunctionSig : public Node {
     public:
-        inline FunctionSig(const Ast::Scope& out, const Ast::Token& name, const Ast::Scope& in) : _out(out), _name(name), _in(in) {}
+        inline FunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in) : _out(out), _name(name), _in(in) {}
         inline const Ast::Scope::List& out() const {return _out.list();}
         inline const Token& name() const {return _name;}
-        inline const Ast::Scope::List& in()  const {return _in.list();}
+        inline const Ast::Scope::List& in() const {return _in.list();}
+        inline Ast::Scope& inScope()  const {return _in;}
     private:
         const Ast::Scope& _out;
         const Token _name;
-        const Ast::Scope& _in;
+        Ast::Scope& _in;
     };
 
     class Function : public UserDefinedTypeSpec {
@@ -250,13 +253,14 @@ namespace Ast {
 
     class FunctionDefn : public Function {
     public:
-        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, const Ast::CompoundStatement& block)
-            : Function(parent, name, defType, sig), _block(block) {}
-        inline const Ast::CompoundStatement& block() const {return _block;}
+        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig)
+            : Function(parent, name, defType, sig), _block(0) {}
+        inline const Ast::CompoundStatement& block() const {return ref(_block);}
+        inline void setBlock(const Ast::CompoundStatement& block) {_block = ptr(block);}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Ast::CompoundStatement& _block;
+        const Ast::CompoundStatement* _block;
     };
 
     class EventDecl : public UserDefinedTypeSpec {
@@ -538,9 +542,11 @@ namespace Ast {
 
     class FunctionReturnStatement : public ReturnStatement {
     public:
-        inline FunctionReturnStatement(const ExprList& exprList) : ReturnStatement(exprList) {}
+        inline FunctionReturnStatement(const Function& function, const ExprList& exprList) : ReturnStatement(exprList), _function(function) {}
     private:
         virtual void visit(Visitor& visitor) const;
+    private:
+        const Function& _function;
     };
 
     class CompoundStatement : public Statement {
@@ -587,8 +593,7 @@ namespace Ast {
     class Unit {
     public:
         typedef std::list<const ImportStatement*> ImportStatementList;
-        typedef std::list<const UserDefinedTypeSpec*> BlockList;
-        typedef std::list<Token> UnitNS;
+
     public:
         inline Unit(const std::string& filename) : _filename(filename), _importNS("*import*"), _rootNS("*root*") {}
     private:
@@ -605,11 +610,6 @@ namespace Ast {
         inline const ImportStatementList& importStatementList() const {return _importStatementList;}
 
     public:
-        /// \brief Return the global statement list
-        /// \return The global statement list
-        inline const BlockList& blockList() const {return _blockList;}
-
-    public:
         /// \brief Return the root namespace
         /// \return The root namespace
         inline Root& rootNS() {return _rootNS;}
@@ -621,24 +621,9 @@ namespace Ast {
         inline Root& importNS() {return _importNS;}
 
     public:
-        /// \brief Return the namespace list
-        /// \return The namespace list
-        inline const UnitNS& unitNS() const {return _unitNS;}
-
-    public:
-        /// \brief Add a namespace to the unit
-        /// \param name Namespace name
-        inline void addNamespace(const Token& name) {_unitNS.push_back(name);}
-
-    public:
         /// \brief Add a import statement to the unit
         /// \param statement A pointer to the node to add
         inline void addImportStatement(const ImportStatement& statement) {_importStatementList.push_back(ptr(statement));}
-
-    public:
-        /// \brief Add a import statement to the unit
-        /// \param statement A pointer to the node to add
-        inline void addBlock(const UserDefinedTypeSpec& block) {_blockList.push_back(ptr(block));}
 
     public:
         /// \brief Add an AST node to the unit
@@ -659,16 +644,9 @@ namespace Ast {
         /// \brief This NS contains all types defined in the current compilation unit.
         Ast::Root _rootNS;
 
-        /// \brief The namespace of the current unit.
-        UnitNS _unitNS;
-
     private:
         /// \brief The list of all import statements in this unit
         ImportStatementList _importStatementList;
-
-    private:
-        /// \brief The list of all import statements in this unit
-        BlockList _blockList;
 
     private:
         /// \brief The owner list of all nodes in this unit
