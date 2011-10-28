@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
         return 1;;
     }
 
-    Project project;
+    Ast::Project project;
     project.addInclude(".");
     project.addInclude("../../zenlang/lib");
     project.addIncludeFile("base/pch.hpp");

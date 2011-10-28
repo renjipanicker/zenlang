@@ -344,6 +344,14 @@ private:
     }
 
     virtual void visit(const Ast::ConstantExpr& node) {
+        if(getName(node.typeSpec()) == "char") {
+            fprintf(_fp, "\'%s\'", node.value().text());
+            return;
+        }
+        if(getName(node.typeSpec()) == "string") {
+            fprintf(_fp, "\"%s\"", node.value().text());
+            return;
+        }
         fprintf(_fp, "%s", node.value().text());
     }
 
@@ -372,6 +380,9 @@ private:
     }
 
     virtual void visit(const Ast::ExprStatement& node) {
+        fprintf(_fpSrc, "%s", Indent::get());
+        ExprGenerator(_fpSrc).visitNode(node.expr());
+        fprintf(_fpSrc, ";\n");
     }
 
     virtual void visit(const Ast::RoutineReturnStatement& node) {
@@ -414,11 +425,11 @@ void TypeDeclarationGenerator::visitBlock(const Ast::CompoundStatement& block) {
 }
 
 struct Generator::Impl {
-    inline Impl(const Project& project, const Ast::Unit& unit) : _project(project), _unit(unit), _fpHdr(0), _fpSrc(0), _fpImp(0) {}
+    inline Impl(const Ast::Project& project, const Ast::Unit& unit) : _project(project), _unit(unit), _fpHdr(0), _fpSrc(0), _fpImp(0) {}
     inline void generateHeaderIncludes(const std::string& basename);
     inline void run();
 private:
-    const Project& _project;
+    const Ast::Project& _project;
     const Ast::Unit& _unit;
 private:
     FILE* _fpHdr;
@@ -428,7 +439,7 @@ private:
 
 inline void Generator::Impl::generateHeaderIncludes(const std::string& basename) {
     fprintf(_fpHdr, "#pragma once\n\n");
-    for(Project::PathList::const_iterator it = _project.includeFileList().begin(); it != _project.includeFileList().end(); ++it) {
+    for(Ast::Project::PathList::const_iterator it = _project.includeFileList().begin(); it != _project.includeFileList().end(); ++it) {
         const std::string& filename = *it;
         fprintf(_fpSrc, "#include \"%s\"\n", filename.c_str());
     }
@@ -457,6 +468,6 @@ inline void Generator::Impl::run() {
 }
 
 //////////////////////////////////////////////
-Generator::Generator(const Project& project, const Ast::Unit& unit) : _impl(0) {_impl = new Impl(project, unit);}
+Generator::Generator(const Ast::Project& project, const Ast::Unit& unit) : _impl(0) {_impl = new Impl(project, unit);}
 Generator::~Generator() {delete _impl;}
 void Generator::run() {return ref(_impl).run();}

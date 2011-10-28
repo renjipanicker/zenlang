@@ -33,7 +33,6 @@ public function (int i)testFunction(const Instance& window) {
     return (67890);
 }
 
-
 public function ()Delete(const Instance& window) native;
 public function ()SetTitle(const Instance& window, const string& title) native;
 public function ()Show(const Instance& window) native;

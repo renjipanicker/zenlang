@@ -13,7 +13,7 @@ bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int
 
 void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& level) {
     trace("importing %s\n", filename.c_str());
-    for(Project::PathList::const_iterator it = _project.includeList().begin(); it != _project.includeList().end(); ++it) {
+    for(Ast::Project::PathList::const_iterator it = _project.includeList().begin(); it != _project.includeList().end(); ++it) {
         const std::string& dir = *it;
         if(parseFile(unit, dir + "/" + filename, level+1))
             return;
@@ -22,7 +22,7 @@ void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& l
 }
 
 void Compiler::compile() {
-    for(Project::PathList::const_iterator it = _project.sourceList().begin(); it != _project.sourceList().end(); ++it) {
+    for(Ast::Project::PathList::const_iterator it = _project.sourceList().begin(); it != _project.sourceList().end(); ++it) {
         const std::string& filename = *it;
         trace("compiling %s\n", filename.c_str());
         Ast::Unit unit(filename);

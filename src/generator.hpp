@@ -1,10 +1,9 @@
 #pragma once
 
 #include "ast.hpp"
-#include "project.hpp"
 class Generator {
 public:
-    Generator(const Project& project, const Ast::Unit& unit);
+    Generator(const Ast::Project& project, const Ast::Unit& unit);
     ~Generator();
     void run();
 private:
