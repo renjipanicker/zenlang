@@ -12,5 +12,3 @@ public function (int i, string s)testFunction(const int& x) {
     "xx";
     return (67890, "yy");
 }
-
-///////////////////////

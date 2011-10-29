@@ -33,6 +33,7 @@ private:
 private:
     Parser& _parser;
     Context& _context;
+    std::string _ss;
 };
 
 #include "lexerGen.c"

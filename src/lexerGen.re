@@ -7,7 +7,6 @@ struct Scanner {
     char* cur;
     char* tok;
     char* lim;
-    char* eof;
     char buffer[BSIZE];
     char yych;
     enum ScanContition cond;
@@ -25,9 +24,9 @@ inline void newLine(Scanner *s) {
 }
 
 static size_t fill(Scanner *s, size_t len) {
-    size_t got = ~0, cnt;
+    size_t got = 0, cnt;
 
-    if ((!(s->eof)) && ((s->lim - s->tok) < (int)len)) {
+    if ((!(feof(s->fp))) && ((s->lim - s->tok) < (int)len)) {
         if (s->tok > s->buffer) {
             cnt = s->tok - s->buffer;
             memcpy(s->buffer, s->tok, s->lim - s->tok);
@@ -45,17 +44,8 @@ static size_t fill(Scanner *s, size_t len) {
             cnt = BSIZE;
         }
 
-        if ((got = fread(s->lim, 1, cnt, s->fp)) != cnt) {
-            s->eof = &s->lim[got];
-            printf("at eof: from %lu, to %lu, len %ld\n", (unsigned long)s->buffer, (unsigned long)s->eof, s->eof - s->buffer);
-            fflush(stdout);
-        }
+        got = fread(s->lim, 1, cnt, s->fp);
         s->lim += got;
-        printf("lim %lu\n", (unsigned long)s->lim);
-        fflush(stdout);
-    }
-    if (s->eof && s->cur + len > s->eof) {
-        return ~0; /* not enough input data */
     }
     return got;
 }
@@ -64,12 +54,11 @@ size_t Lexer::Impl::init(Scanner *s) {
     s->sol = s->cur = s->tok = s->lim = s->buffer;
     s->text = 0;
     s->mar = 0;
-    s->eof = 0;
     s->cond = EStateNormal;
     s->state = -1;
     s->row = 1;
 
-    return fill(s, 0);
+    return fill(s, 1);
 }
 
 TokenData Lexer::Impl::token(Scanner* s, const int& id) {
@@ -83,8 +72,6 @@ TokenData Lexer::Impl::token(Scanner* s, const int& id) {
 
 void Lexer::Impl::scan(Scanner *s) {
     s->tok = s->cur;
-    printf("out loop, cur %lu, '%c'\n\n", (unsigned long)s->cur, *(s->cur));
-    fflush(stdout);
 
 /*!re2c
 re2c:define:YYGETSTATE       = "s->state";
@@ -96,10 +83,9 @@ re2c:cond:goto               = "continue;";
 
 /*!getstate:re2c */
 
-    for(;;) {
-        printf("in loop, cur %lu, '%c'\n", (unsigned long)s->cur, *(s->cur));
-        fflush(stdout);
+    while(s->cur < s->lim) {
         s->mar = s->tok = s->cur;
+
 /*!re2c
 
 re2c:define:YYCTYPE          = "char";
@@ -108,7 +94,7 @@ re2c:define:YYLIMIT          = s->lim;
 re2c:define:YYMARKER         = s->tok;
 re2c:define:YYFILL@len       = #;
 re2c:define:YYFILL:naked     = 1;
-re2c:define:YYFILL           = "if (fill(s, #) == ~0) break;";
+re2c:define:YYFILL           = "fill(s, #);";
 re2c:define:YYSETSTATE@state = #;
 re2c:define:YYSETSTATE           = "s->state = #;";
 re2c:define:YYSETCONDITION       = "s->cond = #;";
@@ -239,9 +225,7 @@ re2c:condenumprefix          = EState;
 <!Comment,Skiptoeol> := fprintf(stderr, "Comment\n");
 */
     }
-    if(feof(s->fp)) {
-        _parser.feed(token(s, ZENTOK_EOF));
-    }
+    _parser.feed(token(s, ZENTOK_EOF));
 }
 
 /*

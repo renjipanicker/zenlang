@@ -44,7 +44,6 @@ public event(const Instance& window) => function ()OnResize();
 public event(const Instance& window) => function ()OnClose();
 
 
-//123456
 /*
 Socket::OnRecv(const Instance& socket) <= function ()OnRecv(const string& data);
 */
