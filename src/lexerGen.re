@@ -47,8 +47,12 @@ static size_t fill(Scanner *s, size_t len) {
 
         if ((got = fread(s->lim, 1, cnt, s->fp)) != cnt) {
             s->eof = &s->lim[got];
+            printf("at eof: from %lu, to %lu, len %ld\n", (unsigned long)s->buffer, (unsigned long)s->eof, s->eof - s->buffer);
+            fflush(stdout);
         }
         s->lim += got;
+        printf("lim %lu\n", (unsigned long)s->lim);
+        fflush(stdout);
     }
     if (s->eof && s->cur + len > s->eof) {
         return ~0; /* not enough input data */
@@ -79,6 +83,8 @@ TokenData Lexer::Impl::token(Scanner* s, const int& id) {
 
 void Lexer::Impl::scan(Scanner *s) {
     s->tok = s->cur;
+    printf("out loop, cur %lu, '%c'\n\n", (unsigned long)s->cur, *(s->cur));
+    fflush(stdout);
 
 /*!re2c
 re2c:define:YYGETSTATE       = "s->state";
@@ -91,6 +97,8 @@ re2c:cond:goto               = "continue;";
 /*!getstate:re2c */
 
     for(;;) {
+        printf("in loop, cur %lu, '%c'\n", (unsigned long)s->cur, *(s->cur));
+        fflush(stdout);
         s->mar = s->tok = s->cur;
 /*!re2c
 
@@ -102,7 +110,7 @@ re2c:define:YYFILL@len       = #;
 re2c:define:YYFILL:naked     = 1;
 re2c:define:YYFILL           = "if (fill(s, #) == ~0) break;";
 re2c:define:YYSETSTATE@state = #;
-re2c:define:YYSETSTATE       = "s->state = #;";
+re2c:define:YYSETSTATE           = "s->state = #;";
 re2c:define:YYSETCONDITION       = "s->cond = #;";
 re2c:define:YYSETCONDITION@cond  = #;
 re2c:define:YYGETCONDITION       = s->cond;
