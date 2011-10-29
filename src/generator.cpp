@@ -1,6 +1,7 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "generator.hpp"
+#include "outfile.hpp"
 
 inline bool getName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name) {
     const Ast::ChildTypeSpec* ctypeSpec = dynamic_cast<const Ast::ChildTypeSpec*>(ptr(typeSpec));
@@ -33,23 +34,6 @@ inline std::string getName(const Ast::QualifiedTypeSpec& qtypeSpec, const std::s
     return name;
 }
 
-inline std::string getBaseName(const std::string& filename) {
-    std::string basename = filename;
-    size_t idx = -1;
-
-    // strip last extension, if any
-    idx = basename.rfind('.');
-    if(idx >= 0)
-        basename = basename.substr(0, idx + 1);
-
-    // strip path, if any
-    idx = basename.rfind('/');
-    if(idx >= 0)
-        basename = basename.substr(idx + 1);
-
-    return basename;
-}
-
 struct Indent {
     inline Indent() {
         ind[_indent] = 32;
@@ -77,20 +61,6 @@ private:
 char Indent::ind[Size] = {32};
 int Indent::_indent = -1;
 #define INDENT Indent _ind_
-
-struct OutputFile {
-    inline OutputFile(FILE*& fp, const std::string& filename) : _fp(fp) {
-        _fp = fopen(filename.c_str(), "w");
-        if(_fp == 0) {
-            throw Exception("Unable to open output file %s\n", filename.c_str());
-        }
-    }
-
-    inline ~OutputFile() {
-        fclose(_fp);
-    }
-    FILE*& _fp;
-};
 
 struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     inline FILE* fpDecl(const Ast::TypeSpec& node) {
@@ -453,11 +423,11 @@ private:
 
 inline void Generator::Impl::generateHeaderIncludes(const std::string& basename) {
     fprintf(_fpHdr, "#pragma once\n\n");
-    for(Ast::Project::PathList::const_iterator it = _project.includeFileList().begin(); it != _project.includeFileList().end(); ++it) {
+    for(Ast::Config::PathList::const_iterator it = _project.global().includeFileList().begin(); it != _project.global().includeFileList().end(); ++it) {
         const std::string& filename = *it;
         fprintf(_fpSrc, "#include \"%s\"\n", filename.c_str());
     }
-    fprintf(_fpSrc, "#include \"%shpp\"\n", basename.c_str());
+    fprintf(_fpSrc, "#include \"%s.hpp\"\n", basename.c_str());
 
     StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
     for(Ast::Unit::ImportStatementList::const_iterator sit = _unit.importStatementList().begin(); sit != _unit.importStatementList().end(); ++sit) {
@@ -470,9 +440,9 @@ inline void Generator::Impl::generateHeaderIncludes(const std::string& basename)
 inline void Generator::Impl::run() {
     Indent::init();
     std::string basename = getBaseName(_unit.filename());
-    OutputFile ofImp(_fpImp, basename + "ipp");unused(ofImp);
-    OutputFile ofHdr(_fpHdr, basename + "hpp");unused(ofHdr);
-    OutputFile ofSrc(_fpSrc, basename + "cpp");unused(ofSrc);
+    OutputFile ofImp(_fpImp, basename + ".ipp");unused(ofImp);
+    OutputFile ofHdr(_fpHdr, basename + ".hpp");unused(ofHdr);
+    OutputFile ofSrc(_fpSrc, basename + ".cpp");unused(ofSrc);
 
     generateHeaderIncludes(basename);
 

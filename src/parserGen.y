@@ -40,6 +40,12 @@
 %token_type {TokenData}
 %extra_argument {Context* pctx}
 
+%include {
+#include "base/pch.hpp"
+#include "base/zenlang.hpp"
+#include "context.hpp"
+}
+
 //-------------------------------------------------
 // All keywords, etc
 %nonassoc ERR EOF RESERVED.

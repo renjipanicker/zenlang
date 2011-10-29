@@ -14,7 +14,7 @@ bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int
 
 void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& level) {
     trace("importing %s\n", filename.c_str());
-    for(Ast::Project::PathList::const_iterator it = _project.includeList().begin(); it != _project.includeList().end(); ++it) {
+    for(Ast::Config::PathList::const_iterator it = _project.global().includePathList().begin(); it != _project.global().includePathList().end(); ++it) {
         const std::string& dir = *it;
         if(parseFile(unit, dir + "/" + filename, level+1))
             return;
@@ -23,7 +23,7 @@ void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& l
 }
 
 void Compiler::compile() {
-    for(Ast::Project::PathList::const_iterator it = _project.sourceList().begin(); it != _project.sourceList().end(); ++it) {
+    for(Ast::Config::PathList::const_iterator it = _project.global().sourceFileList().begin(); it != _project.global().sourceFileList().end(); ++it) {
         const std::string& filename = *it;
         trace("compiling %s\n", filename.c_str());
         Ast::Unit unit(filename);
@@ -35,7 +35,7 @@ void Compiler::compile() {
     }
 
     if(_project.mode() != Ast::Project::Mode::Compile) {
-        ProGen progen;
+        ProGen progen(_project);
         progen.run();
     }
 }

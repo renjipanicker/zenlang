@@ -1,8 +1,10 @@
 #pragma once
 
+#include "ast.hpp"
+
 class ProGen {
 public:
-    ProGen();
+    ProGen(const Ast::Project& project);
     ~ProGen();
 public:
     void run();

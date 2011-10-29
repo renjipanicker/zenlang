@@ -667,6 +667,29 @@ namespace Ast {
         std::list<const Node*> _nodeList;
     };
 
+    class Config {
+    public:
+        typedef std::list<std::string> PathList;
+    public:
+        inline Config(const std::string& name) : _name(name) {}
+    public:
+        inline const std::string& name() const {return _name;}
+    public:
+        inline Config& addIncludePath(const std::string& dir) { _includePathList.push_back(dir); return ref(this);}
+        inline const PathList& includePathList() const {return _includePathList;}
+    public:
+        inline Config& addIncludeFile(const std::string& file) { _includeFileList.push_back(file); return ref(this);}
+        inline const PathList& includeFileList() const {return _includeFileList;}
+    public:
+        inline Config& addSourceFile(const std::string& file) { _sourceFileList.push_back(file); return ref(this);}
+        inline const PathList& sourceFileList() const {return _sourceFileList;}
+    private:
+        const std::string _name;
+        PathList _includePathList;
+        PathList _includeFileList;
+        PathList _sourceFileList;
+    };
+
     class Project {
     public:
         struct Mode {
@@ -677,26 +700,33 @@ namespace Ast {
                 Static
             };
         };
+        typedef std::list<Config*> ConfigList;
 
-        typedef std::list<std::string> PathList;
     public:
-        inline Project() : _mode(Mode::Executable) {}
+        inline Project() : _name("main"), _mode(Mode::Executable), _global("global"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;") {}
+    public:
+        inline Project& name(const std::string& val) { _name = val; return ref(this);}
+        inline const std::string& name() const {return _name;}
     public:
         inline Project& mode(const Mode::T& val) { _mode = val; return ref(this);}
         inline const Mode::T& mode() const {return _mode;}
     public:
-        inline Project& addInclude(const std::string& dir) { _includeList.push_back(dir); return ref(this);}
-        inline const PathList& includeList() const {return _includeList;}
+        inline Config& global() {return _global;}
+        inline const Config& global() const {return _global;}
     public:
-        inline Project& addIncludeFile(const std::string& file) { _includeFileList.push_back(file); return ref(this);}
-        inline const PathList& includeFileList() const {return _includeFileList;}
+        inline const ConfigList& configList() const {return _configList;}
     public:
-        inline Project& addSource(const std::string& file) { _sourceList.push_back(file); return ref(this);}
-        inline const PathList& sourceList() const {return _sourceList;}
+        inline const std::string& hppExt() const {return _hppExt;}
+        inline const std::string& cppExt() const {return _cppExt;}
+        inline const std::string& zppExt() const {return _zppExt;}
     private:
-        Mode _mode;
-        PathList _includeList;
-        PathList _includeFileList;
-        PathList _sourceList;
+        std::string _name;
+        Mode::T _mode;
+        Config _global;
+        ConfigList _configList;
+    private:
+        std::string _hppExt;
+        std::string _cppExt;
+        std::string _zppExt;
     };
 }
