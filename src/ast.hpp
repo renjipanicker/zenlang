@@ -263,6 +263,20 @@ namespace Ast {
         const Ast::CompoundStatement* _block;
     };
 
+    class FunctionImpl : public UserDefinedTypeSpec {
+    public:
+        inline FunctionImpl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::Function& base)
+            : UserDefinedTypeSpec(parent, name, defType), _base(base), _block(0) {}
+        inline const Ast::Function& base() const {return _base;}
+        inline const Ast::CompoundStatement& block() const {return ref(_block);}
+        inline void setBlock(const Ast::CompoundStatement& block) {_block = ptr(block);}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ast::Function& _base;
+        const Ast::CompoundStatement* _block;
+    };
+
     class EventDecl : public UserDefinedTypeSpec {
     public:
         inline EventDecl(const TypeSpec& parent, const Ast::Token& name, const Ast::VariableDefn& in, const FunctionSig& functionSig, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _in(in), _functionSig(functionSig) {}
@@ -309,6 +323,7 @@ namespace Ast {
         virtual void visit(const RoutineDefn& node) = 0;
         virtual void visit(const FunctionDecl& node) = 0;
         virtual void visit(const FunctionDefn& node) = 0;
+        virtual void visit(const FunctionImpl& node) = 0;
         virtual void visit(const EventDecl& node) = 0;
         virtual void visit(const Namespace& node) = 0;
         virtual void visit(const Root& node) = 0;
@@ -321,6 +336,7 @@ namespace Ast {
     inline void RoutineDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void FunctionImpl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void EventDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Namespace::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Root::visit(Visitor& visitor) const {visitor.visit(ref(this));}
@@ -703,10 +719,13 @@ namespace Ast {
         typedef std::list<Config*> ConfigList;
 
     public:
-        inline Project() : _name("main"), _mode(Mode::Executable), _global("global"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;") {}
+        inline Project() : _name("main"), _zenPath("../../zenlang/lib"), _mode(Mode::Executable), _global("global"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;") {}
     public:
         inline Project& name(const std::string& val) { _name = val; return ref(this);}
         inline const std::string& name() const {return _name;}
+    public:
+        inline Project& zenPath(const std::string& val) { _zenPath = val; return ref(this);}
+        inline const std::string& zenPath() const {return _zenPath;}
     public:
         inline Project& mode(const Mode::T& val) { _mode = val; return ref(this);}
         inline const Mode::T& mode() const {return _mode;}
@@ -721,6 +740,7 @@ namespace Ast {
         inline const std::string& zppExt() const {return _zppExt;}
     private:
         std::string _name;
+        std::string _zenPath;
         Mode::T _mode;
         Config _global;
         ConfigList _configList;

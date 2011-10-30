@@ -31,11 +31,15 @@ void ProGen::Impl::run() {
     fprintf(_fpPro, "ENDIF(CMAKE_CONFIGURATION_TYPES)\n");
     fprintf(_fpPro, "\n");
 
+    fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \".\")\n");
+    fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", _project.zenPath().c_str());
     for(Ast::Config::PathList::const_iterator it = _project.global().includePathList().begin(); it != _project.global().includePathList().end(); ++it) {
         const std::string& dir = *it;
         fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", dir.c_str());
     }
     fprintf(_fpPro, "\n");
+
+    fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s/base/zenlang.cpp)\n", _project.zenPath().c_str());
 
     for(Ast::Config::PathList::const_iterator it = _project.global().sourceFileList().begin(); it != _project.global().sourceFileList().end(); ++it) {
         const std::string& filename = *it;

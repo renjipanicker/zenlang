@@ -237,6 +237,25 @@ Ast::FunctionDefn* Context::aEnterFunctionDefn(const Ast::FunctionSig& functionS
     return ptr(functionDefn);
 }
 
+Ast::FunctionImpl* Context::aFunctionImpl(Ast::FunctionImpl& functionImpl, const Ast::CompoundStatement& block) {
+    functionImpl.setBlock(block);
+    leaveScope();
+    leaveTypeSpec(functionImpl);
+    return ptr(functionImpl);
+}
+
+Ast::FunctionImpl* Context::aEnterFunctionImpl(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(base));
+    if(function == 0) {
+        throw Exception("base type not a function '%s'\n", base.name().text());
+    }
+    Ast::FunctionImpl& functionImpl = _unit.addNode(new Ast::FunctionImpl(currentTypeSpec(), name, defType, ref(function)));
+    currentTypeSpec().addChild(functionImpl);
+    enterScope(ref(function).sig().inScope());
+    enterTypeSpec(functionImpl);
+    return ptr(functionImpl);
+}
+
 Ast::EventDecl* Context::aEventDecl(const Ast::VariableDefn& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
     const Ast::Token& name = functionSig.name();
     Ast::EventDecl& eventDef = _unit.addNode(new Ast::EventDecl(currentTypeSpec(), name, in, functionSig, defType));

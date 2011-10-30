@@ -15,13 +15,22 @@ IF( CMAKE_BUILD_TYPE STREQUAL "Debug")
     ADD_DEFINITIONS( "-DDEBUG" )
 ENDIF()
 
-SET(zen_SOURCES ${zen_SOURCES} src/main.cpp)
+SET(zen_SOURCES ${zen_SOURCES} src/ast.hpp)
+SET(zen_SOURCES ${zen_SOURCES} src/outfile.hpp)
+SET(zen_SOURCES ${zen_SOURCES} src/token.hpp)
+SET(zen_SOURCES ${zen_SOURCES} src/lexer.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/lexer.cpp)
+SET(zen_SOURCES ${zen_SOURCES} src/parser.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/parser.cpp)
+SET(zen_SOURCES ${zen_SOURCES} src/compiler.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/compiler.cpp)
+SET(zen_SOURCES ${zen_SOURCES} src/context.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/context.cpp)
+SET(zen_SOURCES ${zen_SOURCES} src/generator.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/generator.cpp)
+SET(zen_SOURCES ${zen_SOURCES} src/progen.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/progen.cpp)
+SET(zen_SOURCES ${zen_SOURCES} src/main.cpp)
 
 IF(WIN32)
     SET(lemon_cc "${CMAKE_CURRENT_SOURCE_DIR}/tools/lemon.exe")
@@ -41,12 +50,3 @@ ADD_EXECUTABLE(zen ${zen_SOURCES})
 ADD_DEPENDENCIES(zen ${zen_DEPENDS})
 
 #-DCMAKE_BUILD_TYPE=Debug
-
-#ADD_CUSTOM_COMMAND(
-#    OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.c"
-#    COMMAND "${lemon_cc}" -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
-#    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
-#)
-
-#SET_SOURCE_FILES_PROPERTIES("${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.c" PROPERTIES LANGUAGE CXX)
-#SET(zen_SOURCES ${zen_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.c")

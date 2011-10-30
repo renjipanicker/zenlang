@@ -218,7 +218,6 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             fprintf(fpDecl(node), "_%s = %s; ", vdef.name().text(), vdef.name().text());
         }
         fprintf(fpDecl(node), "return ref(this);}\n");
-
         fprintf(fpDecl(node), "%s};\n", Indent::get());
     }
 
@@ -233,6 +232,34 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(_fpSrc, "%s%s& %s::impl(%s& This)\n", Indent::get(), node.name().text(), node.name().text(), node.name().text());
         visitBlock(node.block());
         fprintf(fpDecl(node), "\n");
+    }
+
+    void visit(const Ast::FunctionImpl& node) {
+        fprintf(fpDecl(node), "%sclass %s : public %s< %s > {\n", Indent::get(), node.name().text(), node.base().name().text(), node.name().text());
+        fprintf(fpDecl(node), "%s    static %s& impl(%s& This);\n", Indent::get(), node.name().text(), node.name().text());
+
+        fprintf(fpDecl(node), "%spublic:\n", Indent::get());
+        fprintf(fpDecl(node), "%s    inline %s(", Indent::get(), node.name().text());
+        std::string sep = "";
+        for(Ast::Scope::List::const_iterator it = node.base().sig().in().begin(); it != node.base().sig().in().end(); ++it) {
+            const Ast::VariableDefn& vdef = ref(*it);
+            fprintf(fpDecl(node), "%sconst %s& %s", sep.c_str(), getName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
+            sep = ", ";
+        }
+        fprintf(fpDecl(node), ") : %s(&impl)", node.base().name().text());
+        for(Ast::Scope::List::const_iterator it = node.base().sig().in().begin(); it != node.base().sig().in().end(); ++it) {
+            const Ast::VariableDefn& vdef = ref(*it);
+            fprintf(fpDecl(node), ", _%s(%s)", vdef.name().text(), vdef.name().text());
+        }
+        fprintf(fpDecl(node), " {}\n");
+
+        fprintf(fpDecl(node), "%s};\n", Indent::get());
+        fprintf(fpDecl(node), "\n");
+        fprintf(_fpSrc, "%s%s& %s::impl(%s& This)\n", Indent::get(), node.name().text(), node.name().text(), node.name().text());
+        visitBlock(node.block());
+        if(getName(node.base()) == "test") {
+            fprintf(_fpSrc, "%sstatic %s test_%s;\n", Indent::get(), node.name().text(), node.name().text());
+        }
     }
 
     void visit(const Ast::EventDecl& node) {

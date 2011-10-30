@@ -9,7 +9,7 @@ struct Scanner {
     char* lim;
     char buffer[BSIZE];
     char yych;
-    enum ScanContition cond;
+    enum ScanCondition cond;
     int state;
 
     char* sol; // start of line
@@ -76,7 +76,7 @@ void Lexer::Impl::scan(Scanner *s) {
 /*!re2c
 re2c:define:YYGETSTATE       = "s->state";
 re2c:define:YYGETSTATE:naked = 1;
-re2c:define:YYCONDTYPE       = ScanContition;
+re2c:define:YYCONDTYPE       = ScanCondition;
 re2c:indent:top              = 1;
 re2c:cond:goto               = "continue;";
 */

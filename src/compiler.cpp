@@ -14,6 +14,16 @@ bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int
 
 void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& level) {
     trace("importing %s\n", filename.c_str());
+
+    // first check current dir
+    if(parseFile(unit, "./" + filename, level+1))
+        return;
+
+    // next check zen lib dir
+    if(parseFile(unit, _project.zenPath() + "/" + filename, level+1))
+        return;
+
+    // then all other include paths
     for(Ast::Config::PathList::const_iterator it = _project.global().includePathList().begin(); it != _project.global().includePathList().end(); ++it) {
         const std::string& dir = *it;
         if(parseFile(unit, dir + "/" + filename, level+1))

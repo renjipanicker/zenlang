@@ -150,6 +150,7 @@ rTypeSpecDef(L) ::= rRoutineDecl(R). {L = R;}
 rTypeSpecDef(L) ::= rRoutineDefn(R). {L = R;}
 rTypeSpecDef(L) ::= rFunctionDecl(R).{L = R;}
 rTypeSpecDef(L) ::= rFunctionDefn(R).{L = R;}
+rTypeSpecDef(L) ::= rFunctionImpl(R).{L = R;}
 rTypeSpecDef(L) ::= rEventDecl(R).   {L = R;}
 
 //-------------------------------------------------
@@ -211,6 +212,15 @@ rFunctionDefn(L) ::= rEnterFunctionDefn(functionDefn) rCompoundStatement(block).
 //-------------------------------------------------
 %type rEnterFunctionDefn {Ast::FunctionDefn*}
 rEnterFunctionDefn(L) ::= rFunctionSig(functionSig) rDefinitionType(defType). {L = ref(pctx).aEnterFunctionDefn(ref(functionSig), defType);}
+
+//-------------------------------------------------
+// function implementation
+%type rFunctionImpl {Ast::FunctionImpl*}
+rFunctionImpl(L) ::= rEnterFunctionImpl(functionImpl) rCompoundStatement(block). {L = ref(pctx).aFunctionImpl(ref(functionImpl), ref(block));}
+
+//-------------------------------------------------
+%type rEnterFunctionImpl {Ast::FunctionImpl*}
+rEnterFunctionImpl(L) ::= rTypeSpec(base) ID(name). {L = ref(pctx).aEnterFunctionImpl(ref(base), name, Ast::DefinitionType::Direct);}
 
 //-------------------------------------------------
 // event declarations

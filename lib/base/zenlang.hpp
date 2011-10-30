@@ -66,8 +66,39 @@ private:
     std::string _msg;
 };
 
+class CallContext {
+public:
+    void run();
+    inline size_t size() const {return _invocationList.size();}
+
+private:
+    struct Invocation {
+        virtual void run() = 0;
+    };
+
+    template <typename FunctionT>
+    struct InvocationT : public Invocation {
+        InvocationT(const FunctionT& function) : _function(function) {}
+        FunctionT _function;
+        virtual void run() {
+            _function._impl(_function);
+            _function.run();
+        }
+    };
+    typedef std::list<Invocation*> InvocationList;
+    InvocationList _invocationList;
+
+public:
+    template <typename FunctionT>
+    FunctionT add(FunctionT function) {
+        _invocationList.push_back(new InvocationT<FunctionT>(function));
+        return function;
+    }
+};
+
 template <typename ImplT>
 struct MethodX {
+    friend class CallContext;
     typedef ImplT Impl;
     inline MethodX(const Impl& impl) : _impl(impl) {}
 protected:
@@ -77,7 +108,7 @@ protected:
 template <typename MethodT>
 struct Method : public MethodX<MethodT& (*)(MethodT& This)> {
     inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<MethodT& (*)(MethodT& This)>(impl) {}
-    inline void run() {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)));}
+    inline MethodT& run() {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)));}
 };
 
 template <typename MethodT, typename ReturnT >
@@ -174,6 +205,7 @@ struct Event {
     typename Handler::List list;
     inline ~Event() {
     }
+
     inline typename Handler::Ptr add_(Handler* handler) {
         list.push_back(typename Handler::Item(handler));
         typename Handler::Item& item = list.back();
@@ -182,4 +214,22 @@ struct Event {
 
     static T instance;
     static inline typename Handler::Ptr add(Handler* handler) {return instance.add_(handler);}
+};
+
+struct TestInstance {
+    TestInstance();
+    virtual void enque(CallContext& context) = 0;
+    TestInstance* _next;
+};
+
+template <typename T>
+struct test : public Function< T > {
+    inline test(typename Function< T >::Impl impl) : Function<T>(impl), _instance(ref(static_cast<T*>(this))) {}
+    struct Instance : public TestInstance {
+        inline Instance(T& t) : _t(t) {}
+        virtual void enque(CallContext& context) {
+            context.add(_t);
+        }
+        T& _t;
+    } _instance;
 };
