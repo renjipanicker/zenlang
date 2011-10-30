@@ -24,6 +24,8 @@ private:
     inline Ast::TypeSpec& currentTypeSpec() const;
     inline Ast::TypeSpec& enterTypeSpec(Ast::TypeSpec& typeSpec);
     inline Ast::TypeSpec& leaveTypeSpec(Ast::TypeSpec& typeSpec);
+    inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
+    inline const Ast::QualifiedTypeSpec& getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name);
 
 private:
     inline Ast::Scope& addScope();
@@ -47,6 +49,9 @@ public:
     Ast::ImportStatement*    aImportNamespaceId(const Ast::Token& name);
     Ast::Statement*          aGlobalTypeSpecStatement(const Ast::AccessType::T& accessType, Ast::UserDefinedTypeSpec& typeSpec);
     Ast::TypedefDefn*        aTypedefDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
+    Ast::TemplatePartList*   aTemplatePartList(Ast::TemplatePartList& list, const Ast::Token& name);
+    Ast::TemplatePartList*   aTemplatePartList(const Ast::Token& name);
+    Ast::TemplateDefn*       aTemplateDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TemplatePartList& list);
     Ast::EnumDefn*           aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::EnumDefn*           aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::EnumMemberDefnList& list);
     Ast::EnumMemberDefnList* aEnumMemberDefnList(Ast::EnumMemberDefnList& list, const Ast::EnumMemberDefn& enumMemberDef);
@@ -78,6 +83,7 @@ public:
 public:
     Ast::UserDefinedTypeSpecStatement* aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec);
     Ast::ExprStatement*                aExprStatement(const Ast::Expr& expr);
+    Ast::PrintStatement*               aPrintStatement(const Ast::FormatExpr& expr);
     Ast::RoutineReturnStatement*       aRoutineReturnStatement();
     Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Expr& expr);
     Ast::FunctionReturnStatement*      aFunctionReturnStatement(const Ast::ExprList& exprList);
@@ -94,6 +100,20 @@ public:
     Ast::PrefixOpExpr&        aPrefixExpr(const Ast::Token& op, const Ast::Expr& rhs);
     Ast::StructMemberRefExpr& aStructMemberRefExpr(const Ast::StructDefn& structDef, const Ast::Token& name);
     Ast::EnumMemberRefExpr&   aEnumMemberRefExpr(const Ast::EnumDefn& enumDef, const Ast::Token& name);
+
+    Ast::ListExpr*            aListExpr(const Ast::Token& pos, const Ast::ListList& list);
+    Ast::ListList*            aListList(Ast::ListList& list, const Ast::ListItem& item);
+    Ast::ListList*            aListList(const Ast::ListItem& item);
+    Ast::ListList*            aListList();
+    Ast::ListItem*            aListItem(const Ast::Expr& valueExpr);
+
+    Ast::DictExpr*            aDictExpr(const Ast::Token& pos, const Ast::DictList& list);
+    Ast::DictList*            aDictList(Ast::DictList& list, const Ast::DictItem& item);
+    Ast::DictList*            aDictList(const Ast::DictItem& item);
+    Ast::DictList*            aDictList();
+    Ast::DictItem*            aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& valueExpr);
+
+    Ast::FormatExpr*          aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr);
     Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
     Ast::ConstantExpr&        aConstantExpr(const std::string& type, const Ast::Token& value);
 };

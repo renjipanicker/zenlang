@@ -11,6 +11,11 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR} "lib/")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} "src/")
 
 # add debug definitions
+IF(CMAKE_COMPILER_IS_GNUCXX)
+    ADD_DEFINITIONS( "-Wall" )
+ENDIF(CMAKE_COMPILER_IS_GNUCXX)
+
+# add debug definitions
 IF( CMAKE_BUILD_TYPE STREQUAL "Debug")
     ADD_DEFINITIONS( "-DDEBUG" )
 ENDIF()

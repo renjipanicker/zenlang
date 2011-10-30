@@ -48,9 +48,9 @@ void ProGen::Impl::run() {
         trace("basename %s\n", basename.c_str());
         trace("ext %s\n", ext.c_str());
 
-        if((_project.hppExt().find(ext) != -1) || (_project.cppExt().find(ext) != -1)) {
+        if((_project.hppExt().find(ext) != std::string::npos) || (_project.cppExt().find(ext) != std::string::npos)) {
             fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s)\n", filename.c_str());
-        } else if(_project.zppExt().find(ext) != -1) {
+        } else if(_project.zppExt().find(ext) != std::string::npos) {
             fprintf(_fpPro, "ADD_CUSTOM_COMMAND(\n");
             fprintf(_fpPro, "    COMMAND zen -c \"%s\"\n", filename.c_str());
             fprintf(_fpPro, "    OUTPUT \"%s.cpp\"\n", basename.c_str());

@@ -3,9 +3,15 @@
 #include "compiler.hpp"
 
 static int showHelp() {
-    fprintf(stdout, "zen compiler 0.1\n");
+    fprintf(stdout, "zen compiler 0.1a");
+    static const int len = 1024;
+    char path[len];
+    if (readlink ("/proc/self/exe", path, len) != -1) {
+        fprintf(stdout, " (%s)", path);
+    }
+    fprintf(stdout, "\n");
     fprintf(stdout, "Copyright(c) 2011 Renji Panicker.\n");
-    fprintf(stdout, "zen <options> <files>\n");
+    fprintf(stdout, "Usage: zen <options> <files>\n");
     fprintf(stdout, "  -h --help      Show this message\n");
     fprintf(stdout, "  -c             Compile only\n");
     fprintf(stdout, "  -n --name      Project name\n");

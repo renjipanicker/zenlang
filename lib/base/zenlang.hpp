@@ -14,8 +14,6 @@ inline T* ptr(T& t) {
     return &t;
 }
 
-typedef std::string string;
-
 inline void _trace(const std::string& txt) {
 #if defined(WIN32)
     OutputDebugStringA(txt.c_str());
@@ -232,4 +230,44 @@ struct test : public Function< T > {
         }
         T& _t;
     } _instance;
+};
+
+template <typename V>
+struct ListCreator {
+    inline ListCreator& add(V v) {
+        _list.push_back(v);
+        return ref(this);
+    }
+    inline std::list<V> value() {return _list;}
+    std::list<V> _list;
+};
+
+template <typename K, typename V>
+struct DictCreator {
+    inline DictCreator& add(K k, V v) {
+        _list[k] = v;
+        return ref(this);
+    }
+    inline std::map<K, V> value() {return _list;}
+    std::map<K, V> _list;
+};
+
+struct Formatter {
+    inline Formatter(const std::string& text) : _text(text) {}
+    template <typename T>
+    inline Formatter& add(const std::string& key, T value) {
+        std::stringstream ss;
+        ss << value;
+        std::string replace = ss.str();
+        std::string search = "%{" + key + "}";
+
+        for(std::string::size_type next = _text.find(search); next != std::string::npos;next = _text.find(search, next)) {
+            _text.replace(next, search.length(), replace);
+            next += replace.length();
+        }
+        return ref(this);
+    }
+    inline std::string value() {return _text;}
+private:
+    std::string _text;
 };

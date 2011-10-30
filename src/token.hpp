@@ -6,7 +6,7 @@
 
 struct TokenData {
 private:
-    static const int Size = 32;
+    static const size_t Size = 32;
     int _id;
     int _row;
     int _col;

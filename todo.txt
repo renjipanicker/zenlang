@@ -1,9 +1,4 @@
-string-format-expr
-print-statement
 function-call-expr
-list
-dict
-tree
 if-else
 while
 do-while
@@ -26,8 +21,17 @@ xrefs
 grammar
 large lists in in-memory sqlite
 project generator - msvc
+assert
+unused
+print <dst> <expr>;
+print <dst> <src> <level> <expr>;
 
 Remove block from unit
 project generator - cmake
 unit tests
 main()
+list
+dict
+tree
+string-format-expr
+print <expr>;

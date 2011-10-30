@@ -10,9 +10,12 @@ public routine int testRoutine(const int& x) {
 public function (int i, string s)testFunction(const int& x) {
     (1 + 2) * 3;
     "xx";
+    [1,2,3];
+    ["a":1,"b":2,"c":3];
     return (67890, "yy");
 }
 
 public test testFunction001 {
+    print "yy %{x}\n" @ {"x":1};
     //return (1);
 }

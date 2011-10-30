@@ -35,6 +35,8 @@
 #define snprintf _snprintf_s
 #define sprintf sprintf_s
 #pragma warning (disable:4355) // this used in base ctor initialization.
+#else
+#include <libgen.h>
 #endif
 
 #if defined __cplusplus

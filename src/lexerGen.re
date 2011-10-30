@@ -167,20 +167,22 @@ re2c:condenumprefix          = EState;
 <Normal>   "public"    := _parser.feed(token(s, ZENTOK_PUBLIC)); continue;
 <Normal>   "export"    := _parser.feed(token(s, ZENTOK_EXPORT)); continue;
 
-<Normal>   "typedef"  := _parser.feed(token(s, ZENTOK_TYPEDEF)); continue;
-<Normal>   "enum"     := _parser.feed(token(s, ZENTOK_ENUM)); continue;
-<Normal>   "struct"   := _parser.feed(token(s, ZENTOK_STRUCT)); continue;
-<Normal>   "routine"  := _parser.feed(token(s, ZENTOK_ROUTINE)); continue;
-<Normal>   "function" := _parser.feed(token(s, ZENTOK_FUNCTION)); continue;
-<Normal>   "event"    := _parser.feed(token(s, ZENTOK_EVENT)); continue;
+<Normal>   "typedef"   := _parser.feed(token(s, ZENTOK_TYPEDEF)); continue;
+<Normal>   "template"  := _parser.feed(token(s, ZENTOK_TEMPLATE)); continue;
+<Normal>   "enum"      := _parser.feed(token(s, ZENTOK_ENUM)); continue;
+<Normal>   "struct"    := _parser.feed(token(s, ZENTOK_STRUCT)); continue;
+<Normal>   "routine"   := _parser.feed(token(s, ZENTOK_ROUTINE)); continue;
+<Normal>   "function"  := _parser.feed(token(s, ZENTOK_FUNCTION)); continue;
+<Normal>   "event"     := _parser.feed(token(s, ZENTOK_EVENT)); continue;
 
-<Normal>   "native"   := _parser.feed(token(s, ZENTOK_NATIVE)); continue;
-<Normal>   "const"    := _parser.feed(token(s, ZENTOK_CONST)); continue;
+<Normal>   "native"    := _parser.feed(token(s, ZENTOK_NATIVE)); continue;
+<Normal>   "const"     := _parser.feed(token(s, ZENTOK_CONST)); continue;
 
-<Normal>   "return"   := sendReturn(s); continue;
+<Normal>   "print"     := _parser.feed(token(s, ZENTOK_PRINT)); continue;
+<Normal>   "return"    := sendReturn(s); continue;
 
 <Normal>   "@" [a-zA-Z][a-zA-Z0-9_]* := _parser.feed(token(s, ZENTOK_KEY)); continue;
-<Normal>   [a-zA-Z][a-zA-Z0-9_]* := _parser.feed(token(s, ZENTOK_ID)); continue;
+<Normal>       [a-zA-Z][a-zA-Z0-9_]* := _parser.feed(token(s, ZENTOK_ID)); continue;
 
 <Normal>   "0" [0-7]+      := _parser.feed(token(s, ZENTOK_OCTINT_CONST)); continue;
 <Normal>   "0" [0-7]+ [lL] := _parser.feed(token(s, ZENTOK_LOCTINT_CONST)); continue;
@@ -188,36 +190,36 @@ re2c:condenumprefix          = EState;
 <Normal>   [0-9]+      := _parser.feed(token(s, ZENTOK_DECINT_CONST)); continue;
 <Normal>   [0-9]+ [lL] := _parser.feed(token(s, ZENTOK_LDECINT_CONST)); continue;
 
-<Normal>   "0" [xX] [A-Za-z0-9]+      := _parser.feed(token(s, ZENTOK_HEXINT_CONST)); continue;
-<Normal>   "0" [xX] [A-Za-z0-9]+ [lL] := _parser.feed(token(s, ZENTOK_LHEXINT_CONST)); continue;
+<Normal>   "0" [xX] [A-Za-z0-9]+                        := _parser.feed(token(s, ZENTOK_HEXINT_CONST)); continue;
+<Normal>   "0" [xX] [A-Za-z0-9]+ [lL]                   := _parser.feed(token(s, ZENTOK_LHEXINT_CONST)); continue;
 
-<Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [fF] := _parser.feed(token(s, ZENTOK_FLOAT_CONST)); continue;
-<Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [fF] := _parser.feed(token(s, ZENTOK_FLOAT_CONST)); continue;
+<Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [fF]  := _parser.feed(token(s, ZENTOK_FLOAT_CONST)); continue;
+<Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [fF]                := _parser.feed(token(s, ZENTOK_FLOAT_CONST)); continue;
 
 <Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [dD]? := _parser.feed(token(s, ZENTOK_DOUBLE_CONST)); continue;
-<Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [dD]? := _parser.feed(token(s, ZENTOK_DOUBLE_CONST)); continue;
+<Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [dD]?               := _parser.feed(token(s, ZENTOK_DOUBLE_CONST)); continue;
 
-<Normal>   '"' => String := s->text = s->cur; continue;
-<String>   '\\' . := continue;
-<String>   '"' => Normal := _parser.feed(token(s, ZENTOK_STRING_CONST)); continue;
-<String>   [^] := continue;
+<Normal>   '"'    => String := s->text = s->cur; continue;
+<String>   '\\' .           := continue;
+<String>   '"'    => Normal := _parser.feed(token(s, ZENTOK_STRING_CONST)); continue;
+<String>   [^]              := continue;
 
-<Normal>   "/*" :=> Comment
+<Normal>    "/*"    :=> Comment
 <Comment>   "*" "/" :=> Normal
-<Comment>   [^] :=> Comment
+<Comment>   [^]     :=> Comment
 
-<Normal>   "//" :=> Skiptoeol
+<Normal>      "//"            :=> Skiptoeol
 <Skiptoeol>   "\\" "\r"? "\n" :=> Skiptoeol
-<Skiptoeol>   "\r" "\n" => Normal := newLine(s); continue;
-<Skiptoeol>   "\n" => Normal := newLine(s); continue;
-<Skiptoeol>   [^] :=> Skiptoeol
+<Skiptoeol>   "\r" "\n"        => Normal      :=  newLine(s); continue;
+<Skiptoeol>   "\n"             => Normal      :=  newLine(s); continue;
+<Skiptoeol>   [^]             :=> Skiptoeol
 
 <Normal>   "\r" "\n" := newLine(s); continue;
-<Normal>   "\n" := newLine(s); continue;
-<Normal>   " " := continue;
+<Normal>   "\n"      := newLine(s); continue;
+<Normal>   " "       := continue;
 
 <Normal>   "\000" := _parser.feed(token(s, ZENTOK_EOF)); continue;
-<Normal>   [^] := _parser.feed(token(s, ZENTOK_ERR)); continue;
+<Normal>   [^]    := _parser.feed(token(s, ZENTOK_ERR)); continue;
 */
 
 /*
