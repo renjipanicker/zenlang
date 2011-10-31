@@ -16,6 +16,7 @@ private:
     void sendReturn(Scanner* s) {
         const Ast::RoutineDefn* rd = 0;
         const Ast::FunctionDefn* fd = 0;
+        const Ast::FunctionImpl* fi = 0;
         for(Context::TypeSpecStack::const_reverse_iterator it = _context.typeSpecStack().rbegin(); it != _context.typeSpecStack().rend(); ++it) {
             const Ast::TypeSpec* ts = *it;
             if((rd = dynamic_cast<const Ast::RoutineDefn*>(ts)) != 0) {
@@ -26,8 +27,12 @@ private:
                 _parser.feed(token(s, ZENTOK_FRETURN));
                 return;
             }
+            if((fi = dynamic_cast<const Ast::FunctionImpl*>(ts)) != 0) {
+                _parser.feed(token(s, ZENTOK_FRETURN));
+                return;
+            }
         }
-        throw Exception("Invalid return\n");
+        throw Exception("Invalid return in lexer\n");
     }
 
 private:

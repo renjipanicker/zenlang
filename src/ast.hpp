@@ -251,11 +251,22 @@ namespace Ast {
         inline const Ast::Scope::List& out() const {return _out.list();}
         inline const Token& name() const {return _name;}
         inline const Ast::Scope::List& in() const {return _in.list();}
+        inline const Ast::Scope& outScope()  const {return _out;}
         inline Ast::Scope& inScope()  const {return _in;}
     private:
         const Ast::Scope& _out;
         const Token _name;
         Ast::Scope& _in;
+    };
+
+    class FunctionRetn : public ChildTypeSpec {
+    public:
+        inline FunctionRetn(const TypeSpec& parent, const Ast::Token& name, const Ast::Scope& out) : ChildTypeSpec(parent, name), _out(out) {}
+        inline const Ast::Scope::List& out() const {return _out.list();}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ast::Scope& _out;
     };
 
     class Function : public UserDefinedTypeSpec {
@@ -349,6 +360,7 @@ namespace Ast {
         virtual void visit(const FunctionDefn& node) = 0;
         virtual void visit(const FunctionImpl& node) = 0;
         virtual void visit(const EventDecl& node) = 0;
+        virtual void visit(const FunctionRetn& node) = 0;
         virtual void visit(const Namespace& node) = 0;
         virtual void visit(const Root& node) = 0;
     };
@@ -363,6 +375,7 @@ namespace Ast {
     inline void FunctionDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionImpl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void EventDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void FunctionRetn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Namespace::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Root::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
@@ -566,6 +579,18 @@ namespace Ast {
         const Expr& _expr;
     };
 
+    class FunctionCallExpr : public Expr {
+    public:
+        inline FunctionCallExpr(const QualifiedTypeSpec& qTypeSpec, const TypeSpec& typeSpec, const ExprList& exprList) : Expr(qTypeSpec), _typeSpec(typeSpec), _exprList(exprList) {}
+        inline const TypeSpec& typeSpec() const {return _typeSpec;}
+        inline const ExprList& exprList() const {return _exprList;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const TypeSpec& _typeSpec;
+        const ExprList& _exprList;
+    };
+
     class ConstantExpr : public Expr {
     public:
         inline ConstantExpr(const QualifiedTypeSpec& qTypeSpec, const Token& value) : Expr(qTypeSpec), _value(value) {}
@@ -598,6 +623,7 @@ namespace Ast {
         virtual void visit(const ListExpr& node) = 0;
         virtual void visit(const DictExpr& node) = 0;
         virtual void visit(const FormatExpr& node) = 0;
+        virtual void visit(const FunctionCallExpr& node) = 0;
         virtual void visit(const OrderedExpr& node) = 0;
         virtual void visit(const ConstantExpr& node) = 0;
         virtual void sep() = 0;
@@ -612,6 +638,7 @@ namespace Ast {
     inline void ListExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void DictExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FormatExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void FunctionCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ConstantExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
@@ -696,11 +723,9 @@ namespace Ast {
 
     class FunctionReturnStatement : public ReturnStatement {
     public:
-        inline FunctionReturnStatement(const Function& function, const ExprList& exprList) : ReturnStatement(exprList), _function(function) {}
+        inline FunctionReturnStatement(const ExprList& exprList) : ReturnStatement(exprList) {}
     private:
         virtual void visit(Visitor& visitor) const;
-    private:
-        const Function& _function;
     };
 
     class CompoundStatement : public Statement {

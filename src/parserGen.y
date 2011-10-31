@@ -345,6 +345,7 @@ rExpr(L) ::= rPrefixExpr(R).   {L = R;}
 rExpr(L) ::= rListExpr(R).     {L = R;}
 rExpr(L) ::= rDictExpr(R).     {L = R;}
 rExpr(L) ::= rFormatExpr(R).   {L = R;}
+rExpr(L) ::= rFunctionCallExpr(R). {L = R;}
 rExpr(L) ::= rConstantExpr(R). {L = R;}
 
 //-------------------------------------------------
@@ -463,6 +464,11 @@ rTreesList(L)  ::=                     rTreeItem(I). {L = ref(pctx).aDictList(re
 
 %type rTreeItem {Ast::DictItem*}
 rTreeItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(E));}
+
+//-------------------------------------------------
+// function call expressions
+%type rFunctionCallExpr {Ast::FunctionCallExpr*}
+rFunctionCallExpr(L) ::= rTypeSpec(typeSpec) rExprsList(exprList).  {L = ref(pctx).aFunctionCallExpr(ref(typeSpec), ref(exprList));}
 
 //-------------------------------------------------
 // ordered expression

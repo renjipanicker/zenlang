@@ -263,6 +263,11 @@ Ast::FunctionDefn* Context::aEnterFunctionDefn(const Ast::FunctionSig& functionS
     currentTypeSpec().addChild(functionDefn);
     enterScope(functionSig.inScope());
     enterTypeSpec(functionDefn);
+
+    Ast::Token token(name.row(), name.col(), "Return");
+    Ast::FunctionRetn& functionRetn = _unit.addNode(new Ast::FunctionRetn(functionDefn, token, functionSig.outScope()));
+    functionDefn.addChild(functionRetn);
+
     return ptr(functionDefn);
 }
 
@@ -282,6 +287,11 @@ Ast::FunctionImpl* Context::aEnterFunctionImpl(const Ast::TypeSpec& base, const 
     currentTypeSpec().addChild(functionImpl);
     enterScope(ref(function).sig().inScope());
     enterTypeSpec(functionImpl);
+
+    Ast::Token token(name.row(), name.col(), "Return");
+    Ast::FunctionRetn& functionRetn = _unit.addNode(new Ast::FunctionRetn(functionImpl, token, function->sig().outScope()));
+    functionImpl.addChild(functionRetn);
+
     return ptr(functionImpl);
 }
 
@@ -294,6 +304,7 @@ Ast::EventDecl* Context::aEventDecl(const Ast::VariableDefn& in, const Ast::Func
 
 Ast::FunctionSig* Context::aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in) {
     Ast::FunctionSig& functionSig = _unit.addNode(new Ast::FunctionSig(out, name, in));
+
     return ptr(functionSig);
 }
 
@@ -368,12 +379,7 @@ Ast::RoutineReturnStatement* Context::aRoutineReturnStatement(const Ast::Expr& e
 }
 
 Ast::FunctionReturnStatement* Context::aFunctionReturnStatement(const Ast::ExprList& exprList) {
-    Ast::TypeSpec& typeSpec = currentTypeSpec();
-    const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
-    if(function == 0) {
-        throw Exception("Invalid return\n");
-    }
-    Ast::FunctionReturnStatement& returnStatement = _unit.addNode(new Ast::FunctionReturnStatement(ref(function), exprList));
+    Ast::FunctionReturnStatement& returnStatement = _unit.addNode(new Ast::FunctionReturnStatement(exprList));
     return ptr(returnStatement);
 }
 
@@ -506,6 +512,17 @@ Ast::FormatExpr* Context::aFormatExpr(const Ast::Token& pos, const Ast::Expr& st
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "string");
     Ast::FormatExpr& formatExpr = _unit.addNode(new Ast::FormatExpr(qTypeSpec, stringExpr, dictExpr));
     return ptr(formatExpr);
+}
+
+Ast::FunctionCallExpr* Context::aFunctionCallExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
+    const Ast::TypeSpec* retn = typeSpec.hasChild("Return");
+    const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(retn);
+    if(functionRetn == 0) {
+        throw Exception("Unknown function return type '%s'\n", typeSpec.name().text());
+    }
+    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(functionRetn), false);
+    Ast::FunctionCallExpr& functionCallExpr = _unit.addNode(new Ast::FunctionCallExpr(qTypeSpec, typeSpec, exprList));
+    return ptr(functionCallExpr);
 }
 
 Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {

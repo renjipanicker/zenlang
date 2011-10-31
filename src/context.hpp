@@ -114,6 +114,7 @@ public:
     Ast::DictItem*            aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& valueExpr);
 
     Ast::FormatExpr*          aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr);
+    Ast::FunctionCallExpr*    aFunctionCallExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
     Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
     Ast::ConstantExpr&        aConstantExpr(const std::string& type, const Ast::Token& value);
 };

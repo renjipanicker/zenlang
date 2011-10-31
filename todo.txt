@@ -1,4 +1,4 @@
-function-call-expr
+local variables
 if-else
 while
 do-while
@@ -9,7 +9,6 @@ struct-init
 project builder
 project reader
 inner functions
-local variables
 shared variables
 query
 run
@@ -35,3 +34,4 @@ dict
 tree
 string-format-expr
 print <expr>;
+function-call-expr

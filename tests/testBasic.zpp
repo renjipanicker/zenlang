@@ -17,5 +17,6 @@ public function (int i, string s)testFunction(const int& x) {
 
 public test testFunction001 {
     print "yy %{x}\n" @ {"x":1};
-    //return (1);
+    testFunction(1);
+    return (1);
 }
