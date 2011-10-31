@@ -1,4 +1,5 @@
 idref-expr
+run
 if-else
 while
 do-while
@@ -6,21 +7,20 @@ switch-value
 switch-expression
 switch-typeof
 struct-init
+coerce
+default intrinsic type values
+assert()
+unused()
 project builder
 project reader
 inner functions
 shared variables
 query
-run
-coerce
-default intrinsic type values
 lexical scanner for string input
 cmdline
 grammar
 large lists in in-memory sqlite
 project generator - msvc
-assert
-unused
 print <dst> <expr>;
 print <dst> <src> <level> <expr>;
 
