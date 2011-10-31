@@ -199,7 +199,9 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(fpDecl(node), "%sclass %s : public Function<%s> {\n", Indent::get(), node.name().text(), node.name().text());
 
         fprintf(fpDecl(node), "%s    static void impl(%s& This);\n", Indent::get(), node.name().text());
+        fprintf(fpDecl(node), "%spublic:\n", Indent::get());
         visitChildrenIndent(node);
+        fprintf(fpDecl(node), "%sprivate:\n", Indent::get());
         fprintf(fpDecl(node), "%s    Return* _return;\n", Indent::get());
         fprintf(fpDecl(node), "%s    inline void ret(Return* val) {_return = val;}\n", Indent::get());
 
@@ -474,6 +476,12 @@ private:
 
     virtual void visit(const Ast::UserDefinedTypeSpecStatement& node) {
         TypeDeclarationGenerator(_fpHdr, _fpSrc, _fpImp).visitNode(node.typeSpec());
+    }
+
+    virtual void visit(const Ast::LocalStatement& node) {
+        fprintf(_fpSrc, "%s%s %s = ", Indent::get(), getName(node.defn().qualifiedTypeSpec()).c_str(), node.defn().name().text());
+        ExprGenerator(_fpSrc).visitNode(node.defn().initExpr());
+        fprintf(_fpSrc, ";\n");
     }
 
     virtual void visit(const Ast::ExprStatement& node) {

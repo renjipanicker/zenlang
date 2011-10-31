@@ -102,14 +102,17 @@ namespace Ast {
         const bool _isRef;
     };
 
+    class Expr;
     class VariableDefn : public Node {
     public:
-        inline VariableDefn(const QualifiedTypeSpec& qualifiedTypeSpec, const Token& name) : _qualifiedTypeSpec(qualifiedTypeSpec), _name(name) {}
+        inline VariableDefn(const QualifiedTypeSpec& qualifiedTypeSpec, const Token& name, const Ast::Expr& initExpr) : _qualifiedTypeSpec(qualifiedTypeSpec), _name(name), _initExpr(initExpr) {}
         inline const QualifiedTypeSpec& qualifiedTypeSpec() const {return _qualifiedTypeSpec;}
         inline const Token& name() const {return _name;}
+        inline const Expr& initExpr() const {return _initExpr;}
     private:
         const QualifiedTypeSpec& _qualifiedTypeSpec;
         const Token _name;
+        const Ast::Expr& _initExpr;
     };
 
     class Scope : public Node {
@@ -685,6 +688,16 @@ namespace Ast {
         const UserDefinedTypeSpec& _typeSpec;
     };
 
+    class LocalStatement : public Statement {
+    public:
+        inline LocalStatement(const VariableDefn& defn) : _defn(defn) {}
+        inline const VariableDefn& defn() const {return _defn;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const VariableDefn& _defn;
+    };
+
     class ExprStatement : public Statement {
     public:
         inline ExprStatement(const Expr& expr) : _expr(expr) {}
@@ -748,6 +761,7 @@ namespace Ast {
 
         virtual void visit(const ImportStatement& node) = 0;
         virtual void visit(const UserDefinedTypeSpecStatement& node) = 0;
+        virtual void visit(const LocalStatement& node) = 0;
         virtual void visit(const ExprStatement& node) = 0;
         virtual void visit(const PrintStatement& node) = 0;
         virtual void visit(const RoutineReturnStatement& node) = 0;
@@ -757,6 +771,7 @@ namespace Ast {
 
     inline void ImportStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void UserDefinedTypeSpecStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void LocalStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void PrintStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}

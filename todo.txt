@@ -1,4 +1,4 @@
-local variables
+idref-expr
 if-else
 while
 do-while
@@ -16,7 +16,6 @@ coerce
 default intrinsic type values
 lexical scanner for string input
 cmdline
-xrefs
 grammar
 large lists in in-memory sqlite
 project generator - msvc
@@ -35,3 +34,4 @@ tree
 string-format-expr
 print <expr>;
 function-call-expr
+local variables

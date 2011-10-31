@@ -173,13 +173,13 @@ rTemplatePartList(L) ::=                            ID(name). {L = ref(pctx).aTe
 //-------------------------------------------------
 // enum declarations
 %type rEnumDefn {Ast::EnumDefn*}
-rEnumDefn(L) ::= ENUM ID(name) NATIVE SEMI. {L = ref(pctx).aEnumDefn(name, Ast::DefinitionType::Native);}
+rEnumDefn(L) ::= ENUM ID(name) NATIVE                                  SEMI. {L = ref(pctx).aEnumDefn(name, Ast::DefinitionType::Native);}
 rEnumDefn(L) ::= ENUM ID(name) LCURLY rEnumMemberDefnList(list) RCURLY SEMI. {L = ref(pctx).aEnumDefn(name, Ast::DefinitionType::Direct, ref(list));}
 
 //-------------------------------------------------
 %type rEnumMemberDefnList {Ast::EnumMemberDefnList*}
 rEnumMemberDefnList(L) ::= rEnumMemberDefnList(list) rEnumMemberDefn(enumMemberDef). {L = ref(pctx).aEnumMemberDefnList(ref(list), ref(enumMemberDef));}
-rEnumMemberDefnList(L) ::= rEnumMemberDefn(enumMemberDef). {L = ref(pctx).aEnumMemberDefnList(ref(enumMemberDef));}
+rEnumMemberDefnList(L) ::=                           rEnumMemberDefn(enumMemberDef). {L = ref(pctx).aEnumMemberDefnList(ref(enumMemberDef));}
 
 //-------------------------------------------------
 %type rEnumMemberDefn {Ast::EnumMemberDefn*}
@@ -188,14 +188,14 @@ rEnumMemberDefn(L) ::= ID(name) SEMI. {L = ref(pctx).aEnumMemberDefn(name);}
 //-------------------------------------------------
 // struct declarations
 %type rStructDefn {Ast::StructDefn*}
-rStructDefn(L) ::= STRUCT ID(name) NATIVE                                   SEMI. {L = ref(pctx).aStructDefn(name, Ast::DefinitionType::Native);}
+rStructDefn(L) ::= STRUCT ID(name) NATIVE                                    SEMI. {L = ref(pctx).aStructDefn(name, Ast::DefinitionType::Native);}
 rStructDefn(L) ::= STRUCT ID(name) LCURLY rStructMemberDefnList(list) RCURLY SEMI. {L = ref(pctx).aStructDefn(name, Ast::DefinitionType::Direct, ref(list));}
-rStructDefn(L) ::= STRUCT ID(name) LCURLY                            RCURLY SEMI. {L = ref(pctx).aStructDefn(name, Ast::DefinitionType::Direct);}
+rStructDefn(L) ::= STRUCT ID(name) LCURLY                             RCURLY SEMI. {L = ref(pctx).aStructDefn(name, Ast::DefinitionType::Direct);}
 
 //-------------------------------------------------
 %type rStructMemberDefnList {Ast::Scope*}
 rStructMemberDefnList(L) ::= rStructMemberDefnList(list) rVariableDefn(variableDef) SEMI. {L = ref(pctx).aStructMemberDefnList(ref(list), ref(variableDef));}
-rStructMemberDefnList(L) ::=                            rVariableDefn(variableDef) SEMI. {L = ref(pctx).aStructMemberDefnList(ref(variableDef));}
+rStructMemberDefnList(L) ::=                             rVariableDefn(variableDef) SEMI. {L = ref(pctx).aStructMemberDefnList(ref(variableDef));}
 
 //-------------------------------------------------
 // routine declarations
@@ -264,8 +264,8 @@ rScope(L) ::= .                                              {L = ref(pctx).aSco
 //-------------------------------------------------
 // variable def
 %type rVariableDefn {const Ast::VariableDefn*}
-rVariableDefn(L) ::= rQualifiedTypeSpec(qTypeRef) ID(name).                   {L = ref(pctx).aVariableDefn(ref(qTypeRef), name);}
-rVariableDefn(L) ::= rQualifiedTypeSpec(qTypeRef) ID(name) ASSIGNEQUAL rExpr. {L = ref(pctx).aVariableDefn(ref(qTypeRef), name);}
+rVariableDefn(L) ::=                              ID(name) ASSIGNEQUAL rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
+rVariableDefn(L) ::= rQualifiedTypeSpec(qTypeRef) ID(name).                             {L = ref(pctx).aVariableDefn(ref(qTypeRef), name);}
 
 //-------------------------------------------------
 // qualified types
@@ -283,17 +283,22 @@ rTypeSpec(L) ::=                         ID(name). {L = ref(pctx).aTypeSpec(name
 
 //-------------------------------------------------
 // statements
-%type rLocalStatement {Ast::Statement*}
-rLocalStatement(L) ::= rUserDefinedTypeSpecStatement(R). {L = R;}
-rLocalStatement(L) ::= rExprStatement(R).                {L = R;}
-rLocalStatement(L) ::= rPrintStatement(R).               {L = R;}
-rLocalStatement(L) ::= rRoutineReturnStatement(R).       {L = R;}
-rLocalStatement(L) ::= rFunctionReturnStatement(R).      {L = R;}
-rLocalStatement(L) ::= rCompoundStatement(R).            {L = R;}
+%type rInnerStatement {Ast::Statement*}
+rInnerStatement(L) ::= rUserDefinedTypeSpecStatement(R). {L = R;}
+rInnerStatement(L) ::= rLocalStatement(R).               {L = R;}
+rInnerStatement(L) ::= rExprStatement(R).                {L = R;}
+rInnerStatement(L) ::= rPrintStatement(R).               {L = R;}
+rInnerStatement(L) ::= rRoutineReturnStatement(R).       {L = R;}
+rInnerStatement(L) ::= rFunctionReturnStatement(R).      {L = R;}
+rInnerStatement(L) ::= rCompoundStatement(R).            {L = R;}
 
 //-------------------------------------------------
 %type rUserDefinedTypeSpecStatement {Ast::UserDefinedTypeSpecStatement*}
 rUserDefinedTypeSpecStatement(L) ::= rTypeSpecDef(typeSpec). {L = ref(pctx).aUserDefinedTypeSpecStatement(ref(typeSpec));}
+
+//-------------------------------------------------
+%type rLocalStatement {Ast::LocalStatement*}
+rLocalStatement(L) ::= LOCAL rVariableDefn(defn) SEMI. {L = ref(pctx).aLocalStatement(ref(defn));}
 
 //-------------------------------------------------
 %type rExprStatement {Ast::ExprStatement*}
@@ -320,7 +325,7 @@ rEnterCompoundStatement ::= LCURLY.
 rLeaveCompoundStatement ::= RCURLY.
 
 %type rStatementList {Ast::CompoundStatement*}
-rStatementList(L) ::= rStatementList(list) rLocalStatement(statement). {L = ref(pctx).aStatementList(ref(list), ref(statement));}
+rStatementList(L) ::= rStatementList(list) rInnerStatement(statement). {L = ref(pctx).aStatementList(ref(list), ref(statement));}
 rStatementList(L) ::= .                                                {L = ref(pctx).aStatementList();}
 
 //-------------------------------------------------

@@ -26,6 +26,7 @@ private:
     inline Ast::TypeSpec& leaveTypeSpec(Ast::TypeSpec& typeSpec);
     inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
     inline const Ast::QualifiedTypeSpec& getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name);
+    inline const Ast::Expr& getInitExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
 
 private:
     inline Ast::Scope& addScope();
@@ -75,6 +76,7 @@ public:
     Ast::Scope*              aScope(Ast::Scope& list, const Ast::VariableDefn& variableDefn);
     Ast::Scope*              aScope(const Ast::VariableDefn& variableDefn);
     Ast::Scope*              aScope();
+    Ast::VariableDefn*       aVariableDefn(const Ast::Token& name, const Ast::Expr& initExpr);
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
     Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
     const Ast::TypeSpec*     aTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
@@ -82,6 +84,7 @@ public:
 
 public:
     Ast::UserDefinedTypeSpecStatement* aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec);
+    Ast::LocalStatement*               aLocalStatement(const Ast::VariableDefn& defn);
     Ast::ExprStatement*                aExprStatement(const Ast::Expr& expr);
     Ast::PrintStatement*               aPrintStatement(const Ast::FormatExpr& expr);
     Ast::RoutineReturnStatement*       aRoutineReturnStatement();

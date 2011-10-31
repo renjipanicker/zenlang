@@ -97,6 +97,31 @@ inline const Ast::QualifiedTypeSpec& coerce(const Ast::QualifiedTypeSpec& lhs, c
     return lhs;
 }
 
+inline const Ast::Expr& Context::getInitExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
+    if((typeSpec.name().string() == "short")
+            || (typeSpec.name().string() == "int")
+            || (typeSpec.name().string() == "long")
+            || (typeSpec.name().string() == "float")
+            || (typeSpec.name().string() == "double")
+            ) {
+        Ast::Token value(name.row(), name.col(), "0");
+        return aConstantExpr(typeSpec.name().string(), value);
+    }
+
+    if((typeSpec.name().string() == "char")
+            || (typeSpec.name().string() == "string")
+            ) {
+        Ast::Token value(name.row(), name.col(), "");
+        return aConstantExpr(typeSpec.name().string(), value);
+    }
+
+    if((typeSpec.name().string() == "bool")) {
+        Ast::Token value(name.row(), name.col(), "false");
+        return aConstantExpr(typeSpec.name().string(), value);
+    }
+    throw Exception("Unknown init value for type '%s'\n", typeSpec.name().text());
+}
+
 inline Ast::EnumMemberDefnList& Context::addEnumMemberDefList() {
     Ast::EnumMemberDefnList& enumMemberDefnList = _unit.addNode(new Ast::EnumMemberDefnList());
     return enumMemberDefnList;
@@ -327,8 +352,15 @@ Ast::Scope* Context::aScope() {
     return ptr(list);
 }
 
+Ast::VariableDefn* Context::aVariableDefn(const Ast::Token& name, const Ast::Expr& initExpr) {
+    const Ast::QualifiedTypeSpec& qualifiedTypeSpec = initExpr.qTypeSpec();
+    Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
+    return ptr(variableDef);
+}
+
 Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name) {
-    Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name));
+    const Ast::Expr& initExpr = getInitExpr(qualifiedTypeSpec.typeSpec(), name);
+    Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
     return ptr(variableDef);
 }
 
@@ -353,6 +385,11 @@ const Ast::TypeSpec* Context::aTypeSpec(const Ast::Token& name) const {
 Ast::UserDefinedTypeSpecStatement* Context::aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec) {
     Ast::UserDefinedTypeSpecStatement& userDefinedTypeSpecStatement = _unit.addNode(new Ast::UserDefinedTypeSpecStatement(typeSpec));
     return ptr(userDefinedTypeSpecStatement);
+}
+
+Ast::LocalStatement* Context::aLocalStatement(const Ast::VariableDefn& defn) {
+    Ast::LocalStatement& localStatement = _unit.addNode(new Ast::LocalStatement(defn));
+    return ptr(localStatement);
 }
 
 Ast::ExprStatement* Context::aExprStatement(const Ast::Expr& expr) {
