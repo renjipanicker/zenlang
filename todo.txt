@@ -23,6 +23,7 @@ large lists in in-memory sqlite
 project generator - msvc
 print <dst> <expr>;
 print <dst> <src> <level> <expr>;
+***  move Formatter to String, Creator to List/Dict
 
 Remove block from unit
 project generator - cmake

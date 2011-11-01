@@ -32,15 +32,17 @@ void ProGen::Impl::run() {
     fprintf(_fpPro, "\n");
 
     fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \".\")\n");
-    fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", _project.zenPath().c_str());
+    fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", _project.zlibPath().c_str());
     for(Ast::Config::PathList::const_iterator it = _project.global().includePathList().begin(); it != _project.global().includePathList().end(); ++it) {
         const std::string& dir = *it;
         fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", dir.c_str());
     }
     fprintf(_fpPro, "\n");
 
-    fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s/base/zenlang.cpp)\n", _project.zenPath().c_str());
+    fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s/base/zenlang.cpp)\n", _project.zlibPath().c_str());
 
+    std::string zexePath = _project.zexePath();
+    String::replace(zexePath, "\\", "/");
     for(Ast::Config::PathList::const_iterator it = _project.global().sourceFileList().begin(); it != _project.global().sourceFileList().end(); ++it) {
         const std::string& filename = *it;
         std::string basename = getBaseName(filename);
@@ -52,7 +54,7 @@ void ProGen::Impl::run() {
             fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s)\n", filename.c_str());
         } else if(_project.zppExt().find(ext) != std::string::npos) {
             fprintf(_fpPro, "ADD_CUSTOM_COMMAND(\n");
-            fprintf(_fpPro, "    COMMAND zen -c \"%s\"\n", filename.c_str());
+            fprintf(_fpPro, "    COMMAND \"%s\" -c \"%s\"\n", zexePath.c_str(), filename.c_str());
             fprintf(_fpPro, "    OUTPUT \"%s.cpp\"\n", basename.c_str());
             fprintf(_fpPro, "    DEPENDS \"%s\"\n", filename.c_str());
             fprintf(_fpPro, ")\n");

@@ -200,6 +200,15 @@ struct DictCreator {
     std::map<K, V> _list;
 };
 
+namespace String {
+    inline void replace(std::string& text, const std::string& search, const std::string& replace) {
+        for(std::string::size_type next = text.find(search); next != std::string::npos;next = text.find(search, next)) {
+            text.replace(next, search.length(), replace);
+            next += replace.length();
+        }
+    }
+}
+
 struct Formatter {
     inline Formatter(const std::string& text) : _text(text) {}
     template <typename T>
@@ -208,11 +217,7 @@ struct Formatter {
         ss << value;
         std::string replace = ss.str();
         std::string search = "%{" + key + "}";
-
-        for(std::string::size_type next = _text.find(search); next != std::string::npos;next = _text.find(search, next)) {
-            _text.replace(next, search.length(), replace);
-            next += replace.length();
-        }
+        String::replace(_text, search, replace);
         return ref(this);
     }
     inline std::string value() {return _text;}

@@ -2,13 +2,9 @@
 #include "base/zenlang.hpp"
 #include "compiler.hpp"
 
-static int showHelp() {
+static int showHelp(const Ast::Project& project) {
     fprintf(stdout, "zen compiler 0.1a");
-    static const int len = 1024;
-    char path[len];
-    if (readlink ("/proc/self/exe", path, len) != -1) {
-        fprintf(stdout, " (%s)", path);
-    }
+    fprintf(stdout, " (%s)", project.zexePath().c_str());
     fprintf(stdout, "\n");
     fprintf(stdout, "Copyright(c) 2011 Renji Panicker.\n");
     fprintf(stdout, "Usage: zen <options> <files>\n");
@@ -21,18 +17,35 @@ static int showHelp() {
 
 int main(int argc, char* argv[]) {
     Ast::Project project;
+
+    static const int len = 1024;
+    char path[len];
+#ifdef WIN32
+    GetModuleFileName(NULL, path, len);
+    if(GetLastError() != ERROR_SUCCESS) {
+        fprintf(stdout, "Internal error retreiving process path\n");
+        return -1;
+    }
+#else
+    if (readlink ("/proc/self/exe", path, len) != -1) {
+        fprintf(stdout, "Internal error retreiving process path\n");
+        return -1;
+    }
+#endif
+    project.zexePath(path);
+
     project.global().addIncludeFile("base/pch.hpp");
     project.global().addIncludeFile("base/zenlang.hpp");
 
     if (argc < 2) {
-        return showHelp();
+        return showHelp(project);
     }
 
     int i = 1;
     while(i < argc) {
         std::string t = argv[i++];
         if((t == "-h") || (t == "--help")) {
-            return showHelp();
+            return showHelp(project);
         } else if(t == "-c") {
             project.mode(Ast::Project::Mode::Compile);
         } else if((t == "-n") || (t == "--name")) {
@@ -40,7 +53,7 @@ int main(int argc, char* argv[]) {
             project.name(t);
         } else if((t == "-z") || (t == "--zenPath")) {
             t = argv[i++];
-            project.zenPath(t);
+            project.zlibPath(t);
         } else {
             project.global().addSourceFile(t);
         }

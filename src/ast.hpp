@@ -885,13 +885,16 @@ namespace Ast {
         typedef std::list<Config*> ConfigList;
 
     public:
-        inline Project() : _name("main"), _zenPath("../../zenlang/lib"), _mode(Mode::Executable), _global("global"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;") {}
+        inline Project() : _name("main"), _zlibPath("../../zenlang/lib"), _mode(Mode::Executable), _global("global"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;") {}
     public:
         inline Project& name(const std::string& val) { _name = val; return ref(this);}
         inline const std::string& name() const {return _name;}
     public:
-        inline Project& zenPath(const std::string& val) { _zenPath = val; return ref(this);}
-        inline const std::string& zenPath() const {return _zenPath;}
+        inline Project& zexePath(const std::string& val) { _zexePath = val; return ref(this);}
+        inline const std::string& zexePath() const {return _zexePath;}
+    public:
+        inline Project& zlibPath(const std::string& val) { _zlibPath = val; return ref(this);}
+        inline const std::string& zlibPath() const {return _zlibPath;}
     public:
         inline Project& mode(const Mode::T& val) { _mode = val; return ref(this);}
         inline const Mode::T& mode() const {return _mode;}
@@ -906,7 +909,8 @@ namespace Ast {
         inline const std::string& zppExt() const {return _zppExt;}
     private:
         std::string _name;
-        std::string _zenPath;
+        std::string _zexePath;
+        std::string _zlibPath;
         Mode::T _mode;
         Config _global;
         ConfigList _configList;

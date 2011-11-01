@@ -20,7 +20,7 @@ void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& l
         return;
 
     // next check zen lib dir
-    if(parseFile(unit, _project.zenPath() + "/" + filename, level+1))
+    if(parseFile(unit, _project.zlibPath() + "/" + filename, level+1))
         return;
 
     // then all other include paths
