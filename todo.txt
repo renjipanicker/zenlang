@@ -23,7 +23,9 @@ large lists in in-memory sqlite
 project generator - msvc
 print <dst> <expr>;
 print <dst> <src> <level> <expr>;
-***  move Formatter to String, Creator to List/Dict
+*** move Formatter to String, Creator to List/Dict
+*** generate enum-init-expr
+*** merge enum and struct Ast's.
 
 Remove block from unit
 project generator - cmake

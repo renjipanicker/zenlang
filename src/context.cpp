@@ -96,6 +96,15 @@ inline const Ast::TypeSpec& Context::getRootTypeSpec(const Ast::Token &name) con
     return ref(typeSpec);
 }
 
+inline const Ast::VariableDefn* Context::hasMember(const Ast::Scope& scope, const Ast::Token& name) {
+    for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
+        const Ast::VariableDefn& vref = ref(*it);
+        if(vref.name().string() == name.string())
+            return ptr(vref);
+    }
+    return 0;
+}
+
 inline Ast::ExprList& Context::addExprList() {
     Ast::ExprList& exprList = _unit.addNode(new Ast::ExprList());
     return exprList;
@@ -128,12 +137,12 @@ inline const Ast::Expr& Context::getInitExpr(const Ast::TypeSpec& typeSpec, cons
         Ast::Token value(name.row(), name.col(), "false");
         return aConstantExpr(typeSpec.name().string(), value);
     }
-    throw Exception("Unknown init value for type '%s'\n", typeSpec.name().text());
-}
 
-inline Ast::EnumMemberDefnList& Context::addEnumMemberDefList() {
-    Ast::EnumMemberDefnList& enumMemberDefnList = _unit.addNode(new Ast::EnumMemberDefnList());
-    return enumMemberDefnList;
+    // dummy code for now.
+    Ast::Token value(name.row(), name.col(), "#");
+    return aConstantExpr("int", value);
+
+    //throw Exception("Unknown init value for type '%s'\n", typeSpec.name().text());
 }
 
 ////////////////////////////////////////////////////////////
@@ -209,30 +218,39 @@ Ast::TemplateDefn* Context::aTemplateDefn(const Ast::Token& name, const Ast::Def
     return ptr(templateDefn);
 }
 
-Ast::EnumDefn* Context::aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::EnumMemberDefnList& list) {
+Ast::EnumDefn* Context::aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list) {
     Ast::EnumDefn& enumDefn = _unit.addNode(new Ast::EnumDefn(currentTypeSpec(), name, defType, list));
     currentTypeSpec().addChild(enumDefn);
     return ptr(enumDefn);
 }
 
 Ast::EnumDefn* Context::aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
-    const Ast::EnumMemberDefnList& list = addEnumMemberDefList();
-    return aEnumDefn(name, defType, list);
+    Ast::Scope& scope = addScope();
+    Ast::EnumDefn& enumDefn = _unit.addNode(new Ast::EnumDefn(currentTypeSpec(), name, defType, scope));
+    currentTypeSpec().addChild(enumDefn);
+    return ptr(enumDefn);
 }
 
-Ast::EnumMemberDefnList* Context::aEnumMemberDefnList(Ast::EnumMemberDefnList& list, const Ast::EnumMemberDefn& enumMemberDef) {
-    list.addEnumMemberDef(enumMemberDef);
+Ast::Scope* Context::aEnumMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& variableDefn) {
+    list.addVariableDef(variableDefn);
     return ptr(list);
 }
 
-Ast::EnumMemberDefnList* Context::aEnumMemberDefnList(const Ast::EnumMemberDefn& enumMemberDef) {
-    Ast::EnumMemberDefnList& list = addEnumMemberDefList();
-    return aEnumMemberDefnList(list, enumMemberDef);
+Ast::Scope* Context::aEnumMemberDefnList(const Ast::VariableDefn& variableDefn) {
+    Ast::Scope& scope = addScope();
+    return aEnumMemberDefnList(scope, variableDefn);
 }
 
-Ast::EnumMemberDefn* Context::aEnumMemberDefn(const Ast::Token& name) {
-    Ast::EnumMemberDefn& enumMemberDefn = _unit.addNode(new Ast::EnumMemberDefn(name));
-    return ptr(enumMemberDefn);
+Ast::VariableDefn* Context::aEnumMemberDefn(const Ast::Token& name) {
+    Ast::Token value(name.row(), name.col(), "#");
+    const Ast::ConstantExpr& initExpr = aConstantExpr("int", value);
+    Ast::VariableDefn& variableDefn = _unit.addNode(new Ast::VariableDefn(initExpr.qTypeSpec(), name, initExpr));
+    return ptr(variableDefn);
+}
+
+Ast::VariableDefn* Context::aEnumMemberDefn(const Ast::Token& name, const Ast::Expr& initExpr) {
+    Ast::VariableDefn& variableDefn = _unit.addNode(new Ast::VariableDefn(initExpr.qTypeSpec(), name, initExpr));
+    return ptr(variableDefn);
 }
 
 Ast::StructDefn* Context::aStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list) {
@@ -574,6 +592,50 @@ Ast::FunctionCallExpr* Context::aFunctionCallExpr(const Ast::TypeSpec& typeSpec,
 Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
     Ast::OrderedExpr& expr = _unit.addNode(new Ast::OrderedExpr(innerExpr.qTypeSpec(), innerExpr));
     return ptr(expr);
+}
+
+Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
+    for(ScopeStack::const_reverse_iterator it = _scopeStack.rbegin(); it != _scopeStack.rend(); ++it) {
+        const Ast::Scope& scope = ref(*it);
+        const Ast::VariableDefn* vref = hasMember(scope, name);
+        if(vref != 0) {
+            Ast::VariableRefExpr& vrefExpr = _unit.addNode(new Ast::VariableRefExpr(ref(vref).qualifiedTypeSpec(), ref(vref)));
+            return ptr(vrefExpr);
+        }
+    }
+    throw Exception("Variable not found: '%s'\n", name.text());
+}
+
+Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name) {
+    const Ast::TypeSpec& typeSpec = expr.qTypeSpec().typeSpec();
+
+    const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
+    if(structDefn != 0) {
+        const Ast::VariableDefn* vref = hasMember(ref(structDefn).scope(), name);
+        if(vref != 0) {
+            Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(ref(vref).qualifiedTypeSpec(), expr, ref(vref)));
+            return ptr(vdefExpr);
+        }
+    } else {
+        throw Exception("Not a aggregate type '%s'\n", typeSpec.name().text());
+    }
+
+    throw Exception("%s is not a member of type '%s'\n", name.text(), typeSpec.name().text());
+}
+
+Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
+    const Ast::EnumDefn* enumDefn = dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec));
+    if(enumDefn != 0) {
+        const Ast::VariableDefn* vref = hasMember(ref(enumDefn).scope(), name);
+        if(vref != 0) {
+            Ast::TypeSpecMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::TypeSpecMemberExpr(ref(vref).qualifiedTypeSpec(), typeSpec, ref(vref)));
+            return ptr(typeSpecMemberExpr);
+        }
+    } else {
+        throw Exception("Not a aggregate type '%s'\n", typeSpec.name().text());
+    }
+
+    throw Exception("%s is not a member of type '%s'\n", name.text(), typeSpec.name().text());
 }
 
 Ast::ConstantExpr& Context::aConstantExpr(const std::string& type, const Ast::Token& value) {

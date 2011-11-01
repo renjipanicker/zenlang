@@ -10,11 +10,13 @@ public routine int testRoutine(const int& x) {
     return 12345;
 }
 
-public function (int i, string s)testFunction(const int& x) {
-    (1 + 2) * 3;
-    "xx";
-    [1,2,3];
-    ["a":1,"b":2,"c":3];
+public function (int i, string s)testFunction(const int& x, const Instance& y) {
+    local e = (1 + 2) * 3;
+    local s = "xx";
+    local l = [1,2,3];
+    local d = ["a":1,"b":2,"c":3];
+    local r = x;
+    local m = y.i;
     return (67890, "yy");
 }
 
@@ -22,6 +24,6 @@ public test testFunction001 {
     print "yy %{x}\n" @ {"x":1};
     local i = 0;
     local f = testFunction(1);
-    local k = f.a;
+    //local k = f.a;
     return (1);
 }

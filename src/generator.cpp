@@ -10,6 +10,7 @@ static bool getName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::
 
     if(getName(ref(ctypeSpec).parent(), sep, name))
         name += sep;
+
     name += typeSpec.name().string();
 
     if(dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec)) != 0) {
@@ -72,6 +73,131 @@ char Indent::ind[Size] = {32};
 int Indent::_indent = -1;
 #define INDENT Indent _ind_
 
+struct ExprGenerator : public Ast::Expr::Visitor {
+public:
+    inline ExprGenerator(FILE* fp, const std::string& sep2 = "", const std::string& sep1 = "") : _fp(fp), _sep2(sep2), _sep1(sep1), _sep0(sep1) {}
+private:
+    virtual void visit(const Ast::TernaryOpExpr& node) {
+        fprintf(_fp, "(");
+        visitNode(node.lhs());
+        fprintf(_fp, "%s", node.op1().text());
+        visitNode(node.rhs1());
+        fprintf(_fp, "%s", node.op2().text());
+        visitNode(node.rhs2());
+        fprintf(_fp, ")");
+    }
+
+    virtual void visit(const Ast::BinaryOpExpr& node) {
+        visitNode(node.lhs());
+        fprintf(_fp, "%s", node.op().text());
+        visitNode(node.rhs());
+    }
+
+    virtual void visit(const Ast::PostfixOpExpr& node) {
+        visitNode(node.lhs());
+        fprintf(_fp, "%s", node.op().text());
+    }
+
+    virtual void visit(const Ast::PrefixOpExpr& node) {
+        fprintf(_fp, "%s", node.op().text());
+        visitNode(node.rhs());
+    }
+
+    virtual void visit(const Ast::StructMemberRefExpr& node) {
+    }
+
+    virtual void visit(const Ast::EnumMemberRefExpr& node) {
+    }
+
+    virtual void visit(const Ast::ListExpr& node) {
+        fprintf(_fp, "ListCreator<%s>()", getName(node.list().valueType()).c_str());
+        for(Ast::ListList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
+            const Ast::ListItem& item = ref(*it);
+            fprintf(_fp, ".add(");
+            visitNode(item.valueExpr());
+            fprintf(_fp, ")");
+        }
+        fprintf(_fp, ".value()");
+    }
+
+    virtual void visit(const Ast::DictExpr& node) {
+        fprintf(_fp, "DictCreator<%s, %s>()", getName(node.list().keyType()).c_str(), getName(node.list().valueType()).c_str());
+        for(Ast::DictList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
+            const Ast::DictItem& item = ref(*it);
+            fprintf(_fp, ".add(");
+            visitNode(item.keyExpr());
+            fprintf(_fp, ", ");
+            visitNode(item.valueExpr());
+            fprintf(_fp, ")");
+        }
+        fprintf(_fp, ".value()");
+    }
+
+    virtual void visit(const Ast::FormatExpr& node) {
+        fprintf(_fp, "Formatter(");
+        visitNode(node.stringExpr());
+        fprintf(_fp, ")");
+        for(Ast::DictList::List::const_iterator it = node.dictExpr().list().list().begin(); it != node.dictExpr().list().list().end(); ++it) {
+            const Ast::DictItem& item = ref(*it);
+            fprintf(_fp, ".add(");
+            visitNode(item.keyExpr());
+            fprintf(_fp, ", ");
+            visitNode(item.valueExpr());
+            fprintf(_fp, ")");
+        }
+        fprintf(_fp, ".value()");
+    }
+
+    virtual void visit(const Ast::FunctionCallExpr& node) {
+        fprintf(_fp, "(%s(", getName(node.typeSpec()).c_str());
+        ExprGenerator(_fp, ", ").visitList(node.exprList());
+        fprintf(_fp, ").run().ret())");
+    }
+
+    virtual void visit(const Ast::OrderedExpr& node) {
+        fprintf(_fp, "(");
+        visitNode(node.expr());
+        fprintf(_fp, ")");
+    }
+
+    virtual void visit(const Ast::VariableRefExpr& node) {
+        fprintf(_fp, "%s", node.vref().name().text());
+    }
+
+    virtual void visit(const Ast::VariableMemberExpr& node) {
+        visitNode(node.expr());
+        fprintf(_fp, ".%s", node.vref().name().text());
+    }
+
+    virtual void visit(const Ast::TypeSpecMemberExpr& node) {
+        fprintf(_fp, "%s", getName(node.typeSpec()).c_str());
+        fprintf(_fp, "::%s", node.vref().name().text());
+    }
+
+    virtual void visit(const Ast::ConstantExpr& node) {
+        if(getName(node.qTypeSpec()) == "char") {
+            fprintf(_fp, "\'%s\'", node.value().text());
+            return;
+        }
+        if(getName(node.qTypeSpec()) == "std::string") {
+            fprintf(_fp, "\"%s\"", node.value().text());
+            return;
+        }
+        fprintf(_fp, "%s", node.value().text());
+    }
+
+    virtual void sep() {
+        fprintf(_fp, "%s", _sep0.c_str());
+        _sep0 = _sep2;
+    }
+
+private:
+    FILE* _fp;
+    const std::string _sep2;
+    const std::string _sep1;
+    std::string _sep0;
+};
+
 struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     inline FILE* fpDecl(const Ast::TypeSpec& node) {
         if(node.accessType() == Ast::AccessType::Public) {
@@ -112,10 +238,15 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             fprintf(fpDecl(node), "%sstruct %s {\n", Indent::get(), node.name().text());
             fprintf(fpDecl(node), "%s  enum T {\n", Indent::get());
             std::string sep = " ";
-            for(Ast::EnumMemberDefnList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+            for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 INDENT;
-                const Ast::EnumMemberDefn& def = ref(*it);
-                fprintf(fpDecl(node), "%s%s %s\n", Indent::get(), sep.c_str(), def.name().text());
+                const Ast::VariableDefn& def = ref(*it);
+                fprintf(fpDecl(node), "%s%s %s", Indent::get(), sep.c_str(), def.name().text());
+                const Ast::ConstantExpr* cexpr = dynamic_cast<const Ast::ConstantExpr*>(ptr(def.initExpr()));
+                if((cexpr == 0) || (ref(cexpr).value().string() != "#")) {
+                    /// \todo generate enum-init-expr
+                }
+                fprintf(fpDecl(node), "\n");
                 sep = ",";
             }
             fprintf(fpDecl(node), "%s  };\n", Indent::get());
@@ -345,117 +476,6 @@ private:
     FILE* _fpHdr;
     FILE* _fpSrc;
     FILE* _fpImp;
-};
-
-struct ExprGenerator : public Ast::Expr::Visitor {
-public:
-    inline ExprGenerator(FILE* fp, const std::string& sep2 = "", const std::string& sep1 = "") : _fp(fp), _sep2(sep2), _sep1(sep1), _sep0(sep1) {}
-private:
-    virtual void visit(const Ast::TernaryOpExpr& node) {
-        fprintf(_fp, "(");
-        visitNode(node.lhs());
-        fprintf(_fp, "%s", node.op1().text());
-        visitNode(node.rhs1());
-        fprintf(_fp, "%s", node.op2().text());
-        visitNode(node.rhs2());
-        fprintf(_fp, ")");
-    }
-
-    virtual void visit(const Ast::BinaryOpExpr& node) {
-        visitNode(node.lhs());
-        fprintf(_fp, "%s", node.op().text());
-        visitNode(node.rhs());
-    }
-
-    virtual void visit(const Ast::PostfixOpExpr& node) {
-        visitNode(node.lhs());
-        fprintf(_fp, "%s", node.op().text());
-    }
-
-    virtual void visit(const Ast::PrefixOpExpr& node) {
-        fprintf(_fp, "%s", node.op().text());
-        visitNode(node.rhs());
-    }
-
-    virtual void visit(const Ast::StructMemberRefExpr& node) {
-    }
-
-    virtual void visit(const Ast::EnumMemberRefExpr& node) {
-    }
-
-    virtual void visit(const Ast::ListExpr& node) {
-        fprintf(_fp, "ListCreator<%s>()", getName(node.list().valueType()).c_str());
-        for(Ast::ListList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-            const Ast::ListItem& item = ref(*it);
-            fprintf(_fp, ".add(");
-            visitNode(item.valueExpr());
-            fprintf(_fp, ")");
-        }
-        fprintf(_fp, ".value()");
-    }
-
-    virtual void visit(const Ast::DictExpr& node) {
-        fprintf(_fp, "DictCreator<%s, %s>()", getName(node.list().keyType()).c_str(), getName(node.list().valueType()).c_str());
-        for(Ast::DictList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-            const Ast::DictItem& item = ref(*it);
-            fprintf(_fp, ".add(");
-            visitNode(item.keyExpr());
-            fprintf(_fp, ", ");
-            visitNode(item.valueExpr());
-            fprintf(_fp, ")");
-        }
-        fprintf(_fp, ".value()");
-    }
-
-    virtual void visit(const Ast::FormatExpr& node) {
-        fprintf(_fp, "Formatter(");
-        visitNode(node.stringExpr());
-        fprintf(_fp, ")");
-        for(Ast::DictList::List::const_iterator it = node.dictExpr().list().list().begin(); it != node.dictExpr().list().list().end(); ++it) {
-            const Ast::DictItem& item = ref(*it);
-            fprintf(_fp, ".add(");
-            visitNode(item.keyExpr());
-            fprintf(_fp, ", ");
-            visitNode(item.valueExpr());
-            fprintf(_fp, ")");
-        }
-        fprintf(_fp, ".value()");
-    }
-
-    virtual void visit(const Ast::FunctionCallExpr& node) {
-        fprintf(_fp, "(%s(", getName(node.typeSpec()).c_str());
-        ExprGenerator(_fp, ", ").visitList(node.exprList());
-        fprintf(_fp, ").run().ret())");
-    }
-
-    virtual void visit(const Ast::OrderedExpr& node) {
-        fprintf(_fp, "(");
-        visitNode(node.expr());
-        fprintf(_fp, ")");
-    }
-
-    virtual void visit(const Ast::ConstantExpr& node) {
-        if(getName(node.qTypeSpec()) == "char") {
-            fprintf(_fp, "\'%s\'", node.value().text());
-            return;
-        }
-        if(getName(node.qTypeSpec()) == "std::string") {
-            fprintf(_fp, "\"%s\"", node.value().text());
-            return;
-        }
-        fprintf(_fp, "%s", node.value().text());
-    }
-
-    virtual void sep() {
-        fprintf(_fp, "%s", _sep0.c_str());
-        _sep0 = _sep2;
-    }
-
-private:
-    FILE* _fp;
-    const std::string _sep2;
-    const std::string _sep1;
-    std::string _sep0;
 };
 
 struct StatementGenerator : public Ast::Statement::Visitor {

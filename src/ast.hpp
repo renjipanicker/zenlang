@@ -178,39 +178,22 @@ namespace Ast {
         const TemplatePartList& _list;
     };
 
-    class EnumMemberDefn : public Node {
-    public:
-        inline EnumMemberDefn(const Token& name) : _name(name) {}
-        inline const Token& name() const {return _name;}
-    private:
-        const Token _name;
-    };
-
-    class EnumMemberDefnList : public Node {
-    public:
-        typedef std::list<const EnumMemberDefn*> List;
-    public:
-        inline EnumMemberDefnList() {}
-        inline EnumMemberDefnList& addEnumMemberDef(const EnumMemberDefn& enumMemberDef) {_list.push_back(ptr(enumMemberDef)); return ref(this);}
-        inline const List& list() const {return _list;}
-    private:
-        List _list;
-    };
-
     class EnumDefn : public UserDefinedTypeSpec {
     public:
-        inline EnumDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const EnumMemberDefnList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
-        inline const EnumMemberDefnList::List& list() const {return _list.list();}
+        inline EnumDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Scope& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
+        inline const Scope::List& list() const {return _list.list();}
+        inline const Ast::Scope& scope() const {return _list;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const EnumMemberDefnList& _list;
+        const Scope& _list;
     };
 
     class StructDefn : public UserDefinedTypeSpec {
     public:
         inline StructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::Scope& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
         inline const Ast::Scope::List& list() const {return _list.list();}
+        inline const Ast::Scope& scope() const {return _list;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
@@ -594,6 +577,40 @@ namespace Ast {
         const ExprList& _exprList;
     };
 
+    class VariableRefExpr : public Expr {
+    public:
+        inline VariableRefExpr(const QualifiedTypeSpec& qTypeSpec, const VariableDefn& vref) : Expr(qTypeSpec), _vref(vref) {}
+        inline const VariableDefn& vref() const {return _vref;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const VariableDefn& _vref;
+    };
+
+    class VariableMemberExpr : public Expr {
+    public:
+        inline VariableMemberExpr(const QualifiedTypeSpec& qTypeSpec, const Expr& expr, const VariableDefn& vref) : Expr(qTypeSpec), _expr(expr), _vref(vref) {}
+        inline const Expr& expr() const {return _expr;}
+        inline const VariableDefn& vref() const {return _vref;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Expr& _expr;
+        const VariableDefn& _vref;
+    };
+
+    class TypeSpecMemberExpr : public Expr {
+    public:
+        inline TypeSpecMemberExpr(const QualifiedTypeSpec& qTypeSpec, const TypeSpec& typeSpec, const VariableDefn& vref) : Expr(qTypeSpec), _typeSpec(typeSpec), _vref(vref) {}
+        inline const TypeSpec& typeSpec() const {return _typeSpec;}
+        inline const VariableDefn& vref() const {return _vref;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const TypeSpec& _typeSpec;
+        const VariableDefn& _vref;
+    };
+
     class ConstantExpr : public Expr {
     public:
         inline ConstantExpr(const QualifiedTypeSpec& qTypeSpec, const Token& value) : Expr(qTypeSpec), _value(value) {}
@@ -628,6 +645,9 @@ namespace Ast {
         virtual void visit(const FormatExpr& node) = 0;
         virtual void visit(const FunctionCallExpr& node) = 0;
         virtual void visit(const OrderedExpr& node) = 0;
+        virtual void visit(const VariableRefExpr& node) = 0;
+        virtual void visit(const VariableMemberExpr& node) = 0;
+        virtual void visit(const TypeSpecMemberExpr& node) = 0;
         virtual void visit(const ConstantExpr& node) = 0;
         virtual void sep() = 0;
     };
@@ -643,6 +663,9 @@ namespace Ast {
     inline void FormatExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void VariableMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void TypeSpecMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ConstantExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////

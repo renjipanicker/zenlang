@@ -12,7 +12,6 @@ public:
 
 private:
     inline Ast::ExprList& addExprList();
-    inline Ast::EnumMemberDefnList& addEnumMemberDefList();
     inline Ast::Root& getRootNamespace() const;
     inline const Ast::TypeSpec& getRootTypeSpec(const Ast::Token& name) const;
     inline const Ast::TypeSpec* findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
@@ -27,6 +26,7 @@ private:
     inline Ast::TypeSpec& leaveTypeSpec(Ast::TypeSpec& typeSpec);
     inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
     inline const Ast::QualifiedTypeSpec& getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name);
+    inline const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name);
     inline const Ast::Expr& getInitExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
 
 private:
@@ -38,9 +38,13 @@ private:
     Compiler& _compiler;
     Ast::Unit& _unit;
     const int _level;
+
 private:
-    std::list<Ast::Scope*>     _scopeStack;
-    TypeSpecStack _typeSpecStack;
+    typedef std::list<Ast::Scope*> ScopeStack;
+
+private:
+    ScopeStack                  _scopeStack;
+    TypeSpecStack              _typeSpecStack;
     std::list<Ast::Namespace*> _namespaceStack;
 
 public:
@@ -54,11 +58,12 @@ public:
     Ast::TemplatePartList*   aTemplatePartList(Ast::TemplatePartList& list, const Ast::Token& name);
     Ast::TemplatePartList*   aTemplatePartList(const Ast::Token& name);
     Ast::TemplateDefn*       aTemplateDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TemplatePartList& list);
+    Ast::EnumDefn*           aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list);
     Ast::EnumDefn*           aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
-    Ast::EnumDefn*           aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::EnumMemberDefnList& list);
-    Ast::EnumMemberDefnList* aEnumMemberDefnList(Ast::EnumMemberDefnList& list, const Ast::EnumMemberDefn& enumMemberDef);
-    Ast::EnumMemberDefnList* aEnumMemberDefnList(const Ast::EnumMemberDefn& enumMemberDef);
-    Ast::EnumMemberDefn*     aEnumMemberDefn(const Ast::Token& name);
+    Ast::Scope*              aEnumMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& variableDefn);
+    Ast::Scope*              aEnumMemberDefnList(const Ast::VariableDefn& variableDefn);
+    Ast::VariableDefn*       aEnumMemberDefn(const Ast::Token& name);
+    Ast::VariableDefn*       aEnumMemberDefn(const Ast::Token& name, const Ast::Expr& initExpr);
     Ast::StructDefn*         aStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list);
     Ast::StructDefn*         aStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::Scope*              aStructMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& enumMemberDefn);
@@ -120,5 +125,8 @@ public:
     Ast::FormatExpr*          aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr);
     Ast::FunctionCallExpr*    aFunctionCallExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
     Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
+    Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);
+    Ast::VariableMemberExpr*  aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name);
+    Ast::TypeSpecMemberExpr*  aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
     Ast::ConstantExpr&        aConstantExpr(const std::string& type, const Ast::Token& value);
 };

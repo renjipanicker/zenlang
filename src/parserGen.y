@@ -177,13 +177,14 @@ rEnumDefn(L) ::= ENUM ID(name) NATIVE                                  SEMI. {L 
 rEnumDefn(L) ::= ENUM ID(name) LCURLY rEnumMemberDefnList(list) RCURLY SEMI. {L = ref(pctx).aEnumDefn(name, Ast::DefinitionType::Direct, ref(list));}
 
 //-------------------------------------------------
-%type rEnumMemberDefnList {Ast::EnumMemberDefnList*}
+%type rEnumMemberDefnList {Ast::Scope*}
 rEnumMemberDefnList(L) ::= rEnumMemberDefnList(list) rEnumMemberDefn(enumMemberDef). {L = ref(pctx).aEnumMemberDefnList(ref(list), ref(enumMemberDef));}
 rEnumMemberDefnList(L) ::=                           rEnumMemberDefn(enumMemberDef). {L = ref(pctx).aEnumMemberDefnList(ref(enumMemberDef));}
 
 //-------------------------------------------------
-%type rEnumMemberDefn {Ast::EnumMemberDefn*}
-rEnumMemberDefn(L) ::= ID(name) SEMI. {L = ref(pctx).aEnumMemberDefn(name);}
+%type rEnumMemberDefn {Ast::VariableDefn*}
+rEnumMemberDefn(L) ::= ID(name)                      SEMI. {L = ref(pctx).aEnumMemberDefn(name);}
+rEnumMemberDefn(L) ::= ID(name) ASSIGNEQUAL rExpr(I) SEMI. {L = ref(pctx).aEnumMemberDefn(name, ref(I));}
 
 //-------------------------------------------------
 // struct declarations
@@ -352,6 +353,8 @@ rExpr(L) ::= rDictExpr(R).         {L = R;}
 rExpr(L) ::= rFormatExpr(R).       {L = R;}
 rExpr(L) ::= rFunctionCallExpr(R). {L = R;}
 rExpr(L) ::= rVariableRefExpr(R).  {L = R;}
+rExpr(L) ::= rVariableMemberExpr(R).  {L = R;}
+rExpr(L) ::= rTypeSpecMemberExpr(R).  {L = R;}
 rExpr(L) ::= rConstantExpr(R).     {L = R;}
 
 //-------------------------------------------------
@@ -481,17 +484,19 @@ rFunctionCallExpr(L) ::= rTypeSpec(typeSpec) rExprsList(exprList).  {L = ref(pct
 rExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedExpr(ref(innerExpr));}
 
 //-------------------------------------------------
-// variable member expressions
-rExpr(L) ::= rExpr(R) DOT ID(M). {unused(L);unused(R);unused(M);trace("yy\n");}
-
-//-------------------------------------------------
 // variable ref expressions
 %type rVariableRefExpr {Ast::Expr*}
-rVariableRefExpr(L) ::= ID(I). {unused(L);unused(I);trace("xx\n");}
+rVariableRefExpr(L) ::= ID(I). {L = ref(pctx).aVariableRefExpr(I);}
+
+//-------------------------------------------------
+// variable member expressions
+%type rVariableMemberExpr {Ast::VariableMemberExpr*}
+rVariableMemberExpr(L) ::= rExpr(R) DOT ID(M). {L = ref(pctx).aVariableMemberExpr(ref(R), M);}
 
 //-------------------------------------------------
 // type member expressions, e.g. enum member
-rExpr(L) ::= rTypeSpec(R) DOT ID(M). {unused(L);unused(R);unused(M);}
+%type rTypeSpecMemberExpr {Ast::TypeSpecMemberExpr*}
+rTypeSpecMemberExpr(L) ::= rTypeSpec(R) DOT ID(M). {L = ref(pctx).aTypeSpecMemberExpr(ref(R), M);}
 
 //-------------------------------------------------
 // constant expressions
