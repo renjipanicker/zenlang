@@ -279,7 +279,7 @@ rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx
 // type references
 %type rTypeSpec {const Ast::TypeSpec*}
 rTypeSpec(L) ::= rTypeSpec(parent) SCOPE ID(name). {L = ref(pctx).aTypeSpec(ref(parent), name);}
-rTypeSpec(L) ::=                         ID(name). {L = ref(pctx).aTypeSpec(name);}
+rTypeSpec(L) ::=                  ROOT_TYPE(name). {L = ref(pctx).aTypeSpec(name);}
 
 //-------------------------------------------------
 // statements
@@ -343,15 +343,16 @@ rExprList(R) ::= .                            {R = ref(pctx).aExprList();}
 //-------------------------------------------------
 // expressions
 %type rExpr {const Ast::Expr*}
-rExpr(L) ::= rTernaryExpr(R).  {L = R;}
-rExpr(L) ::= rBinaryExpr(R).   {L = R;}
-rExpr(L) ::= rPostfixExpr(R).  {L = R;}
-rExpr(L) ::= rPrefixExpr(R).   {L = R;}
-rExpr(L) ::= rListExpr(R).     {L = R;}
-rExpr(L) ::= rDictExpr(R).     {L = R;}
-rExpr(L) ::= rFormatExpr(R).   {L = R;}
+rExpr(L) ::= rTernaryExpr(R).      {L = R;}
+rExpr(L) ::= rBinaryExpr(R).       {L = R;}
+rExpr(L) ::= rPostfixExpr(R).      {L = R;}
+rExpr(L) ::= rPrefixExpr(R).       {L = R;}
+rExpr(L) ::= rListExpr(R).         {L = R;}
+rExpr(L) ::= rDictExpr(R).         {L = R;}
+rExpr(L) ::= rFormatExpr(R).       {L = R;}
 rExpr(L) ::= rFunctionCallExpr(R). {L = R;}
-rExpr(L) ::= rConstantExpr(R). {L = R;}
+rExpr(L) ::= rVariableRefExpr(R).  {L = R;}
+rExpr(L) ::= rConstantExpr(R).     {L = R;}
 
 //-------------------------------------------------
 // It could be possible to implement creating local variables inline within expressions.
@@ -481,28 +482,33 @@ rExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedExpr(ref
 
 //-------------------------------------------------
 // variable member expressions
-rExpr(L) ::= rExpr(R) DOT rExpr(M). {unused(L);unused(R);unused(M);}
+rExpr(L) ::= rExpr(R) DOT ID(M). {unused(L);unused(R);unused(M);trace("yy\n");}
 
 //-------------------------------------------------
-// type member expressions
+// variable ref expressions
+%type rVariableRefExpr {Ast::Expr*}
+rVariableRefExpr(L) ::= ID(I). {unused(L);unused(I);trace("xx\n");}
+
+//-------------------------------------------------
+// type member expressions, e.g. enum member
 rExpr(L) ::= rTypeSpec(R) DOT ID(M). {unused(L);unused(R);unused(M);}
 
 //-------------------------------------------------
 // constant expressions
 %type rConstantExpr {const Ast::ConstantExpr*}
-rConstantExpr(L) ::= FLOAT_CONST(value).   {L = ptr(ref(pctx).aConstantExpr("float", value));}
-rConstantExpr(L) ::= DOUBLE_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("double", value));}
-rConstantExpr(L) ::= TRUE_CONST(value).    {L = ptr(ref(pctx).aConstantExpr("bool", value));}
-rConstantExpr(L) ::= FALSE_CONST(value).   {L = ptr(ref(pctx).aConstantExpr("bool", value));}
-rConstantExpr(L) ::= KEY_CONST(value).     {L = ptr(ref(pctx).aConstantExpr("string", value));}
-rConstantExpr(L) ::= STRING_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("string", value));}
-rConstantExpr(L) ::= CHAR_CONST(value).    {L = ptr(ref(pctx).aConstantExpr("char", value));}
-rConstantExpr(L) ::= HEXINT_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("int", value));}
-rConstantExpr(L) ::= DECINT_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("int", value));}
-rConstantExpr(L) ::= OCTINT_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("int", value));}
-rConstantExpr(L) ::= LHEXINT_CONST(value). {L = ptr(ref(pctx).aConstantExpr("long", value));}
-rConstantExpr(L) ::= LDECINT_CONST(value). {L = ptr(ref(pctx).aConstantExpr("long", value));}
-rConstantExpr(L) ::= LOCTINT_CONST(value). {L = ptr(ref(pctx).aConstantExpr("long", value));}
+rConstantExpr(L) ::= FLOAT_CONST  (value).  {L = ptr(ref(pctx).aConstantExpr("float",  value));}
+rConstantExpr(L) ::= DOUBLE_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("double", value));}
+rConstantExpr(L) ::= TRUE_CONST   (value).  {L = ptr(ref(pctx).aConstantExpr("bool",   value));}
+rConstantExpr(L) ::= FALSE_CONST  (value).  {L = ptr(ref(pctx).aConstantExpr("bool",   value));}
+rConstantExpr(L) ::= KEY_CONST    (value).  {L = ptr(ref(pctx).aConstantExpr("string", value));}
+rConstantExpr(L) ::= STRING_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("string", value));}
+rConstantExpr(L) ::= CHAR_CONST   (value).  {L = ptr(ref(pctx).aConstantExpr("char",   value));}
+rConstantExpr(L) ::= HEXINT_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("int",    value));}
+rConstantExpr(L) ::= DECINT_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("int",    value));}
+rConstantExpr(L) ::= OCTINT_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("int",    value));}
+rConstantExpr(L) ::= LHEXINT_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("long",   value));}
+rConstantExpr(L) ::= LDECINT_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("long",   value));}
+rConstantExpr(L) ::= LOCTINT_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("long",   value));}
 
 /*
 //-------------------------------------------------

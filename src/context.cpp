@@ -74,15 +74,24 @@ inline Ast::Scope& Context::leaveScope() {
     return ref(s);
 }
 
-inline const Ast::TypeSpec& Context::getRootTypeSpec(const Ast::Token &name) const {
+const Ast::TypeSpec* Context::hasRootTypeSpec(const Ast::Token& name) const {
     const Ast::TypeSpec* typeSpec = findTypeSpec(currentTypeSpec(), name);
+    if(typeSpec)
+        return typeSpec;
+
+    if(_level == 0) {
+        typeSpec = _unit.importNS().hasChild(name.text());
+        if(typeSpec)
+            return typeSpec;
+    }
+
+    return 0;
+}
+
+inline const Ast::TypeSpec& Context::getRootTypeSpec(const Ast::Token &name) const {
+    const Ast::TypeSpec* typeSpec = hasRootTypeSpec(name);
     if(!typeSpec) {
-        if(_level == 0) {
-            typeSpec = _unit.importNS().hasChild(name.text());
-            if(!typeSpec) {
-                throw Exception("Unknown root type '%s'\n", name.text());
-            }
-        }
+        throw Exception("Unknown root type '%s'\n", name.text());
     }
     return ref(typeSpec);
 }

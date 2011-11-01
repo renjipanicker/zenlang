@@ -18,6 +18,7 @@ private:
     inline const Ast::TypeSpec* findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
 
 public:
+    const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const;
     inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
 
 private:

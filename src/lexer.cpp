@@ -12,28 +12,9 @@ public:
     void scan(Scanner* s);
 
 private:
-    TokenData token(Scanner* s, const int& id);
-    void sendReturn(Scanner* s) {
-        const Ast::RoutineDefn* rd = 0;
-        const Ast::FunctionDefn* fd = 0;
-        const Ast::FunctionImpl* fi = 0;
-        for(Context::TypeSpecStack::const_reverse_iterator it = _context.typeSpecStack().rbegin(); it != _context.typeSpecStack().rend(); ++it) {
-            const Ast::TypeSpec* ts = *it;
-            if((rd = dynamic_cast<const Ast::RoutineDefn*>(ts)) != 0) {
-                _parser.feed(token(s, ZENTOK_RRETURN));
-                return;
-            }
-            if((fd = dynamic_cast<const Ast::FunctionDefn*>(ts)) != 0) {
-                _parser.feed(token(s, ZENTOK_FRETURN));
-                return;
-            }
-            if((fi = dynamic_cast<const Ast::FunctionImpl*>(ts)) != 0) {
-                _parser.feed(token(s, ZENTOK_FRETURN));
-                return;
-            }
-        }
-        throw Exception("Invalid return in lexer\n");
-    }
+    inline TokenData token(Scanner* s, const int& id);
+    inline void sendId(Scanner* s);
+    inline void sendReturn(Scanner* s);
 
 private:
     Parser& _parser;

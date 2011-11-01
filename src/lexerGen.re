@@ -61,13 +61,44 @@ size_t Lexer::Impl::init(Scanner *s) {
     return fill(s, 1);
 }
 
-TokenData Lexer::Impl::token(Scanner* s, const int& id) {
+inline TokenData Lexer::Impl::token(Scanner* s, const int& id) {
     if(s->text > 0) {
         char* t = s->text;
         s->text = 0;
         return TokenData::createT(id, s->row, s->cur-s->sol, t, s->cur - 1);
     }
     return TokenData::createT(id, s->row, s->cur-s->sol, s->mar, s->cur);
+}
+
+inline void Lexer::Impl::sendId(Scanner* s) {
+    Ast::Token td = token(s, 0);
+    if(_context.hasRootTypeSpec(td)) {
+        _parser.feed(token(s, ZENTOK_ROOT_TYPE));
+        return;
+    }
+    _parser.feed(token(s, ZENTOK_ID));
+}
+
+inline void Lexer::Impl::sendReturn(Scanner* s) {
+    const Ast::RoutineDefn* rd = 0;
+    const Ast::FunctionDefn* fd = 0;
+    const Ast::FunctionImpl* fi = 0;
+    for(Context::TypeSpecStack::const_reverse_iterator it = _context.typeSpecStack().rbegin(); it != _context.typeSpecStack().rend(); ++it) {
+        const Ast::TypeSpec* ts = *it;
+        if((rd = dynamic_cast<const Ast::RoutineDefn*>(ts)) != 0) {
+            _parser.feed(token(s, ZENTOK_RRETURN));
+            return;
+        }
+        if((fd = dynamic_cast<const Ast::FunctionDefn*>(ts)) != 0) {
+            _parser.feed(token(s, ZENTOK_FRETURN));
+            return;
+        }
+        if((fi = dynamic_cast<const Ast::FunctionImpl*>(ts)) != 0) {
+            _parser.feed(token(s, ZENTOK_FRETURN));
+            return;
+        }
+    }
+    throw Exception("Invalid return in lexer\n");
 }
 
 void Lexer::Impl::scan(Scanner *s) {
@@ -140,7 +171,7 @@ re2c:condenumprefix          = EState;
 <Normal>   "?"     := _parser.feed(token(s, ZENTOK_QUESTION)); continue;
 <Normal>   ":"     := _parser.feed(token(s, ZENTOK_COLON)); continue;
 <Normal>   "::"    := _parser.feed(token(s, ZENTOK_SCOPE)); continue;
-<Normal>   "."     := _parser.feed(token(s, ZENTOK_DOT)); continue;
+<Normal>   "."     := _parser.feed(token(s, ZENTOK_DOT)); trace("dot\n");continue;
 <Normal>   ","     := _parser.feed(token(s, ZENTOK_COMMA)); continue;
 <Normal>   "@"     := _parser.feed(token(s, ZENTOK_AMP)); continue;
 <Normal>   "("     := _parser.feed(token(s, ZENTOK_LBRACKET)); continue;
@@ -183,7 +214,8 @@ re2c:condenumprefix          = EState;
 <Normal>   "return"    := sendReturn(s); continue;
 
 <Normal>   "@" [a-zA-Z][a-zA-Z0-9_]* := _parser.feed(token(s, ZENTOK_KEY)); continue;
-<Normal>       [a-zA-Z][a-zA-Z0-9_]* := _parser.feed(token(s, ZENTOK_ID)); continue;
+
+<Normal>       [a-zA-Z][a-zA-Z0-9_]* := sendId(s); continue;
 
 <Normal>   "0" [0-7]+      := _parser.feed(token(s, ZENTOK_OCTINT_CONST)); continue;
 <Normal>   "0" [0-7]+ [lL] := _parser.feed(token(s, ZENTOK_LOCTINT_CONST)); continue;
