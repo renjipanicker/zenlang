@@ -1,5 +1,5 @@
+inner functions
 scope-resolution for closure
-routine-call-expr
 run
 if-else
 while
@@ -7,6 +7,8 @@ do-while
 switch-value
 switch-expression
 switch-typeof
+for
+foreach
 enum-init
 struct-init
 coerce
@@ -16,7 +18,6 @@ unused()
 
 project builder
 project reader
-inner functions
 shared variables
 query
 lexical scanner for string input
@@ -26,8 +27,12 @@ large lists in in-memory sqlite
 project generator - msvc
 print <dst> <expr>;
 print <dst> <src> <level> <expr>;
+in-params are const by default, locals are not
+*** rename local to auto (consistency with c++0x)
 *** move Formatter to String, Creator to List/Dict
 *** merge enum and struct Ast's.
+*** remove get-set for struct, retain set-chain ability (how?)
+*** 3 level unit test - suite/test/check
 
 Remove block from unit
 project generator - cmake
@@ -42,3 +47,4 @@ function-call-expr
 local variables
 idref-expr
 scope-resolution
+routine-call-expr

@@ -17,14 +17,14 @@ public routine int testRoutine(const int& x) {
 
 public function (int ri, string rs)testFunction(const int& x, const MyStruct& myStruct, const MyEnum& myEnum) {
     local i = 0;
-    local e = (1 + 2) * 3;
     local s = "xx";
-    local f = "yy %{x}\n" @ {"x":1};
+    local e = (1 + 2) * 3;
+    local t = "yy %{x}\n" @ {"x":1};
     local l = [1,2,3];
     local d = ["a":1,"b":2,"c":3];
-    local r = x;
+    local v = x;
     local m = myStruct.i;
-    //local r = testRoutine(123);
+    local r = testRoutine(123);
     return (67890, "yy");
 }
 

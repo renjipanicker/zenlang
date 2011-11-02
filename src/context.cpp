@@ -606,15 +606,25 @@ Ast::FormatExpr* Context::aFormatExpr(const Ast::Token& pos, const Ast::Expr& st
     return ptr(formatExpr);
 }
 
-Ast::FunctionCallExpr* Context::aFunctionCallExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
-    const Ast::TypeSpec* retn = typeSpec.hasChild("Return");
-    const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(retn);
-    if(functionRetn == 0) {
-        throw Exception("Unknown function return type '%s'\n", typeSpec.name().text());
+Ast::CallExpr* Context::aCallExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
+    const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
+    if(function != 0) {
+        const Ast::TypeSpec* retn = typeSpec.hasChild("Return");
+        const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(retn);
+        if(functionRetn == 0) {
+            throw Exception("Unknown function return type '%s'\n", typeSpec.name().text());
+        }
+        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(functionRetn), false);
+        Ast::FunctionCallExpr& functionCallExpr = _unit.addNode(new Ast::FunctionCallExpr(qTypeSpec, ref(function), exprList));
+        return ptr(functionCallExpr);
     }
-    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(functionRetn), false);
-    Ast::FunctionCallExpr& functionCallExpr = _unit.addNode(new Ast::FunctionCallExpr(qTypeSpec, typeSpec, exprList));
-    return ptr(functionCallExpr);
+    const Ast::Routine* routine = dynamic_cast<const Ast::Routine*>(ptr(typeSpec));
+    if(routine != 0) {
+        const Ast::QualifiedTypeSpec& qTypeSpec = ref(routine).outType();
+        Ast::RoutineCallExpr& routineCallExpr = _unit.addNode(new Ast::RoutineCallExpr(qTypeSpec, ref(routine), exprList));
+        return ptr(routineCallExpr);
+    }
+    throw Exception("Unknown function being called '%s'\n", typeSpec.name().text());
 }
 
 Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
@@ -624,7 +634,7 @@ Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
 
 Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
     Ast::RefType::T refType = Ast::RefType::Local;
-    trace("check refType\n");
+    printf("check refType\n");
     for(ScopeStack::const_reverse_iterator it = _scopeStack.rbegin(); it != _scopeStack.rend(); ++it) {
         const Ast::Scope& scope = ref(*it);
 
@@ -663,7 +673,7 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
         }
 
         const Ast::VariableDefn* vref = hasMember(scope, name);
-        trace("Scope: name %s, refType %d, scopeType %d\n", name.text(), refType, scope.type());
+        printf("Scope: name %s, refType %d, scopeType %d\n", name.text(), refType, scope.type());
         if(vref != 0) {
             Ast::VariableRefExpr& vrefExpr = _unit.addNode(new Ast::VariableRefExpr(ref(vref).qualifiedTypeSpec(), ref(vref), refType));
             return ptr(vrefExpr);

@@ -606,16 +606,33 @@ namespace Ast {
         const Expr& _expr;
     };
 
-    class FunctionCallExpr : public Expr {
+    class CallExpr : public Expr {
+    protected:
+        inline CallExpr(const QualifiedTypeSpec& qTypeSpec, const ExprList& exprList) : Expr(qTypeSpec), _exprList(exprList) {}
     public:
-        inline FunctionCallExpr(const QualifiedTypeSpec& qTypeSpec, const TypeSpec& typeSpec, const ExprList& exprList) : Expr(qTypeSpec), _typeSpec(typeSpec), _exprList(exprList) {}
-        inline const TypeSpec& typeSpec() const {return _typeSpec;}
         inline const ExprList& exprList() const {return _exprList;}
+    private:
+        const ExprList& _exprList;
+    };
+
+    class RoutineCallExpr : public CallExpr {
+    public:
+        inline RoutineCallExpr(const QualifiedTypeSpec& qTypeSpec, const Routine& routine, const ExprList& exprList) : CallExpr(qTypeSpec, exprList), _routine(routine) {}
+        inline const Routine& routine() const {return _routine;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const TypeSpec& _typeSpec;
-        const ExprList& _exprList;
+        const Routine& _routine;
+    };
+
+    class FunctionCallExpr : public CallExpr {
+    public:
+        inline FunctionCallExpr(const QualifiedTypeSpec& qTypeSpec, const Function& function, const ExprList& exprList) : CallExpr(qTypeSpec, exprList), _function(function) {}
+        inline const Function& function() const {return _function;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Function& _function;
     };
 
     class VariableRefExpr : public Expr {
@@ -686,6 +703,7 @@ namespace Ast {
         virtual void visit(const ListExpr& node) = 0;
         virtual void visit(const DictExpr& node) = 0;
         virtual void visit(const FormatExpr& node) = 0;
+        virtual void visit(const RoutineCallExpr& node) = 0;
         virtual void visit(const FunctionCallExpr& node) = 0;
         virtual void visit(const OrderedExpr& node) = 0;
         virtual void visit(const VariableRefExpr& node) = 0;
@@ -704,6 +722,7 @@ namespace Ast {
     inline void ListExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void DictExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FormatExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void RoutineCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
