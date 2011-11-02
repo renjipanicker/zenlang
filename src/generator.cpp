@@ -3,43 +3,52 @@
 #include "generator.hpp"
 #include "outfile.hpp"
 
-static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name);
+struct GetNameMode {
+    enum T {
+        Normal,
+        TypeSpecMemberRef
+    };
+};
 
-inline std::string getTypeSpecName(const Ast::TypeSpec& typeSpec, const std::string& sep = "::") {
+static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name, const GetNameMode::T& mode);
+
+inline std::string getTypeSpecName(const Ast::TypeSpec& typeSpec, const std::string& sep = "::", const GetNameMode::T& mode = GetNameMode::Normal) {
     std::string name;
-    getRootName(typeSpec, sep, name);
+    getRootName(typeSpec, sep, name, mode);
     return name;
 }
 
-inline std::string getQualifiedTypeSpecName(const Ast::QualifiedTypeSpec& qtypeSpec, const std::string& sep = "::") {
+inline std::string getQualifiedTypeSpecName(const Ast::QualifiedTypeSpec& qtypeSpec, const std::string& sep = "::", const GetNameMode::T& mode = GetNameMode::Normal) {
     std::string name;
     if(qtypeSpec.isConst())
         name += "const ";
-    getRootName(qtypeSpec.typeSpec(), sep, name);
+    getRootName(qtypeSpec.typeSpec(), sep, name,mode);
     if(qtypeSpec.isRef())
         name += "&";
     return name;
 }
 
-static bool getName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name) {
+static bool getName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name, const GetNameMode::T& mode) {
     const Ast::ChildTypeSpec* ctypeSpec = dynamic_cast<const Ast::ChildTypeSpec*>(ptr(typeSpec));
     if(!ctypeSpec)
         return false;
 
-    if(getName(ref(ctypeSpec).parent(), sep, name))
+    if(getName(ref(ctypeSpec).parent(), sep, name, mode))
         name += sep;
 
     name += typeSpec.name().string();
 
-    if(dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec)) != 0) {
-        name += sep;
-        name += "T";
+    if(mode != GetNameMode::TypeSpecMemberRef) {
+        if(dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec)) != 0) {
+            name += sep;
+            name += "T";
+        }
     }
 
     return true;
 }
 
-static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name) {
+static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name, const GetNameMode::T& mode) {
     if(typeSpec.name().string() == "string") {
         name = "std::string";
         return true;
@@ -66,7 +75,7 @@ static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, s
         return true;
     }
 
-    return getName(typeSpec, sep, name);
+    return getName(typeSpec, sep, name, mode);
 }
 
 struct Indent {
@@ -216,7 +225,7 @@ private:
     }
 
     virtual void visit(const Ast::TypeSpecMemberExpr& node) {
-        fprintf(_fp, "%s", getTypeSpecName(node.typeSpec()).c_str());
+        fprintf(_fp, "%s", getTypeSpecName(node.typeSpec(), "::", GetNameMode::TypeSpecMemberRef).c_str());
         fprintf(_fp, "::%s", node.vref().name().text());
     }
 

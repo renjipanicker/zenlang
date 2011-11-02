@@ -33,6 +33,7 @@ in-params are const by default, locals are not
 *** merge enum and struct Ast's.
 *** remove get-set for struct, retain set-chain ability (how?)
 *** 3 level unit test - suite/test/check
+*** optimize trace/exception
 
 Remove block from unit
 project generator - cmake

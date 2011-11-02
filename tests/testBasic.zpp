@@ -36,6 +36,8 @@ public struct MyStruct {
 public function (int r)testFunction002(const int& x, const MyStruct& myStruct, const MyEnum& myEnum) {
     local v = x;
     local m = myStruct.i;
+    local e = MyEnum.C1;
+    local n = myEnum;
     return (67890);
 }
 

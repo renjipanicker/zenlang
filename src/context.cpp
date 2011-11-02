@@ -1,6 +1,7 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "context.hpp"
+#include "error.hpp"
 
 inline Ast::Root& Context::getRootNamespace() const {
     return (_level == 0)?_unit.rootNS():_unit.importNS();
@@ -688,30 +689,27 @@ Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, con
     const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
     if(structDefn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(structDefn).scope(), name);
-        if(vref != 0) {
-            Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(ref(vref).qualifiedTypeSpec(), expr, ref(vref)));
-            return ptr(vdefExpr);
+        if(vref == 0) {
+            throw Exception("%s %s is not a member of expression type '%s'\n", err(_unit, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
         }
-    } else {
-        throw Exception("Not a aggregate type '%s'\n", typeSpec.name().text());
+        Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(ref(vref).qualifiedTypeSpec(), expr, ref(vref)));
+        return ptr(vdefExpr);
     }
 
-    throw Exception("%s is not a member of type '%s'\n", name.text(), typeSpec.name().text());
+    throw Exception("%s Not a aggregate expression type '%s'\n", err(_unit, typeSpec.name()).c_str(), typeSpec.name().text());
 }
 
 Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
     const Ast::EnumDefn* enumDefn = dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec));
     if(enumDefn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(enumDefn).scope(), name);
-        if(vref != 0) {
-            Ast::TypeSpecMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::TypeSpecMemberExpr(ref(vref).qualifiedTypeSpec(), typeSpec, ref(vref)));
-            return ptr(typeSpecMemberExpr);
+        if(vref == 0) {
+            throw Exception("%s %s is not a member of type '%s'\n", err(_unit, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
         }
-    } else {
-        throw Exception("Not a aggregate type '%s'\n", typeSpec.name().text());
+        Ast::TypeSpecMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::TypeSpecMemberExpr(ref(vref).qualifiedTypeSpec(), typeSpec, ref(vref)));
+        return ptr(typeSpecMemberExpr);
     }
-
-    throw Exception("%s is not a member of type '%s'\n", name.text(), typeSpec.name().text());
+    throw Exception("%s: Not a aggregate type '%s'\n", err(_unit, typeSpec.name()).c_str(), typeSpec.name().text());
 }
 
 Ast::ConstantExpr& Context::aConstantExpr(const std::string& type, const Ast::Token& value) {
