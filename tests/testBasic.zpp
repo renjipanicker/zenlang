@@ -1,13 +1,5 @@
 namespace TestBasic;
 
-public enum MyEnum {
-    C1;
-    C2;
-};
-
-public struct MyStruct {
-    i = 0;
-};
 public routine int testNative(const string& s) native;
 
 public routine int testRoutine(const int& x) {
@@ -31,6 +23,15 @@ public test testBasicExpr {
 
     return (1);
 }
+
+public enum MyEnum {
+    C1;
+    C2;
+};
+
+public struct MyStruct {
+    i = 0;
+};
 
 public function (int r)testFunction002(const int& x, const MyStruct& myStruct, const MyEnum& myEnum) {
     local v = x;
