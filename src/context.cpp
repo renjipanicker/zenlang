@@ -635,7 +635,6 @@ Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
 
 Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
     Ast::RefType::T refType = Ast::RefType::Local;
-    printf("check refType\n");
     for(ScopeStack::const_reverse_iterator it = _scopeStack.rbegin(); it != _scopeStack.rend(); ++it) {
         const Ast::Scope& scope = ref(*it);
 
@@ -674,7 +673,6 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
         }
 
         const Ast::VariableDefn* vref = hasMember(scope, name);
-        printf("Scope: name %s, refType %d, scopeType %d\n", name.text(), refType, scope.type());
         if(vref != 0) {
             Ast::VariableRefExpr& vrefExpr = _unit.addNode(new Ast::VariableRefExpr(ref(vref).qualifiedTypeSpec(), ref(vref), refType));
             return ptr(vrefExpr);
@@ -709,6 +707,60 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
         Ast::TypeSpecMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::TypeSpecMemberExpr(ref(vref).qualifiedTypeSpec(), typeSpec, ref(vref)));
         return ptr(typeSpecMemberExpr);
     }
+
+    const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
+    if(structDefn != 0) {
+        const Ast::VariableDefn* vref = hasMember(ref(structDefn).scope(), name);
+        if(vref == 0) {
+            throw Exception("%s %s is not a member of type '%s'\n", err(_unit, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
+        }
+        Ast::TypeSpecMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::TypeSpecMemberExpr(ref(vref).qualifiedTypeSpec(), typeSpec, ref(vref)));
+        return ptr(typeSpecMemberExpr);
+    }
+
+    throw Exception("%s Not an aggregate type '%s'\n", err(_unit, name).c_str(), typeSpec.name().text());
+}
+
+Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::StructInitPartList& list) {
+    const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
+    if(structDefn != 0) {
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
+        Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(qTypeSpec, ref(structDefn), list));
+        return ptr(structInstanceExpr);
+    }
+
+    throw Exception("%s Not a struct type '%s'\n", err(_unit, pos).c_str(), typeSpec.name().text());
+}
+
+Ast::StructInitPartList* Context::aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part) {
+    list.addPart(part);
+    return ptr(list);
+}
+
+Ast::StructInitPartList* Context::aStructInitPartList(const Ast::StructInitPart& part) {
+    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList());
+    list.addPart(part);
+    return ptr(list);
+}
+
+Ast::StructInitPartList* Context::aStructInitPartList() {
+    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList());
+    return ptr(list);
+}
+
+Ast::StructInitPart* Context::aStructInitPart(const Ast::Token& name, const Ast::Expr& expr) {
+    Ast::StructInitPart& part = _unit.addNode(new Ast::StructInitPart(name, expr));
+    return ptr(part);
+}
+
+Ast::FunctionInstanceExpr* Context::aFunctionInstanceExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
+    const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
+    if(function != 0) {
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
+        Ast::FunctionInstanceExpr& functionInstanceExpr = _unit.addNode(new Ast::FunctionInstanceExpr(qTypeSpec, ref(function), exprList));
+        return ptr(functionInstanceExpr);
+    }
+
     throw Exception("%s: Not a aggregate type '%s'\n", err(_unit, typeSpec.name()).c_str(), typeSpec.name().text());
 }
 

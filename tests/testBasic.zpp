@@ -42,7 +42,7 @@ public function (int r)testFunction002(const int& x, const MyStruct& myStruct, c
 
 public test testFunction001 {
     print "yy %{x}\n" @ {"x":1};
-    local myStruct = MyStruct[];
+    local myStruct = MyStruct{i:0};
     local e = MyEnum.C1;
 //    local c = testFunction(321, myStruct, e);
     return (1);

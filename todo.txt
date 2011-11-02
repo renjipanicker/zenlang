@@ -10,7 +10,6 @@ switch-typeof
 for
 foreach
 enum-init
-struct-init
 coerce
 default intrinsic type values
 assert()
@@ -49,3 +48,5 @@ local variables
 idref-expr
 scope-resolution
 routine-call-expr
+struct-init
+function-instance

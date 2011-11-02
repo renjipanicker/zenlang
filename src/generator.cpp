@@ -221,12 +221,28 @@ private:
 
     virtual void visit(const Ast::VariableMemberExpr& node) {
         visitNode(node.expr());
-        fprintf(_fp, ".%s()", node.vref().name().text());
+        fprintf(_fp, ".%s", node.vref().name().text());
     }
 
     virtual void visit(const Ast::TypeSpecMemberExpr& node) {
         fprintf(_fp, "%s", getTypeSpecName(node.typeSpec(), "::", GetNameMode::TypeSpecMemberRef).c_str());
         fprintf(_fp, "::%s", node.vref().name().text());
+    }
+
+    virtual void visit(const Ast::StructInstanceExpr& node) {
+        fprintf(_fp, "%s()", getTypeSpecName(node.structDefn()).c_str());
+        for(Ast::StructInitPartList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
+            const Ast::StructInitPart& part = ref(*it);
+            fprintf(_fp, "._%s(", part.name().text());
+            visitNode(part.expr());
+            fprintf(_fp, ")");
+        }
+    }
+
+    virtual void visit(const Ast::FunctionInstanceExpr& node) {
+        fprintf(_fp, "%s(", getTypeSpecName(node.function()).c_str());
+        ExprGenerator(_fp, ", ").visitList(node.exprList());
+        fprintf(_fp, ")");
     }
 
     virtual void visit(const Ast::ConstantExpr& node) {
@@ -334,20 +350,12 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
         if(node.defType() != Ast::DefinitionType::Native) {
             fprintf(fp, "%sstruct %s%s {\n", Indent::get(), node.name().text(), impl.c_str());
-            fprintf(fp, "%sprivate:\n", Indent::get());
             for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 INDENT;
                 const Ast::VariableDefn& vdef = ref(*it);
-                fprintf(fp, "%s%s _%s;\n", Indent::get(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
-            }
-            fprintf(fp, "%spublic:\n", Indent::get());
-            for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
-                INDENT;
-                const Ast::VariableDefn& vdef = ref(*it);
-                fprintf(fp, "%sinline %s& %s(const %s& val) {_%s = val; return ref(this);}\n",
+                fprintf(fp, "%s%s %s;\n", Indent::get(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
+                fprintf(fp, "%sinline %s& _%s(const %s& val) {%s = val; return ref(this);}\n",
                         Indent::get(), node.name().text(), vdef.name().text(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
-                fprintf(fp, "%sinline const %s& %s() const {return _%s;}\n",
-                        Indent::get(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text(), vdef.name().text());
             }
             visitChildrenIndent(node);
             fprintf(fp, "%s};\n", Indent::get());

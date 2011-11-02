@@ -671,6 +671,57 @@ namespace Ast {
         const VariableDefn& _vref;
     };
 
+    class TypeSpecInstanceExpr : public Expr {
+    protected:
+        inline TypeSpecInstanceExpr(const QualifiedTypeSpec& qTypeSpec, const ExprList& exprList) : Expr(qTypeSpec), _exprList(exprList) {}
+    public:
+        inline const ExprList& exprList() const {return _exprList;}
+    private:
+        const ExprList& _exprList;
+    };
+
+    class StructInitPart : public Node {
+    public:
+        inline StructInitPart(const Token& name, const Expr& expr) : _name(name), _expr(expr) {}
+        inline const Token& name() const {return _name;}
+        inline const Expr& expr() const {return _expr;}
+    private:
+        const Token _name;
+        const Expr& _expr;
+    };
+
+    class StructInitPartList : public Node {
+    public:
+        typedef std::list<const StructInitPart*> List;
+    public:
+        inline const List& list() const {return _list;}
+        inline void addPart(const StructInitPart& part) { _list.push_back(ptr(part));}
+    private:
+        List _list;
+    };
+
+    class StructInstanceExpr : public Expr {
+    public:
+        inline StructInstanceExpr(const QualifiedTypeSpec& qTypeSpec, const StructDefn& structDefn, const StructInitPartList& list) : Expr(qTypeSpec), _structDefn(structDefn), _list(list) {}
+        inline const StructDefn& structDefn() const {return _structDefn;}
+        inline const StructInitPartList& list() const {return _list;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const StructDefn& _structDefn;
+        const StructInitPartList& _list;
+    };
+
+    class FunctionInstanceExpr : public TypeSpecInstanceExpr {
+    public:
+        inline FunctionInstanceExpr(const QualifiedTypeSpec& qTypeSpec, const Function& function, const ExprList& exprList) : TypeSpecInstanceExpr(qTypeSpec, exprList), _function(function) {}
+        inline const Function& function() const {return _function;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Function& _function;
+    };
+
     class ConstantExpr : public Expr {
     public:
         inline ConstantExpr(const QualifiedTypeSpec& qTypeSpec, const Token& value) : Expr(qTypeSpec), _value(value) {}
@@ -709,6 +760,8 @@ namespace Ast {
         virtual void visit(const VariableRefExpr& node) = 0;
         virtual void visit(const VariableMemberExpr& node) = 0;
         virtual void visit(const TypeSpecMemberExpr& node) = 0;
+        virtual void visit(const StructInstanceExpr& node) = 0;
+        virtual void visit(const FunctionInstanceExpr& node) = 0;
         virtual void visit(const ConstantExpr& node) = 0;
         virtual void sep() = 0;
     };
@@ -728,6 +781,8 @@ namespace Ast {
     inline void VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void VariableMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TypeSpecMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void StructInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void FunctionInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ConstantExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////

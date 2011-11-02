@@ -132,5 +132,11 @@ public:
     Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);
     Ast::VariableMemberExpr*  aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name);
     Ast::TypeSpecMemberExpr*  aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
+    Ast::StructInstanceExpr*  aStructInstanceExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::StructInitPartList& list);
+    Ast::StructInitPartList*  aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part);
+    Ast::StructInitPartList*  aStructInitPartList(const Ast::StructInitPart& part);
+    Ast::StructInitPartList*  aStructInitPartList();
+    Ast::StructInitPart*      aStructInitPart(const Ast::Token& name, const Ast::Expr& expr);
+    Ast::FunctionInstanceExpr* aFunctionInstanceExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
     Ast::ConstantExpr&        aConstantExpr(const std::string& type, const Ast::Token& value);
 };

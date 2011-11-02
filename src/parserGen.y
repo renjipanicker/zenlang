@@ -351,10 +351,12 @@ rExpr(L) ::= rPrefixExpr(R).       {L = R;}
 rExpr(L) ::= rListExpr(R).         {L = R;}
 rExpr(L) ::= rDictExpr(R).         {L = R;}
 rExpr(L) ::= rFormatExpr(R).       {L = R;}
-rExpr(L) ::= rCallExpr(R). {L = R;}
-rExpr(L) ::= rVariableRefExpr(R).  {L = R;}
-rExpr(L) ::= rVariableMemberExpr(R).  {L = R;}
-rExpr(L) ::= rTypeSpecMemberExpr(R).  {L = R;}
+rExpr(L) ::= rCallExpr(R).              {L = R;}
+rExpr(L) ::= rVariableRefExpr(R).       {L = R;}
+rExpr(L) ::= rVariableMemberExpr(R).    {L = R;}
+rExpr(L) ::= rTypeSpecMemberExpr(R).    {L = R;}
+rExpr(L) ::= rFunctionInstanceExpr(R).  {L = R;}
+rExpr(L) ::= rStructInstanceExpr(R).    {L = R;}
 rExpr(L) ::= rConstantExpr(R).     {L = R;}
 
 //-------------------------------------------------
@@ -497,6 +499,26 @@ rVariableMemberExpr(L) ::= rExpr(R) DOT ID(M). {L = ref(pctx).aVariableMemberExp
 // type member expressions, e.g. enum member
 %type rTypeSpecMemberExpr {Ast::TypeSpecMemberExpr*}
 rTypeSpecMemberExpr(L) ::= rTypeSpec(R) DOT ID(M). {L = ref(pctx).aTypeSpecMemberExpr(ref(R), M);}
+
+//-------------------------------------------------
+// function instance expressions
+%type rFunctionInstanceExpr {Ast::TypeSpecInstanceExpr*}
+rFunctionInstanceExpr(L) ::= rTypeSpec(R) LSQUARE rExprList(M) RSQUARE. {L = ref(pctx).aFunctionInstanceExpr(ref(R), ref(M));}
+
+//-------------------------------------------------
+// struct instance expressions
+%type rStructInstanceExpr {Ast::StructInstanceExpr*}
+rStructInstanceExpr(L) ::= rTypeSpec(R) LCURLY(B) rStructInitPartList(P) RCURLY. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
+
+//-------------------------------------------------
+%type rStructInitPartList {Ast::StructInitPartList*}
+rStructInitPartList(L) ::= rStructInitPartList(R) COMMA rStructInitPart(P). {L = ref(pctx).aStructInitPartList(ref(R), ref(P));}
+rStructInitPartList(L) ::=                              rStructInitPart(P). {L = ref(pctx).aStructInitPartList(ref(P));}
+rStructInitPartList(L) ::=                                                . {L = ref(pctx).aStructInitPartList();}
+
+//-------------------------------------------------
+%type rStructInitPart {Ast::StructInitPart*}
+rStructInitPart(L) ::= ID(R) COLON rExpr(E). {L = ref(pctx).aStructInitPart(R, ref(E));}
 
 //-------------------------------------------------
 // constant expressions
