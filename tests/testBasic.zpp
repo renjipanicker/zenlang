@@ -30,6 +30,7 @@ public function (int ri, string rs)testFunction(const int& x, const MyStruct& my
 
 public test testFunction001 {
     print "yy %{x}\n" @ {"x":1};
-    local c = testFunction(321);
+//    local myStruct = MyStruct[];
+//    local c = testFunction(321);
     return (1);
 }

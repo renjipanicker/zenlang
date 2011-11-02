@@ -1,4 +1,5 @@
-idref-expr
+scope-resolution for closure
+routine-call-expr
 run
 if-else
 while
@@ -6,11 +7,13 @@ do-while
 switch-value
 switch-expression
 switch-typeof
+enum-init
 struct-init
 coerce
 default intrinsic type values
 assert()
 unused()
+
 project builder
 project reader
 inner functions
@@ -24,7 +27,6 @@ project generator - msvc
 print <dst> <expr>;
 print <dst> <src> <level> <expr>;
 *** move Formatter to String, Creator to List/Dict
-*** generate enum-init-expr
 *** merge enum and struct Ast's.
 
 Remove block from unit
@@ -38,3 +40,5 @@ string-format-expr
 print <expr>;
 function-call-expr
 local variables
+idref-expr
+scope-resolution

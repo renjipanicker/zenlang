@@ -189,12 +189,24 @@ private:
     }
 
     virtual void visit(const Ast::VariableRefExpr& node) {
-        fprintf(_fp, "%s", node.vref().name().text());
+        switch(node.refType()) {
+            case Ast::RefType::Global:
+                break;
+            case Ast::RefType::XRef:
+                fprintf(_fp, "This.%s()", node.vref().name().text());
+                break;
+            case Ast::RefType::Param:
+                fprintf(_fp, "This.%s()", node.vref().name().text());
+                break;
+            case Ast::RefType::Local:
+                fprintf(_fp, "%s", node.vref().name().text());
+                break;
+        }
     }
 
     virtual void visit(const Ast::VariableMemberExpr& node) {
         visitNode(node.expr());
-        fprintf(_fp, ".%s", node.vref().name().text());
+        fprintf(_fp, ".%s()", node.vref().name().text());
     }
 
     virtual void visit(const Ast::TypeSpecMemberExpr& node) {

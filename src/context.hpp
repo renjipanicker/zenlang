@@ -32,7 +32,7 @@ private:
     inline const Ast::Expr& getInitExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
 
 private:
-    inline Ast::Scope& addScope();
+    inline Ast::Scope& addScope(const Ast::ScopeType::T& type);
     inline Ast::Scope& enterScope(Ast::Scope& scope);
     inline Ast::Scope& leaveScope();
 
@@ -81,9 +81,9 @@ public:
     Ast::EventDecl*          aEventDecl(const Ast::VariableDefn& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
     Ast::FunctionSig*        aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in);
     Ast::Scope*              aInParamsList(Ast::Scope& scope);
-    Ast::Scope*              aScope(Ast::Scope& list, const Ast::VariableDefn& variableDefn);
-    Ast::Scope*              aScope(const Ast::VariableDefn& variableDefn);
-    Ast::Scope*              aScope();
+    Ast::Scope*              aParam(Ast::Scope& list, const Ast::VariableDefn& variableDefn);
+    Ast::Scope*              aParam(const Ast::VariableDefn& variableDefn);
+    Ast::Scope*              aParam();
     Ast::VariableDefn*       aVariableDefn(const Ast::Token& name, const Ast::Expr& initExpr);
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
     Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
@@ -100,6 +100,8 @@ public:
     Ast::FunctionReturnStatement*      aFunctionReturnStatement(const Ast::ExprList& exprList);
     Ast::CompoundStatement*            aStatementList();
     Ast::CompoundStatement*            aStatementList(Ast::CompoundStatement& list, const Ast::Statement& statement);
+    void                               aEnterCompoundStatement();
+    void                               aLeaveCompoundStatement();
     Ast::ExprList*                     aExprList(Ast::ExprList& list, const Ast::Expr& expr);
     Ast::ExprList*                     aExprList(const Ast::Expr& expr);
     Ast::ExprList*                     aExprList();

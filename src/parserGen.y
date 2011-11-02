@@ -253,14 +253,14 @@ rInParamsList(L) ::= rParamsList(scope). {L = ref(pctx).aInParamsList(ref(scope)
 //-------------------------------------------------
 // parameter lists
 %type rParamsList {Ast::Scope*}
-rParamsList(L) ::= LBRACKET rScope(R) RBRACKET. {L = R;}
+rParamsList(L) ::= LBRACKET rParam(R) RBRACKET. {L = R;}
 
 //-------------------------------------------------
 // variable lists
-%type rScope {Ast::Scope*}
-rScope(L) ::= rScope(list) COMMA rVariableDefn(variableDef). {L = ref(pctx).aScope(ref(list), ref(variableDef));}
-rScope(L) ::=                    rVariableDefn(variableDef). {L = ref(pctx).aScope(ref(variableDef));}
-rScope(L) ::= .                                              {L = ref(pctx).aScope();}
+%type rParam {Ast::Scope*}
+rParam(L) ::= rParam(list) COMMA rVariableDefn(variableDef). {L = ref(pctx).aParam(ref(list), ref(variableDef));}
+rParam(L) ::=                    rVariableDefn(variableDef). {L = ref(pctx).aParam(ref(variableDef));}
+rParam(L) ::= .                                              {L = ref(pctx).aParam();}
 
 //-------------------------------------------------
 // variable def
@@ -322,8 +322,8 @@ rFunctionReturnStatement(L) ::= FRETURN rExprsList(S) SEMI. {L = ref(pctx).aFunc
 // simple list of statements
 %type rCompoundStatement {Ast::CompoundStatement*}
 rCompoundStatement(L)   ::= rEnterCompoundStatement rStatementList(R) rLeaveCompoundStatement. {L = R;}
-rEnterCompoundStatement ::= LCURLY.
-rLeaveCompoundStatement ::= RCURLY.
+rEnterCompoundStatement ::= LCURLY. {ref(pctx).aEnterCompoundStatement();}
+rLeaveCompoundStatement ::= RCURLY. {ref(pctx).aLeaveCompoundStatement();}
 
 %type rStatementList {Ast::CompoundStatement*}
 rStatementList(L) ::= rStatementList(list) rInnerStatement(statement). {L = ref(pctx).aStatementList(ref(list), ref(statement));}

@@ -56,8 +56,8 @@ Context::~Context() {
     leaveTypeSpec(rootTypeSpec);
 }
 
-inline Ast::Scope& Context::addScope() {
-    Ast::Scope& scope = _unit.addNode(new Ast::Scope());
+inline Ast::Scope& Context::addScope(const Ast::ScopeType::T& type) {
+    Ast::Scope& scope = _unit.addNode(new Ast::Scope(type));
     return scope;
 }
 
@@ -237,7 +237,7 @@ Ast::EnumDefn* Context::aEnumDefn(const Ast::Token& name, const Ast::DefinitionT
 }
 
 Ast::EnumDefn* Context::aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
-    Ast::Scope& scope = addScope();
+    Ast::Scope& scope = addScope(Ast::ScopeType::Member);
     Ast::EnumDefn& enumDefn = _unit.addNode(new Ast::EnumDefn(currentTypeSpec(), name, defType, scope));
     currentTypeSpec().addChild(enumDefn);
     return ptr(enumDefn);
@@ -249,7 +249,7 @@ Ast::Scope* Context::aEnumMemberDefnList(Ast::Scope& list, const Ast::VariableDe
 }
 
 Ast::Scope* Context::aEnumMemberDefnList(const Ast::VariableDefn& variableDefn) {
-    Ast::Scope& scope = addScope();
+    Ast::Scope& scope = addScope(Ast::ScopeType::Member);
     return aEnumMemberDefnList(scope, variableDefn);
 }
 
@@ -272,7 +272,7 @@ Ast::StructDefn* Context::aStructDefn(const Ast::Token& name, const Ast::Definit
 }
 
 Ast::StructDefn* Context::aStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
-    Ast::Scope& scope = addScope();
+    Ast::Scope& scope = addScope(Ast::ScopeType::Member);
     return aStructDefn(name, defType, scope);
 }
 
@@ -282,7 +282,7 @@ Ast::Scope* Context::aStructMemberDefnList(Ast::Scope& list, const Ast::Variable
 }
 
 Ast::Scope* Context::aStructMemberDefnList(const Ast::VariableDefn& enumMemberDefn) {
-    Ast::Scope& list = addScope();
+    Ast::Scope& list = addScope(Ast::ScopeType::Member);
     return aStructMemberDefnList(list, enumMemberDefn);
 }
 
@@ -376,18 +376,18 @@ Ast::Scope* Context::aInParamsList(Ast::Scope& scope) {
     return ptr(scope);
 }
 
-Ast::Scope* Context::aScope(Ast::Scope& list, const Ast::VariableDefn& variableDefn) {
+Ast::Scope* Context::aParam(Ast::Scope& list, const Ast::VariableDefn& variableDefn) {
     list.addVariableDef(variableDefn);
     return ptr(list);
 }
 
-Ast::Scope* Context::aScope(const Ast::VariableDefn& variableDefn) {
-    Ast::Scope& list = addScope();
-    return aScope(list, variableDefn);
+Ast::Scope* Context::aParam(const Ast::VariableDefn& variableDefn) {
+    Ast::Scope& list = addScope(Ast::ScopeType::Param);
+    return aParam(list, variableDefn);
 }
 
-Ast::Scope* Context::aScope() {
-    Ast::Scope& list = addScope();
+Ast::Scope* Context::aParam() {
+    Ast::Scope& list = addScope(Ast::ScopeType::Param);
     return ptr(list);
 }
 
@@ -467,6 +467,15 @@ Ast::CompoundStatement* Context::aStatementList() {
 Ast::CompoundStatement* Context::aStatementList(Ast::CompoundStatement& list, const Ast::Statement& statement) {
     list.addStatement(statement);
     return ptr(list);
+}
+
+void Context::aEnterCompoundStatement() {
+    Ast::Scope& scope = addScope(Ast::ScopeType::Local);
+    enterScope(scope);
+}
+
+void Context::aLeaveCompoundStatement() {
+    leaveScope();
 }
 
 Ast::ExprList* Context::aExprList(Ast::ExprList& list, const Ast::Expr& expr) {
@@ -614,11 +623,49 @@ Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
 }
 
 Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
+    Ast::RefType::T refType = Ast::RefType::Local;
+    trace("check refType\n");
     for(ScopeStack::const_reverse_iterator it = _scopeStack.rbegin(); it != _scopeStack.rend(); ++it) {
         const Ast::Scope& scope = ref(*it);
+
+        switch(refType) {
+            case Ast::RefType::Global:
+                break;
+            case Ast::RefType::XRef:
+                break;
+            case Ast::RefType::Param:
+                switch(scope.type()) {
+                    case Ast::ScopeType::Global:
+                        throw Exception("Internal error: Invalid reference to global variable '%s'\n", name.text());
+                    case Ast::ScopeType::Member:
+                        throw Exception("Internal error: Invalid reference to member variable '%s'\n", name.text());
+                    case Ast::ScopeType::Param:
+                        refType = Ast::RefType::XRef;
+                        break;
+                    case Ast::ScopeType::Local:
+                        refType = Ast::RefType::XRef;
+                        break;
+                }
+                break;
+            case Ast::RefType::Local:
+                switch(scope.type()) {
+                    case Ast::ScopeType::Global:
+                        throw Exception("Internal error: Invalid reference to global variable '%s'\n", name.text());
+                    case Ast::ScopeType::Member:
+                        throw Exception("Internal error: Invalid reference to member variable '%s'\n", name.text());
+                    case Ast::ScopeType::Param:
+                        refType = Ast::RefType::Param;
+                        break;
+                    case Ast::ScopeType::Local:
+                        break;
+                }
+                break;
+        }
+
         const Ast::VariableDefn* vref = hasMember(scope, name);
+        trace("Scope: name %s, refType %d, scopeType %d\n", name.text(), refType, scope.type());
         if(vref != 0) {
-            Ast::VariableRefExpr& vrefExpr = _unit.addNode(new Ast::VariableRefExpr(ref(vref).qualifiedTypeSpec(), ref(vref)));
+            Ast::VariableRefExpr& vrefExpr = _unit.addNode(new Ast::VariableRefExpr(ref(vref).qualifiedTypeSpec(), ref(vref), refType));
             return ptr(vrefExpr);
         }
     }

@@ -24,12 +24,34 @@ namespace Ast {
         };
     };
 
-    /// \brief Outer struct for ImportType enumeration.
+    /// \brief Outer struct for HeaderType enumeration.
     struct HeaderType {
-        /// \brief The import type for any header file.
+        /// \brief The type for any header file.
         enum T {
             Import,     /// import system file
             Include     /// include application file
+        };
+    };
+
+    /// \brief Outer struct for ScopeType enumeration.
+    struct ScopeType {
+        /// \brief The type for any scope
+        enum T {
+            Global,      /// global scope (unused for now)
+            Member,      /// Member of enum or struct
+            Param,       /// Param scope
+            Local        /// local scope
+        };
+    };
+
+    /// \brief Outer struct for RefType enumeration.
+    struct RefType {
+        /// \brief The type for any scope
+        enum T {
+            Global,      /// Variable is in global scope (unused for now)
+            XRef,        /// Variable is from outside current function
+            Param,       /// Reference to current function parameter
+            Local        /// variable is in local scope
         };
     };
 
@@ -119,10 +141,12 @@ namespace Ast {
     public:
         typedef std::list<const VariableDefn*> List;
     public:
-        inline Scope() {}
+        inline Scope(const ScopeType::T& type) : _type(type) {}
         inline Scope& addVariableDef(const VariableDefn& variableDef) {_list.push_back(ptr(variableDef)); return ref(this);}
+        inline const ScopeType::T& type() const {return _type;}
         inline const List& list() const {return _list;}
     private:
+        const ScopeType::T _type;
         List _list;
     };
 
@@ -596,12 +620,14 @@ namespace Ast {
 
     class VariableRefExpr : public Expr {
     public:
-        inline VariableRefExpr(const QualifiedTypeSpec& qTypeSpec, const VariableDefn& vref) : Expr(qTypeSpec), _vref(vref) {}
+        inline VariableRefExpr(const QualifiedTypeSpec& qTypeSpec, const VariableDefn& vref, const RefType::T& refType) : Expr(qTypeSpec), _vref(vref), _refType(refType) {}
         inline const VariableDefn& vref() const {return _vref;}
+        inline const RefType::T& refType() const {return _refType;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const VariableDefn& _vref;
+        const RefType::T _refType;
     };
 
     class VariableMemberExpr : public Expr {
