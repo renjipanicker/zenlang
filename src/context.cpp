@@ -69,10 +69,15 @@ inline Ast::Scope& Context::enterScope(Ast::Scope& scope) {
 
 inline Ast::Scope& Context::leaveScope() {
     Ast::Scope* s = _scopeStack.back();
-    //assert(s == ptr(scope));
     assert(_scopeStack.size() > 0);
     _scopeStack.pop_back();
     return ref(s);
+}
+
+inline Ast::Scope& Context::currentScope() {
+    assert(_scopeStack.size() > 0);
+    Ast::Scope* scope = _scopeStack.back();
+    return ref(scope);
 }
 
 const Ast::TypeSpec* Context::hasRootTypeSpec(const Ast::Token& name) const {
@@ -239,9 +244,7 @@ Ast::EnumDefn* Context::aEnumDefn(const Ast::Token& name, const Ast::DefinitionT
 
 Ast::EnumDefn* Context::aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
     Ast::Scope& scope = addScope(Ast::ScopeType::Member);
-    Ast::EnumDefn& enumDefn = _unit.addNode(new Ast::EnumDefn(currentTypeSpec(), name, defType, scope));
-    currentTypeSpec().addChild(enumDefn);
-    return ptr(enumDefn);
+    return aEnumDefn(name, defType, scope);
 }
 
 Ast::Scope* Context::aEnumMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& variableDefn) {
@@ -429,6 +432,7 @@ Ast::UserDefinedTypeSpecStatement* Context::aUserDefinedTypeSpecStatement(const 
 
 Ast::LocalStatement* Context::aLocalStatement(const Ast::VariableDefn& defn) {
     Ast::LocalStatement& localStatement = _unit.addNode(new Ast::LocalStatement(defn));
+    currentScope().addVariableDef(defn);
     return ptr(localStatement);
 }
 
@@ -704,7 +708,8 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
         if(vref == 0) {
             throw Exception("%s %s is not a member of type '%s'\n", err(_unit, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
         }
-        Ast::TypeSpecMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::TypeSpecMemberExpr(ref(vref).qualifiedTypeSpec(), typeSpec, ref(vref)));
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
+        Ast::TypeSpecMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::TypeSpecMemberExpr(qTypeSpec, typeSpec, ref(vref)));
         return ptr(typeSpecMemberExpr);
     }
 

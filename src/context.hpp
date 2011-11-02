@@ -35,6 +35,7 @@ private:
     inline Ast::Scope& addScope(const Ast::ScopeType::T& type);
     inline Ast::Scope& enterScope(Ast::Scope& scope);
     inline Ast::Scope& leaveScope();
+    inline Ast::Scope& currentScope();
 
 private:
     Compiler& _compiler;

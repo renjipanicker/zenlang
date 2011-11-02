@@ -46,7 +46,8 @@ print <expr>;
 function-call-expr
 local variables
 idref-expr
-scope-resolution
+param-scope-resolution
 routine-call-expr
 struct-init
 function-instance
+local-scope-resolution
