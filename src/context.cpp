@@ -40,7 +40,7 @@ inline Ast::QualifiedTypeSpec& Context::addQualifiedTypeSpec(const bool& isConst
 
 inline const Ast::QualifiedTypeSpec& Context::getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name) {
     Ast::Token token(pos.row(), pos.col(), name);
-    const Ast::TypeSpec& typeSpec = getRootTypeSpec(token);
+    const Ast::TypeSpec& typeSpec = getRootTypeSpec<Ast::TypeSpec>(token);
     const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
     return qTypeSpec;
 }
@@ -88,12 +88,17 @@ const Ast::TypeSpec* Context::hasRootTypeSpec(const Ast::Token& name) const {
     return 0;
 }
 
-inline const Ast::TypeSpec& Context::getRootTypeSpec(const Ast::Token &name) const {
+template <typename T>
+inline const T& Context::getRootTypeSpec(const Ast::Token &name) const {
     const Ast::TypeSpec* typeSpec = hasRootTypeSpec(name);
     if(!typeSpec) {
         throw Exception("Unknown root type '%s'\n", name.text());
     }
-    return ref(typeSpec);
+    const T* tTypeSpec = dynamic_cast<const T*>(typeSpec);
+    if(!tTypeSpec) {
+        throw Exception("Type mismatch '%s'\n", name.text());
+    }
+    return ref(tTypeSpec);
 }
 
 inline const Ast::VariableDefn* Context::hasMember(const Ast::Scope& scope, const Ast::Token& name) {
@@ -143,6 +148,13 @@ inline const Ast::Expr& Context::getInitExpr(const Ast::TypeSpec& typeSpec, cons
     return aConstantExpr("int", value);
 
     //throw Exception("Unknown init value for type '%s'\n", typeSpec.name().text());
+}
+
+inline Ast::TemplateDefn& Context::createTemplateDefn(const Ast::Token& pos, const std::string& name) {
+    Ast::Token token(pos.row(), pos.col(), name);
+    const Ast::TemplateDecl& templateDecl = getRootTypeSpec<Ast::TemplateDecl>(token);
+    Ast::TemplateDefn& templateDefn = _unit.addNode(new Ast::TemplateDefn(currentTypeSpec(), token, Ast::DefinitionType::Direct, templateDecl));
+    return templateDefn;
 }
 
 ////////////////////////////////////////////////////////////
@@ -212,8 +224,8 @@ Ast::TemplatePartList* Context::aTemplatePartList(const Ast::Token& name) {
     return ptr(list);
 }
 
-Ast::TemplateDefn* Context::aTemplateDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TemplatePartList& list) {
-    Ast::TemplateDefn& templateDefn = _unit.addNode(new Ast::TemplateDefn(currentTypeSpec(), name, defType, list));
+Ast::TemplateDecl* Context::aTemplateDecl(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TemplatePartList& list) {
+    Ast::TemplateDecl& templateDefn = _unit.addNode(new Ast::TemplateDecl(currentTypeSpec(), name, defType, list));
     currentTypeSpec().addChild(templateDefn);
     return ptr(templateDefn);
 }
@@ -405,7 +417,7 @@ const Ast::TypeSpec* Context::aTypeSpec(const Ast::TypeSpec& parent, const Ast::
 }
 
 const Ast::TypeSpec* Context::aTypeSpec(const Ast::Token& name) const {
-    const Ast::TypeSpec& typeSpec = getRootTypeSpec(name);
+    const Ast::TypeSpec& typeSpec = getRootTypeSpec<Ast::TypeSpec>(name);
     return ptr(typeSpec);
 }
 
@@ -510,7 +522,10 @@ Ast::EnumMemberRefExpr& Context::aEnumMemberRefExpr(const Ast::EnumDefn& enumDef
 }
 
 Ast::ListExpr* Context::aListExpr(const Ast::Token& pos, const Ast::ListList& list) {
-    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "list");
+    Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "list");
+    templateDefn.addType(list.valueType());
+    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
+
     Ast::ListExpr& expr = _unit.addNode(new Ast::ListExpr(qTypeSpec, list));
     return ptr(expr);
 }
@@ -540,7 +555,11 @@ Ast::ListItem* Context::aListItem(const Ast::Expr& valueExpr) {
 }
 
 Ast::DictExpr* Context::aDictExpr(const Ast::Token& pos, const Ast::DictList& list) {
-    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "dict");
+    Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "dict");
+    templateDefn.addType(list.keyType());
+    templateDefn.addType(list.valueType());
+    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
+
     Ast::DictExpr& expr = _unit.addNode(new Ast::DictExpr(qTypeSpec, list));
     return ptr(expr);
 }

@@ -167,15 +167,30 @@ namespace Ast {
         List _list;
     };
 
-    class TemplateDefn : public UserDefinedTypeSpec {
+    class TemplateDecl : public UserDefinedTypeSpec {
     public:
-        inline TemplateDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const TemplatePartList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
+        inline TemplateDecl(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const TemplatePartList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
     public:
         inline const TemplatePartList::List& list() const {return _list.list();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const TemplatePartList& _list;
+    };
+
+    class TemplateDefn : public UserDefinedTypeSpec {
+    public:
+        typedef std::list<const QualifiedTypeSpec*> List;
+    public:
+        inline TemplateDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const TemplateDecl& templateDecl) : UserDefinedTypeSpec(parent, name, defType), _templateDecl(templateDecl) {}
+    public:
+        inline void addType(const QualifiedTypeSpec& qTypeSpec) {_list.push_back(ptr(qTypeSpec));}
+        inline const List& list() const {return _list;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const TemplateDecl& _templateDecl;
+        List _list;
     };
 
     class EnumDefn : public UserDefinedTypeSpec {
@@ -337,6 +352,7 @@ namespace Ast {
         }
 
         virtual void visit(const TypedefDefn& node) = 0;
+        virtual void visit(const TemplateDecl& node) = 0;
         virtual void visit(const TemplateDefn& node) = 0;
         virtual void visit(const EnumDefn& node) = 0;
         virtual void visit(const StructDefn& node) = 0;
@@ -352,6 +368,7 @@ namespace Ast {
     };
 
     inline void TypedefDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void TemplateDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TemplateDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void EnumDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void StructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}

@@ -27,8 +27,8 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 #else
-    if (readlink ("/proc/self/exe", path, len) != -1) {
-        fprintf(stdout, "Internal error retreiving process path\n");
+    if (readlink ("/proc/self/exe", path, len) == -1) {
+        fprintf(stdout, "Internal error retreiving process path %s\n", path);
         return -1;
     }
 #endif

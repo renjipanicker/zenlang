@@ -13,7 +13,8 @@ public:
 private:
     inline Ast::ExprList& addExprList();
     inline Ast::Root& getRootNamespace() const;
-    inline const Ast::TypeSpec& getRootTypeSpec(const Ast::Token& name) const;
+    template <typename T>
+    inline const T& getRootTypeSpec(const Ast::Token& name) const;
     inline const Ast::TypeSpec* findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
 
 public:
@@ -27,6 +28,7 @@ private:
     inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
     inline const Ast::QualifiedTypeSpec& getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name);
     inline const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name);
+    inline Ast::TemplateDefn& createTemplateDefn(const Ast::Token& pos, const std::string& name);
     inline const Ast::Expr& getInitExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
 
 private:
@@ -57,7 +59,7 @@ public:
     Ast::TypedefDefn*        aTypedefDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::TemplatePartList*   aTemplatePartList(Ast::TemplatePartList& list, const Ast::Token& name);
     Ast::TemplatePartList*   aTemplatePartList(const Ast::Token& name);
-    Ast::TemplateDefn*       aTemplateDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TemplatePartList& list);
+    Ast::TemplateDecl*       aTemplateDecl(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TemplatePartList& list);
     Ast::EnumDefn*           aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list);
     Ast::EnumDefn*           aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::Scope*              aEnumMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& variableDefn);

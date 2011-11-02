@@ -145,7 +145,7 @@ rDefinitionType(L) ::= .       {L = Ast::DefinitionType::Direct;}
 //-------------------------------------------------
 %type rTypeSpecDef {Ast::UserDefinedTypeSpec*}
 rTypeSpecDef(L) ::= rTypedefDefn(R).  {L = R;}
-rTypeSpecDef(L) ::= rTemplateDefn(R). {L = R;}
+rTypeSpecDef(L) ::= rTemplateDecl(R). {L = R;}
 rTypeSpecDef(L) ::= rEnumDefn(R).     {L = R;}
 rTypeSpecDef(L) ::= rStructDefn(R).   {L = R;}
 rTypeSpecDef(L) ::= rRoutineDecl(R).  {L = R;}
@@ -162,8 +162,8 @@ rTypedefDefn(L) ::= TYPEDEF ID(name) NATIVE SEMI. {L = ref(pctx).aTypedefDefn(na
 
 //-------------------------------------------------
 // template declarations
-%type rTemplateDefn {Ast::TemplateDefn*}
-rTemplateDefn(L) ::= TEMPLATE LT rTemplatePartList(list) GT ID(name) NATIVE SEMI. {L = ref(pctx).aTemplateDefn(name, Ast::DefinitionType::Native, ref(list));}
+%type rTemplateDecl {Ast::TemplateDecl*}
+rTemplateDecl(L) ::= TEMPLATE LT rTemplatePartList(list) GT ID(name) NATIVE SEMI. {L = ref(pctx).aTemplateDecl(name, Ast::DefinitionType::Native, ref(list));}
 
 //-------------------------------------------------
 %type rTemplatePartList {Ast::TemplatePartList*}
