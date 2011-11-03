@@ -300,9 +300,9 @@ namespace Ast {
         virtual void visit(Visitor& visitor) const;
     };
 
-    class FunctionDefnBase : public Function {
+    class FunctionDefn : public Function {
     protected:
-        inline FunctionDefnBase(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig)
+        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig)
             : Function(parent, name, defType, sig), _block(0) {}
     public:
         inline const Ast::CompoundStatement& block() const {return ref(_block);}
@@ -311,18 +311,18 @@ namespace Ast {
         const Ast::CompoundStatement* _block;
     };
 
-    class FunctionDefn : public FunctionDefnBase {
+    class RootFunctionDefn : public FunctionDefn {
     public:
-        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig)
-            : FunctionDefnBase(parent, name, defType, sig) {}
+        inline RootFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig)
+            : FunctionDefn(parent, name, defType, sig) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
-    class FunctionImpl : public FunctionDefnBase {
+    class ChildFunctionDefn : public FunctionDefn {
     public:
-        inline FunctionImpl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, const Ast::Function& base)
-            : FunctionDefnBase(parent, name, defType, sig), _base(base) {}
+        inline ChildFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, const Ast::Function& base)
+            : FunctionDefn(parent, name, defType, sig), _base(base) {}
         inline const Ast::Function& base() const {return _base;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -397,8 +397,8 @@ namespace Ast {
         virtual void visit(const RoutineDecl& node) = 0;
         virtual void visit(const RoutineDefn& node) = 0;
         virtual void visit(const FunctionDecl& node) = 0;
-        virtual void visit(const FunctionDefn& node) = 0;
-        virtual void visit(const FunctionImpl& node) = 0;
+        virtual void visit(const RootFunctionDefn& node) = 0;
+        virtual void visit(const ChildFunctionDefn& node) = 0;
         virtual void visit(const FunctionRetn& node) = 0;
         virtual void visit(const Functor& node) = 0;
         virtual void visit(const EventDecl& node) = 0;
@@ -414,8 +414,8 @@ namespace Ast {
     inline void RoutineDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void FunctionDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void FunctionImpl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void RootFunctionDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void ChildFunctionDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionRetn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Functor::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void EventDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}

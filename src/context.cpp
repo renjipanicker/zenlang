@@ -319,7 +319,7 @@ Ast::FunctionDecl* Context::aFunctionDecl(const Ast::FunctionSig& functionSig, c
     return ptr(functionDecl);
 }
 
-Ast::FunctionDefn* Context::aFunctionDefn(Ast::FunctionDefn& functionDefn, const Ast::CompoundStatement& block) {
+Ast::RootFunctionDefn* Context::aRootFunctionDefn(Ast::RootFunctionDefn& functionDefn, const Ast::CompoundStatement& block) {
     functionDefn.setBlock(block);
     leaveScope();
     leaveTypeSpec(functionDefn);
@@ -327,9 +327,9 @@ Ast::FunctionDefn* Context::aFunctionDefn(Ast::FunctionDefn& functionDefn, const
     return ptr(functionDefn);
 }
 
-Ast::FunctionDefn* Context::aEnterFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
+Ast::RootFunctionDefn* Context::aEnterRootFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
     const Ast::Token& name = functionSig.name();
-    Ast::FunctionDefn& functionDefn = _unit.addNode(new Ast::FunctionDefn(currentTypeSpec(), name, defType, functionSig));
+    Ast::RootFunctionDefn& functionDefn = _unit.addNode(new Ast::RootFunctionDefn(currentTypeSpec(), name, defType, functionSig));
     currentTypeSpec().addChild(functionDefn);
     enterScope(functionSig.inScope());
     enterTypeSpec(functionDefn);
@@ -345,7 +345,7 @@ Ast::FunctionDefn* Context::aEnterFunctionDefn(const Ast::FunctionSig& functionS
     return ptr(functionDefn);
 }
 
-Ast::FunctionImpl* Context::aFunctionImpl(Ast::FunctionImpl& functionImpl, const Ast::CompoundStatement& block) {
+Ast::ChildFunctionDefn* Context::aChildFunctionDefn(Ast::ChildFunctionDefn& functionImpl, const Ast::CompoundStatement& block) {
     functionImpl.setBlock(block);
     leaveScope();
     leaveTypeSpec(functionImpl);
@@ -353,12 +353,12 @@ Ast::FunctionImpl* Context::aFunctionImpl(Ast::FunctionImpl& functionImpl, const
     return ptr(functionImpl);
 }
 
-Ast::FunctionImpl* Context::aEnterFunctionImpl(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+Ast::ChildFunctionDefn* Context::aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(base));
     if(function == 0) {
         throw Exception("base type not a function '%s'\n", base.name().text());
     }
-    Ast::FunctionImpl& functionImpl = _unit.addNode(new Ast::FunctionImpl(currentTypeSpec(), name, defType, ref(function).sig(), ref(function)));
+    Ast::ChildFunctionDefn& functionImpl = _unit.addNode(new Ast::ChildFunctionDefn(currentTypeSpec(), name, defType, ref(function).sig(), ref(function)));
     currentTypeSpec().addChild(functionImpl);
     enterScope(ref(function).sig().inScope());
     enterTypeSpec(functionImpl);

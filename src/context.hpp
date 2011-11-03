@@ -75,10 +75,10 @@ public:
     Ast::RoutineDefn*        aRoutineDefn(Ast::RoutineDefn& routineDefn, const Ast::CompoundStatement& block);
     Ast::RoutineDefn*        aEnterRoutineDefn(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType);
     Ast::FunctionDecl*       aFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
-    Ast::FunctionDefn*       aFunctionDefn(Ast::FunctionDefn& functionDefn, const Ast::CompoundStatement& block);
-    Ast::FunctionDefn*       aEnterFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
-    Ast::FunctionImpl*       aFunctionImpl(Ast::FunctionImpl& functionImpl, const Ast::CompoundStatement& block);
-    Ast::FunctionImpl*       aEnterFunctionImpl(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
+    Ast::RootFunctionDefn*   aRootFunctionDefn(Ast::RootFunctionDefn& functionDefn, const Ast::CompoundStatement& block);
+    Ast::RootFunctionDefn*   aEnterRootFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
+    Ast::ChildFunctionDefn*  aChildFunctionDefn(Ast::ChildFunctionDefn& functionImpl, const Ast::CompoundStatement& block);
+    Ast::ChildFunctionDefn*  aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::EventDecl*          aEventDecl(const Ast::VariableDefn& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
     Ast::FunctionSig*        aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in);
     Ast::Scope*              aInParamsList(Ast::Scope& scope);

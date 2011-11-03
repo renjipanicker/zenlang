@@ -493,12 +493,12 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(fpDecl(node), "\n");
     }
 
-    void visit(const Ast::FunctionDefn& node) {
+    void visit(const Ast::RootFunctionDefn& node) {
         visitFunction(node);
         fprintf(fpDecl(node), "\n");
     }
 
-    void visit(const Ast::FunctionImpl& node) {
+    void visit(const Ast::ChildFunctionDefn& node) {
         fprintf(fpDecl(node), "%sclass %s : public %s< %s > {\n", Indent::get(), node.name().text(), node.base().name().text(), node.name().text());
 
         // impl-function

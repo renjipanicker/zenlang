@@ -144,16 +144,16 @@ rDefinitionType(L) ::= .       {L = Ast::DefinitionType::Direct;}
 
 //-------------------------------------------------
 %type rTypeSpecDef {Ast::UserDefinedTypeSpec*}
-rTypeSpecDef(L) ::= rTypedefDefn(R).  {L = R;}
-rTypeSpecDef(L) ::= rTemplateDecl(R). {L = R;}
-rTypeSpecDef(L) ::= rEnumDefn(R).     {L = R;}
-rTypeSpecDef(L) ::= rStructDefn(R).   {L = R;}
-rTypeSpecDef(L) ::= rRoutineDecl(R).  {L = R;}
-rTypeSpecDef(L) ::= rRoutineDefn(R).  {L = R;}
-rTypeSpecDef(L) ::= rFunctionDecl(R). {L = R;}
-rTypeSpecDef(L) ::= rFunctionDefn(R). {L = R;}
-rTypeSpecDef(L) ::= rFunctionImpl(R). {L = R;}
-rTypeSpecDef(L) ::= rEventDecl(R).    {L = R;}
+rTypeSpecDef(L) ::= rTypedefDefn(R).       {L = R;}
+rTypeSpecDef(L) ::= rTemplateDecl(R).      {L = R;}
+rTypeSpecDef(L) ::= rEnumDefn(R).          {L = R;}
+rTypeSpecDef(L) ::= rStructDefn(R).        {L = R;}
+rTypeSpecDef(L) ::= rRoutineDecl(R).       {L = R;}
+rTypeSpecDef(L) ::= rRoutineDefn(R).       {L = R;}
+rTypeSpecDef(L) ::= rFunctionDecl(R).      {L = R;}
+rTypeSpecDef(L) ::= rRootFunctionDefn(R).  {L = R;}
+rTypeSpecDef(L) ::= rChildFunctionDefn(R). {L = R;}
+rTypeSpecDef(L) ::= rEventDecl(R).         {L = R;}
 
 //-------------------------------------------------
 // typedef declarations
@@ -218,22 +218,22 @@ rEnterRoutineDefn(L) ::= ROUTINE rQualifiedTypeSpec(out) ID(name) rInParamsList(
 rFunctionDecl(L) ::= rFunctionSig(functionSig) rDefinitionType(defType) SEMI. {L = ref(pctx).aFunctionDecl(ref(functionSig), defType);}
 
 //-------------------------------------------------
-// function declarations
-%type rFunctionDefn {Ast::FunctionDefn*}
-rFunctionDefn(L) ::= rEnterFunctionDefn(functionDefn) rCompoundStatement(block). {L = ref(pctx).aFunctionDefn(ref(functionDefn), ref(block));}
+// root function declarations
+%type rRootFunctionDefn {Ast::RootFunctionDefn*}
+rRootFunctionDefn(L) ::= rEnterRootFunctionDefn(functionDefn) rCompoundStatement(block). {L = ref(pctx).aRootFunctionDefn(ref(functionDefn), ref(block));}
 
 //-------------------------------------------------
-%type rEnterFunctionDefn {Ast::FunctionDefn*}
-rEnterFunctionDefn(L) ::= rFunctionSig(functionSig) rDefinitionType(defType). {L = ref(pctx).aEnterFunctionDefn(ref(functionSig), defType);}
+%type rEnterRootFunctionDefn {Ast::RootFunctionDefn*}
+rEnterRootFunctionDefn(L) ::= rFunctionSig(functionSig) rDefinitionType(defType). {L = ref(pctx).aEnterRootFunctionDefn(ref(functionSig), defType);}
 
 //-------------------------------------------------
-// function implementation
-%type rFunctionImpl {Ast::FunctionImpl*}
-rFunctionImpl(L) ::= rEnterFunctionImpl(functionImpl) rCompoundStatement(block). {L = ref(pctx).aFunctionImpl(ref(functionImpl), ref(block));}
+// child function declaration
+%type rChildFunctionDefn {Ast::ChildFunctionDefn*}
+rChildFunctionDefn(L) ::= rEnterChildFunctionDefn(functionImpl) rCompoundStatement(block). {L = ref(pctx).aChildFunctionDefn(ref(functionImpl), ref(block));}
 
 //-------------------------------------------------
-%type rEnterFunctionImpl {Ast::FunctionImpl*}
-rEnterFunctionImpl(L) ::= rTypeSpec(base) ID(name). {L = ref(pctx).aEnterFunctionImpl(ref(base), name, Ast::DefinitionType::Direct);}
+%type rEnterChildFunctionDefn {Ast::ChildFunctionDefn*}
+rEnterChildFunctionDefn(L) ::= rTypeSpec(base) ID(name). {L = ref(pctx).aEnterChildFunctionDefn(ref(base), name, Ast::DefinitionType::Direct);}
 
 //-------------------------------------------------
 // event declarations

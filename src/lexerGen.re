@@ -81,19 +81,19 @@ inline void Lexer::Impl::sendId(Scanner* s) {
 
 inline void Lexer::Impl::sendReturn(Scanner* s) {
     const Ast::RoutineDefn* rd = 0;
-    const Ast::FunctionDefn* fd = 0;
-    const Ast::FunctionImpl* fi = 0;
+    const Ast::RootFunctionDefn* rfd = 0;
+    const Ast::ChildFunctionDefn* cfd = 0;
     for(Context::TypeSpecStack::const_reverse_iterator it = _context.typeSpecStack().rbegin(); it != _context.typeSpecStack().rend(); ++it) {
         const Ast::TypeSpec* ts = *it;
         if((rd = dynamic_cast<const Ast::RoutineDefn*>(ts)) != 0) {
             _parser.feed(token(s, ZENTOK_RRETURN));
             return;
         }
-        if((fd = dynamic_cast<const Ast::FunctionDefn*>(ts)) != 0) {
+        if((rfd = dynamic_cast<const Ast::RootFunctionDefn*>(ts)) != 0) {
             _parser.feed(token(s, ZENTOK_FRETURN));
             return;
         }
-        if((fi = dynamic_cast<const Ast::FunctionImpl*>(ts)) != 0) {
+        if((cfd = dynamic_cast<const Ast::ChildFunctionDefn*>(ts)) != 0) {
             _parser.feed(token(s, ZENTOK_FRETURN));
             return;
         }
