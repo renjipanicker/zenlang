@@ -518,11 +518,11 @@ rStructInitPart(L) ::= ID(R) COLON rExpr(E). {L = ref(pctx).aStructInitPart(R, r
 //-------------------------------------------------
 // function call expressions
 %type rCallExpr {Ast::CallExpr*}
-rCallExpr(L) ::= rTypeSpec(typeSpec) rExprsList(exprList).  {L = ref(pctx).aCallExpr(ref(typeSpec), ref(exprList));}
+rCallExpr(L) ::= rTypeSpec(typeSpec) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aCallExpr(B, ref(typeSpec), ref(exprList));}
 
 //-------------------------------------------------
 // functor call expressions
-rCallExpr(L) ::= rExpr(expr) rExprsList(exprList).  {L = ref(pctx).aCallExpr(ref(expr), ref(exprList));}
+rCallExpr(L) ::= rExpr(expr) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aCallExpr(B, ref(expr), ref(exprList));}
 
 //-------------------------------------------------
 // constant expressions

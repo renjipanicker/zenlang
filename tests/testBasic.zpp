@@ -48,9 +48,19 @@ public test testFunction001 {
     return (1);
 }
 
-public test testFunction002 {
+public test testInnerRootFunction {
     function (int i)innerFunction(int j) {
         return (2);
+    }
+    local f = innerFunction(2);
+    local o = innerFunction[];
+    local r = o(2);
+    return (1);
+}
+
+public test testInnerChildFunction {
+    testFunction innerFunction {
+        return (2, "aa");
     }
     local f = innerFunction(2);
     local o = innerFunction[];

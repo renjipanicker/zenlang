@@ -30,6 +30,7 @@ private:
     inline const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name);
     inline Ast::TemplateDefn& createTemplateDefn(const Ast::Token& pos, const std::string& name);
     inline const Ast::Expr& getInitExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
+    inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
 
 private:
     inline Ast::Scope& addScope(const Ast::ScopeType::T& type);
@@ -128,8 +129,8 @@ public:
     Ast::DictItem*            aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& valueExpr);
 
     Ast::FormatExpr*          aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr);
-    Ast::CallExpr*            aCallExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
-    Ast::CallExpr*            aCallExpr(const Ast::Expr& expr, const Ast::ExprList& exprList);
+    Ast::CallExpr*            aCallExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
+    Ast::CallExpr*            aCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList);
     Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
     Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);
     Ast::VariableMemberExpr*  aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name);

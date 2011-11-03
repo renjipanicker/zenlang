@@ -98,11 +98,11 @@ template <typename T>
 inline const T& Context::getRootTypeSpec(const Ast::Token &name) const {
     const Ast::TypeSpec* typeSpec = hasRootTypeSpec(name);
     if(!typeSpec) {
-        throw Exception("Unknown root type '%s'\n", name.text());
+        throw Exception("%s Unknown root type '%s'\n", err(_unit, name).c_str(), name.text());
     }
     const T* tTypeSpec = dynamic_cast<const T*>(typeSpec);
     if(!tTypeSpec) {
-        throw Exception("Type mismatch '%s'\n", name.text());
+        throw Exception("%s Type mismatch '%s'\n", err(_unit, name).c_str(), name.text());
     }
     return ref(tTypeSpec);
 }
@@ -153,7 +153,7 @@ inline const Ast::Expr& Context::getInitExpr(const Ast::TypeSpec& typeSpec, cons
     Ast::Token value(name.row(), name.col(), "#");
     return aConstantExpr("int", value);
 
-    //throw Exception("Unknown init value for type '%s'\n", typeSpec.name().text());
+    //throw Exception("%s Unknown init value for type '%s'\n", err(_unit, typeSpec.name()).c_str(), typeSpec.name().text());
 }
 
 inline Ast::TemplateDefn& Context::createTemplateDefn(const Ast::Token& pos, const std::string& name) {
@@ -161,6 +161,24 @@ inline Ast::TemplateDefn& Context::createTemplateDefn(const Ast::Token& pos, con
     const Ast::TemplateDecl& templateDecl = getRootTypeSpec<Ast::TemplateDecl>(token);
     Ast::TemplateDefn& templateDefn = _unit.addNode(new Ast::TemplateDefn(currentTypeSpec(), token, Ast::DefinitionType::Direct, templateDecl));
     return templateDefn;
+}
+
+inline const Ast::FunctionRetn& Context::getFunctionRetn(const Ast::Token& pos, const Ast::Function& function) {
+    const Ast::Function* base = ptr(function);
+    while(base != 0) {
+        const Ast::ChildFunctionDefn* childFunctionDefn = dynamic_cast<const Ast::ChildFunctionDefn*>(base);
+        if(childFunctionDefn == 0)
+            break;
+        base = ptr(ref(childFunctionDefn).base());
+    }
+    if(base != 0) {
+        const Ast::TypeSpec* retn = ref(base).hasChild("_Out");
+        const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(retn);
+        if(functionRetn != 0) {
+            return ref(functionRetn);
+        }
+    }
+    throw Exception("%s Unknown function return type '%s'\n", err(_unit, pos).c_str(), function.name().text());
 }
 
 ////////////////////////////////////////////////////////////
@@ -316,6 +334,11 @@ Ast::FunctionDecl* Context::aFunctionDecl(const Ast::FunctionSig& functionSig, c
     const Ast::Token& name = functionSig.name();
     Ast::FunctionDecl& functionDecl = _unit.addNode(new Ast::FunctionDecl(currentTypeSpec(), name, defType, functionSig));
     currentTypeSpec().addChild(functionDecl);
+
+    Ast::Token token1(name.row(), name.col(), "_Out");
+    Ast::FunctionRetn& functionRetn = _unit.addNode(new Ast::FunctionRetn(functionDecl, token1, functionSig.outScope()));
+    functionDecl.addChild(functionRetn);
+
     return ptr(functionDecl);
 }
 
@@ -338,10 +361,6 @@ Ast::RootFunctionDefn* Context::aEnterRootFunctionDefn(const Ast::FunctionSig& f
     Ast::FunctionRetn& functionRetn = _unit.addNode(new Ast::FunctionRetn(functionDefn, token1, functionSig.outScope()));
     functionDefn.addChild(functionRetn);
 
-    Ast::Token token2(name.row(), name.col(), "_Impl");
-    Ast::Functor& functor = _unit.addNode(new Ast::Functor(functionDefn, token2, functionDefn));
-    functionDefn.addChild(functor);
-
     return ptr(functionDefn);
 }
 
@@ -356,7 +375,7 @@ Ast::ChildFunctionDefn* Context::aChildFunctionDefn(Ast::ChildFunctionDefn& func
 Ast::ChildFunctionDefn* Context::aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(base));
     if(function == 0) {
-        throw Exception("base type not a function '%s'\n", base.name().text());
+        throw Exception("%s base type not a function '%s'\n", err(_unit, name).c_str(), base.name().text());
     }
     Ast::ChildFunctionDefn& functionImpl = _unit.addNode(new Ast::ChildFunctionDefn(currentTypeSpec(), name, defType, ref(function).sig(), ref(function)));
     currentTypeSpec().addChild(functionImpl);
@@ -417,7 +436,7 @@ Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const A
 const Ast::TypeSpec* Context::aTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
     const Ast::TypeSpec* typeSpec = parent.hasChild(name.text());
     if(!typeSpec) {
-        throw Exception("Unknown child type '%s'\n", name.text());
+        throw Exception("%s Unknown child type '%s'\n", err(_unit, name).c_str(), name.text());
     }
     return typeSpec;
 }
@@ -613,36 +632,33 @@ Ast::FormatExpr* Context::aFormatExpr(const Ast::Token& pos, const Ast::Expr& st
     return ptr(formatExpr);
 }
 
-Ast::CallExpr* Context::aCallExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
+Ast::CallExpr* Context::aCallExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
     if(function != 0) {
-        const Ast::TypeSpec* retn = typeSpec.hasChild("_Out");
-        const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(retn);
-        if(functionRetn == 0) {
-            throw Exception("Unknown function return type '%s'\n", typeSpec.name().text());
-        }
-        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(functionRetn), false);
+        const Ast::FunctionRetn& functionRetn = getFunctionRetn(pos, ref(function));
+        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionRetn, false);
         Ast::FunctionCallExpr& functionCallExpr = _unit.addNode(new Ast::FunctionCallExpr(qTypeSpec, ref(function), exprList));
         return ptr(functionCallExpr);
     }
+
     const Ast::Routine* routine = dynamic_cast<const Ast::Routine*>(ptr(typeSpec));
     if(routine != 0) {
         const Ast::QualifiedTypeSpec& qTypeSpec = ref(routine).outType();
         Ast::RoutineCallExpr& routineCallExpr = _unit.addNode(new Ast::RoutineCallExpr(qTypeSpec, ref(routine), exprList));
         return ptr(routineCallExpr);
     }
-    throw Exception("Unknown function being called '%s'\n", typeSpec.name().text());
+    throw Exception("%s Unknown function being called '%s'\n", err(_unit, pos).c_str(), typeSpec.name().text());
 }
 
-Ast::CallExpr* Context::aCallExpr(const Ast::Expr& expr, const Ast::ExprList& exprList) {
-    const Ast::TypeSpec* retn = expr.qTypeSpec().typeSpec().hasChild("_Out");
-    const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(retn);
-    if(functionRetn == 0) {
-        throw Exception("Unknown function return type '%s'\n", expr.qTypeSpec().typeSpec().name().text());
+Ast::CallExpr* Context::aCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList) {
+    const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(expr.qTypeSpec().typeSpec()));
+    if(function != 0) {
+        const Ast::FunctionRetn& functionRetn = getFunctionRetn(pos, ref(function));
+        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionRetn, false);
+        Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, expr, exprList));
+        return ptr(functorCallExpr);
     }
-    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(functionRetn), false);
-    Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, expr, exprList));
-    return ptr(functorCallExpr);
+    throw Exception("%s Unknown functor being called '%s'\n", err(_unit, pos).c_str(), expr.qTypeSpec().typeSpec().name().text());
 }
 
 Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
@@ -663,9 +679,9 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
             case Ast::RefType::Param:
                 switch(scope.type()) {
                     case Ast::ScopeType::Global:
-                        throw Exception("Internal error: Invalid reference to global variable '%s'\n", name.text());
+                        throw Exception("%s Internal error: Invalid reference to global variable '%s'\n", err(_unit, name).c_str(), name.text());
                     case Ast::ScopeType::Member:
-                        throw Exception("Internal error: Invalid reference to member variable '%s'\n", name.text());
+                        throw Exception("%s Internal error: Invalid reference to member variable '%s'\n", err(_unit, name).c_str(), name.text());
                     case Ast::ScopeType::Param:
                         refType = Ast::RefType::XRef;
                         break;
@@ -677,9 +693,9 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
             case Ast::RefType::Local:
                 switch(scope.type()) {
                     case Ast::ScopeType::Global:
-                        throw Exception("Internal error: Invalid reference to global variable '%s'\n", name.text());
+                        throw Exception("%s Internal error: Invalid reference to global variable '%s'\n", err(_unit, name).c_str(), name.text());
                     case Ast::ScopeType::Member:
-                        throw Exception("Internal error: Invalid reference to member variable '%s'\n", name.text());
+                        throw Exception("%s Internal error: Invalid reference to member variable '%s'\n", err(_unit, name).c_str(), name.text());
                     case Ast::ScopeType::Param:
                         refType = Ast::RefType::Param;
                         break;
@@ -695,7 +711,7 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
             return ptr(vrefExpr);
         }
     }
-    throw Exception("Variable not found: '%s'\n", name.text());
+    throw Exception("%s Variable not found: '%s'\n", err(_unit, name).c_str(), name.text());
 }
 
 Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name) {

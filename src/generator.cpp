@@ -490,11 +490,6 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(fpDecl(node), "\n");
     }
 
-    void visit(const Ast::Functor& node) {
-        unused(node);
-        // do nothing.
-    }
-
     void visit(const Ast::FunctionDecl& node) {
         visitFunction(node);
         fprintf(fpDecl(node), "\n");
@@ -506,7 +501,11 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     }
 
     void visit(const Ast::ChildFunctionDefn& node) {
-        fprintf(fpDecl(node), "%sclass %s : public %s< %s > {\n", Indent::get(), node.name().text(), node.base().name().text(), node.name().text());
+        if(getTypeSpecName(node.base()) == "test") {
+            fprintf(fpDecl(node), "%sclass %s : public test< %s > {\n", Indent::get(), node.name().text(), node.name().text());
+        } else {
+            fprintf(fpDecl(node), "%sclass %s : public %s {\n", Indent::get(), node.name().text(), getTypeSpecName(node.base()).c_str());
+        }
 
         // impl-function
         fprintf(fpDecl(node), "%s    static _Out impl(%s& _this, const _In& _in);\n", Indent::get(), node.name().text());

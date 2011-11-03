@@ -340,16 +340,6 @@ namespace Ast {
         const Ast::Scope& _out;
     };
 
-    class Functor : public ChildTypeSpec {
-    public:
-        inline Functor(const TypeSpec& parent, const Ast::Token& name, const Ast::Function& function) : ChildTypeSpec(parent, name), _function(function) {}
-        inline const Ast::Function& function() const {return _function;}
-    private:
-        virtual void visit(Visitor& visitor) const;
-    private:
-        const Ast::Function& _function;
-    };
-
     class EventDecl : public UserDefinedTypeSpec {
     public:
         inline EventDecl(const TypeSpec& parent, const Ast::Token& name, const Ast::VariableDefn& in, const FunctionSig& functionSig, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _in(in), _functionSig(functionSig) {}
@@ -400,7 +390,6 @@ namespace Ast {
         virtual void visit(const RootFunctionDefn& node) = 0;
         virtual void visit(const ChildFunctionDefn& node) = 0;
         virtual void visit(const FunctionRetn& node) = 0;
-        virtual void visit(const Functor& node) = 0;
         virtual void visit(const EventDecl& node) = 0;
         virtual void visit(const Namespace& node) = 0;
         virtual void visit(const Root& node) = 0;
@@ -417,7 +406,6 @@ namespace Ast {
     inline void RootFunctionDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ChildFunctionDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionRetn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void Functor::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void EventDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Namespace::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Root::visit(Visitor& visitor) const {visitor.visit(ref(this));}
