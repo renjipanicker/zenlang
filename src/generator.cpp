@@ -394,7 +394,8 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     }
 
     void visitFunction(const Ast::Function& node) {
-        fprintf(fpDecl(node), "%sclass %s : public Function<%s> {\n", Indent::get(), node.name().text(), node.name().text());
+//        fprintf(fpDecl(node), "%sclass %s : public Function<%s> {\n", Indent::get(), node.name().text(), node.name().text());
+        fprintf(fpDecl(node), "%sclass %s {\n", Indent::get(), node.name().text());
 
         fprintf(fpDecl(node), "%s    static void impl(%s& This);\n", Indent::get(), node.name().text());
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
@@ -403,7 +404,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(fpDecl(node), "%s    Return* _return;\n", Indent::get());
         fprintf(fpDecl(node), "%s    inline void ret(Return* val) {_return = val;}\n", Indent::get());
 
-        // generate in parameters
+        // in-param-list
         if(node.sig().in().size() > 0) {
             fprintf(fpDecl(node), "%spublic:\n", Indent::get());
             for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
@@ -413,6 +414,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             }
         }
 
+        //default-ctor
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
         fprintf(fpDecl(node), "%s    inline %s(", Indent::get(), node.name().text());
         std::string sep = "";
@@ -421,7 +423,8 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             fprintf(fpDecl(node), "%sconst %s& p%s", sep.c_str(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
             sep = ", ";
         }
-        fprintf(fpDecl(node), ") : Function(&impl), _return(0)");
+//        fprintf(fpDecl(node), ") : Function(&impl), _return(0)");
+        fprintf(fpDecl(node), ") : _return(0)");
         for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
             const Ast::VariableDefn& vdef = ref(*it);
             fprintf(fpDecl(node), ", %s(p%s)", vdef.name().text(), vdef.name().text());

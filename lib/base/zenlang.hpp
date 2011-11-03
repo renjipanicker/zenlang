@@ -94,9 +94,6 @@ public:
 template <typename MethodT>
 struct Method {
     typedef void (*Impl)(MethodT& This);
-    struct Body {
-        virtual void run(MethodT& This) = 0;
-    };
 
     inline Method(const Impl& impl) : _impl(impl) {}
     inline MethodT& run() {
