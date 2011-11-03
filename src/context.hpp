@@ -129,6 +129,7 @@ public:
 
     Ast::FormatExpr*          aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr);
     Ast::CallExpr*            aCallExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
+    Ast::CallExpr*            aCallExpr(const Ast::Expr& expr, const Ast::ExprList& exprList);
     Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
     Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);
     Ast::VariableMemberExpr*  aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name);

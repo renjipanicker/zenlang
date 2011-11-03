@@ -54,6 +54,6 @@ public test testFunction002 {
     }
     local f = innerFunction(2);
     local o = innerFunction[];
-//    local r = o(2);
+    local r = o(2);
     return (1);
 }

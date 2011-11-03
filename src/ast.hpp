@@ -651,6 +651,16 @@ namespace Ast {
         const Function& _function;
     };
 
+    class FunctorCallExpr : public CallExpr {
+    public:
+        inline FunctorCallExpr(const QualifiedTypeSpec& qTypeSpec, const Expr& expr, const ExprList& exprList) : CallExpr(qTypeSpec, exprList), _expr(expr) {}
+        inline const Expr& expr() const {return _expr;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Expr& _expr;
+    };
+
     class VariableRefExpr : public Expr {
     public:
         inline VariableRefExpr(const QualifiedTypeSpec& qTypeSpec, const VariableDefn& vref, const RefType::T& refType) : Expr(qTypeSpec), _vref(vref), _refType(refType) {}
@@ -772,6 +782,7 @@ namespace Ast {
         virtual void visit(const FormatExpr& node) = 0;
         virtual void visit(const RoutineCallExpr& node) = 0;
         virtual void visit(const FunctionCallExpr& node) = 0;
+        virtual void visit(const FunctorCallExpr& node) = 0;
         virtual void visit(const OrderedExpr& node) = 0;
         virtual void visit(const VariableRefExpr& node) = 0;
         virtual void visit(const VariableMemberExpr& node) = 0;
@@ -793,6 +804,7 @@ namespace Ast {
     inline void FormatExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void FunctorCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void VariableMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}

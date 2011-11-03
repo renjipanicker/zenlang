@@ -634,6 +634,17 @@ Ast::CallExpr* Context::aCallExpr(const Ast::TypeSpec& typeSpec, const Ast::Expr
     throw Exception("Unknown function being called '%s'\n", typeSpec.name().text());
 }
 
+Ast::CallExpr* Context::aCallExpr(const Ast::Expr& expr, const Ast::ExprList& exprList) {
+    const Ast::TypeSpec* retn = expr.qTypeSpec().typeSpec().hasChild("_Out");
+    const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(retn);
+    if(functionRetn == 0) {
+        throw Exception("Unknown function return type '%s'\n", expr.qTypeSpec().typeSpec().name().text());
+    }
+    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(functionRetn), false);
+    Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, expr, exprList));
+    return ptr(functorCallExpr);
+}
+
 Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
     Ast::OrderedExpr& expr = _unit.addNode(new Ast::OrderedExpr(innerExpr.qTypeSpec(), innerExpr));
     return ptr(expr);

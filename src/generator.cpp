@@ -197,6 +197,13 @@ private:
         fprintf(_fp, "))");
     }
 
+    virtual void visit(const Ast::FunctorCallExpr& node) {
+        ExprGenerator(_fp).visitNode(node.expr());
+        fprintf(_fp, ".run(%s::_In(", getTypeSpecName(node.expr().qTypeSpec().typeSpec()).c_str());
+        ExprGenerator(_fp, ", ").visitList(node.exprList());
+        fprintf(_fp, "))");
+    }
+
     virtual void visit(const Ast::OrderedExpr& node) {
         fprintf(_fp, "(");
         visitNode(node.expr());
@@ -696,7 +703,6 @@ inline void Generator::Impl::generateFunctionImplementations() {
         BodyGenerator gen(_fpHdr, _fpSrc, _fpImp);
         gen.visitNode(body);
     }
-    fprintf(_fpSrc, "\n");
 }
 
 inline void Generator::Impl::run() {

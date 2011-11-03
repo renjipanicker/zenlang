@@ -52,3 +52,4 @@ struct-init
 local-scope-resolution
 inner functions
 function-instance
+function-instance-call (functor-call)

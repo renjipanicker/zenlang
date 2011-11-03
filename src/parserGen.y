@@ -477,11 +477,6 @@ rTreesList(L)  ::=                     rTreeItem(I). {L = ref(pctx).aDictList(re
 rTreeItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(E));}
 
 //-------------------------------------------------
-// function call expressions
-%type rCallExpr {Ast::CallExpr*}
-rCallExpr(L) ::= rTypeSpec(typeSpec) rExprsList(exprList).  {L = ref(pctx).aCallExpr(ref(typeSpec), ref(exprList));}
-
-//-------------------------------------------------
 // ordered expression
 rExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedExpr(ref(innerExpr));}
 
@@ -519,6 +514,15 @@ rStructInitPartList(L) ::=                                                . {L =
 //-------------------------------------------------
 %type rStructInitPart {Ast::StructInitPart*}
 rStructInitPart(L) ::= ID(R) COLON rExpr(E). {L = ref(pctx).aStructInitPart(R, ref(E));}
+
+//-------------------------------------------------
+// function call expressions
+%type rCallExpr {Ast::CallExpr*}
+rCallExpr(L) ::= rTypeSpec(typeSpec) rExprsList(exprList).  {L = ref(pctx).aCallExpr(ref(typeSpec), ref(exprList));}
+
+//-------------------------------------------------
+// functor call expressions
+rCallExpr(L) ::= rExpr(expr) rExprsList(exprList).  {L = ref(pctx).aCallExpr(ref(expr), ref(exprList));}
 
 //-------------------------------------------------
 // constant expressions
