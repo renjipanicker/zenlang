@@ -284,16 +284,6 @@ namespace Ast {
         Ast::Scope& _in;
     };
 
-    class FunctionRetn : public ChildTypeSpec {
-    public:
-        inline FunctionRetn(const TypeSpec& parent, const Ast::Token& name, const Ast::Scope& out) : ChildTypeSpec(parent, name), _out(out) {}
-        inline const Ast::Scope::List& out() const {return _out.list();}
-    private:
-        virtual void visit(Visitor& visitor) const;
-    private:
-        const Ast::Scope& _out;
-    };
-
     class Function : public UserDefinedTypeSpec {
     public:
         inline Function(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig) : UserDefinedTypeSpec(parent, name, defType), _sig(sig) {}
@@ -310,30 +300,54 @@ namespace Ast {
         virtual void visit(Visitor& visitor) const;
     };
 
-    class FunctionDefn : public Function {
-    public:
-        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig)
+    class FunctionDefnBase : public Function {
+    protected:
+        inline FunctionDefnBase(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig)
             : Function(parent, name, defType, sig), _block(0) {}
+    public:
         inline const Ast::CompoundStatement& block() const {return ref(_block);}
         inline void setBlock(const Ast::CompoundStatement& block) {_block = ptr(block);}
-    private:
-        virtual void visit(Visitor& visitor) const;
     private:
         const Ast::CompoundStatement* _block;
     };
 
-    class FunctionImpl : public UserDefinedTypeSpec {
+    class FunctionDefn : public FunctionDefnBase {
     public:
-        inline FunctionImpl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::Function& base)
-            : UserDefinedTypeSpec(parent, name, defType), _base(base), _block(0) {}
+        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig)
+            : FunctionDefnBase(parent, name, defType, sig) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class FunctionImpl : public FunctionDefnBase {
+    public:
+        inline FunctionImpl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, const Ast::Function& base)
+            : FunctionDefnBase(parent, name, defType, sig), _base(base) {}
         inline const Ast::Function& base() const {return _base;}
-        inline const Ast::CompoundStatement& block() const {return ref(_block);}
-        inline void setBlock(const Ast::CompoundStatement& block) {_block = ptr(block);}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const Ast::Function& _base;
-        const Ast::CompoundStatement* _block;
+    };
+
+    class FunctionRetn : public ChildTypeSpec {
+    public:
+        inline FunctionRetn(const TypeSpec& parent, const Ast::Token& name, const Ast::Scope& out) : ChildTypeSpec(parent, name), _out(out) {}
+        inline const Ast::Scope::List& out() const {return _out.list();}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ast::Scope& _out;
+    };
+
+    class Functor : public ChildTypeSpec {
+    public:
+        inline Functor(const TypeSpec& parent, const Ast::Token& name, const Ast::Function& function) : ChildTypeSpec(parent, name), _function(function) {}
+        inline const Ast::Function& function() const {return _function;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ast::Function& _function;
     };
 
     class EventDecl : public UserDefinedTypeSpec {
@@ -385,8 +399,9 @@ namespace Ast {
         virtual void visit(const FunctionDecl& node) = 0;
         virtual void visit(const FunctionDefn& node) = 0;
         virtual void visit(const FunctionImpl& node) = 0;
-        virtual void visit(const EventDecl& node) = 0;
         virtual void visit(const FunctionRetn& node) = 0;
+        virtual void visit(const Functor& node) = 0;
+        virtual void visit(const EventDecl& node) = 0;
         virtual void visit(const Namespace& node) = 0;
         virtual void visit(const Root& node) = 0;
     };
@@ -401,8 +416,9 @@ namespace Ast {
     inline void FunctionDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionImpl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void EventDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionRetn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void Functor::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void EventDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Namespace::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Root::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
@@ -790,7 +806,7 @@ namespace Ast {
     class Statement : public Node {
     public:
         struct Visitor;
-    public:
+    protected:
         inline Statement() {}
     public:
         virtual void visit(Visitor& visitor) const = 0;
@@ -919,6 +935,52 @@ namespace Ast {
     inline void CompoundStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////
+    class Body : public Node {
+    public:
+        struct Visitor;
+    protected:
+        inline Body(const CompoundStatement& block) : _block(block) {}
+    public:
+        inline const CompoundStatement& block() const {return _block;}
+    public:
+        virtual void visit(Visitor& visitor) const = 0;
+    private:
+        const CompoundStatement& _block;
+    };
+
+    class RoutineBody : public Body {
+    public:
+        inline RoutineBody(const Routine& routine, const CompoundStatement& block) : Body(block), _routine(routine) {}
+        inline const Routine& routine() const {return _routine;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Routine& _routine;
+    };
+
+    class FunctionBody : public Body {
+    public:
+        inline FunctionBody(const Function& function, const CompoundStatement& block) : Body(block), _function(function) {}
+        inline const Function& function() const {return _function;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Function& _function;
+    };
+
+    struct Body::Visitor {
+        inline void visitNode(const Body& node) {
+            node.visit(ref(this));
+        }
+
+        virtual void visit(const RoutineBody& node) = 0;
+        virtual void visit(const FunctionBody& node) = 0;
+    };
+
+    inline void RoutineBody::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void FunctionBody::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+
+    //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
     /*! \brief AST Node for a compilation unit
       The Unit AST node is the owner for all AST nodes in the unit.
@@ -928,6 +990,7 @@ namespace Ast {
     */
     class Unit {
     public:
+        typedef std::list<const Body*> BodyList;
         typedef std::list<const ImportStatement*> ImportStatementList;
 
     public:
@@ -945,6 +1008,10 @@ namespace Ast {
         /// \return The import statement list
         inline const ImportStatementList& importStatementList() const {return _importStatementList;}
 
+        /// \brief Return the function implementation list
+        /// \return The function implementation list
+        inline const BodyList& bodyList() const {return _bodyList;}
+
     public:
         /// \brief Return the root namespace
         /// \return The root namespace
@@ -960,6 +1027,10 @@ namespace Ast {
         /// \brief Add a import statement to the unit
         /// \param statement A pointer to the node to add
         inline void addImportStatement(const ImportStatement& statement) {_importStatementList.push_back(ptr(statement));}
+
+        /// \brief Add a function implementation to the unit
+        /// \param functionDefnBase the function implementation to add
+        inline void addBody(const Body& body) {_bodyList.push_back(ptr(body));}
 
     public:
         /// \brief Add an AST node to the unit
@@ -983,6 +1054,9 @@ namespace Ast {
     private:
         /// \brief The list of all import statements in this unit
         ImportStatementList _importStatementList;
+
+        /// \brief The list of all function implementations in this unit
+        BodyList _bodyList;
 
     private:
         /// \brief The owner list of all nodes in this unit

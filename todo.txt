@@ -1,4 +1,4 @@
-inner functions
+function-instance with closures
 scope-resolution for closure
 run
 if-else
@@ -49,5 +49,5 @@ idref-expr
 param-scope-resolution
 routine-call-expr
 struct-init
-function-instance
 local-scope-resolution
+inner functions

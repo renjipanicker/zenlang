@@ -364,10 +364,14 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         return;
     }
 
-    void visitBlock(const Ast::CompoundStatement& block);
-
-    void visitRoutine(FILE* fp, const Ast::Routine& node) {
-        fprintf(fp, "%s%s %s(", Indent::get(), getQualifiedTypeSpecName(node.outType()).c_str(), node.name().text());
+    static inline void visitRoutine(FILE* fp, const Ast::Routine& node, const bool& inNS) {
+        fprintf(fp, "%s%s ", Indent::get(), getQualifiedTypeSpecName(node.outType()).c_str());
+        if(inNS) {
+            fprintf(fp, "%s", node.name().text());
+        } else {
+            fprintf(fp, "%s", getTypeSpecName(node).c_str());
+        }
+        fprintf(fp, "(");
         std::string sep;
         for(Ast::Scope::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
             const Ast::VariableDefn& vdef = ref(*it);
@@ -378,19 +382,15 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     }
 
     void visit(const Ast::RoutineDecl& node) {
-        visitRoutine(fpDecl(node), node);
+        visitRoutine(fpDecl(node), node, true);
         fprintf(fpDecl(node), ";\n");
         fprintf(fpDecl(node), "\n");
     }
 
     void visit(const Ast::RoutineDefn& node) {
-        visitRoutine(fpDecl(node), node);
+        visitRoutine(fpDecl(node), node, true);
         fprintf(fpDecl(node), ";\n");
         fprintf(fpDecl(node), "\n");
-
-        visitRoutine(_fpSrc, node);
-        fprintf(_fpSrc, "\n");
-        visitBlock(node.block());
     }
 
     void visitFunction(const Ast::Function& node) {
@@ -465,6 +465,11 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(fpDecl(node), "\n");
     }
 
+    void visit(const Ast::Functor& node) {
+        unused(node);
+        // do nothing.
+    }
+
     void visit(const Ast::FunctionDecl& node) {
         visitFunction(node);
         fprintf(fpDecl(node), "\n");
@@ -472,15 +477,15 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
     void visit(const Ast::FunctionDefn& node) {
         visitFunction(node);
-
-        fprintf(_fpSrc, "%svoid %s::impl(%s& This)\n", Indent::get(), node.name().text(), node.name().text());
-        visitBlock(node.block());
         fprintf(fpDecl(node), "\n");
     }
 
     void visit(const Ast::FunctionImpl& node) {
         fprintf(fpDecl(node), "%sclass %s : public %s< %s > {\n", Indent::get(), node.name().text(), node.base().name().text(), node.name().text());
         fprintf(fpDecl(node), "%s    static void impl(%s& This);\n", Indent::get(), node.name().text());
+
+        fprintf(fpDecl(node), "%spublic:\n", Indent::get());
+        visitChildrenIndent(node);
 
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
         fprintf(fpDecl(node), "%s    inline %s(", Indent::get(), node.name().text());
@@ -499,8 +504,6 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
         fprintf(fpDecl(node), "%s};\n", Indent::get());
         fprintf(fpDecl(node), "\n");
-        fprintf(_fpSrc, "%svoid %s::impl(%s& This)\n", Indent::get(), node.name().text(), node.name().text());
-        visitBlock(node.block());
         if(getTypeSpecName(node.base()) == "test") {
             fprintf(_fpSrc, "%sstatic %s test_%s;\n", Indent::get(), node.name().text(), node.name().text());
         }
@@ -564,7 +567,7 @@ private:
     }
 
     virtual void visit(const Ast::UserDefinedTypeSpecStatement& node) {
-        TypeDeclarationGenerator(_fpHdr, _fpSrc, _fpImp).visitNode(node.typeSpec());
+        //TypeDeclarationGenerator(_fpHdr, _fpSrc, _fpImp).visitNode(node.typeSpec());
     }
 
     virtual void visit(const Ast::LocalStatement& node) {
@@ -619,14 +622,10 @@ private:
     FILE* _fpImp;
 };
 
-void TypeDeclarationGenerator::visitBlock(const Ast::CompoundStatement& block) {
-    StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
-    gen.visitNode(block);
-}
-
 struct Generator::Impl {
     inline Impl(const Ast::Project& project, const Ast::Unit& unit) : _project(project), _unit(unit), _fpHdr(0), _fpSrc(0), _fpImp(0) {}
     inline void generateHeaderIncludes(const std::string& basename);
+    inline void generateFunctionImplementations();
     inline void run();
 private:
     const Ast::Project& _project;
@@ -653,6 +652,39 @@ inline void Generator::Impl::generateHeaderIncludes(const std::string& basename)
     fprintf(_fpHdr, "\n");
 }
 
+class BodyGenerator : public Ast::Body::Visitor {
+public:
+    inline BodyGenerator(FILE* fpHdr, FILE* fpSrc, FILE* fpImp) : _fpHdr(fpHdr), _fpSrc(fpSrc), _fpImp(fpImp) {}
+private:
+    virtual void visit(const Ast::RoutineBody& node) {
+        TypeDeclarationGenerator::visitRoutine(_fpSrc, node.routine(), false);
+        fprintf(_fpSrc, "\n");
+        StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
+        gen.visitNode(node.block());
+        fprintf(_fpSrc, "\n");
+    }
+
+    virtual void visit(const Ast::FunctionBody& node) {
+        fprintf(_fpSrc, "void %s::impl(%s& This)\n", getTypeSpecName(node.function()).c_str(), getTypeSpecName(node.function()).c_str());
+        StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
+        gen.visitNode(node.block());
+        fprintf(_fpSrc, "\n");
+    }
+private:
+    FILE* _fpHdr;
+    FILE* _fpSrc;
+    FILE* _fpImp;
+};
+
+inline void Generator::Impl::generateFunctionImplementations() {
+    for(Ast::Unit::BodyList::const_iterator sit = _unit.bodyList().begin(); sit != _unit.bodyList().end(); ++sit) {
+        const Ast::Body& body = ref(*sit);
+        BodyGenerator gen(_fpHdr, _fpSrc, _fpImp);
+        gen.visitNode(body);
+    }
+    fprintf(_fpSrc, "\n");
+}
+
 inline void Generator::Impl::run() {
     Indent::init();
     std::string basename = getBaseName(_unit.filename());
@@ -664,7 +696,8 @@ inline void Generator::Impl::run() {
 
     TypeDeclarationGenerator(_fpHdr, _fpSrc, _fpImp).visitChildren(_unit.rootNS());
     fprintf(_fpHdr, "\n");
-    fprintf(_fpSrc, "\n\n");
+    fprintf(_fpSrc, "\n");
+    generateFunctionImplementations();
 }
 
 //////////////////////////////////////////////

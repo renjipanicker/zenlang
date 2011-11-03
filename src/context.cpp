@@ -300,6 +300,7 @@ Ast::RoutineDefn* Context::aRoutineDefn(Ast::RoutineDefn& routineDefn, const Ast
     routineDefn.setBlock(block);
     leaveScope();
     leaveTypeSpec(routineDefn);
+    _unit.addBody(_unit.addNode(new Ast::RoutineBody(routineDefn, block)));
     return ptr(routineDefn);
 }
 
@@ -322,6 +323,7 @@ Ast::FunctionDefn* Context::aFunctionDefn(Ast::FunctionDefn& functionDefn, const
     functionDefn.setBlock(block);
     leaveScope();
     leaveTypeSpec(functionDefn);
+    _unit.addBody(_unit.addNode(new Ast::FunctionBody(functionDefn, block)));
     return ptr(functionDefn);
 }
 
@@ -332,9 +334,13 @@ Ast::FunctionDefn* Context::aEnterFunctionDefn(const Ast::FunctionSig& functionS
     enterScope(functionSig.inScope());
     enterTypeSpec(functionDefn);
 
-    Ast::Token token(name.row(), name.col(), "Return");
-    Ast::FunctionRetn& functionRetn = _unit.addNode(new Ast::FunctionRetn(functionDefn, token, functionSig.outScope()));
+    Ast::Token token1(name.row(), name.col(), "Return");
+    Ast::FunctionRetn& functionRetn = _unit.addNode(new Ast::FunctionRetn(functionDefn, token1, functionSig.outScope()));
     functionDefn.addChild(functionRetn);
+
+    Ast::Token token2(name.row(), name.col(), "Impl");
+    Ast::Functor& functor = _unit.addNode(new Ast::Functor(functionDefn, token2, functionDefn));
+    functionDefn.addChild(functor);
 
     return ptr(functionDefn);
 }
@@ -343,6 +349,7 @@ Ast::FunctionImpl* Context::aFunctionImpl(Ast::FunctionImpl& functionImpl, const
     functionImpl.setBlock(block);
     leaveScope();
     leaveTypeSpec(functionImpl);
+    _unit.addBody(_unit.addNode(new Ast::FunctionBody(functionImpl, block)));
     return ptr(functionImpl);
 }
 
@@ -351,14 +358,10 @@ Ast::FunctionImpl* Context::aEnterFunctionImpl(const Ast::TypeSpec& base, const 
     if(function == 0) {
         throw Exception("base type not a function '%s'\n", base.name().text());
     }
-    Ast::FunctionImpl& functionImpl = _unit.addNode(new Ast::FunctionImpl(currentTypeSpec(), name, defType, ref(function)));
+    Ast::FunctionImpl& functionImpl = _unit.addNode(new Ast::FunctionImpl(currentTypeSpec(), name, defType, ref(function).sig(), ref(function)));
     currentTypeSpec().addChild(functionImpl);
     enterScope(ref(function).sig().inScope());
     enterTypeSpec(functionImpl);
-
-    Ast::Token token(name.row(), name.col(), "Return");
-    Ast::FunctionRetn& functionRetn = _unit.addNode(new Ast::FunctionRetn(functionImpl, token, function->sig().outScope()));
-    functionImpl.addChild(functionRetn);
 
     return ptr(functionImpl);
 }
@@ -372,7 +375,6 @@ Ast::EventDecl* Context::aEventDecl(const Ast::VariableDefn& in, const Ast::Func
 
 Ast::FunctionSig* Context::aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in) {
     Ast::FunctionSig& functionSig = _unit.addNode(new Ast::FunctionSig(out, name, in));
-
     return ptr(functionSig);
 }
 
@@ -761,7 +763,12 @@ Ast::StructInitPart* Context::aStructInitPart(const Ast::Token& name, const Ast:
 Ast::FunctionInstanceExpr* Context::aFunctionInstanceExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
     if(function != 0) {
-        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
+        const Ast::TypeSpec* ftor = typeSpec.hasChild("Impl");
+        const Ast::Functor* functor = dynamic_cast<const Ast::Functor*>(ftor);
+        if(functor == 0) {
+            throw Exception("Unknown functor type '%s'\n", typeSpec.name().text());
+        }
+        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(functor), false);
         Ast::FunctionInstanceExpr& functionInstanceExpr = _unit.addNode(new Ast::FunctionInstanceExpr(qTypeSpec, ref(function), exprList));
         return ptr(functionInstanceExpr);
     }

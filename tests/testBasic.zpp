@@ -33,7 +33,7 @@ public struct MyStruct {
     i = 0;
 };
 
-public function (int r)testFunction002(const int& x, const MyStruct& myStruct, const MyEnum& myEnum) {
+public function (int r)testAdvancedExpr(const int& x, const MyStruct& myStruct, const MyEnum& myEnum) {
     local v = x;
     local m = myStruct.i;
     local n = myEnum;
@@ -44,6 +44,15 @@ public test testFunction001 {
     print "yy %{x}\n" @ {"x":1};
     local myStruct = MyStruct{i:0};
     local e = MyEnum.C1;
-    local c = testFunction002(321, myStruct, e);
+    local c = testAdvancedExpr(321, myStruct, e);
+    return (1);
+}
+
+public test testFunction002 {
+    function (int i)innerFunction(int j) {
+        return (2);
+    }
+    local f = innerFunction(2);
+    local o = innerFunction[];
     return (1);
 }
