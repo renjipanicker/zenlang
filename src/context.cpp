@@ -763,12 +763,7 @@ Ast::StructInitPart* Context::aStructInitPart(const Ast::Token& name, const Ast:
 Ast::FunctionInstanceExpr* Context::aFunctionInstanceExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
     if(function != 0) {
-        const Ast::TypeSpec* ftor = typeSpec.hasChild("Impl");
-        const Ast::Functor* functor = dynamic_cast<const Ast::Functor*>(ftor);
-        if(functor == 0) {
-            throw Exception("Unknown functor type '%s'\n", typeSpec.name().text());
-        }
-        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(functor), false);
+        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(function), false);
         Ast::FunctionInstanceExpr& functionInstanceExpr = _unit.addNode(new Ast::FunctionInstanceExpr(qTypeSpec, ref(function), exprList));
         return ptr(functionInstanceExpr);
     }

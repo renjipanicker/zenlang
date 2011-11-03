@@ -1,4 +1,4 @@
-function-instance with closures
+function-instance-closure
 scope-resolution for closure
 run
 if-else
@@ -51,3 +51,4 @@ routine-call-expr
 struct-init
 local-scope-resolution
 inner functions
+function-instance
