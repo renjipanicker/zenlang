@@ -334,11 +334,11 @@ Ast::FunctionDefn* Context::aEnterFunctionDefn(const Ast::FunctionSig& functionS
     enterScope(functionSig.inScope());
     enterTypeSpec(functionDefn);
 
-    Ast::Token token1(name.row(), name.col(), "Return");
+    Ast::Token token1(name.row(), name.col(), "_Out");
     Ast::FunctionRetn& functionRetn = _unit.addNode(new Ast::FunctionRetn(functionDefn, token1, functionSig.outScope()));
     functionDefn.addChild(functionRetn);
 
-    Ast::Token token2(name.row(), name.col(), "Impl");
+    Ast::Token token2(name.row(), name.col(), "_Impl");
     Ast::Functor& functor = _unit.addNode(new Ast::Functor(functionDefn, token2, functionDefn));
     functionDefn.addChild(functor);
 
@@ -616,7 +616,7 @@ Ast::FormatExpr* Context::aFormatExpr(const Ast::Token& pos, const Ast::Expr& st
 Ast::CallExpr* Context::aCallExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
     if(function != 0) {
-        const Ast::TypeSpec* retn = typeSpec.hasChild("Return");
+        const Ast::TypeSpec* retn = typeSpec.hasChild("_Out");
         const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(retn);
         if(functionRetn == 0) {
             throw Exception("Unknown function return type '%s'\n", typeSpec.name().text());

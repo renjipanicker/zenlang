@@ -76,48 +76,25 @@ private:
 
     template <typename FunctionT>
     struct InvocationT : public Invocation {
-        InvocationT(const FunctionT& function) : _function(function) {}
+        InvocationT(const FunctionT& function, const typename FunctionT::_In& in) : _function(function), _in(in) {}
         FunctionT _function;
-        virtual void run() {_function.run();}
+        typename FunctionT::_In _in;
+        virtual void run() {_function.run(_in);}
     };
     typedef std::list<Invocation*> InvocationList;
     InvocationList _invocationList;
 
 public:
     template <typename FunctionT>
-    FunctionT add(FunctionT function) {
-        _invocationList.push_back(new InvocationT<FunctionT>(function));
+    FunctionT add(FunctionT function, const typename FunctionT::_In& in) {
+        _invocationList.push_back(new InvocationT<FunctionT>(function, in));
         return function;
     }
 };
 
-template <typename MethodT>
-struct Method {
-    typedef void (*Impl)(MethodT& This);
-
-    inline Method(const Impl& impl) : _impl(impl) {}
-    inline MethodT& run() {
-        MethodT& This = ref(static_cast<MethodT*>(this));
-        (*(_impl))(This);
-        return This;
-    }
-private:
-    Impl _impl;
-};
-
-template <typename T>
-struct AbstractFunction : public Method<T> {
-    inline AbstractFunction(const typename AbstractFunction<T>::Impl& impl) : Method<T>(impl) {}
-};
-
-template <typename T>
-struct Function : public AbstractFunction<T> {
-    inline Function(const typename Function<T>::Impl& impl) : AbstractFunction<T>(impl) {}
-};
-
 template <typename T>
 struct Event {
-    struct Handler : public Method<Handler> {
+    struct Handler {
         struct Item {
             inline Item(Handler* x) : t(x) {}
             Handler* t;
@@ -130,16 +107,16 @@ struct Event {
             inline Ptr(const Ptr& src) : _item(src._item) {}
         };
 
-        inline Handler(typename Handler::Impl impl) : Method<Handler>(impl) {}
+        inline Handler() {}
         virtual ~Handler(){}
     };
 
     template <typename FnT>
-    class AddHandler : public Function<FnT> {
+    class AddHandler {
     protected:
         typename Handler::Ptr _handler;
     public:
-        inline AddHandler(const typename AddHandler::Impl& impl, typename Handler::Ptr handler) : Function<FnT>(impl), _handler(handler) {}
+        inline AddHandler(typename Handler::Ptr handler) : _handler(handler) {}
     };
 
     typename Handler::List list;
@@ -163,19 +140,23 @@ struct TestInstance {
 };
 
 template <typename T>
-struct test : public Function< T > {
-    struct Return {
-        inline Return(const int& passed) : _passed(passed) {}
+struct test {
+    struct _Out {
+        inline _Out(const int& passed) : _passed(passed) {}
         int _passed;
     };
-    Return* _return;
-    inline void ret(Return* val) {_return = val;}
+    _Out* _out;
+    inline void ret(_Out* val) {_out = val;}
+public:
+    struct _In {
+        inline _In() {}
+    };
 
-    inline test(typename Function< T >::Impl impl) : Function<T>(impl), _instance(ref(static_cast<T*>(this))) {}
+    inline test() : _instance(ref(static_cast<T*>(this))) {}
     struct Instance : public TestInstance {
         inline Instance(T& t) : _t(t) {}
         virtual void enque(CallContext& context) {
-            context.add(_t);
+            context.add(_t, _In());
         }
         T& _t;
     } _instance;
