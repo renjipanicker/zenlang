@@ -7,8 +7,11 @@ class Context {
 public:
     typedef std::list<Ast::TypeSpec*> TypeSpecStack;
 public:
-    Context(Compiler& compiler, Ast::Unit& unit, const int& level);
+    Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename);
     ~Context();
+
+public:
+    inline const std::string& filename() const {return _filename;}
 
 private:
     inline Ast::ExprList& addExprList();
@@ -42,6 +45,7 @@ private:
     Compiler& _compiler;
     Ast::Unit& _unit;
     const int _level;
+    const std::string _filename;
 
 private:
     typedef std::list<Ast::Scope*> ScopeStack;

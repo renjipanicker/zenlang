@@ -6,7 +6,7 @@
 #include "progen.hpp"
 
 bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int& level) {
-    Context context(ref(this), unit, level);
+    Context context(ref(this), unit, level, filename);
     Parser parser(context);
     Lexer lexer(context, parser);
     return lexer.readFile(filename);

@@ -46,7 +46,7 @@ inline const Ast::QualifiedTypeSpec& Context::getQualifiedTypeSpec(const Ast::To
     return qTypeSpec;
 }
 
-Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level) : _compiler(compiler), _unit(unit), _level(level) {
+Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename) {
     Ast::Root& rootTypeSpec = getRootNamespace();
     enterTypeSpec(rootTypeSpec);
 }
@@ -98,11 +98,11 @@ template <typename T>
 inline const T& Context::getRootTypeSpec(const Ast::Token &name) const {
     const Ast::TypeSpec* typeSpec = hasRootTypeSpec(name);
     if(!typeSpec) {
-        throw Exception("%s Unknown root type '%s'\n", err(_unit, name).c_str(), name.text());
+        throw Exception("%s Unknown root type '%s'\n", err(_filename, name).c_str(), name.text());
     }
     const T* tTypeSpec = dynamic_cast<const T*>(typeSpec);
     if(!tTypeSpec) {
-        throw Exception("%s Type mismatch '%s'\n", err(_unit, name).c_str(), name.text());
+        throw Exception("%s Type mismatch '%s'\n", err(_filename, name).c_str(), name.text());
     }
     return ref(tTypeSpec);
 }
@@ -153,7 +153,7 @@ inline const Ast::Expr& Context::getInitExpr(const Ast::TypeSpec& typeSpec, cons
     Ast::Token value(name.row(), name.col(), "#");
     return aConstantExpr("int", value);
 
-    //throw Exception("%s Unknown init value for type '%s'\n", err(_unit, typeSpec.name()).c_str(), typeSpec.name().text());
+    //throw Exception("%s Unknown init value for type '%s'\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());
 }
 
 inline Ast::TemplateDefn& Context::createTemplateDefn(const Ast::Token& pos, const std::string& name) {
@@ -178,7 +178,7 @@ inline const Ast::FunctionRetn& Context::getFunctionRetn(const Ast::Token& pos, 
             return ref(functionRetn);
         }
     }
-    throw Exception("%s Unknown function return type '%s'\n", err(_unit, pos).c_str(), function.name().text());
+    throw Exception("%s Unknown function return type '%s'\n", err(_filename, pos).c_str(), function.name().text());
 }
 
 ////////////////////////////////////////////////////////////
@@ -375,7 +375,7 @@ Ast::ChildFunctionDefn* Context::aChildFunctionDefn(Ast::ChildFunctionDefn& func
 Ast::ChildFunctionDefn* Context::aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(base));
     if(function == 0) {
-        throw Exception("%s base type not a function '%s'\n", err(_unit, name).c_str(), base.name().text());
+        throw Exception("%s base type not a function '%s'\n", err(_filename, name).c_str(), base.name().text());
     }
     Ast::ChildFunctionDefn& functionImpl = _unit.addNode(new Ast::ChildFunctionDefn(currentTypeSpec(), name, defType, ref(function).sig(), ref(function)));
     currentTypeSpec().addChild(functionImpl);
@@ -436,7 +436,7 @@ Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const A
 const Ast::TypeSpec* Context::aPreTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
     const Ast::TypeSpec* typeSpec = parent.hasChild(name.text());
     if(!typeSpec) {
-        throw Exception("%s Unknown child type '%s'\n", err(_unit, name).c_str(), name.text());
+        throw Exception("%s Unknown child type '%s'\n", err(_filename, name).c_str(), name.text());
     }
     return typeSpec;
 }
@@ -454,7 +454,7 @@ const Ast::Function* Context::aFunctionTypeSpec(const Ast::TypeSpec& parent, con
     const Ast::TypeSpec* typeSpec = aPreTypeSpec(parent, name);
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(typeSpec);
     if(!function) {
-        throw Exception("%s function type expected '%s'\n", err(_unit, name).c_str(), name.text());
+        throw Exception("%s function type expected '%s'\n", err(_filename, name).c_str(), name.text());
     }
     return function;
 }
@@ -660,7 +660,7 @@ Ast::CallExpr* Context::aCallExpr(const Ast::Token& pos, const Ast::TypeSpec& ty
         Ast::RoutineCallExpr& routineCallExpr = _unit.addNode(new Ast::RoutineCallExpr(qTypeSpec, ref(routine), exprList));
         return ptr(routineCallExpr);
     }
-    throw Exception("%s Unknown function being called '%s'\n", err(_unit, pos).c_str(), typeSpec.name().text());
+    throw Exception("%s Unknown function being called '%s'\n", err(_filename, pos).c_str(), typeSpec.name().text());
 }
 
 Ast::CallExpr* Context::aCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList) {
@@ -671,7 +671,7 @@ Ast::CallExpr* Context::aCallExpr(const Ast::Token& pos, const Ast::Expr& expr, 
         Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, expr, exprList));
         return ptr(functorCallExpr);
     }
-    throw Exception("%s Unknown functor being called '%s'\n", err(_unit, pos).c_str(), expr.qTypeSpec().typeSpec().name().text());
+    throw Exception("%s Unknown functor being called '%s'\n", err(_filename, pos).c_str(), expr.qTypeSpec().typeSpec().name().text());
 }
 
 Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
@@ -692,9 +692,9 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
             case Ast::RefType::Param:
                 switch(scope.type()) {
                     case Ast::ScopeType::Global:
-                        throw Exception("%s Internal error: Invalid reference to global variable '%s'\n", err(_unit, name).c_str(), name.text());
+                        throw Exception("%s Internal error: Invalid reference to global variable '%s'\n", err(_filename, name).c_str(), name.text());
                     case Ast::ScopeType::Member:
-                        throw Exception("%s Internal error: Invalid reference to member variable '%s'\n", err(_unit, name).c_str(), name.text());
+                        throw Exception("%s Internal error: Invalid reference to member variable '%s'\n", err(_filename, name).c_str(), name.text());
                     case Ast::ScopeType::Param:
                         refType = Ast::RefType::XRef;
                         break;
@@ -706,9 +706,9 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
             case Ast::RefType::Local:
                 switch(scope.type()) {
                     case Ast::ScopeType::Global:
-                        throw Exception("%s Internal error: Invalid reference to global variable '%s'\n", err(_unit, name).c_str(), name.text());
+                        throw Exception("%s Internal error: Invalid reference to global variable '%s'\n", err(_filename, name).c_str(), name.text());
                     case Ast::ScopeType::Member:
-                        throw Exception("%s Internal error: Invalid reference to member variable '%s'\n", err(_unit, name).c_str(), name.text());
+                        throw Exception("%s Internal error: Invalid reference to member variable '%s'\n", err(_filename, name).c_str(), name.text());
                     case Ast::ScopeType::Param:
                         refType = Ast::RefType::Param;
                         break;
@@ -724,7 +724,7 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
             return ptr(vrefExpr);
         }
     }
-    throw Exception("%s Variable not found: '%s'\n", err(_unit, name).c_str(), name.text());
+    throw Exception("%s Variable not found: '%s'\n", err(_filename, name).c_str(), name.text());
 }
 
 Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name) {
@@ -734,13 +734,13 @@ Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, con
     if(structDefn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(structDefn).scope(), name);
         if(vref == 0) {
-            throw Exception("%s %s is not a member of expression type '%s'\n", err(_unit, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
+            throw Exception("%s %s is not a member of expression type '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
         }
         Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(ref(vref).qualifiedTypeSpec(), expr, ref(vref)));
         return ptr(vdefExpr);
     }
 
-    throw Exception("%s Not a aggregate expression type '%s'\n", err(_unit, typeSpec.name()).c_str(), typeSpec.name().text());
+    throw Exception("%s Not a aggregate expression type '%s'\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());
 }
 
 Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
@@ -748,7 +748,7 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
     if(enumDefn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(enumDefn).scope(), name);
         if(vref == 0) {
-            throw Exception("%s %s is not a member of type '%s'\n", err(_unit, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
+            throw Exception("%s %s is not a member of type '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
         }
         const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
         Ast::TypeSpecMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::TypeSpecMemberExpr(qTypeSpec, typeSpec, ref(vref)));
@@ -759,13 +759,13 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
     if(structDefn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(structDefn).scope(), name);
         if(vref == 0) {
-            throw Exception("%s %s is not a member of type '%s'\n", err(_unit, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
+            throw Exception("%s %s is not a member of type '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
         }
         Ast::TypeSpecMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::TypeSpecMemberExpr(ref(vref).qualifiedTypeSpec(), typeSpec, ref(vref)));
         return ptr(typeSpecMemberExpr);
     }
 
-    throw Exception("%s Not an aggregate type '%s'\n", err(_unit, name).c_str(), typeSpec.name().text());
+    throw Exception("%s Not an aggregate type '%s'\n", err(_filename, name).c_str(), typeSpec.name().text());
 }
 
 Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::StructInitPartList& list) {
@@ -776,7 +776,7 @@ Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, con
         return ptr(structInstanceExpr);
     }
 
-    throw Exception("%s Not a struct type '%s'\n", err(_unit, pos).c_str(), typeSpec.name().text());
+    throw Exception("%s Not a struct type '%s'\n", err(_filename, pos).c_str(), typeSpec.name().text());
 }
 
 Ast::StructInitPartList* Context::aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part) {
@@ -808,7 +808,7 @@ Ast::FunctionInstanceExpr* Context::aFunctionInstanceExpr(const Ast::TypeSpec& t
         return ptr(functionInstanceExpr);
     }
 
-    throw Exception("%s: Not a aggregate type '%s'\n", err(_unit, typeSpec.name()).c_str(), typeSpec.name().text());
+    throw Exception("%s: Not a aggregate type '%s'\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());
 }
 
 Ast::AnonymousFunctionExpr* Context::aAnonymousFunctionExpr(const Ast::Function& function, const Ast::CompoundStatement& compoundStatement) {

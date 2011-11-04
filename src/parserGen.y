@@ -16,7 +16,7 @@
 %token_prefix ZENTOK_
 
 %syntax_error {
-    throw Exception("(%d, %d) Syntax error at token: %d (%s)\n", TOKEN.row(), TOKEN.col(), TOKEN.id(), TOKEN.text());
+    throw Exception("%s Syntax error at token: %d (%s)\n", err(ref(pctx).filename(), TOKEN).c_str(), TOKEN.id(), TOKEN.text());
 }
 
 %parse_accept {
@@ -44,6 +44,7 @@
 %include {
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
+#include "error.hpp"
 #include "context.hpp"
 }
 

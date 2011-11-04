@@ -61,13 +61,17 @@ size_t Lexer::Impl::init(Scanner *s) {
     return fill(s, 1);
 }
 
+inline TokenData createToken(const int& id, const int& row, const int& col, const char* start, const char* end) {
+    return TokenData::createT(id, row, col, start, end);
+}
+
 inline TokenData Lexer::Impl::token(Scanner* s, const int& id) {
     if(s->text > 0) {
         char* t = s->text;
         s->text = 0;
-        return TokenData::createT(id, s->row, s->cur-s->sol, t, s->cur - 1);
+        return createToken(id, s->row, s->cur-s->sol, t, s->cur - 1);
     }
-    return TokenData::createT(id, s->row, s->cur-s->sol, s->mar, s->cur);
+    return createToken(id, s->row, s->cur-s->sol, s->mar, s->cur);
 }
 
 inline void Lexer::Impl::sendId(Scanner* s) {

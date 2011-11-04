@@ -15,7 +15,7 @@ inline T* ptr(T& t) {
 }
 
 inline void _trace(const std::string& txt) {
-#if defined(WIN32)
+#if defined(_WIN32)
     OutputDebugStringA(txt.c_str());
 #else
     std::cout << txt.c_str() << std::flush;
@@ -25,7 +25,7 @@ inline void _trace(const std::string& txt) {
 inline std::string ssprintfv(const char* txt, va_list vlist) {
     const int len = 1024;
     char buf[len];
-#if defined(WIN32)
+#if defined(_WIN32)
     vsnprintf_s(buf, len, _TRUNCATE, txt, vlist);
 #else
     vsnprintf(buf, len, txt, vlist);
