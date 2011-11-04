@@ -89,17 +89,19 @@ namespace Ast {
         inline const Token& name() const {return _name;}
         inline const AccessType::T& accessType() const {return _accessType;}
         inline const ChildTypeSpecList& childTypeSpecList() const {return _childTypeSpecList;}
+        inline size_t childCount() const {return _childTypeSpecList.size();}
     public:
         inline void addChild(TypeSpec& typeSpec) {
             _childTypeSpecList.push_back(ptr(typeSpec));
             _childTypeSpecMap[typeSpec.name().text()] = ptr(typeSpec);
         }
 
-        inline const TypeSpec* hasChild(const std::string& name) const {
+        template <typename T>
+        inline T* hasChild(const std::string& name) const {
             ChildTypeSpecMap::const_iterator it = _childTypeSpecMap.find(name);
             if(it == _childTypeSpecMap.end())
                 return 0;
-            return it->second;
+            return dynamic_cast<T*>(it->second);
         }
 
     public:
@@ -493,30 +495,6 @@ namespace Ast {
         const Expr& _rhs;
     };
 
-    class StructMemberRefExpr : public Expr {
-    public:
-        inline StructMemberRefExpr(const QualifiedTypeSpec& qTypeSpec, const StructDefn& structDef, const Token& name) : Expr(qTypeSpec), _structDef(structDef), _name(name) {}
-        inline const StructDefn& structDef() const {return _structDef;}
-        inline const Token& name() const {return _name;}
-    private:
-        virtual void visit(Visitor& visitor) const;
-    private:
-        const StructDefn& _structDef;
-        const Token _name;
-    };
-
-    class EnumMemberRefExpr : public Expr {
-    public:
-        inline EnumMemberRefExpr(const QualifiedTypeSpec& qTypeSpec, const EnumDefn& enumDef, const Token& name) : Expr(qTypeSpec), _enumDef(enumDef), _name(name) {}
-        inline const EnumDefn& enumDef() const {return _enumDef;}
-        inline const Token& name() const {return _name;}
-    private:
-        virtual void visit(Visitor& visitor) const;
-    private:
-        const EnumDefn& _enumDef;
-        const Token _name;
-    };
-
     class ListItem : public Node {
     public:
         inline ListItem(const Expr& valueExpr) : _valueExpr(valueExpr) {}
@@ -736,16 +714,6 @@ namespace Ast {
         const Function& _function;
     };
 
-    class AnonymousFunctionExpr : public Expr {
-    public:
-        inline AnonymousFunctionExpr(const QualifiedTypeSpec& qTypeSpec, const Function& function, const CompoundStatement& compoundStatement) : Expr(qTypeSpec), _compoundStatement(compoundStatement) {}
-        inline const CompoundStatement& compoundStatement() const {return _compoundStatement;}
-    private:
-        virtual void visit(Visitor& visitor) const;
-    private:
-        const CompoundStatement& _compoundStatement;
-    };
-
     class ConstantExpr : public Expr {
     public:
         inline ConstantExpr(const QualifiedTypeSpec& qTypeSpec, const Token& value) : Expr(qTypeSpec), _value(value) {}
@@ -773,8 +741,6 @@ namespace Ast {
         virtual void visit(const BinaryOpExpr& node) = 0;
         virtual void visit(const PostfixOpExpr& node) = 0;
         virtual void visit(const PrefixOpExpr& node) = 0;
-        virtual void visit(const StructMemberRefExpr& node) = 0;
-        virtual void visit(const EnumMemberRefExpr& node) = 0;
         virtual void visit(const ListExpr& node) = 0;
         virtual void visit(const DictExpr& node) = 0;
         virtual void visit(const FormatExpr& node) = 0;
@@ -787,7 +753,6 @@ namespace Ast {
         virtual void visit(const TypeSpecMemberExpr& node) = 0;
         virtual void visit(const StructInstanceExpr& node) = 0;
         virtual void visit(const FunctionInstanceExpr& node) = 0;
-        virtual void visit(const AnonymousFunctionExpr& node) = 0;
         virtual void visit(const ConstantExpr& node) = 0;
         virtual void sep() = 0;
     };
@@ -796,8 +761,6 @@ namespace Ast {
     inline void BinaryOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void PostfixOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void PrefixOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void StructMemberRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void EnumMemberRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ListExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void DictExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FormatExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
@@ -810,7 +773,6 @@ namespace Ast {
     inline void TypeSpecMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void StructInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void AnonymousFunctionExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ConstantExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////

@@ -67,3 +67,11 @@ public test testInnerChildFunction {
     local r = o(2);
     return (1);
 }
+
+public test testAnonymousFunction {
+    local a = testFunction {
+        return (2, "aa");
+    };
+    local r = a(2);
+    return (1);
+}

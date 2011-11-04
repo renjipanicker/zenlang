@@ -12,6 +12,7 @@ public:
 
 public:
     inline const std::string& filename() const {return _filename;}
+    inline const Ast::TypeSpec* currentTypeRef() const {return _currentTypeRef;}
 
 private:
     inline Ast::ExprList& addExprList();
@@ -42,6 +43,10 @@ private:
     inline Ast::Scope& currentScope();
 
 private:
+    inline void setCurrentTypeRef(const Ast::TypeSpec& typeSpec);
+    inline void resetCurrentTypeRef();
+
+private:
     Compiler& _compiler;
     Ast::Unit& _unit;
     const int _level;
@@ -54,6 +59,7 @@ private:
     ScopeStack                  _scopeStack;
     TypeSpecStack              _typeSpecStack;
     std::list<Ast::Namespace*> _namespaceStack;
+    const Ast::TypeSpec*       _currentTypeRef;
 
 public:
     void                     aUnitNamespaceId(const Ast::Token& name);
@@ -93,10 +99,15 @@ public:
     Ast::VariableDefn*       aVariableDefn(const Ast::Token& name, const Ast::Expr& initExpr);
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
     Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
-    const Ast::TypeSpec*     aPreTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
-    const Ast::TypeSpec*     aPreTypeSpec(const Ast::Token& name) const;
-    const Ast::Function*     aFunctionTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
-    const Ast::TypeSpec*     aTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
+    const Ast::Function*     aFunctionTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
+    const Ast::Function*     aFunctionTypeSpec(const Ast::Token& name);
+    const Ast::Function*     aFunctionTypeSpec(const Ast::Function& function);
+    const Ast::StructDefn*   aStructTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
+    const Ast::StructDefn*   aStructTypeSpec(const Ast::Token& name);
+    const Ast::StructDefn*   aStructTypeSpec(const Ast::StructDefn& structDefn);
+    const Ast::TypeSpec*     aOtherTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
+    const Ast::TypeSpec*     aOtherTypeSpec(const Ast::Token& name);
+    const Ast::TypeSpec*     aTypeSpec(const Ast::TypeSpec& typeSpec);
 
 public:
     Ast::UserDefinedTypeSpecStatement* aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec);
@@ -119,8 +130,6 @@ public:
     Ast::BinaryOpExpr&        aBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
     Ast::PostfixOpExpr&       aPostfixExpr(const Ast::Token& op, const Ast::Expr& lhs);
     Ast::PrefixOpExpr&        aPrefixExpr(const Ast::Token& op, const Ast::Expr& rhs);
-    Ast::StructMemberRefExpr& aStructMemberRefExpr(const Ast::StructDefn& structDef, const Ast::Token& name);
-    Ast::EnumMemberRefExpr&   aEnumMemberRefExpr(const Ast::EnumDefn& enumDef, const Ast::Token& name);
 
     Ast::ListExpr*            aListExpr(const Ast::Token& pos, const Ast::ListList& list);
     Ast::ListList*            aListList(Ast::ListList& list, const Ast::ListItem& item);
@@ -141,12 +150,12 @@ public:
     Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);
     Ast::VariableMemberExpr*  aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name);
     Ast::TypeSpecMemberExpr*  aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
-    Ast::StructInstanceExpr*  aStructInstanceExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::StructInitPartList& list);
+    Ast::StructInstanceExpr*  aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list);
     Ast::StructInitPartList*  aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part);
     Ast::StructInitPartList*  aStructInitPartList(const Ast::StructInitPart& part);
     Ast::StructInitPartList*  aStructInitPartList();
     Ast::StructInitPart*      aStructInitPart(const Ast::Token& name, const Ast::Expr& expr);
     Ast::FunctionInstanceExpr* aFunctionInstanceExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
-    Ast::AnonymousFunctionExpr* aAnonymousFunctionExpr(const Ast::Function& function, const Ast::CompoundStatement& compoundStatement);
+    Ast::FunctionInstanceExpr* aAnonymousFunctionExpr(const Ast::Function& function, const Ast::CompoundStatement& compoundStatement);
     Ast::ConstantExpr&        aConstantExpr(const std::string& type, const Ast::Token& value);
 };

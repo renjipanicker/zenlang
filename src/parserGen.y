@@ -278,31 +278,39 @@ rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec).               {L = ref(pctx
 rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx).aQualifiedTypeSpec(true,  ref(typeSpec), true );}
 
 //-------------------------------------------------
-// type references
+// "public" type references, can be invoked from other rules
 %type rTypeSpec {const Ast::TypeSpec*}
-rTypeSpec(L) ::= rPreTypeSpec(R). {L = R;}
-
-//-------------------------------------------------
-// type references
-%type rPreTypeSpec {const Ast::TypeSpec*}
-rPreTypeSpec(L) ::= rFunctionTypeSpec(R). {L = R;}
-rPreTypeSpec(L) ::= rStructTypeSpec(R). {L = R;}
-rPreTypeSpec(L) ::= rOtherTypeSpec(R). {L = R;}
-
-//-------------------------------------------------
-%type rFunctionTypeSpec {const Ast::Function*}
-rFunctionTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(ref(parent), name);}
-rFunctionTypeSpec(L) ::=                            FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(name);}
+rTypeSpec(L) ::= rPreTypeSpec(R). {L = ref(pctx).aTypeSpec(ref(R));}
 
 //-------------------------------------------------
 %type rStructTypeSpec {const Ast::StructDefn*}
-rStructTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE STRUCT_TYPE(name). {L = ref(pctx).aStructTypeSpec(ref(parent), name);}
-rStructTypeSpec(L) ::=                            STRUCT_TYPE(name). {L = ref(pctx).aStructTypeSpec(name);}
+rStructTypeSpec(L) ::= rPreStructTypeSpec(R). {L = ref(pctx).aStructTypeSpec(ref(R));}
 
 //-------------------------------------------------
-%type rOtherTypeSpec {const Ast::TypeSpec*}
-rOtherTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE OTHER_TYPE(name). {L = ref(pctx).aOtherTypeSpec(ref(parent), name);}
-rOtherTypeSpec(L) ::=                            OTHER_TYPE(name). {L = ref(pctx).aOtherTypeSpec(name);}
+%type rFunctionTypeSpec {const Ast::Function*}
+rFunctionTypeSpec(L) ::= rPreFunctionTypeSpec(R). {L = ref(pctx).aFunctionTypeSpec(ref(R));}
+
+//-------------------------------------------------
+// "private" type references, can be only called by the public equivalent rules
+%type rPreTypeSpec {const Ast::TypeSpec*}
+rPreTypeSpec(L) ::= rPreFunctionTypeSpec(R). {L = R;}
+rPreTypeSpec(L) ::= rPreStructTypeSpec(R).   {L = R;}
+rPreTypeSpec(L) ::= rPreOtherTypeSpec(R).    {L = R;}
+
+//-------------------------------------------------
+%type rPreFunctionTypeSpec {const Ast::Function*}
+rPreFunctionTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(ref(parent), name);}
+rPreFunctionTypeSpec(L) ::=                            FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(name);}
+
+//-------------------------------------------------
+%type rPreStructTypeSpec {const Ast::StructDefn*}
+rPreStructTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE STRUCT_TYPE(name). {L = ref(pctx).aStructTypeSpec(ref(parent), name);}
+rPreStructTypeSpec(L) ::=                            STRUCT_TYPE(name). {L = ref(pctx).aStructTypeSpec(name);}
+
+//-------------------------------------------------
+%type rPreOtherTypeSpec {const Ast::TypeSpec*}
+rPreOtherTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE OTHER_TYPE(name). {L = ref(pctx).aOtherTypeSpec(ref(parent), name);}
+rPreOtherTypeSpec(L) ::=                            OTHER_TYPE(name). {L = ref(pctx).aOtherTypeSpec(name);}
 
 //-------------------------------------------------
 // statements
@@ -525,13 +533,13 @@ rFunctionInstanceExpr(L) ::= rTypeSpec(R) LSQUARE rExprList(M) RSQUARE. {L = ref
 
 //-------------------------------------------------
 // function instance expressions
-%type rAnonymousFunctionExpr {Ast::AnonymousFunctionExpr*}
-rAnonymousFunctionExpr(L) ::= rFunctionTypeSpec(R) XX rCompoundStatement(C). {L = ref(pctx).aAnonymousFunctionExpr(ref(R), ref(C));}
+%type rAnonymousFunctionExpr {Ast::FunctionInstanceExpr*}
+rAnonymousFunctionExpr(L) ::= rFunctionTypeSpec(R) rCompoundStatement(C). {L = ref(pctx).aAnonymousFunctionExpr(ref(R), ref(C));}
 
 //-------------------------------------------------
 // struct instance expressions
 %type rStructInstanceExpr {Ast::StructInstanceExpr*}
-rStructInstanceExpr(L) ::= rTypeSpec(R) LCURLY(B) rStructInitPartList(P) RCURLY. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
+rStructInstanceExpr(L) ::= rStructTypeSpec(R) LCURLY(B) rStructInitPartList(P) RCURLY. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
 
 //-------------------------------------------------
 %type rStructInitPartList {Ast::StructInitPartList*}

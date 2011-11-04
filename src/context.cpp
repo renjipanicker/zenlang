@@ -8,7 +8,7 @@ inline Ast::Root& Context::getRootNamespace() const {
 }
 
 inline const Ast::TypeSpec* Context::findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
-    const Ast::TypeSpec* child = parent.hasChild(name.text());
+    const Ast::TypeSpec* child = parent.hasChild<const Ast::TypeSpec>(name.text());
     if(child)
         return child;
     const Ast::ChildTypeSpec* parentx = dynamic_cast<const Ast::ChildTypeSpec*>(ptr(parent));
@@ -46,7 +46,15 @@ inline const Ast::QualifiedTypeSpec& Context::getQualifiedTypeSpec(const Ast::To
     return qTypeSpec;
 }
 
-Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename) {
+inline void Context::setCurrentTypeRef(const Ast::TypeSpec& typeSpec) {
+    _currentTypeRef = ptr(typeSpec);
+}
+
+inline void Context::resetCurrentTypeRef() {
+    _currentTypeRef = 0;
+}
+
+Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0) {
     Ast::Root& rootTypeSpec = getRootNamespace();
     enterTypeSpec(rootTypeSpec);
 }
@@ -86,7 +94,7 @@ const Ast::TypeSpec* Context::hasRootTypeSpec(const Ast::Token& name) const {
         return typeSpec;
 
     if(_level == 0) {
-        typeSpec = _unit.importNS().hasChild(name.text());
+        typeSpec = _unit.importNS().hasChild<const Ast::TypeSpec>(name.text());
         if(typeSpec)
             return typeSpec;
     }
@@ -172,8 +180,7 @@ inline const Ast::FunctionRetn& Context::getFunctionRetn(const Ast::Token& pos, 
         base = ptr(ref(childFunctionDefn).base());
     }
     if(base != 0) {
-        const Ast::TypeSpec* retn = ref(base).hasChild("_Out");
-        const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(retn);
+        const Ast::FunctionRetn* functionRetn = ref(base).hasChild<const Ast::FunctionRetn>("_Out");
         if(functionRetn != 0) {
             return ref(functionRetn);
         }
@@ -433,30 +440,64 @@ Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const A
     return ptr(qualifiedTypeSpec);
 }
 
-const Ast::TypeSpec* Context::aPreTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
-    const Ast::TypeSpec* typeSpec = parent.hasChild(name.text());
-    if(!typeSpec) {
-        throw Exception("%s Unknown child type '%s'\n", err(_filename, name).c_str(), name.text());
-    }
-    return typeSpec;
-}
-
-const Ast::TypeSpec* Context::aPreTypeSpec(const Ast::Token& name) const {
-    const Ast::TypeSpec& typeSpec = getRootTypeSpec<Ast::TypeSpec>(name);
-    return ptr(typeSpec);
-}
-
-const Ast::TypeSpec* Context::aTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
-    return aPreTypeSpec(parent, name);
-}
-
-const Ast::Function* Context::aFunctionTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
-    const Ast::TypeSpec* typeSpec = aPreTypeSpec(parent, name);
-    const Ast::Function* function = dynamic_cast<const Ast::Function*>(typeSpec);
+const Ast::Function* Context::aFunctionTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
+    const Ast::Function* function = parent.hasChild<const Ast::Function>(name.text());
     if(!function) {
         throw Exception("%s function type expected '%s'\n", err(_filename, name).c_str(), name.text());
     }
+    setCurrentTypeRef(ref(function));
     return function;
+}
+
+const Ast::Function* Context::aFunctionTypeSpec(const Ast::Token& name) {
+    const Ast::Function& function = getRootTypeSpec<Ast::Function>(name);
+    setCurrentTypeRef(function);
+    return ptr(function);
+}
+
+const Ast::Function* Context::aFunctionTypeSpec(const Ast::Function& function) {
+    resetCurrentTypeRef();
+    return ptr(function);
+}
+
+const Ast::StructDefn* Context::aStructTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
+    const Ast::StructDefn* structDefn = parent.hasChild<const Ast::StructDefn>(name.text());
+    if(!structDefn) {
+        throw Exception("%s struct type expected '%s'\n", err(_filename, name).c_str(), name.text());
+    }
+    setCurrentTypeRef(ref(structDefn));
+    return structDefn;
+}
+
+const Ast::StructDefn* Context::aStructTypeSpec(const Ast::Token& name) {
+    const Ast::StructDefn& structDefn = getRootTypeSpec<Ast::StructDefn>(name);
+    setCurrentTypeRef(structDefn);
+    return ptr(structDefn);
+}
+
+const Ast::StructDefn* Context::aStructTypeSpec(const Ast::StructDefn& structDefn) {
+    resetCurrentTypeRef();
+    return ptr(structDefn);
+}
+
+const Ast::TypeSpec* Context::aOtherTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
+    const Ast::TypeSpec* typeSpec = parent.hasChild<const Ast::TypeSpec>(name.text());
+    if(!typeSpec) {
+        throw Exception("%s Unknown child type '%s'\n", err(_filename, name).c_str(), name.text());
+    }
+    setCurrentTypeRef(ref(typeSpec));
+    return typeSpec;
+}
+
+const Ast::TypeSpec* Context::aOtherTypeSpec(const Ast::Token& name) {
+    const Ast::TypeSpec& typeSpec = getRootTypeSpec<Ast::TypeSpec>(name);
+    setCurrentTypeRef(typeSpec);
+    return ptr(typeSpec);
+}
+
+const Ast::TypeSpec* Context::aTypeSpec(const Ast::TypeSpec& typeSpec) {
+    resetCurrentTypeRef();
+    return ptr(typeSpec);
 }
 
 Ast::UserDefinedTypeSpecStatement* Context::aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec) {
@@ -554,18 +595,6 @@ Ast::PostfixOpExpr& Context::aPostfixExpr(const Ast::Token& op, const Ast::Expr&
 Ast::PrefixOpExpr& Context::aPrefixExpr(const Ast::Token& op, const Ast::Expr& rhs) {
     const Ast::QualifiedTypeSpec& qTypeSpec = rhs.qTypeSpec();
     Ast::PrefixOpExpr& expr = _unit.addNode(new Ast::PrefixOpExpr(qTypeSpec, op, rhs));
-    return expr;
-}
-
-Ast::StructMemberRefExpr& Context::aStructMemberRefExpr(const Ast::StructDefn& structDef, const Ast::Token& name) {
-    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, structDef, false);
-    Ast::StructMemberRefExpr& expr = _unit.addNode(new Ast::StructMemberRefExpr(qTypeSpec, structDef, name));
-    return expr;
-}
-
-Ast::EnumMemberRefExpr& Context::aEnumMemberRefExpr(const Ast::EnumDefn& enumDef, const Ast::Token& name) {
-    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, enumDef, false);
-    Ast::EnumMemberRefExpr& expr = _unit.addNode(new Ast::EnumMemberRefExpr(qTypeSpec, enumDef, name));
     return expr;
 }
 
@@ -768,15 +797,10 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
     throw Exception("%s Not an aggregate type '%s'\n", err(_filename, name).c_str(), typeSpec.name().text());
 }
 
-Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::StructInitPartList& list) {
-    const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
-    if(structDefn != 0) {
-        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
-        Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(qTypeSpec, ref(structDefn), list));
-        return ptr(structInstanceExpr);
-    }
-
-    throw Exception("%s Not a struct type '%s'\n", err(_filename, pos).c_str(), typeSpec.name().text());
+Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list) {
+    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, structDefn, false);
+    Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(qTypeSpec, structDefn, list));
+    return ptr(structInstanceExpr);
 }
 
 Ast::StructInitPartList* Context::aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part) {
@@ -811,10 +835,17 @@ Ast::FunctionInstanceExpr* Context::aFunctionInstanceExpr(const Ast::TypeSpec& t
     throw Exception("%s: Not a aggregate type '%s'\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());
 }
 
-Ast::AnonymousFunctionExpr* Context::aAnonymousFunctionExpr(const Ast::Function& function, const Ast::CompoundStatement& compoundStatement) {
-    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, function, false);
-    Ast::AnonymousFunctionExpr& anonymousFunctionExpr = _unit.addNode(new Ast::AnonymousFunctionExpr(qTypeSpec, function, compoundStatement));
-    return ptr(anonymousFunctionExpr);
+Ast::FunctionInstanceExpr* Context::aAnonymousFunctionExpr(const Ast::Function& function, const Ast::CompoundStatement& compoundStatement) {
+    char namestr[128];
+    sprintf(namestr, "_anonymous_%lu", currentTypeSpec().childCount());
+    Ast::Token name(0, 0, namestr);
+    Ast::ChildFunctionDefn* functionDefn = aEnterChildFunctionDefn(function, name, Ast::DefinitionType::Direct);
+    aChildFunctionDefn(ref(functionDefn), compoundStatement);
+
+    Ast::ExprList& exprList = addExprList();
+    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(functionDefn), false);
+    Ast::FunctionInstanceExpr& functionInstanceExpr = _unit.addNode(new Ast::FunctionInstanceExpr(qTypeSpec, ref(functionDefn), exprList));
+    return ptr(functionInstanceExpr);
 }
 
 Ast::ConstantExpr& Context::aConstantExpr(const std::string& type, const Ast::Token& value) {

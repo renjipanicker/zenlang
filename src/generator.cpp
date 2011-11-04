@@ -136,16 +136,6 @@ private:
         visitNode(node.rhs());
     }
 
-    virtual void visit(const Ast::StructMemberRefExpr& node) {
-        unused(node);
-        throw Exception("Unimplemented: StructMemberRefExpr\n");
-    }
-
-    virtual void visit(const Ast::EnumMemberRefExpr& node) {
-        unused(node);
-        throw Exception("Unimplemented: EnumMemberRefExpr\n");
-    }
-
     virtual void visit(const Ast::ListExpr& node) {
         fprintf(_fp, "ListCreator<%s>()", getQualifiedTypeSpecName(node.list().valueType()).c_str());
         for(Ast::ListList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
@@ -250,11 +240,6 @@ private:
         fprintf(_fp, "%s(", getTypeSpecName(node.function()).c_str());
         ExprGenerator(_fp, ", ").visitList(node.exprList());
         fprintf(_fp, ")");
-    }
-
-    virtual void visit(const Ast::AnonymousFunctionExpr& node) {
-        unused(node);
-        throw Exception("Unimplemented: AnonymousFunctionExpr");
     }
 
     virtual void visit(const Ast::ConstantExpr& node) {

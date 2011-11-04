@@ -13,6 +13,7 @@ public:
 
 private:
     inline TokenData token(Scanner* s, const int& id);
+    inline bool trySendId(Scanner* s, const Ast::TypeSpec* typeSpec);
     inline void sendId(Scanner* s);
     inline void sendReturn(Scanner* s);
 

@@ -74,12 +74,28 @@ inline TokenData Lexer::Impl::token(Scanner* s, const int& id) {
     return createToken(id, s->row, s->cur-s->sol, s->mar, s->cur);
 }
 
+inline bool Lexer::Impl::trySendId(Scanner* s, const Ast::TypeSpec* typeSpec) {
+    if(dynamic_cast<const Ast::Function*>(typeSpec) != 0) {
+        _parser.feed(token(s, ZENTOK_FUNCTION_TYPE));
+        return true;
+    }
+    if(dynamic_cast<const Ast::StructDefn*>(typeSpec) != 0) {
+        _parser.feed(token(s, ZENTOK_STRUCT_TYPE));
+        return true;
+    }
+    if(dynamic_cast<const Ast::TypeSpec*>(typeSpec) != 0) {
+        _parser.feed(token(s, ZENTOK_OTHER_TYPE));
+        return true;
+    }
+    return false;
+}
+
 inline void Lexer::Impl::sendId(Scanner* s) {
     Ast::Token td = token(s, 0);
-    if(_context.hasRootTypeSpec(td)) {
-        _parser.feed(token(s, ZENTOK_OTHER_TYPE));
+    if(trySendId(s, _context.currentTypeRef()))
         return;
-    }
+    if(trySendId(s, _context.hasRootTypeSpec(td)))
+        return;
     _parser.feed(token(s, ZENTOK_ID));
 }
 
