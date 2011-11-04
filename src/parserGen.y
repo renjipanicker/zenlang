@@ -272,15 +272,24 @@ rVariableDefn(L) ::= rQualifiedTypeSpec(qTypeRef) ID(name).                     
 // qualified types
 %type rQualifiedTypeSpec {const Ast::QualifiedTypeSpec*}
 rQualifiedTypeSpec(L) ::=       rTypeSpec(typeSpec).               {L = ref(pctx).aQualifiedTypeSpec(false, ref(typeSpec), false);}
-rQualifiedTypeSpec(L) ::=       rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx).aQualifiedTypeSpec(false, ref(typeSpec), true);}
-rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec).               {L = ref(pctx).aQualifiedTypeSpec(true, ref(typeSpec), false);}
-rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx).aQualifiedTypeSpec(true, ref(typeSpec), true);}
+rQualifiedTypeSpec(L) ::=       rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx).aQualifiedTypeSpec(false, ref(typeSpec), true );}
+rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec).               {L = ref(pctx).aQualifiedTypeSpec(true,  ref(typeSpec), false);}
+rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx).aQualifiedTypeSpec(true,  ref(typeSpec), true );}
+
+//-------------------------------------------------
+// type references
+%type rPreTypeSpec {const Ast::TypeSpec*}
+rPreTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE ID(name). {L = ref(pctx).aPreTypeSpec(ref(parent), name);}
+rPreTypeSpec(L) ::=                     ROOT_TYPE(name). {L = ref(pctx).aPreTypeSpec(name);}
+
+//-------------------------------------------------
+%type rFunctionTypeSpec {const Ast::Function*}
+rFunctionTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(ref(parent), name);}
 
 //-------------------------------------------------
 // type references
 %type rTypeSpec {const Ast::TypeSpec*}
-rTypeSpec(L) ::= rTypeSpec(parent) SCOPE ID(name). {L = ref(pctx).aTypeSpec(ref(parent), name);}
-rTypeSpec(L) ::=                  ROOT_TYPE(name). {L = ref(pctx).aTypeSpec(name);}
+rTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE ID(name). {L = ref(pctx).aTypeSpec(ref(parent), name);}
 
 //-------------------------------------------------
 // statements
@@ -355,9 +364,10 @@ rExpr(L) ::= rCallExpr(R).              {L = R;}
 rExpr(L) ::= rVariableRefExpr(R).       {L = R;}
 rExpr(L) ::= rVariableMemberExpr(R).    {L = R;}
 rExpr(L) ::= rTypeSpecMemberExpr(R).    {L = R;}
-rExpr(L) ::= rFunctionInstanceExpr(R).  {L = R;}
 rExpr(L) ::= rStructInstanceExpr(R).    {L = R;}
-rExpr(L) ::= rConstantExpr(R).     {L = R;}
+rExpr(L) ::= rFunctionInstanceExpr(R).  {L = R;}
+rExpr(L) ::= rAnonymousFunctionExpr(R).  {L = R;}
+rExpr(L) ::= rConstantExpr(R).          {L = R;}
 
 //-------------------------------------------------
 // It could be possible to implement creating local variables inline within expressions.
@@ -499,6 +509,11 @@ rTypeSpecMemberExpr(L) ::= rTypeSpec(R) DOT ID(M). {L = ref(pctx).aTypeSpecMembe
 // function instance expressions
 %type rFunctionInstanceExpr {Ast::TypeSpecInstanceExpr*}
 rFunctionInstanceExpr(L) ::= rTypeSpec(R) LSQUARE rExprList(M) RSQUARE. {L = ref(pctx).aFunctionInstanceExpr(ref(R), ref(M));}
+
+//-------------------------------------------------
+// function instance expressions
+%type rAnonymousFunctionExpr {Ast::AnonymousFunctionExpr*}
+rAnonymousFunctionExpr(L) ::= rFunctionTypeSpec(R) rCompoundStatement(C). {L = ref(pctx).aAnonymousFunctionExpr(ref(R), ref(C));}
 
 //-------------------------------------------------
 // struct instance expressions

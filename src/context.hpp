@@ -89,8 +89,10 @@ public:
     Ast::VariableDefn*       aVariableDefn(const Ast::Token& name, const Ast::Expr& initExpr);
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
     Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
+    const Ast::TypeSpec*     aPreTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
+    const Ast::TypeSpec*     aPreTypeSpec(const Ast::Token& name) const;
+    const Ast::Function*     aFunctionTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
     const Ast::TypeSpec*     aTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
-    const Ast::TypeSpec*     aTypeSpec(const Ast::Token& name) const;
 
 public:
     Ast::UserDefinedTypeSpecStatement* aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec);
@@ -141,5 +143,6 @@ public:
     Ast::StructInitPartList*  aStructInitPartList();
     Ast::StructInitPart*      aStructInitPart(const Ast::Token& name, const Ast::Expr& expr);
     Ast::FunctionInstanceExpr* aFunctionInstanceExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
+    Ast::AnonymousFunctionExpr* aAnonymousFunctionExpr(const Ast::Function& function, const Ast::CompoundStatement& compoundStatement);
     Ast::ConstantExpr&        aConstantExpr(const std::string& type, const Ast::Token& value);
 };

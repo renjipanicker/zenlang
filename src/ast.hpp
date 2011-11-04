@@ -736,6 +736,16 @@ namespace Ast {
         const Function& _function;
     };
 
+    class AnonymousFunctionExpr : public Expr {
+    public:
+        inline AnonymousFunctionExpr(const QualifiedTypeSpec& qTypeSpec, const Function& function, const CompoundStatement& compoundStatement) : Expr(qTypeSpec), _compoundStatement(compoundStatement) {}
+        inline const CompoundStatement& compoundStatement() const {return _compoundStatement;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const CompoundStatement& _compoundStatement;
+    };
+
     class ConstantExpr : public Expr {
     public:
         inline ConstantExpr(const QualifiedTypeSpec& qTypeSpec, const Token& value) : Expr(qTypeSpec), _value(value) {}
@@ -777,6 +787,7 @@ namespace Ast {
         virtual void visit(const TypeSpecMemberExpr& node) = 0;
         virtual void visit(const StructInstanceExpr& node) = 0;
         virtual void visit(const FunctionInstanceExpr& node) = 0;
+        virtual void visit(const AnonymousFunctionExpr& node) = 0;
         virtual void visit(const ConstantExpr& node) = 0;
         virtual void sep() = 0;
     };
@@ -799,6 +810,7 @@ namespace Ast {
     inline void TypeSpecMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void StructInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void AnonymousFunctionExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ConstantExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////

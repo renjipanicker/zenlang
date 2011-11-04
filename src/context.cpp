@@ -433,7 +433,7 @@ Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const A
     return ptr(qualifiedTypeSpec);
 }
 
-const Ast::TypeSpec* Context::aTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
+const Ast::TypeSpec* Context::aPreTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
     const Ast::TypeSpec* typeSpec = parent.hasChild(name.text());
     if(!typeSpec) {
         throw Exception("%s Unknown child type '%s'\n", err(_unit, name).c_str(), name.text());
@@ -441,9 +441,22 @@ const Ast::TypeSpec* Context::aTypeSpec(const Ast::TypeSpec& parent, const Ast::
     return typeSpec;
 }
 
-const Ast::TypeSpec* Context::aTypeSpec(const Ast::Token& name) const {
+const Ast::TypeSpec* Context::aPreTypeSpec(const Ast::Token& name) const {
     const Ast::TypeSpec& typeSpec = getRootTypeSpec<Ast::TypeSpec>(name);
     return ptr(typeSpec);
+}
+
+const Ast::TypeSpec* Context::aTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
+    return aPreTypeSpec(parent, name);
+}
+
+const Ast::Function* Context::aFunctionTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
+    const Ast::TypeSpec* typeSpec = aPreTypeSpec(parent, name);
+    const Ast::Function* function = dynamic_cast<const Ast::Function*>(typeSpec);
+    if(!function) {
+        throw Exception("%s function type expected '%s'\n", err(_unit, name).c_str(), name.text());
+    }
+    return function;
 }
 
 Ast::UserDefinedTypeSpecStatement* Context::aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec) {
@@ -796,6 +809,12 @@ Ast::FunctionInstanceExpr* Context::aFunctionInstanceExpr(const Ast::TypeSpec& t
     }
 
     throw Exception("%s: Not a aggregate type '%s'\n", err(_unit, typeSpec.name()).c_str(), typeSpec.name().text());
+}
+
+Ast::AnonymousFunctionExpr* Context::aAnonymousFunctionExpr(const Ast::Function& function, const Ast::CompoundStatement& compoundStatement) {
+    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, function, false);
+    Ast::AnonymousFunctionExpr& anonymousFunctionExpr = _unit.addNode(new Ast::AnonymousFunctionExpr(qTypeSpec, function, compoundStatement));
+    return ptr(anonymousFunctionExpr);
 }
 
 Ast::ConstantExpr& Context::aConstantExpr(const std::string& type, const Ast::Token& value) {

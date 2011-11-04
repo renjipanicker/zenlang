@@ -252,6 +252,11 @@ private:
         fprintf(_fp, ")");
     }
 
+    virtual void visit(const Ast::AnonymousFunctionExpr& node) {
+        unused(node);
+        throw Exception("Unimplemented: AnonymousFunctionExpr");
+    }
+
     virtual void visit(const Ast::ConstantExpr& node) {
         if(getQualifiedTypeSpecName(node.qTypeSpec()) == "char") {
             fprintf(_fp, "\'%s\'", node.value().text());
