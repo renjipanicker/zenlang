@@ -279,18 +279,30 @@ rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx
 
 //-------------------------------------------------
 // type references
+%type rTypeSpec {const Ast::TypeSpec*}
+rTypeSpec(L) ::= rPreTypeSpec(R). {L = R;}
+
+//-------------------------------------------------
+// type references
 %type rPreTypeSpec {const Ast::TypeSpec*}
-rPreTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE ID(name). {L = ref(pctx).aPreTypeSpec(ref(parent), name);}
-rPreTypeSpec(L) ::=                     ROOT_TYPE(name). {L = ref(pctx).aPreTypeSpec(name);}
+rPreTypeSpec(L) ::= rFunctionTypeSpec(R). {L = R;}
+rPreTypeSpec(L) ::= rStructTypeSpec(R). {L = R;}
+rPreTypeSpec(L) ::= rOtherTypeSpec(R). {L = R;}
 
 //-------------------------------------------------
 %type rFunctionTypeSpec {const Ast::Function*}
 rFunctionTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(ref(parent), name);}
+rFunctionTypeSpec(L) ::=                            FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(name);}
 
 //-------------------------------------------------
-// type references
-%type rTypeSpec {const Ast::TypeSpec*}
-rTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE ID(name). {L = ref(pctx).aTypeSpec(ref(parent), name);}
+%type rStructTypeSpec {const Ast::StructDefn*}
+rStructTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE STRUCT_TYPE(name). {L = ref(pctx).aStructTypeSpec(ref(parent), name);}
+rStructTypeSpec(L) ::=                            STRUCT_TYPE(name). {L = ref(pctx).aStructTypeSpec(name);}
+
+//-------------------------------------------------
+%type rOtherTypeSpec {const Ast::TypeSpec*}
+rOtherTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE OTHER_TYPE(name). {L = ref(pctx).aOtherTypeSpec(ref(parent), name);}
+rOtherTypeSpec(L) ::=                            OTHER_TYPE(name). {L = ref(pctx).aOtherTypeSpec(name);}
 
 //-------------------------------------------------
 // statements
@@ -514,7 +526,7 @@ rFunctionInstanceExpr(L) ::= rTypeSpec(R) LSQUARE rExprList(M) RSQUARE. {L = ref
 //-------------------------------------------------
 // function instance expressions
 %type rAnonymousFunctionExpr {Ast::AnonymousFunctionExpr*}
-rAnonymousFunctionExpr(L) ::= rFunctionTypeSpec(R) rCompoundStatement(C). {L = ref(pctx).aAnonymousFunctionExpr(ref(R), ref(C));}
+rAnonymousFunctionExpr(L) ::= rFunctionTypeSpec(R) XX rCompoundStatement(C). {L = ref(pctx).aAnonymousFunctionExpr(ref(R), ref(C));}
 
 //-------------------------------------------------
 // struct instance expressions

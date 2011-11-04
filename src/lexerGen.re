@@ -77,7 +77,7 @@ inline TokenData Lexer::Impl::token(Scanner* s, const int& id) {
 inline void Lexer::Impl::sendId(Scanner* s) {
     Ast::Token td = token(s, 0);
     if(_context.hasRootTypeSpec(td)) {
-        _parser.feed(token(s, ZENTOK_ROOT_TYPE));
+        _parser.feed(token(s, ZENTOK_OTHER_TYPE));
         return;
     }
     _parser.feed(token(s, ZENTOK_ID));
