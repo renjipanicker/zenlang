@@ -75,3 +75,12 @@ public test testAnonymousFunction {
     local r = a(2);
     return (1);
 }
+
+public test testAnonymousFunctionWithClosure {
+    local i = 0;
+    local a = testFunction {
+        return (i, "aa");
+    };
+    local r = a(2);
+    return (1);
+}

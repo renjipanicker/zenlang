@@ -534,7 +534,12 @@ rFunctionInstanceExpr(L) ::= rTypeSpec(R) LSQUARE rExprList(M) RSQUARE. {L = ref
 //-------------------------------------------------
 // function instance expressions
 %type rAnonymousFunctionExpr {Ast::FunctionInstanceExpr*}
-rAnonymousFunctionExpr(L) ::= rFunctionTypeSpec(R) rCompoundStatement(C). {L = ref(pctx).aAnonymousFunctionExpr(ref(R), ref(C));}
+rAnonymousFunctionExpr(L) ::= rEnterAnonymousFunction(R) rCompoundStatement(C). {L = ref(pctx).aAnonymousFunctionExpr(ref(R), ref(C));}
+
+//-------------------------------------------------
+// function instance expressions
+%type rEnterAnonymousFunction {Ast::ChildFunctionDefn*}
+rEnterAnonymousFunction(L) ::= rFunctionTypeSpec(R). {L = ref(pctx).aEnterAnonymousFunction(ref(R));}
 
 //-------------------------------------------------
 // struct instance expressions

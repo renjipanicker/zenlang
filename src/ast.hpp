@@ -39,6 +39,7 @@ namespace Ast {
         enum T {
             Global,      /// global scope (unused for now)
             Member,      /// Member of enum or struct
+            XRef,        /// XRef scope
             Param,       /// Param scope
             Local        /// local scope
         };
@@ -243,18 +244,20 @@ namespace Ast {
 
     class Routine : public UserDefinedTypeSpec {
     protected:
-        inline Routine(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::Scope& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _outType(outType), _in(in) {}
+        inline Routine(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _outType(outType), _in(in) {}
     public:
         inline const Ast::QualifiedTypeSpec& outType() const {return _outType;}
         inline const Ast::Scope::List& in()  const {return _in.list();}
+    public:
+        inline Ast::Scope& inScope() const {return _in;}
     private:
         const Ast::QualifiedTypeSpec& _outType;
-        const Ast::Scope& _in;
+        Ast::Scope& _in;
     };
 
     class RoutineDecl : public Routine {
     public:
-        inline RoutineDecl(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::Scope& in, const DefinitionType::T& defType) : Routine(parent, outType, name, in, defType) {}
+        inline RoutineDecl(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const DefinitionType::T& defType) : Routine(parent, outType, name, in, defType) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
@@ -262,7 +265,7 @@ namespace Ast {
     class CompoundStatement;
     class RoutineDefn : public Routine {
     public:
-        inline RoutineDefn(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::Scope& in, const DefinitionType::T& defType)
+        inline RoutineDefn(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const DefinitionType::T& defType)
             : Routine(parent, outType, name, in, defType), _block(0) {}
     public:
         inline const Ast::CompoundStatement& block() const {return ref(_block);}
@@ -274,16 +277,21 @@ namespace Ast {
 
     class FunctionSig : public Node {
     public:
-        inline FunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in) : _out(out), _name(name), _in(in) {}
+        inline FunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in, Ast::Scope& xref) : _out(out), _name(name), _in(in), _xref(xref) {}
+    public:
         inline const Ast::Scope::List& out() const {return _out.list();}
         inline const Token& name() const {return _name;}
         inline const Ast::Scope::List& in() const {return _in.list();}
+        inline const Ast::Scope::List& xref() const {return _xref.list();}
+    public:
         inline const Ast::Scope& outScope()  const {return _out;}
         inline Ast::Scope& inScope()  const {return _in;}
+        inline Ast::Scope& xrefScope()  const {return _xref;}
     private:
         const Ast::Scope& _out;
         const Token _name;
         Ast::Scope& _in;
+        Ast::Scope& _xref;
     };
 
     class Function : public UserDefinedTypeSpec {

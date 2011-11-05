@@ -40,6 +40,7 @@ private:
     inline Ast::Scope& addScope(const Ast::ScopeType::T& type);
     inline Ast::Scope& enterScope(Ast::Scope& scope);
     inline Ast::Scope& leaveScope();
+    inline Ast::Scope& leaveScope(Ast::Scope& scope);
     inline Ast::Scope& currentScope();
 
 private:
@@ -82,7 +83,7 @@ public:
     Ast::StructDefn*         aStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::Scope*              aStructMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& enumMemberDefn);
     Ast::Scope*              aStructMemberDefnList(const Ast::VariableDefn& enumMemberDefn);
-    Ast::RoutineDecl*        aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::Scope& in, const Ast::DefinitionType::T& defType);
+    Ast::RoutineDecl*        aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType);
     Ast::RoutineDefn*        aRoutineDefn(Ast::RoutineDefn& routineDefn, const Ast::CompoundStatement& block);
     Ast::RoutineDefn*        aEnterRoutineDefn(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType);
     Ast::FunctionDecl*       aFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
@@ -156,6 +157,7 @@ public:
     Ast::StructInitPartList*  aStructInitPartList();
     Ast::StructInitPart*      aStructInitPart(const Ast::Token& name, const Ast::Expr& expr);
     Ast::FunctionInstanceExpr* aFunctionInstanceExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
-    Ast::FunctionInstanceExpr* aAnonymousFunctionExpr(const Ast::Function& function, const Ast::CompoundStatement& compoundStatement);
+    Ast::FunctionInstanceExpr* aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement);
+    Ast::ChildFunctionDefn*   aEnterAnonymousFunction(const Ast::Function& function);
     Ast::ConstantExpr&        aConstantExpr(const std::string& type, const Ast::Token& value);
 };
