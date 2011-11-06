@@ -1,17 +1,19 @@
 run
+for
+foreach
 if-else
 while
 do-while
 switch-value
 switch-expression
 switch-typeof
-for
-foreach
 enum-init
 coerce
 default intrinsic type values
 assert()
 unused()
+event
+event-handler
 
 project builder
 project reader
