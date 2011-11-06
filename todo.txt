@@ -1,32 +1,34 @@
-enum-init
-run
 assert()
 check()
 unused()
 event
 event-handler
+run
+future
 *** rename local to auto (consistency with c++0x)
+*** enum-default-value
+*** struct-default-value
+*** enum-init-expr
 
+in-params are const by default, locals are not
+lexical scanner for string input
 project builder
 project reader
+switch-typeof
 shared variables
-query
-lexical scanner for string input
 cmdline
-grammar
 large lists in in-memory sqlite
+query
+grammar
 project generator - msvc
 print <dst> <expr>;
 print <dst> <src> <level> <expr>;
-in-params are const by default, locals are not
 *** move Formatter to String, Creator to List/Dict
 *** merge enum and struct Ast's.
-*** remove get-set for struct, retain set-chain ability (how?)
 *** 3 level unit test - suite/test/check
 *** optimize trace/exception
 *** document ast
 *** document vref logic
-switch-typeof
 
 Remove block from unit
 project generator - cmake
@@ -62,3 +64,4 @@ break
 continue
 switch-value
 switch-expression
+remove get-set for struct, retain set-chain ability (how?)
