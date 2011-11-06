@@ -128,6 +128,9 @@ public:
     Ast::IfElseStatement*              aIfElseStatement(const Ast::Expr& expr, const Ast::CompoundStatement& tblock, const Ast::CompoundStatement& fblock);
     Ast::WhileStatement*               aWhileStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block);
     Ast::DoWhileStatement*             aDoWhileStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block);
+    Ast::ForStatement*                 aForStatement(const Ast::Expr& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block);
+    Ast::ForStatement*                 aForStatement(const Ast::VariableDefn& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block);
+    const Ast::VariableDefn*           aEnterForInit(const Ast::VariableDefn& init);
     Ast::RoutineReturnStatement*       aRoutineReturnStatement();
     Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Expr& expr);
     Ast::FunctionReturnStatement*      aFunctionReturnStatement(const Ast::ExprList& exprList);

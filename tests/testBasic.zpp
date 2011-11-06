@@ -131,3 +131,20 @@ public test testDoWhileStatement {
     } while(i < 2);
     return (1);
 }
+
+public test testForExprStatement {
+    local j = 0;
+    local i = 0;
+    for(i = 0; i < 10; ++i) {
+        j += i;
+    }
+    return (1);
+}
+
+public test testForInitStatement {
+    local j = 0;
+    for(local i = 0; i < 10; ++i) {
+        j += i;
+    }
+    return (1);
+}

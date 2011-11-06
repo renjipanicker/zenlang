@@ -337,6 +337,7 @@ rInnerStatement(L) ::= rIfStatement(R).                  {L = R;}
 rInnerStatement(L) ::= rIfElseStatement(R).              {L = R;}
 rInnerStatement(L) ::= rWhileStatement(R).               {L = R;}
 rInnerStatement(L) ::= rDoWhileStatement(R).             {L = R;}
+rInnerStatement(L) ::= rForStatement(R).                 {L = R;}
 rInnerStatement(L) ::= rRoutineReturnStatement(R).       {L = R;}
 rInnerStatement(L) ::= rFunctionReturnStatement(R).      {L = R;}
 rInnerStatement(L) ::= rCompoundStatement(R).            {L = R;}
@@ -372,6 +373,14 @@ rWhileStatement(L) ::= WHILE LBRACKET rExpr(expr) RBRACKET rCompoundStatement(bl
 //-------------------------------------------------
 %type rDoWhileStatement {Ast::DoWhileStatement*}
 rDoWhileStatement(L) ::= DO rCompoundStatement(block) WHILE LBRACKET rExpr(expr) RBRACKET SEMI. {L = ref(pctx).aDoWhileStatement(ref(expr), ref(block));}
+
+//-------------------------------------------------
+%type rForStatement {Ast::ForStatement*}
+rForStatement(L) ::= FOR LBRACKET rExpr(init) SEMI rExpr(expr) SEMI rExpr(incr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aForStatement(ref(init), ref(expr), ref(incr), ref(block));}
+rForStatement(L) ::= FOR LBRACKET rEnterForInit(init) SEMI rExpr(expr) SEMI rExpr(incr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aForStatement(ref(init), ref(expr), ref(incr), ref(block));}
+
+%type rEnterForInit {const Ast::VariableDefn*}
+rEnterForInit(L) ::= LOCAL rVariableDefn(init). {L = ref(pctx).aEnterForInit(ref(init));}
 
 //-------------------------------------------------
 %type rRoutineReturnStatement {Ast::RoutineReturnStatement*}

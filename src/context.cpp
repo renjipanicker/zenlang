@@ -591,6 +591,24 @@ Ast::DoWhileStatement* Context::aDoWhileStatement(const Ast::Expr& expr, const A
     return ptr(doWhileStatement);
 }
 
+Ast::ForStatement* Context::aForStatement(const Ast::Expr& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block) {
+    Ast::ForExprStatement& forStatement = _unit.addNode(new Ast::ForExprStatement(init, expr, incr, block));
+    return ptr(forStatement);
+}
+
+Ast::ForStatement* Context::aForStatement(const Ast::VariableDefn& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block) {
+    Ast::ForInitStatement& forStatement = _unit.addNode(new Ast::ForInitStatement(init, expr, incr, block));
+    leaveScope();
+    return ptr(forStatement);
+}
+
+const Ast::VariableDefn* Context::aEnterForInit(const Ast::VariableDefn& init) {
+    Ast::Scope& scope = addScope(Ast::ScopeType::Local);
+    scope.addVariableDef(init);
+    enterScope(scope);
+    return ptr(init);
+}
+
 Ast::RoutineReturnStatement* Context::aRoutineReturnStatement() {
     Ast::ExprList& exprList = addExprList();
     Ast::RoutineReturnStatement& returnStatement = _unit.addNode(new Ast::RoutineReturnStatement(exprList));

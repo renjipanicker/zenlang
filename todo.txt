@@ -1,4 +1,3 @@
-for
 foreach
 switch-value
 switch-expression
@@ -60,3 +59,4 @@ default intrinsic type values
 if-else
 while
 do-while
+for

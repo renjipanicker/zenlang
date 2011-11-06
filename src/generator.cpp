@@ -648,6 +648,28 @@ private:
         fprintf(_fpSrc, ");\n");
     }
 
+    virtual void visit(const Ast::ForExprStatement& node) {
+        fprintf(_fpSrc, "%sfor(", Indent::get());
+        ExprGenerator(_fpSrc).visitNode(node.init());
+        fprintf(_fpSrc, "; ");
+        ExprGenerator(_fpSrc).visitNode(node.expr());
+        fprintf(_fpSrc, "; ");
+        ExprGenerator(_fpSrc).visitNode(node.incr());
+        fprintf(_fpSrc, ")\n");
+        visitNode(node.block());
+    }
+
+    virtual void visit(const Ast::ForInitStatement& node) {
+        fprintf(_fpSrc, "%sfor(%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.init().qualifiedTypeSpec()).c_str(), node.init().name().text());
+        ExprGenerator(_fpSrc).visitNode(node.init().initExpr());
+        fprintf(_fpSrc, "; ");
+        ExprGenerator(_fpSrc).visitNode(node.expr());
+        fprintf(_fpSrc, "; ");
+        ExprGenerator(_fpSrc).visitNode(node.incr());
+        fprintf(_fpSrc, ")\n");
+        visitNode(node.block());
+    }
+
     virtual void visit(const Ast::RoutineReturnStatement& node) {
         fprintf(_fpSrc, "%sreturn", Indent::get());
         if(node.exprList().list().size() > 0) {

@@ -917,6 +917,35 @@ namespace Ast {
         virtual void visit(Visitor& visitor) const;
     };
 
+    class ForStatement : public LoopStatement {
+    protected:
+        inline ForStatement(const Expr& expr, const Expr& incr, const CompoundStatement& block) : LoopStatement(expr, block), _incr(incr) {}
+    public:
+        inline const Expr& incr() const {return _incr;}
+    private:
+        const Expr& _incr;
+    };
+
+    class ForExprStatement : public ForStatement {
+    public:
+        inline ForExprStatement(const Expr& init, const Expr& expr, const Expr& incr, const CompoundStatement& block) : ForStatement(expr, incr, block), _init(init) {}
+        inline const Expr& init() const {return _init;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Expr& _init;
+    };
+
+    class ForInitStatement : public ForStatement {
+    public:
+        inline ForInitStatement(const VariableDefn& init, const Expr& expr, const Expr& incr, const CompoundStatement& block) : ForStatement(expr, incr, block), _init(init) {}
+        inline const VariableDefn& init() const {return _init;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const VariableDefn& _init;
+    };
+
     class ReturnStatement : public Statement {
     protected:
         inline ReturnStatement(const ExprList& exprList) : _exprList(exprList) {}
@@ -967,6 +996,8 @@ namespace Ast {
         virtual void visit(const IfElseStatement& node) = 0;
         virtual void visit(const WhileStatement& node) = 0;
         virtual void visit(const DoWhileStatement& node) = 0;
+        virtual void visit(const ForExprStatement& node) = 0;
+        virtual void visit(const ForInitStatement& node) = 0;
         virtual void visit(const RoutineReturnStatement& node) = 0;
         virtual void visit(const FunctionReturnStatement& node) = 0;
         virtual void visit(const CompoundStatement& node) = 0;
@@ -981,6 +1012,8 @@ namespace Ast {
     inline void IfElseStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void WhileStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void DoWhileStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void ForExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void ForInitStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void CompoundStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
