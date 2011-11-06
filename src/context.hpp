@@ -148,6 +148,7 @@ public:
     Ast::CallExpr*            aCallExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
     Ast::CallExpr*            aCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList);
     Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
+    Ast::TypeofExpr*          aTypeofExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec);
     Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);
     Ast::VariableMemberExpr*  aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name);
     Ast::TypeSpecMemberExpr*  aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);

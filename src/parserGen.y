@@ -512,6 +512,10 @@ rTreeItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(
 rExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedExpr(ref(innerExpr));}
 
 //-------------------------------------------------
+// type expression
+rExpr(L) ::= TYPEOF(B) rTypeSpec(T). {L = ref(pctx).aTypeofExpr(B, ref(T));}
+
+//-------------------------------------------------
 // variable ref expressions
 %type rVariableRefExpr {Ast::Expr*}
 rVariableRefExpr(L) ::= ID(I). {L = ref(pctx).aVariableRefExpr(I);}

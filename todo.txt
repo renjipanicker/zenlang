@@ -11,6 +11,7 @@ enum-init
 coerce
 default intrinsic type values
 assert()
+check()
 unused()
 event
 event-handler
@@ -58,3 +59,5 @@ function-instance-call (functor-call)
 anonymous-function
 function-instance-closure
 scope-resolution for closure
+typeof-expr
+

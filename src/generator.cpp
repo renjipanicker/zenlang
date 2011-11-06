@@ -194,6 +194,10 @@ private:
         fprintf(_fp, ")");
     }
 
+    virtual void visit(const Ast::TypeofExpr& node) {
+        fprintf(_fp, "/* */");
+    }
+
     virtual void visit(const Ast::VariableRefExpr& node) {
         switch(node.refType()) {
             case Ast::RefType::Global:

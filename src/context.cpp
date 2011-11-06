@@ -724,6 +724,12 @@ Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
     return ptr(expr);
 }
 
+Ast::TypeofExpr* Context::aTypeofExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec) {
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "type_of");
+    Ast::TypeofExpr& expr = _unit.addNode(new Ast::TypeofExpr(qTypeSpec, typeSpec));
+    return ptr(expr);
+}
+
 Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
     Ast::RefType::T refType = Ast::RefType::Local;
     typedef std::list<Ast::Scope*> ScopeList;
