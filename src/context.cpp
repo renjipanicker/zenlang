@@ -164,34 +164,28 @@ inline const Ast::QualifiedTypeSpec& Context::coerce(const Ast::Token& pos, cons
     throw Exception("%s Cannot coerce '%s' and '%s'\n", err(_filename, pos).c_str(), lhs.typeSpec().name().text(), rhs.typeSpec().name().text());
 }
 
-inline const Ast::Expr& Context::getInitExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
-    if((typeSpec.name().string() == "short")
-            || (typeSpec.name().string() == "int")
-            || (typeSpec.name().string() == "long")
-            || (typeSpec.name().string() == "float")
-            || (typeSpec.name().string() == "double")
-            ) {
-        Ast::Token value(name.row(), name.col(), "0");
-        return aConstantExpr(typeSpec.name().string(), value);
+inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
+    const Ast::Unit::DefaultValueList& list = _unit.defaultValueList();
+    Ast::Unit::DefaultValueList::const_iterator it = list.find(ptr(typeSpec));
+    if(it != list.end()) {
+        return ref(it->second);
     }
 
-    if((typeSpec.name().string() == "char")
-            || (typeSpec.name().string() == "string")
-            ) {
-        Ast::Token value(name.row(), name.col(), "");
-        return aConstantExpr(typeSpec.name().string(), value);
+    const Ast::EnumDefn* ed = dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec));
+    if(ed != 0) {
+        // dummy code for now.
+        Ast::Token value(name.row(), name.col(), "#");
+        return aConstantExpr("int", value);
     }
 
-    if((typeSpec.name().string() == "bool")) {
-        Ast::Token value(name.row(), name.col(), "false");
-        return aConstantExpr(typeSpec.name().string(), value);
+    const Ast::StructDefn* sd = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
+    if(sd != 0) {
+        // dummy code for now.
+        Ast::Token value(name.row(), name.col(), "#");
+        return aConstantExpr("int", value);
     }
 
-    // dummy code for now.
-    Ast::Token value(name.row(), name.col(), "#");
-    return aConstantExpr("int", value);
-
-    //throw Exception("%s Unknown init value for type '%s'\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());
+    throw Exception("%s No default value for type '%s'\n", err(_filename, name).c_str(), typeSpec.name().text());
 }
 
 inline Ast::TemplateDefn& Context::createTemplateDefn(const Ast::Token& pos, const std::string& name) {
@@ -281,6 +275,10 @@ Ast::CoerceList* Context::aCoerceList(const Ast::TypeSpec& typeSpec) {
     Ast::CoerceList& list = _unit.addNode(new Ast::CoerceList());
     list.addTypeSpec(typeSpec);
     return ptr(list);
+}
+
+void Context::aGlobalDefaultStatement(const Ast::TypeSpec& typeSpec, const Ast::Expr& expr) {
+    _unit.addDefaultValue(typeSpec, expr);
 }
 
 Ast::TypedefDefn* Context::aTypedefDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
@@ -482,7 +480,7 @@ Ast::VariableDefn* Context::aVariableDefn(const Ast::Token& name, const Ast::Exp
 }
 
 Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name) {
-    const Ast::Expr& initExpr = getInitExpr(qualifiedTypeSpec.typeSpec(), name);
+    const Ast::Expr& initExpr = getDefaultValue(qualifiedTypeSpec.typeSpec(), name);
     Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
     return ptr(variableDef);
 }

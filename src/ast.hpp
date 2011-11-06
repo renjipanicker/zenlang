@@ -985,6 +985,7 @@ namespace Ast {
         typedef std::list<const Body*> BodyList;
         typedef std::list<const ImportStatement*> ImportStatementList;
         typedef std::list<const Ast::CoerceList*> CoerceListList;
+        typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
 
     public:
         inline Unit(const std::string& filename) : _filename(filename), _importNS("*import*"), _rootNS("*root*") {}
@@ -1009,6 +1010,10 @@ namespace Ast {
         /// \return The coercion list
         inline const CoerceListList& coercionList() const {return _coerceListList;}
 
+        /// \brief Return the default value list
+        /// \return The default value  list
+        inline const DefaultValueList& defaultValueList() const {return _defaultValueList;}
+
     public:
         /// \brief Return the root namespace
         /// \return The root namespace
@@ -1032,6 +1037,11 @@ namespace Ast {
         /// \brief Add a coercion list to the unit
         /// \param list the coercion list to add
         inline void addCoercionList(const CoerceList& list) {_coerceListList.push_back(ptr(list));}
+
+        /// \brief Add a default value to the unit
+        /// \param typeSpec the typeSpec to add
+        /// \param expr the expr to add
+        inline void addDefaultValue(const TypeSpec& typeSpec, const Expr& expr) {_defaultValueList[ptr(typeSpec)] = ptr(expr);}
 
     public:
         /// \brief Add an AST node to the unit
@@ -1065,6 +1075,9 @@ namespace Ast {
 
         /// \brief The coercion list for all types in this unit
         CoerceListList _coerceListList;
+
+        /// \brief The list of idefault values for types in this unit
+        DefaultValueList _defaultValueList;
     };
 
     class Config {

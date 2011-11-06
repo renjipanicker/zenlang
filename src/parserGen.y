@@ -140,6 +140,7 @@ rAccessType(L) ::= EXPORT.    {L = Ast::AccessType::Export;}
 rAccessType(L) ::= .          {L = Ast::AccessType::Private;}
 
 //-------------------------------------------------
+// coercion statements
 rGlobalCoerceStatement ::= COERCE rCoerceList(T) SEMI. {ref(pctx).aGlobalCoerceStatement(ref(T));}
 
 %type rCoerceList {Ast::CoerceList*}
@@ -147,8 +148,8 @@ rCoerceList(L) ::= rCoerceList(R) LINK rTypeSpec(T). {L = ref(pctx).aCoerceList(
 rCoerceList(L) ::=                     rTypeSpec(T). {L = ref(pctx).aCoerceList(ref(T));}
 
 //-------------------------------------------------
-%type rGlobalDefaultStatement {Ast::Statement*}
-rGlobalDefaultStatement ::= DEFAULT rTypeSpec(T) ASSIGNEQUAL rExpr(E) SEMI. {unused(T); unused(E);}
+// default values for types
+rGlobalDefaultStatement ::= DEFAULT rTypeSpec(T) ASSIGNEQUAL rExpr(E) SEMI. {ref(pctx).aGlobalDefaultStatement(ref(T), ref(E));}
 
 //-------------------------------------------------
 // definition specifiers

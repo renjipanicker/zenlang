@@ -1,4 +1,3 @@
-default intrinsic type values
 run
 for
 foreach
@@ -60,3 +59,4 @@ function-instance-closure
 scope-resolution for closure
 typeof-expr
 coerce
+default intrinsic type values

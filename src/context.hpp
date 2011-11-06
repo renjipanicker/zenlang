@@ -33,7 +33,7 @@ private:
     inline const Ast::QualifiedTypeSpec& getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name);
     inline const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name);
     inline Ast::TemplateDefn& createTemplateDefn(const Ast::Token& pos, const std::string& name);
-    inline const Ast::Expr& getInitExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
+    inline const Ast::Expr& getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
     inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
 
 private:
@@ -70,9 +70,12 @@ public:
     Ast::ImportStatement*    aImportNamespaceId(Ast::ImportStatement& statement, const Ast::Token& name);
     Ast::ImportStatement*    aImportNamespaceId(const Ast::Token& name);
     Ast::Statement*          aGlobalTypeSpecStatement(const Ast::AccessType::T& accessType, Ast::UserDefinedTypeSpec& typeSpec);
+
     void                     aGlobalCoerceStatement(Ast::CoerceList& list);
     Ast::CoerceList*         aCoerceList(Ast::CoerceList& list, const Ast::TypeSpec& typeSpec);
     Ast::CoerceList*         aCoerceList(const Ast::TypeSpec& typeSpec);
+
+    void                     aGlobalDefaultStatement(const Ast::TypeSpec& typeSpec, const Ast::Expr& expr);
 
 public:
     Ast::TypedefDefn*        aTypedefDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
