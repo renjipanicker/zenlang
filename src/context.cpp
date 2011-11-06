@@ -581,6 +581,16 @@ Ast::IfElseStatement* Context::aIfElseStatement(const Ast::Expr& expr, const Ast
     return ptr(ifElseStatement);
 }
 
+Ast::WhileStatement* Context::aWhileStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block) {
+    Ast::WhileStatement& whileStatement = _unit.addNode(new Ast::WhileStatement(expr, block));
+    return ptr(whileStatement);
+}
+
+Ast::DoWhileStatement* Context::aDoWhileStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block) {
+    Ast::DoWhileStatement& doWhileStatement = _unit.addNode(new Ast::DoWhileStatement(expr, block));
+    return ptr(doWhileStatement);
+}
+
 Ast::RoutineReturnStatement* Context::aRoutineReturnStatement() {
     Ast::ExprList& exprList = addExprList();
     Ast::RoutineReturnStatement& returnStatement = _unit.addNode(new Ast::RoutineReturnStatement(exprList));

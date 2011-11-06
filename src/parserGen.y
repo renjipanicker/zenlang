@@ -335,6 +335,8 @@ rInnerStatement(L) ::= rExprStatement(R).                {L = R;}
 rInnerStatement(L) ::= rPrintStatement(R).               {L = R;}
 rInnerStatement(L) ::= rIfStatement(R).                  {L = R;}
 rInnerStatement(L) ::= rIfElseStatement(R).              {L = R;}
+rInnerStatement(L) ::= rWhileStatement(R).               {L = R;}
+rInnerStatement(L) ::= rDoWhileStatement(R).             {L = R;}
 rInnerStatement(L) ::= rRoutineReturnStatement(R).       {L = R;}
 rInnerStatement(L) ::= rFunctionReturnStatement(R).      {L = R;}
 rInnerStatement(L) ::= rCompoundStatement(R).            {L = R;}
@@ -362,6 +364,14 @@ rIfStatement(L) ::= IF LBRACKET rExpr(expr) RBRACKET rCompoundStatement(tblock).
 //-------------------------------------------------
 %type rIfElseStatement {Ast::IfElseStatement*}
 rIfElseStatement(L) ::= IF LBRACKET rExpr(expr) RBRACKET rCompoundStatement(tblock) ELSE rCompoundStatement(fblock). {L = ref(pctx).aIfElseStatement(ref(expr), ref(tblock), ref(fblock));}
+
+//-------------------------------------------------
+%type rWhileStatement {Ast::WhileStatement*}
+rWhileStatement(L) ::= WHILE LBRACKET rExpr(expr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aWhileStatement(ref(expr), ref(block));}
+
+//-------------------------------------------------
+%type rDoWhileStatement {Ast::DoWhileStatement*}
+rDoWhileStatement(L) ::= DO rCompoundStatement(block) WHILE LBRACKET rExpr(expr) RBRACKET SEMI. {L = ref(pctx).aDoWhileStatement(ref(expr), ref(block));}
 
 //-------------------------------------------------
 %type rRoutineReturnStatement {Ast::RoutineReturnStatement*}

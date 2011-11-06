@@ -102,7 +102,6 @@ public test testIfStatement {
     if(i > 2) {
         j = 3;
     }
-
     return (1);
 }
 
@@ -114,6 +113,21 @@ public test testIfElseStatement {
     } else {
         j = 5;
     }
+    return (1);
+}
 
+public test testWhileStatement {
+    local i = 0;
+    while(i < 2) {
+        i++;
+    }
+    return (1);
+}
+
+public test testDoWhileStatement {
+    local i = 0;
+    do {
+        i++;
+    } while(i < 2);
     return (1);
 }

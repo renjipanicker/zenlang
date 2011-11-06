@@ -892,6 +892,31 @@ namespace Ast {
         const CompoundStatement& _fblock;
     };
 
+    class LoopStatement : public Statement {
+    protected:
+        inline LoopStatement(const Expr& expr, const CompoundStatement& block) : _expr(expr), _block(block) {}
+    public:
+        inline const Expr& expr() const {return _expr;}
+        inline const CompoundStatement& block() const {return _block;}
+    private:
+        const Expr& _expr;
+        const CompoundStatement& _block;
+    };
+
+    class WhileStatement : public LoopStatement {
+    public:
+        inline WhileStatement(const Expr& expr, const CompoundStatement& block) : LoopStatement(expr, block) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class DoWhileStatement : public LoopStatement {
+    public:
+        inline DoWhileStatement(const Expr& expr, const CompoundStatement& block) : LoopStatement(expr, block) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
     class ReturnStatement : public Statement {
     protected:
         inline ReturnStatement(const ExprList& exprList) : _exprList(exprList) {}
@@ -940,6 +965,8 @@ namespace Ast {
         virtual void visit(const PrintStatement& node) = 0;
         virtual void visit(const IfStatement& node) = 0;
         virtual void visit(const IfElseStatement& node) = 0;
+        virtual void visit(const WhileStatement& node) = 0;
+        virtual void visit(const DoWhileStatement& node) = 0;
         virtual void visit(const RoutineReturnStatement& node) = 0;
         virtual void visit(const FunctionReturnStatement& node) = 0;
         virtual void visit(const CompoundStatement& node) = 0;
@@ -952,6 +979,8 @@ namespace Ast {
     inline void PrintStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void IfStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void IfElseStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void WhileStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void DoWhileStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void CompoundStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}

@@ -633,6 +633,21 @@ private:
         visitNode(node.fblock());
     }
 
+    virtual void visit(const Ast::WhileStatement& node) {
+        fprintf(_fpSrc, "%swhile(", Indent::get());
+        ExprGenerator(_fpSrc).visitNode(node.expr());
+        fprintf(_fpSrc, ")\n");
+        visitNode(node.block());
+    }
+
+    virtual void visit(const Ast::DoWhileStatement& node) {
+        fprintf(_fpSrc, "%sdo\n", Indent::get());
+        visitNode(node.block());
+        fprintf(_fpSrc, "%swhile(", Indent::get());
+        ExprGenerator(_fpSrc).visitNode(node.expr());
+        fprintf(_fpSrc, ");\n");
+    }
+
     virtual void visit(const Ast::RoutineReturnStatement& node) {
         fprintf(_fpSrc, "%sreturn", Indent::get());
         if(node.exprList().list().size() > 0) {

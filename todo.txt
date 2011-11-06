@@ -1,12 +1,10 @@
-run
 for
 foreach
-while
-do-while
 switch-value
 switch-expression
 switch-typeof
 enum-init
+run
 assert()
 check()
 unused()
@@ -60,3 +58,5 @@ typeof-expr
 coerce
 default intrinsic type values
 if-else
+while
+do-while
