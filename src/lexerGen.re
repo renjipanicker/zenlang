@@ -229,11 +229,16 @@ re2c:condenumprefix          = EState;
 <Normal>   "native"    := _parser.feed(token(s, ZENTOK_NATIVE)); continue;
 <Normal>   "const"     := _parser.feed(token(s, ZENTOK_CONST)); continue;
 
+<Normal>   "coerce"    := _parser.feed(token(s, ZENTOK_COERCE)); continue;
+<Normal>   "default"   := _parser.feed(token(s, ZENTOK_DEFAULT)); continue;
 <Normal>   "typeof"    := _parser.feed(token(s, ZENTOK_TYPEOF)); continue;
 
 <Normal>   "local"     := _parser.feed(token(s, ZENTOK_LOCAL)); continue;
 <Normal>   "print"     := _parser.feed(token(s, ZENTOK_PRINT)); continue;
 <Normal>   "return"    := sendReturn(s); continue;
+
+<Normal>   "false"     := _parser.feed(token(s, ZENTOK_FALSE_CONST)); continue;
+<Normal>   "true"      := _parser.feed(token(s, ZENTOK_TRUE_CONST)); continue;
 
 <Normal>   "@" [a-zA-Z][a-zA-Z0-9_]* := _parser.feed(token(s, ZENTOK_KEY)); continue;
 
@@ -253,6 +258,11 @@ re2c:condenumprefix          = EState;
 
 <Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [dD]? := _parser.feed(token(s, ZENTOK_DOUBLE_CONST)); continue;
 <Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [dD]?               := _parser.feed(token(s, ZENTOK_DOUBLE_CONST)); continue;
+
+<Normal>   '\''    => Char  := s->text = s->cur; continue;
+<Char>     '\\' .           := continue;
+<Char>     '\''   => Normal := _parser.feed(token(s, ZENTOK_CHAR_CONST)); continue;
+<Char>     [^]              := continue;
 
 <Normal>   '"'    => String := s->text = s->cur; continue;
 <String>   '\\' .           := continue;

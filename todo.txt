@@ -1,3 +1,4 @@
+default intrinsic type values
 run
 for
 foreach
@@ -8,8 +9,6 @@ switch-value
 switch-expression
 switch-typeof
 enum-init
-coerce
-default intrinsic type values
 assert()
 check()
 unused()
@@ -60,4 +59,4 @@ anonymous-function
 function-instance-closure
 scope-resolution for closure
 typeof-expr
-
+coerce

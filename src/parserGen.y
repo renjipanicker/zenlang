@@ -122,6 +122,8 @@ rGlobalStatementList ::= .
 
 //-------------------------------------------------
 rGlobalStatement ::= rGlobalTypeSpecStatement.
+rGlobalStatement ::= rGlobalCoerceStatement.
+rGlobalStatement ::= rGlobalDefaultStatement.
 
 //-------------------------------------------------
 %type rGlobalTypeSpecStatement {Ast::Statement*}
@@ -136,6 +138,17 @@ rAccessType(L) ::= PROTECTED. {L = Ast::AccessType::Protected;}
 rAccessType(L) ::= PUBLIC.    {L = Ast::AccessType::Public;}
 rAccessType(L) ::= EXPORT.    {L = Ast::AccessType::Export;}
 rAccessType(L) ::= .          {L = Ast::AccessType::Private;}
+
+//-------------------------------------------------
+rGlobalCoerceStatement ::= COERCE rCoerceList(T) SEMI. {ref(pctx).aGlobalCoerceStatement(ref(T));}
+
+%type rCoerceList {Ast::CoerceList*}
+rCoerceList(L) ::= rCoerceList(R) LINK rTypeSpec(T). {L = ref(pctx).aCoerceList(ref(R), ref(T));}
+rCoerceList(L) ::=                     rTypeSpec(T). {L = ref(pctx).aCoerceList(ref(T));}
+
+//-------------------------------------------------
+%type rGlobalDefaultStatement {Ast::Statement*}
+rGlobalDefaultStatement ::= DEFAULT rTypeSpec(T) ASSIGNEQUAL rExpr(E) SEMI. {unused(T); unused(E);}
 
 //-------------------------------------------------
 // definition specifiers
@@ -466,9 +479,9 @@ rListList(L) ::= rListsList(R)      . {L = R;}
 rListList(L) ::= rListsList(R) COMMA. {L = R;}
 
 %type rListsList {Ast::ListList*}
-rListsList(L)  ::= rListsList(R) COMMA rListItem(I). {L = ref(pctx).aListList(ref(R), ref(I));}
-rListsList(L)  ::=                     rListItem(I). {L = ref(pctx).aListList(ref(I));}
-rListsList(L)  ::=                                 . {L = ref(pctx).aListList();}
+rListsList(L)  ::= rListsList(R) COMMA(B) rListItem(I). {L = ref(pctx).aListList(B, ref(R), ref(I));}
+rListsList(L)  ::=                        rListItem(I). {L = ref(pctx).aListList(ref(I));}
+rListsList(L)  ::=                                    . {L = ref(pctx).aListList();}
 
 %type rListItem {Ast::ListItem*}
 rListItem(L)  ::= rExpr(E). {L = ref(pctx).aListItem(ref(E));}
@@ -484,8 +497,8 @@ rDictList(L) ::= rDictsList(R) COMMA . {L = R;}
 rDictList(L) ::= COLON               . {L = ref(pctx).aDictList();}
 
 %type rDictsList {Ast::DictList*}
-rDictsList(L)  ::= rDictsList(R) COMMA rDictItem(I). {L = ref(pctx).aDictList(ref(R), ref(I));}
-rDictsList(L)  ::=                     rDictItem(I). {L = ref(pctx).aDictList(ref(I));}
+rDictsList(L)  ::= rDictsList(R) COMMA(B) rDictItem(I). {L = ref(pctx).aDictList(B, ref(R), ref(I));}
+rDictsList(L)  ::=                        rDictItem(I). {L = ref(pctx).aDictList(ref(I));}
 
 %type rDictItem {Ast::DictItem*}
 rDictItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(E));}
@@ -501,8 +514,8 @@ rTreeList(L) ::= rTreesList(R) COMMA . {L = R;}
 rTreeList(L) ::= COLON               . {L = ref(pctx).aDictList();}
 
 %type rTreesList {Ast::DictList*}
-rTreesList(L)  ::= rTreesList(R) COMMA rTreeItem(I). {L = ref(pctx).aDictList(ref(R), ref(I));}
-rTreesList(L)  ::=                     rTreeItem(I). {L = ref(pctx).aDictList(ref(I));}
+rTreesList(L)  ::= rTreesList(R) COMMA(B) rTreeItem(I). {L = ref(pctx).aDictList(B, ref(R), ref(I));}
+rTreesList(L)  ::=                        rTreeItem(I). {L = ref(pctx).aDictList(ref(I));}
 
 %type rTreeItem {Ast::DictItem*}
 rTreeItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(E));}

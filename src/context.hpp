@@ -46,6 +46,7 @@ private:
 private:
     inline void setCurrentTypeRef(const Ast::TypeSpec& typeSpec);
     inline void resetCurrentTypeRef();
+    inline const Ast::QualifiedTypeSpec& coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
 
 private:
     Compiler& _compiler;
@@ -57,7 +58,7 @@ private:
     typedef std::list<Ast::Scope*> ScopeStack;
 
 private:
-    ScopeStack                  _scopeStack;
+    ScopeStack                 _scopeStack;
     TypeSpecStack              _typeSpecStack;
     std::list<Ast::Namespace*> _namespaceStack;
     const Ast::TypeSpec*       _currentTypeRef;
@@ -69,6 +70,11 @@ public:
     Ast::ImportStatement*    aImportNamespaceId(Ast::ImportStatement& statement, const Ast::Token& name);
     Ast::ImportStatement*    aImportNamespaceId(const Ast::Token& name);
     Ast::Statement*          aGlobalTypeSpecStatement(const Ast::AccessType::T& accessType, Ast::UserDefinedTypeSpec& typeSpec);
+    void                     aGlobalCoerceStatement(Ast::CoerceList& list);
+    Ast::CoerceList*         aCoerceList(Ast::CoerceList& list, const Ast::TypeSpec& typeSpec);
+    Ast::CoerceList*         aCoerceList(const Ast::TypeSpec& typeSpec);
+
+public:
     Ast::TypedefDefn*        aTypedefDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::TemplatePartList*   aTemplatePartList(Ast::TemplatePartList& list, const Ast::Token& name);
     Ast::TemplatePartList*   aTemplatePartList(const Ast::Token& name);
@@ -133,13 +139,13 @@ public:
     Ast::PrefixOpExpr&        aPrefixExpr(const Ast::Token& op, const Ast::Expr& rhs);
 
     Ast::ListExpr*            aListExpr(const Ast::Token& pos, const Ast::ListList& list);
-    Ast::ListList*            aListList(Ast::ListList& list, const Ast::ListItem& item);
+    Ast::ListList*            aListList(const Ast::Token& pos, Ast::ListList& list, const Ast::ListItem& item);
     Ast::ListList*            aListList(const Ast::ListItem& item);
     Ast::ListList*            aListList();
     Ast::ListItem*            aListItem(const Ast::Expr& valueExpr);
 
     Ast::DictExpr*            aDictExpr(const Ast::Token& pos, const Ast::DictList& list);
-    Ast::DictList*            aDictList(Ast::DictList& list, const Ast::DictItem& item);
+    Ast::DictList*            aDictList(const Ast::Token& pos, Ast::DictList& list, const Ast::DictItem& item);
     Ast::DictList*            aDictList(const Ast::DictItem& item);
     Ast::DictList*            aDictList();
     Ast::DictItem*            aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& valueExpr);

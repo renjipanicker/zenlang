@@ -135,9 +135,33 @@ inline Ast::ExprList& Context::addExprList() {
     return exprList;
 }
 
-inline const Ast::QualifiedTypeSpec& coerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) {
-    /// \todo
-    return lhs;
+inline const Ast::QualifiedTypeSpec& Context::coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) {
+    if(ptr(lhs.typeSpec()) == ptr(rhs.typeSpec())) {
+        return lhs;
+    }
+
+    for(Ast::Unit::CoerceListList::const_iterator it = _unit.coercionList().begin(); it != _unit.coercionList().end(); ++it) {
+        const Ast::CoerceList& coerceList = ref(*it);
+        int lidx = -1;
+        int ridx = -1;
+        int cidx = 0;
+        for(Ast::CoerceList::List::const_iterator cit = coerceList.list().begin(); cit != coerceList.list().end(); ++cit, ++cidx) {
+            const Ast::TypeSpec& typeSpec = ref(*cit);
+            if(ptr(typeSpec) == ptr(lhs.typeSpec())) {
+                lidx = cidx;
+            }
+            if(ptr(typeSpec) == ptr(rhs.typeSpec())) {
+                ridx = cidx;
+            }
+        }
+        if((lidx >= 0) && (ridx >= 0)) {
+            if(lidx >= ridx)
+                return lhs;
+            return rhs;
+        }
+    }
+
+    throw Exception("%s Cannot coerce '%s' and '%s'\n", err(_filename, pos).c_str(), lhs.typeSpec().name().text(), rhs.typeSpec().name().text());
 }
 
 inline const Ast::Expr& Context::getInitExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
@@ -242,6 +266,21 @@ Ast::Statement* Context::aGlobalTypeSpecStatement(const Ast::AccessType::T& acce
     typeSpec.accessType(accessType);
     Ast::Statement* statement = aUserDefinedTypeSpecStatement(typeSpec);
     return statement;
+}
+
+void Context::aGlobalCoerceStatement(Ast::CoerceList& list) {
+    _unit.addCoercionList(list);
+}
+
+Ast::CoerceList* Context::aCoerceList(Ast::CoerceList& list, const Ast::TypeSpec& typeSpec) {
+    list.addTypeSpec(typeSpec);
+    return ptr(list);
+}
+
+Ast::CoerceList* Context::aCoerceList(const Ast::TypeSpec& typeSpec) {
+    Ast::CoerceList& list = _unit.addNode(new Ast::CoerceList());
+    list.addTypeSpec(typeSpec);
+    return ptr(list);
 }
 
 Ast::TypedefDefn* Context::aTypedefDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
@@ -588,13 +627,13 @@ Ast::ExprList* Context::aExprList() {
 }
 
 Ast::TernaryOpExpr* Context::aTernaryExpr(const Ast::Token& op1, const Ast::Token& op2, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2) {
-    const Ast::QualifiedTypeSpec& qTypeSpec = coerce(rhs1.qTypeSpec(), rhs2.qTypeSpec());
+    const Ast::QualifiedTypeSpec& qTypeSpec = coerce(op2, rhs1.qTypeSpec(), rhs2.qTypeSpec());
     Ast::TernaryOpExpr& expr = _unit.addNode(new Ast::TernaryOpExpr(qTypeSpec, op1, op2, lhs, rhs1, rhs2));
     return ptr(expr);
 }
 
 Ast::BinaryOpExpr& Context::aBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
-    const Ast::QualifiedTypeSpec& qTypeSpec = coerce(lhs.qTypeSpec(), rhs.qTypeSpec());
+    const Ast::QualifiedTypeSpec& qTypeSpec = coerce(op, lhs.qTypeSpec(), rhs.qTypeSpec());
     Ast::BinaryOpExpr& expr = _unit.addNode(new Ast::BinaryOpExpr(qTypeSpec, op, lhs, rhs));
     return expr;
 }
@@ -620,9 +659,9 @@ Ast::ListExpr* Context::aListExpr(const Ast::Token& pos, const Ast::ListList& li
     return ptr(expr);
 }
 
-Ast::ListList* Context::aListList(Ast::ListList& list, const Ast::ListItem& item) {
+Ast::ListList* Context::aListList(const Ast::Token& pos, Ast::ListList& list, const Ast::ListItem& item) {
     list.addItem(item);
-    const Ast::QualifiedTypeSpec& qValueTypeSpec = coerce(list.valueType(), item.valueExpr().qTypeSpec());
+    const Ast::QualifiedTypeSpec& qValueTypeSpec = coerce(pos, list.valueType(), item.valueExpr().qTypeSpec());
     list.valueType(qValueTypeSpec);
     return ptr(list);
 }
@@ -654,10 +693,10 @@ Ast::DictExpr* Context::aDictExpr(const Ast::Token& pos, const Ast::DictList& li
     return ptr(expr);
 }
 
-Ast::DictList* Context::aDictList(Ast::DictList& list, const Ast::DictItem& item) {
+Ast::DictList* Context::aDictList(const Ast::Token& pos, Ast::DictList& list, const Ast::DictItem& item) {
     list.addItem(item);
-    const Ast::QualifiedTypeSpec& qKeyTypeSpec = coerce(list.keyType(), item.keyExpr().qTypeSpec());
-    const Ast::QualifiedTypeSpec& qValueTypeSpec = coerce(list.valueType(), item.valueExpr().qTypeSpec());
+    const Ast::QualifiedTypeSpec& qKeyTypeSpec = coerce(pos, list.keyType(), item.keyExpr().qTypeSpec());
+    const Ast::QualifiedTypeSpec& qValueTypeSpec = coerce(pos, list.valueType(), item.valueExpr().qTypeSpec());
     list.keyType(qKeyTypeSpec);
     list.valueType(qValueTypeSpec);
     return ptr(list);
@@ -786,7 +825,6 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
                 assert(scopeList.size() > 0);
                 for(ScopeList::iterator it = scopeList.begin(); it != scopeList.end(); ++it) {
                     Ast::Scope& scope = ref(*it);
-                    printf("adding xref %s to %lu\n", name.text(), (unsigned long)ptr(scope));
                     scope.addVariableDef(ref(vref));
                 }
             }

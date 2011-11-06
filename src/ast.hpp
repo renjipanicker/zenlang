@@ -421,6 +421,16 @@ namespace Ast {
     inline void Root::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////
+    class CoerceList : public Node {
+    public:
+        typedef std::list<const Ast::TypeSpec*> List;
+        inline void addTypeSpec(const Ast::TypeSpec& typeSpec) {_list.push_back(ptr(typeSpec));}
+        inline const List& list() const {return _list;}
+    private:
+        List _list;
+    };
+
+    //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
     class Expr : public Node {
     public:
@@ -974,6 +984,7 @@ namespace Ast {
     public:
         typedef std::list<const Body*> BodyList;
         typedef std::list<const ImportStatement*> ImportStatementList;
+        typedef std::list<const Ast::CoerceList*> CoerceListList;
 
     public:
         inline Unit(const std::string& filename) : _filename(filename), _importNS("*import*"), _rootNS("*root*") {}
@@ -994,6 +1005,10 @@ namespace Ast {
         /// \return The function implementation list
         inline const BodyList& bodyList() const {return _bodyList;}
 
+        /// \brief Return the coercion list
+        /// \return The coercion list
+        inline const CoerceListList& coercionList() const {return _coerceListList;}
+
     public:
         /// \brief Return the root namespace
         /// \return The root namespace
@@ -1013,6 +1028,10 @@ namespace Ast {
         /// \brief Add a function implementation to the unit
         /// \param functionDefnBase the function implementation to add
         inline void addBody(const Body& body) {_bodyList.push_back(ptr(body));}
+
+        /// \brief Add a coercion list to the unit
+        /// \param list the coercion list to add
+        inline void addCoercionList(const CoerceList& list) {_coerceListList.push_back(ptr(list));}
 
     public:
         /// \brief Add an AST node to the unit
@@ -1043,6 +1062,9 @@ namespace Ast {
     private:
         /// \brief The owner list of all nodes in this unit
         std::list<const Node*> _nodeList;
+
+        /// \brief The coercion list for all types in this unit
+        CoerceListList _coerceListList;
     };
 
     class Config {
