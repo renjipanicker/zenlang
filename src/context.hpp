@@ -47,6 +47,8 @@ private:
     inline void setCurrentTypeRef(const Ast::TypeSpec& typeSpec);
     inline void resetCurrentTypeRef();
     inline const Ast::QualifiedTypeSpec& coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
+    inline Ast::VariableDefn& addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
+    inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len);
 
 private:
     Compiler& _compiler;
@@ -131,6 +133,9 @@ public:
     Ast::ForStatement*                 aForStatement(const Ast::Expr& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block);
     Ast::ForStatement*                 aForStatement(const Ast::VariableDefn& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block);
     const Ast::VariableDefn*           aEnterForInit(const Ast::VariableDefn& init);
+    Ast::ForeachStatement*             aForeachStatement(Ast::ForeachStatement& statement, const Ast::CompoundStatement& block);
+    Ast::ForeachListStatement*         aEnterForeachInit(const Ast::Token& valName, const Ast::Expr& expr);
+    Ast::ForeachDictStatement*         aEnterForeachInit(const Ast::Token& keyName, const Ast::Token& valName, const Ast::Expr& expr);
     Ast::RoutineReturnStatement*       aRoutineReturnStatement();
     Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Expr& expr);
     Ast::FunctionReturnStatement*      aFunctionReturnStatement(const Ast::ExprList& exprList);

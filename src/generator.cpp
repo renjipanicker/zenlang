@@ -670,6 +670,37 @@ private:
         visitNode(node.block());
     }
 
+    virtual void visit(const Ast::ForeachListStatement& node) {
+        std::string constit = "";
+        if(node.expr().qTypeSpec().isConst())
+            constit = "const_";
+        fprintf(_fpSrc, "%s{\n", Indent::get());
+        fprintf(_fpSrc, "%s%s _list = ", Indent::get(), getQualifiedTypeSpecName(node.expr().qTypeSpec()).c_str());
+        ExprGenerator(_fpSrc).visitNode(node.expr());
+        fprintf(_fpSrc, ";\n");
+        fprintf(_fpSrc, "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec()).c_str(), constit.c_str());
+        fprintf(_fpSrc, "%s%s %s = *_it;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec()).c_str(), node.valDef().name().text());
+        visitNode(node.block());
+        fprintf(_fpSrc, "%s}\n", Indent::get());
+        fprintf(_fpSrc, "%s}\n", Indent::get());
+    }
+
+    virtual void visit(const Ast::ForeachDictStatement& node) {
+        std::string constit = "";
+        if(node.expr().qTypeSpec().isConst())
+            constit = "const_";
+        fprintf(_fpSrc, "%s{\n", Indent::get());
+        fprintf(_fpSrc, "%s%s _list = ", Indent::get(), getQualifiedTypeSpecName(node.expr().qTypeSpec()).c_str());
+        ExprGenerator(_fpSrc).visitNode(node.expr());
+        fprintf(_fpSrc, ";\n");
+        fprintf(_fpSrc, "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec()).c_str(), constit.c_str());
+        fprintf(_fpSrc, "%s%s %s = _it->first;\n", Indent::get(), getQualifiedTypeSpecName(node.keyDef().qualifiedTypeSpec()).c_str(), node.keyDef().name().text());
+        fprintf(_fpSrc, "%s%s %s = _it->second;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec()).c_str(), node.valDef().name().text());
+        visitNode(node.block());
+        fprintf(_fpSrc, "%s}\n", Indent::get());
+        fprintf(_fpSrc, "%s}\n", Indent::get());
+    }
+
     virtual void visit(const Ast::RoutineReturnStatement& node) {
         fprintf(_fpSrc, "%sreturn", Indent::get());
         if(node.exprList().list().size() > 0) {

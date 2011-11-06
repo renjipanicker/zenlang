@@ -240,6 +240,8 @@ re2c:condenumprefix          = EState;
 <Normal>   "while"     := _parser.feed(token(s, ZENTOK_WHILE)); continue;
 <Normal>   "do"        := _parser.feed(token(s, ZENTOK_DO)); continue;
 <Normal>   "for"       := _parser.feed(token(s, ZENTOK_FOR)); continue;
+<Normal>   "foreach"   := _parser.feed(token(s, ZENTOK_FOREACH)); continue;
+<Normal>   "in"        := _parser.feed(token(s, ZENTOK_IN)); continue;
 <Normal>   "return"    := sendReturn(s); continue;
 
 <Normal>   "false"     := _parser.feed(token(s, ZENTOK_FALSE_CONST)); continue;

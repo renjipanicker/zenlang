@@ -212,6 +212,27 @@ inline const Ast::FunctionRetn& Context::getFunctionRetn(const Ast::Token& pos, 
     throw Exception("%s Unknown function return type '%s'\n", err(_filename, pos).c_str(), function.name().text());
 }
 
+inline Ast::VariableDefn& Context::addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name) {
+    const Ast::Expr& initExpr = getDefaultValue(qualifiedTypeSpec.typeSpec(), name);
+    Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
+    return variableDef;
+}
+
+inline const Ast::TemplateDefn& Context::getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len) {
+    const Ast::TypeSpec& typeSpec = expr.qTypeSpec().typeSpec();
+    if(typeSpec.name().string() != cname) {
+        throw Exception("%s Expression is not of %s type: %s (1)\n", err(_filename, name).c_str(), cname.c_str(), typeSpec.name().text());
+    }
+    const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(ptr(typeSpec));
+    if(templateDefn == 0) {
+        throw Exception("%s Expression is not of %s type: %s (2)\n", err(_filename, name).c_str(), cname.c_str(), typeSpec.name().text());
+    }
+    if(ref(templateDefn).list().size() != len) {
+        throw Exception("%s Expression is not of %s type: %s (3)\n", err(_filename, name).c_str(), cname.c_str(), typeSpec.name().text());
+    }
+    return ref(templateDefn);
+}
+
 ////////////////////////////////////////////////////////////
 void Context::aUnitNamespaceId(const Ast::Token &name) {
     Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(currentTypeSpec(), name));
@@ -480,8 +501,7 @@ Ast::VariableDefn* Context::aVariableDefn(const Ast::Token& name, const Ast::Exp
 }
 
 Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name) {
-    const Ast::Expr& initExpr = getDefaultValue(qualifiedTypeSpec.typeSpec(), name);
-    Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
+    Ast::VariableDefn& variableDef = addVariableDefn(qualifiedTypeSpec, name);
     return ptr(variableDef);
 }
 
@@ -607,6 +627,39 @@ const Ast::VariableDefn* Context::aEnterForInit(const Ast::VariableDefn& init) {
     scope.addVariableDef(init);
     enterScope(scope);
     return ptr(init);
+}
+
+Ast::ForeachStatement* Context::aForeachStatement(Ast::ForeachStatement& statement, const Ast::CompoundStatement& block) {
+    statement.setBlock(block);
+    leaveScope();
+    return ptr(statement);
+}
+
+Ast::ForeachListStatement* Context::aEnterForeachInit(const Ast::Token& valName, const Ast::Expr& expr) {
+    const Ast::TemplateDefn& templateDefn = getTemplateDefn(valName, expr, "list", 1);
+    const Ast::QualifiedTypeSpec& valTypeSpec = templateDefn.at(0);
+    const Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
+    Ast::Scope& scope = addScope(Ast::ScopeType::Local);
+    scope.addVariableDef(valDef);
+    enterScope(scope);
+
+    Ast::ForeachListStatement& foreachStatement = _unit.addNode(new Ast::ForeachListStatement(valDef, expr));
+    return ptr(foreachStatement);
+}
+
+Ast::ForeachDictStatement* Context::aEnterForeachInit(const Ast::Token& keyName, const Ast::Token& valName, const Ast::Expr& expr) {
+    const Ast::TemplateDefn& templateDefn = getTemplateDefn(valName, expr, "dict", 2);
+    const Ast::QualifiedTypeSpec& keyTypeSpec = templateDefn.at(0);
+    const Ast::QualifiedTypeSpec& valTypeSpec = templateDefn.at(1);
+    const Ast::VariableDefn& keyDef = addVariableDefn(keyTypeSpec, keyName);
+    const Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
+    Ast::Scope& scope = addScope(Ast::ScopeType::Local);
+    scope.addVariableDef(keyDef);
+    scope.addVariableDef(valDef);
+    enterScope(scope);
+
+    Ast::ForeachDictStatement& foreachStatement = _unit.addNode(new Ast::ForeachDictStatement(keyDef, valDef, expr));
+    return ptr(foreachStatement);
 }
 
 Ast::RoutineReturnStatement* Context::aRoutineReturnStatement() {
@@ -780,6 +833,7 @@ Ast::CallExpr* Context::aCallExpr(const Ast::Token& pos, const Ast::TypeSpec& ty
         Ast::RoutineCallExpr& routineCallExpr = _unit.addNode(new Ast::RoutineCallExpr(qTypeSpec, ref(routine), exprList));
         return ptr(routineCallExpr);
     }
+
     throw Exception("%s Unknown function being called '%s'\n", err(_filename, pos).c_str(), typeSpec.name().text());
 }
 

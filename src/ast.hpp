@@ -207,12 +207,13 @@ namespace Ast {
 
     class TemplateDefn : public UserDefinedTypeSpec {
     public:
-        typedef std::list<const QualifiedTypeSpec*> List;
+        typedef std::vector<const QualifiedTypeSpec*> List;
     public:
         inline TemplateDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const TemplateDecl& templateDecl) : UserDefinedTypeSpec(parent, name, defType), _templateDecl(templateDecl) {}
     public:
         inline void addType(const QualifiedTypeSpec& qTypeSpec) {_list.push_back(ptr(qTypeSpec));}
         inline const List& list() const {return _list;}
+        inline const QualifiedTypeSpec& at(const size_t& idx) const {assert(idx < _list.size()); return ref(_list.at(idx));}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
@@ -946,6 +947,41 @@ namespace Ast {
         const VariableDefn& _init;
     };
 
+    class ForeachStatement : public Statement {
+    protected:
+        inline ForeachStatement(const Expr& expr) : _expr(expr), _block(0) {}
+    public:
+        inline const Expr& expr() const {return _expr;}
+        inline const CompoundStatement& block() const {return ref(_block);}
+        inline void setBlock(const CompoundStatement& val) {_block = ptr(val);}
+    private:
+        const Expr& _expr;
+        const CompoundStatement* _block;
+    };
+
+    class ForeachListStatement : public ForeachStatement {
+    public:
+        inline ForeachListStatement(const Ast::VariableDefn& valDef, const Expr& expr) : ForeachStatement(expr), _valDef(valDef) {}
+        inline const VariableDefn& valDef() const {return _valDef;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const VariableDefn& _valDef;
+    };
+
+    class ForeachDictStatement : public ForeachStatement {
+    public:
+        inline ForeachDictStatement(const Ast::VariableDefn& keyDef, const Ast::VariableDefn& valDef, const Expr& expr) : ForeachStatement(expr), _keyDef(keyDef), _valDef(valDef) {}
+        inline const VariableDefn& keyDef() const {return _keyDef;}
+        inline const VariableDefn& valDef() const {return _valDef;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const VariableDefn& _keyDef;
+        const VariableDefn& _valDef;
+    };
+
+
     class ReturnStatement : public Statement {
     protected:
         inline ReturnStatement(const ExprList& exprList) : _exprList(exprList) {}
@@ -998,6 +1034,8 @@ namespace Ast {
         virtual void visit(const DoWhileStatement& node) = 0;
         virtual void visit(const ForExprStatement& node) = 0;
         virtual void visit(const ForInitStatement& node) = 0;
+        virtual void visit(const ForeachListStatement& node) = 0;
+        virtual void visit(const ForeachDictStatement& node) = 0;
         virtual void visit(const RoutineReturnStatement& node) = 0;
         virtual void visit(const FunctionReturnStatement& node) = 0;
         virtual void visit(const CompoundStatement& node) = 0;
@@ -1014,6 +1052,8 @@ namespace Ast {
     inline void DoWhileStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ForExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ForInitStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void ForeachListStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void ForeachDictStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void CompoundStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}

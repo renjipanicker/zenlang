@@ -148,3 +148,21 @@ public test testForInitStatement {
     }
     return (1);
 }
+
+public test testForeachListStatement {
+    local j = 0;
+    local l = [1,2,3];
+    foreach(i in l) {
+        j += i;
+    }
+    return (1);
+}
+
+public test testForeachDictStatement {
+    local j = 0;
+    local l = ['a':1, 'b':2,'c':3];
+    foreach(k,v in l) {
+        j += v;
+    }
+    return (1);
+}

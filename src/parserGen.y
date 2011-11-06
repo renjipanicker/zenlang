@@ -338,6 +338,7 @@ rInnerStatement(L) ::= rIfElseStatement(R).              {L = R;}
 rInnerStatement(L) ::= rWhileStatement(R).               {L = R;}
 rInnerStatement(L) ::= rDoWhileStatement(R).             {L = R;}
 rInnerStatement(L) ::= rForStatement(R).                 {L = R;}
+rInnerStatement(L) ::= rForeachStatement(R).             {L = R;}
 rInnerStatement(L) ::= rRoutineReturnStatement(R).       {L = R;}
 rInnerStatement(L) ::= rFunctionReturnStatement(R).      {L = R;}
 rInnerStatement(L) ::= rCompoundStatement(R).            {L = R;}
@@ -381,6 +382,14 @@ rForStatement(L) ::= FOR LBRACKET rEnterForInit(init) SEMI rExpr(expr) SEMI rExp
 
 %type rEnterForInit {const Ast::VariableDefn*}
 rEnterForInit(L) ::= LOCAL rVariableDefn(init). {L = ref(pctx).aEnterForInit(ref(init));}
+
+//-------------------------------------------------
+%type rForeachStatement {Ast::ForeachStatement*}
+rForeachStatement(L) ::= FOREACH LBRACKET rEnterForeachInit(vdef) RBRACKET rCompoundStatement(block). {L = ref(pctx).aForeachStatement(ref(vdef), ref(block));}
+
+%type rEnterForeachInit {Ast::ForeachStatement*}
+rEnterForeachInit(L) ::= ID(I) IN rExpr(list). {L = ref(pctx).aEnterForeachInit(I, ref(list));}
+rEnterForeachInit(L) ::= ID(K) COMMA ID(V) IN rExpr(list). {L = ref(pctx).aEnterForeachInit(K, V, ref(list));}
 
 //-------------------------------------------------
 %type rRoutineReturnStatement {Ast::RoutineReturnStatement*}

@@ -1,4 +1,3 @@
-foreach
 switch-value
 switch-expression
 switch-typeof
@@ -60,3 +59,4 @@ if-else
 while
 do-while
 for
+foreach
