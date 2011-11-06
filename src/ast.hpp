@@ -866,6 +866,32 @@ namespace Ast {
         const FormatExpr& _expr;
     };
 
+    class IfStatement : public Statement {
+    public:
+        inline IfStatement(const Expr& expr, const CompoundStatement& tblock) : _expr(expr), _tblock(tblock) {}
+        inline const Expr& expr() const {return _expr;}
+        inline const CompoundStatement& tblock() const {return _tblock;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Expr& _expr;
+        const CompoundStatement& _tblock;
+    };
+
+    class IfElseStatement : public Statement {
+    public:
+        inline IfElseStatement(const Expr& expr, const CompoundStatement& tblock, const CompoundStatement& fblock) : _expr(expr), _tblock(tblock), _fblock(fblock) {}
+        inline const Expr& expr() const {return _expr;}
+        inline const CompoundStatement& tblock() const {return _tblock;}
+        inline const CompoundStatement& fblock() const {return _fblock;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Expr& _expr;
+        const CompoundStatement& _tblock;
+        const CompoundStatement& _fblock;
+    };
+
     class ReturnStatement : public Statement {
     protected:
         inline ReturnStatement(const ExprList& exprList) : _exprList(exprList) {}
@@ -912,6 +938,8 @@ namespace Ast {
         virtual void visit(const LocalStatement& node) = 0;
         virtual void visit(const ExprStatement& node) = 0;
         virtual void visit(const PrintStatement& node) = 0;
+        virtual void visit(const IfStatement& node) = 0;
+        virtual void visit(const IfElseStatement& node) = 0;
         virtual void visit(const RoutineReturnStatement& node) = 0;
         virtual void visit(const FunctionReturnStatement& node) = 0;
         virtual void visit(const CompoundStatement& node) = 0;
@@ -922,6 +950,8 @@ namespace Ast {
     inline void LocalStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void PrintStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void IfStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void IfElseStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void CompoundStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}

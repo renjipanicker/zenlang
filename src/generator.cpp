@@ -617,6 +617,22 @@ private:
         fprintf(_fpSrc, ".c_str());\n");
     }
 
+    virtual void visit(const Ast::IfStatement& node) {
+        fprintf(_fpSrc, "%sif(", Indent::get());
+        ExprGenerator(_fpSrc).visitNode(node.expr());
+        fprintf(_fpSrc, ")\n");
+        visitNode(node.tblock());
+    }
+
+    virtual void visit(const Ast::IfElseStatement& node) {
+        fprintf(_fpSrc, "%sif(", Indent::get());
+        ExprGenerator(_fpSrc).visitNode(node.expr());
+        fprintf(_fpSrc, ")\n");
+        visitNode(node.tblock());
+        fprintf(_fpSrc, "%selse\n", Indent::get());
+        visitNode(node.fblock());
+    }
+
     virtual void visit(const Ast::RoutineReturnStatement& node) {
         fprintf(_fpSrc, "%sreturn", Indent::get());
         if(node.exprList().list().size() > 0) {

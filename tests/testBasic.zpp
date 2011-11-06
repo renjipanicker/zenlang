@@ -95,3 +95,25 @@ public test testAnonymousFunctionWithClosure {
     local r = a(2);
     return (1);
 }
+
+public test testIfStatement {
+    local i = 0;
+    local j = 0;
+    if(i > 2) {
+        j = 3;
+    }
+
+    return (1);
+}
+
+public test testIfElseStatement {
+    local i = 0;
+    local j = 0;
+    if(i > 2) {
+        j = 3;
+    } else {
+        j = 5;
+    }
+
+    return (1);
+}

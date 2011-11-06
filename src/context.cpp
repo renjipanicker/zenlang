@@ -571,6 +571,16 @@ Ast::PrintStatement* Context::aPrintStatement(const Ast::FormatExpr& expr) {
     return ptr(printStatement);
 }
 
+Ast::IfStatement* Context::aIfStatement(const Ast::Expr& expr, const Ast::CompoundStatement& tblock) {
+    Ast::IfStatement& ifStatement = _unit.addNode(new Ast::IfStatement(expr, tblock));
+    return ptr(ifStatement);
+}
+
+Ast::IfElseStatement* Context::aIfElseStatement(const Ast::Expr& expr, const Ast::CompoundStatement& tblock, const Ast::CompoundStatement& fblock) {
+    Ast::IfElseStatement& ifElseStatement = _unit.addNode(new Ast::IfElseStatement(expr, tblock, fblock));
+    return ptr(ifElseStatement);
+}
+
 Ast::RoutineReturnStatement* Context::aRoutineReturnStatement() {
     Ast::ExprList& exprList = addExprList();
     Ast::RoutineReturnStatement& returnStatement = _unit.addNode(new Ast::RoutineReturnStatement(exprList));

@@ -124,6 +124,8 @@ public:
     Ast::LocalStatement*               aLocalStatement(const Ast::VariableDefn& defn);
     Ast::ExprStatement*                aExprStatement(const Ast::Expr& expr);
     Ast::PrintStatement*               aPrintStatement(const Ast::FormatExpr& expr);
+    Ast::IfStatement*                  aIfStatement(const Ast::Expr& expr, const Ast::CompoundStatement& tblock);
+    Ast::IfElseStatement*              aIfElseStatement(const Ast::Expr& expr, const Ast::CompoundStatement& tblock, const Ast::CompoundStatement& fblock);
     Ast::RoutineReturnStatement*       aRoutineReturnStatement();
     Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Expr& expr);
     Ast::FunctionReturnStatement*      aFunctionReturnStatement(const Ast::ExprList& exprList);

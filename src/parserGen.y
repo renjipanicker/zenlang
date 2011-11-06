@@ -333,6 +333,8 @@ rInnerStatement(L) ::= rUserDefinedTypeSpecStatement(R). {L = R;}
 rInnerStatement(L) ::= rLocalStatement(R).               {L = R;}
 rInnerStatement(L) ::= rExprStatement(R).                {L = R;}
 rInnerStatement(L) ::= rPrintStatement(R).               {L = R;}
+rInnerStatement(L) ::= rIfStatement(R).                  {L = R;}
+rInnerStatement(L) ::= rIfElseStatement(R).              {L = R;}
 rInnerStatement(L) ::= rRoutineReturnStatement(R).       {L = R;}
 rInnerStatement(L) ::= rFunctionReturnStatement(R).      {L = R;}
 rInnerStatement(L) ::= rCompoundStatement(R).            {L = R;}
@@ -352,6 +354,14 @@ rExprStatement(L) ::= rExpr(expr) SEMI. {L = ref(pctx).aExprStatement(ref(expr))
 //-------------------------------------------------
 %type rPrintStatement {Ast::PrintStatement*}
 rPrintStatement(L) ::= PRINT rFormatExpr(expr) SEMI. {L = ref(pctx).aPrintStatement(ref(expr));}
+
+//-------------------------------------------------
+%type rIfStatement {Ast::IfStatement*}
+rIfStatement(L) ::= IF LBRACKET rExpr(expr) RBRACKET rCompoundStatement(tblock). {L = ref(pctx).aIfStatement(ref(expr), ref(tblock));}
+
+//-------------------------------------------------
+%type rIfElseStatement {Ast::IfElseStatement*}
+rIfElseStatement(L) ::= IF LBRACKET rExpr(expr) RBRACKET rCompoundStatement(tblock) ELSE rCompoundStatement(fblock). {L = ref(pctx).aIfElseStatement(ref(expr), ref(tblock), ref(fblock));}
 
 //-------------------------------------------------
 %type rRoutineReturnStatement {Ast::RoutineReturnStatement*}

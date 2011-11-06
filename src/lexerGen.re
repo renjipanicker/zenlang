@@ -235,6 +235,8 @@ re2c:condenumprefix          = EState;
 
 <Normal>   "local"     := _parser.feed(token(s, ZENTOK_LOCAL)); continue;
 <Normal>   "print"     := _parser.feed(token(s, ZENTOK_PRINT)); continue;
+<Normal>   "if"        := _parser.feed(token(s, ZENTOK_IF)); continue;
+<Normal>   "else"      := _parser.feed(token(s, ZENTOK_ELSE)); continue;
 <Normal>   "return"    := sendReturn(s); continue;
 
 <Normal>   "false"     := _parser.feed(token(s, ZENTOK_FALSE_CONST)); continue;
