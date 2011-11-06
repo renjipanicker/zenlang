@@ -277,43 +277,43 @@ namespace Ast {
 
     class FunctionSig : public Node {
     public:
-        inline FunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in, Ast::Scope& xref) : _out(out), _name(name), _in(in), _xref(xref) {}
+        inline FunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in) : _out(out), _name(name), _in(in) {}
     public:
         inline const Ast::Scope::List& out() const {return _out.list();}
         inline const Token& name() const {return _name;}
         inline const Ast::Scope::List& in() const {return _in.list();}
-        inline const Ast::Scope::List& xref() const {return _xref.list();}
     public:
         inline const Ast::Scope& outScope()  const {return _out;}
         inline Ast::Scope& inScope()  const {return _in;}
-        inline Ast::Scope& xrefScope()  const {return _xref;}
     private:
         const Ast::Scope& _out;
         const Token _name;
         Ast::Scope& _in;
-        Ast::Scope& _xref;
     };
 
     class Function : public UserDefinedTypeSpec {
     public:
-        inline Function(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig) : UserDefinedTypeSpec(parent, name, defType), _sig(sig) {}
+        inline Function(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref) : UserDefinedTypeSpec(parent, name, defType), _xref(xref), _sig(sig) {}
+        inline const Ast::Scope::List& xref() const {return _xref.list();}
+        inline Ast::Scope& xrefScope()  const {return _xref;}
         inline const Ast::FunctionSig& sig() const {return _sig;}
     private:
+        Ast::Scope& _xref;
         const Ast::FunctionSig& _sig;
     };
 
     class FunctionDecl : public Function {
     public:
-        inline FunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig)
-            : Function(parent, name, defType, sig) {}
+        inline FunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref)
+            : Function(parent, name, defType, sig, xref) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class FunctionDefn : public Function {
     protected:
-        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig)
-            : Function(parent, name, defType, sig), _block(0) {}
+        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref)
+            : Function(parent, name, defType, sig, xref), _block(0) {}
     public:
         inline const Ast::CompoundStatement& block() const {return ref(_block);}
         inline void setBlock(const Ast::CompoundStatement& block) {_block = ptr(block);}
@@ -323,16 +323,16 @@ namespace Ast {
 
     class RootFunctionDefn : public FunctionDefn {
     public:
-        inline RootFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig)
-            : FunctionDefn(parent, name, defType, sig) {}
+        inline RootFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref)
+            : FunctionDefn(parent, name, defType, sig, xref) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class ChildFunctionDefn : public FunctionDefn {
     public:
-        inline ChildFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, const Ast::Function& base)
-            : FunctionDefn(parent, name, defType, sig), _base(base) {}
+        inline ChildFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, const Ast::Function& base)
+            : FunctionDefn(parent, name, defType, sig, xref), _base(base) {}
         inline const Ast::Function& base() const {return _base;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -615,16 +615,6 @@ namespace Ast {
         const Routine& _routine;
     };
 
-    class FunctionCallExpr : public CallExpr {
-    public:
-        inline FunctionCallExpr(const QualifiedTypeSpec& qTypeSpec, const Function& function, const ExprList& exprList) : CallExpr(qTypeSpec, exprList), _function(function) {}
-        inline const Function& function() const {return _function;}
-    private:
-        virtual void visit(Visitor& visitor) const;
-    private:
-        const Function& _function;
-    };
-
     class FunctorCallExpr : public CallExpr {
     public:
         inline FunctorCallExpr(const QualifiedTypeSpec& qTypeSpec, const Expr& expr, const ExprList& exprList) : CallExpr(qTypeSpec, exprList), _expr(expr) {}
@@ -753,7 +743,6 @@ namespace Ast {
         virtual void visit(const DictExpr& node) = 0;
         virtual void visit(const FormatExpr& node) = 0;
         virtual void visit(const RoutineCallExpr& node) = 0;
-        virtual void visit(const FunctionCallExpr& node) = 0;
         virtual void visit(const FunctorCallExpr& node) = 0;
         virtual void visit(const OrderedExpr& node) = 0;
         virtual void visit(const VariableRefExpr& node) = 0;
@@ -773,7 +762,6 @@ namespace Ast {
     inline void DictExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FormatExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void FunctionCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctorCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}

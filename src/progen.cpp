@@ -47,8 +47,6 @@ void ProGen::Impl::run() {
         const std::string& filename = *it;
         std::string basename = getBaseName(filename);
         std::string ext = getExtention(filename);
-        trace("basename %s\n", basename.c_str());
-        trace("ext %s\n", ext.c_str());
 
         if((_project.hppExt().find(ext) != std::string::npos) || (_project.cppExt().find(ext) != std::string::npos)) {
             fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s)\n", filename.c_str());

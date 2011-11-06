@@ -68,6 +68,17 @@ public test testInnerChildFunction {
     return (1);
 }
 
+public test testInnerChildFunctionClosure {
+    local i = 0;
+    testFunction innerFunction {
+        return (i, "aa");
+    }
+    local f = innerFunction(2);
+    local o = innerFunction[];
+    local r = o(2);
+    return (1);
+}
+
 public test testAnonymousFunction {
     local a = testFunction {
         return (2, "aa");

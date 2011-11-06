@@ -345,7 +345,8 @@ Ast::RoutineDefn* Context::aEnterRoutineDefn(const Ast::QualifiedTypeSpec& outTy
 
 Ast::FunctionDecl* Context::aFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
     const Ast::Token& name = functionSig.name();
-    Ast::FunctionDecl& functionDecl = _unit.addNode(new Ast::FunctionDecl(currentTypeSpec(), name, defType, functionSig));
+    Ast::Scope& xref = addScope(Ast::ScopeType::XRef);
+    Ast::FunctionDecl& functionDecl = _unit.addNode(new Ast::FunctionDecl(currentTypeSpec(), name, defType, functionSig, xref));
     currentTypeSpec().addChild(functionDecl);
 
     Ast::Token token1(name.row(), name.col(), "_Out");
@@ -358,7 +359,7 @@ Ast::FunctionDecl* Context::aFunctionDecl(const Ast::FunctionSig& functionSig, c
 Ast::RootFunctionDefn* Context::aRootFunctionDefn(Ast::RootFunctionDefn& functionDefn, const Ast::CompoundStatement& block) {
     functionDefn.setBlock(block);
     leaveScope(functionDefn.sig().inScope());
-    leaveScope(functionDefn.sig().xrefScope());
+    leaveScope(functionDefn.xrefScope());
     leaveTypeSpec(functionDefn);
     _unit.addBody(_unit.addNode(new Ast::FunctionBody(functionDefn, block)));
     return ptr(functionDefn);
@@ -366,9 +367,10 @@ Ast::RootFunctionDefn* Context::aRootFunctionDefn(Ast::RootFunctionDefn& functio
 
 Ast::RootFunctionDefn* Context::aEnterRootFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
     const Ast::Token& name = functionSig.name();
-    Ast::RootFunctionDefn& functionDefn = _unit.addNode(new Ast::RootFunctionDefn(currentTypeSpec(), name, defType, functionSig));
+    Ast::Scope& xref = addScope(Ast::ScopeType::XRef);
+    Ast::RootFunctionDefn& functionDefn = _unit.addNode(new Ast::RootFunctionDefn(currentTypeSpec(), name, defType, functionSig, xref));
     currentTypeSpec().addChild(functionDefn);
-    enterScope(functionSig.xrefScope());
+    enterScope(functionDefn.xrefScope());
     enterScope(functionSig.inScope());
     enterTypeSpec(functionDefn);
 
@@ -379,13 +381,13 @@ Ast::RootFunctionDefn* Context::aEnterRootFunctionDefn(const Ast::FunctionSig& f
     return ptr(functionDefn);
 }
 
-Ast::ChildFunctionDefn* Context::aChildFunctionDefn(Ast::ChildFunctionDefn& functionImpl, const Ast::CompoundStatement& block) {
-    functionImpl.setBlock(block);
-    leaveScope(functionImpl.sig().inScope());
-    leaveScope(functionImpl.sig().xrefScope());
-    leaveTypeSpec(functionImpl);
-    _unit.addBody(_unit.addNode(new Ast::FunctionBody(functionImpl, block)));
-    return ptr(functionImpl);
+Ast::ChildFunctionDefn* Context::aChildFunctionDefn(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& block) {
+    functionDefn.setBlock(block);
+    leaveScope(functionDefn.sig().inScope());
+    leaveScope(functionDefn.xrefScope());
+    leaveTypeSpec(functionDefn);
+    _unit.addBody(_unit.addNode(new Ast::FunctionBody(functionDefn, block)));
+    return ptr(functionDefn);
 }
 
 Ast::ChildFunctionDefn* Context::aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
@@ -393,13 +395,14 @@ Ast::ChildFunctionDefn* Context::aEnterChildFunctionDefn(const Ast::TypeSpec& ba
     if(function == 0) {
         throw Exception("%s base type not a function '%s'\n", err(_filename, name).c_str(), base.name().text());
     }
-    Ast::ChildFunctionDefn& functionImpl = _unit.addNode(new Ast::ChildFunctionDefn(currentTypeSpec(), name, defType, ref(function).sig(), ref(function)));
-    currentTypeSpec().addChild(functionImpl);
-    enterScope(ref(function).sig().xrefScope());
+    Ast::Scope& xref = addScope(Ast::ScopeType::XRef);
+    Ast::ChildFunctionDefn& functionDefn = _unit.addNode(new Ast::ChildFunctionDefn(currentTypeSpec(), name, defType, ref(function).sig(), xref, ref(function)));
+    currentTypeSpec().addChild(functionDefn);
+    enterScope(functionDefn.xrefScope());
     enterScope(ref(function).sig().inScope());
-    enterTypeSpec(functionImpl);
+    enterTypeSpec(functionDefn);
 
-    return ptr(functionImpl);
+    return ptr(functionDefn);
 }
 
 Ast::EventDecl* Context::aEventDecl(const Ast::VariableDefn& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
@@ -410,8 +413,7 @@ Ast::EventDecl* Context::aEventDecl(const Ast::VariableDefn& in, const Ast::Func
 }
 
 Ast::FunctionSig* Context::aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in) {
-    Ast::Scope& xref = addScope(Ast::ScopeType::XRef);
-    Ast::FunctionSig& functionSig = _unit.addNode(new Ast::FunctionSig(out, name, in, xref));
+    Ast::FunctionSig& functionSig = _unit.addNode(new Ast::FunctionSig(out, name, in));
     return ptr(functionSig);
 }
 
@@ -688,10 +690,13 @@ Ast::FormatExpr* Context::aFormatExpr(const Ast::Token& pos, const Ast::Expr& st
 Ast::CallExpr* Context::aCallExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
     if(function != 0) {
+        Ast::QualifiedTypeSpec& qExprTypeSpec = addQualifiedTypeSpec(false, ref(function), false);
+        Ast::FunctionInstanceExpr& functionInstanceExpr = _unit.addNode(new Ast::FunctionInstanceExpr(qExprTypeSpec, ref(function), exprList));
+
         const Ast::FunctionRetn& functionRetn = getFunctionRetn(pos, ref(function));
         Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionRetn, false);
-        Ast::FunctionCallExpr& functionCallExpr = _unit.addNode(new Ast::FunctionCallExpr(qTypeSpec, ref(function), exprList));
-        return ptr(functionCallExpr);
+        Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, functionInstanceExpr, exprList));
+        return ptr(functorCallExpr);
     }
 
     const Ast::Routine* routine = dynamic_cast<const Ast::Routine*>(ptr(typeSpec));
@@ -724,7 +729,6 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
     typedef std::list<Ast::Scope*> ScopeList;
     ScopeList scopeList;
 
-    printf("ref %s\n", name.text());
     for(ScopeStack::const_reverse_iterator it = _scopeStack.rbegin(); it != _scopeStack.rend(); ++it) {
         Ast::Scope& scope = ref(*it);
 
@@ -734,25 +738,21 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
 
         switch(refType) {
             case Ast::RefType::Global:
-                printf("Glo->X\n");
                 break;
             case Ast::RefType::XRef:
-                printf("XRef->X\n");
                 break;
             case Ast::RefType::Param:
                 switch(scope.type()) {
                     case Ast::ScopeType::Global:
-                        throw Exception("%s Internal error: Invalid reference to global variable '%s'\n", err(_filename, name).c_str(), name.text());
+                        throw Exception("%s Internal error: Invalid vref %s: Param-Global\n", err(_filename, name).c_str(), name.text());
                     case Ast::ScopeType::Member:
-                        throw Exception("%s Internal error: Invalid reference to member variable '%s'\n", err(_filename, name).c_str(), name.text());
+                        throw Exception("%s Internal error: Invalid vref %s: Param-Member\n", err(_filename, name).c_str(), name.text());
                     case Ast::ScopeType::XRef:
-                        throw Exception("%s Internal error: Invalid x reference to member variable '%s'\n", err(_filename, name).c_str(), name.text());
-                    case Ast::ScopeType::Param:
-                        printf("Param-Param->XRef\n");
                         refType = Ast::RefType::XRef;
                         break;
+                    case Ast::ScopeType::Param:
+                        throw Exception("%s Internal error: Invalid vref %s: Param-Param\n", err(_filename, name).c_str(), name.text());
                     case Ast::ScopeType::Local:
-                        printf("Param-Local->XRef\n");
                         refType = Ast::RefType::XRef;
                         break;
                 }
@@ -760,17 +760,15 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
             case Ast::RefType::Local:
                 switch(scope.type()) {
                     case Ast::ScopeType::Global:
-                        throw Exception("%s Internal error: Invalid reference to global variable '%s'\n", err(_filename, name).c_str(), name.text());
+                        throw Exception("%s Internal error: Invalid vref %s: Local-Global\n", err(_filename, name).c_str(), name.text());
                     case Ast::ScopeType::Member:
-                        throw Exception("%s Internal error: Invalid reference to member variable '%s'\n", err(_filename, name).c_str(), name.text());
+                        throw Exception("%s Internal error: Invalid vref %s: Local-Member\n", err(_filename, name).c_str(), name.text());
                     case Ast::ScopeType::XRef:
-                        throw Exception("%s Internal error: Invalid x reference to member variable '%s'\n", err(_filename, name).c_str(), name.text());
+                        throw Exception("%s Internal error: Invalid vref %s: Local-XRef\n", err(_filename, name).c_str(), name.text());
                     case Ast::ScopeType::Param:
-                        printf("Local-Param->Param\n");
                         refType = Ast::RefType::Param;
                         break;
                     case Ast::ScopeType::Local:
-                        printf("Local-Local->Local\n");
                         break;
                 }
                 break;
@@ -778,6 +776,14 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
 
         const Ast::VariableDefn* vref = hasMember(scope, name);
         if(vref != 0) {
+            if(refType == Ast::RefType::XRef) {
+                assert(scopeList.size() > 0);
+                for(ScopeList::iterator it = scopeList.begin(); it != scopeList.end(); ++it) {
+                    Ast::Scope& scope = ref(*it);
+                    printf("adding xref %s to %lu\n", name.text(), (unsigned long)ptr(scope));
+                    scope.addVariableDef(ref(vref));
+                }
+            }
             Ast::VariableRefExpr& vrefExpr = _unit.addNode(new Ast::VariableRefExpr(ref(vref).qualifiedTypeSpec(), ref(vref), refType));
             return ptr(vrefExpr);
         }

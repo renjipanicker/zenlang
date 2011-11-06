@@ -181,12 +181,6 @@ private:
         fprintf(_fp, ")");
     }
 
-    virtual void visit(const Ast::FunctionCallExpr& node) {
-        fprintf(_fp, "%s().run(%s::_In(", getTypeSpecName(node.function()).c_str(), getTypeSpecName(node.function()).c_str());
-        ExprGenerator(_fp, ", ").visitList(node.exprList());
-        fprintf(_fp, "))");
-    }
-
     virtual void visit(const Ast::FunctorCallExpr& node) {
         ExprGenerator(_fp).visitNode(node.expr());
         fprintf(_fp, ".run(%s::_In(", getTypeSpecName(node.expr().qTypeSpec().typeSpec()).c_str());
@@ -238,7 +232,12 @@ private:
 
     virtual void visit(const Ast::FunctionInstanceExpr& node) {
         fprintf(_fp, "%s(", getTypeSpecName(node.function()).c_str());
-        ExprGenerator(_fp, ", ").visitList(node.exprList());
+        std::string sep;
+        for(Ast::Scope::List::const_iterator it = node.function().xref().begin(); it != node.function().xref().end(); ++it) {
+            const Ast::VariableDefn& vref = ref(*it);
+            fprintf(_fp, "%s%s", sep.c_str(), vref.name().text());
+            sep = ", ";
+        }
         fprintf(_fp, ")");
     }
 
@@ -378,16 +377,37 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(fp, ")");
     }
 
-    void visit(const Ast::RoutineDecl& node) {
-        visitRoutine(fpDecl(node), node, true);
-        fprintf(fpDecl(node), ";\n");
-        fprintf(fpDecl(node), "\n");
-    }
+    void visitScope(FILE* fp, const Ast::Scope& scope, const std::string& cname, const std::string& sname) {
+        if(sname.size() > 0)
+            fprintf(fp, "%sstruct %s {\n", Indent::get(), sname.c_str());
 
-    void visit(const Ast::RoutineDefn& node) {
-        visitRoutine(fpDecl(node), node, true);
-        fprintf(fpDecl(node), ";\n");
-        fprintf(fpDecl(node), "\n");
+        for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
+            INDENT;
+            const Ast::VariableDefn& vdef = ref(*it);
+            fprintf(fp, "%sconst %s %s;\n", Indent::get(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
+        }
+
+        // ctor
+        if(cname.size() > 0) {
+            fprintf(fp, "%s    inline %s(", Indent::get(), cname.c_str());
+            std::string sep = "";
+            for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
+                const Ast::VariableDefn& vdef = ref(*it);
+                fprintf(fp, "%sconst %s& p%s", sep.c_str(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
+                sep = ", ";
+            }
+            fprintf(fp, ")");
+            sep = " : ";
+            for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
+                const Ast::VariableDefn& vdef = ref(*it);
+                fprintf(fp, "%s%s(p%s)", sep.c_str(), vdef.name().text(), vdef.name().text());
+                sep = ", ";
+            }
+            fprintf(fp, " {}\n");
+        }
+
+        if(sname.size() > 0)
+            fprintf(fp, "%s};\n", Indent::get());
     }
 
     void visitFunction(const Ast::Function& node) {
@@ -402,35 +422,17 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(fpDecl(node), "%s    _Out* _out;\n", Indent::get());
         fprintf(fpDecl(node), "%s    inline void ret(_Out* val) {_out = val;}\n", Indent::get());
 
+        // xref-list
+        if(node.xref().size() > 0) {
+            fprintf(fpDecl(node), "%spublic:\n", Indent::get());
+            visitScope(fpDecl(node), node.xrefScope(), node.name().string(), "");
+        }
+
         // in-param-list
         if(node.sig().in().size() > 0) {
             fprintf(fpDecl(node), "%spublic:\n", Indent::get());
             INDENT;
-            fprintf(fpDecl(node), "%sstruct _In {\n", Indent::get());
-            for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
-                INDENT;
-                const Ast::VariableDefn& vdef = ref(*it);
-                fprintf(fpDecl(node), "%sconst %s %s;\n", Indent::get(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
-            }
-
-            // in-param-list-ctor
-            fprintf(fpDecl(node), "%s    inline _In(", Indent::get());
-            std::string sep = "";
-            for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
-                const Ast::VariableDefn& vdef = ref(*it);
-                fprintf(fpDecl(node), "%sconst %s& p%s", sep.c_str(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
-                sep = ", ";
-            }
-            fprintf(fpDecl(node), ")");
-            sep = " : ";
-            for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
-                const Ast::VariableDefn& vdef = ref(*it);
-                fprintf(fpDecl(node), "%s%s(p%s)", sep.c_str(), vdef.name().text(), vdef.name().text());
-                sep = ", ";
-            }
-            fprintf(fpDecl(node), " {}\n");
-
-            fprintf(fpDecl(node), "%s};\n", Indent::get());
+            visitScope(fpDecl(node), node.sig().inScope(), "_In", "_In");
         }
 
         // impl-function
@@ -443,9 +445,20 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
         //default-ctor
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    inline %s() {};\n", Indent::get(), node.name().text());
         fprintf(fpDecl(node), "%s    inline const _Out& ret() const {return ref(_out);}\n", Indent::get());
         fprintf(fpDecl(node), "%s};\n", Indent::get());
+    }
+
+    void visit(const Ast::RoutineDecl& node) {
+        visitRoutine(fpDecl(node), node, true);
+        fprintf(fpDecl(node), ";\n");
+        fprintf(fpDecl(node), "\n");
+    }
+
+    void visit(const Ast::RoutineDefn& node) {
+        visitRoutine(fpDecl(node), node, true);
+        fprintf(fpDecl(node), ";\n");
+        fprintf(fpDecl(node), "\n");
     }
 
     void visit(const Ast::FunctionRetn& node) {
@@ -503,13 +516,15 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
         visitChildrenIndent(node);
 
+        // xref-list
+        if(node.xref().size() > 0) {
+            fprintf(fpDecl(node), "%spublic:\n", Indent::get());
+            visitScope(fpDecl(node), node.xrefScope(), node.name().string(), "");
+        }
+
         // run-function
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
         fprintf(fpDecl(node), "%s    inline _Out run(const _In& _in) {return (*impl)(ref(this), _in);}\n", Indent::get());
-
-        //default-ctor
-        fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    inline %s() {};\n", Indent::get(), node.name().text());
 
         fprintf(fpDecl(node), "%s};\n", Indent::get());
         fprintf(fpDecl(node), "\n");

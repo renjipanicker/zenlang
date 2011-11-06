@@ -1,5 +1,3 @@
-function-instance-closure
-scope-resolution for closure
 run
 if-else
 while
@@ -33,6 +31,8 @@ in-params are const by default, locals are not
 *** remove get-set for struct, retain set-chain ability (how?)
 *** 3 level unit test - suite/test/check
 *** optimize trace/exception
+*** document ast
+*** document vref logic
 
 Remove block from unit
 project generator - cmake
@@ -54,3 +54,5 @@ inner functions
 function-instance
 function-instance-call (functor-call)
 anonymous-function
+function-instance-closure
+scope-resolution for closure
