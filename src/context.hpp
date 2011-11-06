@@ -136,6 +136,14 @@ public:
     Ast::ForeachStatement*             aForeachStatement(Ast::ForeachStatement& statement, const Ast::CompoundStatement& block);
     Ast::ForeachListStatement*         aEnterForeachInit(const Ast::Token& valName, const Ast::Expr& expr);
     Ast::ForeachDictStatement*         aEnterForeachInit(const Ast::Token& keyName, const Ast::Token& valName, const Ast::Expr& expr);
+    Ast::SwitchValueStatement*         aSwitchStatement(const Ast::Expr& expr, const Ast::CompoundStatement& list);
+    Ast::SwitchExprStatement*          aSwitchStatement(const Ast::CompoundStatement& list);
+    Ast::CompoundStatement*            aCaseList(Ast::CompoundStatement& list, const Ast::CaseStatement& stmt);
+    Ast::CompoundStatement*            aCaseList(const Ast::CaseStatement& stmt);
+    Ast::CaseStatement*                aCaseStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block);
+    Ast::CaseStatement*                aCaseStatement(const Ast::CompoundStatement& block);
+    Ast::BreakStatement*               aBreakStatement();
+    Ast::ContinueStatement*            aContinueStatement();
     Ast::RoutineReturnStatement*       aRoutineReturnStatement();
     Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Expr& expr);
     Ast::FunctionReturnStatement*      aFunctionReturnStatement(const Ast::ExprList& exprList);

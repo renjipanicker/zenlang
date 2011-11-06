@@ -982,6 +982,73 @@ namespace Ast {
     };
 
 
+    class CaseStatement : public Statement {
+    protected:
+        inline CaseStatement(const CompoundStatement& block) : _block(block) {}
+    public:
+        inline const CompoundStatement& block() const {return _block;}
+    private:
+        const CompoundStatement& _block;
+    };
+
+    class CaseExprStatement : public CaseStatement {
+    public:
+        inline CaseExprStatement(const Expr& expr, const CompoundStatement& block) : CaseStatement(block), _expr(expr) {}
+    public:
+        inline const Expr& expr() const {return _expr;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Expr& _expr;
+    };
+
+    class CaseDefaultStatement : public CaseStatement {
+    public:
+        inline CaseDefaultStatement(const CompoundStatement& block) : CaseStatement(block) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class SwitchStatement : public Statement {
+    protected:
+        inline SwitchStatement(const CompoundStatement& block) : _block(block) {}
+    public:
+        inline const CompoundStatement& block() const {return _block;}
+    private:
+        const CompoundStatement& _block;
+    };
+
+    class SwitchValueStatement : public SwitchStatement {
+    public:
+        inline SwitchValueStatement(const Expr& expr, const CompoundStatement& block) : SwitchStatement(block), _expr(expr) {}
+        inline const Expr& expr() const {return _expr;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Expr& _expr;
+    };
+
+    class SwitchExprStatement : public SwitchStatement {
+    public:
+        inline SwitchExprStatement(const CompoundStatement& block) : SwitchStatement(block) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BreakStatement : public Statement {
+    public:
+        inline BreakStatement() {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class ContinueStatement : public Statement {
+    public:
+        inline ContinueStatement() {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
     class ReturnStatement : public Statement {
     protected:
         inline ReturnStatement(const ExprList& exprList) : _exprList(exprList) {}
@@ -1036,6 +1103,12 @@ namespace Ast {
         virtual void visit(const ForInitStatement& node) = 0;
         virtual void visit(const ForeachListStatement& node) = 0;
         virtual void visit(const ForeachDictStatement& node) = 0;
+        virtual void visit(const CaseExprStatement& node) = 0;
+        virtual void visit(const CaseDefaultStatement& node) = 0;
+        virtual void visit(const SwitchValueStatement& node) = 0;
+        virtual void visit(const SwitchExprStatement& node) = 0;
+        virtual void visit(const BreakStatement& node) = 0;
+        virtual void visit(const ContinueStatement& node) = 0;
         virtual void visit(const RoutineReturnStatement& node) = 0;
         virtual void visit(const FunctionReturnStatement& node) = 0;
         virtual void visit(const CompoundStatement& node) = 0;
@@ -1054,6 +1127,12 @@ namespace Ast {
     inline void ForInitStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ForeachListStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ForeachDictStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void CaseExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void CaseDefaultStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void SwitchValueStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void SwitchExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void BreakStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void ContinueStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void CompoundStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}

@@ -701,6 +701,55 @@ private:
         fprintf(_fpSrc, "%s}\n", Indent::get());
     }
 
+    virtual void visit(const Ast::CaseExprStatement& node) {
+        fprintf(_fpSrc, "%scase (", Indent::get());
+        ExprGenerator(_fpSrc).visitNode(node.expr());
+        fprintf(_fpSrc, ") : \n");
+        visitNode(node.block());
+    }
+
+    virtual void visit(const Ast::CaseDefaultStatement& node) {
+        fprintf(_fpSrc, "%sdefault : \n", Indent::get());
+        visitNode(node.block());
+    }
+
+    virtual void visit(const Ast::SwitchValueStatement& node) {
+        fprintf(_fpSrc, "%sswitch(", Indent::get());
+        ExprGenerator(_fpSrc).visitNode(node.expr());
+        fprintf(_fpSrc, ")\n");
+        visitNode(node.block());
+    }
+
+    virtual void visit(const Ast::SwitchExprStatement& node) {
+        std::string ifstr = "if";
+        for(Ast::CompoundStatement::List::const_iterator sit = node.block().list().begin(); sit != node.block().list().end(); ++sit) {
+            const Ast::Statement* s = *sit;
+            const Ast::CaseExprStatement* ce = dynamic_cast<const Ast::CaseExprStatement*>(s);
+            const Ast::CaseDefaultStatement* cd = dynamic_cast<const Ast::CaseDefaultStatement*>(s);
+            if(ce) {
+                fprintf(_fpSrc, "%s%s(", Indent::get(), ifstr.c_str());
+                ExprGenerator(_fpSrc).visitNode(ref(ce).expr());
+                fprintf(_fpSrc, ")\n");
+                visitNode(ref(ce).block());
+                ifstr = "else if";
+            } else if(cd) {
+                fprintf(_fpSrc, "%selse\n", Indent::get());
+                visitNode(ref(cd).block());
+                break;
+            } else {
+                throw Exception("Internal error: not a case statement inside switch\n");
+            }
+        }
+    }
+
+    virtual void visit(const Ast::BreakStatement& node) {
+        fprintf(_fpSrc, "%sbreak;\n", Indent::get());
+    }
+
+    virtual void visit(const Ast::ContinueStatement& node) {
+        fprintf(_fpSrc, "%scontinue;\n", Indent::get());
+    }
+
     virtual void visit(const Ast::RoutineReturnStatement& node) {
         fprintf(_fpSrc, "%sreturn", Indent::get());
         if(node.exprList().list().size() > 0) {

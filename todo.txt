@@ -1,6 +1,3 @@
-switch-value
-switch-expression
-switch-typeof
 enum-init
 run
 assert()
@@ -8,6 +5,7 @@ check()
 unused()
 event
 event-handler
+*** rename local to auto (consistency with c++0x)
 
 project builder
 project reader
@@ -21,7 +19,6 @@ project generator - msvc
 print <dst> <expr>;
 print <dst> <src> <level> <expr>;
 in-params are const by default, locals are not
-*** rename local to auto (consistency with c++0x)
 *** move Formatter to String, Creator to List/Dict
 *** merge enum and struct Ast's.
 *** remove get-set for struct, retain set-chain ability (how?)
@@ -29,6 +26,7 @@ in-params are const by default, locals are not
 *** optimize trace/exception
 *** document ast
 *** document vref logic
+switch-typeof
 
 Remove block from unit
 project generator - cmake
@@ -60,3 +58,7 @@ while
 do-while
 for
 foreach
+break
+continue
+switch-value
+switch-expression

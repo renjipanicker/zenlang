@@ -339,6 +339,9 @@ rInnerStatement(L) ::= rWhileStatement(R).               {L = R;}
 rInnerStatement(L) ::= rDoWhileStatement(R).             {L = R;}
 rInnerStatement(L) ::= rForStatement(R).                 {L = R;}
 rInnerStatement(L) ::= rForeachStatement(R).             {L = R;}
+rInnerStatement(L) ::= rSwitchStatement(R).              {L = R;}
+rInnerStatement(L) ::= rBreakStatement(R).               {L = R;}
+rInnerStatement(L) ::= rContinueStatement(R).            {L = R;}
 rInnerStatement(L) ::= rRoutineReturnStatement(R).       {L = R;}
 rInnerStatement(L) ::= rFunctionReturnStatement(R).      {L = R;}
 rInnerStatement(L) ::= rCompoundStatement(R).            {L = R;}
@@ -390,6 +393,29 @@ rForeachStatement(L) ::= FOREACH LBRACKET rEnterForeachInit(vdef) RBRACKET rComp
 %type rEnterForeachInit {Ast::ForeachStatement*}
 rEnterForeachInit(L) ::= ID(I) IN rExpr(list). {L = ref(pctx).aEnterForeachInit(I, ref(list));}
 rEnterForeachInit(L) ::= ID(K) COMMA ID(V) IN rExpr(list). {L = ref(pctx).aEnterForeachInit(K, V, ref(list));}
+
+//-------------------------------------------------
+%type rSwitchStatement {Ast::SwitchStatement*}
+rSwitchStatement(L) ::= SWITCH LBRACKET rExpr(expr) RBRACKET LCURLY rCaseList(list) RCURLY. {L = ref(pctx).aSwitchStatement(ref(expr), ref(list));}
+rSwitchStatement(L) ::= SWITCH                               LCURLY rCaseList(list) RCURLY. {L = ref(pctx).aSwitchStatement(ref(list));}
+
+//-------------------------------------------------
+%type rCaseList {Ast::CompoundStatement*}
+rCaseList(L) ::= rCaseList(R) rCaseStatement(S). {L = ref(pctx).aCaseList(ref(R), ref(S));}
+rCaseList(L) ::=              rCaseStatement(S). {L = ref(pctx).aCaseList(ref(S));}
+
+//-------------------------------------------------
+%type rCaseStatement {Ast::CaseStatement*}
+rCaseStatement(L) ::= CASE rExpr(expr) COLON rCompoundStatement(block). {L = ref(pctx).aCaseStatement(ref(expr), ref(block));}
+rCaseStatement(L) ::= DEFAULT          COLON rCompoundStatement(block). {L = ref(pctx).aCaseStatement(ref(block));}
+
+//-------------------------------------------------
+%type rBreakStatement {Ast::BreakStatement*}
+rBreakStatement(L) ::= BREAK SEMI. {L = ref(pctx).aBreakStatement();}
+
+//-------------------------------------------------
+%type rContinueStatement {Ast::ContinueStatement*}
+rContinueStatement(L) ::= CONTINUE SEMI. {L = ref(pctx).aContinueStatement();}
 
 //-------------------------------------------------
 %type rRoutineReturnStatement {Ast::RoutineReturnStatement*}

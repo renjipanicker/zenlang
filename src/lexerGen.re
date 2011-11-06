@@ -242,6 +242,12 @@ re2c:condenumprefix          = EState;
 <Normal>   "for"       := _parser.feed(token(s, ZENTOK_FOR)); continue;
 <Normal>   "foreach"   := _parser.feed(token(s, ZENTOK_FOREACH)); continue;
 <Normal>   "in"        := _parser.feed(token(s, ZENTOK_IN)); continue;
+<Normal>   "has"       := _parser.feed(token(s, ZENTOK_HAS)); continue;
+<Normal>   "switch"    := _parser.feed(token(s, ZENTOK_SWITCH)); continue;
+<Normal>   "case"      := _parser.feed(token(s, ZENTOK_CASE)); continue;
+<Normal>   "break"     := _parser.feed(token(s, ZENTOK_BREAK)); continue;
+<Normal>   "continue"  := _parser.feed(token(s, ZENTOK_CONTINUE)); continue;
+
 <Normal>   "return"    := sendReturn(s); continue;
 
 <Normal>   "false"     := _parser.feed(token(s, ZENTOK_FALSE_CONST)); continue;

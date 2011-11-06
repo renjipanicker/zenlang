@@ -662,6 +662,47 @@ Ast::ForeachDictStatement* Context::aEnterForeachInit(const Ast::Token& keyName,
     return ptr(foreachStatement);
 }
 
+Ast::SwitchValueStatement* Context::aSwitchStatement(const Ast::Expr& expr, const Ast::CompoundStatement& list) {
+    Ast::SwitchValueStatement& switchStatement = _unit.addNode(new Ast::SwitchValueStatement(expr, list));
+    return ptr(switchStatement);
+}
+
+Ast::SwitchExprStatement* Context::aSwitchStatement(const Ast::CompoundStatement& list) {
+    Ast::SwitchExprStatement& switchStatement = _unit.addNode(new Ast::SwitchExprStatement(list));
+    return ptr(switchStatement);
+}
+
+Ast::CompoundStatement* Context::aCaseList(Ast::CompoundStatement& list, const Ast::CaseStatement& stmt) {
+    list.addStatement(stmt);
+    return ptr(list);
+}
+
+Ast::CompoundStatement* Context::aCaseList(const Ast::CaseStatement& stmt) {
+    Ast::CompoundStatement& list = _unit.addNode(new Ast::CompoundStatement());
+    list.addStatement(stmt);
+    return ptr(list);
+}
+
+Ast::CaseStatement* Context::aCaseStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block) {
+    Ast::CaseExprStatement& caseStatement = _unit.addNode(new Ast::CaseExprStatement(expr, block));
+    return ptr(caseStatement);
+}
+
+Ast::CaseStatement* Context::aCaseStatement(const Ast::CompoundStatement& block) {
+    Ast::CaseDefaultStatement& caseStatement = _unit.addNode(new Ast::CaseDefaultStatement(block));
+    return ptr(caseStatement);
+}
+
+Ast::BreakStatement* Context::aBreakStatement() {
+    Ast::BreakStatement& breakStatement = _unit.addNode(new Ast::BreakStatement());
+    return ptr(breakStatement);
+}
+
+Ast::ContinueStatement* Context::aContinueStatement() {
+    Ast::ContinueStatement& continueStatement = _unit.addNode(new Ast::ContinueStatement());
+    return ptr(continueStatement);
+}
+
 Ast::RoutineReturnStatement* Context::aRoutineReturnStatement() {
     Ast::ExprList& exprList = addExprList();
     Ast::RoutineReturnStatement& returnStatement = _unit.addNode(new Ast::RoutineReturnStatement(exprList));

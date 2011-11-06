@@ -163,6 +163,36 @@ public test testForeachDictStatement {
     local l = ['a':1, 'b':2,'c':3];
     foreach(k,v in l) {
         j += v;
+        continue;
+    }
+    return (1);
+}
+
+public test testSwitchValueStatement {
+    local j = 0;
+    switch(j) {
+        case 1: {
+            break;
+        }
+        case 2: {
+            break;
+        }
+        default: {
+            break;
+        }
+    }
+    return (1);
+}
+
+public test testSwitchExprStatement {
+    local j = 0;
+    switch {
+        case j == 1: {
+        }
+        case j == 2: {
+        }
+        default: {
+        }
     }
     return (1);
 }
