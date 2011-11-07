@@ -1,4 +1,3 @@
-run
 future
 event
 event-handler
@@ -65,3 +64,4 @@ switch-expression
 remove get-set for struct, retain set-chain ability (how?)
 assert()
 unused()
+run-expr
