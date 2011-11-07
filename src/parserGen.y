@@ -301,25 +301,35 @@ rTypeSpec(L) ::= rPreTypeSpec(R). {L = ref(pctx).aTypeSpec(ref(R));}
 rStructTypeSpec(L) ::= rPreStructTypeSpec(R). {L = ref(pctx).aStructTypeSpec(ref(R));}
 
 //-------------------------------------------------
+%type rRoutineTypeSpec {const Ast::Routine*}
+rRoutineTypeSpec(L) ::= rPreRoutineTypeSpec(R). {L = ref(pctx).aRoutineTypeSpec(ref(R));}
+
+//-------------------------------------------------
 %type rFunctionTypeSpec {const Ast::Function*}
 rFunctionTypeSpec(L) ::= rPreFunctionTypeSpec(R). {L = ref(pctx).aFunctionTypeSpec(ref(R));}
 
 //-------------------------------------------------
 // "private" type references, can be only called by the public equivalent rules
 %type rPreTypeSpec {const Ast::TypeSpec*}
-rPreTypeSpec(L) ::= rPreFunctionTypeSpec(R). {L = R;}
 rPreTypeSpec(L) ::= rPreStructTypeSpec(R).   {L = R;}
+rPreTypeSpec(L) ::= rPreRoutineTypeSpec(R).  {L = R;}
+rPreTypeSpec(L) ::= rPreFunctionTypeSpec(R). {L = R;}
 rPreTypeSpec(L) ::= rPreOtherTypeSpec(R).    {L = R;}
-
-//-------------------------------------------------
-%type rPreFunctionTypeSpec {const Ast::Function*}
-rPreFunctionTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(ref(parent), name);}
-rPreFunctionTypeSpec(L) ::=                            FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(name);}
 
 //-------------------------------------------------
 %type rPreStructTypeSpec {const Ast::StructDefn*}
 rPreStructTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE STRUCT_TYPE(name). {L = ref(pctx).aStructTypeSpec(ref(parent), name);}
 rPreStructTypeSpec(L) ::=                            STRUCT_TYPE(name). {L = ref(pctx).aStructTypeSpec(name);}
+
+//-------------------------------------------------
+%type rPreRoutineTypeSpec {const Ast::Routine*}
+rPreRoutineTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE ROUTINE_TYPE(name). {L = ref(pctx).aRoutineTypeSpec(ref(parent), name);}
+rPreRoutineTypeSpec(L) ::=                            ROUTINE_TYPE(name). {L = ref(pctx).aRoutineTypeSpec(name);}
+
+//-------------------------------------------------
+%type rPreFunctionTypeSpec {const Ast::Function*}
+rPreFunctionTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(ref(parent), name);}
+rPreFunctionTypeSpec(L) ::=                            FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(name);}
 
 //-------------------------------------------------
 %type rPreOtherTypeSpec {const Ast::TypeSpec*}
@@ -460,7 +470,8 @@ rExpr(L) ::= rListExpr(R).         {L = R;}
 rExpr(L) ::= rDictExpr(R).         {L = R;}
 rExpr(L) ::= rFormatExpr(R).       {L = R;}
 rExpr(L) ::= rCallExpr(R).         {L = R;}
-//rExpr(L) ::= rRunExpr(R).          {L = R;}
+rExpr(L) ::= rRunExpr(R).          {L = R;}
+rExpr(L) ::= rOrderedExpr(R).      {L = R;}
 rExpr(L) ::= rVariableRefExpr(R).       {L = R;}
 rExpr(L) ::= rVariableMemberExpr(R).    {L = R;}
 rExpr(L) ::= rTypeSpecMemberExpr(R).    {L = R;}
@@ -588,7 +599,8 @@ rTreeItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(
 
 //-------------------------------------------------
 // ordered expression
-rExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedExpr(ref(innerExpr));}
+%type rOrderedExpr {Ast::OrderedExpr*}
+rOrderedExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedExpr(ref(innerExpr));}
 
 //-------------------------------------------------
 // type expression
@@ -646,13 +658,26 @@ rCallExpr(L) ::= rCallPart(R).  {L = R;}
 
 //-------------------------------------------------
 // function call type
-rCallExpr(L) ::= RUN(B) rCallPart(F).  {L = ref(pctx).aRunExpr(B, ref(F));}
+%type rRunExpr {Ast::RunExpr*}
+rRunExpr(L) ::= RUN(B) rFunctorCallPart(F).  {L = ref(pctx).aRunExpr(B, ref(F));}
 
 //-------------------------------------------------
 // functor call expressions
 %type rCallPart {Ast::CallExpr*}
-rCallPart(L) ::= rExpr(expr) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aCallExpr(B, ref(expr), ref(exprList));}
-rCallPart(L) ::= rTypeSpec(typeSpec) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aCallExpr(B, ref(typeSpec), ref(exprList));}
+rCallPart(L) ::= rRoutineCallPart(R). {L = R;}
+rCallPart(L) ::= rFunctorCallPart(R). {L = R;}
+
+//-------------------------------------------------
+// routine call expressions
+%type rRoutineCallPart {Ast::RoutineCallExpr*}
+rRoutineCallPart(L) ::= rRoutineTypeSpec(typeSpec) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aRoutineCallExpr(B, ref(typeSpec), ref(exprList));}
+
+//-------------------------------------------------
+// functor call expressions
+%type rFunctorCallPart {Ast::FunctorCallExpr*}
+rFunctorCallPart(L) ::= ID(I)                       LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aFunctorCallExpr(B, I, ref(exprList));}
+rFunctorCallPart(L) ::= rOrderedExpr(expr)          LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aFunctorCallExpr(B, ref(expr), ref(exprList));}
+rFunctorCallPart(L) ::= rFunctionTypeSpec(typeSpec) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aFunctionCallExpr(B, ref(typeSpec), ref(exprList));}
 
 //-------------------------------------------------
 // constant expressions

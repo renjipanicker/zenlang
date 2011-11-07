@@ -510,26 +510,6 @@ Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const A
     return ptr(qualifiedTypeSpec);
 }
 
-const Ast::Function* Context::aFunctionTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
-    const Ast::Function* function = parent.hasChild<const Ast::Function>(name.text());
-    if(!function) {
-        throw Exception("%s function type expected '%s'\n", err(_filename, name).c_str(), name.text());
-    }
-    setCurrentTypeRef(ref(function));
-    return function;
-}
-
-const Ast::Function* Context::aFunctionTypeSpec(const Ast::Token& name) {
-    const Ast::Function& function = getRootTypeSpec<Ast::Function>(name);
-    setCurrentTypeRef(function);
-    return ptr(function);
-}
-
-const Ast::Function* Context::aFunctionTypeSpec(const Ast::Function& function) {
-    resetCurrentTypeRef();
-    return ptr(function);
-}
-
 const Ast::StructDefn* Context::aStructTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
     const Ast::StructDefn* structDefn = parent.hasChild<const Ast::StructDefn>(name.text());
     if(!structDefn) {
@@ -548,6 +528,46 @@ const Ast::StructDefn* Context::aStructTypeSpec(const Ast::Token& name) {
 const Ast::StructDefn* Context::aStructTypeSpec(const Ast::StructDefn& structDefn) {
     resetCurrentTypeRef();
     return ptr(structDefn);
+}
+
+const Ast::Routine* Context::aRoutineTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
+    const Ast::Routine* routine = parent.hasChild<const Ast::Routine>(name.text());
+    if(!routine) {
+        throw Exception("%s routine type expected '%s'\n", err(_filename, name).c_str(), name.text());
+    }
+    setCurrentTypeRef(ref(routine));
+    return routine;
+}
+
+const Ast::Routine* Context::aRoutineTypeSpec(const Ast::Token& name) {
+    const Ast::Routine& routine = getRootTypeSpec<Ast::Routine>(name);
+    setCurrentTypeRef(routine);
+    return ptr(routine);
+}
+
+const Ast::Routine* Context::aRoutineTypeSpec(const Ast::Routine& routine) {
+    resetCurrentTypeRef();
+    return ptr(routine);
+}
+
+const Ast::Function* Context::aFunctionTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
+    const Ast::Function* function = parent.hasChild<const Ast::Function>(name.text());
+    if(!function) {
+        throw Exception("%s function type expected '%s'\n", err(_filename, name).c_str(), name.text());
+    }
+    setCurrentTypeRef(ref(function));
+    return function;
+}
+
+const Ast::Function* Context::aFunctionTypeSpec(const Ast::Token& name) {
+    const Ast::Function& function = getRootTypeSpec<Ast::Function>(name);
+    setCurrentTypeRef(function);
+    return ptr(function);
+}
+
+const Ast::Function* Context::aFunctionTypeSpec(const Ast::Function& function) {
+    resetCurrentTypeRef();
+    return ptr(function);
 }
 
 const Ast::TypeSpec* Context::aOtherTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
@@ -856,29 +876,25 @@ Ast::FormatExpr* Context::aFormatExpr(const Ast::Token& pos, const Ast::Expr& st
     return ptr(formatExpr);
 }
 
-Ast::CallExpr* Context::aCallExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
-    const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
-    if(function != 0) {
-        Ast::QualifiedTypeSpec& qExprTypeSpec = addQualifiedTypeSpec(false, ref(function), false);
-        Ast::FunctionInstanceExpr& functionInstanceExpr = _unit.addNode(new Ast::FunctionInstanceExpr(qExprTypeSpec, ref(function), exprList));
-
-        const Ast::FunctionRetn& functionRetn = getFunctionRetn(pos, ref(function));
-        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionRetn, false);
-        Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, functionInstanceExpr, exprList));
-        return ptr(functorCallExpr);
-    }
-
-    const Ast::Routine* routine = dynamic_cast<const Ast::Routine*>(ptr(typeSpec));
-    if(routine != 0) {
-        const Ast::QualifiedTypeSpec& qTypeSpec = ref(routine).outType();
-        Ast::RoutineCallExpr& routineCallExpr = _unit.addNode(new Ast::RoutineCallExpr(qTypeSpec, ref(routine), exprList));
-        return ptr(routineCallExpr);
-    }
-
-    throw Exception("%s Unknown function being called '%s'\n", err(_filename, pos).c_str(), typeSpec.name().text());
+Ast::RoutineCallExpr* Context::aRoutineCallExpr(const Ast::Token& pos, const Ast::Routine& routine, const Ast::ExprList& exprList) {
+    unused(pos);
+    const Ast::QualifiedTypeSpec& qTypeSpec = routine.outType();
+    Ast::RoutineCallExpr& routineCallExpr = _unit.addNode(new Ast::RoutineCallExpr(qTypeSpec, routine, exprList));
+    return ptr(routineCallExpr);
 }
 
-Ast::CallExpr* Context::aCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList) {
+Ast::FunctorCallExpr* Context::aFunctionCallExpr(const Ast::Token& pos, const Ast::Function& function, const Ast::ExprList& exprList) {
+    unused(pos);
+    Ast::QualifiedTypeSpec& qExprTypeSpec = addQualifiedTypeSpec(false, function, false);
+    Ast::FunctionInstanceExpr& functionInstanceExpr = _unit.addNode(new Ast::FunctionInstanceExpr(qExprTypeSpec, function, exprList));
+
+    const Ast::FunctionRetn& functionRetn = getFunctionRetn(pos, function);
+    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionRetn, false);
+    Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, functionInstanceExpr, exprList));
+    return ptr(functorCallExpr);
+}
+
+Ast::FunctorCallExpr* Context::aFunctorCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(expr.qTypeSpec().typeSpec()));
     if(function != 0) {
         const Ast::FunctionRetn& functionRetn = getFunctionRetn(pos, ref(function));
@@ -887,6 +903,21 @@ Ast::CallExpr* Context::aCallExpr(const Ast::Token& pos, const Ast::Expr& expr, 
         return ptr(functorCallExpr);
     }
     throw Exception("%s Unknown functor being called '%s'\n", err(_filename, pos).c_str(), expr.qTypeSpec().typeSpec().name().text());
+}
+
+Ast::FunctorCallExpr* Context::aFunctorCallExpr(const Ast::Token& pos, const Ast::Token& name, const Ast::ExprList& exprList) {
+    Ast::VariableRefExpr* expr = aVariableRefExpr(name);
+    return aFunctorCallExpr(pos, ref(expr), exprList);
+}
+
+Ast::RunExpr* Context::aRunExpr(const Ast::Token& pos, const Ast::FunctorCallExpr& callExpr) {
+    const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(callExpr.expr().qTypeSpec().typeSpec()));
+    if(function != 0) {
+        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(function), true);
+        Ast::RunExpr& runExpr = _unit.addNode(new Ast::RunExpr(qTypeSpec, callExpr));
+        return ptr(runExpr);
+    }
+    throw Exception("%s Unknown functor in run expression '%s'\n", err(_filename, pos).c_str(), callExpr.expr().qTypeSpec().typeSpec().name().text());
 }
 
 Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {

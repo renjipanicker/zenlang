@@ -199,8 +199,18 @@ private:
 
     virtual void visit(const Ast::FunctorCallExpr& node) {
         ExprGenerator(_fp).visitNode(node.expr());
-        fprintf(_fp, ".run(%s::_In(", getTypeSpecName(node.expr().qTypeSpec().typeSpec()).c_str());
+        fprintf(_fp, ".run(");
+        fprintf(_fp, "%s::_In(", getTypeSpecName(node.expr().qTypeSpec().typeSpec()).c_str());
         ExprGenerator(_fp, ", ").visitList(node.exprList());
+        fprintf(_fp, "))");
+    }
+
+    virtual void visit(const Ast::RunExpr& node) {
+        fprintf(_fp, "CallContext::get().add(");
+        ExprGenerator(_fp).visitNode(node.callExpr().expr());
+        fprintf(_fp, ", ");
+        fprintf(_fp, "%s::_In(", getTypeSpecName(node.callExpr().expr().qTypeSpec().typeSpec()).c_str());
+        ExprGenerator(_fp, ", ").visitList(node.callExpr().exprList());
         fprintf(_fp, "))");
     }
 
@@ -219,7 +229,7 @@ private:
             case Ast::RefType::Global:
                 break;
             case Ast::RefType::XRef:
-                fprintf(_fp, "_this.%s", node.vref().name().text());
+                fprintf(_fp, "ref(this).%s", node.vref().name().text());
                 break;
             case Ast::RefType::Param:
                 fprintf(_fp, "_in.%s", node.vref().name().text());
@@ -455,13 +465,9 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             visitScope(fpDecl(node), node.sig().inScope(), "_In", "_In");
         }
 
-        // impl-function
-        fprintf(fpDecl(node), "%sprivate:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    static _Out impl(%s& _this, const _In& _in);\n", Indent::get(), node.name().text());
-
         // run-function
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    inline _Out run(const _In& _in) {return (*impl)(ref(this), _in);}\n", Indent::get());
+        fprintf(fpDecl(node), "%s    _Out run(const _In& _in);\n", Indent::get());
 
         //default-ctor
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
@@ -530,9 +536,6 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             fprintf(fpDecl(node), "%sclass %s : public %s {\n", Indent::get(), node.name().text(), getTypeSpecName(node.base()).c_str());
         }
 
-        // impl-function
-        fprintf(fpDecl(node), "%s    static _Out impl(%s& _this, const _In& _in);\n", Indent::get(), node.name().text());
-
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
         visitChildrenIndent(node);
 
@@ -544,7 +547,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
         // run-function
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    inline _Out run(const _In& _in) {return (*impl)(ref(this), _in);}\n", Indent::get());
+        fprintf(fpDecl(node), "%s    _Out run(const _In& _in);\n", Indent::get());
 
         fprintf(fpDecl(node), "%s};\n", Indent::get());
         fprintf(fpDecl(node), "\n");
@@ -561,12 +564,12 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             fprintf(fpDecl(node), "%sclass Add : public AddHandler<Add> {\n", Indent::get());
             fprintf(fpDecl(node), "%s    struct _Out {\n", Indent::get());
             fprintf(fpDecl(node), "%s    };\n", Indent::get());
-            fprintf(fpDecl(node), "%s    static _Out impl(Add& This);\n", Indent::get());
+            fprintf(fpDecl(node), "%s    _Out run();\n", Indent::get());
             fprintf(fpDecl(node), "%s    const %s _%s;\n", Indent::get(), getTypeSpecName(node.in().qualifiedTypeSpec().typeSpec()).c_str(), node.in().name().text());
             fprintf(fpDecl(node), "%spublic:\n", Indent::get());
             fprintf(fpDecl(node), "%s    inline Add(", Indent::get());
             fprintf(fpDecl(node), "const %s& %s, Handler* handler", getTypeSpecName(node.in().qualifiedTypeSpec().typeSpec()).c_str(), node.in().name().text());
-            fprintf(fpDecl(node), ") : AddHandler(&impl, add(handler)), _%s(%s) {}\n", node.in().name().text(), node.in().name().text());
+            fprintf(fpDecl(node), ") : AddHandler(add_(handler)), _%s(%s) {}\n", node.in().name().text(), node.in().name().text());
             fprintf(fpDecl(node), "%s};\n", Indent::get());
         }
         fprintf(fpDecl(node), "%s};\n", Indent::get());
@@ -843,11 +846,12 @@ private:
     }
 
     virtual void visit(const Ast::FunctionBody& node) {
-        fprintf(_fpSrc, "%s::_Out %s::impl(%s& _this, const _In& _in)\n", getTypeSpecName(node.function()).c_str(), getTypeSpecName(node.function()).c_str(), getTypeSpecName(node.function()).c_str());
+        fprintf(_fpSrc, "%s::_Out %s::run(const _In& _in)\n", getTypeSpecName(node.function()).c_str(), getTypeSpecName(node.function()).c_str());
         StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
         gen.visitNode(node.block());
         fprintf(_fpSrc, "\n");
     }
+
 private:
     FILE* _fpHdr;
     FILE* _fpSrc;

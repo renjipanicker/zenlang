@@ -66,6 +66,8 @@ private:
 
 class CallContext {
 public:
+    static CallContext& get();
+public:
     void run();
     inline size_t size() const {return _invocationList.size();}
 
@@ -86,9 +88,10 @@ private:
 
 public:
     template <typename FunctionT>
-    FunctionT add(FunctionT function, const typename FunctionT::_In& in) {
-        _invocationList.push_back(new InvocationT<FunctionT>(function, in));
-        return function;
+    FunctionT& add(FunctionT function, const typename FunctionT::_In& in) {
+        InvocationT<FunctionT>* inv = new InvocationT<FunctionT>(function, in);
+        _invocationList.push_back(inv);
+        return ref(inv)._function;
     }
 };
 

@@ -2,6 +2,9 @@
 #include "zenlang.hpp"
 
 CallContext g_context = CallContext();
+CallContext& CallContext::get() {
+    return g_context;
+}
 
 static TestInstance* g_testListHead = 0;
 static TestInstance* g_testListTail = 0;

@@ -111,12 +111,15 @@ public:
     Ast::VariableDefn*       aVariableDefn(const Ast::Token& name, const Ast::Expr& initExpr);
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
     Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
-    const Ast::Function*     aFunctionTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
-    const Ast::Function*     aFunctionTypeSpec(const Ast::Token& name);
-    const Ast::Function*     aFunctionTypeSpec(const Ast::Function& function);
     const Ast::StructDefn*   aStructTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
     const Ast::StructDefn*   aStructTypeSpec(const Ast::Token& name);
     const Ast::StructDefn*   aStructTypeSpec(const Ast::StructDefn& structDefn);
+    const Ast::Routine*      aRoutineTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
+    const Ast::Routine*      aRoutineTypeSpec(const Ast::Token& name);
+    const Ast::Routine*      aRoutineTypeSpec(const Ast::Routine& routine);
+    const Ast::Function*     aFunctionTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
+    const Ast::Function*     aFunctionTypeSpec(const Ast::Token& name);
+    const Ast::Function*     aFunctionTypeSpec(const Ast::Function& function);
     const Ast::TypeSpec*     aOtherTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
     const Ast::TypeSpec*     aOtherTypeSpec(const Ast::Token& name);
     const Ast::TypeSpec*     aTypeSpec(const Ast::TypeSpec& typeSpec);
@@ -174,8 +177,14 @@ public:
     Ast::DictItem*            aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& valueExpr);
 
     Ast::FormatExpr*          aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr);
-    Ast::CallExpr*            aCallExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
-    Ast::CallExpr*            aCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList);
+
+    Ast::RunExpr*             aRunExpr(const Ast::Token& pos, const Ast::FunctorCallExpr& callExpr);
+
+    Ast::FunctorCallExpr*     aFunctorCallExpr(const Ast::Token& pos, const Ast::Token& name, const Ast::ExprList& exprList);
+    Ast::FunctorCallExpr*     aFunctorCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList);
+    Ast::FunctorCallExpr*     aFunctionCallExpr(const Ast::Token& pos, const Ast::Function& function, const Ast::ExprList& exprList);
+    Ast::RoutineCallExpr*     aRoutineCallExpr(const Ast::Token& pos, const Ast::Routine& routine, const Ast::ExprList& exprList);
+
     Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
     Ast::TypeofExpr*          aTypeofExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec);
     Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);
