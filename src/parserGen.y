@@ -52,7 +52,7 @@
 // All keywords, etc
 %nonassoc ERR EOF RESERVED.
 %nonassoc OCTINT_CONST DECINT_CONST HEXINT_CONST DOUBLE_CONST FLOAT_CONST STRING_CONST.
-%nonassoc JOIN LINK.
+%nonassoc JOIN LINK RUN.
 
 //-------------------------------------------------
 // All operators, in increasing order of precedence
@@ -459,13 +459,14 @@ rExpr(L) ::= rPrefixExpr(R).       {L = R;}
 rExpr(L) ::= rListExpr(R).         {L = R;}
 rExpr(L) ::= rDictExpr(R).         {L = R;}
 rExpr(L) ::= rFormatExpr(R).       {L = R;}
-rExpr(L) ::= rCallExpr(R).              {L = R;}
+rExpr(L) ::= rCallExpr(R).         {L = R;}
+//rExpr(L) ::= rRunExpr(R).          {L = R;}
 rExpr(L) ::= rVariableRefExpr(R).       {L = R;}
 rExpr(L) ::= rVariableMemberExpr(R).    {L = R;}
 rExpr(L) ::= rTypeSpecMemberExpr(R).    {L = R;}
 rExpr(L) ::= rStructInstanceExpr(R).    {L = R;}
 rExpr(L) ::= rFunctionInstanceExpr(R).  {L = R;}
-rExpr(L) ::= rAnonymousFunctionExpr(R).  {L = R;}
+rExpr(L) ::= rAnonymousFunctionExpr(R). {L = R;}
 rExpr(L) ::= rConstantExpr(R).          {L = R;}
 
 //-------------------------------------------------
@@ -639,13 +640,19 @@ rStructInitPartList(L) ::=                                                . {L =
 rStructInitPart(L) ::= ID(R) COLON rExpr(E). {L = ref(pctx).aStructInitPart(R, ref(E));}
 
 //-------------------------------------------------
-// function call expressions
+// functor call expressions
 %type rCallExpr {Ast::CallExpr*}
-rCallExpr(L) ::= rTypeSpec(typeSpec) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aCallExpr(B, ref(typeSpec), ref(exprList));}
+rCallExpr(L) ::= rCallPart(R).  {L = R;}
+
+//-------------------------------------------------
+// function call type
+rCallExpr(L) ::= RUN(B) rCallPart(F).  {L = ref(pctx).aRunExpr(B, ref(F));}
 
 //-------------------------------------------------
 // functor call expressions
-rCallExpr(L) ::= rExpr(expr) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aCallExpr(B, ref(expr), ref(exprList));}
+%type rCallPart {Ast::CallExpr*}
+rCallPart(L) ::= rExpr(expr) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aCallExpr(B, ref(expr), ref(exprList));}
+rCallPart(L) ::= rTypeSpec(typeSpec) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aCallExpr(B, ref(typeSpec), ref(exprList));}
 
 //-------------------------------------------------
 // constant expressions
