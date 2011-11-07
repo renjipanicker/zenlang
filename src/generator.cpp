@@ -176,7 +176,23 @@ private:
     }
 
     virtual void visit(const Ast::RoutineCallExpr& node) {
-        fprintf(_fp, "%s(", getTypeSpecName(node.routine()).c_str());
+        const std::string name = getTypeSpecName(node.routine());
+        if((name == "assert") || (name == "unused")) {
+            std::string sep;
+            for(Ast::ExprList::List::const_iterator it = node.exprList().list().begin(); it != node.exprList().list().end(); ++it) {
+                const Ast::Expr& expr = ref(*it);
+                fprintf(_fp, "%s%s(", sep.c_str(), name.c_str());
+                ExprGenerator(_fp).visitNode(expr);
+                fprintf(_fp, ")");
+                sep = ",";
+            }
+            return;
+        }
+
+        if(name == "check") {
+        }
+
+        fprintf(_fp, "%s(", name.c_str());
         ExprGenerator(_fp, ", ").visitList(node.exprList());
         fprintf(_fp, ")");
     }

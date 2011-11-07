@@ -21,6 +21,8 @@ public test testBasicExpr {
     local r = testRoutine(123);
     local f = testFunction(456);
 
+    assert(i == 0, s == "xx", e == 9);
+
     return (1);
 }
 

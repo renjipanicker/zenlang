@@ -1,14 +1,12 @@
-assert()
-check()
-unused()
-event
-event-handler
 run
 future
+event
+event-handler
 *** rename local to auto (consistency with c++0x)
 *** enum-default-value
 *** struct-default-value
 *** enum-init-expr
+*** 3 level unit test - suite/test/check
 
 in-params are const by default, locals are not
 lexical scanner for string input
@@ -25,10 +23,10 @@ print <dst> <expr>;
 print <dst> <src> <level> <expr>;
 *** move Formatter to String, Creator to List/Dict
 *** merge enum and struct Ast's.
-*** 3 level unit test - suite/test/check
 *** optimize trace/exception
 *** document ast
 *** document vref logic
+*** changed test::passed to bool
 
 Remove block from unit
 project generator - cmake
@@ -65,3 +63,5 @@ continue
 switch-value
 switch-expression
 remove get-set for struct, retain set-chain ability (how?)
+assert()
+unused()
