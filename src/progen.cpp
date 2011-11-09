@@ -44,11 +44,13 @@ void ProGen::Impl::run() {
     if(_project.global().gui()) {
         fprintf(_fpPro, "ADD_DEFINITIONS( \"-DGUI\" )\n");
 
+        fprintf(_fpPro, "IF(!WIN32)\n");
         fprintf(_fpPro, "set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} \"%s/../tools/\")\n", _project.zlibPath().c_str());
         fprintf(_fpPro, "FIND_PACKAGE(GTK3)\n");
         fprintf(_fpPro, "IF(GTK3_FOUND)\n");
         fprintf(_fpPro, "    INCLUDE_DIRECTORIES(${GTK3_INCLUDE_DIRS})\n");
         fprintf(_fpPro, "ENDIF(GTK3_FOUND)\n");
+        fprintf(_fpPro, "ENDIF(!WIN32)\n");
     }
 
     fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \".\")\n");
