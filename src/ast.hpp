@@ -77,11 +77,12 @@ namespace Ast {
 
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
+    class ChildTypeSpec;
     class TypeSpec : public Node {
     public:
         struct Visitor;
     private:
-        typedef std::list<TypeSpec*> ChildTypeSpecList;
+        typedef std::list<ChildTypeSpec*> ChildTypeSpecList;
         typedef std::map<std::string, TypeSpec*> ChildTypeSpecMap;
     public:
         inline TypeSpec(const Token& name) : _accessType(AccessType::Parent), _name(name) {}
@@ -92,7 +93,9 @@ namespace Ast {
         inline const ChildTypeSpecList& childTypeSpecList() const {return _childTypeSpecList;}
         inline size_t childCount() const {return _childTypeSpecList.size();}
     public:
-        inline void addChild(TypeSpec& typeSpec) {
+        template <typename T>
+        inline void addChild(T& typeSpec) {
+            assert(ptr(typeSpec.parent()) == this);
             _childTypeSpecList.push_back(ptr(typeSpec));
             _childTypeSpecMap[typeSpec.name().text()] = ptr(typeSpec);
         }
@@ -353,15 +356,13 @@ namespace Ast {
 
     class EventDecl : public UserDefinedTypeSpec {
     public:
-        inline EventDecl(const TypeSpec& parent, const Ast::Token& name, const Ast::VariableDefn& in, const FunctionSig& functionSig, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _in(in), _functionSig(functionSig) {}
+        inline EventDecl(const TypeSpec& parent, const Ast::Token& name, const Ast::VariableDefn& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _in(in) {}
     public:
         inline const Ast::VariableDefn& in()  const {return _in;}
-        inline const Ast::FunctionSig& functionSig() const {return _functionSig;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const Ast::VariableDefn& _in;
-        const FunctionSig& _functionSig;
     };
 
     class Namespace : public ChildTypeSpec {
@@ -1312,6 +1313,9 @@ namespace Ast {
     public:
         inline const std::string& name() const {return _name;}
     public:
+        inline Config& gui(const bool& val) { _gui = val; return ref(this);}
+        inline const bool& gui() const {return _gui;}
+    public:
         inline Config& addIncludePath(const std::string& dir) { _includePathList.push_back(dir); return ref(this);}
         inline const PathList& includePathList() const {return _includePathList;}
     public:
@@ -1322,6 +1326,7 @@ namespace Ast {
         inline const PathList& sourceFileList() const {return _sourceFileList;}
     private:
         const std::string _name;
+        bool _gui;
         PathList _includePathList;
         PathList _includeFileList;
         PathList _sourceFileList;

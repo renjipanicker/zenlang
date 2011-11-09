@@ -185,6 +185,13 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
         return aConstantExpr("int", value);
     }
 
+    const Ast::Function* fd = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
+    if(fd != 0) {
+        // dummy code for now.
+        Ast::Token value(name.row(), name.col(), "#");
+        return aConstantExpr("int", value);
+    }
+
     throw Exception("%s No default value for type '%s'\n", err(_filename, name).c_str(), typeSpec.name().text());
 }
 
@@ -231,6 +238,16 @@ inline const Ast::TemplateDefn& Context::getTemplateDefn(const Ast::Token& name,
         throw Exception("%s Expression is not of %s type: %s (3)\n", err(_filename, name).c_str(), cname.c_str(), typeSpec.name().text());
     }
     return ref(templateDefn);
+}
+
+inline Ast::FunctionDecl& Context::addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
+    const Ast::Token& name = functionSig.name();
+    Ast::Scope& xref = addScope(Ast::ScopeType::XRef);
+    Ast::FunctionDecl& functionDecl = _unit.addNode(new Ast::FunctionDecl(parent, name, defType, functionSig, xref));
+    Ast::Token token1(name.row(), name.col(), "_Out");
+    Ast::FunctionRetn& functionRetn = _unit.addNode(new Ast::FunctionRetn(functionDecl, token1, functionSig.outScope()));
+    functionDecl.addChild(functionRetn);
+    return functionDecl;
 }
 
 ////////////////////////////////////////////////////////////
@@ -402,15 +419,8 @@ Ast::RoutineDefn* Context::aEnterRoutineDefn(const Ast::QualifiedTypeSpec& outTy
 }
 
 Ast::FunctionDecl* Context::aFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
-    const Ast::Token& name = functionSig.name();
-    Ast::Scope& xref = addScope(Ast::ScopeType::XRef);
-    Ast::FunctionDecl& functionDecl = _unit.addNode(new Ast::FunctionDecl(currentTypeSpec(), name, defType, functionSig, xref));
+    Ast::FunctionDecl& functionDecl = addFunctionDecl(currentTypeSpec(), functionSig, defType);
     currentTypeSpec().addChild(functionDecl);
-
-    Ast::Token token1(name.row(), name.col(), "_Out");
-    Ast::FunctionRetn& functionRetn = _unit.addNode(new Ast::FunctionRetn(functionDecl, token1, functionSig.outScope()));
-    functionDecl.addChild(functionRetn);
-
     return ptr(functionDecl);
 }
 
@@ -460,13 +470,37 @@ Ast::ChildFunctionDefn* Context::aEnterChildFunctionDefn(const Ast::TypeSpec& ba
     enterScope(ref(function).sig().inScope());
     enterTypeSpec(functionDefn);
 
+
     return ptr(functionDefn);
 }
 
-Ast::EventDecl* Context::aEventDecl(const Ast::VariableDefn& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
+Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDefn& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
     const Ast::Token& name = functionSig.name();
-    Ast::EventDecl& eventDef = _unit.addNode(new Ast::EventDecl(currentTypeSpec(), name, in, functionSig, defType));
+
+    Ast::Token eventName(pos.row(), pos.col(), name.string());
+    Ast::EventDecl& eventDef = _unit.addNode(new Ast::EventDecl(currentTypeSpec(), eventName, in, defType));
     currentTypeSpec().addChild(eventDef);
+
+    Ast::Token handlerName(pos.row(), pos.col(), "Handler");
+    Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, functionSig.inScope());
+    Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, ref(handlerSig), defType);
+
+    Ast::Token hVarName(pos.row(), pos.col(), "handler");
+    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, funDecl, false);
+    Ast::VariableDefn& vdef = addVariableDefn(qTypeSpec, hVarName);
+    eventDef.addChild(funDecl);
+
+
+    Ast::Scope& outAdd = addScope(Ast::ScopeType::Param);
+    Ast::Scope& inAdd  = addScope(Ast::ScopeType::Param);
+    Ast::Token nameAdd(pos.row(), pos.col(), "Add");
+    Ast::FunctionSig* addSig = aFunctionSig(outAdd, nameAdd, inAdd);
+    Ast::FunctionDecl& addDecl = addFunctionDecl(eventDef, ref(addSig), defType);
+    eventDef.addChild(addDecl);
+
+    inAdd.addVariableDef(in);
+    inAdd.addVariableDef(vdef);
+
     return ptr(eventDef);
 }
 
@@ -1039,6 +1073,13 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
 }
 
 Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list) {
+    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, structDefn, false);
+    Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(qTypeSpec, structDefn, list));
+    return ptr(structInstanceExpr);
+}
+
+Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn) {
+    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList());
     const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, structDefn, false);
     Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(qTypeSpec, structDefn, list));
     return ptr(structInstanceExpr);

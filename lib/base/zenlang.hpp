@@ -148,21 +148,30 @@ struct test {
         inline _Out(const int& passed) : _passed(passed) {}
         int _passed;
     };
-    _Out* _out;
-    inline void ret(_Out* val) {_out = val;}
 public:
     struct _In {
         inline _In() {}
     };
-
-    inline test() : _instance(ref(static_cast<T*>(this))) {}
+public:
+    inline const _Out& run(const _In _in) {return (*_impl)(ref(this), _in);}
+public:
+    inline const _Out& out() const {return ref(_out);}
+public:
+    typedef const _Out& Impl(T& _this, const _In& _in);
+    inline test(Impl& pimpl) : _impl(pimpl), _instance(ref(static_cast<T*>(this))) {}
     struct Instance : public TestInstance {
         inline Instance(T& t) : _t(t) {}
         virtual void enque(CallContext& context) {
-            context.add(_t, _In());
+            _In in;
+            context.add(_t, in);
         }
         T& _t;
     } _instance;
+private:
+    _Out* _out;
+    inline void ret(_Out* val) {_out = val;}
+private:
+    Impl& _impl;
 };
 
 template <typename V>

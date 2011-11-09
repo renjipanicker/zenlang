@@ -46,4 +46,5 @@ public routine void assert() native;
 public routine void unused() native;
 public routine void check() native;
 
+public function ()addHandler();
 public function (int passed)test();

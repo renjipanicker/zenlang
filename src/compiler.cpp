@@ -4,6 +4,7 @@
 #include "lexer.hpp"
 #include "generator.hpp"
 #include "progen.hpp"
+#include "outfile.hpp"
 
 bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int& level) {
     Context context(ref(this), unit, level, filename);
@@ -35,13 +36,17 @@ void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& l
 void Compiler::compile() {
     for(Ast::Config::PathList::const_iterator it = _project.global().sourceFileList().begin(); it != _project.global().sourceFileList().end(); ++it) {
         const std::string& filename = *it;
-        trace("compiling %s\n", filename.c_str());
-        Ast::Unit unit(filename);
-        import(unit, "core/core.ipp", 0);
-        if(!parseFile(unit, filename, 0))
-            throw Exception("Cannot open source file '%s'\n", filename.c_str());
-        Generator generator(_project, unit);
-        generator.run();
+        std::string ext = getExtention(filename);
+
+        if(_project.zppExt().find(ext) != std::string::npos) {
+            trace("compiling %s\n", filename.c_str());
+            Ast::Unit unit(filename);
+            import(unit, "core/core.ipp", 0);
+            if(!parseFile(unit, filename, 0))
+                throw Exception("Cannot open source file '%s'\n", filename.c_str());
+            Generator generator(_project, unit);
+            generator.run();
+        }
     }
 
     if(_project.mode() != Ast::Project::Mode::Compile) {

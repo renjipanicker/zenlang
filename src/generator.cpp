@@ -229,7 +229,7 @@ private:
             case Ast::RefType::Global:
                 break;
             case Ast::RefType::XRef:
-                fprintf(_fp, "ref(this).%s", node.vref().name().text());
+                fprintf(_fp, "_this.%s", node.vref().name().text());
                 break;
             case Ast::RefType::Param:
                 fprintf(_fp, "_in.%s", node.vref().name().text());
@@ -366,6 +366,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
                 fprintf(_fpHdr, "%sstruct Impl;\n", Indent::get());
                 fprintf(_fpHdr, "%sImpl* _impl;\n", Indent::get());
             }
+            fprintf(_fpHdr, "%s    %s();\n", Indent::get(), node.name().text());
             fprintf(_fpHdr, "%s};\n", Indent::get());
             fprintf(_fpHdr, "\n");
             impl = "::Impl";
@@ -387,6 +388,10 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             fprintf(fp, "%s};\n", Indent::get());
             fprintf(fp, "\n");
         }
+
+        if(node.accessType() == Ast::AccessType::Protected) {
+            fprintf(fp, "%s::%s() : _impl(0) {_impl = new Impl();} \n", node.name().text(), node.name().text());
+        }
         return;
     }
 
@@ -407,71 +412,119 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(fp, ")");
     }
 
-    void visitScope(FILE* fp, const Ast::Scope& scope, const std::string& cname, const std::string& sname) {
-        if(sname.size() > 0)
-            fprintf(fp, "%sstruct %s {\n", Indent::get(), sname.c_str());
-
+    inline void writeScopeMemberList(FILE* fp, const Ast::Scope& scope) {
         for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
             INDENT;
             const Ast::VariableDefn& vdef = ref(*it);
             fprintf(fp, "%sconst %s %s;\n", Indent::get(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
         }
-
-        // ctor
-        if(cname.size() > 0) {
-            fprintf(fp, "%s    inline %s(", Indent::get(), cname.c_str());
-            std::string sep = "";
-            for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
-                const Ast::VariableDefn& vdef = ref(*it);
-                fprintf(fp, "%sconst %s& p%s", sep.c_str(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
-                sep = ", ";
-            }
-            fprintf(fp, ")");
-            sep = " : ";
-            for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
-                const Ast::VariableDefn& vdef = ref(*it);
-                fprintf(fp, "%s%s(p%s)", sep.c_str(), vdef.name().text(), vdef.name().text());
-                sep = ", ";
-            }
-            fprintf(fp, " {}\n");
-        }
-
-        if(sname.size() > 0)
-            fprintf(fp, "%s};\n", Indent::get());
     }
 
-    void visitFunction(const Ast::Function& node) {
-        fprintf(fpDecl(node), "%sclass %s {\n", Indent::get(), node.name().text());
+    inline void writeCtor(FILE* fp, const std::string& cname, const Ast::Scope& scope, const bool& hasImpl, const bool& isRoot, const bool& hasSubImpl, const std::string& bname) {
+        fprintf(fp, "%s    inline %s(", Indent::get(), cname.c_str());
 
+        std::string sep = "";
+        if(hasImpl) {
+            if(isRoot) {
+                if(hasSubImpl) {
+                    fprintf(fp, "%sconst Impl& pimpl", sep.c_str());
+                    sep = ", ";
+                }
+            }
+        }
+
+        for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
+            const Ast::VariableDefn& vdef = ref(*it);
+            fprintf(fp, "%sconst %s& p%s", sep.c_str(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec()).c_str(), vdef.name().text());
+            sep = ", ";
+        }
+
+        fprintf(fp, ")");
+
+        sep = " : ";
+        if(hasImpl) {
+            if(isRoot) {
+                if(hasSubImpl) {
+                    fprintf(fp, "%s_impl(pimpl)", sep.c_str());
+                } else {
+                    fprintf(fp, "%s_impl(impl)", sep.c_str());
+                }
+            } else {
+                fprintf(fp, "%s%s(impl)", sep.c_str(), bname.c_str());
+            }
+            sep = ", ";
+        }
+
+        for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
+            const Ast::VariableDefn& vdef = ref(*it);
+            fprintf(fp, "%s%s(p%s)", sep.c_str(), vdef.name().text(), vdef.name().text());
+            sep = ", ";
+        }
+
+        fprintf(fp, " {}\n");
+    }
+
+    inline void visitFunctionSig(const Ast::Function& node, const bool& isRoot, const std::string& bname) {
         // child-typespecs
-        fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        visitChildrenIndent(node);
-
-        // out-param-instance
-        fprintf(fpDecl(node), "%sprivate:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    _Out* _out;\n", Indent::get());
-        fprintf(fpDecl(node), "%s    inline void ret(_Out* val) {_out = val;}\n", Indent::get());
+        if(node.childCount() > 0) {
+            fprintf(fpDecl(node), "%spublic:\n", Indent::get());
+            visitChildrenIndent(node);
+        }
 
         // xref-list
         if(node.xref().size() > 0) {
             fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-            visitScope(fpDecl(node), node.xrefScope(), node.name().string(), "");
+            writeScopeMemberList(fpDecl(node), node.xrefScope());
         }
 
         // in-param-list
-        if(node.sig().in().size() > 0) {
+        if(isRoot) {
             fprintf(fpDecl(node), "%spublic:\n", Indent::get());
             INDENT;
-            visitScope(fpDecl(node), node.sig().inScope(), "_In", "_In");
+            fprintf(fpDecl(node), "%sstruct _In {\n", Indent::get());
+            writeScopeMemberList(fpDecl(node), node.sig().inScope());
+            writeCtor(fpDecl(node), "_In", node.sig().inScope(), false, isRoot, false, bname);
+            fprintf(fpDecl(node), "%s};\n", Indent::get());
+        }
+
+        if(isRoot) {
+            fprintf(fpDecl(node), "%s    typedef const _Out& Impl(%s& _this, const _In& _in);\n", Indent::get(), node.name().text());
+        }
+
+        writeCtor(fpDecl(node), node.name().text(), node.xrefScope(), true, isRoot, false, bname);
+        if(isRoot) {
+            writeCtor(fpDecl(node), node.name().text(), node.xrefScope(), true, isRoot, true, bname); /// \todo do this only if not final
+        }
+
+        // run-function-type
+        if(isRoot) {
+            fprintf(fpDecl(node), "%spublic:\n", Indent::get());
+            fprintf(fpDecl(node), "%s    inline const _Out& run(const _In _in) {return (*_impl)(ref(this), _in);}\n", Indent::get());
+        }
+
+        //out-value
+        fprintf(fpDecl(node), "%spublic:\n", Indent::get());
+        fprintf(fpDecl(node), "%s    inline const _Out& out() const {return ref(_out);}\n", Indent::get());
+
+        // out-param-instance
+        fprintf(fpDecl(node), "%sprivate:\n", Indent::get());
+        fprintf(fpDecl(node), "%s    _Out* _out;\n", Indent::get());
+        fprintf(fpDecl(node), "%s    inline const _Out& out(_Out* val) {_out = val;return ref(_out);}\n", Indent::get());
+
+        // run-function-type
+        if(isRoot) {
+            fprintf(fpDecl(node), "%sprivate:\n", Indent::get());
+            fprintf(fpDecl(node), "%s    Impl& _impl;\n", Indent::get());
         }
 
         // run-function
-        fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    _Out run(const _In& _in);\n", Indent::get());
+        fprintf(fpDecl(node), "%sprivate:\n", Indent::get());
+        fprintf(fpDecl(node), "%s    static const _Out& impl(%s& _this, const _In& _in);\n", Indent::get(), node.name().text());
+    }
 
-        //default-ctor
-        fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    inline const _Out& ret() const {return ref(_out);}\n", Indent::get());
+    inline void visitFunction(const Ast::Function& node) {
+        fprintf(fpDecl(node), "%sclass %s {\n", Indent::get(), node.name().text());
+        visitFunctionSig(node, true, "");
         fprintf(fpDecl(node), "%s};\n", Indent::get());
     }
 
@@ -535,43 +588,27 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         } else {
             fprintf(fpDecl(node), "%sclass %s : public %s {\n", Indent::get(), node.name().text(), getTypeSpecName(node.base()).c_str());
         }
+        visitFunctionSig(node, false, node.base().name().string());
 
-        fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        visitChildrenIndent(node);
-
-        // xref-list
-        if(node.xref().size() > 0) {
-            fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-            visitScope(fpDecl(node), node.xrefScope(), node.name().string(), "");
+        if(getTypeSpecName(node.base()) == "test") {
+            fprintf(fpDecl(node), "%s    static %s _test;\n", Indent::get(), node.name().text());
         }
-
-        // run-function
-        fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    _Out run(const _In& _in);\n", Indent::get());
 
         fprintf(fpDecl(node), "%s};\n", Indent::get());
         fprintf(fpDecl(node), "\n");
-
-        if(getTypeSpecName(node.base()) == "test") {
-            fprintf(_fpSrc, "%sstatic %s test_%s;\n", Indent::get(), node.name().text(), node.name().text());
-        }
     }
 
     void visit(const Ast::EventDecl& node) {
-        fprintf(fpDecl(node), "%sstruct %s : public Event<%s> {\n", Indent::get(), node.name().text(), node.name().text());
-        {
-            INDENT;
-            fprintf(fpDecl(node), "%sclass Add : public AddHandler<Add> {\n", Indent::get());
-            fprintf(fpDecl(node), "%s    struct _Out {\n", Indent::get());
-            fprintf(fpDecl(node), "%s    };\n", Indent::get());
-            fprintf(fpDecl(node), "%s    _Out run();\n", Indent::get());
-            fprintf(fpDecl(node), "%s    const %s _%s;\n", Indent::get(), getTypeSpecName(node.in().qualifiedTypeSpec().typeSpec()).c_str(), node.in().name().text());
+        fprintf(fpDecl(node), "%sstruct %s {\n", Indent::get(), node.name().text());
+        // child-typespecs
+        if(node.childCount() > 0) {
             fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-            fprintf(fpDecl(node), "%s    inline Add(", Indent::get());
-            fprintf(fpDecl(node), "const %s& %s, Handler* handler", getTypeSpecName(node.in().qualifiedTypeSpec().typeSpec()).c_str(), node.in().name().text());
-            fprintf(fpDecl(node), ") : AddHandler(add_(handler)), _%s(%s) {}\n", node.in().name().text(), node.in().name().text());
-            fprintf(fpDecl(node), "%s};\n", Indent::get());
+            visitChildrenIndent(node);
         }
+        fprintf(fpDecl(node), "%s    typedef std::list<Handler*> List;\n", Indent::get());
+        fprintf(fpDecl(node), "%s    List _list;\n", Indent::get());
+        fprintf(fpDecl(node), "%s    static %s instance;\n", Indent::get(), node.name().text());
+        fprintf(fpDecl(node), "%s    static inline Handler& add(const Handler& h) {instance._list.push_back(new Handler(h)); return ref(instance._list.back());}\n", Indent::get());
         fprintf(fpDecl(node), "%s};\n", Indent::get());
         fprintf(fpDecl(node), "\n");
         return;
@@ -603,15 +640,16 @@ public:
     inline StatementGenerator(FILE* fpHdr, FILE* fpSrc, FILE* fpImp) : _fpHdr(fpHdr), _fpSrc(fpSrc), _fpImp(fpImp) {}
 private:
     virtual void visit(const Ast::ImportStatement& node) {
+        FILE* fp = (node.defType() == Ast::DefinitionType::Native)?_fpSrc:_fpHdr;
         std::string qt = (node.headerType() == Ast::HeaderType::Import)?"<>":"\"\"";
-        fprintf(_fpHdr, "#include %c", qt.at(0));
+        fprintf(fp, "#include %c", qt.at(0));
         std::string sep = "";
         for(Ast::ImportStatement::Part::const_iterator it = node.part().begin(); it != node.part().end(); ++it) {
             const Ast::Token& name = *it;
-            fprintf(_fpHdr, "%s%s", sep.c_str(), name.text());
+            fprintf(fp, "%s%s", sep.c_str(), name.text());
             sep = "/";
         }
-        fprintf(_fpHdr, ".hpp%c\n", qt.at(1));
+        fprintf(fp, ".hpp%c\n", qt.at(1));
     }
 
     virtual void visit(const Ast::UserDefinedTypeSpecStatement& node) {
@@ -780,9 +818,9 @@ private:
     }
 
     virtual void visit(const Ast::FunctionReturnStatement& node) {
-        fprintf(_fpSrc, "%sreturn _Out(", Indent::get());
+        fprintf(_fpSrc, "%sreturn _this.out(new _Out(", Indent::get());
         ExprGenerator(_fpSrc, ", ").visitList(node.exprList());
-        fprintf(_fpSrc, ");\n");
+        fprintf(_fpSrc, "));\n");
     }
 
     virtual void visit(const Ast::CompoundStatement& node) {
@@ -803,10 +841,97 @@ private:
     FILE* _fpImp;
 };
 
+struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
+    inline void visitChildrenIndent(const Ast::TypeSpec& node) {
+        INDENT;
+        visitChildren(node);
+    }
+
+    void visit(const Ast::TypedefDefn& node) {
+        visitChildrenIndent(node);
+    }
+
+    void visit(const Ast::TemplateDecl& node) {
+        visitChildrenIndent(node);
+    }
+
+    void visit(const Ast::TemplateDefn& node) {
+        visitChildrenIndent(node);
+    }
+
+    void visit(const Ast::EnumDefn& node) {
+        visitChildrenIndent(node);
+    }
+
+    void visit(const Ast::StructDefn& node) {
+        visitChildrenIndent(node);
+    }
+
+    void visit(const Ast::RoutineDecl& node) {
+        visitChildrenIndent(node);
+    }
+
+    void visit(const Ast::RoutineDefn& node) {
+        visitChildrenIndent(node);
+        TypeDeclarationGenerator::visitRoutine(_fpSrc, node, false);
+        fprintf(_fpSrc, "\n");
+        StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
+        gen.visitNode(node.block());
+        fprintf(_fpSrc, "\n");
+    }
+
+    void visit(const Ast::FunctionRetn& node) {
+        visitChildrenIndent(node);
+    }
+
+    void visit(const Ast::FunctionDecl& node) {
+        visitChildrenIndent(node);
+    }
+
+    inline void visitFunction(const Ast::FunctionDefn& node) {
+        fprintf(_fpSrc, "%sconst %s::_Out& %s::impl(%s& _this, const _In& _in)\n", Indent::get(), getTypeSpecName(node).c_str(), getTypeSpecName(node).c_str(), node.name().text());
+        StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
+        gen.visitNode(node.block());
+        fprintf(_fpSrc, "\n");
+    }
+
+    void visit(const Ast::RootFunctionDefn& node) {
+        visitChildrenIndent(node);
+        visitFunction(node);
+    }
+
+    void visit(const Ast::ChildFunctionDefn& node) {
+        visitChildrenIndent(node);
+        visitFunction(node);
+        if(getTypeSpecName(node.base()) == "test") {
+            fprintf(_fpSrc, "%s%s %s::_test = %s();\n", Indent::get(), getTypeSpecName(node).c_str(), getTypeSpecName(node).c_str(), getTypeSpecName(node).c_str());
+        }
+    }
+
+    void visit(const Ast::EventDecl& node) {
+        visitChildrenIndent(node);
+        fprintf(_fpSrc, "%s%s %s::instance;\n", Indent::get(), getTypeSpecName(node).c_str(), getTypeSpecName(node).c_str());
+    }
+
+    void visit(const Ast::Namespace& node) {
+        visitChildrenIndent(node);
+    }
+
+    void visit(const Ast::Root& node) {
+        visitChildrenIndent(node);
+    }
+
+public:
+    inline TypeDefinitionGenerator(FILE* fpHdr, FILE* fpSrc, FILE* fpImp) : _fpHdr(fpHdr), _fpSrc(fpSrc), _fpImp(fpImp) {}
+private:
+    FILE* _fpHdr;
+    FILE* _fpSrc;
+    FILE* _fpImp;
+};
+
 struct Generator::Impl {
     inline Impl(const Ast::Project& project, const Ast::Unit& unit) : _project(project), _unit(unit), _fpHdr(0), _fpSrc(0), _fpImp(0) {}
     inline void generateHeaderIncludes(const std::string& basename);
-    inline void generateFunctionImplementations();
     inline void run();
 private:
     const Ast::Project& _project;
@@ -833,39 +958,6 @@ inline void Generator::Impl::generateHeaderIncludes(const std::string& basename)
     fprintf(_fpHdr, "\n");
 }
 
-class BodyGenerator : public Ast::Body::Visitor {
-public:
-    inline BodyGenerator(FILE* fpHdr, FILE* fpSrc, FILE* fpImp) : _fpHdr(fpHdr), _fpSrc(fpSrc), _fpImp(fpImp) {}
-private:
-    virtual void visit(const Ast::RoutineBody& node) {
-        TypeDeclarationGenerator::visitRoutine(_fpSrc, node.routine(), false);
-        fprintf(_fpSrc, "\n");
-        StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
-        gen.visitNode(node.block());
-        fprintf(_fpSrc, "\n");
-    }
-
-    virtual void visit(const Ast::FunctionBody& node) {
-        fprintf(_fpSrc, "%s::_Out %s::run(const _In& _in)\n", getTypeSpecName(node.function()).c_str(), getTypeSpecName(node.function()).c_str());
-        StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
-        gen.visitNode(node.block());
-        fprintf(_fpSrc, "\n");
-    }
-
-private:
-    FILE* _fpHdr;
-    FILE* _fpSrc;
-    FILE* _fpImp;
-};
-
-inline void Generator::Impl::generateFunctionImplementations() {
-    for(Ast::Unit::BodyList::const_iterator sit = _unit.bodyList().begin(); sit != _unit.bodyList().end(); ++sit) {
-        const Ast::Body& body = ref(*sit);
-        BodyGenerator gen(_fpHdr, _fpSrc, _fpImp);
-        gen.visitNode(body);
-    }
-}
-
 inline void Generator::Impl::run() {
     Indent::init();
     std::string basename = getBaseName(_unit.filename());
@@ -878,7 +970,8 @@ inline void Generator::Impl::run() {
     TypeDeclarationGenerator(_fpHdr, _fpSrc, _fpImp).visitChildren(_unit.rootNS());
     fprintf(_fpHdr, "\n");
     fprintf(_fpSrc, "\n");
-    generateFunctionImplementations();
+
+    TypeDefinitionGenerator(_fpHdr, _fpSrc, _fpImp).visitChildren(_unit.rootNS());
 }
 
 //////////////////////////////////////////////

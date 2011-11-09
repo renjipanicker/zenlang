@@ -11,6 +11,7 @@ static int showHelp(const Ast::Project& project) {
     fprintf(stdout, "  -h --help      Show this message\n");
     fprintf(stdout, "  -c             Compile only\n");
     fprintf(stdout, "  -n --name      Project name\n");
+    fprintf(stdout, "  -g --gui       GUI application\n");
     fprintf(stdout, "  -z --zenPath   Zen Library path\n");
     return 0;
 }
@@ -51,6 +52,8 @@ int main(int argc, char* argv[]) {
         } else if((t == "-n") || (t == "--name")) {
             t = argv[i++];
             project.name(t);
+        } else if((t == "-g") || (t == "--gui")) {
+            project.global().gui(true);
         } else if((t == "-z") || (t == "--zenPath")) {
             t = argv[i++];
             project.zlibPath(t);

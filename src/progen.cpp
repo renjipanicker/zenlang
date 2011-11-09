@@ -31,6 +31,26 @@ void ProGen::Impl::run() {
     fprintf(_fpPro, "ENDIF(CMAKE_CONFIGURATION_TYPES)\n");
     fprintf(_fpPro, "\n");
 
+    fprintf(_fpPro, "IF(CMAKE_COMPILER_IS_GNUCXX)\n");
+    fprintf(_fpPro, "    ADD_DEFINITIONS( \"-Wall\" )\n");
+    fprintf(_fpPro, "ENDIF(CMAKE_COMPILER_IS_GNUCXX)\n");
+    fprintf(_fpPro, "\n");
+
+    fprintf(_fpPro, "IF( CMAKE_BUILD_TYPE STREQUAL \"Debug\")\n");
+    fprintf(_fpPro, "    ADD_DEFINITIONS( \"-DDEBUG\" )\n");
+    fprintf(_fpPro, "ENDIF()\n");
+    fprintf(_fpPro, "\n");
+
+    if(_project.global().gui()) {
+        fprintf(_fpPro, "ADD_DEFINITIONS( \"-DGUI\" )\n");
+
+        fprintf(_fpPro, "set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} \"%s/../tools/\")\n", _project.zlibPath().c_str());
+        fprintf(_fpPro, "FIND_PACKAGE(GTK3)\n");
+        fprintf(_fpPro, "IF(GTK3_FOUND)\n");
+        fprintf(_fpPro, "    INCLUDE_DIRECTORIES(${GTK3_INCLUDE_DIRS})\n");
+        fprintf(_fpPro, "ENDIF(GTK3_FOUND)\n");
+    }
+
     fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \".\")\n");
     fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", _project.zlibPath().c_str());
     for(Ast::Config::PathList::const_iterator it = _project.global().includePathList().begin(); it != _project.global().includePathList().end(); ++it) {
@@ -72,6 +92,10 @@ void ProGen::Impl::run() {
     fprintf(_fpPro, "\n");
 
     fprintf(_fpPro, "ADD_EXECUTABLE(%s ${project_SOURCES})\n", _project.name().c_str());
+
+    fprintf(_fpPro, "IF(GTK3_FOUND)\n");
+    fprintf(_fpPro, "    TARGET_LINK_LIBRARIES(%s ${GTK3_LIBRARIES})\n", _project.name().c_str());
+    fprintf(_fpPro, "ENDIF(GTK3_FOUND)\n");
     fprintf(_fpPro, "\n");
 }
 

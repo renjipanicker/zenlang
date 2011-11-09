@@ -1,3 +1,5 @@
+include gui::windowimpl native;
+
 namespace Window;
 
 public enum Style {
@@ -6,32 +8,22 @@ public enum Style {
 };
 
 public struct Position {
-    int x = -1;
-    int y = -1;
-    int w = -1;
-    int h = -1;
+    x = -1;
+    y = -1;
+    w = -1;
+    h = -1;
 };
 
 protected struct Instance native;
 
 public struct Definition {
-    string title;
-    Position position;
-    Style style = Style.Normal;
+    title = "";
+    position = Position{};
+    style = Style.Normal;
 };
 
 public routine Position getWindowPosition(const Instance& window) native;
-
-public routine int testRoutine(const Instance& window) {
-    (1>2)?1:2;
-    return 12345;
-}
-
-public function (int i, string s)testFunction(const Instance& window) {
-    (1 + 2) * 3;
-    "xx";
-    return (67890, "yy");
-}
+public routine Position getChildPosition(const Instance& window) native;
 
 public function ()Delete(const Instance& window) native;
 public function ()SetTitle(const Instance& window, const string& title) native;
@@ -42,8 +34,3 @@ public function ()Size(const Instance& window, const int& w, const int& h) nativ
 
 public event(const Instance& window) => function ()OnResize();
 public event(const Instance& window) => function ()OnClose();
-
-
-/*
-Socket::OnRecv(const Instance& socket) <= function ()OnRecv(const string& data);
-*/

@@ -1,11 +1,6 @@
 #include "pch.hpp"
 #include "zenlang.hpp"
 
-CallContext g_context = CallContext();
-CallContext& CallContext::get() {
-    return g_context;
-}
-
 static TestInstance* g_testListHead = 0;
 static TestInstance* g_testListTail = 0;
 
@@ -17,6 +12,11 @@ TestInstance::TestInstance() : _next(0) {
         ref(g_testListTail)._next = this;
     }
     g_testListTail = this;
+}
+
+CallContext g_context = CallContext();
+CallContext& CallContext::get() {
+    return g_context;
 }
 
 void CallContext::run() {

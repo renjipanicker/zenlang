@@ -253,7 +253,7 @@ rEnterChildFunctionDefn(L) ::= rTypeSpec(base) ID(name). {L = ref(pctx).aEnterCh
 //-------------------------------------------------
 // event declarations
 %type rEventDecl {Ast::EventDecl*}
-rEventDecl(L) ::= EVENT LBRACKET rVariableDefn(in) RBRACKET LINK rFunctionSig(functionSig) SEMI. {L = ref(pctx).aEventDecl(ref(in), ref(functionSig), Ast::DefinitionType::Direct);}
+rEventDecl(L) ::= EVENT(B) LBRACKET rVariableDefn(in) RBRACKET LINK rFunctionSig(functionSig) SEMI. {L = ref(pctx).aEventDecl(B, ref(in), ref(functionSig), Ast::DefinitionType::Direct);}
 
 //-------------------------------------------------
 // function signature.
@@ -640,16 +640,16 @@ rEnterAnonymousFunction(L) ::= rFunctionTypeSpec(R). {L = ref(pctx).aEnterAnonym
 // struct instance expressions
 %type rStructInstanceExpr {Ast::StructInstanceExpr*}
 rStructInstanceExpr(L) ::= rStructTypeSpec(R) LCURLY(B) rStructInitPartList(P) RCURLY. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
+rStructInstanceExpr(L) ::= rStructTypeSpec(R) LCURLY(B)                        RCURLY. {L = ref(pctx).aStructInstanceExpr(B, ref(R));}
 
 //-------------------------------------------------
 %type rStructInitPartList {Ast::StructInitPartList*}
-rStructInitPartList(L) ::= rStructInitPartList(R) COMMA rStructInitPart(P). {L = ref(pctx).aStructInitPartList(ref(R), ref(P));}
-rStructInitPartList(L) ::=                              rStructInitPart(P). {L = ref(pctx).aStructInitPartList(ref(P));}
-rStructInitPartList(L) ::=                                                . {L = ref(pctx).aStructInitPartList();}
+rStructInitPartList(L) ::= rStructInitPartList(R) rStructInitPart(P). {L = ref(pctx).aStructInitPartList(ref(R), ref(P));}
+rStructInitPartList(L) ::=                        rStructInitPart(P). {L = ref(pctx).aStructInitPartList(ref(P));}
 
 //-------------------------------------------------
 %type rStructInitPart {Ast::StructInitPart*}
-rStructInitPart(L) ::= ID(R) COLON rExpr(E). {L = ref(pctx).aStructInitPart(R, ref(E));}
+rStructInitPart(L) ::= ID(R) COLON rExpr(E) SEMI. {L = ref(pctx).aStructInitPart(R, ref(E));}
 
 //-------------------------------------------------
 // functor call expressions
