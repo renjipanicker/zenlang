@@ -199,10 +199,10 @@ private:
 
     virtual void visit(const Ast::FunctorCallExpr& node) {
         ExprGenerator(_fp).visitNode(node.expr());
-        fprintf(_fp, ".run(");
+        fprintf(_fp, ".in(");
         fprintf(_fp, "%s::_In(", getTypeSpecName(node.expr().qTypeSpec().typeSpec()).c_str());
         ExprGenerator(_fp, ", ").visitList(node.exprList());
-        fprintf(_fp, "))");
+        fprintf(_fp, ")).run()");
     }
 
     virtual void visit(const Ast::RunExpr& node) {
@@ -468,13 +468,14 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
         // run-function-type
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    const _Out& run(const _In& _pin);\n", Indent::get());
+        fprintf(fpDecl(node), "%s    const _Out& run();\n", Indent::get());
 
         // param-instance
         fprintf(fpDecl(node), "%s    Pointer<_In>  _in;\n", Indent::get());
         fprintf(fpDecl(node), "%s    Pointer<_Out> _out;\n", Indent::get());
 
-        fprintf(fpDecl(node), "%s    inline const _Out& out(_Out* val) {_out = val;return *_out;}\n", Indent::get());
+        fprintf(fpDecl(node), "%s    inline %s& in(_In val) {_in = val; return ref(this);}\n", Indent::get(), node.name().text());
+        fprintf(fpDecl(node), "%s    inline const _Out& out(_Out* val) {_out = val; return *_out;}\n", Indent::get());
     }
 
     inline void visitFunction(const Ast::Function& node) {
@@ -843,7 +844,7 @@ struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
     }
 
     inline void visitFunction(const Ast::FunctionDefn& node) {
-        fprintf(_fpSrc, "%sconst %s::_Out& %s::run(const _In& _pin)\n", Indent::get(), getTypeSpecName(node).c_str(), getTypeSpecName(node).c_str(), node.name().text());
+        fprintf(_fpSrc, "%sconst %s::_Out& %s::run()\n", Indent::get(), getTypeSpecName(node).c_str(), getTypeSpecName(node).c_str());
         StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
         gen.visitNode(node.block());
         fprintf(_fpSrc, "\n");

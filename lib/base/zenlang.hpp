@@ -72,10 +72,9 @@ private:
 
     template <typename FunctionT>
     struct InvocationT : public Invocation {
-        InvocationT(const FunctionT& function, const typename FunctionT::_In& in) : _function(function), _in(in) {}
+        InvocationT(const FunctionT& function) : _function(function) {}
         FunctionT _function;
-        typename FunctionT::_In _in;
-        virtual void run() {_function.run(_in);}
+        virtual void run() {_function.run();}
     };
     typedef std::list<Invocation*> InvocationList;
     InvocationList _invocationList;
@@ -88,15 +87,15 @@ public:
         inline Invocation* operator->() {return _ptr;}
     private:
         inline Ptr(const Ptr& src) : _ptr(0) {unused(src);}
-        inline Ptr& operator=(const Ptr& src) {unused(src);}
+        inline Ptr& operator=(const Ptr& src) {unused(src); return ref(this);}
         Invocation* _ptr;
     };
 
     inline size_t size() const {return _invocationList.size();}
 
     template <typename FunctionT>
-    FunctionT& push(FunctionT function, const typename FunctionT::_In& in) {
-        InvocationT<FunctionT>* inv = new InvocationT<FunctionT>(function, in);
+    FunctionT& push(FunctionT function) {
+        InvocationT<FunctionT>* inv = new InvocationT<FunctionT>(function);
         _invocationList.push_back(inv);
         return ref(inv)._function;
     }
@@ -117,9 +116,33 @@ public:
     void run();
 public:
     template <typename FunctionT>
-    FunctionT& add(FunctionT function, const typename FunctionT::_In& in) {return _list.push(function, in);}
+    FunctionT& add(FunctionT function, const typename FunctionT::_In& in) {
+        function._in = in;
+        return _list.push(function);
+    }
 private:
     FunctionList _list;
+};
+
+template <typename T>
+struct Pointer {
+    inline void reset(T* ptr) {delete _ptr; _ptr = 0; _ptr = ptr;}
+    inline T* clone(const Pointer& src) {
+        if(src._ptr == 0)
+            return 0;
+        return new T(ref(src._ptr));
+    }
+
+    inline Pointer() : _ptr(0) {}
+    inline ~Pointer() {reset(0);}
+    inline Pointer(const Pointer& src) : _ptr(0) {reset(clone(src));}
+    inline Pointer& operator=(const Pointer& src) {reset(clone(src)); return ref(this);}
+    inline Pointer& operator=(T* ptr) {reset(ptr); return ref(this);}
+    inline Pointer& operator=(T t) {reset(new T(t)); return ref(this);}
+    inline T& operator*() {return ref(_ptr);}
+    inline T* operator->() {assert(_ptr); return _ptr;}
+private:
+    T* _ptr;
 };
 
 /*
@@ -182,37 +205,20 @@ public:
         inline _In() {}
     };
 public:
-    inline const _Out& out() const {return ref(_out);}
+    Pointer<_In>  _in;
+    Pointer<_Out> _out;
+    inline const _Out& out(_Out* val) {_out = val;return *_out;}
 public:
     inline test() : _instance(ref(static_cast<T*>(this))) {}
     struct Instance : public TestInstance {
         inline Instance(T& t) : _t(t) {}
         virtual void enque(CallContext& context) {
             _In in;
-            _t.in = _In();
+            _t._in = in;
             context.add(_t, in);
         }
         T& _t;
     } _instance;
-private:
-    _Out* _out;
-    inline void ret(_Out* val) {_out = val;}
-};
-
-template <typename T>
-struct Pointer {
-    inline void reset(T* ptr) {delete _ptr; _ptr = 0; _ptr = ptr;}
-
-    inline Pointer() : _ptr(0) {}
-    inline ~Pointer() {reset(0);}
-    inline Pointer(const Pointer& src) : _ptr(0) {reset(new T(ref(src._ptr)));}
-    inline Pointer& operator=(const Pointer& src) {reset(new T(ref(src._ptr))); return ref(this);}
-    inline Pointer& operator=(T* ptr) {reset(ptr); return ref(this);}
-    inline Pointer& operator=(T& t) {reset(new T(t)); return ref(this);}
-    inline T& operator*() {return ref(_ptr);}
-    inline T* operator->() {assert(_ptr); return _ptr;}
-private:
-    T* _ptr;
 };
 
 template <typename V>
