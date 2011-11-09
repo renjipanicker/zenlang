@@ -64,13 +64,7 @@ private:
     std::string _msg;
 };
 
-class CallContext {
-public:
-    static CallContext& get();
-public:
-    void run();
-    inline size_t size() const {return _invocationList.size();}
-
+class FunctionList {
 private:
     struct Invocation {
         virtual void run() = 0;
@@ -87,14 +81,48 @@ private:
     InvocationList _invocationList;
 
 public:
+    struct Ptr {
+        inline Ptr() : _ptr(0) {}
+        inline ~Ptr() {delete _ptr; _ptr = 0;}
+        inline void set(Invocation* ptr) {delete _ptr; _ptr = 0; _ptr = ptr;}
+        inline Invocation* operator->() {return _ptr;}
+    private:
+        inline Ptr(const Ptr& src) : _ptr(0) {unused(src);}
+        inline Ptr& operator=(const Ptr& src) {unused(src);}
+        Invocation* _ptr;
+    };
+
+    inline size_t size() const {return _invocationList.size();}
+
     template <typename FunctionT>
-    FunctionT& add(FunctionT function, const typename FunctionT::_In& in) {
+    FunctionT& push(FunctionT function, const typename FunctionT::_In& in) {
         InvocationT<FunctionT>* inv = new InvocationT<FunctionT>(function, in);
         _invocationList.push_back(inv);
         return ref(inv)._function;
     }
+
+    inline bool pop(Ptr& ptr) {
+        if(size() == 0)
+            return false;
+        ptr.set(_invocationList.front());
+        _invocationList.pop_front();
+        return true;
+    }
 };
 
+class CallContext {
+public:
+    static CallContext& get();
+public:
+    void run();
+public:
+    template <typename FunctionT>
+    FunctionT& add(FunctionT function, const typename FunctionT::_In& in) {return _list.push(function, in);}
+private:
+    FunctionList _list;
+};
+
+/*
 template <typename T>
 struct Event {
     struct Handler {
@@ -135,6 +163,7 @@ struct Event {
     static T instance;
     static inline typename Handler::Ptr add(Handler* handler) {return instance.add_(handler);}
 };
+*/
 
 struct TestInstance {
     TestInstance();
@@ -160,6 +189,7 @@ public:
         inline Instance(T& t) : _t(t) {}
         virtual void enque(CallContext& context) {
             _In in;
+            _t.in = _In();
             context.add(_t, in);
         }
         T& _t;
@@ -167,6 +197,22 @@ public:
 private:
     _Out* _out;
     inline void ret(_Out* val) {_out = val;}
+};
+
+template <typename T>
+struct Pointer {
+    inline void reset(T* ptr) {delete _ptr; _ptr = 0; _ptr = ptr;}
+
+    inline Pointer() : _ptr(0) {}
+    inline ~Pointer() {reset(0);}
+    inline Pointer(const Pointer& src) : _ptr(0) {reset(new T(ref(src._ptr)));}
+    inline Pointer& operator=(const Pointer& src) {reset(new T(ref(src._ptr))); return ref(this);}
+    inline Pointer& operator=(T* ptr) {reset(ptr); return ref(this);}
+    inline Pointer& operator=(T& t) {reset(new T(t)); return ref(this);}
+    inline T& operator*() {return ref(_ptr);}
+    inline T* operator->() {assert(_ptr); return _ptr;}
+private:
+    T* _ptr;
 };
 
 template <typename V>

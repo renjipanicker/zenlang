@@ -232,7 +232,7 @@ private:
                 fprintf(_fp, "ref(this).%s", node.vref().name().text());
                 break;
             case Ast::RefType::Param:
-                fprintf(_fp, "_in.%s", node.vref().name().text());
+                fprintf(_fp, "(*_in).%s", node.vref().name().text());
                 break;
             case Ast::RefType::Local:
                 fprintf(_fp, "%s", node.vref().name().text());
@@ -468,16 +468,13 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
         // run-function-type
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    const _Out& run(const _In& _in);\n", Indent::get());
+        fprintf(fpDecl(node), "%s    const _Out& run(const _In& _pin);\n", Indent::get());
 
-        //out-value
-        fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    inline const _Out& out() const {return ref(_out);}\n", Indent::get());
+        // param-instance
+        fprintf(fpDecl(node), "%s    Pointer<_In>  _in;\n", Indent::get());
+        fprintf(fpDecl(node), "%s    Pointer<_Out> _out;\n", Indent::get());
 
-        // out-param-instance
-        fprintf(fpDecl(node), "%sprivate:\n", Indent::get());
-        fprintf(fpDecl(node), "%s    _Out* _out;\n", Indent::get());
-        fprintf(fpDecl(node), "%s    inline const _Out& out(_Out* val) {_out = val;return ref(_out);}\n", Indent::get());
+        fprintf(fpDecl(node), "%s    inline const _Out& out(_Out* val) {_out = val;return *_out;}\n", Indent::get());
     }
 
     inline void visitFunction(const Ast::Function& node) {
@@ -563,10 +560,9 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             fprintf(fpDecl(node), "%spublic:\n", Indent::get());
             visitChildrenIndent(node);
         }
-        fprintf(fpDecl(node), "%s    typedef std::list<Handler*> List;\n", Indent::get());
-        fprintf(fpDecl(node), "%s    List _list;\n", Indent::get());
+        fprintf(fpDecl(node), "%s    FunctionList _list;\n", Indent::get());
         fprintf(fpDecl(node), "%s    static %s instance;\n", Indent::get(), node.name().text());
-        fprintf(fpDecl(node), "%s    static inline Handler& add(const Handler& h) {instance._list.push_back(new Handler(h)); return ref(instance._list.back());}\n", Indent::get());
+        fprintf(fpDecl(node), "%s    static inline Handler& add(const Handler& h) {return ref(instance._list.push(h));}\n", Indent::get());
         fprintf(fpDecl(node), "%s};\n", Indent::get());
         fprintf(fpDecl(node), "\n");
         return;
@@ -847,7 +843,7 @@ struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
     }
 
     inline void visitFunction(const Ast::FunctionDefn& node) {
-        fprintf(_fpSrc, "%sconst %s::_Out& %s::run(const _In& _in)\n", Indent::get(), getTypeSpecName(node).c_str(), getTypeSpecName(node).c_str(), node.name().text());
+        fprintf(_fpSrc, "%sconst %s::_Out& %s::run(const _In& _pin)\n", Indent::get(), getTypeSpecName(node).c_str(), getTypeSpecName(node).c_str(), node.name().text());
         StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
         gen.visitNode(node.block());
         fprintf(_fpSrc, "\n");

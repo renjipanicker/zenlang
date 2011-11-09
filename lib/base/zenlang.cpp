@@ -20,11 +20,10 @@ CallContext& CallContext::get() {
 }
 
 void CallContext::run() {
-    while(_invocationList.size() > 0) {
-        Invocation* invocation = _invocationList.front();
-        _invocationList.pop_front();
-        ref(invocation).run();
-        delete invocation;
+    while(_list.size() > 0) {
+        FunctionList::Ptr ptr;
+        if(_list.pop(ptr))
+            ptr->run();
     }
 }
 
