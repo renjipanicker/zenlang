@@ -64,12 +64,12 @@ private:
     std::string _msg;
 };
 
+struct Invocation {
+    virtual void run() = 0;
+};
+
 class FunctionList {
 private:
-    struct Invocation {
-        virtual void run() = 0;
-    };
-
     template <typename FunctionT>
     struct InvocationT : public Invocation {
         InvocationT(const FunctionT& function) : _function(function) {}

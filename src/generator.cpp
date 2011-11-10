@@ -563,7 +563,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         }
         fprintf(fpDecl(node), "%s    FunctionList _list;\n", Indent::get());
         fprintf(fpDecl(node), "%s    static %s instance;\n", Indent::get(), node.name().text());
-        fprintf(fpDecl(node), "%s    static inline Handler& add(const Handler& h) {return ref(instance._list.push(h));}\n", Indent::get());
+        fprintf(fpDecl(node), "%s    static inline Handler& add(const Handler& h) {return instance._list.push(h);}\n", Indent::get());
         fprintf(fpDecl(node), "%s};\n", Indent::get());
         fprintf(fpDecl(node), "\n");
         return;
@@ -584,6 +584,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
 public:
     inline TypeDeclarationGenerator(FILE* fpHdr, FILE* fpSrc, FILE* fpImp) : _fpHdr(fpHdr), _fpSrc(fpSrc), _fpImp(fpImp) {}
+
 private:
     FILE* _fpHdr;
     FILE* _fpSrc;

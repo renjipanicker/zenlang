@@ -30,46 +30,46 @@ Window::Position Window::getChildPosition(const Instance& window) {
 #endif
 }
 
-const Window::Delete::_Out& Window::Delete::run(const Window::Delete::_In& _in) {
-    delete _in.window._impl;
-   //_in.window._impl = 0;
+const Window::Delete::_Out& Window::Delete::run() {
+    delete (*_in).window._impl;
+   //(*_in).window._impl = 0;
    return out(new _Out());
 }
 
-const Window::SetTitle::_Out& Window::SetTitle::run(const Window::SetTitle::_In& _in) {
+const Window::SetTitle::_Out& Window::SetTitle::run() {
 #if defined(WIN32)
-    ::SetWindowText(_in.window._impl->_hWindow, _in.title.c_str());
+    ::SetWindowText((*_in).window._impl->_hWindow, (*_in).title.c_str());
 #endif
 #if defined(GTK)
-    gtk_window_set_title (GTK_WINDOW (_in.window._impl->_hWindow), _in.title.c_str());
+    gtk_window_set_title (GTK_WINDOW ((*_in).window._impl->_hWindow), (*_in).title.c_str());
 #endif
    return out(new _Out());
 }
 
-const Window::Show::_Out& Window::Show::run(const Window::Show::_In& _in) {
+const Window::Show::_Out& Window::Show::run() {
 #if defined(WIN32)
-    ::ShowWindow(_in.window._impl->_hWindow, SW_SHOW);
+    ::ShowWindow((*_in).window._impl->_hWindow, SW_SHOW);
 #endif
 #if defined(GTK)
-    gtk_widget_show(GTK_WIDGET(_in.window._impl->_hWindow));
-    gtk_window_deiconify(GTK_WINDOW(_in.window._impl->_hWindow));
+    gtk_widget_show(GTK_WIDGET((*_in).window._impl->_hWindow));
+    gtk_window_deiconify(GTK_WINDOW((*_in).window._impl->_hWindow));
 #endif
    return out(new _Out());
 }
 
-const Window::Hide::_Out& Window::Hide::run(const Window::Hide::_In& _in) {
+const Window::Hide::_Out& Window::Hide::run() {
 #if defined(WIN32)
-    ::ShowWindow(_in.window._impl->_hWindow, SW_HIDE);
+    ::ShowWindow((*_in).window._impl->_hWindow, SW_HIDE);
 #endif
 #if defined(GTK)
-    gtk_widget_hide(GTK_WIDGET(_in.window._impl->_hWindow));
+    gtk_widget_hide(GTK_WIDGET((*_in).window._impl->_hWindow));
 #endif
    return out(new _Out());
 }
 
-const Window::Move::_Out& Window::Move::run(const Window::Move::_In& _in) {
+const Window::Move::_Out& Window::Move::run() {
 #if defined(WIN32)
-    ::MoveWindow(_in.window._impl->_hWindow, _in.position.x, _in.position.y, _in.position.w, _in.position.h, TRUE);
+    ::MoveWindow((*_in).window._impl->_hWindow, (*_in).position.x, (*_in).position.y, (*_in).position.w, (*_in).position.h, TRUE);
 #endif
 #if defined(GTK)
     unused(_in);
@@ -79,16 +79,16 @@ const Window::Move::_Out& Window::Move::run(const Window::Move::_In& _in) {
    return out(new _Out());
 }
 
-const Window::Size::_Out& Window::Size::run(const Window::Size::_In& _in) {
+const Window::Size::_Out& Window::Size::run() {
 #if defined(WIN32)
     RECT rc;
-    ::GetWindowRect(_in.window._impl->_hWindow, &rc);
-    int w = (_in.w == -1)?(rc.right - rc.left): _in.w;
-    int h = (_in.h == -1)?(rc.bottom - rc.top): _in.h;
-    ::MoveWindow(_in.window._impl->_hWindow, rc.left, rc.top, w, h, TRUE);
+    ::GetWindowRect((*_in).window._impl->_hWindow, &rc);
+    int w = ((*_in).w == -1)?(rc.right - rc.left): (*_in).w;
+    int h = ((*_in).h == -1)?(rc.bottom - rc.top): (*_in).h;
+    ::MoveWindow((*_in).window._impl->_hWindow, rc.left, rc.top, w, h, TRUE);
 #endif
 #if defined(GTK)
-    gtk_widget_set_size_request(_in.window._impl->_hWindow, _in.w, _in.h);
+    gtk_widget_set_size_request((*_in).window._impl->_hWindow, (*_in).w, (*_in).h);
 #endif
    return out(new _Out());
 }
@@ -98,20 +98,19 @@ static gboolean onConfigureEvent(GtkWindow* window, GdkEvent* event, gpointer ph
     unused(window);
     unused(event);
     Window::OnResize::Handler* handler = static_cast<Window::OnResize::Handler*>(phandler);
-    Window::OnResize::Handler::_In in;
-    ref(handler).run(in);
+    ref(handler).run();
     return FALSE;
 }
 #endif
 
-const Window::OnResize::Add::_Out& Window::OnResize::Add::run(const Window::OnResize::Add::_In& _in) {
-    Window::OnResize::Handler& h = Window::OnResize::add(_in.handler);
+const Window::OnResize::Add::_Out& Window::OnResize::Add::run() {
+    Window::OnResize::Handler& h = Window::OnResize::add((*_in).handler);
 #if defined(WIN32)
-    Window::Native::addOnResizeHandler(_in.window._impl->_hWindow, h);
+    Window::Native::addOnResizeHandler((*_in).window._impl->_hWindow, h);
 #endif
 #if defined(GTK)
-    trace("Window::OnResize::Handler::run(): handler = %lu, window = %d\n", ptr(h), _in.window._impl->_hWindow);
-    g_signal_connect (G_OBJECT (_in.window._impl->_hWindow), "configure-event", G_CALLBACK (onConfigureEvent), ptr(h));
+    trace("Window::OnResize::Handler::run(): handler = %lu, window = %d\n", ptr(h), (*_in).window._impl->_hWindow);
+    g_signal_connect (G_OBJECT ((*_in).window._impl->_hWindow), "configure-event", G_CALLBACK (onConfigureEvent), ptr(h));
 #endif
    return out(new _Out());
 }
@@ -121,19 +120,18 @@ static gboolean onWindowCloseEvent(GtkWindow* window, gpointer phandler) {
     unused(window);
     trace("onWindowCloseEvent\n");
     Window::OnClose::Handler* handler = static_cast<Window::OnClose::Handler*>(phandler);
-    Window::OnClose::Handler::_In in;
-    ref(handler).run(in);
+    ref(handler).run();
     return FALSE;
 }
 #endif
 
-const Window::OnClose::Add::_Out& Window::OnClose::Add::run(const Window::OnClose::Add::_In& _in) {
-    Window::OnClose::Handler& h = Window::OnClose::add(_in.handler);
+const Window::OnClose::Add::_Out& Window::OnClose::Add::run() {
+    Window::OnClose::Handler& h = Window::OnClose::add((*_in).handler);
 #if defined(WIN32)
-    Window::Native::addOnCloseHandler(_in.window._impl->_hWindow, h);
+    Window::Native::addOnCloseHandler((*_in).window._impl->_hWindow, h);
 #endif
 #if defined(GTK)
-    g_signal_connect (G_OBJECT (_in.window._impl->_hWindow), "closed", G_CALLBACK (onWindowCloseEvent), ptr(h));
+    g_signal_connect (G_OBJECT ((*_in).window._impl->_hWindow), "closed", G_CALLBACK (onWindowCloseEvent), ptr(h));
 #endif
    return out(new _Out());
 }
