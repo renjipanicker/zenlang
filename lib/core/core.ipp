@@ -36,6 +36,8 @@ default string = "";
 typedef iterator native;
 typedef type_of native;
 
+typedef functor native;
+
 //typedef any native;
 
 template <V>   list native;

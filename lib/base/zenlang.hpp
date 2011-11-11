@@ -68,14 +68,21 @@ struct Invocation {
     virtual void run() = 0;
 };
 
+template <typename FunctionT>
+struct InvocationT : public Invocation {
+    InvocationT(const FunctionT& function) : _function(function) {}
+    FunctionT _function;
+    virtual void run() {_function.run();}
+};
+
+struct Functor {
+    inline Functor(Invocation* inv) : _inv(inv) {}
+private:
+    Invocation* _inv;
+};
+
 class FunctionList {
 private:
-    template <typename FunctionT>
-    struct InvocationT : public Invocation {
-        InvocationT(const FunctionT& function) : _function(function) {}
-        FunctionT _function;
-        virtual void run() {_function.run();}
-    };
     typedef std::list<Invocation*> InvocationList;
     InvocationList _invocationList;
 
@@ -94,10 +101,10 @@ public:
     inline size_t size() const {return _invocationList.size();}
 
     template <typename FunctionT>
-    FunctionT& push(FunctionT function) {
+    InvocationT<FunctionT>& push(FunctionT function) {
         InvocationT<FunctionT>* inv = new InvocationT<FunctionT>(function);
         _invocationList.push_back(inv);
-        return ref(inv)._function;
+        return ref(inv);
     }
 
     inline bool pop(Ptr& ptr) {
@@ -116,7 +123,7 @@ public:
     void run();
 public:
     template <typename FunctionT>
-    FunctionT& add(FunctionT function, const typename FunctionT::_In& in) {
+    InvocationT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
         function._in = in;
         return _list.push(function);
     }
@@ -145,48 +152,30 @@ private:
     T* _ptr;
 };
 
-/*
-template <typename T>
-struct Event {
-    struct Handler {
-        struct Item {
-            inline Item(Handler* x) : t(x) {}
-            Handler* t;
-        };
-        typedef std::list<Item> List;
+template <typename KeyT, typename ValT>
+struct HandlerList {
+    typedef std::list<ValT*> List;
+    typedef std::map<KeyT, List> Map;
+    Map map;
 
-        struct Ptr {
-            Item& _item;
-            inline Ptr(Item& item) : _item(item) {}
-            inline Ptr(const Ptr& src) : _item(src._item) {}
-        };
-
-        inline Handler() {}
-        virtual ~Handler(){}
-    };
-
-    template <typename FnT>
-    class AddHandler {
-    protected:
-        typename Handler::Ptr _handler;
-    public:
-        inline AddHandler(typename Handler::Ptr handler) : _handler(handler) {}
-    };
-
-    typename Handler::List list;
-    inline ~Event() {
+    inline void addHandler(const KeyT& key, ValT* val) {
+        List& list = map[key];
+        list.push_back(val);
     }
 
-    inline typename Handler::Ptr add_(Handler* handler) {
-        list.push_back(typename Handler::Item(handler));
-        typename Handler::Item& item = list.back();
-        return typename Handler::Ptr(item);
-    }
+    inline bool runHandler(const KeyT& key) {
+        typename Map::const_iterator it = map.find(key);
+        if(it == map.end())
+            return false;
 
-    static T instance;
-    static inline typename Handler::Ptr add(Handler* handler) {return instance.add_(handler);}
+        const List& list = it->second;
+        for(typename List::const_iterator itl = list.begin(); itl != list.end(); ++itl) {
+            ValT* handler = *itl;
+            handler->run();
+        }
+        return true;
+    }
 };
-*/
 
 struct TestInstance {
     TestInstance();
@@ -320,5 +309,46 @@ template <typename MethodT, typename ReturnT, typename P1, typename P2, typename
 struct Method<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6,P7,P8)> : public MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6,P7,P8)> {
     inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6,P7,P8)>(impl) {}
     inline ReturnT run(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)), p1, p2, p3, p4, p5, p6, p7, p8);}
+};
+
+template <typename T>
+struct Event {
+    struct Handler {
+        struct Item {
+            inline Item(Handler* x) : t(x) {}
+            Handler* t;
+        };
+        typedef std::list<Item> List;
+
+        struct Ptr {
+            Item& _item;
+            inline Ptr(Item& item) : _item(item) {}
+            inline Ptr(const Ptr& src) : _item(src._item) {}
+        };
+
+        inline Handler() {}
+        virtual ~Handler(){}
+    };
+
+    template <typename FnT>
+    class AddHandler {
+    protected:
+        typename Handler::Ptr _handler;
+    public:
+        inline AddHandler(typename Handler::Ptr handler) : _handler(handler) {}
+    };
+
+    typename Handler::List list;
+    inline ~Event() {
+    }
+
+    inline typename Handler::Ptr add_(Handler* handler) {
+        list.push_back(typename Handler::Item(handler));
+        typename Handler::Item& item = list.back();
+        return typename Handler::Ptr(item);
+    }
+
+    static T instance;
+    static inline typename Handler::Ptr add(Handler* handler) {return instance.add_(handler);}
 };
 #endif

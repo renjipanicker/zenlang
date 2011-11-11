@@ -192,6 +192,11 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
         return aConstantExpr("int", value);
     }
 
+    if(typeSpec.name().string() == "functor") {
+        Ast::Token value(name.row(), name.col(), "0");
+        return aConstantExpr("int", value);
+    }
+
     throw Exception("%s No default value for type '%s'\n", err(_filename, name).c_str(), typeSpec.name().text());
 }
 
@@ -481,15 +486,9 @@ Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDe
     Ast::EventDecl& eventDef = _unit.addNode(new Ast::EventDecl(currentTypeSpec(), eventName, in, defType));
     currentTypeSpec().addChild(eventDef);
 
-    Ast::Token handlerName(pos.row(), pos.col(), "Handler");
-    Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, functionSig.inScope());
-    Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, ref(handlerSig), defType);
-
     Ast::Token hVarName(pos.row(), pos.col(), "handler");
-    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, funDecl, false);
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "functor");
     Ast::VariableDefn& vdef = addVariableDefn(qTypeSpec, hVarName);
-    eventDef.addChild(funDecl);
-
 
     Ast::Scope& outAdd = addScope(Ast::ScopeType::Param);
     Ast::Scope& inAdd  = addScope(Ast::ScopeType::Param);

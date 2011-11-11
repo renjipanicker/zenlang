@@ -54,6 +54,11 @@ static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, s
         return true;
     }
 
+    if(typeSpec.name().string() == "functor") {
+        name = "Functor";
+        return true;
+    }
+
     const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(ptr(typeSpec));
     if(templateDefn) {
         if(typeSpec.name().string() == "list") {
@@ -563,7 +568,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         }
         fprintf(fpDecl(node), "%s    FunctionList _list;\n", Indent::get());
         fprintf(fpDecl(node), "%s    static %s instance;\n", Indent::get(), node.name().text());
-        fprintf(fpDecl(node), "%s    static inline Handler& add(const Handler& h) {return instance._list.push(h);}\n", Indent::get());
+        fprintf(fpDecl(node), "%s    static inline InvocationT<Handler>& add(const Handler& h) {return instance._list.push(h);}\n", Indent::get());
         fprintf(fpDecl(node), "%s};\n", Indent::get());
         fprintf(fpDecl(node), "\n");
         return;

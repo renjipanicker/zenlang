@@ -97,16 +97,17 @@ const Window::Size::_Out& Window::Size::run() {
 static gboolean onConfigureEvent(GtkWindow* window, GdkEvent* event, gpointer phandler) {
     unused(window);
     unused(event);
-    Window::OnResize::Handler* handler = static_cast<Window::OnResize::Handler*>(phandler);
+    Invocation* handler = static_cast<Invocation*>(phandler);
     ref(handler).run();
     return FALSE;
 }
 #endif
 
+static HandlerList<HWND, Invocation> onResizeHandlerList;
 const Window::OnResize::Add::_Out& Window::OnResize::Add::run() {
-    Window::OnResize::Handler& h = Window::OnResize::add((*_in).handler);
+    InvocationT<Window::OnResize::Handler>& h = Window::OnResize::add((*_in).handler);
 #if defined(WIN32)
-    Window::Native::addOnResizeHandler((*_in).window._impl->_hWindow, h);
+    onResizeHandlerList.addHandler((*_in).window._impl->_hWindow, ptr(h));
 #endif
 #if defined(GTK)
     trace("Window::OnResize::Handler::run(): handler = %lu, window = %d\n", ptr(h), (*_in).window._impl->_hWindow);
@@ -119,16 +120,17 @@ const Window::OnResize::Add::_Out& Window::OnResize::Add::run() {
 static gboolean onWindowCloseEvent(GtkWindow* window, gpointer phandler) {
     unused(window);
     trace("onWindowCloseEvent\n");
-    Window::OnClose::Handler* handler = static_cast<Window::OnClose::Handler*>(phandler);
+    Invocation* handler = static_cast<Invocation*>(phandler);
     ref(handler).run();
     return FALSE;
 }
 #endif
 
+static HandlerList<HWND, Invocation> onCloseHandlerList;
 const Window::OnClose::Add::_Out& Window::OnClose::Add::run() {
-    Window::OnClose::Handler& h = Window::OnClose::add((*_in).handler);
+    InvocationT<Window::OnClose::Handler>& h = Window::OnClose::add((*_in).handler);
 #if defined(WIN32)
-    Window::Native::addOnCloseHandler((*_in).window._impl->_hWindow, h);
+    onCloseHandlerList.addHandler((*_in).window._impl->_hWindow, ptr(h));
 #endif
 #if defined(GTK)
     g_signal_connect (G_OBJECT ((*_in).window._impl->_hWindow), "closed", G_CALLBACK (onWindowCloseEvent), ptr(h));
