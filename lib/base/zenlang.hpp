@@ -70,9 +70,10 @@ struct Future {
 
 template <typename FunctionT>
 struct FutureT : public Future {
-    FutureT(const FunctionT& function) : _function(function) {}
+    FutureT(const FunctionT& function, const typename FunctionT::_In& in) : _function(function), _in(in) {}
     FunctionT _function;
-    virtual void run() {_function.run();}
+    typename FunctionT::_In _in;
+    virtual void run() {_function.run(_in);}
 };
 
 template <typename FunctionT>
@@ -105,7 +106,7 @@ public:
         inline ~Ptr() {delete _ptr; _ptr = 0;}
         inline void set(Future* ptr) {delete _ptr; _ptr = 0; _ptr = ptr;}
         inline Future* operator->() {return _ptr;}
-    private:
+     private:
         inline Ptr(const Ptr& src) : _ptr(0) {unused(src);}
         inline Ptr& operator=(const Ptr& src) {unused(src); return ref(this);}
         Future* _ptr;
@@ -114,8 +115,8 @@ public:
     inline size_t size() const {return _invocationList.size();}
 
     template <typename FunctionT>
-    FutureT<FunctionT>& push(FunctionT function) {
-        FutureT<FunctionT>* inv = new FutureT<FunctionT>(function);
+    FutureT<FunctionT>& push(FunctionT function, const typename FunctionT::_In& in) {
+        FutureT<FunctionT>* inv = new FutureT<FunctionT>(function, in);
         _invocationList.push_back(inv);
         return ref(inv);
     }
@@ -137,8 +138,7 @@ public:
 public:
     template <typename FunctionT>
     FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
-        function._in = in;
-        return _list.push(function);
+        return _list.push(function, in);
     }
 private:
     FunctionList _list;
@@ -210,17 +210,16 @@ public:
     Pointer<_In>  _in;
     Pointer<_Out> _out;
     inline const _Out& out(_Out* val) {_out = val;return *_out;}
-public:
-    inline test() : _instance(ref(static_cast<T*>(this))) {}
-    struct Instance : public TestInstance {
-        inline Instance(T& t) : _t(t) {}
-        virtual void enque(CallContext& context) {
-            _In in;
-            _t._in = in;
-            context.add(_t, in);
-        }
-        T& _t;
-    } _instance;
+};
+
+template <typename T>
+struct TestInstanceT : public TestInstance {
+    virtual void enque(CallContext& context) {
+        T t;
+        typename T::_In in;
+        t._in = in;
+        context.add(t, in);
+    }
 };
 
 template <typename V>
