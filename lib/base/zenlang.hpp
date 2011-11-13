@@ -64,45 +64,58 @@ private:
     std::string _msg;
 };
 
-struct Invocation {
+struct Future {
     virtual void run() = 0;
 };
 
 template <typename FunctionT>
-struct InvocationT : public Invocation {
-    InvocationT(const FunctionT& function) : _function(function) {}
+struct FutureT : public Future {
+    FutureT(const FunctionT& function) : _function(function) {}
     FunctionT _function;
     virtual void run() {_function.run();}
 };
 
-struct Functor {
-    inline Functor(Invocation* inv) : _inv(inv) {}
+template <typename FunctionT>
+struct FunctorT {
+    inline FunctorT(FunctionT* function) : _function(function) {}
+    inline FunctionT* function() const {return _function;}
 private:
-    Invocation* _inv;
+    FunctionT* _function;
+};
+
+template <typename FunctionT>
+struct FunctorList {
+    inline FunctionT& add(const FunctorT<FunctionT>& h) {
+        _list.push_back(h.function());
+        return ref(h.function());
+    }
+
+private:
+    typedef std::list<FunctionT*> List;
+    List _list;
 };
 
 class FunctionList {
 private:
-    typedef std::list<Invocation*> InvocationList;
+    typedef std::list<Future*> InvocationList;
     InvocationList _invocationList;
-
 public:
     struct Ptr {
         inline Ptr() : _ptr(0) {}
         inline ~Ptr() {delete _ptr; _ptr = 0;}
-        inline void set(Invocation* ptr) {delete _ptr; _ptr = 0; _ptr = ptr;}
-        inline Invocation* operator->() {return _ptr;}
+        inline void set(Future* ptr) {delete _ptr; _ptr = 0; _ptr = ptr;}
+        inline Future* operator->() {return _ptr;}
     private:
         inline Ptr(const Ptr& src) : _ptr(0) {unused(src);}
         inline Ptr& operator=(const Ptr& src) {unused(src); return ref(this);}
-        Invocation* _ptr;
+        Future* _ptr;
     };
 
     inline size_t size() const {return _invocationList.size();}
 
     template <typename FunctionT>
-    InvocationT<FunctionT>& push(FunctionT function) {
-        InvocationT<FunctionT>* inv = new InvocationT<FunctionT>(function);
+    FutureT<FunctionT>& push(FunctionT function) {
+        FutureT<FunctionT>* inv = new FutureT<FunctionT>(function);
         _invocationList.push_back(inv);
         return ref(inv);
     }
@@ -123,7 +136,7 @@ public:
     void run();
 public:
     template <typename FunctionT>
-    InvocationT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
+    FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
         function._in = in;
         return _list.push(function);
     }

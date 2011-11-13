@@ -192,6 +192,11 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
         return aConstantExpr("int", value);
     }
 
+    if(typeSpec.name().string() == "future") {
+        Ast::Token value(name.row(), name.col(), "0");
+        return aConstantExpr("int", value);
+    }
+
     if(typeSpec.name().string() == "functor") {
         Ast::Token value(name.row(), name.col(), "0");
         return aConstantExpr("int", value);
@@ -480,15 +485,38 @@ Ast::ChildFunctionDefn* Context::aEnterChildFunctionDefn(const Ast::TypeSpec& ba
 }
 
 Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDefn& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
+#if 0
+    Ast::Token handlerName(pos.row(), pos.col(), "Handler");
+    Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, functionSig.inScope());
+    Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, ref(handlerSig), defType);
+
+    Ast::Token hVarName(pos.row(), pos.col(), "handler");
+    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, funDecl, false);
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "functor");
+    Ast::VariableDefn& vdef = addVariableDefn(qTypeSpec, hVarName);
+    eventDef.addChild(funDecl);
+#endif
+
     const Ast::Token& name = functionSig.name();
 
     Ast::Token eventName(pos.row(), pos.col(), name.string());
     Ast::EventDecl& eventDef = _unit.addNode(new Ast::EventDecl(currentTypeSpec(), eventName, in, defType));
     currentTypeSpec().addChild(eventDef);
 
+    Ast::Token handlerName(pos.row(), pos.col(), "Handler");
+    Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, functionSig.inScope());
+    Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, ref(handlerSig), defType);
+    eventDef.addChild(funDecl);
+
+    Ast::QualifiedTypeSpec& qFunTypeSpec = addQualifiedTypeSpec(false, funDecl, false);
+    Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "functor");
+    templateDefn.addType(qFunTypeSpec);
+    const Ast::QualifiedTypeSpec& qFunctorTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
+
+    //10651+251 (icici)
+
     Ast::Token hVarName(pos.row(), pos.col(), "handler");
-    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "functor");
-    Ast::VariableDefn& vdef = addVariableDefn(qTypeSpec, hVarName);
+    Ast::VariableDefn& vdef = addVariableDefn(qFunctorTypeSpec, hVarName);
 
     Ast::Scope& outAdd = addScope(Ast::ScopeType::Param);
     Ast::Scope& inAdd  = addScope(Ast::ScopeType::Param);
@@ -946,7 +974,12 @@ Ast::FunctorCallExpr* Context::aFunctorCallExpr(const Ast::Token& pos, const Ast
 Ast::RunExpr* Context::aRunExpr(const Ast::Token& pos, const Ast::FunctorCallExpr& callExpr) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(callExpr.expr().qTypeSpec().typeSpec()));
     if(function != 0) {
-        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(function), true);
+        Ast::QualifiedTypeSpec& qRetTypeSpec = addQualifiedTypeSpec(false, ref(function), false);
+
+        Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "future");
+        templateDefn.addType(qRetTypeSpec);
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
+
         Ast::RunExpr& runExpr = _unit.addNode(new Ast::RunExpr(qTypeSpec, callExpr));
         return ptr(runExpr);
     }

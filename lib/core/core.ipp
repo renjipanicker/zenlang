@@ -36,7 +36,8 @@ default string = "";
 typedef iterator native;
 typedef type_of native;
 
-typedef functor native;
+template <F> future native;
+template <F> functor native;
 
 //typedef any native;
 
