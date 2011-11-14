@@ -424,9 +424,13 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         }
     }
 
-    void visit(const Ast::StructDefn& node) {
+    inline void visitStructDefn(const Ast::StructDefn& node, const Ast::StructDefn* base) {
         if(node.accessType() == Ast::AccessType::Public) {
-            fprintf(_fpImp, "public struct %s%s {\n", node.name().text(), getDefinitionType(node.defType()).c_str());
+            fprintf(_fpImp, "public struct %s", node.name().text());
+            if(base) {
+                fprintf(_fpImp, " : %s", getTypeSpecName(ref(base), GetNameMode::Import).c_str());
+            }
+            fprintf(_fpImp, "%s {\n", getDefinitionType(node.defType()).c_str());
             for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 const Ast::VariableDefn& vdef = ref(*it);
                 fprintf(_fpImp, "    %s %s", getQualifiedTypeSpecName(vdef.qualifiedTypeSpec(), GetNameMode::Import).c_str(), vdef.name().text());
@@ -450,6 +454,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
                 fprintf(_fpHdr, "%sImpl* _impl;\n", Indent::get());
             }
             fprintf(_fpHdr, "%s    %s();\n", Indent::get(), node.name().text());
+            fprintf(_fpHdr, "%s    %s(const Impl& impl);\n", Indent::get(), node.name().text());
             fprintf(_fpHdr, "%s};\n", Indent::get());
             fprintf(_fpHdr, "\n");
             impl = "::Impl";
@@ -459,7 +464,11 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         }
 
         if(node.defType() != Ast::DefinitionType::Native) {
-            fprintf(fp, "%sstruct %s%s {\n", Indent::get(), node.name().text(), impl.c_str());
+            fprintf(fp, "%sstruct %s%s ", Indent::get(), node.name().text(), impl.c_str());
+            if(base) {
+                fprintf(fp, " : public %s ", getTypeSpecName(ref(base), GetNameMode::Normal).c_str());
+            }
+            fprintf(fp, "{\n");
             for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 INDENT;
                 const Ast::VariableDefn& vdef = ref(*it);
@@ -474,8 +483,17 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
         if(node.accessType() == Ast::AccessType::Protected) {
             fprintf(fp, "%s::%s() : _impl(0) {_impl = new Impl();} \n", node.name().text(), node.name().text());
+            fprintf(fp, "%s::%s(const Impl& impl) : _impl(0) {_impl = new Impl(impl);} \n", node.name().text(), node.name().text());
         }
         return;
+    }
+
+    void visit(const Ast::RootStructDefn& node) {
+        visitStructDefn(node, 0);
+    }
+
+    void visit(const Ast::ChildStructDefn& node) {
+        visitStructDefn(node, ptr(node.base()));
     }
 
     inline void visitRoutineImp(const Ast::Routine& node) {
@@ -955,7 +973,11 @@ struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
         visitChildrenIndent(node);
     }
 
-    void visit(const Ast::StructDefn& node) {
+    void visit(const Ast::RootStructDefn& node) {
+        visitChildrenIndent(node);
+    }
+
+    void visit(const Ast::ChildStructDefn& node) {
         visitChildrenIndent(node);
     }
 

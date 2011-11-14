@@ -204,9 +204,13 @@ rEnumMemberDefn(L) ::= ID(name) ASSIGNEQUAL rExpr(I) SEMI. {L = ref(pctx).aEnumM
 //-------------------------------------------------
 // struct declarations
 %type rStructDefn {Ast::StructDefn*}
-rStructDefn(L) ::= STRUCT ID(name) NATIVE                                    SEMI. {L = ref(pctx).aStructDefn(name, Ast::DefinitionType::Native);}
-rStructDefn(L) ::= STRUCT ID(name) LCURLY rStructMemberDefnList(list) RCURLY SEMI. {L = ref(pctx).aStructDefn(name, Ast::DefinitionType::Direct, ref(list));}
-rStructDefn(L) ::= STRUCT ID(name) LCURLY                             RCURLY SEMI. {L = ref(pctx).aStructDefn(name, Ast::DefinitionType::Direct);}
+rStructDefn(L) ::= STRUCT ID(name) NATIVE                                    SEMI. {L = ref(pctx).aRootStructDefn(name, Ast::DefinitionType::Native);}
+
+rStructDefn(L) ::= STRUCT ID(name) LCURLY rStructMemberDefnList(list) RCURLY SEMI. {L = ref(pctx).aRootStructDefn(name, Ast::DefinitionType::Direct, ref(list));}
+rStructDefn(L) ::= STRUCT ID(name) LCURLY                             RCURLY SEMI. {L = ref(pctx).aRootStructDefn(name, Ast::DefinitionType::Direct);}
+
+rStructDefn(L) ::= STRUCT ID(name) COLON rStructTypeSpec(B) LCURLY rStructMemberDefnList(list) RCURLY SEMI. {L = ref(pctx).aChildStructDefn(ref(B), name, Ast::DefinitionType::Direct, ref(list));}
+rStructDefn(L) ::= STRUCT ID(name) COLON rStructTypeSpec(B) LCURLY                             RCURLY SEMI. {L = ref(pctx).aChildStructDefn(ref(B), name, Ast::DefinitionType::Direct);}
 
 //-------------------------------------------------
 %type rStructMemberDefnList {Ast::Scope*}

@@ -236,14 +236,30 @@ namespace Ast {
     };
 
     class StructDefn : public UserDefinedTypeSpec {
-    public:
+    protected:
         inline StructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::Scope& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
+    public:
         inline const Ast::Scope::List& list() const {return _list.list();}
         inline const Ast::Scope& scope() const {return _list;}
     private:
+        const Ast::Scope& _list;
+    };
+
+    class RootStructDefn : public StructDefn {
+    public:
+        inline RootStructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::Scope& list) : StructDefn(parent, name, defType, list) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class ChildStructDefn : public StructDefn {
+    public:
+        inline ChildStructDefn(const TypeSpec& parent, const StructDefn& base, const Token& name, const DefinitionType::T& defType, const Ast::Scope& list) : StructDefn(parent, name, defType, list), _base(base) {}
+        inline const StructDefn& base() const {return _base;}
+    private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Ast::Scope& _list;
+        const StructDefn& _base;
     };
 
     class Routine : public UserDefinedTypeSpec {
@@ -401,7 +417,8 @@ namespace Ast {
         virtual void visit(const TemplateDecl& node) = 0;
         virtual void visit(const TemplateDefn& node) = 0;
         virtual void visit(const EnumDefn& node) = 0;
-        virtual void visit(const StructDefn& node) = 0;
+        virtual void visit(const RootStructDefn& node) = 0;
+        virtual void visit(const ChildStructDefn& node) = 0;
         virtual void visit(const RoutineDecl& node) = 0;
         virtual void visit(const RoutineDefn& node) = 0;
         virtual void visit(const FunctionDecl& node) = 0;
@@ -417,7 +434,8 @@ namespace Ast {
     inline void TemplateDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TemplateDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void EnumDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void StructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void RootStructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void ChildStructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}

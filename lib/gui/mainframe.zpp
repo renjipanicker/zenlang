@@ -2,7 +2,7 @@ include window;
 
 namespace MainFrame;
 
-public struct Definition {
+public struct Definition : Window::Definition {
 };
 
 public function (Window::Instance window)Create(const Definition& def) native;

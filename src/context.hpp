@@ -91,8 +91,10 @@ public:
     Ast::Scope*              aEnumMemberDefnList(const Ast::VariableDefn& variableDefn);
     Ast::VariableDefn*       aEnumMemberDefn(const Ast::Token& name);
     Ast::VariableDefn*       aEnumMemberDefn(const Ast::Token& name, const Ast::Expr& initExpr);
-    Ast::StructDefn*         aStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list);
-    Ast::StructDefn*         aStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
+    Ast::RootStructDefn*     aRootStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list);
+    Ast::RootStructDefn*     aRootStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
+    Ast::ChildStructDefn*    aChildStructDefn(const Ast::StructDefn& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list);
+    Ast::ChildStructDefn*    aChildStructDefn(const Ast::StructDefn& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::Scope*              aStructMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& enumMemberDefn);
     Ast::Scope*              aStructMemberDefnList(const Ast::VariableDefn& enumMemberDefn);
     Ast::RoutineDecl*        aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType);

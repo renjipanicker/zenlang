@@ -386,15 +386,26 @@ Ast::VariableDefn* Context::aEnumMemberDefn(const Ast::Token& name, const Ast::E
     return ptr(variableDefn);
 }
 
-Ast::StructDefn* Context::aStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list) {
-    Ast::StructDefn& structDefn = _unit.addNode(new Ast::StructDefn(currentTypeSpec(), name, defType, list));
+Ast::RootStructDefn* Context::aRootStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list) {
+    Ast::RootStructDefn& structDefn = _unit.addNode(new Ast::RootStructDefn(currentTypeSpec(), name, defType, list));
     currentTypeSpec().addChild(structDefn);
     return ptr(structDefn);
 }
 
-Ast::StructDefn* Context::aStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+Ast::RootStructDefn* Context::aRootStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
     Ast::Scope& scope = addScope(Ast::ScopeType::Member);
-    return aStructDefn(name, defType, scope);
+    return aRootStructDefn(name, defType, scope);
+}
+
+Ast::ChildStructDefn* Context::aChildStructDefn(const Ast::StructDefn& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list) {
+    Ast::ChildStructDefn& structDefn = _unit.addNode(new Ast::ChildStructDefn(currentTypeSpec(), base, name, defType, list));
+    currentTypeSpec().addChild(structDefn);
+    return ptr(structDefn);
+}
+
+Ast::ChildStructDefn* Context::aChildStructDefn(const Ast::StructDefn& base, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    Ast::Scope& scope = addScope(Ast::ScopeType::Member);
+    return aChildStructDefn(base, name, defType, scope);
 }
 
 Ast::Scope* Context::aStructMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& enumMemberDefn) {
@@ -1058,7 +1069,7 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
 Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name) {
     const Ast::TypeSpec& typeSpec = expr.qTypeSpec().typeSpec();
 
-    const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
+    const Ast::RootStructDefn* structDefn = dynamic_cast<const Ast::RootStructDefn*>(ptr(typeSpec));
     if(structDefn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(structDefn).scope(), name);
         if(vref == 0) {
@@ -1083,7 +1094,7 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
         return ptr(typeSpecMemberExpr);
     }
 
-    const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
+    const Ast::RootStructDefn* structDefn = dynamic_cast<const Ast::RootStructDefn*>(ptr(typeSpec));
     if(structDefn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(structDefn).scope(), name);
         if(vref == 0) {
