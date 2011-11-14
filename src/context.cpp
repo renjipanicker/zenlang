@@ -541,6 +541,11 @@ Ast::Scope* Context::aParam() {
     return ptr(list);
 }
 
+Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr) {
+    Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
+    return ptr(variableDef);
+}
+
 Ast::VariableDefn* Context::aVariableDefn(const Ast::Token& name, const Ast::Expr& initExpr) {
     const Ast::QualifiedTypeSpec& qualifiedTypeSpec = initExpr.qTypeSpec();
     Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));

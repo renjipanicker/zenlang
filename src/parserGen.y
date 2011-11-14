@@ -282,6 +282,7 @@ rParam(L) ::= .                                              {L = ref(pctx).aPar
 %type rVariableDefn {const Ast::VariableDefn*}
 rVariableDefn(L) ::=                              ID(name) ASSIGNEQUAL rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
 rVariableDefn(L) ::= rQualifiedTypeSpec(qTypeRef) ID(name).                             {L = ref(pctx).aVariableDefn(ref(qTypeRef), name);}
+rVariableDefn(L) ::= rQualifiedTypeSpec(qTypeRef) ID(name) ASSIGNEQUAL rExpr(initExpr). {L = ref(pctx).aVariableDefn(ref(qTypeRef), name, ref(initExpr));}
 
 //-------------------------------------------------
 // qualified types
