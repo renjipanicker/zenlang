@@ -23,7 +23,7 @@ inline std::string getQualifiedTypeSpecName(const Ast::QualifiedTypeSpec& qtypeS
     std::string name;
     if(qtypeSpec.isConst())
         name += "const ";
-    getRootName(qtypeSpec.typeSpec(), sep, name,mode);
+    getRootName(qtypeSpec.typeSpec(), sep, name, mode);
     if(qtypeSpec.isRef())
         name += "&";
     return name;
@@ -44,32 +44,34 @@ static bool getName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::
             name += sep;
             name += "T";
         }
+    } else if(mode == GetNameMode::Import) {
+        name += ".";
     }
 
     return true;
 }
 
 static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name, const GetNameMode::T& mode) {
-    if(mode == GetNameMode::Normal) {
-        name = typeSpec.name().string();
+    if(mode == GetNameMode::Import) {
+        name += typeSpec.name().string();
         return true;
     }
 
     if(typeSpec.name().string() == "string") {
-        name = "std::string";
+        name += "std::string";
         return true;
     }
 
     const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(ptr(typeSpec));
     if(templateDefn) {
         if(typeSpec.name().string() == "list") {
-            name = "std::list";
+            name += "std::list";
         } else if(typeSpec.name().string() == "dict") {
-            name = "std::map";
+            name += "std::map";
         } else if(typeSpec.name().string() == "future") {
-            name = "FutureT";
+            name += "FutureT";
         } else if(typeSpec.name().string() == "functor") {
-            name = "FunctorT";
+            name += "FunctorT";
         } else {
             throw Exception("Unknown template type '%s'\n", typeSpec.name().text());
         }
@@ -118,7 +120,7 @@ int Indent::_indent = -1;
 
 struct ExprGenerator : public Ast::Expr::Visitor {
 public:
-    inline ExprGenerator(FILE* fp, const std::string& sep2 = "", const std::string& sep1 = "") : _fp(fp), _sep2(sep2), _sep1(sep1), _sep0(sep1) {}
+    inline ExprGenerator(FILE* fp, const bool& isImp, const std::string& sep2 = "", const std::string& sep1 = "") : _fp(fp), _isImp(isImp), _sep2(sep2), _sep1(sep1), _sep0(sep1) {}
 private:
     virtual void visit(const Ast::TernaryOpExpr& node) {
         fprintf(_fp, "(");
@@ -192,7 +194,7 @@ private:
             for(Ast::ExprList::List::const_iterator it = node.exprList().list().begin(); it != node.exprList().list().end(); ++it) {
                 const Ast::Expr& expr = ref(*it);
                 fprintf(_fp, "%s%s(", sep.c_str(), name.c_str());
-                ExprGenerator(_fp).visitNode(expr);
+                ExprGenerator(_fp, _isImp).visitNode(expr);
                 fprintf(_fp, ")");
                 sep = ",";
             }
@@ -208,19 +210,19 @@ private:
     }
 
     virtual void visit(const Ast::FunctorCallExpr& node) {
-        ExprGenerator(_fp).visitNode(node.expr());
+        ExprGenerator(_fp, _isImp).visitNode(node.expr());
         fprintf(_fp, ".run(");
         fprintf(_fp, "%s::_In(", getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GetNameMode::Normal).c_str());
-        ExprGenerator(_fp, ", ").visitList(node.exprList());
+        ExprGenerator(_fp, _isImp, ", ").visitList(node.exprList());
         fprintf(_fp, "))");
     }
 
     virtual void visit(const Ast::RunExpr& node) {
         fprintf(_fp, "CallContext::get().add(");
-        ExprGenerator(_fp).visitNode(node.callExpr().expr());
+        ExprGenerator(_fp, _isImp).visitNode(node.callExpr().expr());
         fprintf(_fp, ", ");
         fprintf(_fp, "%s::_In(", getTypeSpecName(node.callExpr().expr().qTypeSpec().typeSpec(), GetNameMode::Normal).c_str());
-        ExprGenerator(_fp, ", ").visitList(node.callExpr().exprList());
+        ExprGenerator(_fp, _isImp, ", ").visitList(node.callExpr().exprList());
         fprintf(_fp, "))");
     }
 
@@ -255,9 +257,18 @@ private:
         fprintf(_fp, ".%s", node.vref().name().text());
     }
 
-    virtual void visit(const Ast::TypeSpecMemberExpr& node) {
+    virtual void visit(const Ast::StructMemberExpr& node) {
         fprintf(_fp, "%s", getTypeSpecName(node.typeSpec(), GetNameMode::TypeSpecMemberRef).c_str());
         fprintf(_fp, "::%s", node.vref().name().text());
+    }
+
+    virtual void visit(const Ast::EnumMemberExpr& node) {
+        fprintf(_fp, "%s", getTypeSpecName(node.typeSpec(), GetNameMode::TypeSpecMemberRef).c_str());
+        if(_isImp) {
+            fprintf(_fp, ".%s", node.vref().name().text());
+        } else {
+            fprintf(_fp, "::%s", node.vref().name().text());
+        }
     }
 
     virtual void visit(const Ast::StructInstanceExpr& node) {
@@ -300,6 +311,7 @@ private:
 
 private:
     FILE* _fp;
+    const bool _isImp;
     const std::string _sep2;
     const std::string _sep1;
     std::string _sep0;
@@ -332,20 +344,6 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
                 return " native";
         }
         throw Exception("Internal error: Unknown Definition Type '%d'\n", defType);
-    }
-
-    std::string getAccessType(const Ast::AccessType::T& accessType) const {
-        switch(accessType) {
-            case Ast::AccessType::Public:
-                return "public ";
-            case Ast::AccessType::Protected:
-                return "protected ";
-            case Ast::AccessType::Private:
-                return "private ";
-            default:
-                break;
-        }
-        return "";
     }
 
     void visit(const Ast::TypedefDefn& node) {
@@ -392,7 +390,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
                 const Ast::ConstantExpr* cexpr = dynamic_cast<const Ast::ConstantExpr*>(ptr(def.initExpr()));
                 if((cexpr == 0) || (ref(cexpr).value().string() != "#")) {
                     fprintf(_fpImp, " = ");
-                    ExprGenerator(_fpImp).visitNode(def.initExpr());
+                    ExprGenerator(_fpImp, true).visitNode(def.initExpr());
                 }
                 fprintf(_fpImp, ";\n");
             }
@@ -411,10 +409,10 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
                 const Ast::ConstantExpr* cexpr = dynamic_cast<const Ast::ConstantExpr*>(ptr(def.initExpr()));
                 if((cexpr == 0) || (ref(cexpr).value().string() != "#")) {
                     fprintf(_fpImp, " = ");
-                    ExprGenerator(_fpImp).visitNode(def.initExpr());
+                    ExprGenerator(_fpImp, true).visitNode(def.initExpr());
 
                     fprintf(fpDecl(node), " = ");
-                    ExprGenerator(fpDecl(node)).visitNode(def.initExpr());
+                    ExprGenerator(fpDecl(node), false).visitNode(def.initExpr());
                 }
                 fprintf(fpDecl(node), "\n");
                 sep = ",";
@@ -431,13 +429,16 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             fprintf(_fpImp, "public struct %s%s {\n", node.name().text(), getDefinitionType(node.defType()).c_str());
             for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 const Ast::VariableDefn& vdef = ref(*it);
-                fprintf(_fpImp, "    %s %s", getQualifiedTypeSpecName(vdef.qualifiedTypeSpec(), GetNameMode::Normal).c_str(), vdef.name().text());
+                fprintf(_fpImp, "    %s %s", getQualifiedTypeSpecName(vdef.qualifiedTypeSpec(), GetNameMode::Import).c_str(), vdef.name().text());
                 fprintf(_fpImp, " = ");
-                ExprGenerator(_fpImp).visitNode(vdef.initExpr());
+                ExprGenerator(_fpImp, true).visitNode(vdef.initExpr());
                 fprintf(_fpImp, ";\n");
             }
             fprintf(_fpImp, "};\n");
+        } else if(node.accessType() == Ast::AccessType::Protected) {
+            fprintf(_fpImp, "protected struct %s%s;\n", node.name().text(), getDefinitionType(node.defType()).c_str());
         }
+
 
         FILE* fp = 0;
         std::string impl;
@@ -479,7 +480,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
     inline void visitRoutineImp(const Ast::Routine& node) {
         if(node.accessType() == Ast::AccessType::Public) {
-            fprintf(_fpImp, "public routine %s ", getQualifiedTypeSpecName(node.outType(), GetNameMode::Normal).c_str());
+            fprintf(_fpImp, "public routine %s ", getQualifiedTypeSpecName(node.outType(), GetNameMode::Import).c_str());
             fprintf(_fpImp, "%s", node.name().text());
             fprintf(_fpImp, "(");
             std::string sep;
@@ -539,14 +540,17 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(fp, " {}\n");
     }
 
-    inline void visitFunctionImp(const Ast::Function& node, const std::string& name) {
+    inline void visitFunctionImp(const Ast::Function& node, const std::string& name, const bool& isEvent) {
         if((name.size() > 0) || (node.accessType() == Ast::AccessType::Public)) {
-            fprintf(_fpImp, "public function (");
+            if(!isEvent) {
+                fprintf(_fpImp, "public ");
+            }
+            fprintf(_fpImp, "function (");
 
             std::string sep;
             for(Ast::Scope::List::const_iterator it = node.sig().out().begin(); it != node.sig().out().end(); ++it) {
                 const Ast::VariableDefn& vdef = ref(*it);
-                fprintf(_fpImp, "%s%s %s", sep.c_str(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec(), GetNameMode::Normal).c_str(), vdef.name().text());
+                fprintf(_fpImp, "%s%s %s", sep.c_str(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec(), GetNameMode::Import).c_str(), vdef.name().text());
                 sep = ", ";
             }
             if(name.size() > 0) {
@@ -557,7 +561,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             sep = "";
             for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
                 const Ast::VariableDefn& vdef = ref(*it);
-                fprintf(_fpImp, "%s%s %s", sep.c_str(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec(), GetNameMode::Normal).c_str(), vdef.name().text());
+                fprintf(_fpImp, "%s%s %s", sep.c_str(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec(), GetNameMode::Import).c_str(), vdef.name().text());
                 sep = ", ";
             }
             fprintf(_fpImp, ")%s;\n", getDefinitionType(node.defType()).c_str());
@@ -654,13 +658,13 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     }
 
     void visit(const Ast::FunctionDecl& node) {
-        visitFunctionImp(node, "");
+        visitFunctionImp(node, "", false);
         visitFunction(node, true);
         fprintf(fpDecl(node), "\n");
     }
 
     void visit(const Ast::RootFunctionDefn& node) {
-        visitFunctionImp(node, "");
+        visitFunctionImp(node, "", false);
         visitFunction(node, false);
         fprintf(fpDecl(node), "\n");
     }
@@ -683,8 +687,8 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
     void visit(const Ast::EventDecl& node) {
         if(node.accessType() == Ast::AccessType::Public) {
-            fprintf(_fpImp, "public event(%s) => ", getQualifiedTypeSpecName(node.in().qualifiedTypeSpec(), GetNameMode::Normal).c_str());
-            visitFunctionImp(node.handler(), node.name().string());
+            fprintf(_fpImp, "public event(%s %s) => ", getQualifiedTypeSpecName(node.in().qualifiedTypeSpec(), GetNameMode::Import).c_str(), node.in().name().text());
+            visitFunctionImp(node.handler(), node.name().string(), true);
         }
 
         fprintf(fpDecl(node), "%sstruct %s {\n", Indent::get(), node.name().text());
@@ -746,32 +750,32 @@ private:
 
     virtual void visit(const Ast::LocalStatement& node) {
         fprintf(_fpSrc, "%s%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.defn().name().text());
-        ExprGenerator(_fpSrc).visitNode(node.defn().initExpr());
+        ExprGenerator(_fpSrc, false).visitNode(node.defn().initExpr());
         fprintf(_fpSrc, ";\n");
     }
 
     virtual void visit(const Ast::ExprStatement& node) {
         fprintf(_fpSrc, "%s", Indent::get());
-        ExprGenerator(_fpSrc).visitNode(node.expr());
+        ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ";\n");
     }
 
     virtual void visit(const Ast::PrintStatement& node) {
         fprintf(_fpSrc, "%sprintf(\"%%s\", ", Indent::get());
-        ExprGenerator(_fpSrc).visitNode(node.expr());
+        ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ".c_str());\n");
     }
 
     virtual void visit(const Ast::IfStatement& node) {
         fprintf(_fpSrc, "%sif(", Indent::get());
-        ExprGenerator(_fpSrc).visitNode(node.expr());
+        ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ")\n");
         visitNode(node.tblock());
     }
 
     virtual void visit(const Ast::IfElseStatement& node) {
         fprintf(_fpSrc, "%sif(", Indent::get());
-        ExprGenerator(_fpSrc).visitNode(node.expr());
+        ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ")\n");
         visitNode(node.tblock());
         fprintf(_fpSrc, "%selse\n", Indent::get());
@@ -780,7 +784,7 @@ private:
 
     virtual void visit(const Ast::WhileStatement& node) {
         fprintf(_fpSrc, "%swhile(", Indent::get());
-        ExprGenerator(_fpSrc).visitNode(node.expr());
+        ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ")\n");
         visitNode(node.block());
     }
@@ -789,28 +793,28 @@ private:
         fprintf(_fpSrc, "%sdo\n", Indent::get());
         visitNode(node.block());
         fprintf(_fpSrc, "%swhile(", Indent::get());
-        ExprGenerator(_fpSrc).visitNode(node.expr());
+        ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ");\n");
     }
 
     virtual void visit(const Ast::ForExprStatement& node) {
         fprintf(_fpSrc, "%sfor(", Indent::get());
-        ExprGenerator(_fpSrc).visitNode(node.init());
+        ExprGenerator(_fpSrc, false).visitNode(node.init());
         fprintf(_fpSrc, "; ");
-        ExprGenerator(_fpSrc).visitNode(node.expr());
+        ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, "; ");
-        ExprGenerator(_fpSrc).visitNode(node.incr());
+        ExprGenerator(_fpSrc, false).visitNode(node.incr());
         fprintf(_fpSrc, ")\n");
         visitNode(node.block());
     }
 
     virtual void visit(const Ast::ForInitStatement& node) {
         fprintf(_fpSrc, "%sfor(%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.init().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.init().name().text());
-        ExprGenerator(_fpSrc).visitNode(node.init().initExpr());
+        ExprGenerator(_fpSrc, false).visitNode(node.init().initExpr());
         fprintf(_fpSrc, "; ");
-        ExprGenerator(_fpSrc).visitNode(node.expr());
+        ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, "; ");
-        ExprGenerator(_fpSrc).visitNode(node.incr());
+        ExprGenerator(_fpSrc, false).visitNode(node.incr());
         fprintf(_fpSrc, ")\n");
         visitNode(node.block());
     }
@@ -821,7 +825,7 @@ private:
             constit = "const_";
         fprintf(_fpSrc, "%s{\n", Indent::get());
         fprintf(_fpSrc, "%s%s _list = ", Indent::get(), getQualifiedTypeSpecName(node.expr().qTypeSpec(), GetNameMode::Normal).c_str());
-        ExprGenerator(_fpSrc).visitNode(node.expr());
+        ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ";\n");
         fprintf(_fpSrc, "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), constit.c_str());
         fprintf(_fpSrc, "%s%s %s = *_it;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.valDef().name().text());
@@ -836,7 +840,7 @@ private:
             constit = "const_";
         fprintf(_fpSrc, "%s{\n", Indent::get());
         fprintf(_fpSrc, "%s%s _list = ", Indent::get(), getQualifiedTypeSpecName(node.expr().qTypeSpec(), GetNameMode::Normal).c_str());
-        ExprGenerator(_fpSrc).visitNode(node.expr());
+        ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ";\n");
         fprintf(_fpSrc, "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), constit.c_str());
         fprintf(_fpSrc, "%s%s %s = _it->first;\n", Indent::get(), getQualifiedTypeSpecName(node.keyDef().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.keyDef().name().text());
@@ -848,7 +852,7 @@ private:
 
     virtual void visit(const Ast::CaseExprStatement& node) {
         fprintf(_fpSrc, "%scase (", Indent::get());
-        ExprGenerator(_fpSrc).visitNode(node.expr());
+        ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ") : \n");
         visitNode(node.block());
     }
@@ -860,7 +864,7 @@ private:
 
     virtual void visit(const Ast::SwitchValueStatement& node) {
         fprintf(_fpSrc, "%sswitch(", Indent::get());
-        ExprGenerator(_fpSrc).visitNode(node.expr());
+        ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ")\n");
         visitNode(node.block());
     }
@@ -873,7 +877,7 @@ private:
             const Ast::CaseDefaultStatement* cd = dynamic_cast<const Ast::CaseDefaultStatement*>(s);
             if(ce) {
                 fprintf(_fpSrc, "%s%s(", Indent::get(), ifstr.c_str());
-                ExprGenerator(_fpSrc).visitNode(ref(ce).expr());
+                ExprGenerator(_fpSrc, false).visitNode(ref(ce).expr());
                 fprintf(_fpSrc, ")\n");
                 visitNode(ref(ce).block());
                 ifstr = "else if";
@@ -899,7 +903,7 @@ private:
         fprintf(_fpSrc, "%sreturn", Indent::get());
         if(node.exprList().list().size() > 0) {
             fprintf(_fpSrc, " (");
-            ExprGenerator(_fpSrc, ", ").visitList(node.exprList());
+            ExprGenerator(_fpSrc, false, ", ").visitList(node.exprList());
             fprintf(_fpSrc, ")");
         }
         fprintf(_fpSrc, ";\n");
@@ -907,7 +911,7 @@ private:
 
     virtual void visit(const Ast::FunctionReturnStatement& node) {
         fprintf(_fpSrc, "%sreturn out(new _Out(", Indent::get());
-        ExprGenerator(_fpSrc, ", ").visitList(node.exprList());
+        ExprGenerator(_fpSrc, false, ", ").visitList(node.exprList());
         fprintf(_fpSrc, "));\n");
     }
 
@@ -991,7 +995,7 @@ struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
     void visit(const Ast::ChildFunctionDefn& node) {
         visitChildrenIndent(node);
         visitFunction(node);
-        std::string fname = getTypeSpecName(node.base(), GetNameMode::Normal);
+        std::string fname = getTypeSpecName(node, GetNameMode::Normal);
         if(fname == "test") {
             fprintf(_fpSrc, "%sTestInstanceT<%s> %s::_test = TestInstanceT<%s>();\n", Indent::get(), fname.c_str(), fname.c_str(), fname.c_str());
         }
@@ -1032,6 +1036,16 @@ private:
 };
 
 inline void Generator::Impl::generateHeaderIncludes(const std::string& basename) {
+    std::string ns;
+    std::string sep;
+    for(Ast::Unit::NsPartList::const_iterator it = _unit.nsPartList().begin(); it != _unit.nsPartList().end(); ++it) {
+        const Ast::Token& token = *it;
+        ns += sep;
+        ns += token.string();
+    }
+
+    fprintf(_fpImp, "namespace %s;\n\n", ns.c_str());
+
     fprintf(_fpHdr, "#pragma once\n\n");
     for(Ast::Config::PathList::const_iterator it = _project.global().includeFileList().begin(); it != _project.global().includeFileList().end(); ++it) {
         const std::string& filename = *it;

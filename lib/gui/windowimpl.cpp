@@ -145,7 +145,7 @@ void addOnButtonClickHandler(HWND hwnd, Button::OnClickHandler *handler) {
 #endif
 
 #if defined(WIN32)
-void createWindow(Window::Create& action, const std::string& className, const int& style, const int& xstyle, HWND parent) {
+void Window::Native::createWindow(Window::Create& action, const std::string& className, const int& style, const int& xstyle, HWND parent) {
     Position pos(CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT);
     if(action._position.x != -1)
         pos.x = action._position.x;
@@ -165,32 +165,34 @@ void createWindow(Window::Create& action, const std::string& className, const in
                                                       instance(), (LPVOID)NULL);
 }
 
-void createMainFrame(Window::Create& action, const int& style, const int& xstyle) {
+void Window::Native::createMainFrame(Window::Create& action, const int& style, const int& xstyle) {
     HBRUSH brush = (action._style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
     std::string className = registerClass(brush);
     return createWindow(action, className, style, xstyle, (HWND)NULL);
 }
 
-void createChildFrame(Window::Create& action, const int &style, const int &xstyle, const Window::Instance &parent) {
+void Window::Native::createChildFrame(Window::Create& action, const int &style, const int &xstyle, const Window::Instance &parent) {
     HBRUSH brush = (action._style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
     std::string className = registerClass(brush);
     return createWindow(action, className, style, xstyle, parent._impl->_hWindow);
 }
 
-void createChildWindow(Window::Create& action, const std::string& className, const int& style, const int& xstyle, const Window::Instance& parent) {
+void Window::Native::createChildWindow(Window::Create& action, const std::string& className, const int& style, const int& xstyle, const Window::Instance& parent) {
     return createWindow(action, className, style, xstyle, parent._impl->_hWindow);
 }
 #endif
 
 #if defined(GTK)
-void createWindow(Window::Instance& window, const Window::Definition& def, GtkWidget *parent) {
+Window::Instance::Impl Window::Native::createWindow(const Window::Definition& def, GtkWidget *parent) {
     unused(parent);
-    window._impl->_hWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    gtk_window_set_title (GTK_WINDOW (window._impl->_hWindow), def.title.c_str());
-    window._impl->_hFixed = 0;
+    Window::Instance::Impl impl;
+    impl._hWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title (GTK_WINDOW (impl._hWindow), def.title.c_str());
+    impl._hFixed = 0;
+    return impl;
 }
 
-void createChildWindow(Window::Instance& window, const Window::Definition& def, const Window::Instance& parent) {
+void Window::Native::createChildWindow(Window::Instance& window, const Window::Definition& def, const Window::Instance& parent) {
     trace("createChildWindow: %d\n", window._impl->_hWindow);
     gtk_fixed_put (GTK_FIXED (parent._impl->_hFixed), window._impl->_hWindow, def.position.x, def.position.y);
     gtk_widget_show(window._impl->_hWindow);

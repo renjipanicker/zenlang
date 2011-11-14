@@ -689,15 +689,28 @@ namespace Ast {
     };
 
     class TypeSpecMemberExpr : public Expr {
-    public:
+    protected:
         inline TypeSpecMemberExpr(const QualifiedTypeSpec& qTypeSpec, const TypeSpec& typeSpec, const VariableDefn& vref) : Expr(qTypeSpec), _typeSpec(typeSpec), _vref(vref) {}
+    public:
         inline const TypeSpec& typeSpec() const {return _typeSpec;}
         inline const VariableDefn& vref() const {return _vref;}
     private:
-        virtual void visit(Visitor& visitor) const;
-    private:
         const TypeSpec& _typeSpec;
         const VariableDefn& _vref;
+    };
+
+    class StructMemberExpr : public TypeSpecMemberExpr {
+    public:
+        inline StructMemberExpr(const QualifiedTypeSpec& qTypeSpec, const TypeSpec& typeSpec, const VariableDefn& vref) : TypeSpecMemberExpr(qTypeSpec, typeSpec, vref) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class EnumMemberExpr : public TypeSpecMemberExpr {
+    public:
+        inline EnumMemberExpr(const QualifiedTypeSpec& qTypeSpec, const TypeSpec& typeSpec, const VariableDefn& vref) : TypeSpecMemberExpr(qTypeSpec, typeSpec, vref) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
     };
 
     class TypeSpecInstanceExpr : public Expr {
@@ -788,7 +801,8 @@ namespace Ast {
         virtual void visit(const TypeofExpr& node) = 0;
         virtual void visit(const VariableRefExpr& node) = 0;
         virtual void visit(const VariableMemberExpr& node) = 0;
-        virtual void visit(const TypeSpecMemberExpr& node) = 0;
+        virtual void visit(const StructMemberExpr& node) = 0;
+        virtual void visit(const EnumMemberExpr& node) = 0;
         virtual void visit(const StructInstanceExpr& node) = 0;
         virtual void visit(const FunctionInstanceExpr& node) = 0;
         virtual void visit(const ConstantExpr& node) = 0;
@@ -809,7 +823,8 @@ namespace Ast {
     inline void TypeofExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void VariableMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void TypeSpecMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void StructMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void EnumMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void StructInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ConstantExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
@@ -1217,6 +1232,7 @@ namespace Ast {
         typedef std::list<const ImportStatement*> ImportStatementList;
         typedef std::list<const Ast::CoerceList*> CoerceListList;
         typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
+        typedef std::list<Token> NsPartList;
 
     public:
         inline Unit(const std::string& filename) : _filename(filename), _importNS("*import*"), _rootNS("*root*") {}
@@ -1257,6 +1273,15 @@ namespace Ast {
         inline Root& importNS() {return _importNS;}
 
     public:
+        /// \brief Add a namespace part to the unit
+        /// \param part NS part to add
+        inline void addNamespacePart(const Token& part) {_nsPartList.push_back(part);}
+
+        /// \brief Return the namespace part list
+        /// \return The namespace part list
+        inline const NsPartList& nsPartList() const {return _nsPartList;}
+
+    public:
         /// \brief Add a import statement to the unit
         /// \param statement A pointer to the node to add
         inline void addImportStatement(const ImportStatement& statement) {_importStatementList.push_back(ptr(statement));}
@@ -1283,7 +1308,10 @@ namespace Ast {
 
     private:
         /// \brief Unit Filename
-        const std::string& _filename;
+        const std::string _filename;
+
+        /// \brief Unit Unit namespace
+        NsPartList _nsPartList;
 
     private:
         /// \brief This NS contains all imported typespec's.

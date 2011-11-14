@@ -265,6 +265,7 @@ void Context::aUnitNamespaceId(const Ast::Token &name) {
     Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(currentTypeSpec(), name));
     currentTypeSpec().addChild(ns);
     enterTypeSpec(ns);
+    _unit.addNamespacePart(name);
     _namespaceStack.push_back(ptr(ns));
 }
 
@@ -1078,7 +1079,7 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
             throw Exception("%s %s is not a member of type '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
         }
         const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
-        Ast::TypeSpecMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::TypeSpecMemberExpr(qTypeSpec, typeSpec, ref(vref)));
+        Ast::EnumMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::EnumMemberExpr(qTypeSpec, typeSpec, ref(vref)));
         return ptr(typeSpecMemberExpr);
     }
 
@@ -1088,7 +1089,7 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
         if(vref == 0) {
             throw Exception("%s %s is not a member of type '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
         }
-        Ast::TypeSpecMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::TypeSpecMemberExpr(ref(vref).qualifiedTypeSpec(), typeSpec, ref(vref)));
+        Ast::StructMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::StructMemberExpr(ref(vref).qualifiedTypeSpec(), typeSpec, ref(vref)));
         return ptr(typeSpecMemberExpr);
     }
 

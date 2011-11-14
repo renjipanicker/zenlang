@@ -7,12 +7,13 @@
 struct Scanner;
 class Lexer::Impl {
 public:
-    inline Impl(Context& context, Parser& parser) : _parser(parser), _context(context) {}
+    inline Impl(Context& context, Parser& parser) : _parser(parser), _context(context), _lastToken(0) {}
     size_t init(Scanner* s);
     void scan(Scanner* s);
 
 private:
     inline TokenData token(Scanner* s, const int& id);
+    inline void feedToken(const TokenData& t);
     inline bool trySendId(Scanner* s, const Ast::TypeSpec* typeSpec);
     inline void sendId(Scanner* s);
     inline void sendReturn(Scanner* s);
@@ -20,7 +21,7 @@ private:
 private:
     Parser& _parser;
     Context& _context;
-    std::string _ss;
+    int _lastToken;
 };
 
 #include "lexerGen.c"

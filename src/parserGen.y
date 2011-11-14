@@ -640,8 +640,10 @@ rEnterAnonymousFunction(L) ::= rFunctionTypeSpec(R). {L = ref(pctx).aEnterAnonym
 //-------------------------------------------------
 // struct instance expressions
 %type rStructInstanceExpr {Ast::StructInstanceExpr*}
-rStructInstanceExpr(L) ::= rStructTypeSpec(R) LCURLY(B) rStructInitPartList(P) RCURLY. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
-rStructInstanceExpr(L) ::= rStructTypeSpec(R) LCURLY(B)                        RCURLY. {L = ref(pctx).aStructInstanceExpr(B, ref(R));}
+rStructInstanceExpr(L) ::= rStructTypeSpec(R) LCURLY(B)   rStructInitPartList(P) RCURLY.   {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
+rStructInstanceExpr(L) ::= rStructTypeSpec(R) LCURLY(B)                          RCURLY.   {L = ref(pctx).aStructInstanceExpr(B, ref(R));}
+rStructInstanceExpr(L) ::= rStructTypeSpec(R) LBRACKET(B) rStructInitPartList(P) RBRACKET. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
+rStructInstanceExpr(L) ::= rStructTypeSpec(R) LBRACKET(B)                        RBRACKET. {L = ref(pctx).aStructInstanceExpr(B, ref(R));}
 
 //-------------------------------------------------
 %type rStructInitPartList {Ast::StructInitPartList*}

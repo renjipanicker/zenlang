@@ -1,3 +1,6 @@
+// if first line is a #include, QtCreator recognizes this as a C/C++ file for syntax highlighting.
+#include <typeinfo>
+
 #define	BSIZE	8192
 
 /*!types:re2c */
@@ -74,21 +77,27 @@ inline TokenData Lexer::Impl::token(Scanner* s, const int& id) {
     return createToken(id, s->row, s->cur-s->sol, s->mar, s->cur);
 }
 
+inline void Lexer::Impl::feedToken(const TokenData& t) {
+    _parser.feed(t);
+    _lastToken = t.id();
+}
+
 inline bool Lexer::Impl::trySendId(Scanner* s, const Ast::TypeSpec* typeSpec) {
     if(dynamic_cast<const Ast::StructDefn*>(typeSpec) != 0) {
-        _parser.feed(token(s, ZENTOK_STRUCT_TYPE));
+        feedToken(token(s, ZENTOK_STRUCT_TYPE));
         return true;
     }
     if(dynamic_cast<const Ast::Routine*>(typeSpec) != 0) {
-        _parser.feed(token(s, ZENTOK_ROUTINE_TYPE));
+        feedToken(token(s, ZENTOK_ROUTINE_TYPE));
         return true;
     }
     if(dynamic_cast<const Ast::Function*>(typeSpec) != 0) {
-        _parser.feed(token(s, ZENTOK_FUNCTION_TYPE));
+        feedToken(token(s, ZENTOK_FUNCTION_TYPE));
         return true;
     }
     if(dynamic_cast<const Ast::TypeSpec*>(typeSpec) != 0) {
-        _parser.feed(token(s, ZENTOK_OTHER_TYPE));
+        //printf("try-send (other type): %s is %s\n", ref(typeSpec).name().text(), typeid(*typeSpec).name());
+        feedToken(token(s, ZENTOK_OTHER_TYPE));
         return true;
     }
     return false;
@@ -96,11 +105,22 @@ inline bool Lexer::Impl::trySendId(Scanner* s, const Ast::TypeSpec* typeSpec) {
 
 inline void Lexer::Impl::sendId(Scanner* s) {
     Ast::Token td = token(s, 0);
-    if(trySendId(s, _context.currentTypeRef()))
-        return;
+
+    if(_lastToken == ZENTOK_SCOPE) {
+        const Ast::TypeSpec* parent = _context.currentTypeRef();
+        if(parent) {
+            const Ast::ChildTypeSpec* child = ref(parent).hasChild<const Ast::ChildTypeSpec>(td.string());
+            if(child) {
+                if(trySendId(s, child))
+                    return;
+            }
+        }
+    }
+
     if(trySendId(s, _context.hasRootTypeSpec(td)))
         return;
-    _parser.feed(token(s, ZENTOK_ID));
+
+    feedToken(token(s, ZENTOK_ID));
 }
 
 inline void Lexer::Impl::sendReturn(Scanner* s) {
@@ -110,15 +130,15 @@ inline void Lexer::Impl::sendReturn(Scanner* s) {
     for(Context::TypeSpecStack::const_reverse_iterator it = _context.typeSpecStack().rbegin(); it != _context.typeSpecStack().rend(); ++it) {
         const Ast::TypeSpec* ts = *it;
         if((rd = dynamic_cast<const Ast::RoutineDefn*>(ts)) != 0) {
-            _parser.feed(token(s, ZENTOK_RRETURN));
+            feedToken(token(s, ZENTOK_RRETURN));
             return;
         }
         if((rfd = dynamic_cast<const Ast::RootFunctionDefn*>(ts)) != 0) {
-            _parser.feed(token(s, ZENTOK_FRETURN));
+            feedToken(token(s, ZENTOK_FRETURN));
             return;
         }
         if((cfd = dynamic_cast<const Ast::ChildFunctionDefn*>(ts)) != 0) {
-            _parser.feed(token(s, ZENTOK_FRETURN));
+            feedToken(token(s, ZENTOK_FRETURN));
             return;
         }
     }
@@ -161,130 +181,130 @@ re2c:yych:emit               = 0;
 re2c:indent:top              = 2;
 re2c:condenumprefix          = EState;
 
-<Normal>   "<<="   := _parser.feed(token(s, ZENTOK_SHIFTLEFTEQUAL)); continue;
-<Normal>   ">>="   := _parser.feed(token(s, ZENTOK_SHIFTRIGHTEQUAL)); continue;
-<Normal>   ":="    := _parser.feed(token(s, ZENTOK_DEFINEEQUAL)); continue;
-<Normal>   "*="    := _parser.feed(token(s, ZENTOK_TIMESEQUAL)); continue;
-<Normal>   "/="    := _parser.feed(token(s, ZENTOK_DIVIDEEQUAL)); continue;
-<Normal>   "-="    := _parser.feed(token(s, ZENTOK_MINUSEQUAL)); continue;
-<Normal>   "+="    := _parser.feed(token(s, ZENTOK_PLUSEQUAL)); continue;
-<Normal>   "%="    := _parser.feed(token(s, ZENTOK_MODEQUAL)); continue;
-<Normal>   "&="    := _parser.feed(token(s, ZENTOK_BITWISEANDEQUAL)); continue;
-<Normal>   "^="    := _parser.feed(token(s, ZENTOK_BITWISEXOREQUAL)); continue;
-<Normal>   "|="    := _parser.feed(token(s, ZENTOK_BITWISEOREQUAL)); continue;
-<Normal>   "!="    := _parser.feed(token(s, ZENTOK_NOTEQUAL)); continue;
-<Normal>   "=="    := _parser.feed(token(s, ZENTOK_EQUAL)); continue;
-<Normal>   "<="    := _parser.feed(token(s, ZENTOK_LTE)); continue;
-<Normal>   ">="    := _parser.feed(token(s, ZENTOK_GTE)); continue;
-<Normal>   ">>"    := _parser.feed(token(s, ZENTOK_SHR)); continue;
-<Normal>   "<<"    := _parser.feed(token(s, ZENTOK_SHL)); continue;
-<Normal>   "++"    := _parser.feed(token(s, ZENTOK_INC)); continue;
-<Normal>   "--"    := _parser.feed(token(s, ZENTOK_DEC)); continue;
-<Normal>   "=>"    := _parser.feed(token(s, ZENTOK_LINK)); continue;
-<Normal>   "->"    := _parser.feed(token(s, ZENTOK_JOIN)); continue;
-<Normal>   "&&"    := _parser.feed(token(s, ZENTOK_AND)); continue;
-<Normal>   "||"    := _parser.feed(token(s, ZENTOK_OR)); continue;
-<Normal>   "}"     := _parser.feed(token(s, ZENTOK_RCURLY)); continue;
-<Normal>   ";"     := _parser.feed(token(s, ZENTOK_SEMI)); continue;
-<Normal>   "!"     := _parser.feed(token(s, ZENTOK_NOT)); continue;
-<Normal>   "="     := _parser.feed(token(s, ZENTOK_ASSIGNEQUAL)); continue;
-<Normal>   "~"     := _parser.feed(token(s, ZENTOK_BITWISENOT)); continue;
-<Normal>   "^"     := _parser.feed(token(s, ZENTOK_BITWISEXOR)); continue;
-<Normal>   "|"     := _parser.feed(token(s, ZENTOK_BITWISEOR)); continue;
-<Normal>   "&"     := _parser.feed(token(s, ZENTOK_BITWISEAND)); continue;
-<Normal>   "?"     := _parser.feed(token(s, ZENTOK_QUESTION)); continue;
-<Normal>   ":"     := _parser.feed(token(s, ZENTOK_COLON)); continue;
-<Normal>   "::"    := _parser.feed(token(s, ZENTOK_SCOPE)); continue;
-<Normal>   "."     := _parser.feed(token(s, ZENTOK_DOT)); continue;
-<Normal>   ","     := _parser.feed(token(s, ZENTOK_COMMA)); continue;
-<Normal>   "@"     := _parser.feed(token(s, ZENTOK_AMP)); continue;
-<Normal>   "("     := _parser.feed(token(s, ZENTOK_LBRACKET)); continue;
-<Normal>   ")"     := _parser.feed(token(s, ZENTOK_RBRACKET)); continue;
-<Normal>   "["     := _parser.feed(token(s, ZENTOK_LSQUARE)); continue;
-<Normal>   "]"     := _parser.feed(token(s, ZENTOK_RSQUARE)); continue;
-<Normal>   "{"     := _parser.feed(token(s, ZENTOK_LCURLY)); continue;
-<Normal>   "}"     := _parser.feed(token(s, ZENTOK_RCURLY)); continue;
-<Normal>   "%"     := _parser.feed(token(s, ZENTOK_MOD)); continue;
-<Normal>   "<"     := _parser.feed(token(s, ZENTOK_LT)); continue;
-<Normal>   ">"     := _parser.feed(token(s, ZENTOK_GT)); continue;
-<Normal>   "+"     := _parser.feed(token(s, ZENTOK_PLUS)); continue;
-<Normal>   "-"     := _parser.feed(token(s, ZENTOK_MINUS)); continue;
-<Normal>   "*"     := _parser.feed(token(s, ZENTOK_STAR)); continue;
-<Normal>   "/"     := _parser.feed(token(s, ZENTOK_DIVIDE)); continue;
+<Normal>   "<<="   := feedToken(token(s, ZENTOK_SHIFTLEFTEQUAL)); continue;
+<Normal>   ">>="   := feedToken(token(s, ZENTOK_SHIFTRIGHTEQUAL)); continue;
+<Normal>   ":="    := feedToken(token(s, ZENTOK_DEFINEEQUAL)); continue;
+<Normal>   "*="    := feedToken(token(s, ZENTOK_TIMESEQUAL)); continue;
+<Normal>   "/="    := feedToken(token(s, ZENTOK_DIVIDEEQUAL)); continue;
+<Normal>   "-="    := feedToken(token(s, ZENTOK_MINUSEQUAL)); continue;
+<Normal>   "+="    := feedToken(token(s, ZENTOK_PLUSEQUAL)); continue;
+<Normal>   "%="    := feedToken(token(s, ZENTOK_MODEQUAL)); continue;
+<Normal>   "&="    := feedToken(token(s, ZENTOK_BITWISEANDEQUAL)); continue;
+<Normal>   "^="    := feedToken(token(s, ZENTOK_BITWISEXOREQUAL)); continue;
+<Normal>   "|="    := feedToken(token(s, ZENTOK_BITWISEOREQUAL)); continue;
+<Normal>   "!="    := feedToken(token(s, ZENTOK_NOTEQUAL)); continue;
+<Normal>   "=="    := feedToken(token(s, ZENTOK_EQUAL)); continue;
+<Normal>   "<="    := feedToken(token(s, ZENTOK_LTE)); continue;
+<Normal>   ">="    := feedToken(token(s, ZENTOK_GTE)); continue;
+<Normal>   ">>"    := feedToken(token(s, ZENTOK_SHR)); continue;
+<Normal>   "<<"    := feedToken(token(s, ZENTOK_SHL)); continue;
+<Normal>   "++"    := feedToken(token(s, ZENTOK_INC)); continue;
+<Normal>   "--"    := feedToken(token(s, ZENTOK_DEC)); continue;
+<Normal>   "=>"    := feedToken(token(s, ZENTOK_LINK)); continue;
+<Normal>   "->"    := feedToken(token(s, ZENTOK_JOIN)); continue;
+<Normal>   "&&"    := feedToken(token(s, ZENTOK_AND)); continue;
+<Normal>   "||"    := feedToken(token(s, ZENTOK_OR)); continue;
+<Normal>   "}"     := feedToken(token(s, ZENTOK_RCURLY)); continue;
+<Normal>   ";"     := feedToken(token(s, ZENTOK_SEMI)); continue;
+<Normal>   "!"     := feedToken(token(s, ZENTOK_NOT)); continue;
+<Normal>   "="     := feedToken(token(s, ZENTOK_ASSIGNEQUAL)); continue;
+<Normal>   "~"     := feedToken(token(s, ZENTOK_BITWISENOT)); continue;
+<Normal>   "^"     := feedToken(token(s, ZENTOK_BITWISEXOR)); continue;
+<Normal>   "|"     := feedToken(token(s, ZENTOK_BITWISEOR)); continue;
+<Normal>   "&"     := feedToken(token(s, ZENTOK_BITWISEAND)); continue;
+<Normal>   "?"     := feedToken(token(s, ZENTOK_QUESTION)); continue;
+<Normal>   ":"     := feedToken(token(s, ZENTOK_COLON)); continue;
+<Normal>   "::"    := feedToken(token(s, ZENTOK_SCOPE)); continue;
+<Normal>   "."     := feedToken(token(s, ZENTOK_DOT)); continue;
+<Normal>   ","     := feedToken(token(s, ZENTOK_COMMA)); continue;
+<Normal>   "@"     := feedToken(token(s, ZENTOK_AMP)); continue;
+<Normal>   "("     := feedToken(token(s, ZENTOK_LBRACKET)); continue;
+<Normal>   ")"     := feedToken(token(s, ZENTOK_RBRACKET)); continue;
+<Normal>   "["     := feedToken(token(s, ZENTOK_LSQUARE)); continue;
+<Normal>   "]"     := feedToken(token(s, ZENTOK_RSQUARE)); continue;
+<Normal>   "{"     := feedToken(token(s, ZENTOK_LCURLY)); continue;
+<Normal>   "}"     := feedToken(token(s, ZENTOK_RCURLY)); continue;
+<Normal>   "%"     := feedToken(token(s, ZENTOK_MOD)); continue;
+<Normal>   "<"     := feedToken(token(s, ZENTOK_LT)); continue;
+<Normal>   ">"     := feedToken(token(s, ZENTOK_GT)); continue;
+<Normal>   "+"     := feedToken(token(s, ZENTOK_PLUS)); continue;
+<Normal>   "-"     := feedToken(token(s, ZENTOK_MINUS)); continue;
+<Normal>   "*"     := feedToken(token(s, ZENTOK_STAR)); continue;
+<Normal>   "/"     := feedToken(token(s, ZENTOK_DIVIDE)); continue;
 
-<Normal>   "import"    := _parser.feed(token(s, ZENTOK_IMPORT)); continue;
-<Normal>   "include"   := _parser.feed(token(s, ZENTOK_INCLUDE)); continue;
-<Normal>   "namespace" := _parser.feed(token(s, ZENTOK_NAMESPACE)); continue;
+<Normal>   "import"    := feedToken(token(s, ZENTOK_IMPORT)); continue;
+<Normal>   "include"   := feedToken(token(s, ZENTOK_INCLUDE)); continue;
+<Normal>   "namespace" := feedToken(token(s, ZENTOK_NAMESPACE)); continue;
 
-<Normal>   "private"   := _parser.feed(token(s, ZENTOK_PRIVATE)); continue;
-<Normal>   "internal"  := _parser.feed(token(s, ZENTOK_INTERNAL)); continue;
-<Normal>   "protected" := _parser.feed(token(s, ZENTOK_PROTECTED)); continue;
-<Normal>   "public"    := _parser.feed(token(s, ZENTOK_PUBLIC)); continue;
-<Normal>   "export"    := _parser.feed(token(s, ZENTOK_EXPORT)); continue;
+<Normal>   "private"   := feedToken(token(s, ZENTOK_PRIVATE)); continue;
+<Normal>   "internal"  := feedToken(token(s, ZENTOK_INTERNAL)); continue;
+<Normal>   "protected" := feedToken(token(s, ZENTOK_PROTECTED)); continue;
+<Normal>   "public"    := feedToken(token(s, ZENTOK_PUBLIC)); continue;
+<Normal>   "export"    := feedToken(token(s, ZENTOK_EXPORT)); continue;
 
-<Normal>   "typedef"   := _parser.feed(token(s, ZENTOK_TYPEDEF)); continue;
-<Normal>   "template"  := _parser.feed(token(s, ZENTOK_TEMPLATE)); continue;
-<Normal>   "enum"      := _parser.feed(token(s, ZENTOK_ENUM)); continue;
-<Normal>   "struct"    := _parser.feed(token(s, ZENTOK_STRUCT)); continue;
-<Normal>   "routine"   := _parser.feed(token(s, ZENTOK_ROUTINE)); continue;
-<Normal>   "function"  := _parser.feed(token(s, ZENTOK_FUNCTION)); continue;
-<Normal>   "event"     := _parser.feed(token(s, ZENTOK_EVENT)); continue;
+<Normal>   "typedef"   := feedToken(token(s, ZENTOK_TYPEDEF)); continue;
+<Normal>   "template"  := feedToken(token(s, ZENTOK_TEMPLATE)); continue;
+<Normal>   "enum"      := feedToken(token(s, ZENTOK_ENUM)); continue;
+<Normal>   "struct"    := feedToken(token(s, ZENTOK_STRUCT)); continue;
+<Normal>   "routine"   := feedToken(token(s, ZENTOK_ROUTINE)); continue;
+<Normal>   "function"  := feedToken(token(s, ZENTOK_FUNCTION)); continue;
+<Normal>   "event"     := feedToken(token(s, ZENTOK_EVENT)); continue;
 
-<Normal>   "native"    := _parser.feed(token(s, ZENTOK_NATIVE)); continue;
-<Normal>   "const"     := _parser.feed(token(s, ZENTOK_CONST)); continue;
+<Normal>   "native"    := feedToken(token(s, ZENTOK_NATIVE)); continue;
+<Normal>   "const"     := feedToken(token(s, ZENTOK_CONST)); continue;
 
-<Normal>   "coerce"    := _parser.feed(token(s, ZENTOK_COERCE)); continue;
-<Normal>   "default"   := _parser.feed(token(s, ZENTOK_DEFAULT)); continue;
-<Normal>   "typeof"    := _parser.feed(token(s, ZENTOK_TYPEOF)); continue;
+<Normal>   "coerce"    := feedToken(token(s, ZENTOK_COERCE)); continue;
+<Normal>   "default"   := feedToken(token(s, ZENTOK_DEFAULT)); continue;
+<Normal>   "typeof"    := feedToken(token(s, ZENTOK_TYPEOF)); continue;
 
-<Normal>   "local"     := _parser.feed(token(s, ZENTOK_LOCAL)); continue;
-<Normal>   "print"     := _parser.feed(token(s, ZENTOK_PRINT)); continue;
-<Normal>   "if"        := _parser.feed(token(s, ZENTOK_IF)); continue;
-<Normal>   "else"      := _parser.feed(token(s, ZENTOK_ELSE)); continue;
-<Normal>   "while"     := _parser.feed(token(s, ZENTOK_WHILE)); continue;
-<Normal>   "do"        := _parser.feed(token(s, ZENTOK_DO)); continue;
-<Normal>   "for"       := _parser.feed(token(s, ZENTOK_FOR)); continue;
-<Normal>   "foreach"   := _parser.feed(token(s, ZENTOK_FOREACH)); continue;
-<Normal>   "in"        := _parser.feed(token(s, ZENTOK_IN)); continue;
-<Normal>   "has"       := _parser.feed(token(s, ZENTOK_HAS)); continue;
-<Normal>   "switch"    := _parser.feed(token(s, ZENTOK_SWITCH)); continue;
-<Normal>   "case"      := _parser.feed(token(s, ZENTOK_CASE)); continue;
-<Normal>   "break"     := _parser.feed(token(s, ZENTOK_BREAK)); continue;
-<Normal>   "continue"  := _parser.feed(token(s, ZENTOK_CONTINUE)); continue;
-<Normal>   "run"       := _parser.feed(token(s, ZENTOK_RUN)); continue;
+<Normal>   "local"     := feedToken(token(s, ZENTOK_LOCAL)); continue;
+<Normal>   "print"     := feedToken(token(s, ZENTOK_PRINT)); continue;
+<Normal>   "if"        := feedToken(token(s, ZENTOK_IF)); continue;
+<Normal>   "else"      := feedToken(token(s, ZENTOK_ELSE)); continue;
+<Normal>   "while"     := feedToken(token(s, ZENTOK_WHILE)); continue;
+<Normal>   "do"        := feedToken(token(s, ZENTOK_DO)); continue;
+<Normal>   "for"       := feedToken(token(s, ZENTOK_FOR)); continue;
+<Normal>   "foreach"   := feedToken(token(s, ZENTOK_FOREACH)); continue;
+<Normal>   "in"        := feedToken(token(s, ZENTOK_IN)); continue;
+<Normal>   "has"       := feedToken(token(s, ZENTOK_HAS)); continue;
+<Normal>   "switch"    := feedToken(token(s, ZENTOK_SWITCH)); continue;
+<Normal>   "case"      := feedToken(token(s, ZENTOK_CASE)); continue;
+<Normal>   "break"     := feedToken(token(s, ZENTOK_BREAK)); continue;
+<Normal>   "continue"  := feedToken(token(s, ZENTOK_CONTINUE)); continue;
+<Normal>   "run"       := feedToken(token(s, ZENTOK_RUN)); continue;
 
 <Normal>   "return"    := sendReturn(s); continue;
 
-<Normal>   "false"     := _parser.feed(token(s, ZENTOK_FALSE_CONST)); continue;
-<Normal>   "true"      := _parser.feed(token(s, ZENTOK_TRUE_CONST)); continue;
+<Normal>   "false"     := feedToken(token(s, ZENTOK_FALSE_CONST)); continue;
+<Normal>   "true"      := feedToken(token(s, ZENTOK_TRUE_CONST)); continue;
 
-<Normal>   "@" [a-zA-Z][a-zA-Z0-9_]* := _parser.feed(token(s, ZENTOK_KEY)); continue;
+<Normal>   "@" [a-zA-Z][a-zA-Z0-9_]* := feedToken(token(s, ZENTOK_KEY)); continue;
 
 <Normal>       [a-zA-Z][a-zA-Z0-9_]* := sendId(s); continue;
 
-<Normal>   "0" [0-7]+      := _parser.feed(token(s, ZENTOK_OCTINT_CONST)); continue;
-<Normal>   "0" [0-7]+ [lL] := _parser.feed(token(s, ZENTOK_LOCTINT_CONST)); continue;
+<Normal>   "0" [0-7]+      := feedToken(token(s, ZENTOK_OCTINT_CONST)); continue;
+<Normal>   "0" [0-7]+ [lL] := feedToken(token(s, ZENTOK_LOCTINT_CONST)); continue;
 
-<Normal>   [0-9]+      := _parser.feed(token(s, ZENTOK_DECINT_CONST)); continue;
-<Normal>   [0-9]+ [lL] := _parser.feed(token(s, ZENTOK_LDECINT_CONST)); continue;
+<Normal>   [0-9]+      := feedToken(token(s, ZENTOK_DECINT_CONST)); continue;
+<Normal>   [0-9]+ [lL] := feedToken(token(s, ZENTOK_LDECINT_CONST)); continue;
 
-<Normal>   "0" [xX] [A-Za-z0-9]+                        := _parser.feed(token(s, ZENTOK_HEXINT_CONST)); continue;
-<Normal>   "0" [xX] [A-Za-z0-9]+ [lL]                   := _parser.feed(token(s, ZENTOK_LHEXINT_CONST)); continue;
+<Normal>   "0" [xX] [A-Za-z0-9]+                        := feedToken(token(s, ZENTOK_HEXINT_CONST)); continue;
+<Normal>   "0" [xX] [A-Za-z0-9]+ [lL]                   := feedToken(token(s, ZENTOK_LHEXINT_CONST)); continue;
 
-<Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [fF]  := _parser.feed(token(s, ZENTOK_FLOAT_CONST)); continue;
-<Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [fF]                := _parser.feed(token(s, ZENTOK_FLOAT_CONST)); continue;
+<Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [fF]  := feedToken(token(s, ZENTOK_FLOAT_CONST)); continue;
+<Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [fF]                := feedToken(token(s, ZENTOK_FLOAT_CONST)); continue;
 
-<Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [dD]? := _parser.feed(token(s, ZENTOK_DOUBLE_CONST)); continue;
-<Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [dD]?               := _parser.feed(token(s, ZENTOK_DOUBLE_CONST)); continue;
+<Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [dD]? := feedToken(token(s, ZENTOK_DOUBLE_CONST)); continue;
+<Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [dD]?               := feedToken(token(s, ZENTOK_DOUBLE_CONST)); continue;
 
 <Normal>   '\''    => Char  := s->text = s->cur; continue;
 <Char>     '\\' .           := continue;
-<Char>     '\''   => Normal := _parser.feed(token(s, ZENTOK_CHAR_CONST)); continue;
+<Char>     '\''   => Normal := feedToken(token(s, ZENTOK_CHAR_CONST)); continue;
 <Char>     [^]              := continue;
 
 <Normal>   '"'    => String := s->text = s->cur; continue;
+<String>   '"'    => Normal := feedToken(token(s, ZENTOK_STRING_CONST)); continue;
 <String>   '\\' .           := continue;
-<String>   '"'    => Normal := _parser.feed(token(s, ZENTOK_STRING_CONST)); continue;
 <String>   [^]              := continue;
 
 <Normal>    "/*"    :=> Comment
@@ -292,17 +312,18 @@ re2c:condenumprefix          = EState;
 <Comment>   [^]     :=> Comment
 
 <Normal>      "//"            :=> Skiptoeol
-<Skiptoeol>   "\\" "\r"? "\n" :=> Skiptoeol
 <Skiptoeol>   "\r" "\n"        => Normal      :=  newLine(s); continue;
 <Skiptoeol>   "\n"             => Normal      :=  newLine(s); continue;
+<Skiptoeol>   "\\" "\r"? "\n" :=> Skiptoeol
 <Skiptoeol>   [^]             :=> Skiptoeol
 
 <Normal>   "\r" "\n" := newLine(s); continue;
 <Normal>   "\n"      := newLine(s); continue;
 <Normal>   " "       := continue;
+<Normal>   "\t"      := continue;
 
-<Normal>   "\000" := _parser.feed(token(s, ZENTOK_EOF)); continue;
-<Normal>   [^]    := _parser.feed(token(s, ZENTOK_ERR)); continue;
+<Normal>   "\000" := feedToken(token(s, ZENTOK_EOF)); continue;
+<Normal>   [^]    := feedToken(token(s, ZENTOK_ERR)); continue;
 */
 
 /*
@@ -310,10 +331,9 @@ re2c:condenumprefix          = EState;
 <!Comment,Skiptoeol> := fprintf(stderr, "Comment\n");
 */
     }
-    _parser.feed(token(s, ZENTOK_EOF));
+    feedToken(token(s, ZENTOK_EOF));
 }
 
 /*
 //ESC = [\\] ([abfnrtv?'"\\] | "x" HEX+ | OCT+);
-
 */

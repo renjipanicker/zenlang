@@ -1,14 +1,14 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "mainframe.hpp"
-#include "mainframeimpl.hpp"
+#include "windowimpl.hpp"
 
 const MainFrame::Create::_Out& MainFrame::Create::run(const _In& _in) {
 #if defined(WIN32)
     Window::Native::createMainFrame(This, WS_OVERLAPPEDWINDOW, WS_EX_WINDOWEDGE);
 #endif
 #if defined(GTK)
-    Window::Native::createWindow(This._window, This._def, 0);
+    Window::Instance::Impl impl = Window::Native::createWindow(_in.def, 0);
     if((This._def._position.w != -1) && (This._def._position.h != -1))
         gtk_widget_set_size_request (This._window._impl->_hWindow, This._def._position.w, This._def._position.h);
 
