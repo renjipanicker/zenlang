@@ -190,12 +190,6 @@ struct HandlerList {
     }
 };
 
-struct TestInstance {
-    TestInstance();
-    virtual void enque(CallContext& context) = 0;
-    TestInstance* _next;
-};
-
 template <typename T>
 struct test {
     struct _Out {
@@ -212,6 +206,12 @@ public:
     inline const _Out& out(_Out* val) {_out = val;return *_out;}
 };
 
+struct TestInstance {
+    TestInstance();
+    virtual void enque(CallContext& context) = 0;
+    TestInstance* _next;
+};
+
 template <typename T>
 struct TestInstanceT : public TestInstance {
     virtual void enque(CallContext& context) {
@@ -221,6 +221,10 @@ struct TestInstanceT : public TestInstance {
         context.add(t, in);
     }
 };
+
+#if defined(Z_EXE)
+int Main(const std::list<std::string>& argl);
+#endif
 
 template <typename V>
 struct ListCreator {

@@ -1,7 +1,12 @@
 #ifndef PCH_HPP
 #define PCH_HPP
 
-#ifdef GUI
+// All #defines are validated here
+#if !defined(Z_EXE) && !defined(Z_DLL) && !defined(Z_LIB)
+#define Z_EXE 1
+#endif
+
+#if defined(GUI)
     #if !defined(WIN32)
         #define GTK 1
     #endif
@@ -15,6 +20,7 @@
     #endif
 #endif
 
+// all header files are included here.
 #if defined(WIN32)
     #undef UNICODE
     #undef _UNICODE

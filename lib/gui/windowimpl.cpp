@@ -3,6 +3,201 @@
 #include "window.hpp"
 #include "windowimpl.hpp"
 
+#if defined(WIN32)
+static int lastWM = WM_APP;
+static int lastRes = 1000;
+static int lastclassId = 1;
+
+int getNextWmID() {
+    return lastWM++;
+}
+
+int getNextResID() {
+    return lastRes++;
+}
+
+static std::string getNextClassID() {
+    char name[128];
+    snprintf(name, 128, "classX%d", lastclassId++);
+    return name;
+}
+
+HINSTANCE instance() {
+    return Application::Instance::Impl::instance()._hInstance;
+}
+
+static HandlerList<int, MenuItem::SelectHandler> menuItemSelectHandlerList;
+static HandlerList<int, SysTray::OnActivationHandler> sysTrayActivationHandlerList;
+static HandlerList<int, SysTray::OnContextMenuHandler> sysTrayContextMenuHandlerList;
+
+static HandlerList<HWND, Button::OnClickHandler> onButtonClickHandlerList;
+static HandlerList<HWND, Window::OnResize> onResizeHandlerList;
+static HandlerList<HWND, Window::OnCloseHandler> onCloseHandlerList;
+
+ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
+    ULONGLONG ullVersion = 0;
+    HINSTANCE hinstDll;
+    hinstDll = LoadLibrary(lpszDllName);
+    if(hinstDll) {
+        DLLGETVERSIONPROC pDllGetVersion;
+        pDllGetVersion = (DLLGETVERSIONPROC)GetProcAddress(hinstDll, "DllGetVersion");
+        if(pDllGetVersion)
+        {
+            DLLVERSIONINFO dvi;
+            HRESULT hr;
+            ZeroMemory(&dvi, sizeof(dvi));
+            dvi.cbSize = sizeof(dvi);
+            hr = (*pDllGetVersion)(&dvi);
+            if(SUCCEEDED(hr))
+                ullVersion = MAKEDLLVERULL(dvi.dwMajorVersion, dvi.dwMinorVersion,0,0);
+        }
+        FreeLibrary(hinstDll);
+    }
+    return ullVersion;
+}
+
+// Message handler for the app
+static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    if(lParam == WM_LBUTTONDOWN) {
+        if(sysTrayActivationHandlerList.runHandler(message))
+            return 1;
+    }
+
+    if((lParam == WM_RBUTTONDOWN) || (lParam == WM_CONTEXTMENU)) {
+        if(sysTrayContextMenuHandlerList.runHandler(message))
+            return 1;
+    }
+
+    switch (message) {
+        case WM_COMMAND:
+            if(menuItemSelectHandlerList.runHandler(LOWORD(wParam)))
+                return 1;
+            if(LOWORD(wParam) == BN_CLICKED) {
+                if(onButtonClickHandlerList.runHandler((HWND)lParam))
+                    return 1;
+            }
+            break;
+
+        case WM_SIZE:
+            if(onResizeHandlerList.runHandler(hWnd))
+                return 1;
+            break;
+
+        case WM_CLOSE:
+            if(onCloseHandlerList.runHandler(hWnd))
+                return 1;
+            break;
+    }
+    return ::DefWindowProc(hWnd, message, wParam, lParam);
+}
+
+std::string registerClass(HBRUSH bg) {
+    std::string className = getNextClassID();
+    WNDCLASSEX wcx;
+
+    // Fill in the window class structure with parameters
+    // that describe the main window.
+
+    wcx.cbSize = sizeof(wcx);          // size of structure
+    wcx.style = CS_HREDRAW | CS_VREDRAW;                    // redraw if size changes
+    wcx.lpfnWndProc = WinProc;     // points to window procedure
+    wcx.cbClsExtra = 0;                // no extra class memory
+    wcx.cbWndExtra = 0;                // no extra window memory
+    wcx.hInstance = instance();         // handle to instance
+    wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION);              // predefined app. icon
+    wcx.hCursor = LoadCursor(NULL, IDC_ARROW);                    // predefined arrow
+    wcx.hbrBackground = bg;
+    wcx.lpszMenuName =  _T("MainMenu");    // name of menu resource
+    wcx.lpszClassName = className.c_str();  // name of window class
+    wcx.hIconSm = (HICON)LoadImage(instance(), MAKEINTRESOURCE(5), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+
+    // Register the window class.
+    if(!::RegisterClassEx(&wcx)) {
+        throw Exception("Unable to register class");
+    }
+
+    return className;
+}
+
+void addMenuItemSelectHandler(const int& wm, MenuItem::SelectHandler* handler) {
+    menuItemSelectHandlerList.addHandler(wm, handler);
+}
+
+void addSysTrayActivationHandler(const int& wm, SysTray::OnActivationHandler* handler) {
+    sysTrayActivationHandlerList.addHandler(wm, handler);
+}
+
+void addSysTrayContextMenuHandler(const int& wm, SysTray::OnContextMenuHandler* handler) {
+    sysTrayContextMenuHandlerList.addHandler(wm, handler);
+}
+
+void addOnResizeHandler(HWND hwnd, Window::OnResize *handler) {
+    onResizeHandlerList.addHandler(hwnd, handler);
+}
+
+void addOnCloseHandler(HWND hwnd, Window::OnCloseHandler *handler) {
+    onCloseHandlerList.addHandler(hwnd, handler);
+}
+
+void addOnButtonClickHandler(HWND hwnd, Button::OnClickHandler *handler) {
+    onButtonClickHandlerList.addHandler(hwnd, handler);
+}
+#endif
+
+#if defined(WIN32)
+void createWindow(Window::Create& action, const std::string& className, const int& style, const int& xstyle, HWND parent) {
+    Position pos(CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT);
+    if(action._position.x != -1)
+        pos.x = action._position.x;
+    if(action._position.y != -1)
+        pos.y = action._position.y;
+    if(action._position.w != -1)
+        pos.w = action._position.w;
+    if(action._position.h != -1)
+        pos.h = action._position.h;
+
+    action._window._impl->_hWindow = ::CreateWindowEx(xstyle,
+                                                      className.c_str(),
+                                                      action._title.c_str(),
+                                                      style,
+                                                      pos.x, pos.y, pos.w, pos.h,
+                                                      parent, (HMENU)NULL,
+                                                      instance(), (LPVOID)NULL);
+}
+
+void createMainFrame(Window::Create& action, const int& style, const int& xstyle) {
+    HBRUSH brush = (action._style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
+    std::string className = registerClass(brush);
+    return createWindow(action, className, style, xstyle, (HWND)NULL);
+}
+
+void createChildFrame(Window::Create& action, const int &style, const int &xstyle, const Window::Instance &parent) {
+    HBRUSH brush = (action._style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
+    std::string className = registerClass(brush);
+    return createWindow(action, className, style, xstyle, parent._impl->_hWindow);
+}
+
+void createChildWindow(Window::Create& action, const std::string& className, const int& style, const int& xstyle, const Window::Instance& parent) {
+    return createWindow(action, className, style, xstyle, parent._impl->_hWindow);
+}
+#endif
+
+#if defined(GTK)
+void createWindow(Window::Instance& window, const Window::Definition& def, GtkWidget *parent) {
+    unused(parent);
+    window._impl->_hWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_title (GTK_WINDOW (window._impl->_hWindow), def.title.c_str());
+    window._impl->_hFixed = 0;
+}
+
+void createChildWindow(Window::Instance& window, const Window::Definition& def, const Window::Instance& parent) {
+    trace("createChildWindow: %d\n", window._impl->_hWindow);
+    gtk_fixed_put (GTK_FIXED (parent._impl->_hFixed), window._impl->_hWindow, def.position.x, def.position.y);
+    gtk_widget_show(window._impl->_hWindow);
+}
+#endif
+
+////////////////////////////////////////////////////////////////////////////////
 Window::Position Window::getWindowPosition(const Instance& window) {
 #if defined(WIN32)
     RECT rc;
@@ -104,10 +299,6 @@ static gboolean onConfigureEvent(GtkWindow* window, GdkEvent* event, gpointer ph
 }
 #endif
 
-#if defined(WIN32)
-static HandlerList<HWND, Invocation> onResizeHandlerList;
-#endif
-
 const Window::OnResize::Add::_Out& Window::OnResize::Add::run(const _In& _in) {
     Window::OnResize::Handler& h = Window::OnResize::add(_in.handler);
 #if defined(WIN32)
@@ -131,10 +322,6 @@ static gboolean onWindowCloseEvent(GtkWindow* window, gpointer phandler) {
 }
 #endif
 
-#if defined(WIN32)
-static HandlerList<HWND, Invocation> onCloseHandlerList;
-#endif
-
 const Window::OnClose::Add::_Out& Window::OnClose::Add::run(const _In& _in) {
     Window::OnClose::Handler& h = Window::OnClose::add(_in.handler);
 #if defined(WIN32)
@@ -144,4 +331,10 @@ const Window::OnClose::Add::_Out& Window::OnClose::Add::run(const _In& _in) {
     g_signal_connect (G_OBJECT (_in.window._impl->_hWindow), "closed", G_CALLBACK (onWindowCloseEvent), ptr(h));
 #endif
    return out(new _Out());
+}
+
+
+//////////////////////////
+int Main(const std::list<std::string>& argl) {
+    return 0;
 }

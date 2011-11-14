@@ -1,0 +1,8 @@
+include window;
+
+namespace MainFrame;
+
+public struct Definition {
+};
+
+public function (Window::Instance w)Create(const Definition& def) native;

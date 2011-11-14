@@ -8,11 +8,14 @@ static int showHelp(const Ast::Project& project) {
     fprintf(stdout, "\n");
     fprintf(stdout, "Copyright(c) 2011 Renji Panicker.\n");
     fprintf(stdout, "Usage: zen <options> <files>\n");
-    fprintf(stdout, "  -h --help      Show this message\n");
-    fprintf(stdout, "  -c             Compile only\n");
-    fprintf(stdout, "  -n --name      Project name\n");
-    fprintf(stdout, "  -g --gui       GUI application\n");
-    fprintf(stdout, "  -z --zenPath   Zen Library path\n");
+    fprintf(stdout, "  -h  --help      Show this message\n");
+    fprintf(stdout, "  -c              Compile only\n");
+    fprintf(stdout, "  -px --exe       Executable project (default)\n");
+    fprintf(stdout, "  -pd --dll       Shared library project\n");
+    fprintf(stdout, "  -pl --lib       Static library project\n");
+    fprintf(stdout, "  -n  --name      Project name\n");
+    fprintf(stdout, "  -g  --gui       GUI application\n");
+    fprintf(stdout, "  -z  --zenPath   Zen Library path\n");
     return 0;
 }
 
@@ -52,6 +55,12 @@ int main(int argc, char* argv[]) {
         } else if((t == "-n") || (t == "--name")) {
             t = argv[i++];
             project.name(t);
+        } else if((t == "-px") || (t == "--exe")) {
+            project.mode(Ast::Project::Mode::Executable);
+        } else if((t == "-pd") || (t == "--dll")) {
+            project.mode(Ast::Project::Mode::Shared);
+        } else if((t == "-pl") || (t == "--lib")) {
+            project.mode(Ast::Project::Mode::Static);
         } else if((t == "-g") || (t == "--gui")) {
             project.global().gui(true);
         } else if((t == "-z") || (t == "--zenPath")) {

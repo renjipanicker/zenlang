@@ -27,6 +27,7 @@ void CallContext::run() {
     }
 }
 
+#if defined(Z_EXE)
 int main(int argc, char* argv[]) {
     g_testListTail = g_testListHead;
     while(g_testListTail != 0) {
@@ -34,6 +35,9 @@ int main(int argc, char* argv[]) {
         g_testListTail = ref(g_testListTail)._next;
     }
 
+    std::list<std::string> argl;
+    Main(argl);
     g_context.run();
     return 0;
 }
+#endif

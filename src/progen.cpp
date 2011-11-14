@@ -81,7 +81,7 @@ void ProGen::Impl::run() {
             fprintf(_fpPro, ")\n");
             fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s.cpp)\n", basename.c_str());
         } else {
-            throw Exception("Unknown file type for: %s\n", filename.c_str());
+            throw Exception("Unknown file type for: %s", filename.c_str());
         }
     }
     fprintf(_fpPro, "\n");
@@ -94,7 +94,22 @@ void ProGen::Impl::run() {
     }
     fprintf(_fpPro, "\n");
 
-    fprintf(_fpPro, "ADD_EXECUTABLE(%s ${project_SOURCES})\n", _project.name().c_str());
+    switch(_project.mode()) {
+        case Ast::Project::Mode::Executable:
+            fprintf(_fpPro, "ADD_DEFINITIONS( \"-DZ_EXE\" )\n");
+            fprintf(_fpPro, "ADD_EXECUTABLE(%s ${project_SOURCES})\n", _project.name().c_str());
+            break;
+        case Ast::Project::Mode::Shared:
+            fprintf(_fpPro, "ADD_DEFINITIONS( \"-DZ_DLL\" )\n");
+            fprintf(_fpPro, "ADD_LIBRARY(%s SHARED ${project_SOURCES})\n", _project.name().c_str());
+            break;
+        case Ast::Project::Mode::Static:
+            fprintf(_fpPro, "ADD_DEFINITIONS( \"-DZ_LIB\" )\n");
+            fprintf(_fpPro, "ADD_LIBRARY(%s STATIC ${project_SOURCES})\n", _project.name().c_str());
+            break;
+        case Ast::Project::Mode::Compile:
+            throw Exception("Compile mode not allowed during project generaion");
+    }
 
     fprintf(_fpPro, "IF(GTK3_FOUND)\n");
     fprintf(_fpPro, "    TARGET_LINK_LIBRARIES(%s ${GTK3_LIBRARIES})\n", _project.name().c_str());
