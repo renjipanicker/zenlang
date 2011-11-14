@@ -318,7 +318,35 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         visitChildren(node);
     }
 
+    std::string getDefinitionType(const Ast::DefinitionType::T& defType) const {
+        switch(defType) {
+            case Ast::DefinitionType::Direct:
+                return "";
+            case Ast::DefinitionType::Native:
+                return " native";
+        }
+        throw Exception("Internal error: Unknown Definition Type '%d'\n", defType);
+    }
+
+    std::string getAccessType(const Ast::AccessType::T& accessType) const {
+        switch(accessType) {
+            case Ast::AccessType::Public:
+                return "public ";
+            case Ast::AccessType::Protected:
+                return "protected ";
+            case Ast::AccessType::Private:
+                return "private ";
+            default:
+                break;
+        }
+        return "";
+    }
+
     void visit(const Ast::TypedefDefn& node) {
+        if(node.accessType() == Ast::AccessType::Public) {
+            fprintf(_fpImp, "public typedef %s%s;\n", node.name().text(), getDefinitionType(node.defType()).c_str());
+        }
+
         if(node.defType() == Ast::DefinitionType::Native) {
             fprintf(fpDecl(node), "%s// typedef %s native;\n", Indent::get(), node.name().text());
         } else {
@@ -327,6 +355,17 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     }
 
     void visit(const Ast::TemplateDecl& node) {
+        if(node.accessType() == Ast::AccessType::Public) {
+            fprintf(_fpImp, "public template <");
+            std::string sep;
+            for(Ast::TemplatePartList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                const Ast::Token& token = *it;
+                fprintf(_fpImp, "%s%s\n", sep.c_str(), token.text());
+                sep = ", ";
+            }
+            fprintf(_fpImp, "> %s%s;\n", node.name().text(), getDefinitionType(node.defType()).c_str());
+        }
+
         if(node.defType() == Ast::DefinitionType::Native) {
             fprintf(fpDecl(node), "%s// template %s native;\n", Indent::get(), node.name().text());
         } else {
@@ -339,6 +378,22 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     }
 
     void visit(const Ast::EnumDefn& node) {
+        if(node.accessType() == Ast::AccessType::Public) {
+            fprintf(_fpImp, "public enum %s%s {\n", node.name().text(), getDefinitionType(node.defType()).c_str());
+            for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                const Ast::VariableDefn& def = ref(*it);
+                fprintf(_fpImp, "    %s %s", getQualifiedTypeSpecName(def.qualifiedTypeSpec()).c_str(), def.name().text());
+                const Ast::ConstantExpr* cexpr = dynamic_cast<const Ast::ConstantExpr*>(ptr(def.initExpr()));
+                if((cexpr == 0) || (ref(cexpr).value().string() != "#")) {
+                    fprintf(_fpImp, " = ");
+                    ExprGenerator(_fpImp).visitNode(def.initExpr());
+                }
+                fprintf(_fpImp, ";\n");
+            }
+            fprintf(_fpImp, "};\n");
+            fprintf(_fpImp, "\n");
+        }
+
         if(node.defType() != Ast::DefinitionType::Native) {
             fprintf(fpDecl(node), "%sstruct %s {\n", Indent::get(), node.name().text());
             fprintf(fpDecl(node), "%s  enum T {\n", Indent::get());
@@ -349,11 +404,16 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
                 fprintf(fpDecl(node), "%s%s %s", Indent::get(), sep.c_str(), def.name().text());
                 const Ast::ConstantExpr* cexpr = dynamic_cast<const Ast::ConstantExpr*>(ptr(def.initExpr()));
                 if((cexpr == 0) || (ref(cexpr).value().string() != "#")) {
-                    /// \todo generate enum-init-expr
+                    fprintf(_fpImp, " = ");
+                    ExprGenerator(_fpImp).visitNode(def.initExpr());
+
+                    fprintf(fpDecl(node), " = ");
+                    ExprGenerator(fpDecl(node)).visitNode(def.initExpr());
                 }
                 fprintf(fpDecl(node), "\n");
                 sep = ",";
             }
+
             fprintf(fpDecl(node), "%s  };\n", Indent::get());
             fprintf(fpDecl(node), "%s};\n", Indent::get());
             fprintf(fpDecl(node), "\n");
@@ -361,6 +421,18 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     }
 
     void visit(const Ast::StructDefn& node) {
+        if(node.accessType() == Ast::AccessType::Public) {
+            fprintf(_fpImp, "public struct %s%s {\n", node.name().text(), getDefinitionType(node.defType()).c_str());
+            for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                const Ast::VariableDefn& vdef = ref(*it);
+                fprintf(_fpImp, "    %s %s", getQualifiedTypeSpecName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
+                fprintf(_fpImp, " = ");
+                ExprGenerator(_fpImp).visitNode(vdef.initExpr());
+                fprintf(_fpImp, ";\n");
+            }
+            fprintf(_fpImp, "};\n");
+        }
+
         FILE* fp = 0;
         std::string impl;
         if(node.accessType() == Ast::AccessType::Protected) {
@@ -397,6 +469,21 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             fprintf(fp, "%s::%s() : _impl(0) {_impl = new Impl();} \n", node.name().text(), node.name().text());
         }
         return;
+    }
+
+    inline void visitRoutineImp(const Ast::Routine& node) {
+        if(node.accessType() == Ast::AccessType::Public) {
+            fprintf(_fpImp, "public routine %s ", getQualifiedTypeSpecName(node.outType()).c_str());
+            fprintf(_fpImp, "%s", node.name().text());
+            fprintf(_fpImp, "(");
+            std::string sep;
+            for(Ast::Scope::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
+                const Ast::VariableDefn& vdef = ref(*it);
+                fprintf(_fpImp, "%s%s %s", sep.c_str(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
+                sep = ", ";
+            }
+            fprintf(_fpImp, ")%s;\n", getDefinitionType(node.defType()).c_str());
+        }
     }
 
     static inline void visitRoutine(FILE* fp, const Ast::Routine& node, const bool& inNS) {
@@ -446,6 +533,31 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(fp, " {}\n");
     }
 
+    inline void visitFunctionImp(const Ast::Function& node, const std::string& name) {
+        if((name.size() > 0) || (node.accessType() == Ast::AccessType::Public)) {
+            fprintf(_fpImp, "public function (");
+
+            std::string sep;
+            for(Ast::Scope::List::const_iterator it = node.sig().out().begin(); it != node.sig().out().end(); ++it) {
+                const Ast::VariableDefn& vdef = ref(*it);
+                fprintf(_fpImp, "%s%s %s", sep.c_str(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
+                sep = ", ";
+            }
+            if(name.size() > 0) {
+                fprintf(_fpImp, ")%s(", name.c_str());
+            } else {
+                fprintf(_fpImp, ")%s(", node.name().text());
+            }
+            sep = "";
+            for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
+                const Ast::VariableDefn& vdef = ref(*it);
+                fprintf(_fpImp, "%s%s %s", sep.c_str(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec()).c_str(), vdef.name().text());
+                sep = ", ";
+            }
+            fprintf(_fpImp, ")%s;\n", getDefinitionType(node.defType()).c_str());
+        }
+    }
+
     inline void visitFunctionSig(const Ast::Function& node, const bool& isRoot, const bool& isDecl) {
         // child-typespecs
         if(node.childCount() > 0) {
@@ -490,12 +602,14 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     }
 
     void visit(const Ast::RoutineDecl& node) {
+        visitRoutineImp(node);
         visitRoutine(fpDecl(node), node, true);
         fprintf(fpDecl(node), ";\n");
         fprintf(fpDecl(node), "\n");
     }
 
     void visit(const Ast::RoutineDefn& node) {
+        visitRoutineImp(node);
         visitRoutine(fpDecl(node), node, true);
         fprintf(fpDecl(node), ";\n");
         fprintf(fpDecl(node), "\n");
@@ -534,11 +648,13 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     }
 
     void visit(const Ast::FunctionDecl& node) {
+        visitFunctionImp(node, "");
         visitFunction(node, true);
         fprintf(fpDecl(node), "\n");
     }
 
     void visit(const Ast::RootFunctionDefn& node) {
+        visitFunctionImp(node, "");
         visitFunction(node, false);
         fprintf(fpDecl(node), "\n");
     }
@@ -560,6 +676,11 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     }
 
     void visit(const Ast::EventDecl& node) {
+        if(node.accessType() == Ast::AccessType::Public) {
+            fprintf(_fpImp, "public event(%s) => ", getQualifiedTypeSpecName(node.in().qualifiedTypeSpec()).c_str());
+            visitFunctionImp(node.handler(), node.name().string());
+        }
+
         fprintf(fpDecl(node), "%sstruct %s {\n", Indent::get(), node.name().text());
         // child-typespecs
         if(node.childCount() > 0) {

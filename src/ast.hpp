@@ -356,13 +356,19 @@ namespace Ast {
 
     class EventDecl : public UserDefinedTypeSpec {
     public:
-        inline EventDecl(const TypeSpec& parent, const Ast::Token& name, const Ast::VariableDefn& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _in(in) {}
+        inline EventDecl(const TypeSpec& parent, const Ast::Token& name, const Ast::VariableDefn& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _in(in), _funDecl(0) {}
     public:
         inline const Ast::VariableDefn& in()  const {return _in;}
+        inline void setHandler(Ast::FunctionDecl& funDecl) {
+            addChild(funDecl);
+            _funDecl = ptr(funDecl);
+        }
+        inline const Ast::FunctionDecl& handler() const {return ref(_funDecl);}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const Ast::VariableDefn& _in;
+        Ast::FunctionDecl* _funDecl;
     };
 
     class Namespace : public ChildTypeSpec {

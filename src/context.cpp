@@ -485,18 +485,6 @@ Ast::ChildFunctionDefn* Context::aEnterChildFunctionDefn(const Ast::TypeSpec& ba
 }
 
 Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDefn& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
-#if 0
-    Ast::Token handlerName(pos.row(), pos.col(), "Handler");
-    Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, functionSig.inScope());
-    Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, ref(handlerSig), defType);
-
-    Ast::Token hVarName(pos.row(), pos.col(), "handler");
-    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, funDecl, false);
-    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "functor");
-    Ast::VariableDefn& vdef = addVariableDefn(qTypeSpec, hVarName);
-    eventDef.addChild(funDecl);
-#endif
-
     const Ast::Token& name = functionSig.name();
 
     Ast::Token eventName(pos.row(), pos.col(), name.string());
@@ -506,14 +494,12 @@ Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDe
     Ast::Token handlerName(pos.row(), pos.col(), "Handler");
     Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, functionSig.inScope());
     Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, ref(handlerSig), defType);
-    eventDef.addChild(funDecl);
+    eventDef.setHandler(funDecl);
 
     Ast::QualifiedTypeSpec& qFunTypeSpec = addQualifiedTypeSpec(false, funDecl, false);
     Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "functor");
     templateDefn.addType(qFunTypeSpec);
     const Ast::QualifiedTypeSpec& qFunctorTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
-
-    //10651+251 (icici)
 
     Ast::Token hVarName(pos.row(), pos.col(), "handler");
     Ast::VariableDefn& vdef = addVariableDefn(qFunctorTypeSpec, hVarName);
