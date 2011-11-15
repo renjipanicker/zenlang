@@ -1,5 +1,7 @@
 include mainframe;
 
 public main MyMain {
+    local def = MainFrame::Definition{title:"test"; position:Window::Position{x:10;y:10;w:100;h:100;}; visible:true; };
+    local w = run MainFrame::Create(def);
     return (0);
 }

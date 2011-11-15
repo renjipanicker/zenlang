@@ -204,12 +204,20 @@ Window::Position Window::getWindowPosition(const Instance& window) {
 #if defined(WIN32)
     RECT rc;
     ::GetWindowRect(window._impl->_hWindow, &rc);
-    return Window::Position()._x(rc.left)._y(rc.top)._w(rc.right - rc.left)._h(rc.bottom - rc.top);
+    return Window::Position()
+            ._x<Window::Position>(rc.left)
+            ._y<Window::Position>(rc.top)
+            ._w<Window::Position>(rc.right - rc.left)
+            ._h<Window::Position>(rc.bottom - rc.top);
 #endif
 #if defined(GTK)
     GtkRequisition req;
     gtk_widget_size_request(window._impl->_hWindow, &req);
-    return Window::Position()._x(0)._y(0)._w(req.width)._h(req.height);
+    return Window::Position()
+            ._x<Window::Position>(0)
+            ._y<Window::Position>(0)
+            ._w<Window::Position>(req.width)
+            ._h<Window::Position>(req.height);
 #endif
 }
 
@@ -218,12 +226,20 @@ Window::Position Window::getChildPosition(const Instance& window) {
     RECT rc;
     ::GetClientRect(window._impl->_hWindow, &rc);
     ::MapWindowPoints(window._impl->_hWindow, ::GetParent(window._impl->_hWindow), (LPPOINT) &rc, 2);
-    return Window::Position()._x(rc.left)._y(rc.top)._w(rc.right - rc.left)._h(rc.bottom - rc.top);
+    return Window::Position()
+            ._x<Window::Position>(rc.left)
+            ._y<Window::Position>(rc.top)
+            ._w<Window::Position>(rc.right - rc.left)
+            ._h<Window::Position>(rc.bottom - rc.top);
 #endif
 #if defined(GTK)
     GtkRequisition req;
     gtk_widget_size_request(window._impl->_hWindow, &req);
-    return Window::Position()._x(0)._y(0)._w(req.width)._h(req.height);
+    return Window::Position()
+            ._x<Window::Position>(0)
+            ._y<Window::Position>(0)
+            ._w<Window::Position>(req.width)
+            ._h<Window::Position>(req.height);
 #endif
 }
 

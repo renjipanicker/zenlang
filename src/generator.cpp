@@ -283,7 +283,7 @@ private:
         fprintf(_fp, "%s()", getTypeSpecName(node.structDefn(), GetNameMode::Normal).c_str());
         for(Ast::StructInitPartList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
             const Ast::StructInitPart& part = ref(*it);
-            fprintf(_fp, "._%s(", part.name().text());
+            fprintf(_fp, "._%s<%s>(", part.name().text(), getTypeSpecName(node.structDefn(), GetNameMode::Normal).c_str());
             visitNode(part.expr());
             fprintf(_fp, ")");
         }
@@ -376,7 +376,6 @@ struct ImportGenerator : public Ast::TypeSpec::Visitor {
 
     inline void visitStructDefn(const Ast::StructDefn& node, const Ast::StructDefn* base) {
         if(node.accessType() == Ast::AccessType::Public) {
-            fprintf(_fpImp, "// xxx\n");
             fprintf(_fpImp, "public struct %s", node.name().text());
             if(base) {
                 fprintf(_fpImp, " : %s", getTypeSpecName(ref(base), GetNameMode::Import).c_str());
@@ -591,8 +590,8 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
                 INDENT;
                 const Ast::VariableDefn& vdef = ref(*it);
                 fprintf(fp, "%s%s %s;\n", Indent::get(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec(), GetNameMode::Normal).c_str(), vdef.name().text());
-                fprintf(fp, "%sinline %s& _%s(const %s& val) {%s = val; return ref(this);}\n",
-                        Indent::get(), node.name().text(), vdef.name().text(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec(), GetNameMode::Normal).c_str(), vdef.name().text());
+                fprintf(fp, "%stemplate <typename T> inline T& _%s(const %s& val) {%s = val; return ref(static_cast<T*>(this));}\n",
+                        Indent::get(), vdef.name().text(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec(), GetNameMode::Normal).c_str(), vdef.name().text());
             }
             visitChildrenIndent(node);
             fprintf(fp, "%s};\n", Indent::get());
@@ -687,7 +686,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
         // run-function-type
         fprintf(fpDecl(node), "%spublic:\n", Indent::get());
-        if(isDecl) {
+        if((isDecl) && (node.defType() != Ast::DefinitionType::Native)) {
             fprintf(fpDecl(node), "%s    virtual const _Out& run(const _In& _in) = 0;\n", Indent::get());
         } else {
             fprintf(fpDecl(node), "%s    virtual const _Out& run(const _In& _in);\n", Indent::get());
@@ -1177,7 +1176,10 @@ inline void Generator::Impl::generateHeaderIncludes(const std::string& basename)
         ns += sep;
         ns += token.string();
     }
-    fprintf(_fpImp, "namespace %s;\n\n", ns.c_str());
+
+    if(ns.size() > 0) {
+        fprintf(_fpImp, "namespace %s;\n\n", ns.c_str());
+    }
 }
 
 inline void Generator::Impl::run() {

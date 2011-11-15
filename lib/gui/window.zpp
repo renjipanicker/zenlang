@@ -20,6 +20,7 @@ public struct Definition {
     title = "";
     position = Window::Position{};
     style = Style.Normal;
+    visible = false;
 };
 
 public routine Position getWindowPosition(const Instance& window) native;

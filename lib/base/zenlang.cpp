@@ -57,7 +57,67 @@ void CallContext::run() {
 }
 
 #if defined(Z_EXE)
+static void pump() {
+    g_context.run();
+}
+
+#if defined(GUI)
+#if defined(WIN32)
+static void CALLBACK IdleProc(HWND hwnd, UINT uMsg, UINT idEvent, DWORD time) {
+    unused(hwnd);
+    unused(uMsg);
+    unused(idEvent);
+    unused(time);
+    pump();
+}
+#endif
+#if defined(GTK)
+static gboolean onIdle(gpointer data) {
+    unused(data);
+    pump();
+    return TRUE;
+}
+#endif
+#endif
+
+Application::Application(int argc, char* argv[]) {
+#if defined(GUI)
+#if defined(WIN32)
+#endif
+#if defined(GTK)
+    gtk_init(&argc, &argv);
+#endif
+#endif
+}
+
+int Application::exec() {
+    int code = 0;
+#if defined(GUI)
+#if defined(WIN32)
+    int timerID = Window::Native::getNextResID();
+    UINT timer = SetTimer(NULL, timerID, 0, IdleProc);
+
+    MSG msg;
+    while (GetMessage(&msg, NULL, 0, 0)) {
+        TranslateMessage(&msg);
+        DispatchMessage(&msg);
+    }
+
+    KillTimer(NULL, timer);
+    code = (int)msg.wParam;
+#endif
+#if defined(GTK)
+    g_idle_add(onIdle, 0);
+    gtk_main();
+#endif
+#else
+    pump();
+#endif
+    return code;
+}
+
 int main(int argc, char* argv[]) {
+    Application a(argc, argv);
 
 #if defined(UNIT_TEST)
     TestInstance* ti = s_testList.next();
@@ -74,7 +134,6 @@ int main(int argc, char* argv[]) {
         mi = s_mainList.next();
     }
 
-    g_context.run();
-    return 0;
+    return a.exec();
 }
 #endif

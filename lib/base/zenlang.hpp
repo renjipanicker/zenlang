@@ -300,6 +300,13 @@ struct MainInstanceT : public MainInstance {
     }
 };
 
+#if defined(Z_EXE)
+struct Application {
+    Application(int argc, char* argv[]);
+    int exec();
+};
+#endif
+
 #if 0
 /// \todo helpers to invoke function objects
 template <typename MethodT, typename ReturnT >
