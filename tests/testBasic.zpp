@@ -219,3 +219,9 @@ public test testRunExpr {
     unused(f);
     return (1);
 }
+
+public main MyMain {
+    local f = run runFunctionTest(908);
+    unused(f);
+    return (0);
+}

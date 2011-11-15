@@ -28,6 +28,7 @@ print <dst> <src> <level> <expr>;
 *** document ast
 *** document vref logic
 *** changed test::passed to bool
+*** Selectively decide which header file sto make private.
 
 ==DONE==
 Remove block from unit
@@ -70,3 +71,9 @@ unused()
 run-expr
 event
 event-handler
+
+=========================
+Build modes:
+exe in debug build with tests
+exe in debug build with no tests
+

@@ -15,6 +15,8 @@ static int showHelp(const Ast::Project& project) {
     fprintf(stdout, "  -pl --lib       Static library project\n");
     fprintf(stdout, "  -n  --name      Project name\n");
     fprintf(stdout, "  -g  --gui       GUI application\n");
+    fprintf(stdout, "  -d  --debug     Debug build\n");
+    fprintf(stdout, "  -t  --test      Don't generate unit tests (Note this is a negative switch)\n");
     fprintf(stdout, "  -z  --zenPath   Zen Library path\n");
     return 0;
 }
@@ -63,6 +65,10 @@ int main(int argc, char* argv[]) {
             project.mode(Ast::Project::Mode::Static);
         } else if((t == "-g") || (t == "--gui")) {
             project.global().gui(true);
+        } else if((t == "-d") || (t == "--debug")) {
+            project.global().debug(true);
+        } else if((t == "-t") || (t == "--test")) {
+            project.global().test(false);
         } else if((t == "-z") || (t == "--zenPath")) {
             t = argv[i++];
             project.zlibPath(t);

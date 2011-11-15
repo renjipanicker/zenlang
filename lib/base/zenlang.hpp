@@ -64,6 +64,72 @@ private:
     std::string _msg;
 };
 
+template <typename T>
+struct Pointer {
+    inline void reset(T* ptr) {delete _ptr; _ptr = 0; _ptr = ptr;}
+    inline T* clone(const Pointer& src) {
+        if(src._ptr == 0)
+            return 0;
+        return new T(ref(src._ptr));
+    }
+
+    inline Pointer() : _ptr(0) {}
+    inline ~Pointer() {reset(0);}
+    inline Pointer(const Pointer& src) : _ptr(0) {reset(clone(src));}
+    inline Pointer& operator=(const Pointer& src) {reset(clone(src)); return ref(this);}
+    inline Pointer& operator=(T* ptr) {reset(ptr); return ref(this);}
+    inline Pointer& operator=(T t) {reset(new T(t)); return ref(this);}
+    inline T& operator*() {return ref(_ptr);}
+    inline T* operator->() {assert(_ptr); return _ptr;}
+private:
+    T* _ptr;
+};
+
+template <typename V>
+struct ListCreator {
+    inline ListCreator& add(V v) {
+        _list.push_back(v);
+        return ref(this);
+    }
+    inline std::list<V> value() {return _list;}
+    std::list<V> _list;
+};
+
+template <typename K, typename V>
+struct DictCreator {
+    inline DictCreator& add(K k, V v) {
+        _list[k] = v;
+        return ref(this);
+    }
+    inline std::map<K, V> value() {return _list;}
+    std::map<K, V> _list;
+};
+
+namespace String {
+    inline void replace(std::string& text, const std::string& search, const std::string& replace) {
+        for(std::string::size_type next = text.find(search); next != std::string::npos;next = text.find(search, next)) {
+            text.replace(next, search.length(), replace);
+            next += replace.length();
+        }
+    }
+}
+
+struct Formatter {
+    inline Formatter(const std::string& text) : _text(text) {}
+    template <typename T>
+    inline Formatter& add(const std::string& key, T value) {
+        std::stringstream ss;
+        ss << value;
+        std::string replace = ss.str();
+        std::string search = "%{" + key + "}";
+        String::replace(_text, search, replace);
+        return ref(this);
+    }
+    inline std::string value() {return _text;}
+private:
+    std::string _text;
+};
+
 struct Future {
     virtual void run() = 0;
 };
@@ -144,27 +210,6 @@ private:
     FunctionList _list;
 };
 
-template <typename T>
-struct Pointer {
-    inline void reset(T* ptr) {delete _ptr; _ptr = 0; _ptr = ptr;}
-    inline T* clone(const Pointer& src) {
-        if(src._ptr == 0)
-            return 0;
-        return new T(ref(src._ptr));
-    }
-
-    inline Pointer() : _ptr(0) {}
-    inline ~Pointer() {reset(0);}
-    inline Pointer(const Pointer& src) : _ptr(0) {reset(clone(src));}
-    inline Pointer& operator=(const Pointer& src) {reset(clone(src)); return ref(this);}
-    inline Pointer& operator=(T* ptr) {reset(ptr); return ref(this);}
-    inline Pointer& operator=(T t) {reset(new T(t)); return ref(this);}
-    inline T& operator*() {return ref(_ptr);}
-    inline T* operator->() {assert(_ptr); return _ptr;}
-private:
-    T* _ptr;
-};
-
 template <typename KeyT, typename ValT>
 struct HandlerList {
     typedef std::list<ValT*> List;
@@ -190,6 +235,7 @@ struct HandlerList {
     }
 };
 
+#if defined(UNIT_TEST)
 template <typename T>
 struct test_ {
     struct _Out {
@@ -204,6 +250,22 @@ public:
     Pointer<_Out> _out;
     inline const _Out& out(_Out* val) {_out = val;return *_out;}
 };
+
+struct TestInstance {
+    TestInstance();
+    virtual void enque(CallContext& context) = 0;
+    TestInstance* _next;
+};
+
+template <typename T>
+struct TestInstanceT : public TestInstance {
+    virtual void enque(CallContext& context) {
+        T t;
+        typename T::_In in;
+        context.add(t, in);
+    }
+};
+#endif
 
 typedef std::list<std::string> ArgList;
 
@@ -223,25 +285,10 @@ public:
     inline const _Out& out(_Out* val) {_out = val;return *_out;}
 };
 
-struct TestInstance {
-    TestInstance();
-    virtual void enque(CallContext& context) = 0;
-    TestInstance* _next;
-};
-
 struct MainInstance {
     MainInstance();
     virtual void enque(CallContext& context, const ArgList& argl) = 0;
     MainInstance* _next;
-};
-
-template <typename T>
-struct TestInstanceT : public TestInstance {
-    virtual void enque(CallContext& context) {
-        T t;
-        typename T::_In in;
-        context.add(t, in);
-    }
 };
 
 template <typename T>
@@ -251,51 +298,6 @@ struct MainInstanceT : public MainInstance {
         typename T::_In in(argl);
         context.add(t, in);
     }
-};
-
-template <typename V>
-struct ListCreator {
-    inline ListCreator& add(V v) {
-        _list.push_back(v);
-        return ref(this);
-    }
-    inline std::list<V> value() {return _list;}
-    std::list<V> _list;
-};
-
-template <typename K, typename V>
-struct DictCreator {
-    inline DictCreator& add(K k, V v) {
-        _list[k] = v;
-        return ref(this);
-    }
-    inline std::map<K, V> value() {return _list;}
-    std::map<K, V> _list;
-};
-
-namespace String {
-    inline void replace(std::string& text, const std::string& search, const std::string& replace) {
-        for(std::string::size_type next = text.find(search); next != std::string::npos;next = text.find(search, next)) {
-            text.replace(next, search.length(), replace);
-            next += replace.length();
-        }
-    }
-}
-
-struct Formatter {
-    inline Formatter(const std::string& text) : _text(text) {}
-    template <typename T>
-    inline Formatter& add(const std::string& key, T value) {
-        std::stringstream ss;
-        ss << value;
-        std::string replace = ss.str();
-        std::string search = "%{" + key + "}";
-        String::replace(_text, search, replace);
-        return ref(this);
-    }
-    inline std::string value() {return _text;}
-private:
-    std::string _text;
 };
 
 #if 0
@@ -352,46 +354,5 @@ template <typename MethodT, typename ReturnT, typename P1, typename P2, typename
 struct Method<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6,P7,P8)> : public MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6,P7,P8)> {
     inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6,P7,P8)>(impl) {}
     inline ReturnT run(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)), p1, p2, p3, p4, p5, p6, p7, p8);}
-};
-
-template <typename T>
-struct Event {
-    struct Handler {
-        struct Item {
-            inline Item(Handler* x) : t(x) {}
-            Handler* t;
-        };
-        typedef std::list<Item> List;
-
-        struct Ptr {
-            Item& _item;
-            inline Ptr(Item& item) : _item(item) {}
-            inline Ptr(const Ptr& src) : _item(src._item) {}
-        };
-
-        inline Handler() {}
-        virtual ~Handler(){}
-    };
-
-    template <typename FnT>
-    class AddHandler {
-    protected:
-        typename Handler::Ptr _handler;
-    public:
-        inline AddHandler(typename Handler::Ptr handler) : _handler(handler) {}
-    };
-
-    typename Handler::List list;
-    inline ~Event() {
-    }
-
-    inline typename Handler::Ptr add_(Handler* handler) {
-        list.push_back(typename Handler::Item(handler));
-        typename Handler::Item& item = list.back();
-        return typename Handler::Ptr(item);
-    }
-
-    static T instance;
-    static inline typename Handler::Ptr add(Handler* handler) {return instance.add_(handler);}
 };
 #endif

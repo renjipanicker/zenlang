@@ -103,7 +103,7 @@ rImportStatementList ::= rImportStatementList rImportStatement.
 rImportStatementList ::= .
 
 //-------------------------------------------------
-rImportStatement ::= rHeaderType(headerType) rImportNamespaceId(id) rDefinitionType(defType) SEMI. {ref(pctx).aImportStatement(headerType, ref(id), defType);}
+rImportStatement ::= rHeaderType(headerType) rImportNamespaceId(id) rDefinitionType(defType) SEMI. {ref(pctx).aImportStatement(Ast::AccessType::Public, headerType, ref(id), defType);}
 
 //-------------------------------------------------
 // import type
@@ -114,7 +114,7 @@ rHeaderType(L) ::= IMPORT.    {L = Ast::HeaderType::Import;}
 //-------------------------------------------------
 %type rImportNamespaceId {Ast::ImportStatement*}
 rImportNamespaceId(L) ::= rImportNamespaceId(statement) SCOPE ID(name). {L = ref(pctx).aImportNamespaceId(ref(statement), name);}
-rImportNamespaceId(L) ::=                               ID(name). {L = ref(pctx).aImportNamespaceId(name);}
+rImportNamespaceId(L) ::=                                     ID(name). {L = ref(pctx).aImportNamespaceId(name);}
 
 //-------------------------------------------------
 rGlobalStatementList ::= rGlobalStatementList rGlobalStatement.

@@ -862,7 +862,10 @@ namespace Ast {
     public:
         typedef std::list<Token> Part;
     public:
-        inline ImportStatement() : _headerType(HeaderType::Include), _defType(DefinitionType::Direct) {}
+        inline ImportStatement() : _accessType(AccessType::Private), _headerType(HeaderType::Include), _defType(DefinitionType::Direct) {}
+    public:
+        inline const AccessType::T& accessType() const {return _accessType;}
+        inline ImportStatement& accessType(const AccessType::T& val) { _accessType = val; return ref(this);}
     public:
         inline const HeaderType::T& headerType() const {return _headerType;}
         inline ImportStatement& headerType(const HeaderType::T& val) { _headerType = val; return ref(this);}
@@ -876,6 +879,7 @@ namespace Ast {
         virtual void visit(Visitor& visitor) const;
     private:
         Part _part;
+        AccessType::T _accessType;
         HeaderType::T _headerType;
         DefinitionType::T _defType;
     };
@@ -1361,12 +1365,16 @@ namespace Ast {
     public:
         typedef std::list<std::string> PathList;
     public:
-        inline Config(const std::string& name) : _name(name) {}
+        inline Config(const std::string& name) : _name(name), _gui(false), _debug(true), _test(true) {}
     public:
         inline const std::string& name() const {return _name;}
     public:
         inline Config& gui(const bool& val) { _gui = val; return ref(this);}
         inline const bool& gui() const {return _gui;}
+        inline Config& debug(const bool& val) { _debug = val; return ref(this);}
+        inline const bool& debug() const {return _debug;}
+        inline Config& test(const bool& val) { _test = val; return ref(this);}
+        inline const bool& test() const {return _test;}
     public:
         inline Config& addIncludePath(const std::string& dir) { _includePathList.push_back(dir); return ref(this);}
         inline const PathList& includePathList() const {return _includePathList;}
@@ -1379,6 +1387,8 @@ namespace Ast {
     private:
         const std::string _name;
         bool _gui;
+        bool _debug;
+        bool _test;
         PathList _includePathList;
         PathList _includeFileList;
         PathList _sourceFileList;

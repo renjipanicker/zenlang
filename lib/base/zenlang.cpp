@@ -30,12 +30,14 @@ private:
     InitT* _next;
 };
 
+#if defined(UNIT_TEST)
 static InitList<TestInstance> s_testList;
-static InitList<MainInstance> s_mainList;
-
 TestInstance::TestInstance() : _next(0) {
     s_testList.push(this);
 }
+#endif
+
+static InitList<MainInstance> s_mainList;
 
 MainInstance::MainInstance() : _next(0) {
     s_mainList.push(this);
@@ -56,11 +58,14 @@ void CallContext::run() {
 
 #if defined(Z_EXE)
 int main(int argc, char* argv[]) {
+
+#if defined(UNIT_TEST)
     TestInstance* ti = s_testList.next();
     while(ti != 0) {
         ref(ti).enque(g_context);
         ti = s_testList.next();
     }
+#endif
 
     ArgList argl;
     MainInstance* mi = s_mainList.next();

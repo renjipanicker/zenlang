@@ -69,7 +69,7 @@ private:
 public:
     void                     aUnitNamespaceId(const Ast::Token& name);
     void                     aLeaveNamespace();
-    void                     aImportStatement(const Ast::HeaderType::T& headerType, Ast::ImportStatement& statement, const Ast::DefinitionType::T& defType);
+    void                     aImportStatement(const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, Ast::ImportStatement& statement, const Ast::DefinitionType::T& defType);
     Ast::ImportStatement*    aImportNamespaceId(Ast::ImportStatement& statement, const Ast::Token& name);
     Ast::ImportStatement*    aImportNamespaceId(const Ast::Token& name);
     Ast::Statement*          aGlobalTypeSpecStatement(const Ast::AccessType::T& accessType, Ast::UserDefinedTypeSpec& typeSpec);

@@ -272,7 +272,9 @@ void Context::aUnitNamespaceId(const Ast::Token &name) {
     Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(currentTypeSpec(), name));
     currentTypeSpec().addChild(ns);
     enterTypeSpec(ns);
-    _unit.addNamespacePart(name);
+    if(_level == 0) {
+        _unit.addNamespacePart(name);
+    }
     _namespaceStack.push_back(ptr(ns));
 }
 
@@ -284,7 +286,8 @@ void Context::aLeaveNamespace() {
     }
 }
 
-void Context::aImportStatement(const Ast::HeaderType::T& headerType, Ast::ImportStatement& statement, const Ast::DefinitionType::T& defType) {
+void Context::aImportStatement(const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, Ast::ImportStatement& statement, const Ast::DefinitionType::T& defType) {
+    statement.accessType(accessType);
     statement.headerType(headerType);
     statement.defType(defType);
 

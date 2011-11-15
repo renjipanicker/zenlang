@@ -9,26 +9,16 @@ public:
 public:
     void run();
 private:
+    inline void generateConfig(const Ast::Config& config);
+private:
     const Ast::Project& _project;
     FILE* _fpPro;
 };
 
-void ProGen::Impl::run() {
+inline void ProGen::Impl::generateConfig(const Ast::Config& config) {
     OutputFile ofPro(_fpPro, "CMakeLists.txt");unused(ofPro);
     fprintf(_fpPro, "CMAKE_MINIMUM_REQUIRED(VERSION 2.6)\n");
     fprintf(_fpPro, "PROJECT(%s)\n", _project.name().c_str());
-    fprintf(_fpPro, "\n");
-
-    std::string configNameList;
-    for(Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
-        const Ast::Config& config = ref(*it);
-        configNameList += config.name();
-        configNameList += ";";
-    }
-
-    fprintf(_fpPro, "IF(CMAKE_CONFIGURATION_TYPES)\n");
-    fprintf(_fpPro, "    SET(CMAKE_CONFIGURATION_TYPES \"%s\" CACHE STRING \"\" FORCE)\n", configNameList.c_str());
-    fprintf(_fpPro, "ENDIF(CMAKE_CONFIGURATION_TYPES)\n");
     fprintf(_fpPro, "\n");
 
     fprintf(_fpPro, "IF(CMAKE_COMPILER_IS_GNUCXX)\n");
@@ -36,12 +26,15 @@ void ProGen::Impl::run() {
     fprintf(_fpPro, "ENDIF(CMAKE_COMPILER_IS_GNUCXX)\n");
     fprintf(_fpPro, "\n");
 
-    fprintf(_fpPro, "IF( CMAKE_BUILD_TYPE STREQUAL \"Debug\")\n");
-    fprintf(_fpPro, "    ADD_DEFINITIONS( \"-DDEBUG\" )\n");
-    fprintf(_fpPro, "ENDIF()\n");
-    fprintf(_fpPro, "\n");
+    if(config.debug()) {
+        fprintf(_fpPro, "ADD_DEFINITIONS( \"-DDEBUG\" )\n");
+    }
 
-    if(_project.global().gui()) {
+    if(config.test()) {
+        fprintf(_fpPro, "ADD_DEFINITIONS( \"-DUNIT_TEST\" )\n");
+    }
+
+    if(config.gui()) {
         fprintf(_fpPro, "ADD_DEFINITIONS( \"-DGUI\" )\n");
 
         fprintf(_fpPro, "IF(WIN32)\n");
@@ -56,7 +49,7 @@ void ProGen::Impl::run() {
 
     fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \".\")\n");
     fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", _project.zlibPath().c_str());
-    for(Ast::Config::PathList::const_iterator it = _project.global().includePathList().begin(); it != _project.global().includePathList().end(); ++it) {
+    for(Ast::Config::PathList::const_iterator it = config.includePathList().begin(); it != config.includePathList().end(); ++it) {
         const std::string& dir = *it;
         fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", dir.c_str());
     }
@@ -66,7 +59,7 @@ void ProGen::Impl::run() {
 
     std::string zexePath = _project.zexePath();
     String::replace(zexePath, "\\", "/");
-    for(Ast::Config::PathList::const_iterator it = _project.global().sourceFileList().begin(); it != _project.global().sourceFileList().end(); ++it) {
+    for(Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
         const std::string& filename = *it;
         std::string basename = getBaseName(filename);
         std::string ext = getExtention(filename);
@@ -74,8 +67,11 @@ void ProGen::Impl::run() {
         if((_project.hppExt().find(ext) != std::string::npos) || (_project.cppExt().find(ext) != std::string::npos)) {
             fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s)\n", filename.c_str());
         } else if(_project.zppExt().find(ext) != std::string::npos) {
+            std::string guiFlag = config.gui()?" --gui":"";
+            std::string debugFlag = config.debug()?" --debug":"";
+            std::string testFlag = config.test()?" ":" --test";
             fprintf(_fpPro, "ADD_CUSTOM_COMMAND(\n");
-            fprintf(_fpPro, "    COMMAND \"%s\" -c \"%s\"\n", zexePath.c_str(), filename.c_str());
+            fprintf(_fpPro, "    COMMAND \"%s\"%s%s%s -c \"%s\"\n", zexePath.c_str(), guiFlag.c_str(), debugFlag.c_str(), testFlag.c_str(), filename.c_str());
             fprintf(_fpPro, "    OUTPUT \"%s.cpp\"\n", basename.c_str());
             fprintf(_fpPro, "    DEPENDS \"%s\"\n", filename.c_str());
             fprintf(_fpPro, ")\n");
@@ -115,6 +111,10 @@ void ProGen::Impl::run() {
     fprintf(_fpPro, "    TARGET_LINK_LIBRARIES(%s ${GTK3_LIBRARIES})\n", _project.name().c_str());
     fprintf(_fpPro, "ENDIF(GTK3_FOUND)\n");
     fprintf(_fpPro, "\n");
+}
+
+void ProGen::Impl::run() {
+    generateConfig(_project.global());
 }
 
 ProGen::ProGen(const Ast::Project& project) : _impl(0) {_impl = new Impl(project);}
