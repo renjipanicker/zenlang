@@ -53,7 +53,7 @@ public:
             *s = *t;
         }
         *s = 0;
-        //printf("Token(%d, %d): %d: %s\n", row, col, id, buf);
+//        printf("Token(%d, %d): %d: %s\n", row, col, id, buf);
         return td;
     }
 

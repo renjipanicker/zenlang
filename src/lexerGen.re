@@ -83,6 +83,10 @@ inline void Lexer::Impl::feedToken(const TokenData& t) {
 }
 
 inline bool Lexer::Impl::trySendId(Scanner* s, const Ast::TypeSpec* typeSpec) {
+    if(dynamic_cast<const Ast::TemplateDecl*>(typeSpec) != 0) {
+        feedToken(token(s, ZENTOK_TEMPLATE_TYPE));
+        return true;
+    }
     if(dynamic_cast<const Ast::StructDefn*>(typeSpec) != 0) {
         feedToken(token(s, ZENTOK_STRUCT_TYPE));
         return true;
@@ -96,7 +100,6 @@ inline bool Lexer::Impl::trySendId(Scanner* s, const Ast::TypeSpec* typeSpec) {
         return true;
     }
     if(dynamic_cast<const Ast::TypeSpec*>(typeSpec) != 0) {
-        //printf("try-send (other type): %s is %s\n", ref(typeSpec).name().text(), typeid(*typeSpec).name());
         feedToken(token(s, ZENTOK_OTHER_TYPE));
         return true;
     }
@@ -121,6 +124,14 @@ inline void Lexer::Impl::sendId(Scanner* s) {
         return;
 
     feedToken(token(s, ZENTOK_ID));
+}
+
+inline void Lexer::Impl::sendLessThan(Scanner* s) {
+    if(_lastToken == ZENTOK_TEMPLATE_TYPE) {
+        feedToken(token(s, ZENTOK_TLT));
+        return;
+    }
+    feedToken(token(s, ZENTOK_LT));
 }
 
 inline void Lexer::Impl::sendReturn(Scanner* s) {
@@ -225,7 +236,7 @@ re2c:condenumprefix          = EState;
 <Normal>   "{"     := feedToken(token(s, ZENTOK_LCURLY)); continue;
 <Normal>   "}"     := feedToken(token(s, ZENTOK_RCURLY)); continue;
 <Normal>   "%"     := feedToken(token(s, ZENTOK_MOD)); continue;
-<Normal>   "<"     := feedToken(token(s, ZENTOK_LT)); continue;
+<Normal>   "<"     := sendLessThan(s); continue;
 <Normal>   ">"     := feedToken(token(s, ZENTOK_GT)); continue;
 <Normal>   "+"     := feedToken(token(s, ZENTOK_PLUS)); continue;
 <Normal>   "-"     := feedToken(token(s, ZENTOK_MINUS)); continue;

@@ -50,4 +50,5 @@ public routine void unused() native;
 public routine void check() native;
 
 public function ()addHandler();
+public function (int code)main(const list<string>& argl);
 public function (int passed)test();

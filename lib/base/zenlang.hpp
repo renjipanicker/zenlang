@@ -191,7 +191,7 @@ struct HandlerList {
 };
 
 template <typename T>
-struct test {
+struct test_ {
     struct _Out {
         inline _Out(const int& passed) : _passed(passed) {}
         int _passed;
@@ -201,7 +201,24 @@ public:
         inline _In() {}
     };
 public:
-    Pointer<_In>  _in;
+    Pointer<_Out> _out;
+    inline const _Out& out(_Out* val) {_out = val;return *_out;}
+};
+
+typedef std::list<std::string> ArgList;
+
+template <typename T>
+struct main_ {
+    struct _Out {
+        inline _Out(const int& code) : _code(code) {}
+        int _code;
+    };
+public:
+    struct _In {
+        inline _In(const ArgList& argl) : _argl(argl) {}
+        ArgList _argl;
+    };
+public:
     Pointer<_Out> _out;
     inline const _Out& out(_Out* val) {_out = val;return *_out;}
 };
@@ -212,19 +229,29 @@ struct TestInstance {
     TestInstance* _next;
 };
 
+struct MainInstance {
+    MainInstance();
+    virtual void enque(CallContext& context, const ArgList& argl) = 0;
+    MainInstance* _next;
+};
+
 template <typename T>
 struct TestInstanceT : public TestInstance {
     virtual void enque(CallContext& context) {
         T t;
         typename T::_In in;
-        t._in = in;
         context.add(t, in);
     }
 };
 
-#if defined(Z_EXE)
-int Main(const std::list<std::string>& argl);
-#endif
+template <typename T>
+struct MainInstanceT : public MainInstance {
+    virtual void enque(CallContext& context, const ArgList& argl) {
+        T t;
+        typename T::_In in(argl);
+        context.add(t, in);
+    }
+};
 
 template <typename V>
 struct ListCreator {

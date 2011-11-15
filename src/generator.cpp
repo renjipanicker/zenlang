@@ -689,14 +689,14 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
     void visit(const Ast::ChildFunctionDefn& node) {
         if(getTypeSpecName(node.base(), GetNameMode::Normal) == "test") {
-            fprintf(fpDecl(node), "%sclass %s : public test< %s > {\n", Indent::get(), node.name().text(), node.name().text());
+            fprintf(fpDecl(node), "%sclass %s : public test_< %s > {\n", Indent::get(), node.name().text(), node.name().text());
         } else {
             fprintf(fpDecl(node), "%sclass %s : public %s {\n", Indent::get(), node.name().text(), getTypeSpecName(node.base(), GetNameMode::Normal).c_str());
         }
         visitFunctionSig(node, false, false);
 
         if(getTypeSpecName(node.base(), GetNameMode::Normal) == "test") {
-            fprintf(fpDecl(node), "%s    static TestInstanceT<%s> _test;\n", Indent::get(), node.name().text());
+            fprintf(fpDecl(node), "%s    static TestInstanceT<%s> s_test;\n", Indent::get(), node.name().text());
         }
 
         fprintf(fpDecl(node), "%s};\n", Indent::get());
@@ -1018,8 +1018,8 @@ struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
         visitChildrenIndent(node);
         visitFunction(node);
         std::string fname = getTypeSpecName(node, GetNameMode::Normal);
-        if(fname == "test") {
-            fprintf(_fpSrc, "%sTestInstanceT<%s> %s::_test = TestInstanceT<%s>();\n", Indent::get(), fname.c_str(), fname.c_str(), fname.c_str());
+        if(getTypeSpecName(node.base(), GetNameMode::Normal) == "test") {
+            fprintf(_fpSrc, "%sTestInstanceT<%s> %s::s_test = TestInstanceT<%s>();\n", Indent::get(), fname.c_str(), fname.c_str(), fname.c_str());
         }
     }
 

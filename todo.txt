@@ -1,12 +1,14 @@
 future
-event
-event-handler
+Main()
 *** rename local to auto (consistency with c++0x)
 *** enum-default-value
 *** struct-default-value
 *** enum-init-expr
 *** 3 level unit test - suite/test/check
 
+==BACKLOG==
+auto-detect if main is present
+auto-detect if header should be public or private
 in-params are const by default, locals are not
 lexical scanner for string input
 project builder
@@ -27,6 +29,7 @@ print <dst> <src> <level> <expr>;
 *** document vref logic
 *** changed test::passed to bool
 
+==DONE==
 Remove block from unit
 project generator - cmake
 unit tests
@@ -65,3 +68,5 @@ remove get-set for struct, retain set-chain ability (how?)
 assert()
 unused()
 run-expr
+event
+event-handler

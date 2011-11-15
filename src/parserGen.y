@@ -301,6 +301,12 @@ rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx
 %type rTypeSpec {const Ast::TypeSpec*}
 rTypeSpec(L) ::= rPreTypeSpec(R). {L = ref(pctx).aTypeSpec(ref(R));}
 
+rTypeSpec(L) ::= rTemplateTypeSpec(R) TLT rQualifiedTypeSpec GT. {L = ref(pctx).aTypeSpec(ref(R));}
+
+//-------------------------------------------------
+%type rTemplateTypeSpec {const Ast::TemplateDecl*}
+rTemplateTypeSpec(L) ::= rPreTemplateTypeSpec(R). {L = ref(pctx).aTemplateTypeSpec(ref(R));}
+
 //-------------------------------------------------
 %type rStructTypeSpec {const Ast::StructDefn*}
 rStructTypeSpec(L) ::= rPreStructTypeSpec(R). {L = ref(pctx).aStructTypeSpec(ref(R));}
@@ -316,10 +322,16 @@ rFunctionTypeSpec(L) ::= rPreFunctionTypeSpec(R). {L = ref(pctx).aFunctionTypeSp
 //-------------------------------------------------
 // "private" type references, can be only called by the public equivalent rules
 %type rPreTypeSpec {const Ast::TypeSpec*}
+rPreTypeSpec(L) ::= rPreTemplateTypeSpec(R). {L = R;}
 rPreTypeSpec(L) ::= rPreStructTypeSpec(R).   {L = R;}
 rPreTypeSpec(L) ::= rPreRoutineTypeSpec(R).  {L = R;}
 rPreTypeSpec(L) ::= rPreFunctionTypeSpec(R). {L = R;}
 rPreTypeSpec(L) ::= rPreOtherTypeSpec(R).    {L = R;}
+
+//-------------------------------------------------
+%type rPreTemplateTypeSpec {const Ast::TemplateDecl*}
+rPreTemplateTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE TEMPLATE_TYPE(name). {L = ref(pctx).aTemplateTypeSpec(ref(parent), name);}
+rPreTemplateTypeSpec(L) ::=                            TEMPLATE_TYPE(name). {L = ref(pctx).aTemplateTypeSpec(name);}
 
 //-------------------------------------------------
 %type rPreStructTypeSpec {const Ast::StructDefn*}

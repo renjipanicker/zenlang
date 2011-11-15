@@ -1,17 +1,44 @@
 #include "pch.hpp"
 #include "zenlang.hpp"
 
-static TestInstance* g_testListHead = 0;
-static TestInstance* g_testListTail = 0;
+template <typename InitT>
+struct InitList {
+    inline InitList() : _head(0), _tail(0), _next(0) {}
+
+    inline void push(InitT* inst) {
+        if(_tail == 0) {
+            assert(_head == 0);
+            _head = inst;
+            _next = _head;
+        } else {
+            ref(_tail)._next = inst;
+        }
+        _tail = inst;
+    }
+
+    inline InitT* next() {
+        InitT* n = _next;
+        if(n != 0) {
+            _next = ref(_next)._next;
+        }
+        return n;
+    }
+
+private:
+    InitT* _head;
+    InitT* _tail;
+    InitT* _next;
+};
+
+static InitList<TestInstance> s_testList;
+static InitList<MainInstance> s_mainList;
 
 TestInstance::TestInstance() : _next(0) {
-    if(g_testListTail == 0) {
-        assert(g_testListHead == 0);
-        g_testListHead = this;
-    } else {
-        ref(g_testListTail)._next = this;
-    }
-    g_testListTail = this;
+    s_testList.push(this);
+}
+
+MainInstance::MainInstance() : _next(0) {
+    s_mainList.push(this);
 }
 
 CallContext g_context = CallContext();
@@ -29,14 +56,19 @@ void CallContext::run() {
 
 #if defined(Z_EXE)
 int main(int argc, char* argv[]) {
-    g_testListTail = g_testListHead;
-    while(g_testListTail != 0) {
-        ref(g_testListTail).enque(g_context);
-        g_testListTail = ref(g_testListTail)._next;
+    TestInstance* ti = s_testList.next();
+    while(ti != 0) {
+        ref(ti).enque(g_context);
+        ti = s_testList.next();
     }
 
-    std::list<std::string> argl;
-    Main(argl);
+    ArgList argl;
+    MainInstance* mi = s_mainList.next();
+    while(mi != 0) {
+        ref(mi).enque(g_context, argl);
+        mi = s_mainList.next();
+    }
+
     g_context.run();
     return 0;
 }

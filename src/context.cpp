@@ -171,6 +171,13 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
         return ref(it->second);
     }
 
+    const Ast::TemplateDecl* td = dynamic_cast<const Ast::TemplateDecl*>(ptr(typeSpec));
+    if(td != 0) {
+        // dummy code for now.
+        Ast::Token value(name.row(), name.col(), "#");
+        return aConstantExpr("int", value);
+    }
+
     const Ast::EnumDefn* ed = dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec));
     if(ed != 0) {
         // dummy code for now.
@@ -572,6 +579,26 @@ Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifie
 Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef) {
     Ast::QualifiedTypeSpec& qualifiedTypeSpec = addQualifiedTypeSpec(isConst, typeSpec, isRef);
     return ptr(qualifiedTypeSpec);
+}
+
+const Ast::TemplateDecl* Context::aTemplateTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
+    const Ast::TemplateDecl* templateDecl = parent.hasChild<const Ast::TemplateDecl>(name.text());
+    if(!templateDecl) {
+        throw Exception("%s template type expected '%s'\n", err(_filename, name).c_str(), name.text());
+    }
+    setCurrentTypeRef(ref(templateDecl));
+    return templateDecl;
+}
+
+const Ast::TemplateDecl* Context::aTemplateTypeSpec(const Ast::Token& name) {
+    const Ast::TemplateDecl& templateDecl = getRootTypeSpec<Ast::TemplateDecl>(name);
+    setCurrentTypeRef(templateDecl);
+    return ptr(templateDecl);
+}
+
+const Ast::TemplateDecl* Context::aTemplateTypeSpec(const Ast::TemplateDecl& templateDecl) {
+    resetCurrentTypeRef();
+    return ptr(templateDecl);
 }
 
 const Ast::StructDefn* Context::aStructTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
