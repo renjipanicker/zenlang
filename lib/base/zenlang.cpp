@@ -90,6 +90,17 @@ Application::Application(int argc, char* argv[]) {
 #endif
 }
 
+Application::~Application() {
+#if defined(GUI)
+#if defined(WIN32)
+    ::PostQuitMessage(This._code);
+#endif
+#if defined(GTK)
+    gtk_main_quit();
+#endif
+#endif
+}
+
 int Application::exec() {
     int code = 0;
 #if defined(GUI)

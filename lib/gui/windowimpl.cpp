@@ -192,10 +192,10 @@ Window::Instance::Impl Window::Native::createWindow(const Window::Definition& de
     return impl;
 }
 
-void Window::Native::createChildWindow(Window::Instance& window, const Window::Definition& def, const Window::Instance& parent) {
-    trace("createChildWindow: %d\n", window._impl->_hWindow);
-    gtk_fixed_put (GTK_FIXED (parent._impl->_hFixed), window._impl->_hWindow, def.position.x, def.position.y);
-    gtk_widget_show(window._impl->_hWindow);
+void Window::Native::createChildWindow(Window::Instance::Impl& impl, const Window::Definition& def, const Window::Instance& parent) {
+    trace("createChildWindow: %d\n", impl._hWindow);
+    gtk_fixed_put (GTK_FIXED (parent._impl->_hFixed), impl._hWindow, def.position.x, def.position.y);
+    gtk_widget_show(impl._hWindow);
 }
 #endif
 

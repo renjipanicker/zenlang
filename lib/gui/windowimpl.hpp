@@ -19,7 +19,7 @@ void createWindow(Window::Create& action, const std::string& className, const in
 
 #if defined(GTK)
 Window::Instance::Impl createWindow(const Window::Definition& def, GtkWidget *parent);
-void createChildWindow(Window::Instance& window, const Window::Definition& def, const Window::Instance& parent);
+void createChildWindow(Window::Instance::Impl& impl, const Window::Definition& def, const Window::Instance& parent);
 #endif
 
 }

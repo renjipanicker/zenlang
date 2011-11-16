@@ -303,6 +303,7 @@ struct MainInstanceT : public MainInstance {
 #if defined(Z_EXE)
 struct Application {
     Application(int argc, char* argv[]);
+    ~Application();
     int exec();
 };
 #endif
