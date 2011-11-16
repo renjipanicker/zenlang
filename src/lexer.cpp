@@ -7,7 +7,12 @@
 struct Scanner;
 class Lexer::Impl {
 public:
-    inline Impl(Context& context, Parser& parser) : _parser(parser), _context(context), _lastToken(0) {}
+    inline Impl(Context& context, Parser& parser);
+    inline ~Impl();
+    inline bool openFile(const std::string& filename);
+    inline bool readFile();
+
+private:
     size_t init(Scanner* s);
     void scan(Scanner* s);
 
@@ -20,6 +25,7 @@ private:
     inline void sendReturn(Scanner* s);
 
 private:
+    Scanner* _s;
     Parser& _parser;
     Context& _context;
     int _lastToken;
@@ -27,22 +33,36 @@ private:
 
 #include "lexerGen.c"
 
-Lexer::Lexer(Context& context, Parser& parser) : _impl(0) {
-    _impl = new Impl(context, parser);
+inline Lexer::Impl::Impl(Context& context, Parser& parser) : _s(0), _parser(parser), _context(context), _lastToken(0) {
+    _s = new Scanner();
 }
 
-bool Lexer::readFile(const std::string& filename) {
-    Scanner in;
-    memset((char*) &in, 0, sizeof(in));
+inline Lexer::Impl::~Impl() {
+    if(ref(_s).fp != 0) {
+        fclose(ref(_s).fp);
+        ref(_s).fp = 0;
+    }
+    delete _s;
+}
 
-    if ((in.fp = fopen(filename.c_str(), "r")) == NULL) {
+inline bool Lexer::Impl::openFile(const std::string& filename) {
+    if ((ref(_s).fp = fopen(filename.c_str(), "r")) == NULL) {
+        ref(_s).fp = 0;
         return false;
     }
-
-    if(_impl->init(&in) > 0) {
-        _impl->scan(&in);
-    }
-
-    fclose(in.fp);
     return true;
 }
+
+inline bool Lexer::Impl::readFile() {
+    if(init(_s) > 0) {
+        scan(_s);
+    }
+
+    fclose(ref(_s).fp);
+    return true;
+}
+
+Lexer::Lexer(Context& context, Parser& parser) : _impl(0) {_impl = new Impl(context, parser);}
+Lexer::~Lexer() {delete _impl;}
+bool Lexer::openFile(const std::string& filename) {return ref(_impl).openFile(filename);}
+bool Lexer::readFile() {return ref(_impl).readFile();}

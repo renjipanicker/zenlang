@@ -63,6 +63,17 @@ static void pump() {
 
 #if defined(GUI)
 #if defined(WIN32)
+static int lastWM = WM_APP;
+static int lastRes = 1000;
+
+int win32::getNextWmID() {
+    return lastWM++;
+}
+
+int win32::getNextResID() {
+    return lastRes++;
+}
+
 static void CALLBACK IdleProc(HWND hwnd, UINT uMsg, UINT idEvent, DWORD time) {
     unused(hwnd);
     unused(uMsg);
@@ -91,21 +102,20 @@ Application::Application(int argc, char* argv[]) {
 }
 
 Application::~Application() {
-#if defined(GUI)
-#if defined(WIN32)
-    ::PostQuitMessage(This._code);
-#endif
-#if defined(GTK)
-    gtk_main_quit();
-#endif
-#endif
 }
+
+#if defined(WIN32)
+static HINSTANCE s_hInstance = 0;
+HINSTANCE Application::instance() {
+    return s_hInstance;
+}
+#endif
 
 int Application::exec() {
     int code = 0;
 #if defined(GUI)
 #if defined(WIN32)
-    int timerID = Window::Native::getNextResID();
+    int timerID = win32::getNextResID();
     UINT timer = SetTimer(NULL, timerID, 0, IdleProc);
 
     MSG msg;
@@ -127,6 +137,29 @@ int Application::exec() {
     return code;
 }
 
+int Application::exit(const int& code) {
+#if defined(GUI)
+#if defined(WIN32)
+    ::PostQuitMessage(code);
+#endif
+#if defined(GTK)
+    gtk_main_quit();
+#endif
+#endif
+    return code;
+}
+
+#if defined(GUI) && defined(WIN32)
+int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
+    unused(hPrevInstance);
+    unused(lpCmdLine);
+    unused(nCmdShow);
+    Application a(0, 0);
+    InitCommonControls();
+    s_hInstance = hInstance;
+    return a.exec();
+}
+#else
 int main(int argc, char* argv[]) {
     Application a(argc, argv);
 
@@ -147,4 +180,5 @@ int main(int argc, char* argv[]) {
 
     return a.exec();
 }
+#endif
 #endif

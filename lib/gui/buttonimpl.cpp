@@ -5,7 +5,7 @@
 
 const Button::Create::_Out& Button::Create::run(const _In& _in) {
 #if defined(WIN32)
-    Window::Native::createChildWindow(This, "BUTTON", BS_PUSHBUTTON|WS_CHILD|WS_VISIBLE, 0, This._parent);
+    Window::Instance::Impl impl = Window::Native::createChildWindow(_in.def, "BUTTON", BS_PUSHBUTTON|WS_CHILD|WS_VISIBLE, 0, _in.parent);
 #endif
 #if defined(GTK)
     Window::Instance::Impl impl;

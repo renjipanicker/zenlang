@@ -229,7 +229,7 @@ struct HandlerList {
         const List& list = it->second;
         for(typename List::const_iterator itl = list.begin(); itl != list.end(); ++itl) {
             ValT* handler = *itl;
-            handler->run();
+            //handler->run();
         }
         return true;
     }
@@ -300,11 +300,24 @@ struct MainInstanceT : public MainInstance {
     }
 };
 
+#if defined(WIN32)
+struct win32 {
+#if defined(GUI)
+    static int getNextWmID();
+    static int getNextResID();
+#endif
+};
+#endif
+
 #if defined(Z_EXE)
 struct Application {
     Application(int argc, char* argv[]);
     ~Application();
+#if defined(WIN32)
+    static HINSTANCE instance();
+#endif
     int exec();
+    int exit(const int& code);
 };
 #endif
 

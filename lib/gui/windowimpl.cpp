@@ -2,37 +2,23 @@
 #include "base/zenlang.hpp"
 #include "window.hpp"
 #include "windowimpl.hpp"
+#include "button.hpp"
 
 #if defined(WIN32)
-static int lastWM = WM_APP;
-static int lastRes = 1000;
 static int lastclassId = 1;
-
-int getNextWmID() {
-    return lastWM++;
-}
-
-int getNextResID() {
-    return lastRes++;
-}
-
 static std::string getNextClassID() {
     char name[128];
     snprintf(name, 128, "classX%d", lastclassId++);
     return name;
 }
 
-HINSTANCE instance() {
-    return Application::Instance::Impl::instance()._hInstance;
-}
+//static HandlerList<int, MenuItem::SelectHandler> menuItemSelectHandlerList;
+//static HandlerList<int, SysTray::OnActivationHandler> sysTrayActivationHandlerList;
+//static HandlerList<int, SysTray::OnContextMenuHandler> sysTrayContextMenuHandlerList;
 
-static HandlerList<int, MenuItem::SelectHandler> menuItemSelectHandlerList;
-static HandlerList<int, SysTray::OnActivationHandler> sysTrayActivationHandlerList;
-static HandlerList<int, SysTray::OnContextMenuHandler> sysTrayContextMenuHandlerList;
-
-static HandlerList<HWND, Button::OnClickHandler> onButtonClickHandlerList;
-static HandlerList<HWND, Window::OnResize> onResizeHandlerList;
-static HandlerList<HWND, Window::OnCloseHandler> onCloseHandlerList;
+//static HandlerList<HWND, Button::OnClickHandler> onButtonClickHandlerList;
+static HandlerList<HWND, Window::OnResize::Handler> onResizeHandlerList;
+static HandlerList<HWND, Window::OnClose::Handler> onCloseHandlerList;
 
 ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
     ULONGLONG ullVersion = 0;
@@ -59,23 +45,23 @@ ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
 // Message handler for the app
 static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     if(lParam == WM_LBUTTONDOWN) {
-        if(sysTrayActivationHandlerList.runHandler(message))
-            return 1;
+//        if(sysTrayActivationHandlerList.runHandler(message))
+//            return 1;
     }
 
     if((lParam == WM_RBUTTONDOWN) || (lParam == WM_CONTEXTMENU)) {
-        if(sysTrayContextMenuHandlerList.runHandler(message))
-            return 1;
+//        if(sysTrayContextMenuHandlerList.runHandler(message))
+//            return 1;
     }
 
     switch (message) {
         case WM_COMMAND:
-            if(menuItemSelectHandlerList.runHandler(LOWORD(wParam)))
-                return 1;
-            if(LOWORD(wParam) == BN_CLICKED) {
-                if(onButtonClickHandlerList.runHandler((HWND)lParam))
-                    return 1;
-            }
+//            if(menuItemSelectHandlerList.runHandler(LOWORD(wParam)))
+//                return 1;
+//            if(LOWORD(wParam) == BN_CLICKED) {
+//                if(onButtonClickHandlerList.runHandler((HWND)lParam))
+//                    return 1;
+//            }
             break;
 
         case WM_SIZE:
@@ -103,13 +89,13 @@ std::string registerClass(HBRUSH bg) {
     wcx.lpfnWndProc = WinProc;     // points to window procedure
     wcx.cbClsExtra = 0;                // no extra class memory
     wcx.cbWndExtra = 0;                // no extra window memory
-    wcx.hInstance = instance();         // handle to instance
+    wcx.hInstance = Application::instance();           // handle to instance
     wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION);              // predefined app. icon
     wcx.hCursor = LoadCursor(NULL, IDC_ARROW);                    // predefined arrow
     wcx.hbrBackground = bg;
     wcx.lpszMenuName =  _T("MainMenu");    // name of menu resource
     wcx.lpszClassName = className.c_str();  // name of window class
-    wcx.hIconSm = (HICON)LoadImage(instance(), MAKEINTRESOURCE(5), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+    wcx.hIconSm = (HICON)LoadImage(Application::instance(), MAKEINTRESOURCE(5), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 
     // Register the window class.
     if(!::RegisterClassEx(&wcx)) {
@@ -119,66 +105,73 @@ std::string registerClass(HBRUSH bg) {
     return className;
 }
 
-void addMenuItemSelectHandler(const int& wm, MenuItem::SelectHandler* handler) {
-    menuItemSelectHandlerList.addHandler(wm, handler);
-}
+//void addMenuItemSelectHandler(const int& wm, MenuItem::SelectHandler* handler) {
+//    menuItemSelectHandlerList.addHandler(wm, handler);
+//}
 
-void addSysTrayActivationHandler(const int& wm, SysTray::OnActivationHandler* handler) {
-    sysTrayActivationHandlerList.addHandler(wm, handler);
-}
+//void addSysTrayActivationHandler(const int& wm, SysTray::OnActivationHandler* handler) {
+//    sysTrayActivationHandlerList.addHandler(wm, handler);
+//}
 
-void addSysTrayContextMenuHandler(const int& wm, SysTray::OnContextMenuHandler* handler) {
-    sysTrayContextMenuHandlerList.addHandler(wm, handler);
-}
+//void addSysTrayContextMenuHandler(const int& wm, SysTray::OnContextMenuHandler* handler) {
+//    sysTrayContextMenuHandlerList.addHandler(wm, handler);
+//}
 
-void addOnResizeHandler(HWND hwnd, Window::OnResize *handler) {
+void addOnResizeHandler(HWND hwnd, Window::OnResize::Handler* handler) {
     onResizeHandlerList.addHandler(hwnd, handler);
 }
 
-void addOnCloseHandler(HWND hwnd, Window::OnCloseHandler *handler) {
+void addOnCloseHandler(HWND hwnd, Window::OnClose::Handler* handler) {
     onCloseHandlerList.addHandler(hwnd, handler);
 }
 
-void addOnButtonClickHandler(HWND hwnd, Button::OnClickHandler *handler) {
-    onButtonClickHandlerList.addHandler(hwnd, handler);
-}
+//void addOnButtonClickHandler(HWND hwnd, Button::OnClickHandler *handler) {
+//    onButtonClickHandlerList.addHandler(hwnd, handler);
+//}
 #endif
 
 #if defined(WIN32)
-void Window::Native::createWindow(Window::Create& action, const std::string& className, const int& style, const int& xstyle, HWND parent) {
-    Position pos(CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT, CW_USEDEFAULT);
-    if(action._position.x != -1)
-        pos.x = action._position.x;
-    if(action._position.y != -1)
-        pos.y = action._position.y;
-    if(action._position.w != -1)
-        pos.w = action._position.w;
-    if(action._position.h != -1)
-        pos.h = action._position.h;
+Window::Instance::Impl Window::Native::createWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, HWND parent) {
+    Position pos = Position()
+            ._x<Position>(CW_USEDEFAULT)
+            ._y<Position>(CW_USEDEFAULT)
+            ._w<Position>(CW_USEDEFAULT)
+            ._h<Position>(CW_USEDEFAULT);
 
-    action._window._impl->_hWindow = ::CreateWindowEx(xstyle,
-                                                      className.c_str(),
-                                                      action._title.c_str(),
-                                                      style,
-                                                      pos.x, pos.y, pos.w, pos.h,
-                                                      parent, (HMENU)NULL,
-                                                      instance(), (LPVOID)NULL);
+    if(def.position.x != -1)
+        pos.x = def.position.x;
+    if(def.position.y != -1)
+        pos.y = def.position.y;
+    if(def.position.w != -1)
+        pos.w = def.position.w;
+    if(def.position.h != -1)
+        pos.h = def.position.h;
+
+    Window::Instance::Impl impl;
+    impl._hWindow = ::CreateWindowEx(xstyle,
+                                      className.c_str(),
+                                      def.title.c_str(),
+                                      style,
+                                      pos.x, pos.y, pos.w, pos.h,
+                                      parent, (HMENU)NULL,
+                                      Application::instance(), (LPVOID)NULL);
+    return impl;
 }
 
-void Window::Native::createMainFrame(Window::Create& action, const int& style, const int& xstyle) {
-    HBRUSH brush = (action._style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
+Window::Instance::Impl Window::Native::createMainFrame(const Window::Definition& def, const int& style, const int& xstyle) {
+    HBRUSH brush = (def.style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
     std::string className = registerClass(brush);
-    return createWindow(action, className, style, xstyle, (HWND)NULL);
+    return createWindow(def, className, style, xstyle, (HWND)NULL);
 }
 
-void Window::Native::createChildFrame(Window::Create& action, const int &style, const int &xstyle, const Window::Instance &parent) {
-    HBRUSH brush = (action._style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
+Window::Instance::Impl Window::Native::createChildFrame(const Window::Definition& def, const int &style, const int &xstyle, const Window::Instance &parent) {
+    HBRUSH brush = (def.style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
     std::string className = registerClass(brush);
-    return createWindow(action, className, style, xstyle, parent._impl->_hWindow);
+    return createWindow(def, className, style, xstyle, parent._impl->_hWindow);
 }
 
-void Window::Native::createChildWindow(Window::Create& action, const std::string& className, const int& style, const int& xstyle, const Window::Instance& parent) {
-    return createWindow(action, className, style, xstyle, parent._impl->_hWindow);
+Window::Instance::Impl Window::Native::createChildWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, const Window::Instance& parent) {
+    return createWindow(def, className, style, xstyle, parent._impl->_hWindow);
 }
 #endif
 

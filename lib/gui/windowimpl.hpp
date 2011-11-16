@@ -14,7 +14,10 @@ namespace Window {
 namespace Native {
 
 #if defined(WIN32)
-void createWindow(Window::Create& action, const std::string& className, const int& style, const int& xstyle, HWND parent);
+Window::Instance::Impl createWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, HWND parent);
+Window::Instance::Impl createMainFrame(const Window::Definition& def, const int& style, const int& xstyle);
+Window::Instance::Impl createChildFrame(const Window::Definition& def, const int &style, const int &xstyle, const Window::Instance &parent);
+Window::Instance::Impl createChildWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, const Window::Instance& parent);
 #endif
 
 #if defined(GTK)

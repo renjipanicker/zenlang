@@ -8,7 +8,7 @@ public:
     void compile();
     void import(Ast::Unit& unit, const std::string& filename, const int& level);
 private:
-    inline bool parseFile(Ast::Unit& unit, const std::string& filename, const int& level);
+    inline bool parseFile(Ast::Unit& unit, const std::string& filename, const int& level, const std::string& action);
 private:
     const Ast::Project& _project;
 };

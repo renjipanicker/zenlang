@@ -1255,6 +1255,7 @@ namespace Ast {
         typedef std::list<const Ast::CoerceList*> CoerceListList;
         typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
         typedef std::list<Token> NsPartList;
+        typedef std::map<std::string, int> HeaderFileList;
 
     public:
         inline Unit(const std::string& filename) : _filename(filename), _importNS("*import*"), _rootNS("*root*") {}
@@ -1265,6 +1266,15 @@ namespace Ast {
         /// \brief Return the filename
         /// \return The filename
         inline const std::string& filename() const {return _filename;}
+
+    public:
+        /// \brief Return the header file list
+        /// \return The header file list
+        inline const HeaderFileList& headerFileList() const {return _headerFileList;}
+
+        /// \brief Add a header file to the unit
+        /// \param list the header file to add
+        inline void addheaderFile(const std::string& filename) {_headerFileList[filename]++;}
 
     public:
         /// \brief Return the import statement list
@@ -1359,6 +1369,9 @@ namespace Ast {
 
         /// \brief The list of idefault values for types in this unit
         DefaultValueList _defaultValueList;
+
+        /// \brief The list of header files imported into this unit
+        HeaderFileList _headerFileList;
     };
 
     class Config {

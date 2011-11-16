@@ -4,7 +4,9 @@
 class Lexer {
 public:
     Lexer(Context& context, Parser& parser);
-    bool readFile(const std::string& filename);
+    ~Lexer();
+    bool openFile(const std::string& filename);
+    bool readFile();
 private:
     class Impl;
     Impl* _impl;

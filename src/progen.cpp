@@ -93,7 +93,15 @@ inline void ProGen::Impl::generateConfig(const Ast::Config& config) {
     switch(_project.mode()) {
         case Ast::Project::Mode::Executable:
             fprintf(_fpPro, "ADD_DEFINITIONS( \"-DZ_EXE\" )\n");
-            fprintf(_fpPro, "ADD_EXECUTABLE(%s ${project_SOURCES})\n", _project.name().c_str());
+            if(config.gui()) {
+                fprintf(_fpPro, "IF(WIN32)\n");
+                fprintf(_fpPro, "    ADD_EXECUTABLE(%s WIN32 ${project_SOURCES})\n", _project.name().c_str());
+                fprintf(_fpPro, "ELSE(WIN32)\n");
+                fprintf(_fpPro, "    ADD_EXECUTABLE(%s ${project_SOURCES})\n", _project.name().c_str());
+                fprintf(_fpPro, "ENDIF(WIN32)\n");
+            } else {
+                fprintf(_fpPro, "ADD_EXECUTABLE(%s ${project_SOURCES})\n", _project.name().c_str());
+            }
             break;
         case Ast::Project::Mode::Shared:
             fprintf(_fpPro, "ADD_DEFINITIONS( \"-DZ_DLL\" )\n");
@@ -107,10 +115,16 @@ inline void ProGen::Impl::generateConfig(const Ast::Config& config) {
             throw Exception("Compile mode not allowed during project generaion");
     }
 
-    fprintf(_fpPro, "IF(GTK3_FOUND)\n");
-    fprintf(_fpPro, "    TARGET_LINK_LIBRARIES(%s ${GTK3_LIBRARIES})\n", _project.name().c_str());
-    fprintf(_fpPro, "ENDIF(GTK3_FOUND)\n");
-    fprintf(_fpPro, "\n");
+    if(config.gui()) {
+        fprintf(_fpPro, "IF(WIN32)\n");
+        fprintf(_fpPro, "    TARGET_LINK_LIBRARIES(%s comctl32)\n", _project.name().c_str());
+        fprintf(_fpPro, "ELSE(WIN32)\n");
+        fprintf(_fpPro, "IF(GTK3_FOUND)\n");
+        fprintf(_fpPro, "    TARGET_LINK_LIBRARIES(%s ${GTK3_LIBRARIES})\n", _project.name().c_str());
+        fprintf(_fpPro, "ENDIF(GTK3_FOUND)\n");
+        fprintf(_fpPro, "ENDIF(WIN32)\n");
+        fprintf(_fpPro, "\n");
+    }
 }
 
 void ProGen::Impl::run() {
