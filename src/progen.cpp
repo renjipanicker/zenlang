@@ -1,6 +1,7 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "progen.hpp"
+#include "compiler.hpp"
 #include "outfile.hpp"
 
 class ProGen::Impl {
@@ -10,12 +11,13 @@ public:
     void run();
 private:
     inline void generateConfig(const Ast::Config& config);
+    inline void generateProject(const Ast::Config& config);
 private:
     const Ast::Project& _project;
     FILE* _fpPro;
 };
 
-inline void ProGen::Impl::generateConfig(const Ast::Config& config) {
+inline void ProGen::Impl::generateProject(const Ast::Config& config) {
     OutputFile ofPro(_fpPro, "CMakeLists.txt");unused(ofPro);
     fprintf(_fpPro, "CMAKE_MINIMUM_REQUIRED(VERSION 2.6)\n");
     fprintf(_fpPro, "PROJECT(%s)\n", _project.name().c_str());
@@ -82,14 +84,6 @@ inline void ProGen::Impl::generateConfig(const Ast::Config& config) {
     }
     fprintf(_fpPro, "\n");
 
-    for(Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
-        const Ast::Config& config = ref(*it);
-        fprintf(_fpPro, "IF( CMAKE_BUILD_TYPE STREQUAL \"%s\")\n", config.name().c_str());
-        /// \todo config values go here
-        fprintf(_fpPro, "ENDIF( CMAKE_BUILD_TYPE STREQUAL \"%s\")\n", config.name().c_str());
-    }
-    fprintf(_fpPro, "\n");
-
     switch(_project.mode()) {
         case Ast::Project::Mode::Executable:
             fprintf(_fpPro, "ADD_DEFINITIONS( \"-DZ_EXE\" )\n");
@@ -124,6 +118,13 @@ inline void ProGen::Impl::generateConfig(const Ast::Config& config) {
         fprintf(_fpPro, "ENDIF(GTK3_FOUND)\n");
         fprintf(_fpPro, "ENDIF(WIN32)\n");
         fprintf(_fpPro, "\n");
+    }
+}
+inline void ProGen::Impl::generateConfig(const Ast::Config& config) {
+    Compiler compiler(_project, config);
+    compiler.compile();
+    if(_project.mode() != Ast::Project::Mode::Compile) {
+        generateProject(config);
     }
 }
 

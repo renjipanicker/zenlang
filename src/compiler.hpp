@@ -4,11 +4,12 @@
 
 class Compiler {
 public:
-    inline Compiler(const Ast::Project& project) : _project(project) {}
+    inline Compiler(const Ast::Project& project, const Ast::Config& config) : _project(project), _config(config) {}
     void compile();
     void import(Ast::Unit& unit, const std::string& filename, const int& level);
 private:
-    inline bool parseFile(Ast::Unit& unit, const std::string& filename, const int& level, const std::string& action);
+    inline bool parseFile(Ast::Unit& unit, const std::string& filename, const int& level);
 private:
     const Ast::Project& _project;
+    const Ast::Config& _config;
 };

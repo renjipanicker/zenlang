@@ -1142,11 +1142,12 @@ private:
 };
 
 struct Generator::Impl {
-    inline Impl(const Ast::Project& project, const Ast::Unit& unit) : _project(project), _unit(unit), _fpHdr(0), _fpSrc(0), _fpImp(0) {}
+    inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _project(project), _config(config), _unit(unit), _fpHdr(0), _fpSrc(0), _fpImp(0) {}
     inline void generateHeaderIncludes(const std::string& basename);
     inline void run();
 private:
     const Ast::Project& _project;
+    const Ast::Config& _config;
     const Ast::Unit& _unit;
 private:
     FILE* _fpHdr;
@@ -1156,7 +1157,7 @@ private:
 
 inline void Generator::Impl::generateHeaderIncludes(const std::string& basename) {
     fprintf(_fpHdr, "#pragma once\n\n");
-    for(Ast::Config::PathList::const_iterator it = _project.global().includeFileList().begin(); it != _project.global().includeFileList().end(); ++it) {
+    for(Ast::Config::PathList::const_iterator it = _config.includeFileList().begin(); it != _config.includeFileList().end(); ++it) {
         const std::string& filename = *it;
         fprintf(_fpSrc, "#include \"%s\"\n", filename.c_str());
     }
@@ -1192,14 +1193,14 @@ inline void Generator::Impl::run() {
     generateHeaderIncludes(basename);
 
     ImportGenerator(_fpImp).visitChildren(_unit.rootNS());
-    TypeDeclarationGenerator(_project.global(), _fpHdr, _fpSrc).visitChildren(_unit.rootNS());
+    TypeDeclarationGenerator(_config, _fpHdr, _fpSrc).visitChildren(_unit.rootNS());
     fprintf(_fpHdr, "\n");
     fprintf(_fpSrc, "\n");
 
-    TypeDefinitionGenerator(_project.global(), _fpHdr, _fpSrc, _fpImp).visitChildren(_unit.rootNS());
+    TypeDefinitionGenerator(_config, _fpHdr, _fpSrc, _fpImp).visitChildren(_unit.rootNS());
 }
 
 //////////////////////////////////////////////
-Generator::Generator(const Ast::Project& project, const Ast::Unit& unit) : _impl(0) {_impl = new Impl(project, unit);}
+Generator::Generator(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _impl(0) {_impl = new Impl(project, config, unit);}
 Generator::~Generator() {delete _impl;}
 void Generator::run() {return ref(_impl).run();}

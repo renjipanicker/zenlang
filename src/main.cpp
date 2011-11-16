@@ -1,6 +1,6 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "compiler.hpp"
+#include "progen.hpp"
 
 static int showHelp(const Ast::Project& project) {
     fprintf(stdout, "zen compiler 0.1a");
@@ -77,7 +77,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    Compiler compiler(project);
-    compiler.compile();
+    ProGen progen(project);
+    progen.run();
     return 0;
 }
