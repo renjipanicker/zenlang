@@ -129,7 +129,10 @@ inline void ProGen::Impl::generateConfig(const Ast::Config& config) {
 }
 
 void ProGen::Impl::run() {
-    generateConfig(_project.global());
+    for(Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
+        const Ast::Config& config = ref(it->second);
+        generateConfig(config);
+    }
 }
 
 ProGen::ProGen(const Ast::Project& project) : _impl(0) {_impl = new Impl(project);}

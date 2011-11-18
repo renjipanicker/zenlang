@@ -1417,10 +1417,10 @@ namespace Ast {
                 Static
             };
         };
-        typedef std::list<Config*> ConfigList;
+        typedef std::map<std::string, Config*> ConfigList;
 
     public:
-        inline Project() : _name("main"), _zlibPath("../../zenlang/lib"), _mode(Mode::Executable), _global("global"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;") {}
+        inline Project() : _name("main"), _zlibPath("../../zenlang/lib"), _mode(Mode::Executable), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;") {}
     public:
         inline Project& name(const std::string& val) { _name = val; return ref(this);}
         inline const std::string& name() const {return _name;}
@@ -1434,8 +1434,23 @@ namespace Ast {
         inline Project& mode(const Mode::T& val) { _mode = val; return ref(this);}
         inline const Mode::T& mode() const {return _mode;}
     public:
-        inline Config& global() {return _global;}
-        inline const Config& global() const {return _global;}
+        inline Config& config(const std::string& name) {
+            ConfigList::iterator it = _configList.find(name);
+            if(it == _configList.end()) {
+                throw Exception("Config does not exist");
+            }
+            return ref(it->second);
+        }
+
+        inline Config& addConfig(const std::string& name) {
+            ConfigList::iterator it = _configList.find(name);
+            if(it != _configList.end()) {
+                throw Exception("Config already exists");
+            }
+            _configList[name] = new Config(name);
+            return ref(_configList[name]);
+        }
+
     public:
         inline const ConfigList& configList() const {return _configList;}
     public:
@@ -1447,7 +1462,6 @@ namespace Ast {
         std::string _zexePath;
         std::string _zlibPath;
         Mode::T _mode;
-        Config _global;
         ConfigList _configList;
     private:
         std::string _hppExt;

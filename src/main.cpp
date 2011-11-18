@@ -40,8 +40,9 @@ int main(int argc, char* argv[]) {
 #endif
     project.zexePath(path);
 
-    project.global().addIncludeFile("base/pch.hpp");
-    project.global().addIncludeFile("base/zenlang.hpp");
+    Ast::Config& config = project.addConfig("");
+    config.addIncludeFile("base/pch.hpp");
+    config.addIncludeFile("base/zenlang.hpp");
 
     if (argc < 2) {
         return showHelp(project);
@@ -64,16 +65,16 @@ int main(int argc, char* argv[]) {
         } else if((t == "-pl") || (t == "--lib")) {
             project.mode(Ast::Project::Mode::Static);
         } else if((t == "-g") || (t == "--gui")) {
-            project.global().gui(true);
+            config.gui(true);
         } else if((t == "-d") || (t == "--debug")) {
-            project.global().debug(true);
+            config.debug(true);
         } else if((t == "-t") || (t == "--test")) {
-            project.global().test(false);
+            config.test(false);
         } else if((t == "-z") || (t == "--zenPath")) {
             t = argv[i++];
             project.zlibPath(t);
         } else {
-            project.global().addSourceFile(t);
+            config.addSourceFile(t);
         }
     }
 
