@@ -2,9 +2,9 @@
 #include "base/zenlang.hpp"
 #include "progen.hpp"
 
-static int showHelp(const Ast::Project& project) {
+static int showHelp(const Ast::Config& config) {
     fprintf(stdout, "zen compiler 0.1a");
-    fprintf(stdout, " (%s)", project.zexePath().c_str());
+    fprintf(stdout, " (%s)", config.zexePath().c_str());
     fprintf(stdout, "\n");
     fprintf(stdout, "Copyright(c) 2011 Renji Panicker.\n");
     fprintf(stdout, "Usage: zen <options> <files>\n");
@@ -23,6 +23,7 @@ static int showHelp(const Ast::Project& project) {
 
 int main(int argc, char* argv[]) {
     Ast::Project project;
+    Ast::Config& config = project.addConfig("");
 
     static const int len = 1024;
     char path[len];
@@ -38,32 +39,31 @@ int main(int argc, char* argv[]) {
         return -1;
     }
 #endif
-    project.zexePath(path);
 
-    Ast::Config& config = project.addConfig("");
+    config.zexePath(path);
     config.addIncludeFile("base/pch.hpp");
     config.addIncludeFile("base/zenlang.hpp");
 
     if (argc < 2) {
-        return showHelp(project);
+        return showHelp(config);
     }
 
     int i = 1;
     while(i < argc) {
         std::string t = argv[i++];
         if((t == "-h") || (t == "--help")) {
-            return showHelp(project);
+            return showHelp(config);
         } else if(t == "-c") {
-            project.mode(Ast::Project::Mode::Compile);
+            config.mode(Ast::Config::Mode::Compile);
         } else if((t == "-n") || (t == "--name")) {
             t = argv[i++];
             project.name(t);
         } else if((t == "-px") || (t == "--exe")) {
-            project.mode(Ast::Project::Mode::Executable);
+            config.mode(Ast::Config::Mode::Executable);
         } else if((t == "-pd") || (t == "--dll")) {
-            project.mode(Ast::Project::Mode::Shared);
+            config.mode(Ast::Config::Mode::Shared);
         } else if((t == "-pl") || (t == "--lib")) {
-            project.mode(Ast::Project::Mode::Static);
+            config.mode(Ast::Config::Mode::Static);
         } else if((t == "-g") || (t == "--gui")) {
             config.gui(true);
         } else if((t == "-d") || (t == "--debug")) {
@@ -72,7 +72,7 @@ int main(int argc, char* argv[]) {
             config.test(false);
         } else if((t == "-z") || (t == "--zenPath")) {
             t = argv[i++];
-            project.zlibPath(t);
+            config.zlibPath(t);
         } else {
             config.addSourceFile(t);
         }

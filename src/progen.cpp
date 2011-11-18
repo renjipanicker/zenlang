@@ -41,7 +41,7 @@ inline void ProGen::Impl::generateProject(const Ast::Config& config) {
 
         fprintf(_fpPro, "IF(WIN32)\n");
         fprintf(_fpPro, "ELSE(WIN32)\n");
-        fprintf(_fpPro, "    SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} \"%s/../tools/\")\n", _project.zlibPath().c_str());
+        fprintf(_fpPro, "    SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} \"%s/../tools/\")\n", config.zlibPath().c_str());
         fprintf(_fpPro, "    FIND_PACKAGE(GTK3)\n");
         fprintf(_fpPro, "    IF(GTK3_FOUND)\n");
         fprintf(_fpPro, "        INCLUDE_DIRECTORIES(${GTK3_INCLUDE_DIRS})\n");
@@ -50,16 +50,16 @@ inline void ProGen::Impl::generateProject(const Ast::Config& config) {
     }
 
     fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \".\")\n");
-    fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", _project.zlibPath().c_str());
+    fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", config.zlibPath().c_str());
     for(Ast::Config::PathList::const_iterator it = config.includePathList().begin(); it != config.includePathList().end(); ++it) {
         const std::string& dir = *it;
         fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", dir.c_str());
     }
     fprintf(_fpPro, "\n");
 
-    fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s/base/zenlang.cpp)\n", _project.zlibPath().c_str());
+    fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s/base/zenlang.cpp)\n", config.zlibPath().c_str());
 
-    std::string zexePath = _project.zexePath();
+    std::string zexePath = config.zexePath();
     String::replace(zexePath, "\\", "/");
     for(Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
         const std::string& filename = *it;
@@ -84,8 +84,8 @@ inline void ProGen::Impl::generateProject(const Ast::Config& config) {
     }
     fprintf(_fpPro, "\n");
 
-    switch(_project.mode()) {
-        case Ast::Project::Mode::Executable:
+    switch(config.mode()) {
+        case Ast::Config::Mode::Executable:
             fprintf(_fpPro, "ADD_DEFINITIONS( \"-DZ_EXE\" )\n");
             if(config.gui()) {
                 fprintf(_fpPro, "IF(WIN32)\n");
@@ -97,15 +97,15 @@ inline void ProGen::Impl::generateProject(const Ast::Config& config) {
                 fprintf(_fpPro, "ADD_EXECUTABLE(%s ${project_SOURCES})\n", _project.name().c_str());
             }
             break;
-        case Ast::Project::Mode::Shared:
+        case Ast::Config::Mode::Shared:
             fprintf(_fpPro, "ADD_DEFINITIONS( \"-DZ_DLL\" )\n");
             fprintf(_fpPro, "ADD_LIBRARY(%s SHARED ${project_SOURCES})\n", _project.name().c_str());
             break;
-        case Ast::Project::Mode::Static:
+        case Ast::Config::Mode::Static:
             fprintf(_fpPro, "ADD_DEFINITIONS( \"-DZ_LIB\" )\n");
             fprintf(_fpPro, "ADD_LIBRARY(%s STATIC ${project_SOURCES})\n", _project.name().c_str());
             break;
-        case Ast::Project::Mode::Compile:
+        case Ast::Config::Mode::Compile:
             throw Exception("Compile mode not allowed during project generaion");
     }
 
@@ -123,7 +123,7 @@ inline void ProGen::Impl::generateProject(const Ast::Config& config) {
 inline void ProGen::Impl::generateConfig(const Ast::Config& config) {
     Compiler compiler(_project, config);
     compiler.compile();
-    if(_project.mode() != Ast::Project::Mode::Compile) {
+    if(config.mode() != Ast::Config::Mode::Compile) {
         generateProject(config);
     }
 }

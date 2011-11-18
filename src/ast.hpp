@@ -1376,11 +1376,22 @@ namespace Ast {
 
     class Config {
     public:
+        struct Mode {
+            enum T {
+                Compile,
+                Executable,
+                Shared,
+                Static
+            };
+        };
         typedef std::list<std::string> PathList;
     public:
-        inline Config(const std::string& name) : _name(name), _gui(false), _debug(true), _test(true) {}
+        inline Config(const std::string& name) : _name(name), _mode(Mode::Executable), _gui(false), _debug(true), _test(true), _zlibPath("../../zenlang/lib") {}
     public:
         inline const std::string& name() const {return _name;}
+    public:
+        inline Config& mode(const Mode::T& val) { _mode = val; return ref(this);}
+        inline const Mode::T& mode() const {return _mode;}
     public:
         inline Config& gui(const bool& val) { _gui = val; return ref(this);}
         inline const bool& gui() const {return _gui;}
@@ -1388,6 +1399,12 @@ namespace Ast {
         inline const bool& debug() const {return _debug;}
         inline Config& test(const bool& val) { _test = val; return ref(this);}
         inline const bool& test() const {return _test;}
+    public:
+        inline Config& zexePath(const std::string& val) { _zexePath = val; return ref(this);}
+        inline const std::string& zexePath() const {return _zexePath;}
+    public:
+        inline Config& zlibPath(const std::string& val) { _zlibPath = val; return ref(this);}
+        inline const std::string& zlibPath() const {return _zlibPath;}
     public:
         inline Config& addIncludePath(const std::string& dir) { _includePathList.push_back(dir); return ref(this);}
         inline const PathList& includePathList() const {return _includePathList;}
@@ -1399,9 +1416,12 @@ namespace Ast {
         inline const PathList& sourceFileList() const {return _sourceFileList;}
     private:
         const std::string _name;
+        Mode::T _mode;
         bool _gui;
         bool _debug;
         bool _test;
+        std::string _zexePath;
+        std::string _zlibPath;
         PathList _includePathList;
         PathList _includeFileList;
         PathList _sourceFileList;
@@ -1409,30 +1429,13 @@ namespace Ast {
 
     class Project {
     public:
-        struct Mode {
-            enum T {
-                Compile,
-                Executable,
-                Shared,
-                Static
-            };
-        };
         typedef std::map<std::string, Config*> ConfigList;
 
     public:
-        inline Project() : _name("main"), _zlibPath("../../zenlang/lib"), _mode(Mode::Executable), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;") {}
+        inline Project() : _name("main"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;") {}
     public:
         inline Project& name(const std::string& val) { _name = val; return ref(this);}
         inline const std::string& name() const {return _name;}
-    public:
-        inline Project& zexePath(const std::string& val) { _zexePath = val; return ref(this);}
-        inline const std::string& zexePath() const {return _zexePath;}
-    public:
-        inline Project& zlibPath(const std::string& val) { _zlibPath = val; return ref(this);}
-        inline const std::string& zlibPath() const {return _zlibPath;}
-    public:
-        inline Project& mode(const Mode::T& val) { _mode = val; return ref(this);}
-        inline const Mode::T& mode() const {return _mode;}
     public:
         inline Config& config(const std::string& name) {
             ConfigList::iterator it = _configList.find(name);
@@ -1459,9 +1462,6 @@ namespace Ast {
         inline const std::string& zppExt() const {return _zppExt;}
     private:
         std::string _name;
-        std::string _zexePath;
-        std::string _zlibPath;
-        Mode::T _mode;
         ConfigList _configList;
     private:
         std::string _hppExt;
