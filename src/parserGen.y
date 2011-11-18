@@ -300,7 +300,6 @@ rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx
 // "public" type references, can be invoked from other rules
 %type rTypeSpec {const Ast::TypeSpec*}
 rTypeSpec(L) ::= rPreTypeSpec(R). {L = ref(pctx).aTypeSpec(ref(R));}
-
 rTypeSpec(L) ::= rTemplateTypeSpec(R) TLT rQualifiedTypeSpec GT. {L = ref(pctx).aTypeSpec(ref(R));}
 
 //-------------------------------------------------
@@ -320,12 +319,17 @@ rRoutineTypeSpec(L) ::= rPreRoutineTypeSpec(R). {L = ref(pctx).aRoutineTypeSpec(
 rFunctionTypeSpec(L) ::= rPreFunctionTypeSpec(R). {L = ref(pctx).aFunctionTypeSpec(ref(R));}
 
 //-------------------------------------------------
+%type rEventTypeSpec {const Ast::EventDecl*}
+rEventTypeSpec(L) ::= rPreEventTypeSpec(R). {L = ref(pctx).aEventTypeSpec(ref(R));}
+
+//-------------------------------------------------
 // "private" type references, can be only called by the public equivalent rules
 %type rPreTypeSpec {const Ast::TypeSpec*}
 rPreTypeSpec(L) ::= rPreTemplateTypeSpec(R). {L = R;}
 rPreTypeSpec(L) ::= rPreStructTypeSpec(R).   {L = R;}
 rPreTypeSpec(L) ::= rPreRoutineTypeSpec(R).  {L = R;}
 rPreTypeSpec(L) ::= rPreFunctionTypeSpec(R). {L = R;}
+rPreTypeSpec(L) ::= rPreEventTypeSpec(R).    {L = R;}
 rPreTypeSpec(L) ::= rPreOtherTypeSpec(R).    {L = R;}
 
 //-------------------------------------------------
@@ -349,6 +353,11 @@ rPreFunctionTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE FUNCTION_TYPE(name). {L =
 rPreFunctionTypeSpec(L) ::=                            FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(name);}
 
 //-------------------------------------------------
+%type rPreEventTypeSpec {const Ast::EventDecl*}
+rPreEventTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE EVENT_TYPE(name). {L = ref(pctx).aEventTypeSpec(ref(parent), name);}
+rPreEventTypeSpec(L) ::=                            EVENT_TYPE(name). {L = ref(pctx).aEventTypeSpec(name);}
+
+//-------------------------------------------------
 %type rPreOtherTypeSpec {const Ast::TypeSpec*}
 rPreOtherTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE OTHER_TYPE(name). {L = ref(pctx).aOtherTypeSpec(ref(parent), name);}
 rPreOtherTypeSpec(L) ::=                            OTHER_TYPE(name). {L = ref(pctx).aOtherTypeSpec(name);}
@@ -369,6 +378,7 @@ rInnerStatement(L) ::= rForeachStatement(R).             {L = R;}
 rInnerStatement(L) ::= rSwitchStatement(R).              {L = R;}
 rInnerStatement(L) ::= rBreakStatement(R).               {L = R;}
 rInnerStatement(L) ::= rContinueStatement(R).            {L = R;}
+rInnerStatement(L) ::= rEventStatement(R).               {L = R;}
 rInnerStatement(L) ::= rRoutineReturnStatement(R).       {L = R;}
 rInnerStatement(L) ::= rFunctionReturnStatement(R).      {L = R;}
 rInnerStatement(L) ::= rCompoundStatement(R).            {L = R;}
@@ -443,6 +453,10 @@ rBreakStatement(L) ::= BREAK SEMI. {L = ref(pctx).aBreakStatement();}
 //-------------------------------------------------
 %type rContinueStatement {Ast::ContinueStatement*}
 rContinueStatement(L) ::= CONTINUE SEMI. {L = ref(pctx).aContinueStatement();}
+
+//-------------------------------------------------
+%type rEventStatement {Ast::EventStatement*}
+rEventStatement(L) ::= rEventTypeSpec(E) LINK SEMI. {L = ref(pctx).aEventStatement();}
 
 //-------------------------------------------------
 %type rRoutineReturnStatement {Ast::RoutineReturnStatement*}
@@ -676,11 +690,6 @@ rStructInitPart(L) ::= ID(R) COLON rExpr(E) SEMI. {L = ref(pctx).aStructInitPart
 rCallExpr(L) ::= rCallPart(R).  {L = R;}
 
 //-------------------------------------------------
-// function call type
-%type rRunExpr {Ast::RunExpr*}
-rRunExpr(L) ::= RUN(B) rFunctorCallPart(F).  {L = ref(pctx).aRunExpr(B, ref(F));}
-
-//-------------------------------------------------
 // functor call expressions
 %type rCallPart {Ast::CallExpr*}
 rCallPart(L) ::= rRoutineCallPart(R). {L = R;}
@@ -690,6 +699,11 @@ rCallPart(L) ::= rFunctorCallPart(R). {L = R;}
 // routine call expressions
 %type rRoutineCallPart {Ast::RoutineCallExpr*}
 rRoutineCallPart(L) ::= rRoutineTypeSpec(typeSpec) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aRoutineCallExpr(B, ref(typeSpec), ref(exprList));}
+
+//-------------------------------------------------
+// function call type
+%type rRunExpr {Ast::RunExpr*}
+rRunExpr(L) ::= RUN(B) rFunctorCallPart(F).  {L = ref(pctx).aRunExpr(B, ref(F));}
 
 //-------------------------------------------------
 // functor call expressions

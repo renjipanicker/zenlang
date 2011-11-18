@@ -5,6 +5,7 @@ Main()
 *** struct-default-value
 *** enum-init-expr
 *** 3 level unit test - suite/test/check
+*** events. event(obj) => function.
 
 ==BACKLOG==
 auto-detect if main is present

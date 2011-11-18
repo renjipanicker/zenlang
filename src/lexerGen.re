@@ -99,6 +99,10 @@ inline bool Lexer::Impl::trySendId(Scanner* s, const Ast::TypeSpec* typeSpec) {
         feedToken(token(s, ZENTOK_FUNCTION_TYPE));
         return true;
     }
+    if(dynamic_cast<const Ast::EventDecl*>(typeSpec) != 0) {
+        feedToken(token(s, ZENTOK_EVENT_TYPE));
+        return true;
+    }
     if(dynamic_cast<const Ast::TypeSpec*>(typeSpec) != 0) {
         feedToken(token(s, ZENTOK_OTHER_TYPE));
         return true;
