@@ -149,20 +149,7 @@ int Application::exit(const int& code) {
     return code;
 }
 
-#if defined(GUI) && defined(WIN32)
-int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
-    unused(hPrevInstance);
-    unused(lpCmdLine);
-    unused(nCmdShow);
-    Application a(0, 0);
-    InitCommonControls();
-    s_hInstance = hInstance;
-    return a.exec();
-}
-#else
-int main(int argc, char* argv[]) {
-    Application a(argc, argv);
-
+static void initMain(int argc, char* argv[]) {
 #if defined(UNIT_TEST)
     TestInstance* ti = s_testList.next();
     while(ti != 0) {
@@ -177,7 +164,23 @@ int main(int argc, char* argv[]) {
         ref(mi).enque(g_context, argl);
         mi = s_mainList.next();
     }
+}
 
+#if defined(GUI) && defined(WIN32)
+int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
+    unused(hPrevInstance);
+    unused(lpCmdLine);
+    unused(nCmdShow);
+    Application a(0, 0);
+    InitCommonControls();
+    s_hInstance = hInstance;
+    initMain(0, 0);
+    return a.exec();
+}
+#else
+int main(int argc, char* argv[]) {
+    Application a(argc, argv);
+    initMain();
     return a.exec();
 }
 #endif

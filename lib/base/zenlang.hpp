@@ -203,9 +203,11 @@ public:
     void run();
 public:
     template <typename FunctionT>
-    FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
+    inline FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
         return _list.push(function, in);
     }
+
+    inline size_t size() const {return _list.size();}
 private:
     FunctionList _list;
 };

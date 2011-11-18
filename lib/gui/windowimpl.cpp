@@ -20,7 +20,7 @@ static std::string getNextClassID() {
 static HandlerList<HWND, Window::OnResize::Handler> onResizeHandlerList;
 static HandlerList<HWND, Window::OnClose::Handler> onCloseHandlerList;
 
-ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
+static ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
     ULONGLONG ullVersion = 0;
     HINSTANCE hinstDll;
     hinstDll = LoadLibrary(lpszDllName);
