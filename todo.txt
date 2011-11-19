@@ -1,5 +1,3 @@
-future
-Main()
 *** rename local to auto (consistency with c++0x)
 *** enum-default-value
 *** struct-default-value
@@ -8,6 +6,36 @@ Main()
 *** events. event(obj) => function.
 verbose output from compiler
 function-instance-expr should have type FunctorT.
+
+push-button
+lineedit
+textedit
+checkbox
+combobox
+dateedit
+timeedit
+datetimeedit
+label
+progress-bar
+radio-button
+scroll-bar
+status-bar
+slider
+menubar
+menuitem
+tab-widget
+group-box
+splitter
+list-view
+tree-view
+web-view
+anchor
+file
+dir
+fileinfo
+stream
+string
+interpreter
 
 ==BACKLOG==
 auto-detect if main is present
@@ -18,6 +46,7 @@ project builder
 project reader
 switch-typeof
 shared variables
+future
 cmdline
 large lists in in-memory sqlite
 query
@@ -74,12 +103,12 @@ unused()
 run-expr
 event
 event-handler
+main()
 
 =========================
-Build modes:
-exe in debug build with tests
-exe in debug build with no tests
-
-=========================
-Button::OnClose(b) => Button::OnClose {...};
-Button::OnClose(b) => MyOnClose[];
+zen --gui \
+../../zenlang/lib/gui/window.zpp ../../zenlang/lib/gui/windowimpl.cpp \
+../../zenlang/lib/gui/mainframe.zpp ../../zenlang/lib/gui/mainframeimpl.cpp \
+../../zenlang/lib/gui/button.zpp ../../zenlang/lib/gui/buttonimpl.cpp \
+../../zenlang/lib/gui/textedit.zpp ../../zenlang/lib/gui/texteditimpl.cpp \
+../../zenlang/tests/guiTest.zpp && cmake . && make && ./main

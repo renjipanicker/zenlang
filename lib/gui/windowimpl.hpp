@@ -14,6 +14,14 @@ namespace Window {
 namespace Native {
 
 #if defined(WIN32)
+struct WndProc {
+    WndProc();
+    virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) = 0;
+    WndProc* _next;
+};
+#endif
+
+#if defined(WIN32)
 Window::Instance::Impl createWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, HWND parent);
 Window::Instance::Impl createMainFrame(const Window::Definition& def, const int& style, const int& xstyle);
 Window::Instance::Impl createChildFrame(const Window::Definition& def, const int &style, const int &xstyle, const Window::Instance &parent);

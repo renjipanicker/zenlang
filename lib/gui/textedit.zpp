@@ -1,4 +1,4 @@
 include window;
-namespace Button;
+namespace TextEdit;
 public function (Window::Instance window)Create(const Window::Instance& parent, const Window::Definition& def) native;
-public event(const Window::Instance& button) => function ()OnClick() native;
+//public event(const Window::Instance& button) => function ()OnClick() native;

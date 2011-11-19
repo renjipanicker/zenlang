@@ -1,13 +1,24 @@
 include mainframe;
 include button;
+include textedit;
 
 public main MyMain {
-    local mainFrame = MainFrame::Create( MainFrame::Definition{title:"test"; position:Window::Position{x:10;y:10;w:100;h:100;}; visible:true; } );
+    local mainFrame = MainFrame::Create( MainFrame::Definition{title:"test"; position:Window::Position{x:10;y:10;w:400;h:200;}; visible:true; } );
+    local checkBtn = Button::Create(mainFrame.window, Window::Definition{title:"Check";});
+    local outputBox = TextEdit::Create(mainFrame.window, Window::Definition{title:"Check";});
+
     Window::OnResize(mainFrame.window) => Window::OnResize::Handler {
-        print "on resize\n" @ {"x":"x"};
+        local pp = Window::getWindowPosition(mainFrame.window);
+        local cp = Window::getChildPosition(outputBox.window);
+        cp.w = pp.w - cp.x - 20;
+        cp.h = pp.h - cp.y - 50;
         return ();
     };
 
-    local checkBtn = Button::Create(mainFrame.window, Window::Definition{title:"Check";});
+    Button::OnClick(checkBtn.window) => Button::OnClick::Handler {
+        print "on click\n" @ {"x":"x"};
+        return ();
+    };
+
     return (0);
 }

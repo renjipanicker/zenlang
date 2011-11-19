@@ -1,35 +1,6 @@
 #include "pch.hpp"
 #include "zenlang.hpp"
 
-template <typename InitT>
-struct InitList {
-    inline InitList() : _head(0), _tail(0), _next(0) {}
-
-    inline void push(InitT* inst) {
-        if(_tail == 0) {
-            assert(_head == 0);
-            _head = inst;
-            _next = _head;
-        } else {
-            ref(_tail)._next = inst;
-        }
-        _tail = inst;
-    }
-
-    inline InitT* next() {
-        InitT* n = _next;
-        if(n != 0) {
-            _next = ref(_next)._next;
-        }
-        return n;
-    }
-
-private:
-    InitT* _head;
-    InitT* _tail;
-    InitT* _next;
-};
-
 #if defined(UNIT_TEST)
 static InitList<TestInstance> s_testList;
 TestInstance::TestInstance() : _next(0) {

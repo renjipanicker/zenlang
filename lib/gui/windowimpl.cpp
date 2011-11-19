@@ -16,7 +16,6 @@ static std::string getNextClassID() {
 //static HandlerList<int, SysTray::OnActivationHandler> sysTrayActivationHandlerList;
 //static HandlerList<int, SysTray::OnContextMenuHandler> sysTrayContextMenuHandlerList;
 
-//static HandlerList<HWND, Button::OnClickHandler> onButtonClickHandlerList;
 static HandlerList<HWND, Window::OnResize::Handler> onResizeHandlerList;
 static HandlerList<HWND, Window::OnClose::Handler> onCloseHandlerList;
 
@@ -43,6 +42,29 @@ static ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
 }
 
 // Message handler for the app
+static InitList<WndProc> s_WndProcList;
+WndProc::WndProc() : _next(0) {
+    s_WndProcList.push(this);
+}
+
+struct WinProc : public Window::Native::WndProc {
+    virtual LRESULT WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+        switch (message) {
+            case WM_SIZE:
+                if(onResizeHandlerList.runHandler(hWnd))
+                    return 1;
+                break;
+
+            case WM_CLOSE:
+                if(onCloseHandlerList.runHandler(hWnd))
+                    return 1;
+                break;
+        }
+        return 0;
+    }
+};
+static WinProc s_winProc;
+
 static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     if(lParam == WM_LBUTTONDOWN) {
 //        if(sysTrayActivationHandlerList.runHandler(message))
@@ -54,26 +76,15 @@ static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 //            return 1;
     }
 
-    switch (message) {
-        case WM_COMMAND:
-//            if(menuItemSelectHandlerList.runHandler(LOWORD(wParam)))
-//                return 1;
-//            if(LOWORD(wParam) == BN_CLICKED) {
-//                if(onButtonClickHandlerList.runHandler((HWND)lParam))
-//                    return 1;
-//            }
-            break;
-
-        case WM_SIZE:
-            if(onResizeHandlerList.runHandler(hWnd))
-                return 1;
-            break;
-
-        case WM_CLOSE:
-            if(onCloseHandlerList.runHandler(hWnd))
-                return 1;
-            break;
+    s_WndProcList.begin();
+    WinProc* wp = s_WndProcList.next();
+    while(wp != 0) {
+        LRESULT lr = ref(wp).handle(hWnd, message, wParam, lParam);
+        if(lr != 0)
+            return lr;
+        wp = s_WndProcList.next();
     }
+
     return ::DefWindowProc(hWnd, message, wParam, lParam);
 }
 
@@ -117,13 +128,13 @@ std::string registerClass(HBRUSH bg) {
 //    sysTrayContextMenuHandlerList.addHandler(wm, handler);
 //}
 
-void addOnResizeHandler(HWND hwnd, Window::OnResize::Handler* handler) {
-    onResizeHandlerList.addHandler(hwnd, handler);
-}
+//void addOnResizeHandler(HWND hwnd, Window::OnResize::Handler* handler) {
+//    onResizeHandlerList.addHandler(hwnd, handler);
+//}
 
-void addOnCloseHandler(HWND hwnd, Window::OnClose::Handler* handler) {
-    onCloseHandlerList.addHandler(hwnd, handler);
-}
+//void addOnCloseHandler(HWND hwnd, Window::OnClose::Handler* handler) {
+//    onCloseHandlerList.addHandler(hwnd, handler);
+//}
 
 //void addOnButtonClickHandler(HWND hwnd, Button::OnClickHandler *handler) {
 //    onButtonClickHandlerList.addHandler(hwnd, handler);
@@ -186,7 +197,6 @@ Window::Instance::Impl Window::Native::createWindow(const Window::Definition& de
 }
 
 void Window::Native::createChildWindow(Window::Instance::Impl& impl, const Window::Definition& def, const Window::Instance& parent) {
-    trace("createChildWindow: %d\n", impl._hWindow);
     gtk_fixed_put (GTK_FIXED (parent._impl->_hFixed), impl._hWindow, def.position.x, def.position.y);
     gtk_widget_show(impl._hWindow);
 }
