@@ -59,6 +59,7 @@ inline bool Lexer::Impl::readFile() {
     }
 
     fclose(ref(_s).fp);
+    ref(_s).fp = 0;
     return true;
 }
 

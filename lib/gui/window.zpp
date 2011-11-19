@@ -33,5 +33,5 @@ public function ()Hide(const Instance& window) native;
 public function ()Move(const Instance& window, const Position& position) native;
 public function ()Size(const Instance& window, const int& w, const int& h) native;
 
-public event(const Instance& window) => function ()OnResize();
-public event(const Instance& window) => function ()OnClose();
+public event(const Instance& window) => function ()OnResize() native;
+public event(const Instance& window) => function ()OnClose() native;

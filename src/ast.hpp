@@ -364,6 +364,7 @@ namespace Ast {
     public:
         inline FunctionRetn(const TypeSpec& parent, const Ast::Token& name, const Ast::Scope& out) : ChildTypeSpec(parent, name), _out(out) {}
         inline const Ast::Scope::List& out() const {return _out.list();}
+        inline const Ast::Scope& outScope() const {return _out;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
@@ -1106,6 +1107,21 @@ namespace Ast {
         virtual void visit(Visitor& visitor) const;
     };
 
+    class AddEventHandlerStatement : public Statement {
+    public:
+        inline AddEventHandlerStatement(const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionInstanceExpr& functor) : _event(event), _source(source), _functor(functor) {}
+    public:
+        inline const Ast::EventDecl& event() const {return _event;}
+        inline const Ast::Expr& source() const {return _source;}
+        inline Ast::FunctionInstanceExpr& functor() const {return _functor;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ast::EventDecl& _event;
+        const Ast::Expr& _source;
+        Ast::FunctionInstanceExpr& _functor;
+    };
+
     class ReturnStatement : public Statement {
     protected:
         inline ReturnStatement(const ExprList& exprList) : _exprList(exprList) {}
@@ -1166,6 +1182,7 @@ namespace Ast {
         virtual void visit(const SwitchExprStatement& node) = 0;
         virtual void visit(const BreakStatement& node) = 0;
         virtual void visit(const ContinueStatement& node) = 0;
+        virtual void visit(const AddEventHandlerStatement& node) = 0;
         virtual void visit(const RoutineReturnStatement& node) = 0;
         virtual void visit(const FunctionReturnStatement& node) = 0;
         virtual void visit(const CompoundStatement& node) = 0;
@@ -1190,6 +1207,7 @@ namespace Ast {
     inline void SwitchExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void BreakStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ContinueStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void AddEventHandlerStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void CompoundStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}

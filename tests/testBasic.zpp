@@ -210,7 +210,7 @@ public test testSwitchExprStatement {
 }
 
 public function (int ri, string rs)runFunctionTest(const int& x) {
-    print "runFunctionTest %{x}\n" @ {"x":x};
+    print "runFunctionTest %{x}\n" @ {:};
     return (67890, "run");
 }
 

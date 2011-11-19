@@ -127,6 +127,9 @@ public:
     const Ast::Function*     aFunctionTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
     const Ast::Function*     aFunctionTypeSpec(const Ast::Token& name);
     const Ast::Function*     aFunctionTypeSpec(const Ast::Function& function);
+    const Ast::EventDecl*    aEventTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
+    const Ast::EventDecl*    aEventTypeSpec(const Ast::Token& name);
+    const Ast::EventDecl*    aEventTypeSpec(const Ast::EventDecl& event);
     const Ast::TypeSpec*     aOtherTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
     const Ast::TypeSpec*     aOtherTypeSpec(const Ast::Token& name);
     const Ast::TypeSpec*     aTypeSpec(const Ast::TypeSpec& typeSpec);
@@ -154,6 +157,7 @@ public:
     Ast::CaseStatement*                aCaseStatement(const Ast::CompoundStatement& block);
     Ast::BreakStatement*               aBreakStatement();
     Ast::ContinueStatement*            aContinueStatement();
+    Ast::AddEventHandlerStatement*     aAddEventHandlerStatement(const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionInstanceExpr& functor);
     Ast::RoutineReturnStatement*       aRoutineReturnStatement();
     Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Expr& expr);
     Ast::FunctionReturnStatement*      aFunctionReturnStatement(const Ast::ExprList& exprList);

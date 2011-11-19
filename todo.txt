@@ -6,6 +6,8 @@ Main()
 *** enum-init-expr
 *** 3 level unit test - suite/test/check
 *** events. event(obj) => function.
+verbose output from compiler
+function-instance-expr should have type FunctorT.
 
 ==BACKLOG==
 auto-detect if main is present
@@ -78,3 +80,6 @@ Build modes:
 exe in debug build with tests
 exe in debug build with no tests
 
+=========================
+Button::OnClose(b) => Button::OnClose {...};
+Button::OnClose(b) => MyOnClose[];

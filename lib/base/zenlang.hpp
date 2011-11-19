@@ -135,6 +135,14 @@ struct Future {
 };
 
 template <typename FunctionT>
+struct FunctorT {
+    inline FunctorT(const FunctionT& function) : _function() {_function = new FunctionT(function);}
+    inline FunctionT* function() const {return _function;}
+private:
+    FunctionT* _function;
+};
+
+template <typename FunctionT>
 struct FutureT : public Future {
     FutureT(const FunctionT& function, const typename FunctionT::_In& in) : _function(function), _in(in) {}
     FunctionT _function;
@@ -143,18 +151,10 @@ struct FutureT : public Future {
 };
 
 template <typename FunctionT>
-struct FunctorT {
-    inline FunctorT(FunctionT* function) : _function(function) {}
-    inline FunctionT* function() const {return _function;}
-private:
-    FunctionT* _function;
-};
-
-template <typename FunctionT>
 struct FunctorList {
-    inline FunctionT& add(const FunctorT<FunctionT>& h) {
-        _list.push_back(h.function());
-        return ref(h.function());
+    inline FunctionT& add(FunctionT* h) {
+        _list.push_back(h);
+        return ref(h);
     }
 
 private:
@@ -207,6 +207,11 @@ public:
         return _list.push(function, in);
     }
 
+    template <typename FunctionT>
+    inline FutureT<FunctionT>& add(FunctorT<FunctionT> functor, const typename FunctionT::_In& in) {
+        return _list.push(ref(functor.function()), in);
+    }
+
     inline size_t size() const {return _list.size();}
 private:
     FunctionList _list;
@@ -223,7 +228,7 @@ struct HandlerList {
         list.push_back(val);
     }
 
-    inline bool runHandler(const KeyT& key) {
+    inline bool runHandler(const KeyT& key, typename ValT::_In in) {
         typename Map::const_iterator it = map.find(key);
         if(it == map.end())
             return false;
@@ -231,7 +236,7 @@ struct HandlerList {
         const List& list = it->second;
         for(typename List::const_iterator itl = list.begin(); itl != list.end(); ++itl) {
             ValT* handler = *itl;
-            //handler->run();
+            handler->run(in);
         }
         return true;
     }

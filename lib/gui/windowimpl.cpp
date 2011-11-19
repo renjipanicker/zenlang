@@ -310,22 +310,19 @@ static gboolean onConfigureEvent(GtkWindow* window, GdkEvent* event, gpointer ph
 }
 #endif
 
-const Window::OnResize::Add::_Out& Window::OnResize::Add::run(const _In& _in) {
-    Window::OnResize::Handler& h = Window::OnResize::add(_in.handler);
+void Window::OnResize::addHandler(const Window::Instance& window, Handler* handler) {
+    Window::OnResize::add(handler);
 #if defined(WIN32)
-    onResizeHandlerList.addHandler(_in.window._impl->_hWindow, ptr(h));
+    onResizeHandlerList.addHandler(window._impl->_hWindow, handler);
 #endif
 #if defined(GTK)
-    trace("Window::OnResize::Handler::run(): handler = %lu, window = %d\n", ptr(h), _in.window._impl->_hWindow);
-    g_signal_connect (G_OBJECT (_in.window._impl->_hWindow), "configure-event", G_CALLBACK (onConfigureEvent), ptr(h));
+    g_signal_connect (G_OBJECT (window._impl->_hWindow), "configure-event", G_CALLBACK (onConfigureEvent), handler);
 #endif
-   return out(new _Out());
 }
 
 #if defined(GTK)
 static gboolean onWindowCloseEvent(GtkWindow* window, gpointer phandler) {
     unused(window);
-    trace("onWindowCloseEvent\n");
     Window::OnClose::Handler* handler = static_cast<Window::OnClose::Handler*>(phandler);
     Window::OnClose::Handler::_In in;
     ref(handler).run(in);
@@ -333,15 +330,14 @@ static gboolean onWindowCloseEvent(GtkWindow* window, gpointer phandler) {
 }
 #endif
 
-const Window::OnClose::Add::_Out& Window::OnClose::Add::run(const _In& _in) {
-    Window::OnClose::Handler& h = Window::OnClose::add(_in.handler);
+void Window::OnClose::addHandler(const Window::Instance& window, Handler* handler) {
+    Window::OnClose::add(handler);
 #if defined(WIN32)
-    onCloseHandlerList.addHandler(_in.window._impl->_hWindow, ptr(h));
+    onCloseHandlerList.addHandler(window._impl->_hWindow, handler);
 #endif
 #if defined(GTK)
-    g_signal_connect (G_OBJECT (_in.window._impl->_hWindow), "closed", G_CALLBACK (onWindowCloseEvent), ptr(h));
+    g_signal_connect (G_OBJECT (window._impl->_hWindow), "closed", G_CALLBACK (onWindowCloseEvent), handler);
 #endif
-   return out(new _Out());
 }
 
 

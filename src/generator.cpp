@@ -262,7 +262,7 @@ private:
 
     virtual void visit(const Ast::VariableMemberExpr& node) {
         visitNode(node.expr());
-        fprintf(_fp, ".%s", node.vref().name().text());
+        fprintf(_fp, ".%s()", node.vref().name().text());
     }
 
     virtual void visit(const Ast::StructMemberExpr& node) {
@@ -290,7 +290,8 @@ private:
     }
 
     virtual void visit(const Ast::FunctionInstanceExpr& node) {
-        fprintf(_fp, "%s(", getTypeSpecName(node.function(), GetNameMode::Normal).c_str());
+        std::string fname = getTypeSpecName(node.function(), GetNameMode::Normal);
+        fprintf(_fp, "%s(", fname.c_str());
         std::string sep;
         for(Ast::Scope::List::const_iterator it = node.function().xref().begin(); it != node.function().xref().end(); ++it) {
             const Ast::VariableDefn& vref = ref(*it);
@@ -790,7 +791,9 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         }
         fprintf(fpDecl(node), "%s    FunctorList<Handler> _list;\n", Indent::get());
         fprintf(fpDecl(node), "%s    static %s instance;\n", Indent::get(), node.name().text());
-        fprintf(fpDecl(node), "%s    static inline Handler& add(const FunctorT<Handler>& h) {return instance._list.add(h);}\n", Indent::get());
+        fprintf(fpDecl(node), "%s    static inline Handler& add(Handler* h) {return instance._list.add(h);}\n", Indent::get());
+        fprintf(fpDecl(node), "%s    static void addHandler(%s %s, Handler* h);\n", Indent::get(), getQualifiedTypeSpecName(node.in().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.in().name().text());
+        fprintf(fpDecl(node), "%s    template<typename T>static inline void addHandlerT(%s %s, T h) {return addHandler(%s, new T(h));}\n", Indent::get(), getQualifiedTypeSpecName(node.in().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.in().name().text(), node.in().name().text());
         fprintf(fpDecl(node), "%s};\n", Indent::get());
         fprintf(fpDecl(node), "\n");
         return;
@@ -1004,6 +1007,15 @@ private:
         fprintf(_fpSrc, "%scontinue;\n", Indent::get());
     }
 
+    virtual void visit(const Ast::AddEventHandlerStatement& node) {
+        std::string ename = getTypeSpecName(node.event(), GetNameMode::Normal);
+        fprintf(_fpSrc, "%s%s::addHandlerT(", Indent::get(), ename.c_str());
+        ExprGenerator(_fpSrc, false).visitNode(node.source());
+        fprintf(_fpSrc, ", ");
+        ExprGenerator(_fpSrc, false).visitNode(node.functor());
+        fprintf(_fpSrc, ");\n");
+    }
+
     virtual void visit(const Ast::RoutineReturnStatement& node) {
         fprintf(_fpSrc, "%sreturn", Indent::get());
         if(node.exprList().list().size() > 0) {
@@ -1092,7 +1104,7 @@ struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
     }
 
     inline void visitFunction(const Ast::FunctionDefn& node) {
-        fprintf(_fpSrc, "%sconst %s::_Out& %s::run(const _In& _in)\n", Indent::get(), getTypeSpecName(node, GetNameMode::Normal).c_str(), getTypeSpecName(node, GetNameMode::Normal).c_str());
+        fprintf(_fpSrc, "const %s::_Out& %s::run(const _In& _in)\n", getTypeSpecName(node, GetNameMode::Normal).c_str(), getTypeSpecName(node, GetNameMode::Normal).c_str());
         StatementGenerator gen(_fpHdr, _fpSrc, _fpImp);
         gen.visitNode(node.block());
         fprintf(_fpSrc, "\n");
@@ -1113,15 +1125,23 @@ struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
         std::string fname = getTypeSpecName(node, GetNameMode::Normal);
 
         if(getTypeSpecName(node.base(), GetNameMode::Normal) == "test") {
-            fprintf(_fpSrc, "%sTestInstanceT<%s> %s::s_test = TestInstanceT<%s>();\n", Indent::get(), fname.c_str(), fname.c_str(), fname.c_str());
+            fprintf(_fpSrc, "TestInstanceT<%s> %s::s_test = TestInstanceT<%s>();\n", fname.c_str(), fname.c_str(), fname.c_str());
         } else if(getTypeSpecName(node.base(), GetNameMode::Normal) == "main") {
-            fprintf(_fpSrc, "%sMainInstanceT<%s> %s::s_main = MainInstanceT<%s>();\n", Indent::get(), fname.c_str(), fname.c_str(), fname.c_str());
+            fprintf(_fpSrc, "MainInstanceT<%s> %s::s_main = MainInstanceT<%s>();\n", fname.c_str(), fname.c_str(), fname.c_str());
         }
     }
 
     void visit(const Ast::EventDecl& node) {
         visitChildrenIndent(node);
-        fprintf(_fpSrc, "%s%s %s::instance;\n", Indent::get(), getTypeSpecName(node, GetNameMode::Normal).c_str(), getTypeSpecName(node, GetNameMode::Normal).c_str());
+        fprintf(_fpSrc, "%s %s::instance;\n", getTypeSpecName(node, GetNameMode::Normal).c_str(), getTypeSpecName(node, GetNameMode::Normal).c_str());
+        if(node.defType() == Ast::DefinitionType::Direct) {
+            fprintf(_fpSrc, "void %s::addHandler(%s %s, Handler* h) {\n", getTypeSpecName(node, GetNameMode::Normal).c_str(), getQualifiedTypeSpecName(node.in().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.in().name().text());
+            fprintf(_fpSrc, "}\n");
+        }
+        fprintf(_fpSrc, "const %s::Add::_Out& %s::Add::run(const _In& in) {\n", getTypeSpecName(node, GetNameMode::Normal).c_str(), getTypeSpecName(node, GetNameMode::Normal).c_str());
+        fprintf(_fpSrc, "    assert(false); //addHandler(in.%s, in.handler);\n", node.in().name().text());
+        fprintf(_fpSrc, "    return out(new _Out());\n");
+        fprintf(_fpSrc, "}\n");
     }
 
     void visit(const Ast::Namespace& node) {

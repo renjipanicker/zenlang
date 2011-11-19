@@ -180,7 +180,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 #else
 int main(int argc, char* argv[]) {
     Application a(argc, argv);
-    initMain();
+    initMain(argc, argv);
     return a.exec();
 }
 #endif

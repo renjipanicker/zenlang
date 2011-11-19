@@ -2,7 +2,12 @@ include mainframe;
 include button;
 
 public main MyMain {
-    local mainFrame = run MainFrame::Create( MainFrame::Definition{title:"test"; position:Window::Position{x:10;y:10;w:100;h:100;}; visible:true; } );
-//    local checkBtn = run Button::Create(mainFrame, Window::Definition{title:"Check";});
+    local mainFrame = MainFrame::Create( MainFrame::Definition{title:"test"; position:Window::Position{x:10;y:10;w:100;h:100;}; visible:true; } );
+    Window::OnResize(mainFrame.window) => Window::OnResize::Handler {
+        print "on resize\n" @ {"x":"x"};
+        return ();
+    };
+
+    local checkBtn = Button::Create(mainFrame.window, Window::Definition{title:"Check";});
     return (0);
 }

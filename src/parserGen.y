@@ -257,7 +257,7 @@ rEnterChildFunctionDefn(L) ::= rTypeSpec(base) ID(name). {L = ref(pctx).aEnterCh
 //-------------------------------------------------
 // event declarations
 %type rEventDecl {Ast::EventDecl*}
-rEventDecl(L) ::= EVENT(B) LBRACKET rVariableDefn(in) RBRACKET LINK rFunctionSig(functionSig) SEMI. {L = ref(pctx).aEventDecl(B, ref(in), ref(functionSig), Ast::DefinitionType::Direct);}
+rEventDecl(L) ::= EVENT(B) LBRACKET rVariableDefn(in) RBRACKET LINK rFunctionSig(functionSig) rDefinitionType(D) SEMI. {L = ref(pctx).aEventDecl(B, ref(in), ref(functionSig), D);}
 
 //-------------------------------------------------
 // function signature.
@@ -378,7 +378,7 @@ rInnerStatement(L) ::= rForeachStatement(R).             {L = R;}
 rInnerStatement(L) ::= rSwitchStatement(R).              {L = R;}
 rInnerStatement(L) ::= rBreakStatement(R).               {L = R;}
 rInnerStatement(L) ::= rContinueStatement(R).            {L = R;}
-rInnerStatement(L) ::= rEventStatement(R).               {L = R;}
+rInnerStatement(L) ::= rAddEventHandlerStatement(R).     {L = R;}
 rInnerStatement(L) ::= rRoutineReturnStatement(R).       {L = R;}
 rInnerStatement(L) ::= rFunctionReturnStatement(R).      {L = R;}
 rInnerStatement(L) ::= rCompoundStatement(R).            {L = R;}
@@ -455,8 +455,8 @@ rBreakStatement(L) ::= BREAK SEMI. {L = ref(pctx).aBreakStatement();}
 rContinueStatement(L) ::= CONTINUE SEMI. {L = ref(pctx).aContinueStatement();}
 
 //-------------------------------------------------
-%type rEventStatement {Ast::EventStatement*}
-rEventStatement(L) ::= rEventTypeSpec(E) LINK SEMI. {L = ref(pctx).aEventStatement();}
+%type rAddEventHandlerStatement {Ast::AddEventHandlerStatement*}
+rAddEventHandlerStatement(L) ::= rEventTypeSpec(E) LBRACKET rExpr(X) RBRACKET LINK rAnonymousFunctionExpr(F) SEMI. {L = ref(pctx).aAddEventHandlerStatement(ref(E), ref(X), ref(F));}
 
 //-------------------------------------------------
 %type rRoutineReturnStatement {Ast::RoutineReturnStatement*}

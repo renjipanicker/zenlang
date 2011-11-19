@@ -515,7 +515,7 @@ Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDe
 
     Ast::Token handlerName(pos.row(), pos.col(), "Handler");
     Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, functionSig.inScope());
-    Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, ref(handlerSig), defType);
+    Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, ref(handlerSig), Ast::DefinitionType::Direct);
     eventDef.setHandler(funDecl);
 
     Ast::QualifiedTypeSpec& qFunTypeSpec = addQualifiedTypeSpec(false, funDecl, false);
@@ -662,6 +662,26 @@ const Ast::Function* Context::aFunctionTypeSpec(const Ast::Token& name) {
 const Ast::Function* Context::aFunctionTypeSpec(const Ast::Function& function) {
     resetCurrentTypeRef();
     return ptr(function);
+}
+
+const Ast::EventDecl* Context::aEventTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
+    const Ast::EventDecl* event = parent.hasChild<const Ast::EventDecl>(name.text());
+    if(!event) {
+        throw Exception("%s event type expected '%s'\n", err(_filename, name).c_str(), name.text());
+    }
+    setCurrentTypeRef(ref(event));
+    return event;
+}
+
+const Ast::EventDecl* Context::aEventTypeSpec(const Ast::Token& name) {
+    const Ast::EventDecl& event = getRootTypeSpec<Ast::EventDecl>(name);
+    setCurrentTypeRef(event);
+    return ptr(event);
+}
+
+const Ast::EventDecl* Context::aEventTypeSpec(const Ast::EventDecl& event) {
+    resetCurrentTypeRef();
+    return ptr(event);
 }
 
 const Ast::TypeSpec* Context::aOtherTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
@@ -815,6 +835,11 @@ Ast::BreakStatement* Context::aBreakStatement() {
 Ast::ContinueStatement* Context::aContinueStatement() {
     Ast::ContinueStatement& continueStatement = _unit.addNode(new Ast::ContinueStatement());
     return ptr(continueStatement);
+}
+
+Ast::AddEventHandlerStatement* Context::aAddEventHandlerStatement(const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionInstanceExpr& functor) {
+    Ast::AddEventHandlerStatement& addEventHandlerStatement = _unit.addNode(new Ast::AddEventHandlerStatement(event, source, functor));
+    return ptr(addEventHandlerStatement);
 }
 
 Ast::RoutineReturnStatement* Context::aRoutineReturnStatement() {
@@ -1102,6 +1127,16 @@ Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, con
     const Ast::RootStructDefn* structDefn = dynamic_cast<const Ast::RootStructDefn*>(ptr(typeSpec));
     if(structDefn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(structDefn).scope(), name);
+        if(vref == 0) {
+            throw Exception("%s %s is not a member of expression type '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
+        }
+        Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(ref(vref).qualifiedTypeSpec(), expr, ref(vref)));
+        return ptr(vdefExpr);
+    }
+
+    const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(ptr(typeSpec));
+    if(functionRetn != 0) {
+        const Ast::VariableDefn* vref = hasMember(ref(functionRetn).outScope(), name);
         if(vref == 0) {
             throw Exception("%s %s is not a member of expression type '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
         }
