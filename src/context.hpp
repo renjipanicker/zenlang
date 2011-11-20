@@ -138,7 +138,7 @@ public:
     Ast::UserDefinedTypeSpecStatement* aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec);
     Ast::LocalStatement*               aLocalStatement(const Ast::VariableDefn& defn);
     Ast::ExprStatement*                aExprStatement(const Ast::Expr& expr);
-    Ast::PrintStatement*               aPrintStatement(const Ast::FormatExpr& expr);
+    Ast::PrintStatement*               aPrintStatement(const Ast::Expr& expr);
     Ast::IfStatement*                  aIfStatement(const Ast::Expr& expr, const Ast::CompoundStatement& tblock);
     Ast::IfElseStatement*              aIfElseStatement(const Ast::Expr& expr, const Ast::CompoundStatement& tblock, const Ast::CompoundStatement& fblock);
     Ast::WhileStatement*               aWhileStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block);
@@ -182,6 +182,7 @@ public:
     Ast::ListItem*            aListItem(const Ast::Expr& valueExpr);
 
     Ast::DictExpr*            aDictExpr(const Ast::Token& pos, const Ast::DictList& list);
+    Ast::DictExpr*            aDictExpr(const Ast::Token& pos);
     Ast::DictList*            aDictList(const Ast::Token& pos, Ast::DictList& list, const Ast::DictItem& item);
     Ast::DictList*            aDictList(const Ast::DictItem& item);
     Ast::DictList*            aDictList();

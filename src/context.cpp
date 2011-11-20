@@ -720,7 +720,7 @@ Ast::ExprStatement* Context::aExprStatement(const Ast::Expr& expr) {
     return ptr(exprStatement);
 }
 
-Ast::PrintStatement* Context::aPrintStatement(const Ast::FormatExpr& expr) {
+Ast::PrintStatement* Context::aPrintStatement(const Ast::Expr& expr) {
     Ast::PrintStatement& printStatement = _unit.addNode(new Ast::PrintStatement(expr));
     return ptr(printStatement);
 }
@@ -962,6 +962,11 @@ Ast::DictExpr* Context::aDictExpr(const Ast::Token& pos, const Ast::DictList& li
     return ptr(expr);
 }
 
+Ast::DictExpr* Context::aDictExpr(const Ast::Token& pos) {
+    Ast::DictList& list = _unit.addNode(new Ast::DictList());
+    return aDictExpr(pos, list);
+}
+
 Ast::DictList* Context::aDictList(const Ast::Token& pos, Ast::DictList& list, const Ast::DictItem& item) {
     list.addItem(item);
     const Ast::QualifiedTypeSpec& qKeyTypeSpec = coerce(pos, list.keyType(), item.keyExpr().qTypeSpec());
@@ -1111,9 +1116,24 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
                 assert(scopeList.size() > 0);
                 for(ScopeList::iterator it = scopeList.begin(); it != scopeList.end(); ++it) {
                     Ast::Scope& scope = ref(*it);
-                    scope.addVariableDef(ref(vref));
+
+                    // check if vref already exists in this scope
+                    bool found = false;
+                    for(Ast::Scope::List::const_iterator xit = scope.list().begin(); xit != scope.list().end(); ++xit) {
+                        const Ast::VariableDefn* xref = *xit;
+                        if(vref == xref) {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    // if not exists, add it
+                    if(!found)
+                        scope.addVariableDef(ref(vref));
                 }
             }
+
+            // create vref expression
             Ast::VariableRefExpr& vrefExpr = _unit.addNode(new Ast::VariableRefExpr(ref(vref).qualifiedTypeSpec(), ref(vref), refType));
             return ptr(vrefExpr);
         }

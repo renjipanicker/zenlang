@@ -1,8 +1,8 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "window.hpp"
-#include "windowimpl.hpp"
-#include "button.hpp"
+#include "Window.hpp"
+#include "WindowImpl.hpp"
+#include "Button.hpp"
 
 #if defined(WIN32)
 static int lastclassId = 1;
@@ -49,6 +49,7 @@ WndProc::WndProc() : _next(0) {
 
 struct WinProc : public Window::Native::WndProc {
     virtual LRESULT WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+        printf("win:wndproc\n");
         switch (message) {
             case WM_SIZE:
                 if(onResizeHandlerList.runHandler(hWnd))
@@ -78,6 +79,7 @@ static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 
     s_WndProcList.begin();
     WinProc* wp = s_WndProcList.next();
+
     while(wp != 0) {
         LRESULT lr = ref(wp).handle(hWnd, message, wParam, lParam);
         if(lr != 0)
@@ -127,18 +129,6 @@ std::string registerClass(HBRUSH bg) {
 //void addSysTrayContextMenuHandler(const int& wm, SysTray::OnContextMenuHandler* handler) {
 //    sysTrayContextMenuHandlerList.addHandler(wm, handler);
 //}
-
-//void addOnResizeHandler(HWND hwnd, Window::OnResize::Handler* handler) {
-//    onResizeHandlerList.addHandler(hwnd, handler);
-//}
-
-//void addOnCloseHandler(HWND hwnd, Window::OnClose::Handler* handler) {
-//    onCloseHandlerList.addHandler(hwnd, handler);
-//}
-
-//void addOnButtonClickHandler(HWND hwnd, Button::OnClickHandler *handler) {
-//    onButtonClickHandlerList.addHandler(hwnd, handler);
-//}
 #endif
 
 #if defined(WIN32)
@@ -160,12 +150,12 @@ Window::Instance::Impl Window::Native::createWindow(const Window::Definition& de
 
     Window::Instance::Impl impl;
     impl._hWindow = ::CreateWindowEx(xstyle,
-                                      className.c_str(),
-                                      def.title.c_str(),
-                                      style,
-                                      pos.x, pos.y, pos.w, pos.h,
-                                      parent, (HMENU)NULL,
-                                      Application::instance(), (LPVOID)NULL);
+                                     className.c_str(),
+                                     def.title.c_str(),
+                                     style,
+                                     pos.x, pos.y, pos.w, pos.h,
+                                     parent, (HMENU)NULL,
+                                     Application::instance(), (LPVOID)NULL);
     return impl;
 }
 
@@ -289,7 +279,7 @@ const Window::Move::_Out& Window::Move::run(const _In& _in) {
 #endif
 #if defined(GTK)
     unused(_in);
-    //gtk_widget_set_uposition(_window._impl->_hWindow, _position.x, _position.y);
+    //gtk_widget_set_uposition(_in.window._impl->_hWindow, _in.position.x, _in.position.y);
     //gtk_window_set_default_size (_window._impl->_hWindow, _position.w, _position.h);
 #endif
    return out(new _Out());
@@ -348,10 +338,4 @@ void Window::OnClose::addHandler(const Window::Instance& window, Handler* handle
 #if defined(GTK)
     g_signal_connect (G_OBJECT (window._impl->_hWindow), "closed", G_CALLBACK (onWindowCloseEvent), handler);
 #endif
-}
-
-
-//////////////////////////
-int Main(const std::list<std::string>& argl) {
-    return 0;
 }

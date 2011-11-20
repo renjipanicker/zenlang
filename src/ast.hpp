@@ -917,12 +917,12 @@ namespace Ast {
 
     class PrintStatement : public Statement {
     public:
-        inline PrintStatement(const FormatExpr& expr) : _expr(expr) {}
-        inline const FormatExpr& expr() const {return _expr;}
+        inline PrintStatement(const Expr& expr) : _expr(expr) {}
+        inline const Expr& expr() const {return _expr;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const FormatExpr& _expr;
+        const Expr& _expr;
     };
 
     class IfStatement : public Statement {

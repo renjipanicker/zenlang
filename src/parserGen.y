@@ -92,8 +92,8 @@ rUnitStatementList ::= rImportStatementList rEnterNamespace rGlobalStatementList
 rEnterNamespace ::= NAMESPACE rUnitNamespaceId SEMI.
 rEnterNamespace ::= .
 
-rUnitNamespaceId ::= rUnitNamespaceId TYPE_SCOPE ID(name). {ref(pctx).aUnitNamespaceId(name);}
-rUnitNamespaceId ::=                             ID(name). {ref(pctx).aUnitNamespaceId(name);}
+rUnitNamespaceId ::= rUnitNamespaceId TYPE_SCOPE rAnyId(name). {ref(pctx).aUnitNamespaceId(name);}
+rUnitNamespaceId ::=                             rAnyId(name). {ref(pctx).aUnitNamespaceId(name);}
 
 rLeaveNamespace ::= . {ref(pctx).aLeaveNamespace();}
 
@@ -113,8 +113,17 @@ rHeaderType(L) ::= IMPORT.    {L = Ast::HeaderType::Import;}
 
 //-------------------------------------------------
 %type rImportNamespaceId {Ast::ImportStatement*}
-rImportNamespaceId(L) ::= rImportNamespaceId(statement) SCOPE ID(name). {L = ref(pctx).aImportNamespaceId(ref(statement), name);}
-rImportNamespaceId(L) ::=                                     ID(name). {L = ref(pctx).aImportNamespaceId(name);}
+rImportNamespaceId(L) ::= rImportNamespaceId(statement) SCOPE rAnyId(name). {L = ref(pctx).aImportNamespaceId(ref(statement), name);}
+rImportNamespaceId(L) ::=                                     rAnyId(name). {L = ref(pctx).aImportNamespaceId(name);}
+
+//-------------------------------------------------
+rAnyId(L) ::= ID(R).            {L = R;}
+rAnyId(L) ::= TEMPLATE_TYPE(R). {L = R;}
+rAnyId(L) ::= STRUCT_TYPE(R).   {L = R;}
+rAnyId(L) ::= ROUTINE_TYPE(R).  {L = R;}
+rAnyId(L) ::= FUNCTION_TYPE(R). {L = R;}
+rAnyId(L) ::= EVENT_TYPE(R).    {L = R;}
+rAnyId(L) ::= OTHER_TYPE(R).    {L = R;}
 
 //-------------------------------------------------
 rGlobalStatementList ::= rGlobalStatementList rGlobalStatement.
@@ -272,7 +281,8 @@ rInParamsList(L) ::= rParamsList(scope). {L = ref(pctx).aInParamsList(ref(scope)
 //-------------------------------------------------
 // parameter lists
 %type rParamsList {Ast::Scope*}
-rParamsList(L) ::= LBRACKET rParam(R) RBRACKET. {L = R;}
+rParamsList(L) ::= LBRACKET rParam(R)                 RBRACKET. {L = R;}
+rParamsList(L) ::= LBRACKET rParam(R) COMMA rPosParam RBRACKET. {L = R;}
 
 //-------------------------------------------------
 // variable lists
@@ -280,6 +290,18 @@ rParamsList(L) ::= LBRACKET rParam(R) RBRACKET. {L = R;}
 rParam(L) ::= rParam(list) COMMA rVariableDefn(variableDef). {L = ref(pctx).aParam(ref(list), ref(variableDef));}
 rParam(L) ::=                    rVariableDefn(variableDef). {L = ref(pctx).aParam(ref(variableDef));}
 rParam(L) ::= .                                              {L = ref(pctx).aParam();}
+
+//-------------------------------------------------
+// positional parameter list
+%type rPosParam {Ast::Scope*}
+rPosParam(L) ::= rPosParam(list) COMMA rPosVariableDefn(variableDef). {L = ref(pctx).aParam(ref(list), ref(variableDef));}
+rPosParam(L) ::=                       rPosVariableDefn(variableDef). {L = ref(pctx).aParam(ref(variableDef));}
+
+//-------------------------------------------------
+// variable def
+%type rPosVariableDefn {const Ast::VariableDefn*}
+rPosVariableDefn(L) ::=                              ID(name) COLON rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
+rPosVariableDefn(L) ::= rQualifiedTypeSpec(qTypeRef) ID(name) COLON rExpr(initExpr). {L = ref(pctx).aVariableDefn(ref(qTypeRef), name, ref(initExpr));}
 
 //-------------------------------------------------
 // variable def
@@ -397,7 +419,7 @@ rExprStatement(L) ::= rExpr(expr) SEMI. {L = ref(pctx).aExprStatement(ref(expr))
 
 //-------------------------------------------------
 %type rPrintStatement {Ast::PrintStatement*}
-rPrintStatement(L) ::= PRINT rFormatExpr(expr) SEMI. {L = ref(pctx).aPrintStatement(ref(expr));}
+rPrintStatement(L) ::= PRINT rExpr(expr) SEMI. {L = ref(pctx).aPrintStatement(ref(expr));}
 
 //-------------------------------------------------
 %type rIfStatement {Ast::IfStatement*}
@@ -615,11 +637,11 @@ rDictItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(
 // tree (no type checking for key or value)
 %type rTreeExpr {Ast::DictExpr*}
 rTreeExpr(L) ::= LCURLY(B) rTreeList(R) RCURLY. {L = ref(pctx).aDictExpr(B, ref(R));}
+rTreeExpr(L) ::= LCURLY(B)              RCURLY. {L = ref(pctx).aDictExpr(B);}
 
 %type rTreeList {Ast::DictList*}
 rTreeList(L) ::= rTreesList(R)       . {L = R;}
 rTreeList(L) ::= rTreesList(R) COMMA . {L = R;}
-rTreeList(L) ::= COLON               . {L = ref(pctx).aDictList();}
 
 %type rTreesList {Ast::DictList*}
 rTreesList(L)  ::= rTreesList(R) COMMA(B) rTreeItem(I). {L = ref(pctx).aDictList(B, ref(R), ref(I));}

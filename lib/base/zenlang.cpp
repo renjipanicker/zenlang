@@ -139,13 +139,13 @@ static void initMain(int argc, char* argv[]) {
 
 #if defined(GUI) && defined(WIN32)
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
-    unused(hPrevInstance);
-    unused(lpCmdLine);
-    unused(nCmdShow);
-    Application a(0, 0);
+    unused(hPrevInstance);unused(lpCmdLine);unused(nCmdShow);
+
     InitCommonControls();
     s_hInstance = hInstance;
-    initMain(0, 0);
+
+    Application a(__argc, __argv);
+    initMain(__argc, __argv);
     return a.exec();
 }
 #else
@@ -156,3 +156,13 @@ int main(int argc, char* argv[]) {
 }
 #endif
 #endif
+
+static Log s_log;
+Log& Log::get() {
+    return s_log;
+}
+
+Log& Log::operator<<(Log::Out) {
+    printf("%s", _ss.str().c_str());
+    return ref(this);
+}

@@ -1,4 +1,4 @@
-include gui::windowimpl native;
+include gui::WindowImpl native;
 
 namespace Window;
 

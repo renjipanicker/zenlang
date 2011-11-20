@@ -107,8 +107,8 @@ main()
 
 =========================
 zen --gui \
-../../zenlang/lib/gui/window.zpp ../../zenlang/lib/gui/windowimpl.cpp \
-../../zenlang/lib/gui/mainframe.zpp ../../zenlang/lib/gui/mainframeimpl.cpp \
-../../zenlang/lib/gui/button.zpp ../../zenlang/lib/gui/buttonimpl.cpp \
-../../zenlang/lib/gui/textedit.zpp ../../zenlang/lib/gui/texteditimpl.cpp \
+../../zenlang/lib/gui/Window.zpp ../../zenlang/lib/gui/WindowImpl.cpp \
+../../zenlang/lib/gui/Mainframe.zpp ../../zenlang/lib/gui/MainframeImpl.cpp \
+../../zenlang/lib/gui/Button.zpp ../../zenlang/lib/gui/ButtonImpl.cpp \
+../../zenlang/lib/gui/TextEdit.zpp ../../zenlang/lib/gui/TextEditImpl.cpp \
 ../../zenlang/tests/guiTest.zpp && cmake . && make && ./main

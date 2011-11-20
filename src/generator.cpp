@@ -262,7 +262,7 @@ private:
 
     virtual void visit(const Ast::VariableMemberExpr& node) {
         visitNode(node.expr());
-        fprintf(_fp, ".%s()", node.vref().name().text());
+        fprintf(_fp, ".%s", node.vref().name().text());
     }
 
     virtual void visit(const Ast::StructMemberExpr& node) {
@@ -722,8 +722,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         for(Ast::Scope::List::const_iterator it = node.out().begin(); it != node.out().end(); ++it) {
             INDENT;
             const Ast::VariableDefn& vdef = ref(*it);
-            fprintf(fpDecl(node), "%sprivate: %s _%s; ", Indent::get(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), vdef.name().text());
-            fprintf(fpDecl(node), "public: inline const %s& %s() const {return _%s;}\n", getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), vdef.name().text(), vdef.name().text());
+            fprintf(fpDecl(node), "%s%s %s;\n", Indent::get(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), vdef.name().text());
         }
 
         // generate out setter
@@ -731,14 +730,14 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         std::string sep = "";
         for(Ast::Scope::List::const_iterator it = node.out().begin(); it != node.out().end(); ++it) {
             const Ast::VariableDefn& vdef = ref(*it);
-            fprintf(fpDecl(node), "%sconst %s& %s", sep.c_str(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), vdef.name().text());
+            fprintf(fpDecl(node), "%sconst %s& p%s", sep.c_str(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), vdef.name().text());
             sep = ", ";
         }
         fprintf(fpDecl(node), ")");
         sep = " : ";
         for(Ast::Scope::List::const_iterator it = node.out().begin(); it != node.out().end(); ++it) {
             const Ast::VariableDefn& vdef = ref(*it);
-            fprintf(fpDecl(node), "%s_%s(%s)", sep.c_str(), vdef.name().text(), vdef.name().text());
+            fprintf(fpDecl(node), "%s%s(p%s)", sep.c_str(), vdef.name().text(), vdef.name().text());
             sep = ", ";
         }
         fprintf(fpDecl(node), "{}\n");
@@ -869,9 +868,9 @@ private:
     }
 
     virtual void visit(const Ast::PrintStatement& node) {
-        fprintf(_fpSrc, "%sprintf(\"%%s\", ", Indent::get());
+        fprintf(_fpSrc, "%sLog::get() << ", Indent::get());
         ExprGenerator(_fpSrc, false).visitNode(node.expr());
-        fprintf(_fpSrc, ".c_str());\n");
+        fprintf(_fpSrc, " << Log::Out();\n");
     }
 
     virtual void visit(const Ast::IfStatement& node) {

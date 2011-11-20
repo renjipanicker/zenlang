@@ -361,6 +361,15 @@ struct Application {
 };
 #endif
 
+struct Log {
+    struct Out{};
+    static Log& get();
+    Log& operator <<(Out);
+    template <typename T> inline Log& operator <<(const T& val) {_ss << val; return ref(this);}
+private:
+    std::stringstream _ss;
+};
+
 #if 0
 /// \todo helpers to invoke function objects
 template <typename MethodT, typename ReturnT >
