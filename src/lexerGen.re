@@ -272,7 +272,7 @@ re2c:condenumprefix          = EState;
 <Normal>   "default"   := feedToken(token(s, ZENTOK_DEFAULT)); continue;
 <Normal>   "typeof"    := feedToken(token(s, ZENTOK_TYPEOF)); continue;
 
-<Normal>   "local"     := feedToken(token(s, ZENTOK_LOCAL)); continue;
+<Normal>   "auto"      := feedToken(token(s, ZENTOK_AUTO)); continue;
 <Normal>   "print"     := feedToken(token(s, ZENTOK_PRINT)); continue;
 <Normal>   "if"        := feedToken(token(s, ZENTOK_IF)); continue;
 <Normal>   "else"      := feedToken(token(s, ZENTOK_ELSE)); continue;

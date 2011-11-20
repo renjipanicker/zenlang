@@ -211,6 +211,16 @@ namespace Ast {
         const TemplatePartList& _list;
     };
 
+    class TemplateTypePartList : public Node {
+    public:
+        typedef std::vector<const QualifiedTypeSpec*> List;
+    public:
+        inline void addType(const QualifiedTypeSpec& qTypeSpec) {_list.push_back(ptr(qTypeSpec));}
+        inline const List& list() const {return _list;}
+    private:
+        List _list;
+    };
+
     class TemplateDefn : public UserDefinedTypeSpec {
     public:
         typedef std::vector<const QualifiedTypeSpec*> List;
@@ -898,9 +908,9 @@ namespace Ast {
         const UserDefinedTypeSpec& _typeSpec;
     };
 
-    class LocalStatement : public Statement {
+    class AutoStatement : public Statement {
     public:
-        inline LocalStatement(const VariableDefn& defn) : _defn(defn) {}
+        inline AutoStatement(const VariableDefn& defn) : _defn(defn) {}
         inline const VariableDefn& defn() const {return _defn;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1168,7 +1178,7 @@ namespace Ast {
 
         virtual void visit(const ImportStatement& node) = 0;
         virtual void visit(const UserDefinedTypeSpecStatement& node) = 0;
-        virtual void visit(const LocalStatement& node) = 0;
+        virtual void visit(const AutoStatement& node) = 0;
         virtual void visit(const ExprStatement& node) = 0;
         virtual void visit(const PrintStatement& node) = 0;
         virtual void visit(const IfStatement& node) = 0;
@@ -1193,7 +1203,7 @@ namespace Ast {
 
     inline void ImportStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void UserDefinedTypeSpecStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void LocalStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void AutoStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void PrintStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void IfStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}

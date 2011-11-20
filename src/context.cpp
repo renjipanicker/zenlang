@@ -171,43 +171,48 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
         return ref(it->second);
     }
 
-    const Ast::TemplateDecl* td = dynamic_cast<const Ast::TemplateDecl*>(ptr(typeSpec));
+    const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(typeSpec));
     if(td != 0) {
-        // dummy code for now.
-        Ast::Token value(name.row(), name.col(), "#");
-        return aConstantExpr("int", value);
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(td), false);
+        Ast::ListList& llist = _unit.addNode(new Ast::ListList());
+        Ast::ListExpr& expr = _unit.addNode(new Ast::ListExpr(qTypeSpec, llist));
+        return expr;
     }
 
     const Ast::EnumDefn* ed = dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec));
     if(ed != 0) {
-        // dummy code for now.
-        Ast::Token value(name.row(), name.col(), "#");
-        return aConstantExpr("int", value);
+        const Ast::Scope::List::const_iterator rit = ref(ed).list().begin();
+        if(rit == ref(ed).list().end()) {
+            throw Exception("%s empty enum type '%s'\n", err(_filename, typeSpec.name()).c_str(), ref(ed).name().text());
+        }
+        const Ast::VariableDefn& vref = ref(*rit);
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
+        Ast::EnumMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::EnumMemberExpr(qTypeSpec, typeSpec, vref));
+        return typeSpecMemberExpr;
     }
 
     const Ast::StructDefn* sd = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
     if(sd != 0) {
-        // dummy code for now.
-        Ast::Token value(name.row(), name.col(), "#");
-        return aConstantExpr("int", value);
+        Ast::StructInstanceExpr* expr = aStructInstanceExpr(name, ref(sd));
+        return ref(expr);
     }
 
     const Ast::Function* fd = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
     if(fd != 0) {
-        // dummy code for now.
-        Ast::Token value(name.row(), name.col(), "#");
-        return aConstantExpr("int", value);
+        Ast::ExprList& exprList = addExprList();
+        Ast::FunctionInstanceExpr* expr = aFunctionInstanceExpr(ref(fd), exprList);
+        return ref(expr);
     }
 
-    if(typeSpec.name().string() == "future") {
-        Ast::Token value(name.row(), name.col(), "0");
-        return aConstantExpr("int", value);
-    }
+//    if(typeSpec.name().string() == "functor") {
+//        Ast::Token value(name.row(), name.col(), "0");
+//        return aConstantExpr("int", value);
+//    }
 
-    if(typeSpec.name().string() == "functor") {
-        Ast::Token value(name.row(), name.col(), "0");
-        return aConstantExpr("int", value);
-    }
+//    if(typeSpec.name().string() == "future") {
+//        Ast::Token value(name.row(), name.col(), "0");
+//        return aConstantExpr("int", value);
+//    }
 
     throw Exception("%s No default value for type '%s'\n", err(_filename, name).c_str(), typeSpec.name().text());
 }
@@ -713,13 +718,32 @@ const Ast::TypeSpec* Context::aTypeSpec(const Ast::TypeSpec& typeSpec) {
     return ptr(typeSpec);
 }
 
+const Ast::TemplateDefn* Context::aTemplateDefnTypeSpec(const Ast::TemplateDecl& typeSpec, const Ast::TemplateTypePartList& list) {
+    Ast::TemplateDefn& templateDefn = _unit.addNode(new Ast::TemplateDefn(currentTypeSpec(), typeSpec.name(), Ast::DefinitionType::Direct, typeSpec));
+    for(Ast::TemplateTypePartList::List::const_iterator it = list.list().begin(); it != list.list().end(); ++it) {
+        const Ast::QualifiedTypeSpec& part = ref(*it);
+        templateDefn.addType(part);
+    }
+    return ptr(templateDefn);
+}
+
+Ast::TemplateTypePartList* Context::aTemplateTypePartList(Ast::TemplateTypePartList& list, const Ast::QualifiedTypeSpec& qTypeSpec) {
+    list.addType(qTypeSpec);
+    return ptr(list);
+}
+
+Ast::TemplateTypePartList* Context::aTemplateTypePartList(const Ast::QualifiedTypeSpec& qTypeSpec) {
+    Ast::TemplateTypePartList& list = _unit.addNode(new Ast::TemplateTypePartList());
+    return aTemplateTypePartList(list, qTypeSpec);
+}
+
 Ast::UserDefinedTypeSpecStatement* Context::aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec) {
     Ast::UserDefinedTypeSpecStatement& userDefinedTypeSpecStatement = _unit.addNode(new Ast::UserDefinedTypeSpecStatement(typeSpec));
     return ptr(userDefinedTypeSpecStatement);
 }
 
-Ast::LocalStatement* Context::aLocalStatement(const Ast::VariableDefn& defn) {
-    Ast::LocalStatement& localStatement = _unit.addNode(new Ast::LocalStatement(defn));
+Ast::AutoStatement* Context::aAutoStatement(const Ast::VariableDefn& defn) {
+    Ast::AutoStatement& localStatement = _unit.addNode(new Ast::AutoStatement(defn));
     currentScope().addVariableDef(defn);
     return ptr(localStatement);
 }

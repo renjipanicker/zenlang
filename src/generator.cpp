@@ -867,7 +867,7 @@ private:
         //TypeDeclarationGenerator(_fpHdr, _fpSrc).visitNode(node.typeSpec());
     }
 
-    virtual void visit(const Ast::LocalStatement& node) {
+    virtual void visit(const Ast::AutoStatement& node) {
         fprintf(_fpSrc, "%s%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.defn().name().text());
         ExprGenerator(_fpSrc, false).visitNode(node.defn().initExpr());
         fprintf(_fpSrc, ";\n");

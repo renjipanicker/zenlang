@@ -1,7 +1,3 @@
-*** rename local to auto (consistency with c++0x)
-*** enum-default-value
-*** struct-default-value
-*** enum-init-expr
 *** 3 level unit test - suite/test/check
 verbose output from compiler
 interpreter
@@ -84,6 +80,7 @@ large lists in in-memory sqlite
 project generator - msvc
 print <dst> <expr>;
 print <dst> <src> <level> <expr>;
+*** enum-init-expr
 *** move Formatter to String, Creator to List/Dict
 *** merge enum and struct Ast's.
 *** optimize trace/exception
@@ -135,7 +132,12 @@ event
 event-handler
 main()
 function-instance-expr should have type FunctorT. (obsolete)
-*** events. event(obj) => function.
+events. event(obj) => function.
+rename local to auto (consistency with c++0x)
+enum-default-value
+struct-default-value
+function-default-value
+template-default-value
 
 =========================
 zen --gui \

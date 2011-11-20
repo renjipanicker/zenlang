@@ -11,15 +11,15 @@ public function (int ri, string rs)testFunction(const int& x) {
 }
 
 public test testBasicExpr {
-    local i = 0;
-    local s = "xx";
-    local e = (1 + 2) * 3;
-    local n = (1 > 2) ? 1 : 2;
-    local t = "yy %{x}\n" @ {"n":n};
-    local l = [1,2,3];
-    local d = ["a":1,"b":2,"c":3];
-    local r = testRoutine(123);
-    local f = testFunction(456);
+    auto i = 0;
+    auto s = "xx";
+    auto e = (1 + 2) * 3;
+    auto n = (1 > 2) ? 1 : 2;
+    auto t = "yy %{x}\n" @ {"n":n};
+    auto l = [1,2,3];
+    auto d = ["a":1,"b":2,"c":3];
+    auto r = testRoutine(123);
+    auto f = testFunction(456);
 
     assert(i == 0, s == "xx", e == 9, n == 2);
     unused(t, l, d, r, f);
@@ -37,17 +37,17 @@ public struct MyStruct {
 };
 
 public function (int r)testAdvancedExpr(const int& x, const MyStruct& myStruct, const MyEnum& myEnum) {
-    local v = x;
-    local m = myStruct.i;
-    local n = myEnum;
+    auto v = x;
+    auto m = myStruct.i;
+    auto n = myEnum;
     unused(v, m, n);
     return (67890);
 }
 
 public test testFunction001 {
-    local myStruct = MyStruct{i:0;};
-    local e = MyEnum.C1;
-    local c = testAdvancedExpr(321, myStruct, e);
+    auto myStruct = MyStruct{i:0;};
+    auto e = MyEnum.C1;
+    auto c = testAdvancedExpr(321, myStruct, e);
     unused(c);
     return (1);
 }
@@ -56,9 +56,9 @@ public test testInnerRootFunction {
     function (int i)innerFunction(int j) {
         return (2);
     }
-    local f = innerFunction(2);
-    local o = innerFunction[];
-    local r = o(2);
+    auto f = innerFunction(2);
+    auto o = innerFunction[];
+    auto r = o(2);
     unused(f, o, r);
     return (1);
 }
@@ -67,47 +67,47 @@ public test testInnerChildFunction {
     testFunction innerFunction {
         return (2, "aa");
     }
-    local f = innerFunction(2);
-    local o = innerFunction[];
-    local r = o(2);
+    auto f = innerFunction(2);
+    auto o = innerFunction[];
+    auto r = o(2);
     unused(f, o, r);
     return (1);
 }
 
 public test testInnerChildFunctionClosure {
-    local i = 0;
+    auto i = 0;
     testFunction innerFunction {
         return (i, "aa");
     }
-    local f = innerFunction(2);
-    local o = innerFunction[];
-    local r = o(2);
+    auto f = innerFunction(2);
+    auto o = innerFunction[];
+    auto r = o(2);
     unused(f, o, r);
     return (1);
 }
 
 public test testAnonymousFunction {
-    local a = testFunction {
+    auto a = testFunction {
         return (2, "aa");
     };
-    local r = a(2);
+    auto r = a(2);
     unused(r);
     return (1);
 }
 
 public test testAnonymousFunctionWithClosure {
-    local i = 0;
-    local a = testFunction {
+    auto i = 0;
+    auto a = testFunction {
         return (i, "aa");
     };
-    local r = a(2);
+    auto r = a(2);
     unused(r);
     return (1);
 }
 
 public test testIfStatement {
-    local i = 0;
-    local j = 0;
+    auto i = 0;
+    auto j = 0;
     if(i > 2) {
         j = 3;
     }
@@ -116,8 +116,8 @@ public test testIfStatement {
 }
 
 public test testIfElseStatement {
-    local i = 0;
-    local j = 0;
+    auto i = 0;
+    auto j = 0;
     if(i > 2) {
         j = 3;
     } else {
@@ -128,7 +128,7 @@ public test testIfElseStatement {
 }
 
 public test testWhileStatement {
-    local i = 0;
+    auto i = 0;
     while(i < 2) {
         i++;
     }
@@ -136,7 +136,7 @@ public test testWhileStatement {
 }
 
 public test testDoWhileStatement {
-    local i = 0;
+    auto i = 0;
     do {
         i++;
     } while(i < 2);
@@ -144,8 +144,8 @@ public test testDoWhileStatement {
 }
 
 public test testForExprStatement {
-    local j = 0;
-    local i = 0;
+    auto j = 0;
+    auto i = 0;
     for(i = 0; i < 10; ++i) {
         j += i;
     }
@@ -153,16 +153,16 @@ public test testForExprStatement {
 }
 
 public test testForInitStatement {
-    local j = 0;
-    for(local i = 0; i < 10; ++i) {
+    auto j = 0;
+    for(auto i = 0; i < 10; ++i) {
         j += i;
     }
     return (1);
 }
 
 public test testForeachListStatement {
-    local j = 0;
-    local l = [1,2,3];
+    auto j = 0;
+    auto l = [1,2,3];
     foreach(i in l) {
         j += i;
     }
@@ -170,8 +170,8 @@ public test testForeachListStatement {
 }
 
 public test testForeachDictStatement {
-    local j = 0;
-    local l = ['a':1, 'b':2,'c':3];
+    auto j = 0;
+    auto l = ['a':1, 'b':2,'c':3];
     foreach(k,v in l) {
         unused(k);
         j += v;
@@ -181,7 +181,7 @@ public test testForeachDictStatement {
 }
 
 public test testSwitchValueStatement {
-    local j = 0;
+    auto j = 0;
     switch(j) {
         case 1: {
             break;
@@ -197,7 +197,7 @@ public test testSwitchValueStatement {
 }
 
 public test testSwitchExprStatement {
-    local j = 0;
+    auto j = 0;
     switch {
         case j == 1: {
         }
@@ -210,18 +210,18 @@ public test testSwitchExprStatement {
 }
 
 public function (int ri, string rs)runFunctionTest(const int& x) {
-    print "runFunctionTest %{x}\n" @ {:};
+    print "runFunctionTest %{x}\n" @ {"x":x};
     return (67890, "run");
 }
 
 public test testRunExpr {
-    local f = run runFunctionTest(456);
+    auto f = run runFunctionTest(456);
     unused(f);
     return (1);
 }
 
 public main MyMain {
-    local f = run runFunctionTest(908);
+    auto f = run runFunctionTest(908);
     unused(f);
     return (0);
 }

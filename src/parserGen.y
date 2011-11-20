@@ -322,7 +322,16 @@ rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx
 // "public" type references, can be invoked from other rules
 %type rTypeSpec {const Ast::TypeSpec*}
 rTypeSpec(L) ::= rPreTypeSpec(R). {L = ref(pctx).aTypeSpec(ref(R));}
-rTypeSpec(L) ::= rTemplateTypeSpec(R) TLT rQualifiedTypeSpec GT. {L = ref(pctx).aTypeSpec(ref(R));}
+rTypeSpec(L) ::= rTemplateDefnTypeSpec(R). {L = R;}
+
+//-------------------------------------------------
+%type rTemplateDefnTypeSpec {const Ast::TemplateDefn*}
+rTemplateDefnTypeSpec(L) ::= rTemplateTypeSpec(R) TLT rTemplateTypePartList(P) GT. {L = ref(pctx).aTemplateDefnTypeSpec(ref(R), ref(P));}
+
+//-------------------------------------------------
+%type rTemplateTypePartList {Ast::TemplateTypePartList*}
+rTemplateTypePartList(L) ::= rTemplateTypePartList(R) COMMA rQualifiedTypeSpec(P). {L = ref(pctx).aTemplateTypePartList(ref(R), ref(P));}
+rTemplateTypePartList(L) ::=                                rQualifiedTypeSpec(P). {L = ref(pctx).aTemplateTypePartList(ref(P));}
 
 //-------------------------------------------------
 %type rTemplateTypeSpec {const Ast::TemplateDecl*}
@@ -388,7 +397,7 @@ rPreOtherTypeSpec(L) ::=                            OTHER_TYPE(name). {L = ref(p
 // statements
 %type rInnerStatement {Ast::Statement*}
 rInnerStatement(L) ::= rUserDefinedTypeSpecStatement(R). {L = R;}
-rInnerStatement(L) ::= rLocalStatement(R).               {L = R;}
+rInnerStatement(L) ::= rAutoStatement(R).                {L = R;}
 rInnerStatement(L) ::= rExprStatement(R).                {L = R;}
 rInnerStatement(L) ::= rPrintStatement(R).               {L = R;}
 rInnerStatement(L) ::= rIfStatement(R).                  {L = R;}
@@ -410,8 +419,8 @@ rInnerStatement(L) ::= rCompoundStatement(R).            {L = R;}
 rUserDefinedTypeSpecStatement(L) ::= rTypeSpecDef(typeSpec). {L = ref(pctx).aUserDefinedTypeSpecStatement(ref(typeSpec));}
 
 //-------------------------------------------------
-%type rLocalStatement {Ast::LocalStatement*}
-rLocalStatement(L) ::= LOCAL rVariableDefn(defn) SEMI. {L = ref(pctx).aLocalStatement(ref(defn));}
+%type rAutoStatement {Ast::AutoStatement*}
+rAutoStatement(L) ::= AUTO rVariableDefn(defn) SEMI. {L = ref(pctx).aAutoStatement(ref(defn));}
 
 //-------------------------------------------------
 %type rExprStatement {Ast::ExprStatement*}
@@ -443,7 +452,7 @@ rForStatement(L) ::= FOR LBRACKET rExpr(init) SEMI rExpr(expr) SEMI rExpr(incr) 
 rForStatement(L) ::= FOR LBRACKET rEnterForInit(init) SEMI rExpr(expr) SEMI rExpr(incr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aForStatement(ref(init), ref(expr), ref(incr), ref(block));}
 
 %type rEnterForInit {const Ast::VariableDefn*}
-rEnterForInit(L) ::= LOCAL rVariableDefn(init). {L = ref(pctx).aEnterForInit(ref(init));}
+rEnterForInit(L) ::= AUTO rVariableDefn(init). {L = ref(pctx).aEnterForInit(ref(init));}
 
 //-------------------------------------------------
 %type rForeachStatement {Ast::ForeachStatement*}

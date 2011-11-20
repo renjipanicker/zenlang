@@ -135,10 +135,13 @@ public:
     const Ast::TypeSpec*     aOtherTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
     const Ast::TypeSpec*     aOtherTypeSpec(const Ast::Token& name);
     const Ast::TypeSpec*     aTypeSpec(const Ast::TypeSpec& typeSpec);
+    const Ast::TemplateDefn* aTemplateDefnTypeSpec(const Ast::TemplateDecl& typeSpec, const Ast::TemplateTypePartList& list);
+    Ast::TemplateTypePartList* aTemplateTypePartList(Ast::TemplateTypePartList& list, const Ast::QualifiedTypeSpec& qTypeSpec);
+    Ast::TemplateTypePartList* aTemplateTypePartList(const Ast::QualifiedTypeSpec& qTypeSpec);
 
 public:
     Ast::UserDefinedTypeSpecStatement* aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec);
-    Ast::LocalStatement*               aLocalStatement(const Ast::VariableDefn& defn);
+    Ast::AutoStatement*                aAutoStatement(const Ast::VariableDefn& defn);
     Ast::ExprStatement*                aExprStatement(const Ast::Expr& expr);
     Ast::PrintStatement*               aPrintStatement(const Ast::Expr& expr);
     Ast::IfStatement*                  aIfStatement(const Ast::Expr& expr, const Ast::CompoundStatement& tblock);
