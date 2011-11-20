@@ -42,29 +42,35 @@ static ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
 }
 
 // Message handler for the app
-static InitList<WndProc> s_WndProcList;
-WndProc::WndProc() : _next(0) {
+static InitList<Window::Native::WndProc> s_WndProcList;
+Window::Native::WndProc::WndProc() : _next(0) {
     s_WndProcList.push(this);
 }
 
-struct WinProc : public Window::Native::WndProc {
-    virtual LRESULT WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+struct WndProc : public Window::Native::WndProc {
+    virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         printf("win:wndproc\n");
         switch (message) {
             case WM_SIZE:
-                if(onResizeHandlerList.runHandler(hWnd))
+            {
+                Window::OnResize::Handler::_In in;
+                if(onResizeHandlerList.runHandler(hWnd, in))
                     return 1;
                 break;
+            }
 
             case WM_CLOSE:
-                if(onCloseHandlerList.runHandler(hWnd))
+            {
+                Window::OnClose::Handler::_In in;
+                if(onCloseHandlerList.runHandler(hWnd, in))
                     return 1;
                 break;
+            }
         }
         return 0;
     }
 };
-static WinProc s_winProc;
+static WndProc s_winProc;
 
 static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     if(lParam == WM_LBUTTONDOWN) {
@@ -78,7 +84,7 @@ static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     }
 
     s_WndProcList.begin();
-    WinProc* wp = s_WndProcList.next();
+    Window::Native::WndProc* wp = s_WndProcList.next();
 
     while(wp != 0) {
         LRESULT lr = ref(wp).handle(hWnd, message, wParam, lParam);

@@ -257,7 +257,7 @@ struct InitList {
         _tail = inst;
     }
 
-    inline InitT* begin() {
+    inline void begin() {
         _next = _head;
     }
 
