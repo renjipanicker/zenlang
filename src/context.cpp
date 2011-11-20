@@ -548,6 +548,15 @@ Ast::Scope* Context::aInParamsList(Ast::Scope& scope) {
     return ptr(scope);
 }
 
+Ast::Scope* Context::aParamsList(Ast::Scope& scope) {
+    return ptr(scope);
+}
+
+Ast::Scope* Context::aParamsList(Ast::Scope& scope, const Ast::Scope& posParam) {
+    scope.posParam(posParam);
+    return aParamsList(scope);
+}
+
 Ast::Scope* Context::aParam(Ast::Scope& list, const Ast::VariableDefn& variableDefn) {
     list.addVariableDef(variableDefn);
     return ptr(list);

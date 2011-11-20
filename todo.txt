@@ -3,19 +3,48 @@
 *** struct-default-value
 *** enum-init-expr
 *** 3 level unit test - suite/test/check
-*** events. event(obj) => function.
 verbose output from compiler
-function-instance-expr should have type FunctorT.
+interpreter
+positional-paramlist
 
 push-button
-lineedit
 textedit
+anchor
+systray
+process
+application
+unicode-char
+date
+time
+datetime
+url
+file
+fileinfo
+temp-file
+dir
+dirlist
+stream
+string
+socket
+settings
+cmdline
+timer
+json
+error-handling
+network
+http
+database
+sql
+
+lineedit
 checkbox
 combobox
 dateedit
 timeedit
 datetimeedit
 label
+group-box
+image
 progress-bar
 radio-button
 scroll-bar
@@ -23,21 +52,25 @@ status-bar
 slider
 menubar
 menuitem
-tab-widget
-group-box
 splitter
 list-view
 tree-view
 web-view
-anchor
-file
-dir
-fileinfo
-stream
-string
-interpreter
+tab-widget
 
 ==BACKLOG==
+ftp
+xml
+regex
+ssl
+string-template
+any-type
+console
+type-of
+query
+grammar
+state-transition
+messagebox
 auto-detect if main is present
 auto-detect if header should be public or private
 in-params are const by default, locals are not
@@ -47,10 +80,7 @@ project reader
 switch-typeof
 shared variables
 future
-cmdline
 large lists in in-memory sqlite
-query
-grammar
 project generator - msvc
 print <dst> <expr>;
 print <dst> <src> <level> <expr>;
@@ -59,8 +89,8 @@ print <dst> <src> <level> <expr>;
 *** optimize trace/exception
 *** document ast
 *** document vref logic
-*** changed test::passed to bool
-*** Selectively decide which header file sto make private.
+*** change test::passed to bool
+*** Selectively decide which header files to make private.
 
 ==DONE==
 Remove block from unit
@@ -104,6 +134,8 @@ run-expr
 event
 event-handler
 main()
+function-instance-expr should have type FunctorT. (obsolete)
+*** events. event(obj) => function.
 
 =========================
 zen --gui \

@@ -281,8 +281,8 @@ rInParamsList(L) ::= rParamsList(scope). {L = ref(pctx).aInParamsList(ref(scope)
 //-------------------------------------------------
 // parameter lists
 %type rParamsList {Ast::Scope*}
-rParamsList(L) ::= LBRACKET rParam(R)                 RBRACKET. {L = R;}
-rParamsList(L) ::= LBRACKET rParam(R) COMMA rPosParam RBRACKET. {L = R;}
+rParamsList(L) ::= LBRACKET rParam(R)                    RBRACKET. {L = ref(pctx).aParamsList(ref(R));}
+rParamsList(L) ::= LBRACKET rParam(R) COMMA rPosParam(P) RBRACKET. {L = ref(pctx).aParamsList(ref(R), ref(P));}
 
 //-------------------------------------------------
 // variable lists

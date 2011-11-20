@@ -637,6 +637,14 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             const Ast::VariableDefn& vdef = ref(*it);
             fprintf(fp, "%sconst %s %s;\n", Indent::get(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), vdef.name().text());
         }
+        const Ast::Scope* posParam = scope.posParam();
+        if(posParam) {
+            for(Ast::Scope::List::const_iterator it = ref(posParam).list().begin(); it != ref(posParam).list().end(); ++it) {
+                INDENT;
+                const Ast::VariableDefn& vdef = ref(*it);
+                fprintf(fp, "%sconst %s %s;\n", Indent::get(), getTypeSpecName(vdef.qualifiedTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), vdef.name().text());
+            }
+        }
     }
 
     inline void writeCtor(FILE* fp, const std::string& cname, const Ast::Scope& scope) {
@@ -656,6 +664,10 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             const Ast::VariableDefn& vdef = ref(*it);
             fprintf(fp, "%s%s(p%s)", sep.c_str(), vdef.name().text(), vdef.name().text());
             sep = ", ";
+        }
+
+        const Ast::Scope* posParam = scope.posParam();
+        if(posParam) {
         }
 
         fprintf(fp, " {}\n");

@@ -108,6 +108,8 @@ public:
     Ast::EventDecl*          aEventDecl(const Ast::Token& pos, const Ast::VariableDefn& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
     Ast::FunctionSig*        aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in);
     Ast::Scope*              aInParamsList(Ast::Scope& scope);
+    Ast::Scope*              aParamsList(Ast::Scope& scope);
+    Ast::Scope*              aParamsList(Ast::Scope& scope, const Ast::Scope& posParam);
     Ast::Scope*              aParam(Ast::Scope& list, const Ast::VariableDefn& variableDefn);
     Ast::Scope*              aParam(const Ast::VariableDefn& variableDefn);
     Ast::Scope*              aParam();

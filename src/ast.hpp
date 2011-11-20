@@ -147,13 +147,16 @@ namespace Ast {
     public:
         typedef std::list<const VariableDefn*> List;
     public:
-        inline Scope(const ScopeType::T& type) : _type(type) {}
+        inline Scope(const ScopeType::T& type) : _type(type), _posParam(0) {}
         inline Scope& addVariableDef(const VariableDefn& variableDef) {_list.push_back(ptr(variableDef)); return ref(this);}
         inline const ScopeType::T& type() const {return _type;}
         inline const List& list() const {return _list;}
+        inline void posParam(const Scope& val) {_posParam = ptr(val);}
+        inline const Scope* posParam() const {return _posParam;}
     private:
         const ScopeType::T _type;
         List _list;
+        const Scope* _posParam;
     };
 
     class RootTypeSpec : public TypeSpec {
