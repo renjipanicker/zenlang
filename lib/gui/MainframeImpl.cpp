@@ -6,6 +6,7 @@
 const MainFrame::Create::_Out& MainFrame::Create::run(const _In& _in) {
 #if defined(WIN32)
     Window::Instance::Impl impl = Window::Native::createMainFrame(_in.def, WS_OVERLAPPEDWINDOW, WS_EX_WINDOWEDGE);
+    ::PostMessage(impl._hWindow, WM_SIZE, 0, 0);
 #endif
 #if defined(GTK)
     Window::Instance::Impl impl = Window::Native::createWindow(_in.def, 0);

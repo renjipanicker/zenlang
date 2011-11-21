@@ -33,6 +33,7 @@
         #undef UNICODE
         #undef _UNICODE
         #define WIN32_LEAN_AND_MEAN
+        #include <Windowsx.h>
         #include <Commctrl.h>
         #include <Shlwapi.h>
         #include <shellapi.h>

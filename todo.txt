@@ -3,10 +3,10 @@ verbose output from compiler
 interpreter
 positional-paramlist
 
-push-button
-textedit
 anchor
 systray
+menubar
+menuitem
 process
 application
 unicode-char
@@ -46,8 +46,6 @@ radio-button
 scroll-bar
 status-bar
 slider
-menubar
-menuitem
 splitter
 list-view
 tree-view
@@ -88,6 +86,14 @@ print <dst> <src> <level> <expr>;
 *** document vref logic
 *** change test::passed to bool
 *** Selectively decide which header files to make private.
+
+=========================
+zen --gui \
+../../zenlang/lib/gui/Window.zpp ../../zenlang/lib/gui/WindowImpl.cpp \
+../../zenlang/lib/gui/Mainframe.zpp ../../zenlang/lib/gui/MainframeImpl.cpp \
+../../zenlang/lib/gui/Button.zpp ../../zenlang/lib/gui/ButtonImpl.cpp \
+../../zenlang/lib/gui/TextEdit.zpp ../../zenlang/lib/gui/TextEditImpl.cpp \
+../../zenlang/tests/guiTest.zpp && cmake . && make && ./main
 
 ==DONE==
 Remove block from unit
@@ -138,11 +144,5 @@ enum-default-value
 struct-default-value
 function-default-value
 template-default-value
-
-=========================
-zen --gui \
-../../zenlang/lib/gui/Window.zpp ../../zenlang/lib/gui/WindowImpl.cpp \
-../../zenlang/lib/gui/Mainframe.zpp ../../zenlang/lib/gui/MainframeImpl.cpp \
-../../zenlang/lib/gui/Button.zpp ../../zenlang/lib/gui/ButtonImpl.cpp \
-../../zenlang/lib/gui/TextEdit.zpp ../../zenlang/lib/gui/TextEditImpl.cpp \
-../../zenlang/tests/guiTest.zpp && cmake . && make && ./main
+push-button-onclick
+textedit-appendtext
