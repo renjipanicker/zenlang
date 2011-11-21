@@ -1,7 +1,8 @@
-*** 3 level unit test - suite/test/check
+unit test - check
 verbose output from compiler
 interpreter
 positional-paramlist
+full gui definition
 
 anchor
 systray
@@ -146,3 +147,5 @@ function-default-value
 template-default-value
 push-button-onclick
 textedit-appendtext
+unit test - suite
+unit test - test
