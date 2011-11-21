@@ -2,6 +2,27 @@
 #include "zenlang.hpp"
 
 #if defined(UNIT_TEST)
+static int s_totalTests = 0;
+static int s_passedTests = 0;
+
+TestResult::~TestResult() {
+//    Log::get() << "PASSED: " << s_passedTests << "/" << s_totalTests << "\n" << Log::Out();
+    printf("PASSED %d/%d\n", s_passedTests, s_totalTests);
+}
+
+void TestResult::begin(const std::string& name) {
+    Log::get() << name << Log::Out();
+    ++s_totalTests;
+}
+
+void TestResult::end(const std::string& name, const bool& passed) {
+    if(passed)
+        ++s_passedTests;
+
+    const std::string r = passed?" - PASS":" - FAIL ******************";
+    Log::get() << r << "\n" << Log::Out();
+}
+
 static InitList<TestInstance> s_testList;
 TestInstance::TestInstance() : _next(0) {
     s_testList.push(this);
@@ -83,6 +104,9 @@ HINSTANCE Application::instance() {
 #endif
 
 int Application::exec() {
+#if defined(UNIT_TEST)
+    TestResult tr; unused(tr);
+#endif
     int code = 0;
 #if defined(GUI)
 #if defined(WIN32)

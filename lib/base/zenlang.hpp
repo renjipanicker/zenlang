@@ -275,7 +275,22 @@ private:
     InitT* _next;
 };
 
+struct Log {
+    struct Out{};
+    static Log& get();
+    Log& operator <<(Out);
+    template <typename T> inline Log& operator <<(const T& val) {_ss << val; return ref(this);}
+private:
+    std::stringstream _ss;
+};
+
 #if defined(UNIT_TEST)
+struct TestResult {
+    ~TestResult();
+    static void begin(const std::string& name);
+    static void end(const std::string& name, const bool& passed);
+};
+
 template <typename T>
 struct test_ {
     struct _Out {
@@ -289,6 +304,13 @@ public:
 public:
     Pointer<_Out> _out;
     inline const _Out& out(_Out* val) {_out = val;return *_out;}
+    virtual const _Out& run(const _In& _in) {
+        T& t = static_cast<T&>(ref(this));
+        TestResult::begin(t.name());
+        const _Out& out = t.test(_in);
+        TestResult::end(t.name(), out._passed);
+        return out;
+    }
 };
 
 struct TestInstance {
@@ -360,15 +382,6 @@ struct Application {
     int exit(const int& code);
 };
 #endif
-
-struct Log {
-    struct Out{};
-    static Log& get();
-    Log& operator <<(Out);
-    template <typename T> inline Log& operator <<(const T& val) {_ss << val; return ref(this);}
-private:
-    std::stringstream _ss;
-};
 
 #if 0
 /// \todo helpers to invoke function objects
