@@ -183,7 +183,7 @@ public:
     Ast::ListExpr*            aListExpr(const Ast::Token& pos, const Ast::ListList& list);
     Ast::ListList*            aListList(const Ast::Token& pos, Ast::ListList& list, const Ast::ListItem& item);
     Ast::ListList*            aListList(const Ast::ListItem& item);
-    Ast::ListList*            aListList();
+    Ast::ListList*            aListList(const Ast::QualifiedTypeSpec& qTypeSpec);
     Ast::ListItem*            aListItem(const Ast::Expr& valueExpr);
 
     Ast::DictExpr*            aDictExpr(const Ast::Token& pos, const Ast::DictList& list);

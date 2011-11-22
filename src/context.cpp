@@ -175,6 +175,8 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
     if(td != 0) {
         const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(td), false);
         Ast::ListList& llist = _unit.addNode(new Ast::ListList());
+        const Ast::QualifiedTypeSpec* qlType = ref(td).list().at(0);
+        llist.valueType(ref(qlType));
         Ast::ListExpr& expr = _unit.addNode(new Ast::ListExpr(qTypeSpec, llist));
         return expr;
     }
@@ -975,8 +977,9 @@ Ast::ListList* Context::aListList(const Ast::ListItem& item) {
     return ptr(list);
 }
 
-Ast::ListList* Context::aListList() {
+Ast::ListList* Context::aListList(const Ast::QualifiedTypeSpec& qTypeSpec) {
     Ast::ListList& list = _unit.addNode(new Ast::ListList());
+    list.valueType(qTypeSpec);
     return ptr(list);
 }
 

@@ -620,7 +620,7 @@ rListList(L) ::= rListsList(R) COMMA. {L = R;}
 %type rListsList {Ast::ListList*}
 rListsList(L)  ::= rListsList(R) COMMA(B) rListItem(I). {L = ref(pctx).aListList(B, ref(R), ref(I));}
 rListsList(L)  ::=                        rListItem(I). {L = ref(pctx).aListList(ref(I));}
-rListsList(L)  ::=                                    . {L = ref(pctx).aListList();}
+rListsList(L)  ::=               rQualifiedTypeSpec(Q). {L = ref(pctx).aListList(ref(Q));}
 
 %type rListItem {Ast::ListItem*}
 rListItem(L)  ::= rExpr(E). {L = ref(pctx).aListItem(ref(E));}

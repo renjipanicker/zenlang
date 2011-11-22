@@ -16,11 +16,24 @@ public struct Position {
 
 protected struct Instance native;
 
-public struct Definition {
+public struct Anchor {
+    Instance window;
+    margin = 0;
+};
+
+public struct RootDefinition {
+};
+
+public struct Definition : RootDefinition {
     title = "";
     position = Window::Position{};
     style = Style.Normal;
     visible = false;
+    Anchor left;
+    Anchor right;
+    Anchor top;
+    Anchor bottom;
+    list<RootDefinition> child;
 };
 
 public routine Position getWindowPosition(const Instance& window) native;

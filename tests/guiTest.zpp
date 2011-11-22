@@ -3,9 +3,21 @@ include Button;
 include TextEdit;
 
 public main MyMain {
+    auto x = MainFrame::Definition {
+                title    : "test";
+                position : Window::Position {x:10;y:10;w:400;h:200;};
+                visible  : true;
+                child    : [Window::Definition{title:"check";}];
+             };
+
     auto mainFrame = MainFrame::Create( MainFrame::Definition{title:"test"; position:Window::Position{x:10;y:10;w:400;h:200;}; visible:true; } );
-    auto checkBtn = Button::Create(mainFrame.window, Window::Definition{title:"Check";position:Window::Position{x:10;y:10;w:60;h:22;};});
-    auto outputBox = TextEdit::Create(mainFrame.window, TextEdit::Definition{title:"Output";position:Window::Position{x:10;y:50;w:300;h:100;};});
+    auto checkBtn = Button::Create(mainFrame.window,
+                        Window::Definition {
+                            title   : "Check";
+                            position: Window::Position {x:10;y:10;w:60;h:22;};
+                            left    : Window::Anchor {window:mainFrame.window;margin:10;};
+                        });
+    auto outputBox = TextEdit::Create(mainFrame.window, TextEdit::Definition{title:"Output";position:Window::Position{x:10;y:50;w:300;h:100;};multiline:true;});
 
     Window::OnResize(mainFrame.window) => Window::OnResize::Handler {
         auto pp = Window::getWindowPosition(mainFrame.window);

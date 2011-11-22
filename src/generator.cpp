@@ -51,7 +51,22 @@ static bool getName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::
 }
 
 static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name, const GetNameMode::T& mode) {
+    const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(ptr(typeSpec));
+
     if(mode == GetNameMode::Import) {
+        if(templateDefn) {
+            name += ref(templateDefn).name().string();
+            name += "<";
+            std::string sep;
+            for(Ast::TemplateDefn::List::const_iterator it = ref(templateDefn).list().begin(); it != ref(templateDefn).list().end(); ++it) {
+                const Ast::QualifiedTypeSpec& qTypeSpec = ref(*it);
+                name += sep;
+                name += getQualifiedTypeSpecName(qTypeSpec, mode);
+                sep = ", ";
+            }
+            name += ">";
+            return true;
+        }
         return getName(typeSpec, sep, name, mode);
     }
 
@@ -60,10 +75,9 @@ static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, s
         return true;
     }
 
-    const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(ptr(typeSpec));
     if(templateDefn) {
         if(typeSpec.name().string() == "list") {
-            name += "std::list";
+            name += "list";
         } else if(typeSpec.name().string() == "dict") {
             name += "std::map";
         } else if(typeSpec.name().string() == "future") {
@@ -157,14 +171,30 @@ private:
     }
 
     virtual void visit(const Ast::ListExpr& node) {
-        fprintf(_fp, "ListCreator<%s>()", getQualifiedTypeSpecName(node.list().valueType(), GetNameMode::Normal).c_str());
-        for(Ast::ListList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-            const Ast::ListItem& item = ref(*it);
-            fprintf(_fp, ".add(");
-            visitNode(item.valueExpr());
-            fprintf(_fp, ")");
+        if(_isImp) {
+            fprintf(_fp, "[");
+            if(node.list().list().size() == 0) {
+                fprintf(_fp, "%s", getQualifiedTypeSpecName(node.list().valueType(), GetNameMode::Import).c_str());
+            } else {
+                std::string sep;
+                for(Ast::ListList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
+                    const Ast::ListItem& item = ref(*it);
+                    fprintf(_fp, "%s", sep.c_str());
+                    visitNode(item.valueExpr());
+                    sep = ", ";
+                }
+            }
+            fprintf(_fp, "]");
+        } else {
+            fprintf(_fp, "list<%s>::creator()", getQualifiedTypeSpecName(node.list().valueType(), GetNameMode::Normal).c_str());
+            for(Ast::ListList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
+                const Ast::ListItem& item = ref(*it);
+                fprintf(_fp, ".add(");
+                visitNode(item.valueExpr());
+                fprintf(_fp, ")");
+            }
+            fprintf(_fp, ".value()");
         }
-        fprintf(_fp, ".value()");
     }
 
     virtual void visit(const Ast::DictExpr& node) {
@@ -204,7 +234,7 @@ private:
                 fprintf(_fp, "%s%s(", sep.c_str(), name.c_str());
                 ExprGenerator(_fp, _isImp).visitNode(expr);
                 fprintf(_fp, ")");
-                sep = ",";
+                sep = ";";
             }
             return;
         }
@@ -954,7 +984,7 @@ private:
         ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ";\n");
         fprintf(_fpSrc, "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), constit.c_str());
-        fprintf(_fpSrc, "%s%s %s = *_it;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.valDef().name().text());
+        fprintf(_fpSrc, "%sconst %s& %s = ref(*_it);\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.valDef().name().text());
         visitNode(node.block());
         fprintf(_fpSrc, "%s}\n", Indent::get());
         fprintf(_fpSrc, "%s}\n", Indent::get());
@@ -969,7 +999,7 @@ private:
         ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ";\n");
         fprintf(_fpSrc, "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), constit.c_str());
-        fprintf(_fpSrc, "%s%s %s = _it->first;\n", Indent::get(), getQualifiedTypeSpecName(node.keyDef().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.keyDef().name().text());
+        fprintf(_fpSrc, "%sconst %s& %s = _it->first;\n", Indent::get(), getQualifiedTypeSpecName(node.keyDef().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.keyDef().name().text());
         fprintf(_fpSrc, "%s%s %s = _it->second;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.valDef().name().text());
         visitNode(node.block());
         fprintf(_fpSrc, "%s}\n", Indent::get());

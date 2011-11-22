@@ -86,23 +86,40 @@ private:
 };
 
 template <typename V>
-struct ListCreator {
-    inline ListCreator& add(V v) {
-        _list.push_back(v);
-        return ref(this);
-    }
-    inline std::list<V> value() {return _list;}
-    std::list<V> _list;
+struct list {
+    typedef std::list<V*> List;
+    typedef typename List::iterator iterator;
+    inline iterator begin() {return _list.begin();}
+    inline iterator end() {return _list.end();}
+    List _list;
+
+    struct creator {
+        template <typename DerT>
+        inline creator& add(const DerT& v) {
+            _list._list.push_back(new DerT(v));
+            return ref(this);
+        }
+        inline list value() {return _list;}
+        list _list;
+    };
 };
 
 template <typename K, typename V>
-struct DictCreator {
-    inline DictCreator& add(K k, V v) {
-        _list[k] = v;
-        return ref(this);
-    }
-    inline std::map<K, V> value() {return _list;}
-    std::map<K, V> _list;
+struct dict {
+    typedef std::map<K, V> List;
+    typedef typename List::iterator iterator;
+    inline iterator begin() {return _list.begin();}
+    inline iterator end() {return _list.end();}
+    List _list;
+
+    struct creator {
+        inline creator& add(K k, V v) {
+            _list._list[k] = v;
+            return ref(this);
+        }
+        inline dict value() {return _list;}
+        dict _list;
+    };
 };
 
 namespace String {
