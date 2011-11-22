@@ -648,12 +648,12 @@ namespace Ast {
 
     class TypeofExpr : public Expr {
     public:
-        inline TypeofExpr(const QualifiedTypeSpec& qTypeSpec, const TypeSpec& typeSpec) : Expr(qTypeSpec), _typeSpec(typeSpec) {}
-        inline const TypeSpec& typeSpec() const {return _typeSpec;}
+        inline TypeofExpr(const QualifiedTypeSpec& qTypeSpec, const Expr& expr) : Expr(qTypeSpec), _expr(expr) {}
+        inline const Expr& expr() const {return _expr;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const TypeSpec& _typeSpec;
+        const Expr& _expr;
     };
 
     class CallExpr : public Expr {
