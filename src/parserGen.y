@@ -621,6 +621,7 @@ rListList(L) ::= rListsList(R) COMMA. {L = R;}
 rListsList(L)  ::= rListsList(R) COMMA(B) rListItem(I). {L = ref(pctx).aListList(B, ref(R), ref(I));}
 rListsList(L)  ::=                        rListItem(I). {L = ref(pctx).aListList(ref(I));}
 rListsList(L)  ::=               rQualifiedTypeSpec(Q). {L = ref(pctx).aListList(ref(Q));}
+//rListsList(L)  ::=                                    . {L = ref(pctx).aListList();}
 
 %type rListItem {Ast::ListItem*}
 rListItem(L)  ::= rExpr(E). {L = ref(pctx).aListItem(ref(E));}
@@ -633,11 +634,13 @@ rDictExpr(L) ::= LSQUARE(B) rDictList(R) RSQUARE. {L = ref(pctx).aDictExpr(B, re
 %type rDictList {Ast::DictList*}
 rDictList(L) ::= rDictsList(R)       . {L = R;}
 rDictList(L) ::= rDictsList(R) COMMA . {L = R;}
-rDictList(L) ::= COLON               . {L = ref(pctx).aDictList();}
 
 %type rDictsList {Ast::DictList*}
 rDictsList(L)  ::= rDictsList(R) COMMA(B) rDictItem(I). {L = ref(pctx).aDictList(B, ref(R), ref(I));}
 rDictsList(L)  ::=                        rDictItem(I). {L = ref(pctx).aDictList(ref(I));}
+
+// first item in list can be a type specifier
+rDictsList(L) ::= rQualifiedTypeSpec(K) COLON rQualifiedTypeSpec(V). {L = ref(pctx).aDictList(ref(K), ref(V));}
 
 %type rDictItem {Ast::DictItem*}
 rDictItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(E));}
@@ -701,10 +704,20 @@ rEnterAnonymousFunction(L) ::= rFunctionTypeSpec(R). {L = ref(pctx).aEnterAnonym
 //-------------------------------------------------
 // struct instance expressions
 %type rStructInstanceExpr {Ast::StructInstanceExpr*}
-rStructInstanceExpr(L) ::= rStructTypeSpec(R) LCURLY(B)   rStructInitPartList(P) RCURLY.   {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
-rStructInstanceExpr(L) ::= rStructTypeSpec(R) LCURLY(B)                          RCURLY.   {L = ref(pctx).aStructInstanceExpr(B, ref(R));}
+rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
+rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B)                        rLeaveStructInstanceExpr. {L = ref(pctx).aStructInstanceExpr(B, ref(R));}
+
+//-------------------------------------------------
+// special case - struct can be instantiated with {} or () for syntactic equivalence with C/C++.
 rStructInstanceExpr(L) ::= rStructTypeSpec(R) LBRACKET(B) rStructInitPartList(P) RBRACKET. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
 rStructInstanceExpr(L) ::= rStructTypeSpec(R) LBRACKET(B)                        RBRACKET. {L = ref(pctx).aStructInstanceExpr(B, ref(R));}
+
+//-------------------------------------------------
+%type rEnterStructInstanceExpr {const Ast::StructDefn*}
+rEnterStructInstanceExpr(L) ::= rStructTypeSpec(R). {L = ref(pctx).aEnterStructInstanceExpr(ref(R));}
+
+//-------------------------------------------------
+rLeaveStructInstanceExpr ::= RCURLY. {ref(pctx).aLeaveStructInstanceExpr();}
 
 //-------------------------------------------------
 %type rStructInitPartList {Ast::StructInitPartList*}
@@ -713,7 +726,12 @@ rStructInitPartList(L) ::=                        rStructInitPart(P). {L = ref(p
 
 //-------------------------------------------------
 %type rStructInitPart {Ast::StructInitPart*}
-rStructInitPart(L) ::= ID(R) COLON rExpr(E) SEMI. {L = ref(pctx).aStructInitPart(R, ref(E));}
+rStructInitPart(L) ::= rEnterStructInitPart(R) COLON rExpr(E) rLeaveStructInitPart. {L = ref(pctx).aStructInitPart(ref(R), ref(E));}
+
+//-------------------------------------------------
+%type rEnterStructInitPart {const Ast::VariableDefn*}
+rEnterStructInitPart(L) ::= ID(R). {L = ref(pctx).aEnterStructInitPart(R);}
+rLeaveStructInitPart    ::= SEMI. {ref(pctx).aLeaveStructInitPart();}
 
 //-------------------------------------------------
 // functor call expressions

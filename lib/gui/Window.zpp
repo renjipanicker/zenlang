@@ -18,6 +18,7 @@ protected struct Instance native;
 
 public struct Anchor {
     Instance window;
+    string target;
     margin = 0;
 };
 
@@ -33,7 +34,7 @@ public struct Definition : RootDefinition {
     Anchor right;
     Anchor top;
     Anchor bottom;
-    list<RootDefinition> child;
+    dict<string,RootDefinition> child;
 };
 
 public routine Position getWindowPosition(const Instance& window) native;
@@ -48,3 +49,10 @@ public function ()Size(const Instance& window, const int& w, const int& h) nativ
 
 public event(const Instance& window) => function ()OnResize() native;
 public event(const Instance& window) => function ()OnClose() native;
+
+public function (Window::Instance window)Create(const RootDefinition& def) {
+    if(false) {
+        return (Create(def));
+    }
+    return (Window::Instance());
+}

@@ -85,18 +85,44 @@ private:
     T* _ptr;
 };
 
-template <typename V>
-struct list {
-    typedef std::list<V*> List;
+struct value {
+protected:
+    inline value(){}
+public:
+    virtual value* clone() = 0;
+};
+
+template <typename DerT>
+struct valueT : public value {
+    inline valueT(const DerT& t) : v(t) {}
+    virtual value* clone() {return new valueT<DerT>(v);}
+    DerT v;
+};
+
+template <typename V, typename ListT>
+struct container {
+    typedef ListT List;
     typedef typename List::iterator iterator;
     inline iterator begin() {return _list.begin();}
     inline iterator end() {return _list.end();}
     List _list;
 
+    inline V& val(value* v) {
+        valueT<V>* vt = dynamic_cast<valueT<V>*>(v);
+        if(vt == 0) {
+            throw Exception("Typecast error in list value item");
+        }
+        return ref(vt).v;
+    }
+};
+
+template <typename V>
+struct list : public container<V, std::list<value*> > {
     struct creator {
         template <typename DerT>
         inline creator& add(const DerT& v) {
-            _list._list.push_back(new DerT(v));
+            const V& dv = v;unused(dv); // ensure that DerT is derived from V.
+            _list._list.push_back(new valueT<DerT>(v));
             return ref(this);
         }
         inline list value() {return _list;}
@@ -105,16 +131,12 @@ struct list {
 };
 
 template <typename K, typename V>
-struct dict {
-    typedef std::map<K, V> List;
-    typedef typename List::iterator iterator;
-    inline iterator begin() {return _list.begin();}
-    inline iterator end() {return _list.end();}
-    List _list;
-
+struct dict : public container<V, std::map<K, value*> >{
     struct creator {
-        inline creator& add(K k, V v) {
-            _list._list[k] = v;
+        template <typename DerT>
+        inline creator& add(K k, DerT v) {
+            const V& dv = v;unused(dv); // ensure that DerT is derived from V.
+            _list._list[k] = new valueT<DerT>(v);
             return ref(this);
         }
         inline dict value() {return _list;}
@@ -311,8 +333,8 @@ struct TestResult {
 template <typename T>
 struct test_ {
     struct _Out {
-        inline _Out(const int& passed) : _passed(passed) {}
-        int _passed;
+        inline _Out(const bool& passed) : _passed(passed) {}
+        bool _passed;
     };
 public:
     struct _In {

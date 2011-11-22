@@ -1,4 +1,8 @@
 include Window;
 namespace Button;
+
+public struct Definition : Window::Definition {
+};
+
 public function (Window::Instance window)Create(const Window::Instance& parent, const Window::Definition& def) native;
 public event(const Window::Instance& button) => function ()OnClick() native;

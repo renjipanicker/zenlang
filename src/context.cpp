@@ -3,6 +3,23 @@
 #include "context.hpp"
 #include "error.hpp"
 
+struct StructBaseIterator {
+    inline StructBaseIterator(const Ast::StructDefn* structDefn) : _structDefn(structDefn) {}
+    inline bool hasNext() const {return (_structDefn != 0);}
+    inline const Ast::StructDefn& get() const {return ref(_structDefn);}
+    inline void next() {
+        const Ast::ChildStructDefn* csd = dynamic_cast<const Ast::ChildStructDefn*>(_structDefn);
+        if(csd) {
+            _structDefn = ptr(ref(csd).base());
+        } else {
+            _structDefn = 0;
+        }
+    }
+
+private:
+    const Ast::StructDefn* _structDefn;
+};
+
 inline Ast::Root& Context::getRootNamespace() const {
     return (_level == 0)?_unit.rootNS():_unit.importNS();
 }
@@ -158,6 +175,24 @@ inline const Ast::QualifiedTypeSpec& Context::coerce(const Ast::Token& pos, cons
             if(lidx >= ridx)
                 return lhs;
             return rhs;
+        }
+    }
+
+    printf("%s checking '%s' and '%s'\n", err(_filename, pos).c_str(), lhs.typeSpec().name().text(), rhs.typeSpec().name().text());
+    const Ast::StructDefn* lsd = dynamic_cast<const Ast::StructDefn*>(ptr(lhs.typeSpec()));
+    const Ast::StructDefn* rsd = dynamic_cast<const Ast::StructDefn*>(ptr(rhs.typeSpec()));
+    if((lsd != 0) && (rsd != 0)) {
+        for(StructBaseIterator sbi(lsd); sbi.hasNext(); sbi.next()) {
+            if(ptr(sbi.get()) == rsd) {
+                printf("returning rhs\n");
+                return rhs;
+            }
+        }
+        for(StructBaseIterator sbi(rsd); sbi.hasNext(); sbi.next()) {
+            if(ptr(sbi.get()) == lsd) {
+                printf("returning lhs\n");
+                return lhs;
+            }
         }
     }
 
@@ -983,6 +1018,11 @@ Ast::ListList* Context::aListList(const Ast::QualifiedTypeSpec& qTypeSpec) {
     return ptr(list);
 }
 
+Ast::ListList* Context::aListList() {
+    Ast::ListList& list = _unit.addNode(new Ast::ListList());
+    return ptr(list);
+}
+
 Ast::ListItem* Context::aListItem(const Ast::Expr& valueExpr) {
     Ast::ListItem& item = _unit.addNode(new Ast::ListItem(valueExpr));
     return ptr(item);
@@ -1020,8 +1060,10 @@ Ast::DictList* Context::aDictList(const Ast::DictItem& item) {
     return ptr(list);
 }
 
-Ast::DictList* Context::aDictList() {
+Ast::DictList* Context::aDictList(const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec) {
     Ast::DictList& list = _unit.addNode(new Ast::DictList());
+    list.keyType(qKeyTypeSpec);
+    list.valueType(qValueTypeSpec);
     return ptr(list);
 }
 
@@ -1241,6 +1283,38 @@ Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, con
     return ptr(structInstanceExpr);
 }
 
+const Ast::StructDefn* Context::aEnterStructInstanceExpr(const Ast::StructDefn& structDefn) {
+    _structInitStack.push_back(ptr(structDefn));
+    return ptr(structDefn);
+}
+
+void Context::aLeaveStructInstanceExpr() {
+    _structInitStack.pop_back();
+}
+
+const Ast::VariableDefn* Context::aEnterStructInitPart(const Ast::Token& name) {
+    if(_structInitStack.size() == 0) {
+        throw Exception("%s: Internal error initializing struct-member\n", err(_filename, name).c_str());
+    }
+
+    const Ast::StructDefn* structDefn = _structInitStack.back();
+    assert(structDefn);
+
+    for(StructBaseIterator sbi(structDefn); sbi.hasNext(); sbi.next()) {
+        for(Ast::Scope::List::const_iterator it = sbi.get().list().begin(); it != sbi.get().list().end(); ++it) {
+            const Ast::VariableDefn& vdef = ref(*it);
+            if(vdef.name().string() == name.string()) {
+                return ptr(vdef);
+            }
+        }
+    }
+
+    throw Exception("%s: struct-member %s not found in %s\n", err(_filename, name).c_str(), name.text(), ref(structDefn).name().text());
+}
+
+void Context::aLeaveStructInitPart() {
+}
+
 Ast::StructInitPartList* Context::aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part) {
     list.addPart(part);
     return ptr(list);
@@ -1257,8 +1331,8 @@ Ast::StructInitPartList* Context::aStructInitPartList() {
     return ptr(list);
 }
 
-Ast::StructInitPart* Context::aStructInitPart(const Ast::Token& name, const Ast::Expr& expr) {
-    Ast::StructInitPart& part = _unit.addNode(new Ast::StructInitPart(name, expr));
+Ast::StructInitPart* Context::aStructInitPart(const Ast::VariableDefn& vdef, const Ast::Expr& expr) {
+    Ast::StructInitPart& part = _unit.addNode(new Ast::StructInitPart(vdef, expr));
     return ptr(part);
 }
 

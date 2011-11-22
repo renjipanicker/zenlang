@@ -79,7 +79,7 @@ static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, s
         if(typeSpec.name().string() == "list") {
             name += "list";
         } else if(typeSpec.name().string() == "dict") {
-            name += "std::map";
+            name += "dict";
         } else if(typeSpec.name().string() == "future") {
             name += "FutureT";
         } else if(typeSpec.name().string() == "functor") {
@@ -198,7 +198,7 @@ private:
     }
 
     virtual void visit(const Ast::DictExpr& node) {
-        fprintf(_fp, "DictCreator<%s, %s>()", getQualifiedTypeSpecName(node.list().keyType(), GetNameMode::Normal).c_str(), getQualifiedTypeSpecName(node.list().valueType(), GetNameMode::Normal).c_str());
+        fprintf(_fp, "dict<%s, %s>::creator()", getQualifiedTypeSpecName(node.list().keyType(), GetNameMode::Normal).c_str(), getQualifiedTypeSpecName(node.list().valueType(), GetNameMode::Normal).c_str());
         for(Ast::DictList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
             const Ast::DictItem& item = ref(*it);
             fprintf(_fp, ".add(");
@@ -313,7 +313,7 @@ private:
         fprintf(_fp, "%s()", getTypeSpecName(node.structDefn(), GetNameMode::Normal).c_str());
         for(Ast::StructInitPartList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
             const Ast::StructInitPart& part = ref(*it);
-            fprintf(_fp, "._%s<%s>(", part.name().text(), getTypeSpecName(node.structDefn(), GetNameMode::Normal).c_str());
+            fprintf(_fp, "._%s<%s>(", part.vdef().name().text(), getTypeSpecName(node.structDefn(), GetNameMode::Normal).c_str());
             visitNode(part.expr());
             fprintf(_fp, ")");
         }
@@ -976,15 +976,20 @@ private:
     }
 
     virtual void visit(const Ast::ForeachListStatement& node) {
+        const std::string etype = getQualifiedTypeSpecName(node.expr().qTypeSpec(), GetNameMode::Normal);
+        const std::string vtype = getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GetNameMode::Normal);
+
         std::string constit = "";
-        if(node.expr().qTypeSpec().isConst())
+        if(node.expr().qTypeSpec().isConst()) {
             constit = "const_";
+        }
+
         fprintf(_fpSrc, "%s{\n", Indent::get());
-        fprintf(_fpSrc, "%s%s _list = ", Indent::get(), getQualifiedTypeSpecName(node.expr().qTypeSpec(), GetNameMode::Normal).c_str());
+        fprintf(_fpSrc, "%s%s& _list = ", Indent::get(), etype.c_str());
         ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ";\n");
         fprintf(_fpSrc, "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), constit.c_str());
-        fprintf(_fpSrc, "%sconst %s& %s = ref(*_it);\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.valDef().name().text());
+        fprintf(_fpSrc, "%s%s& %s = _list.val(*_it);\n", Indent::get(), vtype.c_str(), node.valDef().name().text());
         visitNode(node.block());
         fprintf(_fpSrc, "%s}\n", Indent::get());
         fprintf(_fpSrc, "%s}\n", Indent::get());
@@ -995,12 +1000,12 @@ private:
         if(node.expr().qTypeSpec().isConst())
             constit = "const_";
         fprintf(_fpSrc, "%s{\n", Indent::get());
-        fprintf(_fpSrc, "%s%s _list = ", Indent::get(), getQualifiedTypeSpecName(node.expr().qTypeSpec(), GetNameMode::Normal).c_str());
+        fprintf(_fpSrc, "%s%s& _list = ", Indent::get(), getQualifiedTypeSpecName(node.expr().qTypeSpec(), GetNameMode::Normal).c_str());
         ExprGenerator(_fpSrc, false).visitNode(node.expr());
         fprintf(_fpSrc, ";\n");
         fprintf(_fpSrc, "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GetNameMode::Normal).c_str(), constit.c_str());
         fprintf(_fpSrc, "%sconst %s& %s = _it->first;\n", Indent::get(), getQualifiedTypeSpecName(node.keyDef().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.keyDef().name().text());
-        fprintf(_fpSrc, "%s%s %s = _it->second;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.valDef().name().text());
+        fprintf(_fpSrc, "%s%s& %s = _list.val(_it->second);\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GetNameMode::Normal).c_str(), node.valDef().name().text());
         visitNode(node.block());
         fprintf(_fpSrc, "%s}\n", Indent::get());
         fprintf(_fpSrc, "%s}\n", Indent::get());

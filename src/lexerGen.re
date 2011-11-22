@@ -293,7 +293,7 @@ re2c:condenumprefix          = EState;
 <Normal>   "false"     := feedToken(token(s, ZENTOK_FALSE_CONST)); continue;
 <Normal>   "true"      := feedToken(token(s, ZENTOK_TRUE_CONST)); continue;
 
-<Normal>   "@" [a-zA-Z][a-zA-Z0-9_]* := feedToken(token(s, ZENTOK_KEY)); continue;
+<Normal>   "@" [a-zA-Z][a-zA-Z0-9_]* := feedToken(token(s, ZENTOK_KEY_CONST)); continue;
 
 <Normal>       [a-zA-Z][a-zA-Z0-9_]* := sendId(s); continue;
 

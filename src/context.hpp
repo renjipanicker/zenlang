@@ -59,10 +59,12 @@ private:
 
 private:
     typedef std::list<Ast::Scope*> ScopeStack;
+    typedef std::list<const Ast::StructDefn*> StructInitStack;
 
 private:
     ScopeStack                 _scopeStack;
     TypeSpecStack              _typeSpecStack;
+    StructInitStack            _structInitStack;
     std::list<Ast::Namespace*> _namespaceStack;
     const Ast::TypeSpec*       _currentTypeRef;
 
@@ -184,13 +186,14 @@ public:
     Ast::ListList*            aListList(const Ast::Token& pos, Ast::ListList& list, const Ast::ListItem& item);
     Ast::ListList*            aListList(const Ast::ListItem& item);
     Ast::ListList*            aListList(const Ast::QualifiedTypeSpec& qTypeSpec);
+    Ast::ListList*            aListList();
     Ast::ListItem*            aListItem(const Ast::Expr& valueExpr);
 
     Ast::DictExpr*            aDictExpr(const Ast::Token& pos, const Ast::DictList& list);
     Ast::DictExpr*            aDictExpr(const Ast::Token& pos);
     Ast::DictList*            aDictList(const Ast::Token& pos, Ast::DictList& list, const Ast::DictItem& item);
     Ast::DictList*            aDictList(const Ast::DictItem& item);
-    Ast::DictList*            aDictList();
+    Ast::DictList*            aDictList(const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec);
     Ast::DictItem*            aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& valueExpr);
 
     Ast::FormatExpr*          aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr);
@@ -209,10 +212,14 @@ public:
     Ast::TypeSpecMemberExpr*  aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
     Ast::StructInstanceExpr*  aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list);
     Ast::StructInstanceExpr*  aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn);
+    const Ast::StructDefn*    aEnterStructInstanceExpr(const Ast::StructDefn& structDefn);
+    void                      aLeaveStructInstanceExpr();
+    const Ast::VariableDefn*  aEnterStructInitPart(const Ast::Token& name);
+    void                      aLeaveStructInitPart();
     Ast::StructInitPartList*  aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part);
     Ast::StructInitPartList*  aStructInitPartList(const Ast::StructInitPart& part);
     Ast::StructInitPartList*  aStructInitPartList();
-    Ast::StructInitPart*      aStructInitPart(const Ast::Token& name, const Ast::Expr& expr);
+    Ast::StructInitPart*      aStructInitPart(const Ast::VariableDefn& vdef, const Ast::Expr& expr);
     Ast::FunctionInstanceExpr* aFunctionInstanceExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
     Ast::FunctionInstanceExpr* aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement);
     Ast::ChildFunctionDefn*   aEnterAnonymousFunction(const Ast::Function& function);

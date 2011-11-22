@@ -24,7 +24,7 @@ public test testBasicExpr {
     assert(i == 0, s == "xx", e == 9, n == 2);
     unused(t, l, d, r, f);
 
-    return (1);
+    return (true);
 }
 
 public enum MyEnum {
@@ -49,7 +49,7 @@ public test testFunction001 {
     auto e = MyEnum.C1;
     auto c = testAdvancedExpr(321, myStruct, e);
     unused(c);
-    return (1);
+    return (true);
 }
 
 public test testInnerRootFunction {
@@ -60,7 +60,7 @@ public test testInnerRootFunction {
     auto o = innerFunction[];
     auto r = o(2);
     unused(f, o, r);
-    return (1);
+    return (true);
 }
 
 public test testInnerChildFunction {
@@ -71,7 +71,7 @@ public test testInnerChildFunction {
     auto o = innerFunction[];
     auto r = o(2);
     unused(f, o, r);
-    return (1);
+    return (true);
 }
 
 public test testInnerChildFunctionClosure {
@@ -83,7 +83,7 @@ public test testInnerChildFunctionClosure {
     auto o = innerFunction[];
     auto r = o(2);
     unused(f, o, r);
-    return (1);
+    return (true);
 }
 
 public test testAnonymousFunction {
@@ -92,7 +92,7 @@ public test testAnonymousFunction {
     };
     auto r = a(2);
     unused(r);
-    return (1);
+    return (true);
 }
 
 public test testAnonymousFunctionWithClosure {
@@ -102,7 +102,7 @@ public test testAnonymousFunctionWithClosure {
     };
     auto r = a(2);
     unused(r);
-    return (1);
+    return (true);
 }
 
 public test testIfStatement {
@@ -112,7 +112,7 @@ public test testIfStatement {
         j = 3;
     }
     unused(j);
-    return (1);
+    return (true);
 }
 
 public test testIfElseStatement {
@@ -124,7 +124,7 @@ public test testIfElseStatement {
         j = 5;
     }
     unused(j);
-    return (1);
+    return (true);
 }
 
 public test testWhileStatement {
@@ -132,7 +132,7 @@ public test testWhileStatement {
     while(i < 2) {
         i++;
     }
-    return (1);
+    return (true);
 }
 
 public test testDoWhileStatement {
@@ -140,7 +140,7 @@ public test testDoWhileStatement {
     do {
         i++;
     } while(i < 2);
-    return (1);
+    return (true);
 }
 
 public test testForExprStatement {
@@ -149,7 +149,7 @@ public test testForExprStatement {
     for(i = 0; i < 10; ++i) {
         j += i;
     }
-    return (1);
+    return (true);
 }
 
 public test testForInitStatement {
@@ -157,16 +157,17 @@ public test testForInitStatement {
     for(auto i = 0; i < 10; ++i) {
         j += i;
     }
-    return (1);
+    return (true);
 }
 
 public test testForeachListStatement {
     auto j = 0;
     auto l = [1,2,3];
+    //const list<int>& l2 = l; /// \todo should be valid
     foreach(i in l) {
         j += i;
     }
-    return (1);
+    return (true);
 }
 
 public test testForeachDictStatement {
@@ -177,7 +178,7 @@ public test testForeachDictStatement {
         j += v;
         continue;
     }
-    return (1);
+    return (true);
 }
 
 public test testSwitchValueStatement {
@@ -193,7 +194,7 @@ public test testSwitchValueStatement {
             break;
         }
     }
-    return (1);
+    return (true);
 }
 
 public test testSwitchExprStatement {
@@ -206,7 +207,7 @@ public test testSwitchExprStatement {
         default: {
         }
     }
-    return (1);
+    return (true);
 }
 
 public function (int ri, string rs)runFunctionTest(const int& x) {
@@ -217,7 +218,7 @@ public function (int ri, string rs)runFunctionTest(const int& x) {
 public test testRunExpr {
     auto f = run runFunctionTest(456);
     unused(f);
-    return (1);
+    return (true);
 }
 
 public main MyMain {

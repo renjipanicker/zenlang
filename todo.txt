@@ -3,6 +3,8 @@ verbose output from compiler
 interpreter
 positional-paramlist
 full gui definition
+single-outparam for functions.
+void param-types, do not generate _Out and/or _In
 
 anchor
 systray

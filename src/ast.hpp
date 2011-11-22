@@ -756,11 +756,11 @@ namespace Ast {
 
     class StructInitPart : public Node {
     public:
-        inline StructInitPart(const Token& name, const Expr& expr) : _name(name), _expr(expr) {}
-        inline const Token& name() const {return _name;}
+        inline StructInitPart(const VariableDefn& vdef, const Expr& expr) : _vdef(vdef), _expr(expr) {}
+        inline const VariableDefn& vdef() const {return _vdef;}
         inline const Expr& expr() const {return _expr;}
     private:
-        const Token _name;
+        const VariableDefn& _vdef;
         const Expr& _expr;
     };
 
