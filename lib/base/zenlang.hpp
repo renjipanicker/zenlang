@@ -89,14 +89,34 @@ struct value {
 protected:
     inline value(){}
 public:
-    virtual value* clone() = 0;
+    virtual value* clone() const = 0;
 };
 
 template <typename DerT>
 struct valueT : public value {
-    inline valueT(const DerT& t) : v(t) {}
-    virtual value* clone() {return new valueT<DerT>(v);}
-    DerT v;
+    inline valueT(const DerT& v) : _v(v) {}
+    virtual value* clone() const {return new valueT<DerT>(_v);}
+    inline DerT& get() {return _v;}
+private:
+    DerT _v;
+};
+
+template <typename V>
+struct pointer {
+    inline pointer(const std::string& type, V* val) : _type(type), _val(val) {}
+    inline pointer(const pointer& src) : _type(src._type), _val(0) {_val = ref(src._val).clone();}
+
+    template <typename T>
+    inline T& getT() {
+        valueT<T>* vt = dynamic_cast<valueT<T>*>(_val);
+        if(vt == 0) {
+            throw Exception("Typecast error in pointer");
+        }
+        return ref(vt).get();
+    }
+private:
+    const std::string _type;
+    V* _val;
 };
 
 template <typename V, typename ListT>
@@ -105,41 +125,53 @@ struct container {
     typedef typename List::iterator iterator;
     inline iterator begin() {return _list.begin();}
     inline iterator end() {return _list.end();}
-    List _list;
-
     inline V& val(value* v) {
         valueT<V>* vt = dynamic_cast<valueT<V>*>(v);
         if(vt == 0) {
             throw Exception("Typecast error in list value item");
         }
-        return ref(vt).v;
+        return ref(vt).get();
     }
+protected:
+    List _list;
 };
 
 template <typename V>
-struct list : public container<V, std::list<value*> > {
+struct list : public container<V, std::list<V> > {
+    typedef container<V, std::list<V> > BaseT;
+
+    inline void add(const V& v) {BaseT::_list.push_back(v);}
     struct creator {
         template <typename DerT>
-        inline creator& add(const DerT& v) {
-            const V& dv = v;unused(dv); // ensure that DerT is derived from V.
-            _list._list.push_back(new valueT<DerT>(v));
+        inline creator& add(const V& v) {
+            _list.add(v);
             return ref(this);
         }
-        inline list value() {return _list;}
+        inline list get() {return _list;}
         list _list;
     };
 };
 
 template <typename K, typename V>
-struct dict : public container<V, std::map<K, value*> >{
+struct dict : public container<V, std::map<K, V> > {
+    typedef container<V, std::map<K, V> > BaseT;
+
+    inline void add(const K& k, V v) {BaseT::_list.insert(std::pair<K, V>(k, v));}
+    inline void clone(const dict& src) {
+        for(typename BaseT::List::const_iterator it = src._list.begin(); it != src._list.end(); ++it) {
+            const K& k = it->first;
+            const V& v = it->second;
+            add(k, v);
+        }
+    }
+
     struct creator {
         template <typename DerT>
-        inline creator& add(K k, DerT v) {
-            const V& dv = v;unused(dv); // ensure that DerT is derived from V.
-            _list._list[k] = new valueT<DerT>(v);
+        inline creator& add(K k, V v) {
+            _list.add(k, v);
             return ref(this);
         }
-        inline dict value() {return _list;}
+        inline dict get() {return _list;}
         dict _list;
     };
 };
@@ -164,7 +196,7 @@ struct Formatter {
         String::replace(_text, search, replace);
         return ref(this);
     }
-    inline std::string value() {return _text;}
+    inline std::string get() {return _text;}
 private:
     std::string _text;
 };

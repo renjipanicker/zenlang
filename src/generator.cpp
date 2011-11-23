@@ -64,7 +64,7 @@ static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, s
                 name += getQualifiedTypeSpecName(qTypeSpec, mode);
                 sep = ", ";
             }
-            name += ">";
+            name += "> ";
             return true;
         }
         return getName(typeSpec, sep, name, mode);
@@ -76,7 +76,9 @@ static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, s
     }
 
     if(templateDefn) {
-        if(typeSpec.name().string() == "list") {
+        if(typeSpec.name().string() == "pointer") {
+            name += "pointer";
+        } else if(typeSpec.name().string() == "list") {
             name += "list";
         } else if(typeSpec.name().string() == "dict") {
             name += "dict";
@@ -95,7 +97,7 @@ static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, s
             name += getQualifiedTypeSpecName(qTypeSpec, mode);
             sep = ", ";
         }
-        name += ">";
+        name += "> ";
         return true;
     }
 
@@ -193,7 +195,7 @@ private:
                 visitNode(item.valueExpr());
                 fprintf(_fp, ")");
             }
-            fprintf(_fp, ".value()");
+            fprintf(_fp, ".get()");
         }
     }
 
@@ -207,7 +209,7 @@ private:
             visitNode(item.valueExpr());
             fprintf(_fp, ")");
         }
-        fprintf(_fp, ".value()");
+        fprintf(_fp, ".get()");
     }
 
     virtual void visit(const Ast::FormatExpr& node) {
@@ -222,7 +224,7 @@ private:
             visitNode(item.valueExpr());
             fprintf(_fp, ")");
         }
-        fprintf(_fp, ".value()");
+        fprintf(_fp, ".get()");
     }
 
     virtual void visit(const Ast::RoutineCallExpr& node) {

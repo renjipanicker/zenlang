@@ -34,7 +34,7 @@ public struct Definition : RootDefinition {
     Anchor right;
     Anchor top;
     Anchor bottom;
-    dict<string,RootDefinition> child;
+    dict<string, pointer<RootDefinition> > child;
 };
 
 public routine Position getWindowPosition(const Instance& window) native;

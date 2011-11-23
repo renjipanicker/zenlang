@@ -33,14 +33,12 @@ coerce time => datetime;
 default char = '';
 default string = "";
 
-typedef iterator native;
-typedef type_of native;
+//typedef any native; \todo
 
 template <F> future native;
 template <F> functor native;
 
-//typedef any native;
-
+template <V>   pointer native;
 template <V>   list native;
 template <K,V> dict native;
 template <K,V> tree native;
@@ -49,6 +47,5 @@ public routine void assert() native;
 public routine void unused() native;
 public routine void check() native;
 
-public function ()addHandler();
 public function (int code)main(const list<string>& argl);
 public function (int passed)test();
