@@ -672,6 +672,10 @@ rOrderedExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedE
 rExpr(L) ::= TYPEOF(B) LBRACKET rQualifiedTypeSpec(T) COMMA rExpr(E) RBRACKET. {L = ref(pctx).aTypeofExpr(B, ref(T), ref(E));}
 
 //-------------------------------------------------
+// template definition instance expression
+rExpr(L) ::= rTemplateDefnTypeSpec(R) LBRACKET(B) rExprList(M) RBRACKET. {L = ref(pctx).aTemplateDefnInstanceExpr(B, ref(R), ref(M));}
+
+//-------------------------------------------------
 // variable ref expressions
 %type rVariableRefExpr {Ast::Expr*}
 rVariableRefExpr(L) ::= ID(I). {L = ref(pctx).aVariableRefExpr(I);}
@@ -689,7 +693,7 @@ rTypeSpecMemberExpr(L) ::= rTypeSpec(R) DOT ID(M). {L = ref(pctx).aTypeSpecMembe
 //-------------------------------------------------
 // function instance expressions
 %type rFunctionInstanceExpr {Ast::TypeSpecInstanceExpr*}
-rFunctionInstanceExpr(L) ::= rTypeSpec(R) LSQUARE rExprList(M) RSQUARE. {L = ref(pctx).aFunctionInstanceExpr(ref(R), ref(M));}
+rFunctionInstanceExpr(L) ::= rFunctionTypeSpec(R) LSQUARE rExprList(M) RSQUARE. {L = ref(pctx).aFunctionInstanceExpr(ref(R), ref(M));}
 
 //-------------------------------------------------
 // function instance expressions

@@ -207,6 +207,7 @@ public:
 
     Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
     Ast::TypeofExpr*          aTypeofExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec, const Ast::Expr& expr);
+    Ast::TemplateDefnInstanceExpr* aTemplateDefnInstanceExpr(const Ast::Token& pos, const Ast::TemplateDefn& templateDefn, const Ast::ExprList& exprList);
     Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);
     Ast::VariableMemberExpr*  aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name);
     Ast::TypeSpecMemberExpr*  aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);

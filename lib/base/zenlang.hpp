@@ -85,30 +85,36 @@ private:
     T* _ptr;
 };
 
-struct value {
-protected:
-    inline value(){}
-public:
-    virtual value* clone() const = 0;
-};
-
-template <typename DerT>
-struct valueT : public value {
-    inline valueT(const DerT& v) : _v(v) {}
-    virtual value* clone() const {return new valueT<DerT>(_v);}
-    inline DerT& get() {return _v;}
-private:
-    DerT _v;
-};
-
 template <typename V>
 struct pointer {
-    inline pointer(const std::string& type, V* val) : _type(type), _val(val) {}
-    inline pointer(const pointer& src) : _type(src._type), _val(0) {_val = ref(src._val).clone();}
+    struct value {
+    protected:
+        inline value(){}
+    public:
+        virtual V& get() = 0;
+        virtual value* clone() const = 0;
+    };
 
-    template <typename T>
-    inline T& getT() {
-        valueT<T>* vt = dynamic_cast<valueT<T>*>(_val);
+    template <typename DerT>
+    struct valueT : public value {
+        inline valueT(const DerT& v) : _v(v) {}
+        virtual V& get() {return _v;}
+        virtual value* clone() const {return new valueT<DerT>(_v);}
+    private:
+        DerT _v;
+    };
+
+    template <typename DerT>
+    inline pointer(const std::string& type, const DerT& val) : _type(type), _val(0) {
+        const V& v = val; unused(v); // ensure val can be typecast to V
+        _val = new valueT<DerT>(val);
+    }
+    inline pointer(const pointer& src) : _type(src._type), _val(0) {
+        _val = ref(src._val).clone();
+    }
+
+    inline V& get() {
+        valueT<V>* vt = dynamic_cast<valueT<V>*>(_val);
         if(vt == 0) {
             throw Exception("Typecast error in pointer");
         }
@@ -116,7 +122,7 @@ struct pointer {
     }
 private:
     const std::string _type;
-    V* _val;
+    value* _val;
 };
 
 template <typename V, typename ListT>
@@ -125,13 +131,6 @@ struct container {
     typedef typename List::iterator iterator;
     inline iterator begin() {return _list.begin();}
     inline iterator end() {return _list.end();}
-    inline V& val(value* v) {
-        valueT<V>* vt = dynamic_cast<valueT<V>*>(v);
-        if(vt == 0) {
-            throw Exception("Typecast error in list value item");
-        }
-        return ref(vt).get();
-    }
 protected:
     List _list;
 };
@@ -142,7 +141,6 @@ struct list : public container<V, std::list<V> > {
 
     inline void add(const V& v) {BaseT::_list.push_back(v);}
     struct creator {
-        template <typename DerT>
         inline creator& add(const V& v) {
             _list.add(v);
             return ref(this);
@@ -166,7 +164,6 @@ struct dict : public container<V, std::map<K, V> > {
     }
 
     struct creator {
-        template <typename DerT>
         inline creator& add(K k, V v) {
             _list.add(k, v);
             return ref(this);

@@ -487,11 +487,12 @@ namespace Ast {
 
     class ExprList : public Node {
     public:
-        typedef std::list<const Expr*> List;
+        typedef std::vector<const Expr*> List;
     public:
         inline ExprList() {}
         inline ExprList& addExpr(const Expr& expr) {_list.push_back(ptr(expr)); return ref(this);}
         inline const List& list() const {return _list;}
+        inline const Expr& at(const size_t& idx) const {assert(idx < _list.size()); return ref(_list.at(idx));}
     private:
         List _list;
     };
@@ -656,6 +657,24 @@ namespace Ast {
     private:
         const Ast::QualifiedTypeSpec& _typeSpec;
         const Expr& _expr;
+    };
+
+    class TemplateDefnInstanceExpr : public Expr {
+    protected:
+        inline TemplateDefnInstanceExpr(const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList& exprList) : Expr(qTypeSpec), _templateDefn(templateDefn), _exprList(exprList) {}
+    public:
+        inline const TemplateDefn& templateDefn() const {return _templateDefn;}
+        inline const ExprList& exprList() const {return _exprList;}
+    private:
+        const Ast::TemplateDefn& _templateDefn;
+        const ExprList& _exprList;
+    };
+
+    class PointerInstanceExpr : public TemplateDefnInstanceExpr {
+    public:
+        inline PointerInstanceExpr(const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList& exprList) : TemplateDefnInstanceExpr(qTypeSpec, templateDefn, exprList) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
     };
 
     class CallExpr : public Expr {
@@ -833,6 +852,7 @@ namespace Ast {
         virtual void visit(const FunctorCallExpr& node) = 0;
         virtual void visit(const OrderedExpr& node) = 0;
         virtual void visit(const TypeofExpr& node) = 0;
+        virtual void visit(const PointerInstanceExpr& node) = 0;
         virtual void visit(const VariableRefExpr& node) = 0;
         virtual void visit(const VariableMemberExpr& node) = 0;
         virtual void visit(const StructMemberExpr& node) = 0;
@@ -855,6 +875,7 @@ namespace Ast {
     inline void FunctorCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TypeofExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void PointerInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void VariableMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void StructMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}

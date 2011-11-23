@@ -1138,6 +1138,15 @@ Ast::TypeofExpr* Context::aTypeofExpr(const Ast::Token& pos, const Ast::Qualifie
     return ptr(typeofExpr);
 }
 
+Ast::TemplateDefnInstanceExpr* Context::aTemplateDefnInstanceExpr(const Ast::Token& pos, const Ast::TemplateDefn& templateDefn, const Ast::ExprList& exprList) {
+    if(templateDefn.name().string() == "pointer") {
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
+        Ast::PointerInstanceExpr& expr = _unit.addNode(new Ast::PointerInstanceExpr(qTypeSpec, templateDefn, exprList));
+        return ptr(expr);
+    }
+    throw Exception("%s Invalid template instantiation %s\n", err(_filename, pos).c_str(), templateDefn.name().text());
+}
+
 Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
     Ast::RefType::T refType = Ast::RefType::Local;
     typedef std::list<Ast::Scope*> ScopeList;
@@ -1222,7 +1231,7 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
 Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name) {
     const Ast::TypeSpec& typeSpec = expr.qTypeSpec().typeSpec();
 
-    const Ast::RootStructDefn* structDefn = dynamic_cast<const Ast::RootStructDefn*>(ptr(typeSpec));
+    const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
     if(structDefn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(structDefn).scope(), name);
         if(vref == 0) {
@@ -1257,7 +1266,7 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
         return ptr(typeSpecMemberExpr);
     }
 
-    const Ast::RootStructDefn* structDefn = dynamic_cast<const Ast::RootStructDefn*>(ptr(typeSpec));
+    const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
     if(structDefn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(structDefn).scope(), name);
         if(vref == 0) {

@@ -32,7 +32,11 @@ public enum MyEnum {
     C2;
 };
 
-public struct MyStruct {
+public struct MyBase {
+    j = 0;
+};
+
+public struct MyStruct : MyBase {
     i = 0;
 };
 
@@ -41,6 +45,7 @@ public function (int r)testAdvancedExpr(const int& x, const MyStruct& myStruct, 
     auto m = myStruct.i;
     auto n = myEnum;
     auto a = typeof(int, myStruct);
+    auto p = pointer<MyBase>(myStruct);
     unused(v, m, n, a);
     return (67890);
 }
