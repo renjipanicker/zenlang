@@ -40,7 +40,8 @@ public function (int r)testAdvancedExpr(const int& x, const MyStruct& myStruct, 
     auto v = x;
     auto m = myStruct.i;
     auto n = myEnum;
-    unused(v, m, n);
+    auto a = typeof(int, myStruct);
+    unused(v, m, n, a);
     return (67890);
 }
 

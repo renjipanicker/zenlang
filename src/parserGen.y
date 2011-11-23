@@ -669,7 +669,7 @@ rOrderedExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedE
 
 //-------------------------------------------------
 // type expression
-rExpr(L) ::= TYPEOF(B) LBRACKET rExpr(T) RBRACKET. {L = ref(pctx).aTypeofExpr(B, ref(T));}
+rExpr(L) ::= TYPEOF(B) LBRACKET rQualifiedTypeSpec(T) COMMA rExpr(E) RBRACKET. {L = ref(pctx).aTypeofExpr(B, ref(T), ref(E));}
 
 //-------------------------------------------------
 // variable ref expressions

@@ -1132,9 +1132,9 @@ Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
     return ptr(expr);
 }
 
-Ast::TypeofExpr* Context::aTypeofExpr(const Ast::Token& pos, const Ast::Expr& expr) {
-    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "type_of");
-    Ast::TypeofExpr& typeofExpr = _unit.addNode(new Ast::TypeofExpr(qTypeSpec, expr));
+Ast::TypeofExpr* Context::aTypeofExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec, const Ast::Expr& expr) {
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "string");
+    Ast::TypeofExpr& typeofExpr = _unit.addNode(new Ast::TypeofExpr(qTypeSpec, typeSpec, expr));
     return ptr(typeofExpr);
 }
 

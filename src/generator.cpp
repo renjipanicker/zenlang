@@ -271,7 +271,7 @@ private:
     }
 
     virtual void visit(const Ast::TypeofExpr& node) {
-        fprintf(_fp, "/* */");
+        fprintf(_fp, "\"%s\"", getQualifiedTypeSpecName(node.expr().qTypeSpec(), GetNameMode::Import).c_str());
     }
 
     virtual void visit(const Ast::VariableRefExpr& node) {

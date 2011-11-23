@@ -169,16 +169,16 @@ private:
     std::string _text;
 };
 
-struct Future {
-    virtual void run() = 0;
-};
-
 template <typename FunctionT>
 struct FunctorT {
     inline FunctorT(const FunctionT& function) : _function() {_function = new FunctionT(function);}
     inline FunctionT* function() const {return _function;}
 private:
     FunctionT* _function;
+};
+
+struct Future {
+    virtual void run() = 0;
 };
 
 template <typename FunctionT>

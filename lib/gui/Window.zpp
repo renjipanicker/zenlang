@@ -54,6 +54,5 @@ public function (Window::Instance window)Create(const RootDefinition& def) {
     if(false) {
         return (Create(def));
     }
-    auto a = typeof(def);
     return (Window::Instance());
 }
