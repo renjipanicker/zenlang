@@ -749,8 +749,9 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
         if(!isTest) {
             // param-instance
-            fprintf(fpDecl(node), "%s    Pointer<_Out> _out;\n", Indent::get());
+            fprintf(fpDecl(node), "%s    pointer<_Out> _out;\n", Indent::get());
             fprintf(fpDecl(node), "%s    inline const _Out& out(_Out* val) {_out = val; return *_out;}\n", Indent::get());
+            fprintf(fpDecl(node), "%s    inline %s() : _out(\"%s::_Out\") {}\n", Indent::get(), node.name().text(), getTypeSpecName(node, GenMode::Normal).c_str());
         }
     }
 

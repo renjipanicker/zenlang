@@ -64,6 +64,7 @@ private:
     std::string _msg;
 };
 
+/*
 template <typename T>
 struct Pointer {
     inline void reset(T* ptr) {delete _ptr; _ptr = 0; _ptr = ptr;}
@@ -84,6 +85,7 @@ struct Pointer {
 private:
     T* _ptr;
 };
+*/
 
 template <typename V>
 struct pointer {
@@ -104,22 +106,42 @@ struct pointer {
         DerT _v;
     };
 
-    template <typename DerT>
-    inline pointer(const std::string& type, const DerT& val) : _type(type), _val(0) {
-        const V& v = val; unused(v); // ensure val can be typecast to V
-        _val = new valueT<DerT>(val);
-    }
-    inline pointer(const pointer& src) : _type(src._type), _val(0) {
-        _val = ref(src._val).clone();
+    inline void set(value* val) {
+        delete _val;
+        _val = val;
     }
 
-    inline V& get() {
+    inline V& get() const {
         valueT<V>* vt = dynamic_cast<valueT<V>*>(_val);
         if(vt == 0) {
             throw Exception("Typecast error in pointer");
         }
         return ref(vt).get();
     }
+
+    inline pointer(const std::string& type) : _type(type), _val(0) {}
+
+    template <typename DerT>
+    inline pointer(const std::string& type, const DerT& val) : _type(type), _val(0) {
+        set(new valueT<DerT>(val));
+    }
+
+    inline pointer(const pointer& src) : _type(src._type), _val(0) {
+        set(ref(src._val).clone());
+    }
+
+    template <typename DerT>
+    inline pointer(const pointer<DerT>& src) : _type(src.type()), _val(0) {
+        set(new valueT<DerT>(src.get()));
+    }
+
+    template <typename DerT>
+    inline pointer& operator=(DerT* val) {set(new valueT<DerT>(val)); return ref(this);}
+
+    inline V& operator*() {return get();}
+
+    inline const std::string& type() const {return _type;}
+    inline const value& val() const {return ref(_val);}
 private:
     const std::string _type;
     value* _val;
@@ -164,7 +186,14 @@ struct dict : public container<V, std::map<K, V> > {
     }
 
     struct creator {
-        inline creator& add(K k, V v) {
+        inline creator& add(const K& k, const V& v) {
+            _list.add(k, v);
+            return ref(this);
+        }
+
+        template <typename DerT>
+        inline creator& add(const K& k, const DerT& dv) {
+            V v(dv);
             _list.add(k, v);
             return ref(this);
         }
@@ -370,7 +399,7 @@ public:
         inline _In() {}
     };
 public:
-    Pointer<_Out> _out;
+    pointer<_Out> _out;
     inline const _Out& out(_Out* val) {_out = val;return *_out;}
     virtual const _Out& run(const _In& _in) {
         T& t = static_cast<T&>(ref(this));
@@ -411,7 +440,7 @@ public:
         ArgList _argl;
     };
 public:
-    Pointer<_Out> _out;
+    pointer<_Out> _out;
     inline const _Out& out(_Out* val) {_out = val;return *_out;}
 };
 

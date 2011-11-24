@@ -152,9 +152,9 @@ inline Ast::ExprList& Context::addExprList() {
     return exprList;
 }
 
-inline const Ast::QualifiedTypeSpec& Context::coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) {
+inline const Ast::QualifiedTypeSpec* Context::canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) {
     if(ptr(lhs.typeSpec()) == ptr(rhs.typeSpec())) {
-        return lhs;
+        return ptr(lhs);
     }
 
     for(Ast::Unit::CoerceListList::const_iterator it = _unit.coercionList().begin(); it != _unit.coercionList().end(); ++it) {
@@ -173,30 +173,55 @@ inline const Ast::QualifiedTypeSpec& Context::coerce(const Ast::Token& pos, cons
         }
         if((lidx >= 0) && (ridx >= 0)) {
             if(lidx >= ridx)
-                return lhs;
-            return rhs;
+                return ptr(lhs);
+            return ptr(rhs);
         }
     }
 
-    printf("%s checking '%s' and '%s'\n", err(_filename, pos).c_str(), lhs.typeSpec().name().text(), rhs.typeSpec().name().text());
     const Ast::StructDefn* lsd = dynamic_cast<const Ast::StructDefn*>(ptr(lhs.typeSpec()));
     const Ast::StructDefn* rsd = dynamic_cast<const Ast::StructDefn*>(ptr(rhs.typeSpec()));
     if((lsd != 0) && (rsd != 0)) {
         for(StructBaseIterator sbi(lsd); sbi.hasNext(); sbi.next()) {
             if(ptr(sbi.get()) == rsd) {
-                printf("returning rhs\n");
-                return rhs;
+                return ptr(rhs);
             }
         }
         for(StructBaseIterator sbi(rsd); sbi.hasNext(); sbi.next()) {
             if(ptr(sbi.get()) == lsd) {
-                printf("returning lhs\n");
-                return lhs;
+                return ptr(lhs);
             }
         }
     }
 
-    throw Exception("%s Cannot coerce '%s' and '%s'\n", err(_filename, pos).c_str(), lhs.typeSpec().name().text(), rhs.typeSpec().name().text());
+    const Ast::TemplateDefn* ltd = dynamic_cast<const Ast::TemplateDefn*>(ptr(lhs.typeSpec()));
+    const Ast::TemplateDefn* rtd = dynamic_cast<const Ast::TemplateDefn*>(ptr(rhs.typeSpec()));
+    if((ltd != 0) && (rtd != 0)) {
+        printf("is tempdefn\n");
+        if(ref(ltd).name().string() == ref(rtd).name().string()) {
+            const Ast::QualifiedTypeSpec& lSubType = ref(ltd).at(0);
+            const Ast::QualifiedTypeSpec& rSubType = ref(rtd).at(0);
+            printf("%s (%lu) %s(%lu)\n", lSubType.typeSpec().name().text(), (unsigned long)ptr(lSubType), rSubType.typeSpec().name().text(), (unsigned long)ptr(rSubType));
+            const Ast::QualifiedTypeSpec* val = canCoerce(lSubType, rSubType);
+            printf("val %lu\n", (unsigned long)val);
+            if(val == ptr(lSubType)) {
+                return ptr(lhs);
+            }
+            if(val == ptr(rSubType)) {
+                return ptr(rhs);
+            }
+        }
+    }
+
+    return 0;
+}
+
+inline const Ast::QualifiedTypeSpec& Context::coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) {
+    printf("%s checking '%s' and '%s'\n", err(_filename, pos).c_str(), lhs.typeSpec().name().text(), rhs.typeSpec().name().text());
+    const Ast::QualifiedTypeSpec* val = canCoerce(lhs, rhs);
+    if(!val) {
+        throw Exception("%s Cannot coerce '%s' and '%s'\n", err(_filename, pos).c_str(), lhs.typeSpec().name().text(), rhs.typeSpec().name().text());
+    }
+    return ref(val);
 }
 
 inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
@@ -240,16 +265,6 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
         Ast::FunctionInstanceExpr* expr = aFunctionInstanceExpr(ref(fd), exprList);
         return ref(expr);
     }
-
-//    if(typeSpec.name().string() == "functor") {
-//        Ast::Token value(name.row(), name.col(), "0");
-//        return aConstantExpr("int", value);
-//    }
-
-//    if(typeSpec.name().string() == "future") {
-//        Ast::Token value(name.row(), name.col(), "0");
-//        return aConstantExpr("int", value);
-//    }
 
     throw Exception("%s No default value for type '%s'\n", err(_filename, name).c_str(), typeSpec.name().text());
 }
