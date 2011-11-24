@@ -4,7 +4,8 @@ interpreter
 positional-paramlist
 full gui definition
 single-outparam for functions.
-void param-types, do not generate _Out and/or _In
+void out-param, do not generate _Out
+void in-param, do not generate _In
 
 anchor
 systray

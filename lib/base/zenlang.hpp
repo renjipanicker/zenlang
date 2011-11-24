@@ -14,14 +14,6 @@ inline T* ptr(T& t) {
     return &t;
 }
 
-inline void _trace(const std::string& txt) {
-#if defined(_WIN32)
-    OutputDebugStringA(txt.c_str());
-#else
-    std::cout << txt.c_str() << std::flush;
-#endif
-}
-
 inline std::string ssprintfv(const char* txt, va_list vlist) {
     const int len = 1024;
     char buf[len];
@@ -40,16 +32,20 @@ inline std::string ssprintf(const char* txt, ...) {
     return ssprintfv(txt, vlist);
 }
 
-inline void trace(const char* txt, ...) {
 #if defined(DEBUG)
+#if defined(GUI) && defined(WIN32)
+inline void trace(const char* txt, ...) {
     va_list vlist;
     va_start(vlist, txt);
     std::string buf = ssprintfv(txt, vlist);
-    _trace(buf);
-#else
-    unused(txt);
-#endif
+    OutputDebugStringA(buf.c_str());
 }
+#else
+#define trace printf
+#endif
+#else
+#define trace(x)
+#endif
 
 class Exception {
 public:
@@ -57,38 +53,15 @@ public:
         va_list vlist;
         va_start(vlist, txt);
         _msg = ssprintfv(txt, vlist);
-        printf("%s\n", _msg.c_str());
+        trace("%s\n", _msg.c_str());
     }
 
 private:
     std::string _msg;
 };
 
-/*
-template <typename T>
-struct Pointer {
-    inline void reset(T* ptr) {delete _ptr; _ptr = 0; _ptr = ptr;}
-    inline T* clone(const Pointer& src) {
-        if(src._ptr == 0)
-            return 0;
-        return new T(ref(src._ptr));
-    }
-
-    inline Pointer() : _ptr(0) {}
-    inline ~Pointer() {reset(0);}
-    inline Pointer(const Pointer& src) : _ptr(0) {reset(clone(src));}
-    inline Pointer& operator=(const Pointer& src) {reset(clone(src)); return ref(this);}
-    inline Pointer& operator=(T* ptr) {reset(ptr); return ref(this);}
-    inline Pointer& operator=(T t) {reset(new T(t)); return ref(this);}
-    inline T& operator*() {return ref(_ptr);}
-    inline T* operator->() {assert(_ptr); return _ptr;}
-private:
-    T* _ptr;
-};
-*/
-
 template <typename V>
-struct pointer {
+struct Pointer {
     struct value {
     protected:
         inline value(){}
@@ -119,32 +92,49 @@ struct pointer {
         return ref(vt).get();
     }
 
-    inline pointer(const std::string& type) : _type(type), _val(0) {}
+    inline Pointer() : _val(0) {}
+    inline ~Pointer() {delete _val;}
 
     template <typename DerT>
-    inline pointer(const std::string& type, const DerT& val) : _type(type), _val(0) {
+    inline Pointer(const DerT& val) : _val(0) {
         set(new valueT<DerT>(val));
     }
 
-    inline pointer(const pointer& src) : _type(src._type), _val(0) {
-        set(ref(src._val).clone());
+    inline Pointer(const Pointer& src) : _val(0) {
+        if(src._val) {
+            set(ref(src._val).clone());
+        }
     }
 
     template <typename DerT>
-    inline pointer(const pointer<DerT>& src) : _type(src.type()), _val(0) {
+    inline Pointer(const Pointer<DerT>& src) : _val(0) {
         set(new valueT<DerT>(src.get()));
     }
 
     template <typename DerT>
-    inline pointer& operator=(DerT* val) {set(new valueT<DerT>(val)); return ref(this);}
+    inline Pointer& operator=(const DerT& val) {
+        set(new valueT<DerT>(val));
+        return ref(this);
+    }
 
-    inline V& operator*() {return get();}
+private:
+    value* _val;
+};
+
+template <typename V>
+struct pointer : public Pointer<V> {
+    inline pointer(const std::string& type) : Pointer<V>(), _type(type) {}
+    inline pointer(const pointer& src) : Pointer(src), _type(src._type) {}
+
+    template <typename DerT>
+    inline pointer(const std::string& type, const DerT& val) : Pointer(val), _type(type) {}
+
+    template <typename DerT>
+    inline pointer(const pointer<DerT>& src) : Pointer(src), _type(src.type()) {}
 
     inline const std::string& type() const {return _type;}
-    inline const value& val() const {return ref(_val);}
 private:
     const std::string _type;
-    value* _val;
 };
 
 template <typename V, typename ListT>
@@ -227,13 +217,13 @@ private:
     std::string _text;
 };
 
-template <typename FunctionT>
-struct FunctorT {
-    inline FunctorT(const FunctionT& function) : _function() {_function = new FunctionT(function);}
-    inline FunctionT* function() const {return _function;}
-private:
-    FunctionT* _function;
-};
+//template <typename FunctionT>
+//struct FunctorT {
+//    inline FunctorT(const FunctionT& function) : _function() {_function = new FunctionT(function);}
+//    inline FunctionT* function() const {return _function;}
+//private:
+//    FunctionT* _function;
+//};
 
 struct Future {
     virtual void run() = 0;
@@ -304,10 +294,10 @@ public:
         return _list.push(function, in);
     }
 
-    template <typename FunctionT>
-    inline FutureT<FunctionT>& add(FunctorT<FunctionT> functor, const typename FunctionT::_In& in) {
-        return _list.push(ref(functor.function()), in);
-    }
+//    template <typename FunctionT>
+//    inline FutureT<FunctionT>& add(FunctorT<FunctionT> functor, const typename FunctionT::_In& in) {
+//        return _list.push(ref(functor.function()), in);
+//    }
 
     inline size_t size() const {return _list.size();}
 private:
@@ -390,6 +380,7 @@ struct TestResult {
 
 template <typename T>
 struct test_ {
+public:
     struct _Out {
         inline _Out(const bool& passed) : _passed(passed) {}
         bool _passed;
@@ -399,8 +390,8 @@ public:
         inline _In() {}
     };
 public:
-    pointer<_Out> _out;
-    inline const _Out& out(_Out* val) {_out = val;return *_out;}
+    Pointer<_Out> _out;
+    inline const _Out& out(const _Out& val) {_out = val; return _out.get();}
     virtual const _Out& run(const _In& _in) {
         T& t = static_cast<T&>(ref(this));
         TestResult::begin(t.name());
@@ -440,7 +431,7 @@ public:
         ArgList _argl;
     };
 public:
-    pointer<_Out> _out;
+    Pointer<_Out> _out;
     inline const _Out& out(_Out* val) {_out = val;return *_out;}
 };
 

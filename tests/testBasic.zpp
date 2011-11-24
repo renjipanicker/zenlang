@@ -221,6 +221,26 @@ public function (int ri, string rs)runFunctionTest(const int& x) {
     return (67890, "run");
 }
 
+public test testFunctor {
+    auto f = runFunctionTest[];
+    unused(f);
+    return (true);
+}
+
+public function ()getFunctor(const runFunctionTest& f) {
+    return ();
+}
+
+public runFunctionTest derivedFunctionTest {
+    return (12345, "derived");
+}
+
+public test testPassDerivedFuncion {
+    auto f = derivedFunctionTest[];
+    getFunctor(f);
+    return (true);
+}
+
 public test testRunExpr {
     auto f = run runFunctionTest(456);
     unused(f);
