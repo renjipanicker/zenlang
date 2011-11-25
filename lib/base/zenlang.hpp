@@ -72,7 +72,7 @@ struct Pointer {
 
     template <typename DerT>
     struct valueT : public value {
-        inline valueT(const DerT& v) : _v(v) {}
+        inline valueT(const DerT& v) : _v(v) {const V& x = v;unused(x);}
         virtual V& get() {return _v;}
         virtual value* clone() const {return new valueT<DerT>(_v);}
     private:
@@ -93,29 +93,54 @@ struct Pointer {
     }
 
     inline Pointer() : _val(0) {}
+
     inline ~Pointer() {delete _val;}
 
     template <typename DerT>
     inline Pointer(const DerT& val) : _val(0) {
-        set(new valueT<DerT>(val));
+        value* v = new valueT<DerT>(val);
+        set(v);
     }
 
     inline Pointer(const Pointer& src) : _val(0) {
         if(src._val) {
-            set(ref(src._val).clone());
+            value* v = src._val->clone();
+            set(v);
         }
     }
 
+//    template <typename DerT>
+//    inline Pointer(const Pointer<DerT>& src) : _val(0) {
+//        if(src._val) {
+//            value* v = src._val->clone();
+//            set(v);
+//        }
+//    }
+
     template <typename DerT>
-    inline Pointer(const Pointer<DerT>& src) : _val(0) {
-        set(new valueT<DerT>(src.get()));
+    inline Pointer& setVal(const DerT& val) {
+        value* v = new valueT<DerT>(val);
+        set(v);
+        return ref(this);
+    }
+
+    inline Pointer& operator=(const Pointer& src) {
+        value* v = src._val->clone();
+        set(v);
+        return ref(this);
     }
 
     template <typename DerT>
     inline Pointer& operator=(const DerT& val) {
-        set(new valueT<DerT>(val));
-        return ref(this);
+        return setVal(val);
     }
+
+//    template <typename DerT>
+//    inline Pointer& operator=(const Pointer<DerT>& src) {
+//        value* v = src._val->clone();
+//        set(v);
+//        return ref(this);
+//    }
 
 private:
     value* _val;
@@ -123,18 +148,24 @@ private:
 
 template <typename V>
 struct pointer : public Pointer<V> {
-    inline pointer(const std::string& type) : Pointer<V>(), _type(type) {}
-    inline pointer(const pointer& src) : Pointer(src), _type(src._type) {}
+    inline pointer(const std::string& tname) : Pointer<V>(), _tname(tname) {}
 
     template <typename DerT>
-    inline pointer(const std::string& type, const DerT& val) : Pointer(val), _type(type) {}
+    inline pointer(const std::string& tname, const DerT& val) : Pointer<V>(val), _tname(tname) {}
 
     template <typename DerT>
-    inline pointer(const pointer<DerT>& src) : Pointer(src), _type(src.type()) {}
+    inline pointer(const pointer<DerT>& src) : Pointer<V>(src.get()), _tname(src.tname()) {}
 
-    inline const std::string& type() const {return _type;}
+    template <typename DerT>
+    inline pointer& operator=(const pointer<DerT>& val) {
+        _tname = val.tname();
+        setVal(val);
+        return ref(this);
+    }
+
+    inline const std::string& tname() const {return _tname;}
 private:
-    const std::string _type;
+    std::string _tname;
 };
 
 template <typename V, typename ListT>

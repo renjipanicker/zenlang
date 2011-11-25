@@ -16,6 +16,9 @@ public main MyMain {
                            ];
              };
 
+    auto win = Window::Create(x);
+    unused(win);
+
     auto mainFrame = MainFrame::Create( MainFrame::Definition{title:"test"; position:Window::Position{x:10;y:10;w:400;h:200;}; visible:true; } );
     auto checkBtn = Button::Create(mainFrame.window,
                         Button::Definition {

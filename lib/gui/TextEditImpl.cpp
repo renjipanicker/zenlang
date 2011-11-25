@@ -24,7 +24,7 @@ const TextEdit::Create::_Out& TextEdit::Create::run(const _In& _in) {
         gtk_text_buffer_set_text (buffer, _in.def.title.c_str(), -1);
     }
 #endif
-   return out(new _Out(impl));
+   return out(_Out(impl));
 }
 
 const TextEdit::AppendText::_Out& TextEdit::AppendText::run(const _In& _in) {
@@ -39,5 +39,5 @@ const TextEdit::AppendText::_Out& TextEdit::AppendText::run(const _In& _in) {
     gtk_text_buffer_get_end_iter(buffer, &iter);
     gtk_text_buffer_insert(buffer, &iter, _in.text.c_str(), _in.text.size());
 #endif
-    return out(new _Out());
+    return out(_Out());
 }

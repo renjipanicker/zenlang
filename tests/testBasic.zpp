@@ -247,6 +247,19 @@ public test testRunExpr {
     return (true);
 }
 
+struct InStruct {
+};
+
+struct PtrStruct {
+    pointer<InStruct> p;
+};
+
+public test testPtrStruct {
+    auto s = PtrStruct{p : pointer<InStruct>(InStruct{});};
+    unused(s);
+    return (true);
+}
+
 public main MyMain {
     auto f = run runFunctionTest(908);
     unused(f);

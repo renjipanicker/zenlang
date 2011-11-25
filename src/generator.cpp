@@ -2,107 +2,7 @@
 #include "base/zenlang.hpp"
 #include "generator.hpp"
 #include "outfile.hpp"
-
-struct GenMode {
-    enum T {
-        Normal,
-        Import,
-        TypeSpecMemberRef
-    };
-};
-
-static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name, const GenMode::T& mode);
-
-inline std::string getTypeSpecName(const Ast::TypeSpec& typeSpec, const GenMode::T& mode, const std::string& sep = "::") {
-    std::string name;
-    getRootName(typeSpec, sep, name, mode);
-    return name;
-}
-
-inline std::string getQualifiedTypeSpecName(const Ast::QualifiedTypeSpec& qtypeSpec, const GenMode::T& mode, const std::string& sep = "::") {
-    std::string name;
-    if(qtypeSpec.isConst())
-        name += "const ";
-    getRootName(qtypeSpec.typeSpec(), sep, name, mode);
-    if(qtypeSpec.isRef())
-        name += "&";
-    return name;
-}
-
-static bool getName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name, const GenMode::T& mode) {
-    const Ast::ChildTypeSpec* ctypeSpec = dynamic_cast<const Ast::ChildTypeSpec*>(ptr(typeSpec));
-    if(!ctypeSpec)
-        return false;
-
-    if(getName(ref(ctypeSpec).parent(), sep, name, mode))
-        name += sep;
-
-    name += typeSpec.name().string();
-
-    if(dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec)) != 0) {
-        if(mode == GenMode::Normal) {
-            name += sep;
-            name += "T";
-        } else if(mode == GenMode::Import) {
-        }
-    }
-
-    return true;
-}
-
-static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name, const GenMode::T& mode) {
-    const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(ptr(typeSpec));
-
-    if(mode == GenMode::Import) {
-        if(templateDefn) {
-            name += ref(templateDefn).name().string();
-            name += "<";
-            std::string sep;
-            for(Ast::TemplateDefn::List::const_iterator it = ref(templateDefn).list().begin(); it != ref(templateDefn).list().end(); ++it) {
-                const Ast::QualifiedTypeSpec& qTypeSpec = ref(*it);
-                name += sep;
-                name += getQualifiedTypeSpecName(qTypeSpec, mode);
-                sep = ", ";
-            }
-            name += "> ";
-            return true;
-        }
-        return getName(typeSpec, sep, name, mode);
-    }
-
-    if(typeSpec.name().string() == "string") {
-        name += "std::string";
-        return true;
-    }
-
-    if(templateDefn) {
-        if(typeSpec.name().string() == "pointer") {
-            name += "pointer";
-        } else if(typeSpec.name().string() == "list") {
-            name += "list";
-        } else if(typeSpec.name().string() == "dict") {
-            name += "dict";
-        } else if(typeSpec.name().string() == "future") {
-            name += "FutureT";
-        } else if(typeSpec.name().string() == "functor") {
-            name += "FunctorT";
-        } else {
-            throw Exception("Unknown template type '%s'\n", typeSpec.name().text());
-        }
-        name += "<";
-        std::string sep;
-        for(Ast::TemplateDefn::List::const_iterator it = ref(templateDefn).list().begin(); it != ref(templateDefn).list().end(); ++it) {
-            const Ast::QualifiedTypeSpec& qTypeSpec = ref(*it);
-            name += sep;
-            name += getQualifiedTypeSpecName(qTypeSpec, mode);
-            sep = ", ";
-        }
-        name += "> ";
-        return true;
-    }
-
-    return getName(typeSpec, sep, name, mode);
-}
+#include "typename.hpp"
 
 inline std::string getDefinitionType(const Ast::DefinitionType::T& defType) {
     switch(defType) {
@@ -200,16 +100,34 @@ private:
     }
 
     virtual void visit(const Ast::DictExpr& node) {
-        fprintf(_fp, "dict<%s, %s>::creator()", getQualifiedTypeSpecName(node.list().keyType(), _genMode).c_str(), getQualifiedTypeSpecName(node.list().valueType(), _genMode).c_str());
-        for(Ast::DictList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-            const Ast::DictItem& item = ref(*it);
-            fprintf(_fp, ".add(");
-            visitNode(item.keyExpr());
-            fprintf(_fp, ", ");
-            visitNode(item.valueExpr());
-            fprintf(_fp, ")");
+        if(_genMode == GenMode::Import) {
+            fprintf(_fp, "[");
+            if(node.list().list().size() == 0) {
+                fprintf(_fp, "%s:%s", getQualifiedTypeSpecName(node.list().keyType(), _genMode).c_str(), getQualifiedTypeSpecName(node.list().valueType(), _genMode).c_str());
+            } else {
+                std::string sep;
+                for(Ast::DictList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
+                    const Ast::DictItem& item = ref(*it);
+                    fprintf(_fp, "%s", sep.c_str());
+                    visitNode(item.valueExpr());
+                    fprintf(_fp, ":");
+                    visitNode(item.valueExpr());
+                    sep = ", ";
+                }
+            }
+            fprintf(_fp, "]");
+        } else {
+            fprintf(_fp, "dict<%s, %s>::creator()", getQualifiedTypeSpecName(node.list().keyType(), _genMode).c_str(), getQualifiedTypeSpecName(node.list().valueType(), _genMode).c_str());
+            for(Ast::DictList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
+                const Ast::DictItem& item = ref(*it);
+                fprintf(_fp, ".add(");
+                visitNode(item.keyExpr());
+                fprintf(_fp, ", ");
+                visitNode(item.valueExpr());
+                fprintf(_fp, ")");
+            }
+            fprintf(_fp, ".get()");
         }
-        fprintf(_fp, ".get()");
     }
 
     virtual void visit(const Ast::FormatExpr& node) {
@@ -627,6 +545,17 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
                 fprintf(fp, " : public %s ", getTypeSpecName(ref(base), GenMode::Normal).c_str());
             }
             fprintf(fp, "{\n");
+            visitChildrenIndent(node);
+            fprintf(fp, "%s    inline %s()", Indent::get(), node.name().text());
+            std::string sep = " : ";
+            for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                const Ast::VariableDefn& vdef = ref(*it);
+                fprintf(fp, "%s%s(", sep.c_str(), vdef.name().text());
+                ExprGenerator(fp, GenMode::Normal).visitNode(vdef.initExpr());
+                fprintf(fp, ")");
+                sep = ", ";
+            }
+            fprintf(fp, "{}\n");
             for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 INDENT;
                 const Ast::VariableDefn& vdef = ref(*it);
@@ -634,7 +563,6 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
                 fprintf(fp, "%stemplate <typename T> inline T& _%s(const %s& val) {%s = val; return ref(static_cast<T*>(this));}\n",
                         Indent::get(), vdef.name().text(), getQualifiedTypeSpecName(vdef.qualifiedTypeSpec(), GenMode::Normal).c_str(), vdef.name().text());
             }
-            visitChildrenIndent(node);
             fprintf(fp, "%s};\n", Indent::get());
             fprintf(fp, "\n");
         }
@@ -1208,7 +1136,7 @@ struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
         }
         fprintf(_fpSrc, "const %s::Add::_Out& %s::Add::run(const _In& in) {\n", getTypeSpecName(node, GenMode::Normal).c_str(), getTypeSpecName(node, GenMode::Normal).c_str());
         fprintf(_fpSrc, "    assert(false); //addHandler(in.%s, in.handler);\n", node.in().name().text());
-        fprintf(_fpSrc, "    return out(new _Out());\n");
+        fprintf(_fpSrc, "    return out(_Out());\n");
         fprintf(_fpSrc, "}\n");
     }
 

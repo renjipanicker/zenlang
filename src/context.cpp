@@ -2,6 +2,7 @@
 #include "base/zenlang.hpp"
 #include "context.hpp"
 #include "error.hpp"
+#include "typename.hpp"
 
 struct StructBaseIterator {
     inline StructBaseIterator(const Ast::StructDefn* structDefn) : _structDefn(structDefn) {}
@@ -229,12 +230,33 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
 
     const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(typeSpec));
     if(td != 0) {
-        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(td), false);
-        Ast::ListList& llist = _unit.addNode(new Ast::ListList());
-        const Ast::QualifiedTypeSpec* qlType = ref(td).list().at(0);
-        llist.valueType(ref(qlType));
-        Ast::ListExpr& expr = _unit.addNode(new Ast::ListExpr(qTypeSpec, llist));
-        return expr;
+        if(typeSpec.name().string() == "pointer") {
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(td), false);
+            Ast::ExprList& exprList = addExprList();
+            const Ast::QualifiedTypeSpec& subType = ref(td).at(0);
+            const Ast::Expr& nameExpr = getDefaultValue(subType.typeSpec(), name);
+            exprList.addExpr(nameExpr);
+            Ast::PointerInstanceExpr& expr = _unit.addNode(new Ast::PointerInstanceExpr(qTypeSpec, ref(td), exprList));
+            return expr;
+        }
+        if(typeSpec.name().string() == "list") {
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(td), false);
+            Ast::ListList& llist = _unit.addNode(new Ast::ListList());
+            const Ast::QualifiedTypeSpec* qlType = ref(td).list().at(0);
+            llist.valueType(ref(qlType));
+            Ast::ListExpr& expr = _unit.addNode(new Ast::ListExpr(qTypeSpec, llist));
+            return expr;
+        }
+        if(typeSpec.name().string() == "dict") {
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(td), false);
+            Ast::DictList& llist = _unit.addNode(new Ast::DictList());
+            const Ast::QualifiedTypeSpec* qlType = ref(td).list().at(0);
+            const Ast::QualifiedTypeSpec* qrType = ref(td).list().at(1);
+            llist.keyType(ref(qlType));
+            llist.valueType(ref(qrType));
+            Ast::DictExpr& expr = _unit.addNode(new Ast::DictExpr(qTypeSpec, llist));
+            return expr;
+        }
     }
 
     const Ast::EnumDefn* ed = dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec));
@@ -572,7 +594,7 @@ Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDe
     eventDef.setHandler(funDecl);
 
     Ast::QualifiedTypeSpec& qFunTypeSpec = addQualifiedTypeSpec(false, funDecl, false);
-    Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "functor");
+    Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "pointer");
     templateDefn.addType(qFunTypeSpec);
     const Ast::QualifiedTypeSpec& qFunctorTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
 
