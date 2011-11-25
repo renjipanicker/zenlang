@@ -1,7 +1,6 @@
 typedef void native;
 
 typedef bool native;
-
 typedef byte native;
 typedef short native;
 typedef int native;
@@ -33,6 +32,7 @@ coerce time => datetime;
 default char = '';
 default string = "";
 
+typedef type native;
 //typedef any native; \todo
 
 template <F> future native;

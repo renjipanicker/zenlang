@@ -1,4 +1,3 @@
-implement typespec
 unit test - check
 verbose output from compiler
 interpreter
@@ -157,3 +156,4 @@ push-button-onclick
 textedit-appendtext
 unit test - suite
 unit test - test
+implement typespec

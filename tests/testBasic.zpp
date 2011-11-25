@@ -46,7 +46,7 @@ public function (int r)testAdvancedExpr(const int& x, const MyStruct& myStruct, 
     auto n = myEnum;
     auto a = typeof(int, myStruct);
     auto p = pointer<MyBase>(myStruct);
-    unused(v, m, n, a);
+    unused(v, m, n, a, p);
     return (67890);
 }
 
