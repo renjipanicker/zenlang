@@ -146,9 +146,15 @@ private:
     value* _val;
 };
 
+struct typespec {
+    explicit inline typespec(const std::string& name) : _name(name) {}
+private:
+    std::string _name;
+};
+
 template <typename V>
 struct pointer : public Pointer<V> {
-    inline pointer(const std::string& tname) : Pointer<V>(), _tname(tname) {}
+    inline pointer(const typespec& tname) : Pointer<V>(), _tname(tname) {}
 
     template <typename DerT>
     inline pointer(const std::string& tname, const DerT& val) : Pointer<V>(val), _tname(tname) {}
@@ -163,9 +169,9 @@ struct pointer : public Pointer<V> {
         return ref(this);
     }
 
-    inline const std::string& tname() const {return _tname;}
+    inline const typespec& tname() const {return _tname;}
 private:
-    std::string _tname;
+    typespec _tname;
 };
 
 template <typename V, typename ListT>

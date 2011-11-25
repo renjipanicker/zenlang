@@ -1,3 +1,4 @@
+implement typespec
 unit test - check
 verbose output from compiler
 interpreter
@@ -7,6 +8,7 @@ single-outparam for functions.
 void out-param, do not generate _Out
 void in-param, do not generate _In
 
+Window::Create
 anchor
 systray
 menubar
@@ -55,6 +57,9 @@ list-view
 tree-view
 web-view
 tab-widget
+
+*** make all ctors explicit
+*** Rename GenName::Import and Normal to ZenLang and StlCpp
 
 ==BACKLOG==
 ftp
