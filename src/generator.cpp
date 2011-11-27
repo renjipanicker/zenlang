@@ -190,8 +190,30 @@ private:
         fprintf(_fp, ")");
     }
 
-    virtual void visit(const Ast::TypeofExpr& node) {
-        fprintf(_fp, "type(\"%s\")", getQualifiedTypeSpecName(node.expr().qTypeSpec(), _genMode).c_str());
+    virtual void visit(const Ast::TypeofTypeExpr& node) {
+        fprintf(_fp, "type(\"%s\")", getQualifiedTypeSpecName(node.typeSpec(), _genMode).c_str());
+    }
+
+    virtual void visit(const Ast::TypeofExprExpr& node) {
+        const Ast::TypeSpec* typeSpec = ptr(node.expr().qTypeSpec().typeSpec());
+        const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(typeSpec);
+        if(td) {
+            visitNode(node.expr());
+            fprintf(_fp, ".tname()");
+        } else {
+            fprintf(_fp, "type(\"%s\")", getQualifiedTypeSpecName(node.expr().qTypeSpec(), _genMode).c_str());
+        }
+    }
+
+    virtual void visit(const Ast::StaticTypecastExpr& node) {
+        fprintf(_fp, "static_cast<%s>(", getQualifiedTypeSpecName(node.qTypeSpec(), _genMode).c_str());
+        ExprGenerator(_fp, _genMode).visitNode(node.expr());
+        fprintf(_fp, ")");
+    }
+
+    virtual void visit(const Ast::DynamicTypecastExpr& node) {
+        ExprGenerator(_fp, _genMode).visitNode(node.expr());
+        fprintf(_fp, ".getT<%s>()", getTypeSpecName(node.qTypeSpec().typeSpec(), _genMode).c_str());
     }
 
     virtual void visit(const Ast::PointerInstanceExpr& node) {
@@ -200,6 +222,12 @@ private:
         fprintf(_fp, "(type(\"%s\"), ", getQualifiedTypeSpecName(expr.qTypeSpec(), _genMode).c_str());
         ExprGenerator(_fp, _genMode).visitNode(expr);
         fprintf(_fp, ")");
+    }
+
+    virtual void visit(const Ast::ValueInstanceExpr& node) {
+        const Ast::Expr& expr = node.exprList().at(0);
+        ExprGenerator(_fp, _genMode).visitNode(expr);
+        fprintf(_fp, ".getT<%s>()", getTypeSpecName(node.qTypeSpec().typeSpec(), _genMode).c_str());
     }
 
     virtual void visit(const Ast::VariableRefExpr& node) {

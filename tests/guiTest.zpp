@@ -1,6 +1,7 @@
 include Mainframe;
 include Button;
 include TextEdit;
+include WindowCreator;
 
 public main MyMain {
     auto x = MainFrame::Definition {
@@ -16,7 +17,7 @@ public main MyMain {
                            ];
              };
 
-    auto win = Window::Create(x);
+    auto win = WindowCreator::Create(pointer<MainFrame::Definition>(x));
     unused(win);
 
     auto mainFrame = MainFrame::Create( MainFrame::Definition{title:"test"; position:Window::Position{x:10;y:10;w:400;h:200;}; visible:true; } );

@@ -49,10 +49,3 @@ public function ()Size(const Instance& window, const int& w, const int& h) nativ
 
 public event(const Instance& window) => function ()OnResize() native;
 public event(const Instance& window) => function ()OnClose() native;
-
-public function (Window::Instance window)Create(const RootDefinition& def) {
-    if(false) {
-        return (Create(def));
-    }
-    return (Window::Instance());
-}

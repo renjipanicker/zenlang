@@ -51,6 +51,7 @@ private:
     inline Ast::VariableDefn& addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
     inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len);
     inline Ast::FunctionDecl& addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
+    inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr);
 
 private:
     Compiler& _compiler;
@@ -207,7 +208,12 @@ public:
     Ast::RoutineCallExpr*     aRoutineCallExpr(const Ast::Token& pos, const Ast::Routine& routine, const Ast::ExprList& exprList);
 
     Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
-    Ast::TypeofExpr*          aTypeofExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec, const Ast::Expr& expr);
+    Ast::TypeofTypeExpr*      aTypeofTypeExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec);
+    Ast::TypeofExprExpr*      aTypeofExprExpr(const Ast::Token& pos, const Ast::Expr& expr);
+    Ast::TypecastExpr*        aTypecastExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr);
+    Ast::PointerInstanceExpr* aPointerInstanceExpr(const Ast::Token& pos, const Ast::Expr& expr);
+    Ast::ValueInstanceExpr*   aValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr);
+    Ast::ValueInstanceExpr*   aValueInstanceExpr(const Ast::Token& pos, const Ast::Expr& expr);
     Ast::TemplateDefnInstanceExpr* aTemplateDefnInstanceExpr(const Ast::Token& pos, const Ast::TemplateDefn& templateDefn, const Ast::ExprList& exprList);
     Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);
     Ast::VariableMemberExpr*  aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name);

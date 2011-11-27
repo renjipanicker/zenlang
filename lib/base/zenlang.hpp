@@ -14,6 +14,46 @@ inline T* ptr(T& t) {
     return &t;
 }
 
+#if defined(_WIN32)
+extern "C" {
+    char* _unDName(char* outputString, const char* name, int maxStringLength, void* (*pAlloc)(size_t), void (*pFree)(void*), unsigned short disableFlags);
+}
+#endif
+
+inline std::string undecorate(const char* name) {
+    std::string uname = name;
+#if defined(_WIN32)
+    char * const dname = _unDName(0, name, 0, malloc, free, 0x2800);
+    if (dname) {
+        uname = dname;
+        free(dname);
+    }
+#else
+    int status = -4;
+    char* dname = abi::__cxa_demangle(name, NULL, NULL, &status);
+    if(dname) {
+        if(status == 0)
+            uname = dname;
+        free(dname);
+    }
+#endif
+    return uname;
+}
+
+template <typename T>
+struct type_name {
+    inline type_name() {
+        _name = undecorate(typeid(T).name());
+    }
+    template <typename D>
+    inline type_name(D& t) {
+        _name = undecorate(typeid(t).name());
+    }
+    inline const char* text() const {return _name.c_str();}
+private:
+    std::string _name;
+};
+
 inline std::string ssprintfv(const char* txt, va_list vlist) {
     const int len = 1024;
     char buf[len];
@@ -68,6 +108,7 @@ struct Pointer {
     public:
         virtual V& get() = 0;
         virtual value* clone() const = 0;
+        virtual std::string tname() const = 0;
     };
 
     template <typename DerT>
@@ -75,6 +116,7 @@ struct Pointer {
         inline valueT(const DerT& v) : _v(v) {const V& x = v;unused(x);}
         virtual V& get() {return _v;}
         virtual value* clone() const {return new valueT<DerT>(_v);}
+        virtual std::string tname() const {return type_name<DerT>().text();}
     private:
         DerT _v;
     };
@@ -85,15 +127,16 @@ struct Pointer {
     }
 
     inline V& get() const {
-        valueT<V>* vt = dynamic_cast<valueT<V>*>(_val);
-        if(vt == 0) {
-            throw Exception("Typecast error in pointer");
-        }
-        return ref(vt).get();
+        return ref(_val).get();
+    }
+
+    template <typename DerT>
+    inline DerT& getT() const {
+        V& v = get();
+        return static_cast<DerT&>(v);
     }
 
     inline Pointer() : _val(0) {}
-
     inline ~Pointer() {delete _val;}
 
     template <typename DerT>
@@ -108,14 +151,6 @@ struct Pointer {
             set(v);
         }
     }
-
-//    template <typename DerT>
-//    inline Pointer(const Pointer<DerT>& src) : _val(0) {
-//        if(src._val) {
-//            value* v = src._val->clone();
-//            set(v);
-//        }
-//    }
 
     template <typename DerT>
     inline Pointer& setVal(const DerT& val) {
@@ -135,27 +170,20 @@ struct Pointer {
         return setVal(val);
     }
 
-//    template <typename DerT>
-//    inline Pointer& operator=(const Pointer<DerT>& src) {
-//        value* v = src._val->clone();
-//        set(v);
-//        return ref(this);
-//    }
-
 private:
     value* _val;
 };
 
 struct type {
     explicit inline type(const std::string& name) : _name(name) {}
+    inline const std::string& name() const {return _name;}
+    inline bool operator==(const type& rhs) const {return (_name == rhs._name);}
 private:
     std::string _name;
 };
 
 template <typename V>
 struct pointer : public Pointer<V> {
-    inline pointer(const type& tname) : Pointer<V>(), _tname(tname) {}
-
     template <typename DerT>
     inline pointer(const type& tname, const DerT& val) : Pointer<V>(val), _tname(tname) {}
 
@@ -254,14 +282,6 @@ private:
     std::string _text;
 };
 
-//template <typename FunctionT>
-//struct FunctorT {
-//    inline FunctorT(const FunctionT& function) : _function() {_function = new FunctionT(function);}
-//    inline FunctionT* function() const {return _function;}
-//private:
-//    FunctionT* _function;
-//};
-
 struct Future {
     virtual void run() = 0;
 };
@@ -330,11 +350,6 @@ public:
     inline FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
         return _list.push(function, in);
     }
-
-//    template <typename FunctionT>
-//    inline FutureT<FunctionT>& add(FunctorT<FunctionT> functor, const typename FunctionT::_In& in) {
-//        return _list.push(ref(functor.function()), in);
-//    }
 
     inline size_t size() const {return _list.size();}
 private:

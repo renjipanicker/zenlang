@@ -1,0 +1,16 @@
+include gui::WindowImpl native;
+include Window;
+include Mainframe;
+
+namespace WindowCreator;
+
+public function (Window::Instance window)Create(const pointer<Window::RootDefinition>& def) {
+    if(false) {
+        return (Create(def));
+    }
+
+    if(typeof(def) == typeof(MainFrame::Definition)) {
+    }
+
+    return (Window::Instance());
+}

@@ -648,15 +648,51 @@ namespace Ast {
     };
 
     class TypeofExpr : public Expr {
+    protected:
+        inline TypeofExpr(const QualifiedTypeSpec& qTypeSpec) : Expr(qTypeSpec) {}
+    };
+
+    class TypeofTypeExpr : public TypeofExpr {
     public:
-        inline TypeofExpr(const QualifiedTypeSpec& qTypeSpec, const Ast::QualifiedTypeSpec& typeSpec, const Expr& expr) : Expr(qTypeSpec), _typeSpec(typeSpec), _expr(expr) {}
+        inline TypeofTypeExpr(const QualifiedTypeSpec& qTypeSpec, const Ast::QualifiedTypeSpec& typeSpec) : TypeofExpr(qTypeSpec), _typeSpec(typeSpec) {}
         inline const QualifiedTypeSpec& typeSpec() const {return _typeSpec;}
-        inline const Expr& expr() const {return _expr;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const Ast::QualifiedTypeSpec& _typeSpec;
-        const Expr& _expr;
+    };
+
+    class TypeofExprExpr : public TypeofExpr {
+    public:
+        inline TypeofExprExpr(const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) : TypeofExpr(qTypeSpec), _expr(expr) {}
+        inline const Expr& expr() const {return _expr;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ast::Expr& _expr;
+    };
+
+    class TypecastExpr : public Expr {
+    protected:
+        inline TypecastExpr(const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) : Expr(qTypeSpec), _expr(expr) {}
+    public:
+        inline const Expr& expr() const {return _expr;}
+    private:
+        const Ast::Expr& _expr;
+    };
+
+    class StaticTypecastExpr : public TypecastExpr {
+    public:
+        inline StaticTypecastExpr(const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) : TypecastExpr(qTypeSpec, expr) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class DynamicTypecastExpr : public TypecastExpr {
+    public:
+        inline DynamicTypecastExpr(const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) : TypecastExpr(qTypeSpec, expr) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
     };
 
     class TemplateDefnInstanceExpr : public Expr {
@@ -673,6 +709,13 @@ namespace Ast {
     class PointerInstanceExpr : public TemplateDefnInstanceExpr {
     public:
         inline PointerInstanceExpr(const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList& exprList) : TemplateDefnInstanceExpr(qTypeSpec, templateDefn, exprList) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class ValueInstanceExpr : public TemplateDefnInstanceExpr {
+    public:
+        inline ValueInstanceExpr(const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList& exprList) : TemplateDefnInstanceExpr(qTypeSpec, templateDefn, exprList) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
@@ -851,8 +894,12 @@ namespace Ast {
         virtual void visit(const RoutineCallExpr& node) = 0;
         virtual void visit(const FunctorCallExpr& node) = 0;
         virtual void visit(const OrderedExpr& node) = 0;
-        virtual void visit(const TypeofExpr& node) = 0;
+        virtual void visit(const TypeofTypeExpr& node) = 0;
+        virtual void visit(const TypeofExprExpr& node) = 0;
+        virtual void visit(const StaticTypecastExpr& node) = 0;
+        virtual void visit(const DynamicTypecastExpr& node) = 0;
         virtual void visit(const PointerInstanceExpr& node) = 0;
+        virtual void visit(const ValueInstanceExpr& node) = 0;
         virtual void visit(const VariableRefExpr& node) = 0;
         virtual void visit(const VariableMemberExpr& node) = 0;
         virtual void visit(const StructMemberExpr& node) = 0;
@@ -874,8 +921,12 @@ namespace Ast {
     inline void RoutineCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctorCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void TypeofExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void TypeofTypeExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void TypeofExprExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void StaticTypecastExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void DynamicTypecastExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void PointerInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void ValueInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void VariableMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void StructMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}

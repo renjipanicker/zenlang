@@ -342,6 +342,16 @@ inline Ast::FunctionDecl& Context::addFunctionDecl(const Ast::TypeSpec& parent, 
     return functionDecl;
 }
 
+inline Ast::ValueInstanceExpr& Context::getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr) {
+    unused(pos);
+    Ast::ExprList& exprList = addExprList();
+    exprList.addExpr(expr);
+
+    const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(qTypeSpec.isConst(), qTypeSpec.typeSpec(), true);
+    Ast::ValueInstanceExpr& valueInstanceExpr = _unit.addNode(new Ast::ValueInstanceExpr(typeSpec, templateDefn, exprList));
+    return valueInstanceExpr;
+}
+
 ////////////////////////////////////////////////////////////
 void Context::aUnitNamespaceId(const Ast::Token &name) {
     Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(currentTypeSpec(), name));
@@ -1165,18 +1175,80 @@ Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
     return ptr(expr);
 }
 
-Ast::TypeofExpr* Context::aTypeofExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec, const Ast::Expr& expr) {
+Ast::TypeofTypeExpr* Context::aTypeofTypeExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec) {
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "type");
-    Ast::TypeofExpr& typeofExpr = _unit.addNode(new Ast::TypeofExpr(qTypeSpec, typeSpec, expr));
+    Ast::TypeofTypeExpr& typeofExpr = _unit.addNode(new Ast::TypeofTypeExpr(qTypeSpec, typeSpec));
     return ptr(typeofExpr);
 }
 
+Ast::TypeofExprExpr* Context::aTypeofExprExpr(const Ast::Token& pos, const Ast::Expr& expr) {
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "type");
+    Ast::TypeofExprExpr& typeofExpr = _unit.addNode(new Ast::TypeofExprExpr(qTypeSpec, expr));
+    return ptr(typeofExpr);
+}
+
+Ast::TypecastExpr* Context::aTypecastExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) {
+    unused(pos);
+    const Ast::TemplateDefn* subType = dynamic_cast<const Ast::TemplateDefn*>(ptr(expr.qTypeSpec().typeSpec()));
+    if((subType) && (ref(subType).name().string() == "pointer")) {
+        Ast::TypecastExpr& typecastExpr = _unit.addNode(new Ast::DynamicTypecastExpr(qTypeSpec, expr));
+        return ptr(typecastExpr);
+    }
+
+    Ast::TypecastExpr& typecastExpr = _unit.addNode(new Ast::StaticTypecastExpr(qTypeSpec, expr));
+    return ptr(typecastExpr);
+}
+
+Ast::PointerInstanceExpr* Context::aPointerInstanceExpr(const Ast::Token& pos, const Ast::Expr& expr) {
+    Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "pointer");
+    templateDefn.addType(expr.qTypeSpec());
+    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
+    Ast::ExprList& exprList = addExprList();
+    exprList.addExpr(expr);
+    Ast::PointerInstanceExpr& pointerExpr = _unit.addNode(new Ast::PointerInstanceExpr(qTypeSpec, templateDefn, exprList));
+    return ptr(pointerExpr);
+}
+
+Ast::ValueInstanceExpr* Context::aValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) {
+    const Ast::TemplateDefn* subType = dynamic_cast<const Ast::TemplateDefn*>(ptr(expr.qTypeSpec().typeSpec()));
+    if((subType == 0) || (ref(subType).name().string() != "pointer")) {
+        throw Exception("%s Expression is not a pointer to %s\n", err(_filename, pos).c_str(), qTypeSpec.typeSpec().name().text());
+    }
+
+    Ast::ValueInstanceExpr& valueInstanceExpr = getValueInstanceExpr(pos, qTypeSpec, ref(subType), expr);
+    return ptr(valueInstanceExpr);
+}
+
+Ast::ValueInstanceExpr* Context::aValueInstanceExpr(const Ast::Token& pos, const Ast::Expr& expr) {
+    const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(ptr(expr.qTypeSpec().typeSpec()));
+    if(templateDefn) {
+        if(ref(templateDefn).name().string() == "pointer") {
+            Ast::ValueInstanceExpr& valueInstanceExpr = getValueInstanceExpr(pos, ref(templateDefn).at(0), ref(templateDefn), expr);
+            return ptr(valueInstanceExpr);
+        }
+    }
+
+    const Ast::PointerInstanceExpr* pointerExpr = dynamic_cast<const Ast::PointerInstanceExpr*>(ptr(expr));
+    if(pointerExpr) {
+        assert(false);
+    }
+
+    printf("%s\n", typeid(expr.qTypeSpec().typeSpec()).name());
+    throw Exception("%s Expression is not a pointer to %s\n", err(_filename, pos).c_str(), expr.qTypeSpec().typeSpec().name().text());
+}
+
 Ast::TemplateDefnInstanceExpr* Context::aTemplateDefnInstanceExpr(const Ast::Token& pos, const Ast::TemplateDefn& templateDefn, const Ast::ExprList& exprList) {
-    if(templateDefn.name().string() == "pointer") {
+    std::string name = templateDefn.name().string();
+    if(name == "pointer") {
         const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
         Ast::PointerInstanceExpr& expr = _unit.addNode(new Ast::PointerInstanceExpr(qTypeSpec, templateDefn, exprList));
         return ptr(expr);
     }
+
+    if(name == "value") {
+        return aValueInstanceExpr(pos, templateDefn.at(0), exprList.at(0));
+    }
+
     throw Exception("%s Invalid template instantiation %s\n", err(_filename, pos).c_str(), templateDefn.name().text());
 }
 

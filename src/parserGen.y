@@ -669,7 +669,19 @@ rOrderedExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedE
 
 //-------------------------------------------------
 // type expression
-rExpr(L) ::= TYPEOF(B) LBRACKET rQualifiedTypeSpec(T) COMMA rExpr(E) RBRACKET. {L = ref(pctx).aTypeofExpr(B, ref(T), ref(E));}
+rExpr(L) ::= TYPEOF(B) LBRACKET rQualifiedTypeSpec(T) RBRACKET. {L = ref(pctx).aTypeofTypeExpr(B, ref(T));}
+rExpr(L) ::= TYPEOF(B) LBRACKET rExpr(E)              RBRACKET. {L = ref(pctx).aTypeofExprExpr(B, ref(E));}
+
+//-------------------------------------------------
+// type-cast expression
+rExpr(L) ::= LT(B) rQualifiedTypeSpec(T) GT rExpr(E). {L = ref(pctx).aTypecastExpr(B, ref(T), ref(E));}
+
+//-------------------------------------------------
+// address-of expression
+rExpr(L) ::= BITWISEAND(B)  rExpr(E). {L = ref(pctx).aPointerInstanceExpr(B, ref(E));}
+
+// value-of expression
+rExpr(L) ::= STAR(B) rExpr(E). {L = ref(pctx).aValueInstanceExpr(B, ref(E));}
 
 //-------------------------------------------------
 // template definition instance expression

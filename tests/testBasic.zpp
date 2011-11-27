@@ -44,9 +44,19 @@ public function (int r)testAdvancedExpr(const int& x, const MyStruct& myStruct, 
     auto v = x;
     auto m = myStruct.i;
     auto n = myEnum;
-    auto a = typeof(int, myStruct);
+    auto a = typeof(myStruct);
     auto p = pointer<MyBase>(myStruct);
-    unused(v, m, n, a, p);
+    auto w = value<MyBase>(p);
+    auto x = value<MyStruct>(p);
+    auto t = <MyStruct>p;
+    auto y = <long>v;
+
+    auto q = &myStruct;
+    auto s = &q;
+    auto z = &<MyStruct>p;
+
+    auto r = *p;
+    unused(v, m, n, a, p, w, x, y, r, s, t, q, z);
     return (67890);
 }
 
