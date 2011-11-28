@@ -91,7 +91,11 @@ static bool getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, s
         for(Ast::TemplateDefn::List::const_iterator it = ref(templateDefn).list().begin(); it != ref(templateDefn).list().end(); ++it) {
             const Ast::QualifiedTypeSpec& qTypeSpec = ref(*it);
             name += sep;
-            name += getQualifiedTypeSpecName(qTypeSpec, mode);
+            if(typeSpec.name().string() == "pointer") {
+                name += getTypeSpecName(qTypeSpec.typeSpec(), mode);
+            } else {
+                name += getQualifiedTypeSpecName(qTypeSpec, mode);
+            }
             sep = ", ";
         }
         name += "> ";

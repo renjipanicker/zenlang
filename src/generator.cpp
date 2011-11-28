@@ -217,9 +217,9 @@ private:
     }
 
     virtual void visit(const Ast::PointerInstanceExpr& node) {
-        fprintf(_fp, "pointer<%s>", getQualifiedTypeSpecName(node.templateDefn().at(0), _genMode).c_str());
+        fprintf(_fp, "pointer<%s>", getTypeSpecName(node.templateDefn().at(0).typeSpec(), _genMode).c_str());
         const Ast::Expr& expr = node.exprList().at(0);
-        fprintf(_fp, "(type(\"%s\"), ", getQualifiedTypeSpecName(expr.qTypeSpec(), _genMode).c_str());
+        fprintf(_fp, "(type(\"%s\"), ", getTypeSpecName(expr.qTypeSpec().typeSpec(), _genMode).c_str());
         ExprGenerator(_fp, _genMode).visitNode(expr);
         fprintf(_fp, ")");
     }

@@ -10,6 +10,7 @@ public function (Window::Instance window)Create(const pointer<Window::RootDefini
     }
 
     if(typeof(def) == typeof(MainFrame::Definition)) {
+        auto d = <MainFrame::Definition>def;
     }
 
     return (Window::Instance());
