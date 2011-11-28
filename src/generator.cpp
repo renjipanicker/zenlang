@@ -208,6 +208,13 @@ private:
         fprintf(_fp, ")");
     }
 
+    virtual void visit(const Ast::IndexExpr& node) {
+        visitNode(node.expr());
+        fprintf(_fp, "[");
+        visitNode(node.index());
+        fprintf(_fp, "]");
+    }
+
     virtual void visit(const Ast::TypeofTypeExpr& node) {
         fprintf(_fp, "type(\"%s\")", getQualifiedTypeSpecName(node.typeSpec(), _genMode).c_str());
     }

@@ -658,6 +658,18 @@ namespace Ast {
         const Expr& _expr;
     };
 
+    class IndexExpr : public Expr {
+    public:
+        inline IndexExpr(const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr, const Ast::Expr& index) : Expr(qTypeSpec), _expr(expr), _index(index) {}
+        inline const Expr& expr() const {return _expr;}
+        inline const Expr& index() const {return _index;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Expr& _expr;
+        const Expr& _index;
+    };
+
     class TypeofExpr : public Expr {
     protected:
         inline TypeofExpr(const QualifiedTypeSpec& qTypeSpec) : Expr(qTypeSpec) {}
@@ -905,6 +917,7 @@ namespace Ast {
         virtual void visit(const RoutineCallExpr& node) = 0;
         virtual void visit(const FunctorCallExpr& node) = 0;
         virtual void visit(const OrderedExpr& node) = 0;
+        virtual void visit(const IndexExpr& node) = 0;
         virtual void visit(const TypeofTypeExpr& node) = 0;
         virtual void visit(const TypeofExprExpr& node) = 0;
         virtual void visit(const StaticTypecastExpr& node) = 0;
@@ -932,6 +945,7 @@ namespace Ast {
     inline void RoutineCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctorCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void IndexExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TypeofTypeExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TypeofExprExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void StaticTypecastExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}

@@ -535,6 +535,7 @@ rExpr(L) ::= rFormatExpr(R).       {L = R;}
 rExpr(L) ::= rCallExpr(R).         {L = R;}
 rExpr(L) ::= rRunExpr(R).          {L = R;}
 rExpr(L) ::= rOrderedExpr(R).      {L = R;}
+rExpr(L) ::= rIndexExpr(R).        {L = R;}
 rExpr(L) ::= rVariableRefExpr(R).       {L = R;}
 rExpr(L) ::= rVariableMemberExpr(R).    {L = R;}
 rExpr(L) ::= rTypeSpecMemberExpr(R).    {L = R;}
@@ -667,6 +668,11 @@ rTreeItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(
 // ordered expression
 %type rOrderedExpr {Ast::OrderedExpr*}
 rOrderedExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedExpr(ref(innerExpr));}
+
+//-------------------------------------------------
+// index expression
+%type rIndexExpr {Ast::IndexExpr*}
+rIndexExpr(L) ::= rExpr(E) LSQUARE(B) rExpr(innerExpr) RSQUARE. {L = ref(pctx).aIndexExpr(B, ref(E), ref(innerExpr));}
 
 //-------------------------------------------------
 // type expression

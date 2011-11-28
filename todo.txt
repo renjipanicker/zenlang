@@ -6,6 +6,7 @@ positional-paramlist
 single-outparam for functions.
 void out-param, do not generate _Out
 void in-param, do not generate _In
+sizeof() function.
 
 Window::Create
 anchor

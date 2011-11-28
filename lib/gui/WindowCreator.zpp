@@ -6,7 +6,7 @@ include TextEdit;
 
 namespace WindowCreator;
 
-public function (Window::Instance window)Create(const Window::Instance& parent, const pointer<Window::RootDefinition>& def) {
+public function (Window::Instance window)Create(const Window::Instance& parent, const pointer<Window::Definition>& def) {
     switch {
         case (typeof(def) == typeof(MainFrame::Definition)): {
             auto d = <MainFrame::Definition>def;
@@ -15,7 +15,7 @@ public function (Window::Instance window)Create(const Window::Instance& parent, 
                 auto cw = WindowCreator::Create(w.window, c);
                 unused(cw, n);
                 //Window::addChild(w, n, cw);
-                //w.window.child[n] = cw;
+                w.window.child[n] = &cw.window;
             }
             return (w.window);
         }

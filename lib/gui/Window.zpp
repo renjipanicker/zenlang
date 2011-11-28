@@ -24,10 +24,7 @@ public struct Anchor {
     margin = 0;
 };
 
-public struct RootDefinition {
-};
-
-public struct Definition : RootDefinition {
+public struct Definition {
     title = "";
     position = Window::Position{};
     style = Style.Normal;
@@ -36,7 +33,7 @@ public struct Definition : RootDefinition {
     Anchor right;
     Anchor top;
     Anchor bottom;
-    dict<string, pointer<RootDefinition> > child;
+    dict<string, pointer<Definition> > child;
 };
 
 public routine Position getWindowPosition(const Instance& window) native;

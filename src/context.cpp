@@ -1170,12 +1170,32 @@ Ast::RunExpr* Context::aRunExpr(const Ast::Token& pos, const Ast::FunctorCallExp
         Ast::RunExpr& runExpr = _unit.addNode(new Ast::RunExpr(qTypeSpec, callExpr));
         return ptr(runExpr);
     }
-    throw Exception("%s Unknown functor in run expression '%s'\n", err(_filename, pos).c_str(), callExpr.expr().qTypeSpec().typeSpec().name().text());
+    throw Exception("%s Unknown functor in run expression '%s'\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(callExpr.expr().qTypeSpec(), GenMode::Import).c_str());
 }
 
 Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
     Ast::OrderedExpr& expr = _unit.addNode(new Ast::OrderedExpr(innerExpr.qTypeSpec(), innerExpr));
     return ptr(expr);
+}
+
+Ast::IndexExpr* Context::aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::Expr& index) {
+    const Ast::TypeSpec* listTypeSpec = ptr(expr.qTypeSpec().typeSpec());
+    const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(listTypeSpec);
+    if(td) {
+        if(ref(td).name().string() == "list") {
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(ref(td).at(0).isConst(), ref(td).at(0).typeSpec(), true);
+            Ast::IndexExpr& indexExpr = _unit.addNode(new Ast::IndexExpr(qTypeSpec, expr, index));
+            return ptr(indexExpr);
+        }
+
+        if(ref(td).name().string() == "dict") {
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(ref(td).at(1).isConst(), ref(td).at(1).typeSpec(), true);
+            Ast::IndexExpr& indexExpr = _unit.addNode(new Ast::IndexExpr(qTypeSpec, expr, index));
+            return ptr(indexExpr);
+        }
+    }
+
+    throw Exception("%s '%s' is not an indexable type\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(expr.qTypeSpec(), GenMode::Import).c_str());
 }
 
 Ast::TypeofTypeExpr* Context::aTypeofTypeExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec) {

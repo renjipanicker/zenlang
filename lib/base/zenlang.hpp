@@ -184,6 +184,9 @@ private:
 
 template <typename V>
 struct pointer : public Pointer<V> {
+    /// default-ctor is required when this struct is used as the value in a dict. \todo Find out way to avoid it.
+    inline pointer() : Pointer<V>(), _tname("") {}
+
     template <typename DerT>
     inline pointer(const type& tname, const DerT& val) : Pointer<V>(val), _tname(tname) {}
 
@@ -202,19 +205,20 @@ private:
     type _tname;
 };
 
-template <typename V, typename ListT>
+template <typename K, typename V, typename ListT>
 struct container {
     typedef ListT List;
     typedef typename List::iterator iterator;
     inline iterator begin() {return _list.begin();}
     inline iterator end() {return _list.end();}
+    inline V& operator[](const K& idx) {return _list[idx];}
 protected:
     List _list;
 };
 
 template <typename V>
-struct list : public container<V, std::list<V> > {
-    typedef container<V, std::list<V> > BaseT;
+struct list : public container<int, V, std::vector<V> > {
+    typedef container<int, V, std::vector<V> > BaseT;
 
     inline void add(const V& v) {BaseT::_list.push_back(v);}
     struct creator {
@@ -228,8 +232,8 @@ struct list : public container<V, std::list<V> > {
 };
 
 template <typename K, typename V>
-struct dict : public container<V, std::map<K, V> > {
-    typedef container<V, std::map<K, V> > BaseT;
+struct dict : public container<K, V, std::map<K, V> > {
+    typedef container<K, V, std::map<K, V> > BaseT;
 
     inline void add(const K& k, V v) {BaseT::_list.insert(std::pair<K, V>(k, v));}
     inline void clone(const dict& src) {
