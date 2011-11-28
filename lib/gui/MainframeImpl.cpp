@@ -20,5 +20,6 @@ const MainFrame::Create::_Out& MainFrame::Create::run(const _In& _in) {
     if(_in.def.visible) {
         Window::Show().run(Window::Show::_In(Window::Instance(impl)));
     }
-   return out(_Out(impl));
+
+    return out(_Out(Window::Instance(impl)));
 }

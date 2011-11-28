@@ -203,7 +203,7 @@ Window::Position Window::getWindowPosition(const Instance& window) {
 #if defined(WIN32)
     RECT rc;
     ::GetWindowRect(window._impl->_hWindow, &rc);
-    return Window::Position()
+    const Window::Position pos = Window::Position()
             ._x<Window::Position>(rc.left)
             ._y<Window::Position>(rc.top)
             ._w<Window::Position>(rc.right - rc.left)
@@ -212,12 +212,13 @@ Window::Position Window::getWindowPosition(const Instance& window) {
 #if defined(GTK)
     GtkRequisition req;
     gtk_widget_size_request(window._impl->_hWindow, &req);
-    return Window::Position()
+    const Window::Position pos = Window::Position()
             ._x<Window::Position>(0)
             ._y<Window::Position>(0)
             ._w<Window::Position>(req.width)
             ._h<Window::Position>(req.height);
 #endif
+    return pos;
 }
 
 Window::Position Window::getChildPosition(const Instance& window) {

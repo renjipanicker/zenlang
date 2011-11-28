@@ -4,7 +4,7 @@ include TextEdit;
 include WindowCreator;
 
 public main MyMain {
-    auto x = MainFrame::Definition {
+    auto def = MainFrame::Definition {
                 title    : "test";
                 position : Window::Position {x:10;y:10;w:400;h:200;};
                 visible  : true;
@@ -22,7 +22,7 @@ public main MyMain {
                            ];
              };
 
-    auto win = WindowCreator::Create(Window::Instance(), pointer<MainFrame::Definition>(x));
+    auto win = WindowCreator::Create(Window::Instance(), pointer<MainFrame::Definition>(def));
     unused(win);
 
 //    auto cb = win@checkBox;

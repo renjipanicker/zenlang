@@ -24,7 +24,7 @@ const TextEdit::Create::_Out& TextEdit::Create::run(const _In& _in) {
         gtk_text_buffer_set_text (buffer, _in.def.title.c_str(), -1);
     }
 #endif
-   return out(_Out(impl));
+   return out(_Out(Window::Instance(impl)));
 }
 
 const TextEdit::AppendText::_Out& TextEdit::AppendText::run(const _In& _in) {

@@ -32,7 +32,7 @@ const Button::Create::_Out& Button::Create::run(const _In& _in) {
     impl._hWindow = gtk_button_new_with_label(_in.def.title.c_str());
     Window::Native::createChildWindow(impl, _in.def, _in.parent);
 #endif
-   return out(_Out(impl));
+   return out(_Out(Window::Instance(impl)));
 }
 
 #if defined(GTK)
