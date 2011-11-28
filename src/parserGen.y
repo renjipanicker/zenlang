@@ -673,6 +673,7 @@ rOrderedExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedE
 // index expression
 %type rIndexExpr {Ast::IndexExpr*}
 rIndexExpr(L) ::= rExpr(E) LSQUARE(B) rExpr(innerExpr) RSQUARE. {L = ref(pctx).aIndexExpr(B, ref(E), ref(innerExpr));}
+//rIndexExpr(L) ::= rExpr(E) rKeyConstantExpr(innerExpr).         {L = ref(pctx).aKeyIndexExpr(B, ref(E), ref(innerExpr));}
 
 //-------------------------------------------------
 // type expression
@@ -791,7 +792,6 @@ rConstantExpr(L) ::= FLOAT_CONST  (value).  {L = ptr(ref(pctx).aConstantExpr("fl
 rConstantExpr(L) ::= DOUBLE_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("double", value));}
 rConstantExpr(L) ::= TRUE_CONST   (value).  {L = ptr(ref(pctx).aConstantExpr("bool",   value));}
 rConstantExpr(L) ::= FALSE_CONST  (value).  {L = ptr(ref(pctx).aConstantExpr("bool",   value));}
-rConstantExpr(L) ::= KEY_CONST    (value).  {L = ptr(ref(pctx).aConstantExpr("string", value));}
 rConstantExpr(L) ::= STRING_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("string", value));}
 rConstantExpr(L) ::= CHAR_CONST   (value).  {L = ptr(ref(pctx).aConstantExpr("char",   value));}
 rConstantExpr(L) ::= HEXINT_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("int",    value));}
@@ -800,6 +800,10 @@ rConstantExpr(L) ::= OCTINT_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("in
 rConstantExpr(L) ::= LHEXINT_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("long",   value));}
 rConstantExpr(L) ::= LDECINT_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("long",   value));}
 rConstantExpr(L) ::= LOCTINT_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("long",   value));}
+rConstantExpr(L) ::= rKeyConstantExpr(R).   {L = R;}
+
+%type rKeyConstantExpr {const Ast::ConstantExpr*}
+rKeyConstantExpr(L) ::= KEY_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("string", value));}
 
 /*
 //-------------------------------------------------

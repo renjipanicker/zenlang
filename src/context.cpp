@@ -1198,6 +1198,10 @@ Ast::IndexExpr* Context::aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr
     throw Exception("%s '%s' is not an indexable type\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(expr.qTypeSpec(), GenMode::Import).c_str());
 }
 
+Ast::IndexExpr* Context::aKeyIndexExpr(const Ast::Expr& expr, const Ast::ConstantExpr& index) {
+    return aIndexExpr(index.value(), expr, index);
+}
+
 Ast::TypeofTypeExpr* Context::aTypeofTypeExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec) {
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "type");
     Ast::TypeofTypeExpr& typeofExpr = _unit.addNode(new Ast::TypeofTypeExpr(qTypeSpec, typeSpec));

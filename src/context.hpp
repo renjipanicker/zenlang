@@ -211,6 +211,7 @@ public:
 
     Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
     Ast::IndexExpr*           aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::Expr& index);
+    Ast::IndexExpr*           aKeyIndexExpr(const Ast::Expr& expr, const Ast::ConstantExpr& index);
     Ast::TypeofTypeExpr*      aTypeofTypeExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec);
     Ast::TypeofExprExpr*      aTypeofExprExpr(const Ast::Token& pos, const Ast::Expr& expr);
     Ast::TypecastExpr*        aTypecastExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr);
