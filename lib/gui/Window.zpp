@@ -14,7 +14,9 @@ public struct Position {
     h = -1;
 };
 
-protected struct Instance native;
+protected struct Instance native {
+    child = [string:pointer<Instance>];
+};
 
 public struct Anchor {
     Instance window;

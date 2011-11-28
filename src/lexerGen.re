@@ -87,6 +87,7 @@ inline bool Lexer::Impl::trySendId(Scanner* s, const Ast::TypeSpec* typeSpec) {
         feedToken(token(s, ZENTOK_TEMPLATE_TYPE));
         return true;
     }
+
     if(dynamic_cast<const Ast::StructDefn*>(typeSpec) != 0) {
         feedToken(token(s, ZENTOK_STRUCT_TYPE));
         return true;

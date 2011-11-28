@@ -250,24 +250,33 @@ namespace Ast {
 
     class StructDefn : public UserDefinedTypeSpec {
     protected:
-        inline StructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::Scope& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
+        inline StructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _list(0) {}
     public:
-        inline const Ast::Scope::List& list() const {return _list.list();}
-        inline const Ast::Scope& scope() const {return _list;}
+        inline const Ast::Scope::List& list() const {return ref(_list).list();}
+        inline const Ast::Scope& scope() const {return ref(_list);}
+        inline bool hasList() const {return (_list != 0);}
+        inline void setList(const Scope& val) { _list = ptr(val);}
     private:
-        const Ast::Scope& _list;
+        const Ast::Scope* _list;
+    };
+
+    class RootStructDecl : public StructDefn {
+    public:
+        inline RootStructDecl(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : StructDefn(parent, name, defType) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
     };
 
     class RootStructDefn : public StructDefn {
     public:
-        inline RootStructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::Scope& list) : StructDefn(parent, name, defType, list) {}
+        inline RootStructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : StructDefn(parent, name, defType) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class ChildStructDefn : public StructDefn {
     public:
-        inline ChildStructDefn(const TypeSpec& parent, const StructDefn& base, const Token& name, const DefinitionType::T& defType, const Ast::Scope& list) : StructDefn(parent, name, defType, list), _base(base) {}
+        inline ChildStructDefn(const TypeSpec& parent, const StructDefn& base, const Token& name, const DefinitionType::T& defType) : StructDefn(parent, name, defType), _base(base) {}
         inline const StructDefn& base() const {return _base;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -431,6 +440,7 @@ namespace Ast {
         virtual void visit(const TemplateDecl& node) = 0;
         virtual void visit(const TemplateDefn& node) = 0;
         virtual void visit(const EnumDefn& node) = 0;
+        virtual void visit(const RootStructDecl& node) = 0;
         virtual void visit(const RootStructDefn& node) = 0;
         virtual void visit(const ChildStructDefn& node) = 0;
         virtual void visit(const RoutineDecl& node) = 0;
@@ -448,6 +458,7 @@ namespace Ast {
     inline void TemplateDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TemplateDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void EnumDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void RootStructDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RootStructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ChildStructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}

@@ -61,14 +61,15 @@ private:
 
 private:
     typedef std::list<Ast::Scope*> ScopeStack;
+    typedef std::list<Ast::Namespace*> NamespaceStack;
     typedef std::list<const Ast::StructDefn*> StructInitStack;
 
 private:
-    ScopeStack                 _scopeStack;
-    TypeSpecStack              _typeSpecStack;
-    StructInitStack            _structInitStack;
-    std::list<Ast::Namespace*> _namespaceStack;
-    const Ast::TypeSpec*       _currentTypeRef;
+    ScopeStack           _scopeStack;
+    TypeSpecStack        _typeSpecStack;
+    NamespaceStack       _namespaceStack;
+    StructInitStack      _structInitStack;
+    const Ast::TypeSpec* _currentTypeRef;
 
 public:
     void                     aUnitNamespaceId(const Ast::Token& name);
@@ -95,10 +96,11 @@ public:
     Ast::Scope*              aEnumMemberDefnList(const Ast::VariableDefn& variableDefn);
     Ast::VariableDefn*       aEnumMemberDefn(const Ast::Token& name);
     Ast::VariableDefn*       aEnumMemberDefn(const Ast::Token& name, const Ast::Expr& initExpr);
-    Ast::RootStructDefn*     aRootStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list);
-    Ast::RootStructDefn*     aRootStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
-    Ast::ChildStructDefn*    aChildStructDefn(const Ast::StructDefn& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list);
-    Ast::ChildStructDefn*    aChildStructDefn(const Ast::StructDefn& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
+    Ast::StructDefn*         aLeaveStructDecl(Ast::StructDefn& structDefn);
+    Ast::StructDefn*         aLeaveStructDefn(Ast::StructDefn& structDefn, const Ast::Scope& list);
+    Ast::StructDefn*         aLeaveStructDefn(Ast::StructDefn& structDefn);
+    Ast::StructDefn*         aEnterRootStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
+    Ast::StructDefn*         aEnterChildStructDefn(const Ast::Token& name, const Ast::StructDefn& base, const Ast::DefinitionType::T& defType);
     Ast::Scope*              aStructMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& enumMemberDefn);
     Ast::Scope*              aStructMemberDefnList(const Ast::VariableDefn& enumMemberDefn);
     Ast::RoutineDecl*        aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType);
