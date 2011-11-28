@@ -1341,10 +1341,16 @@ Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, con
 
     const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
     if(structDefn != 0) {
-        const Ast::VariableDefn* vref = hasMember(ref(structDefn).scope(), name);
-        if(vref == 0) {
-            throw Exception("%s %s is not a member of expression type '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
+        const Ast::VariableDefn* vref = 0;
+        for(StructBaseIterator sbi(structDefn); sbi.hasNext(); sbi.next()) {
+            vref = hasMember(sbi.get().scope(), name);
+            if(vref)
+                break;
         }
+        if(vref == 0) {
+            throw Exception("%s '%s' is not a member of struct '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
+        }
+
         Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(ref(vref).qualifiedTypeSpec(), expr, ref(vref)));
         return ptr(vdefExpr);
     }
@@ -1353,7 +1359,7 @@ Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, con
     if(functionRetn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(functionRetn).outScope(), name);
         if(vref == 0) {
-            throw Exception("%s %s is not a member of expression type '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
+            throw Exception("%s '%s' is not a member of function: '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
         }
         Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(ref(vref).qualifiedTypeSpec(), expr, ref(vref)));
         return ptr(vdefExpr);

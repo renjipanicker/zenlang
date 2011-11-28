@@ -9,17 +9,25 @@ public main MyMain {
                 position : Window::Position {x:10;y:10;w:400;h:200;};
                 visible  : true;
                 child    : [ string:pointer<Window::RootDefinition>,
-                             @checkBox: pointer<Button::Definition>(Button::Definition {
+                             @checkBox: &Button::Definition {
                                 title   : "Check";
                                 position: Window::Position {x:10;y:10;w:60;h:22;};
                                 left    : Window::Anchor {target:@parent;margin:10;};
-                             })
+                             },
+                             @outputBox: &TextEdit::Definition {
+                                title:"Output";
+                                position:Window::Position{x:10;y:50;w:300;h:100;};
+                                multiline:true;
+                             }
                            ];
              };
 
-    auto win = WindowCreator::Create(pointer<MainFrame::Definition>(x));
+    auto win = WindowCreator::Create(Window::Instance(), pointer<MainFrame::Definition>(x));
     unused(win);
 
+//    auto cb = win@checkBox;
+
+/*
     auto mainFrame = MainFrame::Create( MainFrame::Definition{title:"test"; position:Window::Position{x:10;y:10;w:400;h:200;}; visible:true; } );
     auto checkBtn = Button::Create(mainFrame.window,
                         Button::Definition {
@@ -43,6 +51,7 @@ public main MyMain {
         TextEdit::AppendText(outputBox.window, "hello!\n");
         return ();
     };
+*/
 
     return (0);
 }
