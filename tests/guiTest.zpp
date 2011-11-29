@@ -22,7 +22,7 @@ public main MyMain {
                            ];
              };
 
-    auto mainFrame = WindowCreator::Create(Window::Instance(), pointer<MainFrame::Definition>(def));
+    auto mainFrame = WindowCreator::Create(Window::Instance(), pointer<Window::Definition>(def));
     auto checkBtn = *(mainFrame.window.child[@checkBox]);
     auto outputBox = *(mainFrame.window.child[@outputBox]);
 

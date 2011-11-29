@@ -102,7 +102,8 @@ zen --gui \
 ../../zenlang/lib/gui/Mainframe.zpp ../../zenlang/lib/gui/MainframeImpl.cpp \
 ../../zenlang/lib/gui/Button.zpp ../../zenlang/lib/gui/ButtonImpl.cpp \
 ../../zenlang/lib/gui/TextEdit.zpp ../../zenlang/lib/gui/TextEditImpl.cpp \
-../../zenlang/tests/guiTest.zpp && cmake . && make && ./main
+../../zenlang/lib/gui/WindowCreator.zpp \
+../../zenlang/tests/guiTest.zpp && cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
 
 ==DONE==
 Remove block from unit

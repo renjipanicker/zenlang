@@ -242,9 +242,11 @@ private:
     }
 
     virtual void visit(const Ast::PointerInstanceExpr& node) {
-        fprintf(_fp, "pointer<%s>", getTypeSpecName(node.templateDefn().at(0).typeSpec(), _genMode).c_str());
         const Ast::Expr& expr = node.exprList().at(0);
-        fprintf(_fp, "(type(\"%s\"), ", getTypeSpecName(expr.qTypeSpec().typeSpec(), _genMode).c_str());
+        const std::string bname = getTypeSpecName(node.templateDefn().at(0).typeSpec(), _genMode);
+        const std::string dname = getTypeSpecName(expr.qTypeSpec().typeSpec(), _genMode);
+        fprintf(_fp, "Creator<%s, %s>::get(", bname.c_str(), dname.c_str());
+        fprintf(_fp, "type(\"%s\"), ", dname.c_str());
         ExprGenerator(_fp, _genMode).visitNode(expr);
         fprintf(_fp, ")");
     }
@@ -751,7 +753,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         if(!isTest) {
             // param-instance
             fprintf(fpDecl(node), "%s    Pointer<_Out> _out;\n", Indent::get());
-            fprintf(fpDecl(node), "%s    inline const _Out& out(const _Out& val) {_out = val; return _out.get();}\n", Indent::get());
+            fprintf(fpDecl(node), "%s    inline const _Out& out(const _Out& val) {_out = Creator<_Out, _Out>::get(val); return _out.get();}\n", Indent::get());
         }
     }
 

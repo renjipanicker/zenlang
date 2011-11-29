@@ -23,11 +23,11 @@ extern "C" {
 inline std::string undecorate(const char* name) {
     std::string uname = name;
 #if defined(_WIN32)
-    char * const dname = _unDName(0, name, 0, malloc, free, 0x2800);
-    if (dname) {
-        uname = dname;
-        free(dname);
-    }
+//    char * const dname = _unDName(0, name, 0, malloc, free, 0x2800);
+//    if (dname) {
+//        uname = dname;
+//        free(dname);
+//    }
 #else
     int status = -4;
     char* dname = abi::__cxa_demangle(name, NULL, NULL, &status);
@@ -137,27 +137,36 @@ struct Pointer {
     }
 
     inline Pointer() : _val(0) {}
+    inline Pointer(value* val) : _val(val) {}
     inline ~Pointer() {delete _val;}
 
-    template <typename DerT>
-    inline Pointer(const DerT& val) : _val(0) {
-        value* v = new valueT<DerT>(val);
-        set(v);
-    }
+//    template <typename DerT>
+//    explicit inline Pointer(const DerT& val) : _val(0) {
+//        value* v = Creator<V, DerT, valueT<DerT> >::get(val);
+//        set(v);
+//    }
 
-    inline Pointer(const Pointer& src) : _val(0) {
+    inline Pointer(const Pointer<V>& src) : _val(0) {
         if(src._val) {
             value* v = src._val->clone();
             set(v);
         }
     }
 
-    template <typename DerT>
-    inline Pointer& setVal(const DerT& val) {
-        value* v = new valueT<DerT>(val);
-        set(v);
-        return ref(this);
-    }
+//    template <typename DerT>
+//    inline Pointer(const Pointer<DerT>& src) : _val(0) {
+//        if(src._val) {
+//            value* v = src._val->clone();
+//            set(v);
+//        }
+//    }
+
+//    template <typename DerT>
+//    inline Pointer& setVal(const DerT& val) {
+//        value* v = Creator<V, DerT, valueT<DerT> >::get(val);
+//        set(v);
+//        return ref(this);
+//    }
 
     inline Pointer& operator=(const Pointer& src) {
         value* v = src._val->clone();
@@ -165,10 +174,10 @@ struct Pointer {
         return ref(this);
     }
 
-    template <typename DerT>
-    inline Pointer& operator=(const DerT& val) {
-        return setVal(val);
-    }
+//    template <typename DerT>
+//    inline Pointer& operator=(const DerT& val) {
+//        return setVal(val);
+//    }
 
 private:
     value* _val;
@@ -184,26 +193,82 @@ private:
 
 template <typename V>
 struct pointer : public Pointer<V> {
-    /// default-ctor is required when this struct is used as the value in a dict. \todo Find out way to avoid it.
+    /// default-ctor is required when this struct is used as the value in a dict.
+    /// \todo Find out way to avoid it.
     inline pointer() : Pointer<V>(), _tname("") {}
+    inline pointer(const type& tname, value* val) : Pointer<V>(val), _tname(tname) {}
 
-    template <typename DerT>
-    inline pointer(const type& tname, const DerT& val) : Pointer<V>(val), _tname(tname) {}
+    inline pointer(const pointer& src) : Pointer<V>(src), _tname(src._tname) {}
 
-    template <typename DerT>
-    inline pointer(const pointer<DerT>& src) : Pointer<V>(src.get()), _tname(src.tname()) {}
-
-    template <typename DerT>
-    inline pointer& operator=(const pointer<DerT>& val) {
-        _tname = val.tname();
-        setVal(val);
+    inline pointer& operator=(const pointer& val) {
+        _tname = val._tname;
         return ref(this);
     }
+
+
+//    template <typename DerT>
+//    inline pointer(const type& tname, const DerT& val) : Pointer<V>(val), _tname(tname) {}
+
+//    template <typename DerT>
+//    inline pointer(const pointer<DerT>& src) : Pointer<V>(src.get()), _tname(src.tname()) {}
+
+//    template <typename DerT>
+//    inline pointer& operator=(const pointer<DerT>& val) {
+//        _tname = val.tname();
+//        setVal(val);
+//        return ref(this);
+//    }
 
     inline const type& tname() const {return _tname;}
 private:
     type _tname;
 };
+
+template <typename V, typename DerT>
+struct Creator {
+    typedef typename Pointer<V>::valueT<DerT> VT;
+    static inline Pointer<V> get(const DerT& val) {
+        return Pointer<V>(new VT(val));
+    }
+    static inline pointer<V> get(const type& tname, const DerT& val) {
+        return pointer<V>(tname, new VT(val));
+    }
+};
+
+template <typename V>
+struct Creator<V, V > {
+    typedef typename Pointer<V>::valueT<V> VT;
+    static inline Pointer<V> get(const V& val) {
+        return Pointer<V>(new VT(val));
+    }
+    static inline pointer<V> get(const type& tname, const V& val) {
+        return pointer<V>(tname, new VT(val));
+    }
+};
+
+//template <typename V>
+//struct Creator<V, V > {
+//    typedef typename Pointer<V>::valueT<V> VT;
+//    static inline VT* get(const V& val) {
+//        return new VT(val);
+//    }
+//};
+
+//template <typename V, typename DerT>
+//struct Creator<V, pointer<DerT> > {
+//    typedef typename Pointer<V>::valueT<DerT> VT;
+//    static inline VT* get(const pointer<DerT>& val) {
+//        return new VT(val.get());
+//    }
+//};
+
+//template <typename V>
+//struct Creator<V, pointer<V> > {
+//    typedef typename Pointer<V>::valueT<V> VT;
+//    static inline VT* get(const pointer<V>& val) {
+//        return new VT(val.get());
+//    }
+//};
 
 template <typename K, typename V, typename ListT>
 struct container {
@@ -252,8 +317,8 @@ struct dict : public container<K, V, std::map<K, V> > {
 
         template <typename DerT>
         inline creator& add(const K& k, const DerT& dv) {
-            V v(dv);
-            _list.add(k, v);
+//            V v(dv);
+            _list.add(k, dv);
             return ref(this);
         }
         inline dict get() {return _list;}
@@ -447,7 +512,7 @@ public:
     };
 public:
     Pointer<_Out> _out;
-    inline const _Out& out(const _Out& val) {_out = val; return _out.get();}
+    inline const _Out& out(const _Out& val) {_out = Creator<_Out, _Out>::get(val); return _out.get();}
     virtual const _Out& run(const _In& _in) {
         T& t = static_cast<T&>(ref(this));
         TestResult::begin(t.name());
@@ -488,7 +553,7 @@ public:
     };
 public:
     Pointer<_Out> _out;
-    inline const _Out& out(_Out* val) {_out = val;return *_out;}
+    inline const _Out& out(_Out* val) {_out = Creator<_Out, _Out>::get(val); return *_out;}
 };
 
 struct MainInstance {
