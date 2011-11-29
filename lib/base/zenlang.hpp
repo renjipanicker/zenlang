@@ -126,6 +126,9 @@ struct Pointer {
         _val = val;
     }
 
+    inline bool has() const {return (_val != 0);}
+    inline value* clone() const {return ref(_val).clone();}
+
     inline V& get() const {
         return ref(_val).get();
     }
@@ -147,19 +150,20 @@ struct Pointer {
 //    }
 
     inline Pointer(const Pointer<V>& src) : _val(0) {
-        if(src._val) {
-            value* v = src._val->clone();
+        if(src.has()) {
+            value* v = src.clone();
             set(v);
         }
     }
 
-//    template <typename DerT>
-//    inline Pointer(const Pointer<DerT>& src) : _val(0) {
-//        if(src._val) {
-//            value* v = src._val->clone();
-//            set(v);
-//        }
-//    }
+    template <typename DerT>
+    inline Pointer(const Pointer<DerT>& src) : _val(0) {
+        if(src.has()) {
+            const DerT& d = src.get();
+            value* v = new valueT<DerT>(d);
+            set(v);
+        }
+    }
 
 //    template <typename DerT>
 //    inline Pointer& setVal(const DerT& val) {
@@ -169,7 +173,7 @@ struct Pointer {
 //    }
 
     inline Pointer& operator=(const Pointer& src) {
-        value* v = src._val->clone();
+        value* v = src.clone();
         set(v);
         return ref(this);
     }
@@ -196,7 +200,7 @@ struct pointer : public Pointer<V> {
     /// default-ctor is required when this struct is used as the value in a dict.
     /// \todo Find out way to avoid it.
     inline pointer() : Pointer<V>(), _tname("") {}
-    inline pointer(const type& tname, value* val) : Pointer<V>(val), _tname(tname) {}
+    inline pointer(const type& tname, typename Pointer<V>::value* val) : Pointer<V>(val), _tname(tname) {}
 
     inline pointer(const pointer& src) : Pointer<V>(src), _tname(src._tname) {}
 
@@ -209,8 +213,8 @@ struct pointer : public Pointer<V> {
 //    template <typename DerT>
 //    inline pointer(const type& tname, const DerT& val) : Pointer<V>(val), _tname(tname) {}
 
-//    template <typename DerT>
-//    inline pointer(const pointer<DerT>& src) : Pointer<V>(src.get()), _tname(src.tname()) {}
+    template <typename DerT>
+    inline pointer(const pointer<DerT>& src) : Pointer<V>(src), _tname(src.tname()) {}
 
 //    template <typename DerT>
 //    inline pointer& operator=(const pointer<DerT>& val) {
@@ -226,7 +230,7 @@ private:
 
 template <typename V, typename DerT>
 struct Creator {
-    typedef typename Pointer<V>::valueT<DerT> VT;
+    typedef typename Pointer<V>::template valueT<DerT> VT;
     static inline Pointer<V> get(const DerT& val) {
         return Pointer<V>(new VT(val));
     }
@@ -235,16 +239,16 @@ struct Creator {
     }
 };
 
-template <typename V>
-struct Creator<V, V > {
-    typedef typename Pointer<V>::valueT<V> VT;
-    static inline Pointer<V> get(const V& val) {
-        return Pointer<V>(new VT(val));
-    }
-    static inline pointer<V> get(const type& tname, const V& val) {
-        return pointer<V>(tname, new VT(val));
-    }
-};
+//template <typename V>
+//struct Creator<V, V > {
+//    typedef typename Pointer<V>::template valueT<V> VT;
+//    static inline Pointer<V> get(const V& val) {
+//        return Pointer<V>(new VT(val));
+//    }
+//    static inline pointer<V> get(const type& tname, const V& val) {
+//        return pointer<V>(tname, new VT(val));
+//    }
+//};
 
 //template <typename V>
 //struct Creator<V, V > {
