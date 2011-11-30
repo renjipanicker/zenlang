@@ -1,6 +1,7 @@
 #pragma once
 
 struct Window::Instance::Impl {
+    inline Impl() {}
 #if defined(WIN32)
     HWND _hWindow;
 #endif
@@ -8,6 +9,9 @@ struct Window::Instance::Impl {
     GtkWidget* _hWindow;
     GtkWidget* _hFixed;
 #endif
+    Window::ChildList _childList;
+private:
+    inline Impl(const Impl& src) {}
 };
 
 namespace Window {

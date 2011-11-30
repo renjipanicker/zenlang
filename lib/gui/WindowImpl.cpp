@@ -243,6 +243,10 @@ Window::Position Window::getChildPosition(const Instance& window) {
 #endif
 }
 
+Window::ChildList& Window::childList(const Window::Instance& window) {
+    return ref(window._impl)._childList;
+}
+
 const Window::Delete::_Out& Window::Delete::run(const _In& _in) {
     delete _in.window._impl;
    //_in.window._impl = 0;

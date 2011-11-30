@@ -181,11 +181,21 @@ namespace Ast {
         const DefinitionType::T _defType;
     };
 
-    class TypedefDefn : public UserDefinedTypeSpec {
+    class TypedefDecl : public UserDefinedTypeSpec {
     public:
-        inline TypedefDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType) {}
+        inline TypedefDecl(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType) {}
     private:
         virtual void visit(Visitor& visitor) const;
+    };
+
+    class TypedefDefn : public UserDefinedTypeSpec {
+    public:
+        inline TypedefDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::QualifiedTypeSpec& qTypeSpec) : UserDefinedTypeSpec(parent, name, defType), _qTypeSpec(qTypeSpec) {}
+        inline const Ast::QualifiedTypeSpec& qTypeSpec() const {return _qTypeSpec;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ast::QualifiedTypeSpec& _qTypeSpec;
     };
 
     class TemplatePartList : public Node {
@@ -436,6 +446,7 @@ namespace Ast {
             }
         }
 
+        virtual void visit(const TypedefDecl& node) = 0;
         virtual void visit(const TypedefDefn& node) = 0;
         virtual void visit(const TemplateDecl& node) = 0;
         virtual void visit(const TemplateDefn& node) = 0;
@@ -454,6 +465,7 @@ namespace Ast {
         virtual void visit(const Root& node) = 0;
     };
 
+    inline void TypedefDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TypedefDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TemplateDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TemplateDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}

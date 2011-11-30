@@ -23,8 +23,8 @@ public main MyMain {
              };
 
     auto mainFrame = WindowCreator::Create(Window::Instance(), pointer<Window::Definition>(def));
-    auto checkBtn = *(mainFrame.window.child[@checkBox]);
-    auto outputBox = *(mainFrame.window.child[@outputBox]);
+    auto checkBtn = Window::childList(mainFrame.window)[@checkBox];
+    auto outputBox = Window::childList(mainFrame.window)[@outputBox];
 
     Window::OnResize(mainFrame.window) => Window::OnResize::Handler {
         auto pp = Window::getWindowPosition(mainFrame.window);
@@ -40,6 +40,5 @@ public main MyMain {
         TextEdit::AppendText(outputBox, "hello!\n");
         return ();
     };
-
     return (0);
 }

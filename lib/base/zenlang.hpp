@@ -14,6 +14,18 @@ inline T* ptr(T& t) {
     return &t;
 }
 
+template <typename T>
+inline std::string ppad(const T* t) {
+    std::stringstream ss;
+    ss << std::setw(16) << (unsigned long)(t);
+    return ss.str();
+}
+
+template <typename T>
+inline std::string rpad(const T& t) {
+    return ppad(ptr(t));
+}
+
 #if defined(_WIN32)
 extern "C" {
     char* _unDName(char* outputString, const char* name, int maxStringLength, void* (*pAlloc)(size_t), void (*pFree)(void*), unsigned short disableFlags);
@@ -130,6 +142,7 @@ struct Pointer {
     inline value* clone() const {return ref(_val).clone();}
 
     inline V& get() const {
+        printf("get-pntr(%s) val = %s\n", ppad(this).c_str(), ppad(_val).c_str());
         return ref(_val).get();
     }
 
@@ -139,21 +152,29 @@ struct Pointer {
         return static_cast<DerT&>(v);
     }
 
-    inline Pointer() : _val(0) {}
-    inline Pointer(value* val) : _val(val) {}
-    inline ~Pointer() {delete _val;}
+    inline Pointer() : _val(0) {
+        printf("def-ctor(%s) val = %s\n", ppad(this).c_str(), ppad(_val).c_str());
+        if(_val == 0) {
+            int x = 0;
+            unused(x);
+        }
+    }
 
-//    template <typename DerT>
-//    explicit inline Pointer(const DerT& val) : _val(0) {
-//        value* v = Creator<V, DerT, valueT<DerT> >::get(val);
-//        set(v);
-//    }
+    inline Pointer(value* val) : _val(val) {
+        printf("val-ctor(%s) val = %s\n", ppad(this).c_str(), ppad(_val).c_str());
+    }
+
+    inline ~Pointer() {
+        printf("def-dtor(%s) val = %s\n", ppad(this).c_str(), ppad(_val).c_str());
+        delete _val;
+    }
 
     inline Pointer(const Pointer<V>& src) : _val(0) {
         if(src.has()) {
             value* v = src.clone();
             set(v);
         }
+        printf("cpy-ctor(%s) val = %s, src = %s\n", ppad(this).c_str(), ppad(_val).c_str(), rpad(src).c_str());
     }
 
     template <typename DerT>
@@ -163,7 +184,21 @@ struct Pointer {
             value* v = new valueT<DerT>(d);
             set(v);
         }
+        printf("tcp-ctor(%s) val = %s, src = %s\n", ppad(this).c_str(), ppad(_val).c_str(), rpad(src).c_str());
     }
+
+    inline Pointer& operator=(const Pointer& src) {
+        value* v = src.clone();
+        set(v);
+        printf("ass-oper(%s) val = %s, src = %s\n", ppad(this).c_str(), ppad(_val).c_str(), rpad(src).c_str());
+        return ref(this);
+    }
+
+//    template <typename DerT>
+//    explicit inline Pointer(const DerT& val) : _val(0) {
+//        value* v = Creator<V, DerT, valueT<DerT> >::get(val);
+//        set(v);
+//    }
 
 //    template <typename DerT>
 //    inline Pointer& setVal(const DerT& val) {
@@ -171,12 +206,6 @@ struct Pointer {
 //        set(v);
 //        return ref(this);
 //    }
-
-    inline Pointer& operator=(const Pointer& src) {
-        value* v = src.clone();
-        set(v);
-        return ref(this);
-    }
 
 //    template <typename DerT>
 //    inline Pointer& operator=(const DerT& val) {
@@ -201,20 +230,17 @@ struct pointer : public Pointer<V> {
     /// \todo Find out way to avoid it.
     inline pointer() : Pointer<V>(), _tname("") {}
     inline pointer(const type& tname, typename Pointer<V>::value* val) : Pointer<V>(val), _tname(tname) {}
-
     inline pointer(const pointer& src) : Pointer<V>(src), _tname(src._tname) {}
-
     inline pointer& operator=(const pointer& val) {
         _tname = val._tname;
         return ref(this);
     }
 
+    template <typename DerT>
+    inline pointer(const pointer<DerT>& src) : Pointer<V>(src), _tname(src.tname()) {}
 
 //    template <typename DerT>
 //    inline pointer(const type& tname, const DerT& val) : Pointer<V>(val), _tname(tname) {}
-
-    template <typename DerT>
-    inline pointer(const pointer<DerT>& src) : Pointer<V>(src), _tname(src.tname()) {}
 
 //    template <typename DerT>
 //    inline pointer& operator=(const pointer<DerT>& val) {
@@ -274,20 +300,23 @@ struct Creator {
 //    }
 //};
 
-template <typename K, typename V, typename ListT>
+template <typename V, typename ListT>
 struct container {
     typedef ListT List;
     typedef typename List::iterator iterator;
     inline iterator begin() {return _list.begin();}
     inline iterator end() {return _list.end();}
-    inline V& operator[](const K& idx) {return _list[idx];}
 protected:
     List _list;
 };
 
 template <typename V>
-struct list : public container<int, V, std::vector<V> > {
-    typedef container<int, V, std::vector<V> > BaseT;
+struct list : public container<V, std::vector<V> > {
+    typedef container<V, std::vector<V> > BaseT;
+
+    inline V& operator[](const uint& idx) {
+        return BaseT::_list[idx];
+    }
 
     inline void add(const V& v) {BaseT::_list.push_back(v);}
     struct creator {
@@ -301,10 +330,18 @@ struct list : public container<int, V, std::vector<V> > {
 };
 
 template <typename K, typename V>
-struct dict : public container<K, V, std::map<K, V> > {
-    typedef container<K, V, std::map<K, V> > BaseT;
+struct dict : public container<V, std::map<K, V> > {
+    typedef container<V, std::map<K, V> > BaseT;
 
-    inline void add(const K& k, V v) {BaseT::_list.insert(std::pair<K, V>(k, v));}
+    inline V& operator[](const K& idx) {
+        typename BaseT::iterator it = BaseT::_list.find(idx);
+        if(it == BaseT::_list.end()) {
+            throw Exception("%s Index %s not found in dict\n", ppad(this).c_str(), idx.c_str());
+        }
+        return it->second;
+    }
+
+    inline void add(const K& k, V v) {BaseT::_list.insert(std::pair<K, V>(k, v));printf("*** %s add %s\n", ppad(this).c_str(), k.c_str());}
     inline void clone(const dict& src) {
         for(typename BaseT::List::const_iterator it = src._list.begin(); it != src._list.end(); ++it) {
             const K& k = it->first;
@@ -316,6 +353,7 @@ struct dict : public container<K, V, std::map<K, V> > {
     struct creator {
         inline creator& add(const K& k, const V& v) {
             _list.add(k, v);
+            printf("%s add %s\n", ppad(this).c_str(), k.c_str());
             return ref(this);
         }
 

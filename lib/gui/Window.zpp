@@ -15,8 +15,9 @@ public struct Position {
 };
 
 protected struct Instance native {
-    child = [string:pointer<Instance>];
 };
+
+public typedef ChildList dict<string,Instance>;
 
 public struct Anchor {
     Instance window;
@@ -38,6 +39,7 @@ public struct Definition {
 
 public routine Position getWindowPosition(const Instance& window) native;
 public routine Position getChildPosition(const Instance& window) native;
+public routine ChildList& childList(const Instance& window) native;
 
 public function ()Delete(const Instance& window) native;
 public function ()SetTitle(const Instance& window, const string& title) native;

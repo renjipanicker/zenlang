@@ -352,6 +352,15 @@ inline Ast::ValueInstanceExpr& Context::getValueInstanceExpr(const Ast::Token& p
     return valueInstanceExpr;
 }
 
+inline const Ast::TypeSpec* Context::resolveTypedef(const Ast::TypeSpec& typeSpec) {
+    const Ast::TypeSpec* subType = ptr(typeSpec);
+    for(const Ast::TypedefDefn* td = dynamic_cast<const Ast::TypedefDefn*>(subType);td != 0; td = dynamic_cast<const Ast::TypedefDefn*>(subType)) {
+        const Ast::QualifiedTypeSpec& qTypeSpec = ref(td).qTypeSpec();
+        subType = ptr(qTypeSpec.typeSpec());
+    }
+    return subType;
+}
+
 ////////////////////////////////////////////////////////////
 void Context::aUnitNamespaceId(const Ast::Token &name) {
     Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(currentTypeSpec(), name));
@@ -425,8 +434,14 @@ void Context::aGlobalDefaultStatement(const Ast::TypeSpec& typeSpec, const Ast::
     _unit.addDefaultValue(typeSpec, expr);
 }
 
-Ast::TypedefDefn* Context::aTypedefDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
-    Ast::TypedefDefn& typedefDefn = _unit.addNode(new Ast::TypedefDefn(currentTypeSpec(), name, defType));
+Ast::TypedefDecl* Context::aTypedefDecl(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    Ast::TypedefDecl& typedefDefn = _unit.addNode(new Ast::TypedefDecl(currentTypeSpec(), name, defType));
+    currentTypeSpec().addChild(typedefDefn);
+    return ptr(typedefDefn);
+}
+
+Ast::TypedefDefn* Context::aTypedefDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::QualifiedTypeSpec& qTypeSpec) {
+    Ast::TypedefDefn& typedefDefn = _unit.addNode(new Ast::TypedefDefn(currentTypeSpec(), name, defType, qTypeSpec));
     currentTypeSpec().addChild(typedefDefn);
     return ptr(typedefDefn);
 }
@@ -1179,7 +1194,7 @@ Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
 }
 
 Ast::IndexExpr* Context::aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::Expr& index) {
-    const Ast::TypeSpec* listTypeSpec = ptr(expr.qTypeSpec().typeSpec());
+    const Ast::TypeSpec* listTypeSpec = resolveTypedef(expr.qTypeSpec().typeSpec());
     const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(listTypeSpec);
     if(td) {
         if(ref(td).name().string() == "list") {

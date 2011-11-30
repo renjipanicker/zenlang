@@ -15,7 +15,8 @@ public function (Window::Instance window)Create(const Window::Instance& parent, 
                 auto cw = WindowCreator::Create(w.window, c);
                 unused(cw, n);
                 //Window::addChild(w, n, cw);
-                w.window.child[n] = &cw.window;
+                print "child name: " + n + "\n";
+                Window::childList(w.window)[n] = cw.window;
             }
             return (w.window);
         }

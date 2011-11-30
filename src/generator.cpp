@@ -344,9 +344,16 @@ struct ImportGenerator : public Ast::TypeSpec::Visitor {
         visitChildren(node);
     }
 
-    void visit(const Ast::TypedefDefn& node) {
+    void visit(const Ast::TypedefDecl& node) {
         if(node.accessType() == Ast::AccessType::Public) {
             fprintf(_fpImp, "public typedef %s%s;\n", node.name().text(), getDefinitionType(node.defType()).c_str());
+        }
+        visitChildrenIndent(node);
+    }
+
+    void visit(const Ast::TypedefDefn& node) {
+        if(node.accessType() == Ast::AccessType::Public) {
+            fprintf(_fpImp, "public typedef %s%s %s;\n", node.name().text(), getDefinitionType(node.defType()).c_str(), getQualifiedTypeSpecName(node.qTypeSpec(), GenMode::Import).c_str());
         }
         visitChildrenIndent(node);
     }
@@ -532,9 +539,17 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         visitChildren(node);
     }
 
-    void visit(const Ast::TypedefDefn& node) {
+    void visit(const Ast::TypedefDecl& node) {
         if(node.defType() == Ast::DefinitionType::Native) {
             fprintf(fpDecl(node), "%s// typedef %s native;\n", Indent::get(), node.name().text());
+        } else {
+            throw Exception("Internal error '%s'\n", node.name().text());
+        }
+    }
+
+    void visit(const Ast::TypedefDefn& node) {
+        if(node.defType() != Ast::DefinitionType::Native) {
+            fprintf(fpDecl(node), "%stypedef %s %s;\n", Indent::get(), getQualifiedTypeSpecName(node.qTypeSpec(), GenMode::Normal).c_str(), node.name().text());
         } else {
             throw Exception("Internal error '%s'\n", node.name().text());
         }
@@ -1122,6 +1137,10 @@ struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
     inline void visitChildrenIndent(const Ast::TypeSpec& node) {
         INDENT;
         visitChildren(node);
+    }
+
+    void visit(const Ast::TypedefDecl& node) {
+        visitChildrenIndent(node);
     }
 
     void visit(const Ast::TypedefDefn& node) {

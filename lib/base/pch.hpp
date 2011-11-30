@@ -67,6 +67,7 @@
     #include <list>
     #include <map>
     #include <iostream>
+    #include <iomanip>
     #include <sstream>
 #endif // __cplusplus
 
