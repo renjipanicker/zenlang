@@ -12,6 +12,7 @@ sizeof() function.
 bug-fix multiple #includes in guiTest.cpp
 "c++" as output code
 "cmake" as output project
+fix indents in definition-generator
 
 process
 application

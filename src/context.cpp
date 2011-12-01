@@ -536,7 +536,9 @@ Ast::Scope* Context::aStructMemberDefnList(const Ast::VariableDefn& enumMemberDe
 
 Ast::RoutineDecl* Context::aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType) {
     Ast::RoutineDecl& routineDecl = _unit.addNode(new Ast::RoutineDecl(currentTypeSpec(), outType, name, in, defType));
-    currentTypeSpec().addChild(routineDecl);
+    if(defType == Ast::DefinitionType::Native) {
+        currentTypeSpec().addChild(routineDecl);
+    }
     return ptr(routineDecl);
 }
 

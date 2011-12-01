@@ -6,8 +6,16 @@ include TextEdit;
 
 namespace WindowCreator;
 
-private routine void processWindow(const Window::Instance& window, Window::Definition& def) {
+/*
+private routine Window::Instance createWindow(const Window::Instance& parent, const pointer<Window::Definition>& def);
+
+private routine void processWindow(const Window::Instance& parent, Window::Definition& def) {
+    foreach(n,c in def.child) {
+        auto cw = createWindow(parent, c);
+        Window::childList(parent)[n] = cw;
+    }
 }
+*/
 
 private routine Window::Instance createWindow(const Window::Instance& parent, const pointer<Window::Definition>& def) {
     switch {

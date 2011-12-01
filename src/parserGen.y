@@ -234,7 +234,7 @@ rStructMemberDefnList(L) ::=                             rVariableDefn(variableD
 //-------------------------------------------------
 // routine declarations
 %type rRoutineDecl {Ast::RoutineDecl*}
-rRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) ID(name) rInParamsList(in) NATIVE SEMI. {L = ref(pctx).aRoutineDecl(ref(out), name, ref(in), Ast::DefinitionType::Native);}
+rRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) ID(name) rInParamsList(in) rDefinitionType(D) SEMI. {L = ref(pctx).aRoutineDecl(ref(out), name, ref(in), D);}
 
 //-------------------------------------------------
 // routine declarations
@@ -243,7 +243,7 @@ rRoutineDefn(L) ::= rEnterRoutineDefn(routineDefn) rCompoundStatement(block). {L
 
 //-------------------------------------------------
 %type rEnterRoutineDefn {Ast::RoutineDefn*}
-rEnterRoutineDefn(L) ::= ROUTINE rQualifiedTypeSpec(out) ID(name) rInParamsList(in). {L = ref(pctx).aEnterRoutineDefn(ref(out), name, ref(in), Ast::DefinitionType::Direct);}
+rEnterRoutineDefn(L) ::= ROUTINE rQualifiedTypeSpec(out) ID(name) rInParamsList(in) rDefinitionType(D). {L = ref(pctx).aEnterRoutineDefn(ref(out), name, ref(in), D);}
 
 //-------------------------------------------------
 // function definition
