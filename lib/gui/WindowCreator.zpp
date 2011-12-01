@@ -6,6 +6,35 @@ include TextEdit;
 
 namespace WindowCreator;
 
+private routine void processWindow(const Window::Instance& window, Window::Definition& def) {
+}
+
+private routine Window::Instance createWindow(const Window::Instance& parent, const pointer<Window::Definition>& def) {
+    switch {
+        case (typeof(def) == typeof(MainFrame::Definition)): {
+            auto d = <MainFrame::Definition>def;
+            auto w = MainFrame::Create(d);
+            foreach(n,c in d.child) {
+                auto cw = createWindow(w.window, c);
+                Window::childList(w.window)[n] = cw;
+            }
+            return w.window;
+        }
+        case (typeof(def) == typeof(Button::Definition)): {
+            auto d = <Button::Definition>def;
+            auto w = Button::Create(parent, d);
+            return w.window;
+        }
+        case (typeof(def) == typeof(TextEdit::Definition)): {
+            auto d = <TextEdit::Definition>def;
+            auto w = TextEdit::Create(parent, d);
+            return w.window;
+        }
+    }
+
+    return Window::Instance();
+}
+
 public function (Window::Instance window)Create(const Window::Instance& parent, const pointer<Window::Definition>& def) {
     switch {
         case (typeof(def) == typeof(MainFrame::Definition)): {
