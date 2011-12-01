@@ -35,8 +35,9 @@ Window::Instance::Impl& createChildWindow(const Window::Definition& def, const s
 #endif
 
 #if defined(GTK)
+Window::Instance::Impl& initWindowImpl(GtkWidget* hwnd);
 Window::Instance::Impl& createWindow(const Window::Definition& def, GtkWidget *parent);
-void createChildWindow(Window::Instance::Impl& impl, const Window::Definition& def, const Window::Instance& parent);
+Window::Instance::Impl& createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const Window::Instance& parent);
 #endif
 
 }

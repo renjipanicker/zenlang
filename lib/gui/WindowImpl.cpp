@@ -189,19 +189,26 @@ Window::Instance::Impl& Window::Native::createChildWindow(const Window::Definiti
 #endif
 
 #if defined(GTK)
-Window::Instance::Impl& Window::Native::createWindow(const Window::Definition& def, GtkWidget *parent) {
-    unused(parent);
+Window::Instance::Impl& Window::Native::initWindowImpl(GtkWidget* hwnd) {
     Window::Instance::Impl* impl = new Window::Instance::Impl();
-    ref(impl)._hWindow = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    g_object_set_data(ref(impl)._hWindow, "impl", impl);
-    gtk_window_set_title (GTK_WINDOW (impl._hWindow), def.title.c_str());
+    ref(impl)._hWindow = hwnd;
     ref(impl)._hFixed = 0;
+    g_object_set_data(G_OBJECT(ref(impl)._hWindow), "impl", impl);
     return ref(impl);
 }
 
-void Window::Native::createChildWindow(Window::Instance::Impl& impl, const Window::Definition& def, const Window::Instance& parent) {
-    gtk_fixed_put (GTK_FIXED (ref(parent._impl)._hFixed), impl._hWindow, def.position.x, def.position.y);
+Window::Instance::Impl& Window::Native::createWindow(const Window::Definition& def, GtkWidget *parent) {
+    unused(parent);
+    GtkWidget* hwnd = gtk_window_new (GTK_WINDOW_TOPLEVEL);
+    Window::Instance::Impl& impl = initWindowImpl(hwnd);
+    return impl;
+}
+
+Window::Instance::Impl& Window::Native::createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const Window::Instance& parent) {
+    gtk_fixed_put (GTK_FIXED (ref(parent._impl)._hFixed), hwnd, def.position.x, def.position.y);
+    Window::Instance::Impl& impl = initWindowImpl(hwnd);
     gtk_widget_show(impl._hWindow);
+    return impl;
 }
 #endif
 

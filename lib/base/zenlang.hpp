@@ -99,6 +99,31 @@ inline void trace(const char* txt, ...) {
 #define trace(x)
 #endif
 
+namespace String {
+    inline void replace(std::string& text, const std::string& search, const std::string& replace) {
+        for(std::string::size_type next = text.find(search); next != std::string::npos;next = text.find(search, next)) {
+            text.replace(next, search.length(), replace);
+            next += replace.length();
+        }
+    }
+}
+
+struct Formatter {
+    inline Formatter(const std::string& text) : _text(text) {}
+    template <typename T>
+    inline Formatter& add(const std::string& key, T value) {
+        std::stringstream ss;
+        ss << value;
+        std::string replace = ss.str();
+        std::string search = "%{" + key + "}";
+        String::replace(_text, search, replace);
+        return ref(this);
+    }
+    inline std::string get() {return _text;}
+private:
+    std::string _text;
+};
+
 class Exception {
 public:
     inline Exception(const char* txt, ...) {
@@ -107,6 +132,7 @@ public:
         _msg = ssprintfv(txt, vlist);
         trace("%s\n", _msg.c_str());
     }
+    inline Exception(const std::string& msg) : _msg(msg) {}
 
 private:
     std::string _msg;
@@ -293,25 +319,48 @@ struct Creator {
 //    }
 //};
 
-template <typename V, typename ListT>
+template <typename K, typename V, typename ListT>
 struct container {
     typedef ListT List;
     typedef typename List::iterator iterator;
     inline iterator begin() {return _list.begin();}
     inline iterator end() {return _list.end();}
+
+    inline V& get(const K& idx) {
+        iterator it = _list.find(idx);
+        if(it == _list.end()) {
+            throw Exception(Formatter("%{idx} not found\n").add("idx", idx).get());
+        }
+        return it->second;
+    }
+
+    inline void set(const K& k, V v) {
+        _list.insert(std::pair<K, V>(k, v));
+    }
+
+    inline V& operator[](const K& idx) {return get(idx);}
+
+    inline void clone(const container& src) {
+        for(typename List::const_iterator it = src._list.begin(); it != src._list.end(); ++it) {
+            const K& k = it->first;
+            const V& v = it->second;
+            set(k, v);
+        }
+    }
+
 protected:
     List _list;
 };
 
 template <typename V>
-struct list : public container<V, std::vector<V> > {
-    typedef container<V, std::vector<V> > BaseT;
+struct list : public container<size_t, V, std::map<size_t, V> > {
+    typedef container<size_t, V, std::map<size_t, V> > BaseT;
 
-    inline V& operator[](const unsigned int& idx) {
-        return BaseT::_list[idx];
+    inline void add(const V& v) {
+        size_t k = BaseT::_list.size();
+        BaseT::set(k, v);
     }
 
-    inline void add(const V& v) {BaseT::_list.push_back(v);}
     struct creator {
         inline creator& add(const V& v) {
             _list.add(v);
@@ -323,66 +372,24 @@ struct list : public container<V, std::vector<V> > {
 };
 
 template <typename K, typename V>
-struct dict : public container<V, std::map<K, V> > {
-    typedef container<V, std::map<K, V> > BaseT;
-
-    inline V& operator[](const K& idx) {
-        typename BaseT::iterator it = BaseT::_list.find(idx);
-        if(it == BaseT::_list.end()) {
-            throw Exception("%s Index %s not found in dict\n", ppad(this).c_str(), idx.c_str());
-        }
-        return it->second;
-    }
-
-    inline void add(const K& k, V v) {BaseT::_list.insert(std::pair<K, V>(k, v));}
-    inline void clone(const dict& src) {
-        for(typename BaseT::List::const_iterator it = src._list.begin(); it != src._list.end(); ++it) {
-            const K& k = it->first;
-            const V& v = it->second;
-            add(k, v);
-        }
-    }
+struct dict : public container<K, V, std::map<K, V> > {
+    typedef container<K, V, std::map<K, V> > BaseT;
 
     struct creator {
         inline creator& add(const K& k, const V& v) {
-            _list.add(k, v);
+            _list.set(k, v);
             return ref(this);
         }
 
-        template <typename DerT>
-        inline creator& add(const K& k, const DerT& dv) {
-//            V v(dv);
-            _list.add(k, dv);
-            return ref(this);
-        }
+//        template <typename DerT>
+//        inline creator& add(const K& k, const DerT& v) {
+//            _list.add(k, v);
+//            return ref(this);
+//        }
+
         inline dict get() {return _list;}
         dict _list;
     };
-};
-
-namespace String {
-    inline void replace(std::string& text, const std::string& search, const std::string& replace) {
-        for(std::string::size_type next = text.find(search); next != std::string::npos;next = text.find(search, next)) {
-            text.replace(next, search.length(), replace);
-            next += replace.length();
-        }
-    }
-}
-
-struct Formatter {
-    inline Formatter(const std::string& text) : _text(text) {}
-    template <typename T>
-    inline Formatter& add(const std::string& key, T value) {
-        std::stringstream ss;
-        ss << value;
-        std::string replace = ss.str();
-        std::string search = "%{" + key + "}";
-        String::replace(_text, search, replace);
-        return ref(this);
-    }
-    inline std::string get() {return _text;}
-private:
-    std::string _text;
 };
 
 struct Future {

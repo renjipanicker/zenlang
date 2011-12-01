@@ -80,6 +80,15 @@ private:
         visitNode(node.rhs());
     }
 
+    virtual void visit(const Ast::SetIndexExpr& node) {
+        visitNode(node.lhs().expr());
+        fprintf(_fp, ".set(");
+        visitNode(node.lhs().index());
+        fprintf(_fp, ", ");
+        visitNode(node.rhs());
+        fprintf(_fp, ")");
+    }
+
     virtual void visit(const Ast::PostfixOpExpr& node) {
         visitNode(node.lhs());
         fprintf(_fp, "%s", node.op().text());
@@ -1006,7 +1015,7 @@ private:
         ExprGenerator(_fpSrc, GenMode::Normal).visitNode(node.expr());
         fprintf(_fpSrc, ";\n");
         fprintf(_fpSrc, "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GenMode::Normal).c_str(), constit.c_str());
-        fprintf(_fpSrc, "%s%s& %s = *_it;\n", Indent::get(), vtype.c_str(), node.valDef().name().text());
+        fprintf(_fpSrc, "%s%s& %s = _it->second;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.valDef().name().text());
         visitNode(node.block());
         fprintf(_fpSrc, "%s}\n", Indent::get());
         fprintf(_fpSrc, "%s}\n", Indent::get());
