@@ -1036,7 +1036,7 @@ Ast::Expr& Context::aBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, cons
     const Ast::QualifiedTypeSpec& qTypeSpec = coerce(op, lhs.qTypeSpec(), rhs.qTypeSpec());
 
     // if it is any of the assign-ops (=, +=, *=, etc). Check if last char is '='
-    if(op.string().at(op.string().size() - 1) == "=") {
+    if(op.string().at(op.string().size() - 1) == '=') {
         const Ast::IndexExpr* indexExpr = dynamic_cast<const Ast::IndexExpr*>(ptr(lhs));
         if(indexExpr) {
             Ast::SetIndexExpr& expr = _unit.addNode(new Ast::SetIndexExpr(qTypeSpec, ref(indexExpr), rhs));
