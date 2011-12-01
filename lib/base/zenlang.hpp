@@ -332,7 +332,7 @@ struct FutureT : public Future {
     FutureT(const FunctionT& function, const typename FunctionT::_In& in) : _function(function), _in(in) {}
     FunctionT _function;
     typename FunctionT::_In _in;
-    virtual void run() {_function.run(_in);}
+    virtual void run() {_function._run(_in);}
 };
 
 template <typename FunctionT>
@@ -485,10 +485,11 @@ public:
 public:
     Pointer<_Out> _out;
     inline const _Out& out(const _Out& val) {_out = Creator<_Out, _Out>::get(val); return _out.get();}
-    virtual const _Out& run(const _In& _in) {
+    virtual const _Out& _run(const _In& _in) {
+        unused(_in);
         T& t = static_cast<T&>(ref(this));
         TestResult::begin(t.name());
-        const _Out& out = t.test(_in);
+        const _Out& out = t.test();
         TestResult::end(t.name(), out._passed);
         return out;
     }
@@ -520,8 +521,8 @@ struct main_ {
     };
 public:
     struct _In {
-        inline _In(const ArgList& argl) : _argl(argl) {}
-        ArgList _argl;
+        inline _In(const ArgList& pargl) : argl(pargl) {}
+        ArgList argl;
     };
 public:
     Pointer<_Out> _out;

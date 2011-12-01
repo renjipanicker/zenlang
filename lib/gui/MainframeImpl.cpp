@@ -3,15 +3,15 @@
 #include "WindowImpl.hpp"
 #include "Mainframe.hpp"
 
-const MainFrame::Create::_Out& MainFrame::Create::run(const _In& _in) {
+const MainFrame::Create::_Out& MainFrame::Create::run(const MainFrame::Definition& def) {
 #if defined(WIN32)
-    Window::Instance::Impl& impl = Window::Native::createMainFrame(_in.def, WS_OVERLAPPEDWINDOW, WS_EX_WINDOWEDGE);
+    Window::Instance::Impl& impl = Window::Native::createMainFrame(def, WS_OVERLAPPEDWINDOW, WS_EX_WINDOWEDGE);
     ::PostMessage(impl._hWindow, WM_SIZE, 0, 0);
 #endif
 #if defined(GTK)
-    Window::Instance::Impl& impl = Window::Native::createWindow(_in.def, 0);
-    if((_in.def.position.w != -1) && (_in.def.position.h != -1))
-        gtk_widget_set_size_request (impl._hWindow, _in.def.position.w, _in.def.position.h);
+    Window::Instance::Impl& impl = Window::Native::createWindow(def, 0);
+    if((def.position.w != -1) && (def.position.h != -1))
+        gtk_widget_set_size_request (impl._hWindow, def.position.w, def.position.h);
 
     impl._hFixed = gtk_fixed_new();
     gtk_container_add(GTK_CONTAINER(impl._hWindow), impl._hFixed);
@@ -19,8 +19,8 @@ const MainFrame::Create::_Out& MainFrame::Create::run(const _In& _in) {
 #endif
     Window::Instance win;
     win.impl(impl);
-    if(_in.def.visible) {
-        Window::Show().run(Window::Show::_In(win));
+    if(def.visible) {
+        Window::Show().run(win);
     }
 
     return out(_Out(win));

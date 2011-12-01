@@ -222,15 +222,18 @@ inline const Ast::QualifiedTypeSpec& Context::coerce(const Ast::Token& pos, cons
 }
 
 inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
+    const Ast::TypeSpec* ts = resolveTypedef(typeSpec);
+
     const Ast::Unit::DefaultValueList& list = _unit.defaultValueList();
-    Ast::Unit::DefaultValueList::const_iterator it = list.find(ptr(typeSpec));
+    Ast::Unit::DefaultValueList::const_iterator it = list.find(ts);
     if(it != list.end()) {
         return ref(it->second);
     }
 
-    const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(typeSpec));
+    const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ts);
     if(td != 0) {
-        if(typeSpec.name().string() == "pointer") {
+        const std::string tdName = ref(td).name().string() ; // getTypeSpecName(ref(td), GenMode::Import); \todo this is incorrect, it will match any type called, say, list.
+        if(tdName == "pointer") {
             const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(td), false);
             Ast::ExprList& exprList = addExprList();
             const Ast::QualifiedTypeSpec& subType = ref(td).at(0);
@@ -239,7 +242,7 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
             Ast::PointerInstanceExpr& expr = _unit.addNode(new Ast::PointerInstanceExpr(qTypeSpec, ref(td), exprList));
             return expr;
         }
-        if(typeSpec.name().string() == "list") {
+        if(tdName == "list") {
             const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(td), false);
             Ast::ListList& llist = _unit.addNode(new Ast::ListList());
             const Ast::QualifiedTypeSpec* qlType = ref(td).list().at(0);
@@ -247,7 +250,7 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
             Ast::ListExpr& expr = _unit.addNode(new Ast::ListExpr(qTypeSpec, llist));
             return expr;
         }
-        if(typeSpec.name().string() == "dict") {
+        if(tdName == "dict") {
             const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(td), false);
             Ast::DictList& llist = _unit.addNode(new Ast::DictList());
             const Ast::QualifiedTypeSpec* qlType = ref(td).list().at(0);
@@ -259,7 +262,7 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
         }
     }
 
-    const Ast::EnumDefn* ed = dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec));
+    const Ast::EnumDefn* ed = dynamic_cast<const Ast::EnumDefn*>(ts);
     if(ed != 0) {
         const Ast::Scope::List::const_iterator rit = ref(ed).list().begin();
         if(rit == ref(ed).list().end()) {
@@ -271,20 +274,20 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
         return typeSpecMemberExpr;
     }
 
-    const Ast::StructDefn* sd = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
+    const Ast::StructDefn* sd = dynamic_cast<const Ast::StructDefn*>(ts);
     if(sd != 0) {
         Ast::StructInstanceExpr* expr = aStructInstanceExpr(name, ref(sd));
         return ref(expr);
     }
 
-    const Ast::Function* fd = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
+    const Ast::Function* fd = dynamic_cast<const Ast::Function*>(ts);
     if(fd != 0) {
         Ast::ExprList& exprList = addExprList();
         Ast::FunctionInstanceExpr* expr = aFunctionInstanceExpr(ref(fd), exprList);
         return ref(expr);
     }
 
-    throw Exception("%s No default value for type '%s'\n", err(_filename, name).c_str(), typeSpec.name().text());
+    throw Exception("%s No default value for type '%s'\n", err(_filename, name).c_str(), ref(ts).name().text());
 }
 
 inline Ast::TemplateDefn& Context::createTemplateDefn(const Ast::Token& pos, const std::string& name) {
@@ -634,7 +637,7 @@ Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDe
     Ast::Token nameAdd(pos.row(), pos.col(), "Add");
     Ast::FunctionSig* addSig = aFunctionSig(outAdd, nameAdd, inAdd);
     Ast::FunctionDecl& addDecl = addFunctionDecl(eventDef, ref(addSig), defType);
-    eventDef.addChild(addDecl);
+    eventDef.setAddFunction(addDecl);
 
     inAdd.addVariableDef(in);
     inAdd.addVariableDef(vdef);

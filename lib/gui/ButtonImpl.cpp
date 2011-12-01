@@ -23,13 +23,13 @@ static WinProc s_winProc;
 
 #endif
 
-const Button::Create::_Out& Button::Create::run(const _In& _in) {
+const Button::Create::_Out& Button::Create::run(const Window::Instance& parent, const Button::Definition& def) {
 #if defined(WIN32)
-    Window::Instance::Impl& impl = Window::Native::createChildWindow(_in.def, "BUTTON", BS_DEFPUSHBUTTON|WS_CHILD|WS_VISIBLE, 0, _in.parent);
+    Window::Instance::Impl& impl = Window::Native::createChildWindow(def, "BUTTON", BS_DEFPUSHBUTTON|WS_CHILD|WS_VISIBLE, 0, parent);
 #endif
 #if defined(GTK)
-    GtkWidget* hWnd = gtk_button_new_with_label(_in.def.title.c_str());
-    Window::Instance::Impl& impl = Window::Native::createChildWindow(hWnd, _in.def, _in.parent);
+    GtkWidget* hWnd = gtk_button_new_with_label(def.title.c_str());
+    Window::Instance::Impl& impl = Window::Native::createChildWindow(hWnd, def, parent);
 #endif
     Window::Instance win;
     win.impl(impl);
@@ -41,7 +41,7 @@ static void onButtonClick(GtkMenuItem* item, gpointer phandler) {
     unused(item);
     Button::OnClick::Handler* handler = static_cast<Button::OnClick::Handler*>(phandler);
     Button::OnClick::Handler::_In in;
-    ref(handler).run(in);
+    ref(handler)._run(in);
 }
 #endif
 

@@ -261,65 +261,65 @@ Window::ChildList& Window::childList(const Window::Instance& window) {
     return ref(window._impl)._childList;
 }
 
-const Window::Delete::_Out& Window::Delete::run(const _In& _in) {
-    delete _in.window._impl;
-   //_in.window._impl = 0;
+const Window::Delete::_Out& Window::Delete::run(const Window::Instance& window) {
+    delete window._impl;
+   //window._impl = 0;
    return out(_Out());
 }
 
-const Window::SetTitle::_Out& Window::SetTitle::run(const _In& _in) {
+const Window::SetTitle::_Out& Window::SetTitle::run(const Window::Instance& window, const std::string& title) {
 #if defined(WIN32)
-    ::SetWindowText(ref(_in.window._impl)._hWindow, _in.title.c_str());
+    ::SetWindowText(ref(window._impl)._hWindow, title.c_str());
 #endif
 #if defined(GTK)
-    gtk_window_set_title (GTK_WINDOW (ref(_in.window._impl)._hWindow), _in.title.c_str());
+    gtk_window_set_title (GTK_WINDOW (ref(window._impl)._hWindow), title.c_str());
 #endif
    return out(_Out());
 }
 
-const Window::Show::_Out& Window::Show::run(const _In& _in) {
+const Window::Show::_Out& Window::Show::run(const Window::Instance& window) {
 #if defined(WIN32)
-    ::ShowWindow(ref(_in.window._impl)._hWindow, SW_SHOW);
+    ::ShowWindow(ref(window._impl)._hWindow, SW_SHOW);
 #endif
 #if defined(GTK)
-    gtk_widget_show(GTK_WIDGET(ref(_in.window._impl)._hWindow));
-    gtk_window_deiconify(GTK_WINDOW(ref(_in.window._impl)._hWindow));
+    gtk_widget_show(GTK_WIDGET(ref(window._impl)._hWindow));
+    gtk_window_deiconify(GTK_WINDOW(ref(window._impl)._hWindow));
 #endif
    return out(_Out());
 }
 
-const Window::Hide::_Out& Window::Hide::run(const _In& _in) {
+const Window::Hide::_Out& Window::Hide::run(const Window::Instance& window) {
 #if defined(WIN32)
-    ::ShowWindow(ref(_in.window._impl)._hWindow, SW_HIDE);
+    ::ShowWindow(ref(window._impl)._hWindow, SW_HIDE);
 #endif
 #if defined(GTK)
-    gtk_widget_hide(GTK_WIDGET(ref(_in.window._impl)._hWindow));
+    gtk_widget_hide(GTK_WIDGET(ref(window._impl)._hWindow));
 #endif
    return out(_Out());
 }
 
-const Window::Move::_Out& Window::Move::run(const _In& _in) {
+const Window::Move::_Out& Window::Move::run(const Window::Instance& window, const Window::Position& position) {
 #if defined(WIN32)
-    ::MoveWindow(ref(_in.window._impl)._hWindow, _in.position.x, _in.position.y, _in.position.w, _in.position.h, TRUE);
+    ::MoveWindow(ref(window._impl)._hWindow, position.x, position.y, position.w, position.h, TRUE);
 #endif
 #if defined(GTK)
-    unused(_in);
-    //gtk_widget_set_uposition(ref(_in.window._impl)._hWindow, _in.position.x, _in.position.y);
-    //gtk_window_set_default_size (ref(_in.window._impl)._hWindow, _position.w, _position.h);
+    unused(window); unused(position);
+    //gtk_widget_set_uposition(ref(window._impl)._hWindow, position.x, position.y);
+    //gtk_window_set_default_size (ref(window._impl)._hWindow, position.w, position.h);
 #endif
    return out(_Out());
 }
 
-const Window::Size::_Out& Window::Size::run(const _In& _in) {
+const Window::Size::_Out& Window::Size::run(const Window::Instance& window, const int& w, const int& h) {
 #if defined(WIN32)
     RECT rc;
-    ::GetWindowRect(ref(_in.window._impl)._hWindow, &rc);
-    int w = (_in.w == -1)?(rc.right - rc.left): _in.w;
-    int h = (_in.h == -1)?(rc.bottom - rc.top): _in.h;
-    ::MoveWindow(ref(_in.window._impl)._hWindow, rc.left, rc.top, w, h, TRUE);
+    ::GetWindowRect(ref(window._impl)._hWindow, &rc);
+    int tw = (w == -1)?(rc.right - rc.left): w;
+    int th = (h == -1)?(rc.bottom - rc.top): h;
+    ::MoveWindow(ref(window._impl)._hWindow, rc.left, rc.top, tw, th, TRUE);
 #endif
 #if defined(GTK)
-    gtk_widget_set_size_request(ref(_in.window._impl)._hWindow, _in.w, _in.h);
+    gtk_widget_set_size_request(ref(window._impl)._hWindow, w, h);
 #endif
    return out(_Out());
 }
@@ -330,7 +330,7 @@ static gboolean onConfigureEvent(GtkWindow* window, GdkEvent* event, gpointer ph
     unused(event);
     Window::OnResize::Handler* handler = static_cast<Window::OnResize::Handler*>(phandler);
     Window::OnResize::Handler::_In in;
-    ref(handler).run(in);
+    ref(handler)._run(in);
     return FALSE;
 }
 #endif
@@ -350,7 +350,7 @@ static gboolean onWindowCloseEvent(GtkWindow* window, gpointer phandler) {
     unused(window);
     Window::OnClose::Handler* handler = static_cast<Window::OnClose::Handler*>(phandler);
     Window::OnClose::Handler::_In in;
-    ref(handler).run(in);
+    ref(handler)._run(in);
     return FALSE;
 }
 #endif

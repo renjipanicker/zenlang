@@ -47,7 +47,7 @@ public function (int r)testAdvancedExpr(const int& x, const MyStruct& myStruct, 
     auto a = typeof(myStruct);
     auto p = pointer<MyBase>(myStruct);
     auto w = value<MyBase>(p);
-    auto x = value<MyStruct>(p);
+    auto u = value<MyStruct>(p);
     auto t = <MyStruct>p;
     auto y = <long>v;
 
@@ -56,7 +56,7 @@ public function (int r)testAdvancedExpr(const int& x, const MyStruct& myStruct, 
     auto z = &<MyStruct>p;
 
     auto r = *p;
-    unused(v, m, n, a, p, w, x, y, r, s, t, q, z);
+    unused(v, m, n, a, p, w, u, y, r, s, t, q, z);
     return (67890);
 }
 

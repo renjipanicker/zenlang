@@ -49,5 +49,6 @@ public routine void assert() native;
 public routine void unused() native;
 public routine void check() native;
 
-public function (int code)main(const list<string>& argl);
+typedef ArgList list<string> native;
+public function (int code)main(const ArgList& argl);
 public function (int passed)test();
