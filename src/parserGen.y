@@ -86,16 +86,7 @@ rstart ::= rSubStart EOF.
 rSubStart ::= rUnitStatementList.
 
 //-------------------------------------------------
-rUnitStatementList ::= rImportStatementList rEnterNamespace rGlobalStatementList rLeaveNamespace.
-
-//-------------------------------------------------
-rEnterNamespace ::= NAMESPACE rUnitNamespaceId SEMI.
-rEnterNamespace ::= .
-
-rUnitNamespaceId ::= rUnitNamespaceId TYPE_SCOPE rAnyId(name). {ref(pctx).aUnitNamespaceId(name);}
-rUnitNamespaceId ::=                             rAnyId(name). {ref(pctx).aUnitNamespaceId(name);}
-
-rLeaveNamespace ::= . {ref(pctx).aLeaveNamespace();}
+rUnitStatementList ::= rImportStatementList rNamespaceStatement(N) rGlobalStatementList. {ref(pctx).aUnitStatementList(ref(N));}
 
 //-------------------------------------------------
 // list of statements to specify imports
@@ -115,6 +106,16 @@ rHeaderType(L) ::= IMPORT.    {L = Ast::HeaderType::Import;}
 %type rImportNamespaceId {Ast::ImportStatement*}
 rImportNamespaceId(L) ::= rImportNamespaceId(statement) SCOPE rAnyId(name). {L = ref(pctx).aImportNamespaceId(ref(statement), name);}
 rImportNamespaceId(L) ::=                                     rAnyId(name). {L = ref(pctx).aImportNamespaceId(name);}
+
+//-------------------------------------------------
+// namespace statement
+%type rNamespaceStatement {Ast::NamespaceStatement*}
+rNamespaceStatement(L) ::= NAMESPACE rUnitNamespaceId(R) SEMI. {L = ref(pctx).aNamespaceStatement(ref(R));}
+rNamespaceStatement(L) ::=                                   . {L = ref(pctx).aNamespaceStatement();}
+
+%type rUnitNamespaceId {Ast::NamespaceStatement*}
+rUnitNamespaceId(L) ::= rUnitNamespaceId(R) TYPE_SCOPE rAnyId(name). {L = ref(pctx).aUnitNamespaceId(ref(R), name);}
+rUnitNamespaceId(L) ::=                                rAnyId(name). {L = ref(pctx).aUnitNamespaceId(name);}
 
 //-------------------------------------------------
 rAnyId(L) ::= ID(R).            {L = R;}
@@ -234,7 +235,7 @@ rStructMemberDefnList(L) ::=                             rVariableDefn(variableD
 //-------------------------------------------------
 // routine declarations
 %type rRoutineDecl {Ast::RoutineDecl*}
-rRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) ID(name) rInParamsList(in) rDefinitionType(D) SEMI. {L = ref(pctx).aRoutineDecl(ref(out), name, ref(in), D);}
+rRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) rInParamsList(in) rDefinitionType(D) SEMI. {L = ref(pctx).aRoutineDecl(ref(out), name, ref(in), D);}
 
 //-------------------------------------------------
 // routine declarations
@@ -243,7 +244,9 @@ rRoutineDefn(L) ::= rEnterRoutineDefn(routineDefn) rCompoundStatement(block). {L
 
 //-------------------------------------------------
 %type rEnterRoutineDefn {Ast::RoutineDefn*}
-rEnterRoutineDefn(L) ::= ROUTINE rQualifiedTypeSpec(out) ID(name) rInParamsList(in) rDefinitionType(D). {L = ref(pctx).aEnterRoutineDefn(ref(out), name, ref(in), D);}
+rEnterRoutineDefn(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) rInParamsList(in) rDefinitionType(D). {L = ref(pctx).aEnterRoutineDefn(ref(out), name, ref(in), D);}
+rRoutineId(L) ::= ID(R). {L = R;}
+rRoutineId(L) ::= ROUTINE_TYPE(R). {L = R;}
 
 //-------------------------------------------------
 // function definition

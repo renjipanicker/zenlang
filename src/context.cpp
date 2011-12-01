@@ -365,17 +365,12 @@ inline const Ast::TypeSpec* Context::resolveTypedef(const Ast::TypeSpec& typeSpe
 }
 
 ////////////////////////////////////////////////////////////
-void Context::aUnitNamespaceId(const Ast::Token &name) {
-    Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(currentTypeSpec(), name));
-    currentTypeSpec().addChild(ns);
-    enterTypeSpec(ns);
+void Context::aUnitStatementList(const Ast::NamespaceStatement& nss) {
+    Ast::LeaveNamespaceStatement& lns = _unit.addNode(new Ast::LeaveNamespaceStatement(nss));
     if(_level == 0) {
-        _unit.addNamespacePart(name);
+        _unit.addStatement(lns);
     }
-    _namespaceStack.push_back(ptr(ns));
-}
 
-void Context::aLeaveNamespace() {
     while(_namespaceStack.size() > 0) {
         Ast::Namespace* ns = _namespaceStack.back();
         leaveTypeSpec(ref(ns));
@@ -408,13 +403,45 @@ Ast::ImportStatement* Context::aImportNamespaceId(Ast::ImportStatement& statemen
 }
 Ast::ImportStatement* Context::aImportNamespaceId(const Ast::Token& name) {
     Ast::ImportStatement& statement = _unit.addNode(new Ast::ImportStatement());
-    _unit.addImportStatement(statement);
+    _unit.addStatement(statement);
     return aImportNamespaceId(statement, name);
+}
+
+Ast::NamespaceStatement* Context::aNamespaceStatement(Ast::NamespaceStatement& statement) {
+    if(_level == 0) {
+        _unit.addStatement(statement);
+    }
+    return ptr(statement);
+}
+
+Ast::NamespaceStatement* Context::aNamespaceStatement() {
+    Ast::NamespaceStatement& statement = _unit.addNode(new Ast::NamespaceStatement());
+    return aNamespaceStatement(statement);
+}
+
+Ast::NamespaceStatement* Context::aUnitNamespaceId(Ast::NamespaceStatement& statement, const Ast::Token &name) {
+    Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(currentTypeSpec(), name));
+    currentTypeSpec().addChild(ns);
+    enterTypeSpec(ns);
+    if(_level == 0) {
+        _unit.addNamespacePart(name);
+    }
+    _namespaceStack.push_back(ptr(ns));
+    statement.addNamespace(ns);
+    return ptr(statement);
+}
+
+Ast::NamespaceStatement* Context::aUnitNamespaceId(const Ast::Token &name) {
+    Ast::NamespaceStatement& statement = _unit.addNode(new Ast::NamespaceStatement());
+    return aUnitNamespaceId(statement, name);
 }
 
 Ast::Statement* Context::aGlobalTypeSpecStatement(const Ast::AccessType::T& accessType, Ast::UserDefinedTypeSpec& typeSpec){
     typeSpec.accessType(accessType);
     Ast::Statement* statement = aUserDefinedTypeSpecStatement(typeSpec);
+    if(_level == 0) {
+        _unit.addStatement(ref(statement));
+    }
     return statement;
 }
 

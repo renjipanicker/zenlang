@@ -73,7 +73,11 @@ private:
     const Ast::TypeSpec* _currentTypeRef;
 
 public:
-    void                     aUnitNamespaceId(const Ast::Token& name);
+    void                     aUnitStatementList(const Ast::NamespaceStatement& ns);
+    Ast::NamespaceStatement* aNamespaceStatement(Ast::NamespaceStatement& statement);
+    Ast::NamespaceStatement* aNamespaceStatement();
+    Ast::NamespaceStatement* aUnitNamespaceId(Ast::NamespaceStatement& statement, const Ast::Token& name);
+    Ast::NamespaceStatement* aUnitNamespaceId(const Ast::Token& name);
     void                     aLeaveNamespace();
     void                     aImportStatement(const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, Ast::ImportStatement& statement, const Ast::DefinitionType::T& defType);
     Ast::ImportStatement*    aImportNamespaceId(Ast::ImportStatement& statement, const Ast::Token& name);

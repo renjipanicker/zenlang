@@ -1031,6 +1031,27 @@ namespace Ast {
         DefinitionType::T _defType;
     };
 
+    class NamespaceStatement : public Statement {
+    public:
+        typedef std::list<const Namespace*> List;
+        inline void addNamespace(const Namespace& val) {_list.push_back(ptr(val));}
+        inline const List& list() const {return _list;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        List _list;
+    };
+
+    class LeaveNamespaceStatement : public Statement {
+    public:
+        inline LeaveNamespaceStatement(const NamespaceStatement& statement) : _statement(statement) {}
+        inline const NamespaceStatement& statement() const {return _statement;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const NamespaceStatement& _statement;
+    };
+
     class UserDefinedTypeSpecStatement : public Statement {
     public:
         inline UserDefinedTypeSpecStatement(const UserDefinedTypeSpec& typeSpec) : _typeSpec(typeSpec) {}
@@ -1310,6 +1331,8 @@ namespace Ast {
         }
 
         virtual void visit(const ImportStatement& node) = 0;
+        virtual void visit(const NamespaceStatement& node) = 0;
+        virtual void visit(const LeaveNamespaceStatement& node) = 0;
         virtual void visit(const UserDefinedTypeSpecStatement& node) = 0;
         virtual void visit(const AutoStatement& node) = 0;
         virtual void visit(const ExprStatement& node) = 0;
@@ -1335,6 +1358,8 @@ namespace Ast {
     };
 
     inline void ImportStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void NamespaceStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void LeaveNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void UserDefinedTypeSpecStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void AutoStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
@@ -1415,7 +1440,7 @@ namespace Ast {
     class Unit {
     public:
         typedef std::list<const Body*> BodyList;
-        typedef std::list<const ImportStatement*> ImportStatementList;
+        typedef std::list<const Statement*> StatementList;
         typedef std::list<const Ast::CoerceList*> CoerceListList;
         typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
         typedef std::list<Token> NsPartList;
@@ -1441,9 +1466,9 @@ namespace Ast {
         inline void addheaderFile(const std::string& filename) {_headerFileList[filename]++;}
 
     public:
-        /// \brief Return the import statement list
-        /// \return The import statement list
-        inline const ImportStatementList& importStatementList() const {return _importStatementList;}
+        /// \brief Return the statement list
+        /// \return The statement list
+        inline const StatementList& statementList() const {return _statementList;}
 
         /// \brief Return the function implementation list
         /// \return The function implementation list
@@ -1480,7 +1505,7 @@ namespace Ast {
     public:
         /// \brief Add a import statement to the unit
         /// \param statement A pointer to the node to add
-        inline void addImportStatement(const ImportStatement& statement) {_importStatementList.push_back(ptr(statement));}
+        inline void addStatement(const Statement& statement) {_statementList.push_back(ptr(statement));}
 
         /// \brief Add a function implementation to the unit
         /// \param functionDefnBase the function implementation to add
@@ -1519,7 +1544,7 @@ namespace Ast {
 
     private:
         /// \brief The list of all import statements in this unit
-        ImportStatementList _importStatementList;
+        StatementList _statementList;
 
         /// \brief The list of all function implementations in this unit
         BodyList _bodyList;
