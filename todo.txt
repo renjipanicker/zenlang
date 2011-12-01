@@ -1,18 +1,18 @@
-full gui definition
-unit test - check
-verbose output from compiler
-interpreter
-positional-paramlist
-single-outparam for functions.
-void out-param, do not generate _Out
-void in-param, do not generate _In
-sizeof() function.
-
-Window::Create
 anchor
 systray
 menubar
 menuitem
+unit test - check
+verbose output from compiler
+interpreter
+single-outparam for functions.
+void out-param, do not generate _Out
+void in-param, do not generate _In
+sizeof() function.
+bug-fix multiple #includes in guiTest.cpp
+"c++" as output code
+"cmake" as output project
+
 process
 application
 unicode-char
@@ -62,6 +62,7 @@ tab-widget
 *** Rename GenName::Import and Normal to ZenLang and StlCpp
 
 ==BACKLOG==
+positional-paramlist
 ftp
 xml
 regex
@@ -87,6 +88,12 @@ large lists in in-memory sqlite
 project generator - msvc
 print <dst> <expr>;
 print <dst> <src> <level> <expr>;
+a public struct cannot contain a private type
+a public function cannot have a private type in its sig
+if a public type contains an imported type, the imported type's header file is public
+multiple code generators: python, php, js, java
+multiple generators: python, php, js, java
+
 *** enum-init-expr
 *** move Formatter to String, Creator to List/Dict
 *** merge enum and struct Ast's.
@@ -159,3 +166,4 @@ textedit-appendtext
 unit test - suite
 unit test - test
 implement typespec
+full gui definition
