@@ -1034,10 +1034,14 @@ Ast::TernaryOpExpr* Context::aTernaryExpr(const Ast::Token& op1, const Ast::Toke
 
 Ast::Expr& Context::aBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
     const Ast::QualifiedTypeSpec& qTypeSpec = coerce(op, lhs.qTypeSpec(), rhs.qTypeSpec());
-    const Ast::IndexExpr* indexExpr = dynamic_cast<const Ast::IndexExpr*>(ptr(lhs));
-    if(indexExpr) {
-        Ast::SetIndexExpr& expr = _unit.addNode(new Ast::SetIndexExpr(qTypeSpec, ref(indexExpr), rhs));
-        return expr;
+
+    // if it is any of the assign-ops (=, +=, *=, etc). Check if last char is '='
+    if(op.string().at(op.string().size() - 1) == "=") {
+        const Ast::IndexExpr* indexExpr = dynamic_cast<const Ast::IndexExpr*>(ptr(lhs));
+        if(indexExpr) {
+            Ast::SetIndexExpr& expr = _unit.addNode(new Ast::SetIndexExpr(qTypeSpec, ref(indexExpr), rhs));
+            return expr;
+        }
     }
 
     Ast::BinaryOpExpr& expr = _unit.addNode(new Ast::BinaryOpExpr(qTypeSpec, op, lhs, rhs));
