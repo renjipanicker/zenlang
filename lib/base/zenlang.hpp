@@ -142,7 +142,6 @@ struct Pointer {
     inline value* clone() const {return ref(_val).clone();}
 
     inline V& get() const {
-        printf("get-pntr(%s) val = %s\n", ppad(this).c_str(), ppad(_val).c_str());
         return ref(_val).get();
     }
 
@@ -153,7 +152,6 @@ struct Pointer {
     }
 
     inline Pointer() : _val(0) {
-        printf("def-ctor(%s) val = %s\n", ppad(this).c_str(), ppad(_val).c_str());
         if(_val == 0) {
             int x = 0;
             unused(x);
@@ -161,11 +159,9 @@ struct Pointer {
     }
 
     inline Pointer(value* val) : _val(val) {
-        printf("val-ctor(%s) val = %s\n", ppad(this).c_str(), ppad(_val).c_str());
     }
 
     inline ~Pointer() {
-        printf("def-dtor(%s) val = %s\n", ppad(this).c_str(), ppad(_val).c_str());
         delete _val;
     }
 
@@ -174,7 +170,6 @@ struct Pointer {
             value* v = src.clone();
             set(v);
         }
-        printf("cpy-ctor(%s) val = %s, src = %s\n", ppad(this).c_str(), ppad(_val).c_str(), rpad(src).c_str());
     }
 
     template <typename DerT>
@@ -184,13 +179,11 @@ struct Pointer {
             value* v = new valueT<DerT>(d);
             set(v);
         }
-        printf("tcp-ctor(%s) val = %s, src = %s\n", ppad(this).c_str(), ppad(_val).c_str(), rpad(src).c_str());
     }
 
     inline Pointer& operator=(const Pointer& src) {
         value* v = src.clone();
         set(v);
-        printf("ass-oper(%s) val = %s, src = %s\n", ppad(this).c_str(), ppad(_val).c_str(), rpad(src).c_str());
         return ref(this);
     }
 
@@ -314,7 +307,7 @@ template <typename V>
 struct list : public container<V, std::vector<V> > {
     typedef container<V, std::vector<V> > BaseT;
 
-    inline V& operator[](const uint& idx) {
+    inline V& operator[](const unsigned int& idx) {
         return BaseT::_list[idx];
     }
 
@@ -341,7 +334,7 @@ struct dict : public container<V, std::map<K, V> > {
         return it->second;
     }
 
-    inline void add(const K& k, V v) {BaseT::_list.insert(std::pair<K, V>(k, v));printf("*** %s add %s\n", ppad(this).c_str(), k.c_str());}
+    inline void add(const K& k, V v) {BaseT::_list.insert(std::pair<K, V>(k, v));}
     inline void clone(const dict& src) {
         for(typename BaseT::List::const_iterator it = src._list.begin(); it != src._list.end(); ++it) {
             const K& k = it->first;
@@ -353,7 +346,6 @@ struct dict : public container<V, std::map<K, V> > {
     struct creator {
         inline creator& add(const K& k, const V& v) {
             _list.add(k, v);
-            printf("%s add %s\n", ppad(this).c_str(), k.c_str());
             return ref(this);
         }
 

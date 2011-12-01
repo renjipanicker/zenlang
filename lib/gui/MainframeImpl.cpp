@@ -1,15 +1,15 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "Mainframe.hpp"
 #include "WindowImpl.hpp"
+#include "Mainframe.hpp"
 
 const MainFrame::Create::_Out& MainFrame::Create::run(const _In& _in) {
 #if defined(WIN32)
-    Window::Instance::Impl impl = Window::Native::createMainFrame(_in.def, WS_OVERLAPPEDWINDOW, WS_EX_WINDOWEDGE);
+    Window::Instance::Impl& impl = Window::Native::createMainFrame(_in.def, WS_OVERLAPPEDWINDOW, WS_EX_WINDOWEDGE);
     ::PostMessage(impl._hWindow, WM_SIZE, 0, 0);
 #endif
 #if defined(GTK)
-    Window::Instance::Impl impl = Window::Native::createWindow(_in.def, 0);
+    Window::Instance::Impl& impl = Window::Native::createWindow(_in.def, 0);
     if((_in.def.position.w != -1) && (_in.def.position.h != -1))
         gtk_widget_set_size_request (impl._hWindow, _in.def.position.w, _in.def.position.h);
 
@@ -17,9 +17,11 @@ const MainFrame::Create::_Out& MainFrame::Create::run(const _In& _in) {
     gtk_container_add(GTK_CONTAINER(impl._hWindow), impl._hFixed);
     gtk_widget_show(impl._hFixed);
 #endif
+    Window::Instance win;
+    win.impl(impl);
     if(_in.def.visible) {
-        Window::Show().run(Window::Show::_In(Window::Instance(impl)));
+        Window::Show().run(Window::Show::_In(win));
     }
 
-    return out(_Out(Window::Instance(impl)));
+    return out(_Out(win));
 }

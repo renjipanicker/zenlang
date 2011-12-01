@@ -27,6 +27,7 @@ public main MyMain {
     auto outputBox = Window::childList(mainFrame.window)[@outputBox];
 
     Window::OnResize(mainFrame.window) => Window::OnResize::Handler {
+        print "on click\n";
         auto pp = Window::getWindowPosition(mainFrame.window);
         auto cp = Window::getChildPosition(outputBox);
         cp.w = pp.w - cp.x - 20;

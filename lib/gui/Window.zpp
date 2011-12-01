@@ -14,7 +14,7 @@ public struct Position {
     h = -1;
 };
 
-protected struct Instance native {
+protected struct Instance {
 };
 
 public typedef ChildList dict<string,Instance>;

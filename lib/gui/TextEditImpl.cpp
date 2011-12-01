@@ -1,7 +1,7 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "TextEdit.hpp"
 #include "WindowImpl.hpp"
+#include "TextEdit.hpp"
 
 const TextEdit::Create::_Out& TextEdit::Create::run(const _In& _in) {
 #if defined(WIN32)
@@ -9,22 +9,25 @@ const TextEdit::Create::_Out& TextEdit::Create::run(const _In& _in) {
     if(_in.def.multiline) {
         flags |= ES_MULTILINE;
     }
-    Window::Instance::Impl impl = Window::Native::createChildWindow(_in.def, "EDIT", flags, WS_EX_CLIENTEDGE, _in.parent);
+    Window::Instance::Impl& impl = Window::Native::createChildWindow(_in.def, "EDIT", flags, WS_EX_CLIENTEDGE, _in.parent);
 #endif
 #if defined(GTK)
-    Window::Instance::Impl impl;
+    GtkWidget* hWnd = 0;
     if(_in.def.multiline) {
-        impl._hWindow = gtk_text_view_new();
+        hWnd = gtk_text_view_new();
     } else {
         assert(false);
     }
-    Window::Native::createChildWindow(impl, _in.def, _in.parent);
+
+    Window::Instance::Impl& impl = Window::Native::createChildWindow(hWnd, _in.def, _in.parent);
     if(_in.def.title.size() > 0) {
         GtkTextBuffer* buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (impl._hWindow));
         gtk_text_buffer_set_text (buffer, _in.def.title.c_str(), -1);
     }
 #endif
-   return out(_Out(Window::Instance(impl)));
+    Window::Instance win;
+    win.impl(impl);
+    return out(_Out(win));
 }
 
 const TextEdit::AppendText::_Out& TextEdit::AppendText::run(const _In& _in) {

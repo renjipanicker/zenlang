@@ -103,7 +103,7 @@ rImportStatementList ::= rImportStatementList rImportStatement.
 rImportStatementList ::= .
 
 //-------------------------------------------------
-rImportStatement ::= rHeaderType(headerType) rImportNamespaceId(id) rDefinitionType(defType) SEMI. {ref(pctx).aImportStatement(Ast::AccessType::Public, headerType, ref(id), defType);}
+rImportStatement ::= rHeaderType(headerType) rImportNamespaceId(id) rDefinitionType(defType) rAccessType(A) SEMI. {ref(pctx).aImportStatement(A, headerType, ref(id), defType);}
 
 //-------------------------------------------------
 // import type
