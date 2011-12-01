@@ -213,24 +213,6 @@ struct Pointer {
         return ref(this);
     }
 
-//    template <typename DerT>
-//    explicit inline Pointer(const DerT& val) : _val(0) {
-//        value* v = Creator<V, DerT, valueT<DerT> >::get(val);
-//        set(v);
-//    }
-
-//    template <typename DerT>
-//    inline Pointer& setVal(const DerT& val) {
-//        value* v = Creator<V, DerT, valueT<DerT> >::get(val);
-//        set(v);
-//        return ref(this);
-//    }
-
-//    template <typename DerT>
-//    inline Pointer& operator=(const DerT& val) {
-//        return setVal(val);
-//    }
-
 private:
     value* _val;
 };
@@ -258,16 +240,6 @@ struct pointer : public Pointer<V> {
     template <typename DerT>
     inline pointer(const pointer<DerT>& src) : Pointer<V>(src), _tname(src.tname()) {}
 
-//    template <typename DerT>
-//    inline pointer(const type& tname, const DerT& val) : Pointer<V>(val), _tname(tname) {}
-
-//    template <typename DerT>
-//    inline pointer& operator=(const pointer<DerT>& val) {
-//        _tname = val.tname();
-//        setVal(val);
-//        return ref(this);
-//    }
-
     inline const type& tname() const {return _tname;}
 private:
     type _tname;
@@ -283,41 +255,6 @@ struct Creator {
         return pointer<V>(tname, new VT(val));
     }
 };
-
-//template <typename V>
-//struct Creator<V, V > {
-//    typedef typename Pointer<V>::template valueT<V> VT;
-//    static inline Pointer<V> get(const V& val) {
-//        return Pointer<V>(new VT(val));
-//    }
-//    static inline pointer<V> get(const type& tname, const V& val) {
-//        return pointer<V>(tname, new VT(val));
-//    }
-//};
-
-//template <typename V>
-//struct Creator<V, V > {
-//    typedef typename Pointer<V>::valueT<V> VT;
-//    static inline VT* get(const V& val) {
-//        return new VT(val);
-//    }
-//};
-
-//template <typename V, typename DerT>
-//struct Creator<V, pointer<DerT> > {
-//    typedef typename Pointer<V>::valueT<DerT> VT;
-//    static inline VT* get(const pointer<DerT>& val) {
-//        return new VT(val.get());
-//    }
-//};
-
-//template <typename V>
-//struct Creator<V, pointer<V> > {
-//    typedef typename Pointer<V>::valueT<V> VT;
-//    static inline VT* get(const pointer<V>& val) {
-//        return new VT(val.get());
-//    }
-//};
 
 template <typename K, typename V, typename ListT>
 struct container {
@@ -380,12 +317,6 @@ struct dict : public container<K, V, std::map<K, V> > {
             _list.set(k, v);
             return ref(this);
         }
-
-//        template <typename DerT>
-//        inline creator& add(const K& k, const DerT& v) {
-//            _list.add(k, v);
-//            return ref(this);
-//        }
 
         inline dict get() {return _list;}
         dict _list;
@@ -630,62 +561,5 @@ struct Application {
 #endif
     int exec();
     int exit(const int& code);
-};
-#endif
-
-#if 0
-/// \todo helpers to invoke function objects
-template <typename MethodT, typename ReturnT >
-struct Method<ReturnT(*)(MethodT& This)> : public MethodX<ReturnT(*)(MethodT& This)> {
-    inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<ReturnT(*)(MethodT& This)>(impl) {}
-    inline ReturnT run() {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)));}
-};
-
-template <typename MethodT, typename ReturnT, typename P1 >
-struct Method<ReturnT(*)(MethodT&,P1)> : public MethodX<ReturnT(*)(MethodT&, P1)> {
-    inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<ReturnT(*)(MethodT&, P1)>(impl) {}
-    inline ReturnT run(P1 p1) {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)), p1);}
-};
-
-template <typename MethodT, typename ReturnT, typename P1, typename P2 >
-struct Method<ReturnT(*)(MethodT&,P1,P2)> : public MethodX<ReturnT(*)(MethodT&,P1,P2)> {
-    inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<ReturnT(*)(MethodT&,P1,P2)>(impl) {}
-    inline ReturnT run(P1 p1, P2 p2) {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)), p1, p2);}
-};
-
-template <typename MethodT, typename ReturnT, typename P1, typename P2, typename P3 >
-struct Method<ReturnT(*)(MethodT&,P1,P2,P3)> : public MethodX<ReturnT(*)(MethodT&,P1,P2,P3)> {
-    inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<ReturnT(*)(MethodT&,P1,P2,P3)>(impl) {}
-    inline ReturnT run(P1 p1, P2 p2, P3 p3) {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)), p1, p2, p3);}
-};
-
-template <typename MethodT, typename ReturnT, typename P1, typename P2, typename P3, typename P4 >
-struct Method<ReturnT(*)(MethodT&,P1,P2,P3,P4)> : public MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4)> {
-    inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4)>(impl) {}
-    inline ReturnT run(P1 p1, P2 p2, P3 p3, P4 p4) {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)), p1, p2, p3, p4);}
-};
-
-template <typename MethodT, typename ReturnT, typename P1, typename P2, typename P3, typename P4, typename P5 >
-struct Method<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5)> : public MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5)> {
-    inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5)>(impl) {}
-    inline ReturnT run(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5) {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)), p1, p2, p3, p4, p5);}
-};
-
-template <typename MethodT, typename ReturnT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6 >
-struct Method<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6)> : public MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6)> {
-    inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6)>(impl) {}
-    inline ReturnT run(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6) {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)), p1, p2, p3, p4, p5, p6);}
-};
-
-template <typename MethodT, typename ReturnT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7 >
-struct Method<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6,P7)> : public MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6,P7)> {
-    inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6,P7)>(impl) {}
-    inline ReturnT run(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7) {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)), p1, p2, p3, p4, p5, p6, p7);}
-};
-
-template <typename MethodT, typename ReturnT, typename P1, typename P2, typename P3, typename P4, typename P5, typename P6, typename P7, typename P8 >
-struct Method<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6,P7,P8)> : public MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6,P7,P8)> {
-    inline Method(const typename Method<MethodT>::Impl& impl) : MethodX<ReturnT(*)(MethodT&,P1,P2,P3,P4,P5,P6,P7,P8)>(impl) {}
-    inline ReturnT run(P1 p1, P2 p2, P3 p3, P4 p4, P5 p5, P6 p6, P7 p7, P8 p8) {return (*(ref(this)._impl))(ref(static_cast<MethodT*>(this)), p1, p2, p3, p4, p5, p6, p7, p8);}
 };
 #endif
