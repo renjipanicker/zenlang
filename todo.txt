@@ -2,17 +2,20 @@ anchor
 systray
 menubar
 menuitem
-unit test - check
-verbose output from compiler
-interpreter
 single-outparam for functions.
 void out-param, do not generate _Out
 void in-param, do not generate _In
-sizeof() function.
+
+bug-fix - gtk-textedit resizes parent window
+sizeof() function for container-expr.
+sizeof() function for types.
 bug-fix multiple #includes in guiTest.cpp
 "c++" as output code
 "cmake" as output project
 fix indents in definition-generator
+unit test - check
+verbose output from compiler
+interpreter
 
 process
 application
