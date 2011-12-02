@@ -83,6 +83,7 @@ public:
     Ast::ImportStatement*    aImportNamespaceId(Ast::ImportStatement& statement, const Ast::Token& name);
     Ast::ImportStatement*    aImportNamespaceId(const Ast::Token& name);
     Ast::Statement*          aGlobalTypeSpecStatement(const Ast::AccessType::T& accessType, Ast::UserDefinedTypeSpec& typeSpec);
+    Ast::Statement*          aGlobalStatement(Ast::Statement& statement);
 
     void                     aGlobalCoerceStatement(Ast::CoerceList& list);
     Ast::CoerceList*         aCoerceList(Ast::CoerceList& list, const Ast::TypeSpec& typeSpec);

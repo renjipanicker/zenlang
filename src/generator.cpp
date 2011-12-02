@@ -18,16 +18,16 @@ inline std::string getAccessType(const Ast::AccessType::T& accessType) {
     switch(accessType) {
         case Ast::AccessType::Public:
             return "public";
-        case Ast::AccessType::Protected:
-            return "protected";
         case Ast::AccessType::Private:
             return "private";
-        case Ast::AccessType::Parent:
-            return "parent";
+        case Ast::AccessType::Protected:
+            return "protected";
         case Ast::AccessType::Internal:
             return "internal";
-        case Ast::AccessType::Export:
-            return "export";
+        case Ast::AccessType::External:
+            return "external";
+        case Ast::AccessType::Parent:
+            return "parent";
     }
     throw Exception("Internal error: Unknown Access Type '%d'\n", accessType);
 }
@@ -59,6 +59,13 @@ private:
 char Indent::ind[Size] = {32};
 int Indent::_indent = -1;
 #define INDENT Indent _ind_
+
+struct FileSet {
+    inline FileSet(FILE* fpHdr, FILE* fpSrc, FILE* fpImp) : _fpHdr(fpHdr), _fpSrc(fpSrc), _fpImp(fpImp) {}
+    FILE* _fpHdr;
+    FILE* _fpSrc;
+    FILE* _fpImp;
+};
 
 struct ExprGenerator : public Ast::Expr::Visitor {
 public:
@@ -348,13 +355,11 @@ private:
 };
 
 struct GeneratorContext {
-    typedef std::list<const Ast::Statement*> List;
     struct TargetMode {
         enum T {
             Import,
-            Header,
-            Source,
-            Body,
+            TypeDecl,
+            TypeDefn,
             Local
         };
     };
@@ -368,9 +373,8 @@ struct GeneratorContext {
 
     TargetMode::T _targetMode;
     IndentMode::T _indentMode;
-    List _list;
     inline GeneratorContext(const TargetMode::T& targetMode, const IndentMode::T& indentMode) : _targetMode(targetMode), _indentMode(indentMode) {}
-    void run(const Ast::Config& config, FILE* fp, const std::string& basename, const Ast::Statement& block);
+    void run(const Ast::Config& config, FileSet& fs, const std::string& basename, const Ast::Statement& block);
 };
 
 struct ImportGenerator : public Ast::TypeSpec::Visitor {
@@ -436,13 +440,7 @@ struct ImportGenerator : public Ast::TypeSpec::Visitor {
                 fprintf(_fp, " : %s", getTypeSpecName(ref(base), GenMode::Import).c_str());
             }
             fprintf(_fp, "%s {\n", getDefinitionType(node.defType()).c_str());
-            for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
-                const Ast::VariableDefn& vdef = ref(*it);
-                fprintf(_fp, "    %s %s", getQualifiedTypeSpecName(vdef.qualifiedTypeSpec(), GenMode::Import).c_str(), vdef.name().text());
-                fprintf(_fp, " = ");
-                ExprGenerator(_fp, GenMode::Import).visitNode(vdef.initExpr());
-                fprintf(_fp, ";\n");
-            }
+            GeneratorContext(GeneratorContext::TargetMode::Import, GeneratorContext::IndentMode::NoBrace).run(_config, _fs, "", node.block());
             fprintf(_fp, "};\n");
         }
     }
@@ -549,8 +547,11 @@ struct ImportGenerator : public Ast::TypeSpec::Visitor {
     }
 
 public:
-    inline ImportGenerator(FILE* fp) : _fp(fp) {}
+    inline ImportGenerator(const Ast::Config& config, FileSet& fs, FILE* fp) : _config(config), _fs(fs), _fp(fp) {}
+
 private:
+    const Ast::Config& _config;
+    FileSet& _fs;
     FILE* _fp;
 };
 
@@ -621,9 +622,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         fprintf(_fp, " {\n");
 
         visitChildrenIndent(node);
-
-        // member-list
-        GeneratorContext(GeneratorContext::TargetMode::Header, GeneratorContext::IndentMode::NoBrace).run(_config, _fp, "", node.block());
+        GeneratorContext(GeneratorContext::TargetMode::TypeDecl, GeneratorContext::IndentMode::NoBrace).run(_config, _fs, "", node.block());
 
         fprintf(_fp, "%s};\n", Indent::get());
         fprintf(_fp, "\n");
@@ -873,10 +872,11 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
     }
 
 public:
-    inline TypeDeclarationGenerator(const Ast::Config& config, FILE* fp) : _config(config), _fp(fp) {}
+    inline TypeDeclarationGenerator(const Ast::Config& config, FileSet& fs, FILE* fp) : _config(config), _fs(fs), _fp(fp) {}
 
 private:
     const Ast::Config& _config;
+    FileSet& _fs;
     FILE* _fp;
 };
 
@@ -925,7 +925,7 @@ struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
     void visit(const Ast::RoutineDefn& node) {
         visitChildrenIndent(node);
         TypeDeclarationGenerator::visitRoutine(_fp, node, false);
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fp, "", node.block());
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
         fprintf(_fp, "\n");
     }
 
@@ -945,7 +945,7 @@ struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
             TypeDeclarationGenerator::writeScopeParamList(_fp, node.sig().inScope(), "");
             fprintf(_fp, ") ");
         }
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fp, "", node.block());
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
         fprintf(_fp, "\n");
     }
 
@@ -995,49 +995,56 @@ struct TypeDefinitionGenerator : public Ast::TypeSpec::Visitor {
     }
 
 public:
-    inline TypeDefinitionGenerator(const Ast::Config& config, FILE* fp) : _config(config), _fp(fp) {}
+    inline TypeDefinitionGenerator(const Ast::Config& config, FileSet& fs, FILE* fp) : _config(config), _fs(fs), _fp(fp) {}
 private:
     const Ast::Config& _config;
+    FileSet& _fs;
     FILE* _fp;
 };
 
 struct StatementGenerator : public Ast::Statement::Visitor {
 private:
+    inline FILE* fpDecl(const Ast::AccessType::T& accessType) const {
+        return (accessType == Ast::AccessType::Private)?_fs._fpSrc:_fs._fpHdr;
+    }
+
+    inline FILE* fpDefn() const {
+        return _fs._fpSrc;
+    }
+private:
     virtual void visit(const Ast::ImportStatement& node) {
         if(_ctx._targetMode == GeneratorContext::TargetMode::Import) {
             if(node.headerType() == Ast::HeaderType::Import) {
-                fprintf(_fp, "import ");
+                fprintf(_fs._fpImp, "import ");
             } else {
-                fprintf(_fp, "include ");
+                fprintf(_fs._fpImp, "include ");
             }
 
             std::string sep = "";
             for(Ast::ImportStatement::Part::const_iterator it = node.part().begin(); it != node.part().end(); ++it) {
                 const Ast::Token& name = *it;
-                fprintf(_fp, "%s%s", sep.c_str(), name.text());
+                fprintf(_fs._fpImp, "%s%s", sep.c_str(), name.text());
                 sep = "::";
             }
 
             if(node.defType() == Ast::DefinitionType::Native) {
-                fprintf(_fp, " native");
+                fprintf(_fs._fpImp, " native");
             }
 
-            fprintf(_fp, ";\n");
-            return;
+            fprintf(_fs._fpImp, ";\n");
         }
 
-        if(((_ctx._targetMode == GeneratorContext::TargetMode::Header) && (node.accessType() == Ast::AccessType::Public)) ||
-           ((_ctx._targetMode == GeneratorContext::TargetMode::Source) && (node.accessType() != Ast::AccessType::Public))) {
+        if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
+            FILE* fp = fpDecl(node.accessType());
             std::string qt = (node.headerType() == Ast::HeaderType::Import)?"<>":"\"\"";
-            fprintf(_fp, "#include %c", qt.at(0));
+            fprintf(fp, "#include %c", qt.at(0));
             std::string sep = "";
             for(Ast::ImportStatement::Part::const_iterator it = node.part().begin(); it != node.part().end(); ++it) {
                 const Ast::Token& name = *it;
-                fprintf(_fp, "%s%s", sep.c_str(), name.text());
+                fprintf(fp, "%s%s", sep.c_str(), name.text());
                 sep = "/";
             }
-            fprintf(_fp, ".hpp%c\n", qt.at(1));
-        } else {
+            fprintf(fp, ".hpp%c\n", qt.at(1));
         }
     }
 
@@ -1051,243 +1058,223 @@ private:
                 fqn += ns.name().string();
             }
             if(fqn.size() > 0) {
-                fprintf(_fp, "namespace %s;\n\n", fqn.c_str());
+                fprintf(_fs._fpImp, "namespace %s;\n\n", fqn.c_str());
             }
-            return;
         }
 
-        if(_ctx._targetMode == GeneratorContext::TargetMode::Source) {
+        if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
             assert(_basename.size() > 0);
-            fprintf(_fp, "#include \"%s.hpp\"\n", _basename.c_str());
-        }
+            fprintf(_fs._fpSrc, "#include \"%s.hpp\"\n", _basename.c_str());
 
-        if((_ctx._targetMode == GeneratorContext::TargetMode::Header) || (_ctx._targetMode == GeneratorContext::TargetMode::Source)) {
             for(Ast::NamespaceStatement::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 const Ast::Namespace& ns = ref(*it);
-                fprintf(_fp, "namespace %s {", ns.name().text());
+                fprintf(_fs._fpHdr, "namespace %s {", ns.name().text());
+                fprintf(_fs._fpSrc, "namespace %s {", ns.name().text());
             }
 
             if(node.list().size() > 0) {
-                fprintf(_fp, "\n");
+                fprintf(_fs._fpHdr, "\n");
+                fprintf(_fs._fpSrc, "\n");
             }
         }
     }
 
     virtual void visit(const Ast::LeaveNamespaceStatement& node) {
-        if(_ctx._targetMode == GeneratorContext::TargetMode::Import) {
-            return;
-        }
-
-        if((_ctx._targetMode == GeneratorContext::TargetMode::Header) || (_ctx._targetMode == GeneratorContext::TargetMode::Source)) {
+        if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
             for(Ast::NamespaceStatement::List::const_reverse_iterator it = node.statement().list().rbegin(); it != node.statement().list().rend(); ++it) {
                 const Ast::Namespace& ns = ref(*it);
-                fprintf(_fp, "} /*** %s */ ", ns.name().text());
+                fprintf(_fs._fpHdr, "} /* %s */ ", ns.name().text());
+                fprintf(_fs._fpSrc, "} /* %s */ ", ns.name().text());
             }
             if(node.statement().list().size() > 0) {
-                fprintf(_fp, "\n");
+                fprintf(_fs._fpHdr, "\n");
+                fprintf(_fs._fpSrc, "\n");
             }
         }
-    }
-
-    bool isHeader(const Ast::TypeSpec& typeSpec) const {
-        if((typeSpec.accessType() == Ast::AccessType::Public) || (typeSpec.accessType() == Ast::AccessType::Protected)) {
-            return true;
-        }
-        if(typeSpec.accessType() == Ast::AccessType::Parent) {
-            const Ast::ChildTypeSpec* childTypeSpec = dynamic_cast<const Ast::ChildTypeSpec*>(ptr(typeSpec));
-            if(childTypeSpec) {
-                return isHeader(ref(childTypeSpec).parent());
-            }
-        }
-        return false;
     }
 
     virtual void visit(const Ast::UserDefinedTypeSpecStatement& node) {
         if(_ctx._targetMode == GeneratorContext::TargetMode::Import) {
-            ImportGenerator(_fp).visitNode(node.typeSpec());
-        } else if(_ctx._targetMode == GeneratorContext::TargetMode::Header) {
-            if(isHeader(node.typeSpec())) {
-                TypeDeclarationGenerator(_config, _fp).visitNode(node.typeSpec());
-            }
-            _ctx._list.push_back(ptr(node));
-        } else if(_ctx._targetMode == GeneratorContext::TargetMode::Source) {
-            if(!isHeader(node.typeSpec())) {
-                TypeDeclarationGenerator(_config, _fp).visitNode(node.typeSpec());
-            }
-            _ctx._list.push_back(ptr(node));
-        } else if(_ctx._targetMode == GeneratorContext::TargetMode::Body) {
-            TypeDefinitionGenerator(_config, _fp).visitNode(node.typeSpec());
+            ImportGenerator(_config, _fs, _fs._fpImp).visitNode(node.typeSpec());
+        }
+
+        if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
+            TypeDeclarationGenerator(_config, _fs, fpDecl(node.typeSpec().accessType())).visitNode(node.typeSpec());
+        }
+
+        if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDefn) {
+            TypeDefinitionGenerator(_config, _fs, _fs._fpSrc).visitNode(node.typeSpec());
         }
     }
 
     virtual void visit(const Ast::StructMemberStatement& node) {
         if(_ctx._targetMode == GeneratorContext::TargetMode::Import) {
-            fprintf(_fp, "%s%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.defn().name().text());
-            ExprGenerator(_fp, GenMode::Normal).visitNode(node.defn().initExpr());
-            fprintf(_fp, ";\n");
-        } else if(_ctx._targetMode == GeneratorContext::TargetMode::Header) {
-            fprintf(_fp, "%s%s %s; /**/ ", Indent::get(), getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.defn().name().text());
-            fprintf(_fp, "template <typename T> inline T& _%s(const %s& val) {%s = val; return ref(static_cast<T*>(this));}\n",
+            fprintf(_fs._fpImp, "%s%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GenMode::Import).c_str(), node.defn().name().text());
+            ExprGenerator(_fs._fpImp, GenMode::Import).visitNode(node.defn().initExpr());
+            fprintf(_fs._fpImp, ";\n");
+        }
+
+        if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
+            fprintf(fpDecl(node.structDefn().accessType()), "%s%s %s; /**/ ", Indent::get(), getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.defn().name().text());
+            fprintf(fpDecl(node.structDefn().accessType()), "template <typename T> inline T& _%s(const %s& val) {%s = val; return ref(static_cast<T*>(this));}\n",
                     node.defn().name().text(), getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.defn().name().text());
-        } else if(_ctx._targetMode == GeneratorContext::TargetMode::Source) {
         }
     }
 
     virtual void visit(const Ast::StructInitStatement& node) {
-        if(_ctx._targetMode == GeneratorContext::TargetMode::Header) {
+        if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
             // internal-impl
-            if(node.defn().accessType() == Ast::AccessType::Protected) {
-                fprintf(_fp, "%sstruct Impl;\n", Indent::get());
-                fprintf(_fp, "%sImpl* _impl;\n", Indent::get());
-                fprintf(_fp, "%sinline void impl(Impl& val) {_impl = ptr(val);}\n", Indent::get());
+            if(node.structDefn().accessType() == Ast::AccessType::Protected) {
+                fprintf(fpDecl(node.structDefn().accessType()), "%sstruct Impl;\n", Indent::get());
+                fprintf(fpDecl(node.structDefn().accessType()), "%sImpl* _impl;\n", Indent::get());
+                fprintf(fpDecl(node.structDefn().accessType()), "%sinline void impl(Impl& val) {_impl = ptr(val);}\n", Indent::get());
             }
 
             // default-ctor
-            fprintf(_fp, "%sexplicit inline %s()", Indent::get(), node.defn().name().text());
+            fprintf(fpDecl(node.structDefn().accessType()), "%sexplicit inline %s()", Indent::get(), node.structDefn().name().text());
             std::string sep = " : ";
-            if(node.defn().accessType() == Ast::AccessType::Protected) {
-                fprintf(_fp, "%s_impl(0)", sep.c_str());
+            if(node.structDefn().accessType() == Ast::AccessType::Protected) {
+                fprintf(fpDecl(node.structDefn().accessType()), "%s_impl(0)", sep.c_str());
                 sep = ", ";
             }
-            for(Ast::Scope::List::const_iterator it = node.defn().list().begin(); it != node.defn().list().end(); ++it) {
+            for(Ast::Scope::List::const_iterator it = node.structDefn().list().begin(); it != node.structDefn().list().end(); ++it) {
                 const Ast::VariableDefn& vdef = ref(*it);
-                fprintf(_fp, "%s%s(", sep.c_str(), vdef.name().text());
-                ExprGenerator(_fp, GenMode::Normal).visitNode(vdef.initExpr());
-                fprintf(_fp, ")");
+                fprintf(fpDecl(node.structDefn().accessType()), "%s%s(", sep.c_str(), vdef.name().text());
+                ExprGenerator(fpDecl(node.structDefn().accessType()), GenMode::Normal).visitNode(vdef.initExpr());
+                fprintf(fpDecl(node.structDefn().accessType()), ")");
                 sep = ", ";
             }
-            fprintf(_fp, " {}\n");
+            fprintf(fpDecl(node.structDefn().accessType()), " {}\n");
         }
     }
 
     virtual void visit(const Ast::AutoStatement& node) {
-        fprintf(_fp, "%s%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.defn().name().text());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.defn().initExpr());
-        fprintf(_fp, ";\n");
+        fprintf(fpDefn(), "%s%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.defn().name().text());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.defn().initExpr());
+        fprintf(fpDefn(), ";\n");
     }
 
     virtual void visit(const Ast::ExprStatement& node) {
-        fprintf(_fp, "%s", Indent::get());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.expr());
-        fprintf(_fp, ";\n");
+        fprintf(fpDefn(), "%s", Indent::get());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), ";\n");
     }
 
     virtual void visit(const Ast::PrintStatement& node) {
-        fprintf(_fp, "%sLog::get() << ", Indent::get());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.expr());
-        fprintf(_fp, " << Log::Out();\n");
+        fprintf(fpDefn(), "%sLog::get() << ", Indent::get());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), " << Log::Out();\n");
     }
 
     virtual void visit(const Ast::IfStatement& node) {
-        fprintf(_fp, "%sif(", Indent::get());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.expr());
-        fprintf(_fp, ") ");
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fp, "", node.tblock());
+        fprintf(fpDefn(), "%sif(", Indent::get());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), ") ");
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.tblock());
     }
 
     virtual void visit(const Ast::IfElseStatement& node) {
-        fprintf(_fp, "%sif(", Indent::get());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.expr());
-        fprintf(_fp, ")");
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fp, "", node.tblock());
-        fprintf(_fp, "%selse", Indent::get());
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fp, "", node.fblock());
+        fprintf(fpDefn(), "%sif(", Indent::get());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), ")");
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.tblock());
+        fprintf(fpDefn(), "%selse", Indent::get());
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.fblock());
     }
 
     virtual void visit(const Ast::WhileStatement& node) {
-        fprintf(_fp, "%swhile(", Indent::get());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.expr());
-        fprintf(_fp, ")");
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fp, "", node.block());
+        fprintf(fpDefn(), "%swhile(", Indent::get());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), ")");
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
     }
 
     virtual void visit(const Ast::DoWhileStatement& node) {
-        fprintf(_fp, "%sdo", Indent::get());
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fp, "", node.block());
-        fprintf(_fp, "%swhile(", Indent::get());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.expr());
-        fprintf(_fp, ");\n");
+        fprintf(fpDefn(), "%sdo", Indent::get());
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
+        fprintf(fpDefn(), "%swhile(", Indent::get());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), ");\n");
     }
 
     virtual void visit(const Ast::ForExprStatement& node) {
-        fprintf(_fp, "%sfor(", Indent::get());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.init());
-        fprintf(_fp, "; ");
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.expr());
-        fprintf(_fp, "; ");
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.incr());
-        fprintf(_fp, ")");
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fp, "", node.block());
+        fprintf(fpDefn(), "%sfor(", Indent::get());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.init());
+        fprintf(fpDefn(), "; ");
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), "; ");
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.incr());
+        fprintf(fpDefn(), ")");
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
     }
 
     virtual void visit(const Ast::ForInitStatement& node) {
-        fprintf(_fp, "%sfor(%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.init().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.init().name().text());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.init().initExpr());
-        fprintf(_fp, "; ");
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.expr());
-        fprintf(_fp, "; ");
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.incr());
-        fprintf(_fp, ")");
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fp, "", node.block());
+        fprintf(fpDefn(), "%sfor(%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.init().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.init().name().text());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.init().initExpr());
+        fprintf(fpDefn(), "; ");
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), "; ");
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.incr());
+        fprintf(fpDefn(), ")");
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
     }
 
     virtual void visit(const Ast::ForeachListStatement& node) {
         const std::string etype = getQualifiedTypeSpecName(node.expr().qTypeSpec(), GenMode::Normal);
-        const std::string vtype = getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GenMode::Normal);
 
         std::string constit = "";
         if(node.expr().qTypeSpec().isConst()) {
             constit = "const_";
         }
 
-        fprintf(_fp, "%s{\n", Indent::get());
-        fprintf(_fp, "%s%s& _list = ", Indent::get(), etype.c_str());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.expr());
-        fprintf(_fp, ";\n");
-        fprintf(_fp, "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GenMode::Normal).c_str(), constit.c_str());
-        fprintf(_fp, "%s%s& %s = _it->second;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.valDef().name().text());
+        fprintf(fpDefn(), "%s{\n", Indent::get());
+        fprintf(fpDefn(), "%s%s& _list = ", Indent::get(), etype.c_str());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), ";\n");
+        fprintf(fpDefn(), "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GenMode::Normal).c_str(), constit.c_str());
+        fprintf(fpDefn(), "%s%s& %s = _it->second;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.valDef().name().text());
 
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::IndentedBrace).run(_config, _fp, "", node.block());
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::IndentedBrace).run(_config, _fs, "", node.block());
 
-        fprintf(_fp, "%s}\n", Indent::get());
-        fprintf(_fp, "%s}\n", Indent::get());
+        fprintf(fpDefn(), "%s}\n", Indent::get());
+        fprintf(fpDefn(), "%s}\n", Indent::get());
     }
 
     virtual void visit(const Ast::ForeachDictStatement& node) {
         std::string constit = "";
         if(node.expr().qTypeSpec().isConst())
             constit = "const_";
-        fprintf(_fp, "%s{\n", Indent::get());
-        fprintf(_fp, "%s%s& _list = ", Indent::get(), getQualifiedTypeSpecName(node.expr().qTypeSpec(), GenMode::Normal).c_str());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.expr());
-        fprintf(_fp, ";\n");
-        fprintf(_fp, "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GenMode::Normal).c_str(), constit.c_str());
-        fprintf(_fp, "%sconst %s& %s = _it->first;\n", Indent::get(), getQualifiedTypeSpecName(node.keyDef().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.keyDef().name().text());
-        fprintf(_fp, "%s%s& %s = _it->second;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.valDef().name().text());
+        fprintf(fpDefn(), "%s{\n", Indent::get());
+        fprintf(fpDefn(), "%s%s& _list = ", Indent::get(), getQualifiedTypeSpecName(node.expr().qTypeSpec(), GenMode::Normal).c_str());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), ";\n");
+        fprintf(fpDefn(), "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GenMode::Normal).c_str(), constit.c_str());
+        fprintf(fpDefn(), "%sconst %s& %s = _it->first;\n", Indent::get(), getQualifiedTypeSpecName(node.keyDef().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.keyDef().name().text());
+        fprintf(fpDefn(), "%s%s& %s = _it->second;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.valDef().name().text());
 
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::IndentedBrace).run(_config, _fp, "", node.block());
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::IndentedBrace).run(_config, _fs, "", node.block());
 
-        fprintf(_fp, "%s}\n", Indent::get());
-        fprintf(_fp, "%s}\n", Indent::get());
+        fprintf(fpDefn(), "%s}\n", Indent::get());
+        fprintf(fpDefn(), "%s}\n", Indent::get());
     }
 
     virtual void visit(const Ast::CaseExprStatement& node) {
-        fprintf(_fp, "%scase (", Indent::get());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.expr());
-        fprintf(_fp, ") :");
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fp, "", node.block());
+        fprintf(fpDefn(), "%scase (", Indent::get());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), ") :");
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
     }
 
     virtual void visit(const Ast::CaseDefaultStatement& node) {
-        fprintf(_fp, "%sdefault :", Indent::get());
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fp, "", node.block());
+        fprintf(fpDefn(), "%sdefault :", Indent::get());
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
     }
 
     virtual void visit(const Ast::SwitchValueStatement& node) {
-        fprintf(_fp, "%sswitch(", Indent::get());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.expr());
-        fprintf(_fp, ")");
-        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fp, "", node.block());
+        fprintf(fpDefn(), "%sswitch(", Indent::get());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), ")");
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
     }
 
     virtual void visit(const Ast::SwitchExprStatement& node) {
@@ -1297,13 +1284,13 @@ private:
             const Ast::CaseExprStatement* ce = dynamic_cast<const Ast::CaseExprStatement*>(s);
             const Ast::CaseDefaultStatement* cd = dynamic_cast<const Ast::CaseDefaultStatement*>(s);
             if(ce) {
-                fprintf(_fp, "%s%s(", Indent::get(), ifstr.c_str());
-                ExprGenerator(_fp, GenMode::Normal).visitNode(ref(ce).expr());
-                fprintf(_fp, ")\n");
+                fprintf(fpDefn(), "%s%s(", Indent::get(), ifstr.c_str());
+                ExprGenerator(fpDefn(), GenMode::Normal).visitNode(ref(ce).expr());
+                fprintf(fpDefn(), ")\n");
                 visitNode(ref(ce).block());
                 ifstr = "else if";
             } else if(cd) {
-                fprintf(_fp, "%selse\n", Indent::get());
+                fprintf(fpDefn(), "%selse\n", Indent::get());
                 visitNode(ref(cd).block());
                 break;
             } else {
@@ -1313,45 +1300,45 @@ private:
     }
 
     virtual void visit(const Ast::BreakStatement& node) {
-        fprintf(_fp, "%sbreak;\n", Indent::get());
+        fprintf(fpDefn(), "%sbreak;\n", Indent::get());
     }
 
     virtual void visit(const Ast::ContinueStatement& node) {
-        fprintf(_fp, "%scontinue;\n", Indent::get());
+        fprintf(fpDefn(), "%scontinue;\n", Indent::get());
     }
 
     virtual void visit(const Ast::AddEventHandlerStatement& node) {
         std::string ename = getTypeSpecName(node.event(), GenMode::Normal);
-        fprintf(_fp, "%s%s::addHandlerT(", Indent::get(), ename.c_str());
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.source());
-        fprintf(_fp, ", ");
-        ExprGenerator(_fp, GenMode::Normal).visitNode(node.functor());
-        fprintf(_fp, ");\n");
+        fprintf(fpDefn(), "%s%s::addHandlerT(", Indent::get(), ename.c_str());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.source());
+        fprintf(fpDefn(), ", ");
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.functor());
+        fprintf(fpDefn(), ");\n");
     }
 
     virtual void visit(const Ast::RoutineReturnStatement& node) {
-        fprintf(_fp, "%sreturn", Indent::get());
+        fprintf(fpDefn(), "%sreturn", Indent::get());
         if(node.exprList().list().size() > 0) {
-            fprintf(_fp, " (");
-            ExprGenerator(_fp, GenMode::Normal, ", ").visitList(node.exprList());
-            fprintf(_fp, ")");
+            fprintf(fpDefn(), " (");
+            ExprGenerator(fpDefn(), GenMode::Normal, ", ").visitList(node.exprList());
+            fprintf(fpDefn(), ")");
         }
-        fprintf(_fp, ";\n");
+        fprintf(fpDefn(), ";\n");
     }
 
     virtual void visit(const Ast::FunctionReturnStatement& node) {
-        fprintf(_fp, "%sreturn out(_Out(", Indent::get());
-        ExprGenerator(_fp, GenMode::Normal, ", ").visitList(node.exprList());
-        fprintf(_fp, "));\n");
+        fprintf(fpDefn(), "%sreturn out(_Out(", Indent::get());
+        ExprGenerator(fpDefn(), GenMode::Normal, ", ").visitList(node.exprList());
+        fprintf(fpDefn(), "));\n");
     }
 
     virtual void visit(const Ast::CompoundStatement& node) {
         if(_ctx._indentMode == GeneratorContext::IndentMode::IndentedBrace) {
-            fprintf(_fp, "%s", Indent::get());
+            fprintf(fpDefn(), "%s", Indent::get());
         }
 
         if((_ctx._indentMode == GeneratorContext::IndentMode::IndentedBrace) || (_ctx._indentMode == GeneratorContext::IndentMode::WithBrace)) {
-            fprintf(_fp, "{\n");
+            fprintf(fpDefn(), "{\n");
         }
 
         {
@@ -1363,21 +1350,21 @@ private:
         }
 
         if((_ctx._indentMode == GeneratorContext::IndentMode::IndentedBrace) || (_ctx._indentMode == GeneratorContext::IndentMode::WithBrace)) {
-            fprintf(_fp, "%s}\n", Indent::get());
+            fprintf(fpDefn(), "%s}\n", Indent::get());
         }
     }
 
 public:
-    inline StatementGenerator(const Ast::Config& config, GeneratorContext& ctx, FILE* fp, const std::string& basename) : _config(config), _ctx(ctx), _fp(fp), _basename(basename) {}
+    inline StatementGenerator(const Ast::Config& config, FileSet& fs, GeneratorContext& ctx, const std::string& basename) : _config(config), _fs(fs), _ctx(ctx), _basename(basename) {}
 private:
     const Ast::Config& _config;
+    FileSet& _fs;
     GeneratorContext& _ctx;
-    FILE* _fp;
     const std::string& _basename;
 };
 
-void GeneratorContext::run(const Ast::Config& config, FILE* fp, const std::string& basename, const Ast::Statement& block) {
-    StatementGenerator gen(config, ref(this), fp, basename);
+void GeneratorContext::run(const Ast::Config& config, FileSet& fs, const std::string& basename, const Ast::Statement& block) {
+    StatementGenerator gen(config, fs, ref(this), basename);
     gen.visitNode(block);
 }
 
@@ -1400,6 +1387,7 @@ inline void Generator::Impl::run() {
     OutputFile ofImp(_fpImp, basename + ".ipp");unused(ofImp);
     OutputFile ofHdr(_fpHdr, basename + ".hpp");unused(ofHdr);
     OutputFile ofSrc(_fpSrc, basename + ".cpp");unused(ofSrc);
+    FileSet fs(_fpHdr, _fpSrc, _fpImp);
 
     fprintf(_fpHdr, "#pragma once\n\n");
     for(Ast::Config::PathList::const_iterator it = _config.includeFileList().begin(); it != _config.includeFileList().end(); ++it) {
@@ -1409,30 +1397,18 @@ inline void Generator::Impl::run() {
 
     for(Ast::Unit::StatementList::const_iterator sit = _unit.statementList().begin(); sit != _unit.statementList().end(); ++sit) {
         const Ast::Statement& s = ref(*sit);
-        GeneratorContext(GeneratorContext::TargetMode::Import, GeneratorContext::IndentMode::WithBrace).run(_config, _fpImp, basename, s);
+        GeneratorContext(GeneratorContext::TargetMode::Import, GeneratorContext::IndentMode::WithBrace).run(_config, fs, basename, s);
     }
 
     for(Ast::Unit::StatementList::const_iterator sit = _unit.statementList().begin(); sit != _unit.statementList().end(); ++sit) {
         const Ast::Statement& s = ref(*sit);
-        GeneratorContext(GeneratorContext::TargetMode::Header, GeneratorContext::IndentMode::WithBrace).run(_config, _fpHdr, basename, s);
+        GeneratorContext(GeneratorContext::TargetMode::TypeDecl, GeneratorContext::IndentMode::WithBrace).run(_config, fs, basename, s);
     }
 
     for(Ast::Unit::StatementList::const_iterator sit = _unit.statementList().begin(); sit != _unit.statementList().end(); ++sit) {
         const Ast::Statement& s = ref(*sit);
-        GeneratorContext(GeneratorContext::TargetMode::Source, GeneratorContext::IndentMode::WithBrace).run(_config, _fpSrc, basename, s);
+        GeneratorContext(GeneratorContext::TargetMode::TypeDefn, GeneratorContext::IndentMode::WithBrace).run(_config, fs, basename, s);
     }
-
-    for(Ast::Unit::StatementList::const_iterator sit = _unit.statementList().begin(); sit != _unit.statementList().end(); ++sit) {
-        const Ast::Statement& s = ref(*sit);
-        GeneratorContext(GeneratorContext::TargetMode::Body, GeneratorContext::IndentMode::WithBrace).run(_config, _fpSrc, basename, s);
-    }
-
-//    StatementGeneratorContext ctx3(StatementGeneratorContext::TargetMode::Body, StatementGeneratorContext::IndentMode::WithBrace);
-//    StatementGenerator gen3(_config, ctx3, _fpSrc, basename);
-//    for(StatementGeneratorContext::List::const_iterator it = ctx1._list.begin(); it != ctx1._list.end(); ++it) {
-//        const Ast::Statement& s = ref(*it);
-//        gen3.visitNode(s);
-//    }
 }
 
 //////////////////////////////////////////////

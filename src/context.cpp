@@ -436,13 +436,17 @@ Ast::NamespaceStatement* Context::aUnitNamespaceId(const Ast::Token &name) {
     return aUnitNamespaceId(statement, name);
 }
 
+Ast::Statement* Context::aGlobalStatement(Ast::Statement& statement) {
+    if(_level == 0) {
+        _unit.addStatement(statement);
+    }
+    return ptr(statement);
+}
+
 Ast::Statement* Context::aGlobalTypeSpecStatement(const Ast::AccessType::T& accessType, Ast::UserDefinedTypeSpec& typeSpec){
     typeSpec.accessType(accessType);
-    Ast::Statement* statement = aUserDefinedTypeSpecStatement(typeSpec);
-    if(_level == 0) {
-        _unit.addStatement(ref(statement));
-    }
-    return statement;
+    Ast::UserDefinedTypeSpecStatement* statement = aUserDefinedTypeSpecStatement(typeSpec);
+    return aGlobalStatement(ref(statement));
 }
 
 void Context::aGlobalCoerceStatement(Ast::CoerceList& list) {
@@ -571,7 +575,7 @@ void Context::aStructMemberDefn(const Ast::VariableDefn& vdef) {
     }
     ref(sd).addMember(vdef);
 
-    Ast::StructMemberStatement& statement = _unit.addNode(new Ast::StructMemberStatement(vdef));
+    Ast::StructMemberStatement& statement = _unit.addNode(new Ast::StructMemberStatement(ref(sd), vdef));
     ref(sd).block().addStatement(statement);
 }
 

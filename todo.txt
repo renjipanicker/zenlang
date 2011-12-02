@@ -2,6 +2,7 @@ anchor
 systray
 menubar
 menuitem
+infer type of rhs in struct-init
 single-outparam for functions.
 void out-param, do not generate _Out
 void in-param, do not generate _In

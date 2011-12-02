@@ -266,7 +266,7 @@ struct PtrStruct {
     pointer<InStruct> p;
 };
 
-public test testPtrStruct {
+test testPtrStruct {
     auto s = PtrStruct{p : pointer<InStruct>(InStruct{});};
     unused(s);
     return (true);

@@ -6,11 +6,11 @@ namespace Ast {
     struct AccessType {
         /// \brief The access type for any user-defined TypeSpec.
         enum T {
-            Private,     /// TypeSpec is visible only within current compilation unit
-            Internal,    /// TypeSpec is externally visible only as a reference
-            Protected,   /// TypeSpec is exposed as a pimpl type.
             Public,      /// TypeSpec is fully exposed externally
-            Export,      /// unused for now, to be used for dllexport later.
+            Private,     /// TypeSpec is visible only within current compilation unit
+            Protected,   /// TypeSpec is exposed as a pimpl type.
+            Internal,    /// TypeSpec is externally visible only as a reference
+            External,    /// unused for now, to be used for dllexport later.
             Parent       /// TypeSpec inherits the access type of its parent
         };
     };
@@ -1066,22 +1066,24 @@ namespace Ast {
 
     class StructMemberStatement : public Statement {
     public:
-        inline StructMemberStatement(const VariableDefn& defn) : _defn(defn) {}
+        inline StructMemberStatement(const StructDefn& structDefn, const VariableDefn& defn) : _structDefn(structDefn), _defn(defn) {}
+        inline const StructDefn& structDefn() const {return _structDefn;}
         inline const VariableDefn& defn() const {return _defn;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
+        const StructDefn& _structDefn;
         const VariableDefn& _defn;
     };
 
     class StructInitStatement : public Statement {
     public:
-        inline StructInitStatement(const StructDefn& defn) : _defn(defn) {}
-        inline const StructDefn& defn() const {return _defn;}
+        inline StructInitStatement(const StructDefn& structDefn) : _structDefn(structDefn) {}
+        inline const StructDefn& structDefn() const {return _structDefn;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const StructDefn& _defn;
+        const StructDefn& _structDefn;
     };
 
     class AutoStatement : public Statement {

@@ -252,11 +252,11 @@ re2c:condenumprefix          = EState;
 <Normal>   "include"   := feedToken(token(s, ZENTOK_INCLUDE)); continue;
 <Normal>   "namespace" := feedToken(token(s, ZENTOK_NAMESPACE)); continue;
 
-<Normal>   "private"   := feedToken(token(s, ZENTOK_PRIVATE)); continue;
-<Normal>   "internal"  := feedToken(token(s, ZENTOK_INTERNAL)); continue;
-<Normal>   "protected" := feedToken(token(s, ZENTOK_PROTECTED)); continue;
 <Normal>   "public"    := feedToken(token(s, ZENTOK_PUBLIC)); continue;
-<Normal>   "export"    := feedToken(token(s, ZENTOK_EXPORT)); continue;
+<Normal>   "private"   := feedToken(token(s, ZENTOK_PRIVATE)); continue;
+<Normal>   "protected" := feedToken(token(s, ZENTOK_PROTECTED)); continue;
+<Normal>   "internal"  := feedToken(token(s, ZENTOK_INTERNAL)); continue;
+<Normal>   "external"  := feedToken(token(s, ZENTOK_EXTERNAL)); continue;
 
 <Normal>   "typedef"   := feedToken(token(s, ZENTOK_TYPEDEF)); continue;
 <Normal>   "template"  := feedToken(token(s, ZENTOK_TEMPLATE)); continue;

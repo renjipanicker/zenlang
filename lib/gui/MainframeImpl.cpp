@@ -13,6 +13,7 @@ const MainFrame::Create::_Out& MainFrame::Create::run(const MainFrame::Definitio
     if((def.position.w != -1) && (def.position.h != -1))
         gtk_widget_set_size_request (impl._hWindow, def.position.w, def.position.h);
 
+    printf("mainfrmae: w %d h %d\n", def.position.w, def.position.h);
     impl._hFixed = gtk_fixed_new();
     gtk_container_add(GTK_CONTAINER(impl._hWindow), impl._hFixed);
     gtk_widget_show(impl._hFixed);

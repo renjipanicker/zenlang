@@ -94,7 +94,13 @@ rImportStatementList ::= rImportStatementList rImportStatement.
 rImportStatementList ::= .
 
 //-------------------------------------------------
-rImportStatement ::= rHeaderType(headerType) rImportNamespaceId(id) rDefinitionType(defType) rAccessType(A) SEMI. {ref(pctx).aImportStatement(A, headerType, ref(id), defType);}
+rImportStatement ::= rHeaderType(headerType) rImportNamespaceId(id) rDefinitionType(defType) rOptionalAccessType(A) SEMI. {ref(pctx).aImportStatement(A, headerType, ref(id), defType);}
+
+//-------------------------------------------------
+// access specifiers
+%type rOptionalAccessType {Ast::AccessType::T}
+rOptionalAccessType(L) ::= rAccessType(R).    {L = R;}
+rOptionalAccessType(L) ::=               .    {L = Ast::AccessType::Private;}
 
 //-------------------------------------------------
 // import type
@@ -138,16 +144,16 @@ rGlobalStatement ::= rGlobalDefaultStatement.
 //-------------------------------------------------
 %type rGlobalTypeSpecStatement {Ast::Statement*}
 rGlobalTypeSpecStatement(L) ::= rAccessType(accessType) rTypeSpecDef(typeSpec). {L = ref(pctx).aGlobalTypeSpecStatement(accessType, ref(typeSpec));}
+rGlobalTypeSpecStatement(L) ::= rInnerStatement(R).                             {L = ref(pctx).aGlobalStatement(ref(R));}
 
 //-------------------------------------------------
 // access specifiers
 %type rAccessType {Ast::AccessType::T}
-rAccessType(L) ::= PRIVATE.   {L = Ast::AccessType::Private;}
-rAccessType(L) ::= INTERNAL.  {L = Ast::AccessType::Internal;}
-rAccessType(L) ::= PROTECTED. {L = Ast::AccessType::Protected;}
 rAccessType(L) ::= PUBLIC.    {L = Ast::AccessType::Public;}
-rAccessType(L) ::= EXPORT.    {L = Ast::AccessType::Export;}
-rAccessType(L) ::= .          {L = Ast::AccessType::Private;}
+rAccessType(L) ::= PRIVATE.   {L = Ast::AccessType::Private;}
+rAccessType(L) ::= PROTECTED. {L = Ast::AccessType::Protected;}
+rAccessType(L) ::= INTERNAL.  {L = Ast::AccessType::Internal;}
+rAccessType(L) ::= EXTERNAL.  {L = Ast::AccessType::External;}
 
 //-------------------------------------------------
 // coercion statements
