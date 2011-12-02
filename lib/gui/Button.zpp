@@ -1,4 +1,4 @@
-include Window;
+include Window public;
 namespace Button;
 
 public struct Definition : Window::Definition {

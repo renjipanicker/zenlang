@@ -258,35 +258,38 @@ namespace Ast {
         const Scope& _list;
     };
 
-    class StructDefn : public UserDefinedTypeSpec {
-    protected:
-        inline StructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _list(0) {}
+    class StructDecl : public UserDefinedTypeSpec {
     public:
-        inline const Ast::Scope::List& list() const {return ref(_list).list();}
-        inline const Ast::Scope& scope() const {return ref(_list);}
-        inline bool hasList() const {return (_list != 0);}
-        inline void setList(const Scope& val) { _list = ptr(val);}
-    private:
-        const Ast::Scope* _list;
-    };
-
-    class RootStructDecl : public StructDefn {
-    public:
-        inline RootStructDecl(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : StructDefn(parent, name, defType) {}
+        inline StructDecl(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
+    class CompoundStatement;
+    class StructDefn : public UserDefinedTypeSpec {
+    protected:
+        inline StructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, Ast::Scope& list, Ast::CompoundStatement& block) : UserDefinedTypeSpec(parent, name, defType), _list(list), _block(block) {}
+    public:
+        inline const Ast::Scope::List& list() const {return _list.list();}
+        inline const Ast::Scope& scope() const {return _list;}
+        inline Ast::CompoundStatement& block() {return _block;}
+        inline const Ast::CompoundStatement& block() const {return _block;}
+        inline void addMember(const VariableDefn& val) { _list.addVariableDef(val);}
+    private:
+        Ast::Scope& _list;
+        Ast::CompoundStatement& _block;
+    };
+
     class RootStructDefn : public StructDefn {
     public:
-        inline RootStructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : StructDefn(parent, name, defType) {}
+        inline RootStructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, Ast::Scope& list, Ast::CompoundStatement& block) : StructDefn(parent, name, defType, list, block) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class ChildStructDefn : public StructDefn {
     public:
-        inline ChildStructDefn(const TypeSpec& parent, const StructDefn& base, const Token& name, const DefinitionType::T& defType) : StructDefn(parent, name, defType), _base(base) {}
+        inline ChildStructDefn(const TypeSpec& parent, const StructDefn& base, const Token& name, const DefinitionType::T& defType, Ast::Scope& list, Ast::CompoundStatement& block) : StructDefn(parent, name, defType, list, block), _base(base) {}
         inline const StructDefn& base() const {return _base;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -314,7 +317,6 @@ namespace Ast {
         virtual void visit(Visitor& visitor) const;
     };
 
-    class CompoundStatement;
     class RoutineDefn : public Routine {
     public:
         inline RoutineDefn(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const DefinitionType::T& defType)
@@ -459,7 +461,7 @@ namespace Ast {
         virtual void visit(const TemplateDecl& node) = 0;
         virtual void visit(const TemplateDefn& node) = 0;
         virtual void visit(const EnumDefn& node) = 0;
-        virtual void visit(const RootStructDecl& node) = 0;
+        virtual void visit(const StructDecl& node) = 0;
         virtual void visit(const RootStructDefn& node) = 0;
         virtual void visit(const ChildStructDefn& node) = 0;
         virtual void visit(const RoutineDecl& node) = 0;
@@ -478,7 +480,7 @@ namespace Ast {
     inline void TemplateDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TemplateDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void EnumDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void RootStructDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void StructDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RootStructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ChildStructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
@@ -1062,6 +1064,26 @@ namespace Ast {
         const UserDefinedTypeSpec& _typeSpec;
     };
 
+    class StructMemberStatement : public Statement {
+    public:
+        inline StructMemberStatement(const VariableDefn& defn) : _defn(defn) {}
+        inline const VariableDefn& defn() const {return _defn;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const VariableDefn& _defn;
+    };
+
+    class StructInitStatement : public Statement {
+    public:
+        inline StructInitStatement(const StructDefn& defn) : _defn(defn) {}
+        inline const StructDefn& defn() const {return _defn;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const StructDefn& _defn;
+    };
+
     class AutoStatement : public Statement {
     public:
         inline AutoStatement(const VariableDefn& defn) : _defn(defn) {}
@@ -1334,6 +1356,8 @@ namespace Ast {
         virtual void visit(const NamespaceStatement& node) = 0;
         virtual void visit(const LeaveNamespaceStatement& node) = 0;
         virtual void visit(const UserDefinedTypeSpecStatement& node) = 0;
+        virtual void visit(const StructMemberStatement& node) = 0;
+        virtual void visit(const StructInitStatement& node) = 0;
         virtual void visit(const AutoStatement& node) = 0;
         virtual void visit(const ExprStatement& node) = 0;
         virtual void visit(const PrintStatement& node) = 0;
@@ -1361,6 +1385,8 @@ namespace Ast {
     inline void NamespaceStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void LeaveNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void UserDefinedTypeSpecStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void StructMemberStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void StructInitStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void AutoStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void PrintStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}

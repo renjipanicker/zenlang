@@ -169,17 +169,25 @@ rDefinitionType(L) ::= .       {L = Ast::DefinitionType::Direct;}
 
 //-------------------------------------------------
 %type rTypeSpecDef {Ast::UserDefinedTypeSpec*}
-rTypeSpecDef(L) ::= rTypedefDecl(R).       {L = R;}
-rTypeSpecDef(L) ::= rTypedefDefn(R).       {L = R;}
-rTypeSpecDef(L) ::= rTemplateDecl(R).      {L = R;}
-rTypeSpecDef(L) ::= rEnumDefn(R).          {L = R;}
-rTypeSpecDef(L) ::= rStructDefn(R).        {L = R;}
+rTypeSpecDef(L) ::= rBasicTypeSpecDef(R).  {L = R;}
 rTypeSpecDef(L) ::= rRoutineDecl(R).       {L = R;}
 rTypeSpecDef(L) ::= rRoutineDefn(R).       {L = R;}
 rTypeSpecDef(L) ::= rFunctionDecl(R).      {L = R;}
 rTypeSpecDef(L) ::= rRootFunctionDefn(R).  {L = R;}
 rTypeSpecDef(L) ::= rChildFunctionDefn(R). {L = R;}
 rTypeSpecDef(L) ::= rEventDecl(R).         {L = R;}
+
+//-------------------------------------------------
+// types that are permitted within struct's
+%type rBasicTypeSpecDef {Ast::UserDefinedTypeSpec*}
+rBasicTypeSpecDef(L) ::= rTypedefDecl(R).       {L = R;}
+rBasicTypeSpecDef(L) ::= rTypedefDefn(R).       {L = R;}
+rBasicTypeSpecDef(L) ::= rTemplateDecl(R).      {L = R;}
+rBasicTypeSpecDef(L) ::= rEnumDecl(R).          {L = R;}
+rBasicTypeSpecDef(L) ::= rEnumDefn(R).          {L = R;}
+rBasicTypeSpecDef(L) ::= rStructDecl(R).        {L = R;}
+rBasicTypeSpecDef(L) ::= rRootStructDefn(R).    {L = R;}
+rBasicTypeSpecDef(L) ::= rChildStructDefn(R).   {L = R;}
 
 //-------------------------------------------------
 // typedef declarations
@@ -201,9 +209,13 @@ rTemplatePartList(L) ::=                            ID(name). {L = ref(pctx).aTe
 
 //-------------------------------------------------
 // enum declarations
+%type rEnumDecl {Ast::EnumDefn*}
+rEnumDecl(L) ::= ENUM ID(name) rDefinitionType(D) SEMI. {L = ref(pctx).aEnumDefn(name, D);}
+
+//-------------------------------------------------
+// enum definition
 %type rEnumDefn {Ast::EnumDefn*}
-rEnumDefn(L) ::= ENUM ID(name) NATIVE                                  SEMI. {L = ref(pctx).aEnumDefn(name, Ast::DefinitionType::Native);}
-rEnumDefn(L) ::= ENUM ID(name) LCURLY rEnumMemberDefnList(list) RCURLY SEMI. {L = ref(pctx).aEnumDefn(name, Ast::DefinitionType::Direct, ref(list));}
+rEnumDefn(L) ::= ENUM ID(name) rDefinitionType(D) LCURLY rEnumMemberDefnList(list) RCURLY SEMI. {L = ref(pctx).aEnumDefn(name, D, ref(list));}
 
 //-------------------------------------------------
 %type rEnumMemberDefnList {Ast::Scope*}
@@ -217,20 +229,41 @@ rEnumMemberDefn(L) ::= ID(name) ASSIGNEQUAL rExpr(I) SEMI. {L = ref(pctx).aEnumM
 
 //-------------------------------------------------
 // struct declarations
-%type rStructDefn {Ast::StructDefn*}
-rStructDefn(L) ::= rEnterStructDefn(S)                                           SEMI. {L = ref(pctx).aLeaveStructDecl(ref(S));}
-rStructDefn(L) ::= rEnterStructDefn(S) LCURLY rStructMemberDefnList(list) RCURLY SEMI. {L = ref(pctx).aLeaveStructDefn(ref(S), ref(list));}
-rStructDefn(L) ::= rEnterStructDefn(S) LCURLY                             RCURLY SEMI. {L = ref(pctx).aLeaveStructDefn(ref(S));}
+%type rStructDecl {Ast::StructDecl*}
+rStructDecl(L) ::= STRUCT rStructId(name) rDefinitionType(D) SEMI. {L = ref(pctx).aStructDecl(name, D);}
 
 //-------------------------------------------------
-%type rEnterStructDefn {Ast::StructDefn*}
-rEnterStructDefn(L) ::= STRUCT ID(name)                          rDefinitionType(D). {L = ref(pctx).aEnterRootStructDefn(name, D);}
-rEnterStructDefn(L) ::= STRUCT ID(name) COLON rStructTypeSpec(B) rDefinitionType(D). {L = ref(pctx).aEnterChildStructDefn(name, ref(B), D);}
+// root struct definitions
+%type rRootStructDefn {Ast::RootStructDefn*}
+rRootStructDefn(L) ::= rEnterRootStructDefn(S) rStructMemberDefnBlock SEMI. {L = ref(pctx).aLeaveRootStructDefn(ref(S));}
 
 //-------------------------------------------------
-%type rStructMemberDefnList {Ast::Scope*}
-rStructMemberDefnList(L) ::= rStructMemberDefnList(list) rVariableDefn(variableDef) SEMI. {L = ref(pctx).aStructMemberDefnList(ref(list), ref(variableDef));}
-rStructMemberDefnList(L) ::=                             rVariableDefn(variableDef) SEMI. {L = ref(pctx).aStructMemberDefnList(ref(variableDef));}
+// child struct definitions
+%type rChildStructDefn {Ast::ChildStructDefn*}
+rChildStructDefn(L) ::= rEnterChildStructDefn(S) rStructMemberDefnBlock SEMI. {L = ref(pctx).aLeaveChildStructDefn(ref(S));}
+
+//-------------------------------------------------
+%type rEnterRootStructDefn {Ast::RootStructDefn*}
+rEnterRootStructDefn(L) ::= STRUCT rStructId(name) rDefinitionType(D). {L = ref(pctx).aEnterRootStructDefn(name, D);}
+
+//-------------------------------------------------
+%type rEnterChildStructDefn {Ast::ChildStructDefn*}
+rEnterChildStructDefn(L) ::= STRUCT rStructId(name) COLON rStructTypeSpec(B) rDefinitionType(D). {L = ref(pctx).aEnterChildStructDefn(name, ref(B), D);}
+
+//-------------------------------------------------
+rStructId(L) ::= STRUCT_TYPE(R). {L = R;}
+rStructId(L) ::= ID(R). {L = R;}
+
+//-------------------------------------------------
+rStructMemberDefnBlock ::= LCURLY rStructMemberDefnList RCURLY.
+rStructMemberDefnBlock ::= LCURLY                       RCURLY.
+
+//-------------------------------------------------
+rStructMemberDefnList ::= rStructMemberDefnList rStructMemberDefn.
+rStructMemberDefnList ::=                       rStructMemberDefn.
+
+//-------------------------------------------------
+rStructMemberDefn ::= rVariableDefn(R) SEMI. {ref(pctx).aStructMemberDefn(ref(R));}
 
 //-------------------------------------------------
 // routine declarations
@@ -269,7 +302,7 @@ rChildFunctionDefn(L) ::= rEnterChildFunctionDefn(functionImpl) rCompoundStateme
 
 //-------------------------------------------------
 %type rEnterChildFunctionDefn {Ast::ChildFunctionDefn*}
-rEnterChildFunctionDefn(L) ::= rTypeSpec(base) ID(name). {L = ref(pctx).aEnterChildFunctionDefn(ref(base), name, Ast::DefinitionType::Direct);}
+rEnterChildFunctionDefn(L) ::= rFunctionTypeSpec(base) ID(name). {L = ref(pctx).aEnterChildFunctionDefn(ref(base), name, Ast::DefinitionType::Direct);}
 
 //-------------------------------------------------
 // event declarations

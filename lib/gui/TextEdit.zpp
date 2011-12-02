@@ -1,4 +1,4 @@
-include Window;
+include Window public;
 namespace TextEdit;
 
 public struct Definition : Window::Definition {

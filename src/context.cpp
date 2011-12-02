@@ -526,39 +526,53 @@ Ast::VariableDefn* Context::aEnumMemberDefn(const Ast::Token& name, const Ast::E
     return ptr(variableDefn);
 }
 
-Ast::StructDefn* Context::aLeaveStructDecl(Ast::StructDefn& structDecl) {
+Ast::StructDecl* Context::aStructDecl(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    Ast::StructDecl& structDecl = _unit.addNode(new Ast::StructDecl(currentTypeSpec(), name, defType));
     return ptr(structDecl);
 }
 
-Ast::StructDefn* Context::aLeaveStructDefn(Ast::StructDefn& structDefn, const Ast::Scope& list) {
-    structDefn.setList(list);
+Ast::RootStructDefn* Context::aLeaveRootStructDefn(Ast::RootStructDefn& structDefn) {
+    leaveTypeSpec(structDefn);
+    Ast::StructInitStatement& statement = _unit.addNode(new Ast::StructInitStatement(structDefn));
+    structDefn.block().addStatement(statement);
     return ptr(structDefn);
 }
 
-Ast::StructDefn* Context::aLeaveStructDefn(Ast::StructDefn& structDefn) {
+Ast::ChildStructDefn* Context::aLeaveChildStructDefn(Ast::ChildStructDefn& structDefn) {
+    leaveTypeSpec(structDefn);
+    Ast::StructInitStatement& statement = _unit.addNode(new Ast::StructInitStatement(structDefn));
+    structDefn.block().addStatement(statement);
     return ptr(structDefn);
 }
 
-Ast::StructDefn* Context::aEnterRootStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
-    Ast::RootStructDefn& structDefn = _unit.addNode(new Ast::RootStructDefn(currentTypeSpec(), name, defType));
-    currentTypeSpec().addChild(structDefn);
-    return ptr(structDefn);
-}
-
-Ast::StructDefn* Context::aEnterChildStructDefn(const Ast::Token& name, const Ast::StructDefn& base, const Ast::DefinitionType::T& defType) {
-    Ast::ChildStructDefn& structDefn = _unit.addNode(new Ast::ChildStructDefn(currentTypeSpec(), base, name, defType));
-    currentTypeSpec().addChild(structDefn);
-    return ptr(structDefn);
-}
-
-Ast::Scope* Context::aStructMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& enumMemberDefn) {
-    list.addVariableDef(enumMemberDefn);
-    return ptr(list);
-}
-
-Ast::Scope* Context::aStructMemberDefnList(const Ast::VariableDefn& enumMemberDefn) {
+Ast::RootStructDefn* Context::aEnterRootStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
     Ast::Scope& list = addScope(Ast::ScopeType::Member);
-    return aStructMemberDefnList(list, enumMemberDefn);
+    Ast::CompoundStatement& block = _unit.addNode(new Ast::CompoundStatement());
+    Ast::RootStructDefn& structDefn = _unit.addNode(new Ast::RootStructDefn(currentTypeSpec(), name, defType, list, block));
+    currentTypeSpec().addChild(structDefn);
+    enterTypeSpec(structDefn);
+    return ptr(structDefn);
+}
+
+Ast::ChildStructDefn* Context::aEnterChildStructDefn(const Ast::Token& name, const Ast::StructDefn& base, const Ast::DefinitionType::T& defType) {
+    Ast::Scope& list = addScope(Ast::ScopeType::Member);
+    Ast::CompoundStatement& block = _unit.addNode(new Ast::CompoundStatement());
+    Ast::ChildStructDefn& structDefn = _unit.addNode(new Ast::ChildStructDefn(currentTypeSpec(), base, name, defType, list, block));
+    currentTypeSpec().addChild(structDefn);
+    enterTypeSpec(structDefn);
+    return ptr(structDefn);
+}
+
+void Context::aStructMemberDefn(const Ast::VariableDefn& vdef) {
+    Ast::TypeSpec& ts = currentTypeSpec();
+    Ast::StructDefn* sd = dynamic_cast<Ast::StructDefn*>(ptr(ts));
+    if(sd == 0) {
+        throw Exception("%s Internal error: not a struct type'%s'\n", err(_filename, vdef.name()).c_str(), ts.name().text());
+    }
+    ref(sd).addMember(vdef);
+
+    Ast::StructMemberStatement& statement = _unit.addNode(new Ast::StructMemberStatement(vdef));
+    ref(sd).block().addStatement(statement);
 }
 
 Ast::RoutineDecl* Context::aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType) {
@@ -1427,8 +1441,7 @@ Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, con
     if(structDefn != 0) {
         const Ast::VariableDefn* vref = 0;
         for(StructBaseIterator sbi(structDefn); sbi.hasNext(); sbi.next()) {
-            if(sbi.get().hasList())
-                vref = hasMember(sbi.get().scope(), name);
+            vref = hasMember(sbi.get().scope(), name);
             if(vref)
                 break;
         }
@@ -1509,12 +1522,10 @@ const Ast::VariableDefn* Context::aEnterStructInitPart(const Ast::Token& name) {
     assert(structDefn);
 
     for(StructBaseIterator sbi(structDefn); sbi.hasNext(); sbi.next()) {
-        if(sbi.get().hasList()) {
-            for(Ast::Scope::List::const_iterator it = sbi.get().list().begin(); it != sbi.get().list().end(); ++it) {
-                const Ast::VariableDefn& vdef = ref(*it);
-                if(vdef.name().string() == name.string()) {
-                    return ptr(vdef);
-                }
+        for(Ast::Scope::List::const_iterator it = sbi.get().list().begin(); it != sbi.get().list().end(); ++it) {
+            const Ast::VariableDefn& vdef = ref(*it);
+            if(vdef.name().string() == name.string()) {
+                return ptr(vdef);
             }
         }
     }

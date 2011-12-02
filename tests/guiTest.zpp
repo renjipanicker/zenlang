@@ -1,9 +1,10 @@
+include Window public;
 include Mainframe;
 include Button;
 include TextEdit;
 include WindowCreator;
 
-public main MyMain {
+main MyMain {
     auto def = MainFrame::Definition {
                 title    : "test";
                 position : Window::Position {x:10;y:10;w:400;h:200;};
