@@ -1,5 +1,3 @@
-remove protected
-enum-member-statement
 rename Instance to Handle
 
 anchor
@@ -71,6 +69,7 @@ tab-widget
 *** Rename GenName::Import and Normal to ZenLang and StlCpp
 
 ==BACKLOG==
+enum-member-statement(?)
 positional-paramlist
 ftp
 xml
@@ -176,3 +175,4 @@ unit test - suite
 unit test - test
 implement typespec
 full gui definition
+remove protected
