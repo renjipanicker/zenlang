@@ -9,7 +9,7 @@ inline std::string err(const std::string& filename, const Ast::Token& token) {
     msg << filename << "(" << token.row() << ", " << token.col() << "):";
 #else
     // GCC style error message, or default.
-    msg << filename << ":" << token.row() << ":";
+    msg << filename << ":" << token.row() << ":" << token.col() << ": error:";
 #endif
     return msg.str();
 }
