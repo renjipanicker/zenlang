@@ -149,9 +149,8 @@ rGlobalTypeSpecStatement(L) ::= rInnerStatement(R).                             
 //-------------------------------------------------
 // access specifiers
 %type rAccessType {Ast::AccessType::T}
-rAccessType(L) ::= PUBLIC.    {L = Ast::AccessType::Public;}
 rAccessType(L) ::= PRIVATE.   {L = Ast::AccessType::Private;}
-rAccessType(L) ::= PROTECTED. {L = Ast::AccessType::Protected;}
+rAccessType(L) ::= PUBLIC.    {L = Ast::AccessType::Public;}
 rAccessType(L) ::= INTERNAL.  {L = Ast::AccessType::Internal;}
 rAccessType(L) ::= EXTERNAL.  {L = Ast::AccessType::External;}
 

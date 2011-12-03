@@ -128,6 +128,12 @@ inline void Lexer::Impl::sendId(Scanner* s) {
     if(trySendId(s, _context.hasRootTypeSpec(td)))
         return;
 
+    for(int i = 0; reservedWords[i][0] != 0; ++i) {
+        const char* res = reservedWords[i];
+        if(td.string() == res) {
+            feedToken(token(s, ZENTOK_RESERVED));
+        }
+    }
     feedToken(token(s, ZENTOK_ID));
 }
 
@@ -252,9 +258,8 @@ re2c:condenumprefix          = EState;
 <Normal>   "include"   := feedToken(token(s, ZENTOK_INCLUDE)); continue;
 <Normal>   "namespace" := feedToken(token(s, ZENTOK_NAMESPACE)); continue;
 
-<Normal>   "public"    := feedToken(token(s, ZENTOK_PUBLIC)); continue;
 <Normal>   "private"   := feedToken(token(s, ZENTOK_PRIVATE)); continue;
-<Normal>   "protected" := feedToken(token(s, ZENTOK_PROTECTED)); continue;
+<Normal>   "public"    := feedToken(token(s, ZENTOK_PUBLIC)); continue;
 <Normal>   "internal"  := feedToken(token(s, ZENTOK_INTERNAL)); continue;
 <Normal>   "external"  := feedToken(token(s, ZENTOK_EXTERNAL)); continue;
 

@@ -29,6 +29,7 @@ private:
     Parser& _parser;
     Context& _context;
     int _lastToken;
+    static const char* reservedWords[];
 };
 
 #include "lexerGen.c"
@@ -67,3 +68,67 @@ Lexer::Lexer(Context& context, Parser& parser) : _impl(0) {_impl = new Impl(cont
 Lexer::~Lexer() {delete _impl;}
 bool Lexer::openFile(const std::string& filename) {return ref(_impl).openFile(filename);}
 bool Lexer::readFile() {return ref(_impl).readFile();}
+
+//-------------------------------------------------
+// All keywords that are not used by zen, but are reserved because
+// 1. they may have a meaning in the generated language.
+// 2. zen might use it later
+const char* Lexer::Impl::reservedWords[] = {
+    "protected"    ,
+    "new"          ,
+    "delete"       ,
+    "create"       ,
+    "insert"       ,
+    "remove"       ,
+    "class"        ,
+    "each"         ,
+    "throw"        ,
+    "catch"        ,
+    "try"          ,
+    "raise"        ,
+    "lambda"       ,
+    "api"          ,
+    "inline"       ,
+    "static"       ,
+    "virtual"      ,
+    "pure"         ,
+    "final"        ,
+    "override"     ,
+    "implements"   ,
+    "interface"    ,
+    "base"         ,
+    "parent"       ,
+    "child"        ,
+    "extends"      ,
+    "union"        ,
+    "system"       ,
+    "plain"        ,
+    "sequence"     ,
+    "continuation" ,
+    "closure"      ,
+    "iterate"      ,
+    "mutable"      ,
+    "local"        ,
+    "shared"       ,
+    "any"          ,
+    "def"          ,
+    "grammar"      ,
+    "parser"       ,
+    "lexer"        ,
+    "not"          ,
+    "export"       ,
+    "import"       ,
+    "owner"        ,
+    "log"          ,
+    "debug"        ,
+    "write"        ,
+    "exit"         ,
+    "quit"         ,
+    "link"         ,
+    "join"         ,
+    "id"           ,
+    "assign"       ,
+    "query"        ,
+    "scope"        ,
+    "\0"           // End of list marker. Must be here.
+};

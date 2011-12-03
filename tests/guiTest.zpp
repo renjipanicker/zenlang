@@ -5,11 +5,11 @@ include TextEdit;
 include WindowCreator;
 
 main MyMain {
-    auto def = MainFrame::Definition {
-                title    : "test";
-                position : Window::Position {x:10;y:10;w:400;h:200;};
-                visible  : true;
-                child    : [ string:pointer<Window::Definition>,
+    auto defn = MainFrame::Definition {
+                title     : "test";
+                position  : Window::Position {x:10;y:10;w:400;h:200;};
+                visible   : true;
+                childList : [ string:pointer<Window::Definition>,
                              @checkBox: &Button::Definition {
                                 title   : "Check";
                                 position: Window::Position {x:10;y:10;w:60;h:22;};
@@ -23,7 +23,7 @@ main MyMain {
                            ];
              };
 
-    auto mainFrame = WindowCreator::Create(Window::Instance(), pointer<Window::Definition>(def));
+    auto mainFrame = WindowCreator::Create(Window::Instance(), pointer<Window::Definition>(defn));
     auto checkBtn = Window::childList(mainFrame.window)[@checkBox];
     auto outputBox = Window::childList(mainFrame.window)[@outputBox];
 

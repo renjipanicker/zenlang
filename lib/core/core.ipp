@@ -33,7 +33,6 @@ default char = '';
 default string = "";
 
 typedef type native;
-//typedef any native; \todo
 
 template <F> future native;
 template <F> functor native;

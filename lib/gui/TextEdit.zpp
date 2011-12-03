@@ -5,7 +5,7 @@ public struct Definition : Window::Definition {
     multiline = false;
 };
 
-public function (Window::Instance window)Create(const Window::Instance& parent, const Definition& def) native;
+public function (Window::Instance window)Create(const Window::Instance& parentWin, const Definition& defn) native;
 public function ()AppendText(const Window::Instance& window, const string& text) native;
 
 //public event(const Window::Instance& button) => function ()OnClick() native;

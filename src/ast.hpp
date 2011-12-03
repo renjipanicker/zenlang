@@ -6,11 +6,11 @@ namespace Ast {
     struct AccessType {
         /// \brief The access type for any user-defined TypeSpec.
         enum T {
-            Public,      /// TypeSpec is fully exposed externally
-            Private,     /// TypeSpec is visible only within current compilation unit
-            Protected,   /// TypeSpec is exposed as a pimpl type.
-            Internal,    /// TypeSpec is externally visible only as a reference
-            External,    /// unused for now, to be used for dllexport later.
+            Private,     /// TypeSpec is visible only within current compilation unit (default)
+            Public,      /// TypeSpec is visible outside current compilation unit
+            Protected,      /// TypeSpec is visible outside current compilation unit
+            Internal,    /// TypeSpec is visible anywhere within current module
+            External,    /// TypeSpec is visible outside current module (dllexport)
             Parent       /// TypeSpec inherits the access type of its parent
         };
     };
@@ -56,6 +56,7 @@ namespace Ast {
         };
     };
 
+    //////////////////////////////////////////////////////////////////
     class Token {
     public:
         inline Token(const int row, const int col, const std::string& text) : _row(row), _col(col), _text(text) {}
