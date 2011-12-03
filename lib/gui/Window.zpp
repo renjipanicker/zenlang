@@ -14,15 +14,15 @@ public struct Position {
     h = -1;
 };
 
-public struct Instance {
+public struct Handle {
     struct Impl native;
     ptr<Impl> wdata;
 };
 
-public typedef ChildList dict<string,Instance>;
+public typedef ChildList dict<string,Handle>;
 
 public struct Anchor {
-    Instance window;
+    Handle window;
     string target;
     margin = 0;
 };
@@ -39,16 +39,16 @@ public struct Definition {
     dict<string, pointer<Definition> > childList;
 };
 
-public routine Position getWindowPosition(const Instance& window) native;
-public routine Position getChildPosition(const Instance& window) native;
-public routine ChildList& childList(const Instance& window) native;
+public routine Position getWindowPosition(const Handle& window) native;
+public routine Position getChildPosition(const Handle& window) native;
+public routine ChildList& childList(const Handle& window) native;
 
-public function ()Delete(const Instance& window) native;
-public function ()SetTitle(const Instance& window, const string& title) native;
-public function ()Show(const Instance& window) native;
-public function ()Hide(const Instance& window) native;
-public function ()Move(const Instance& window, const Position& position) native;
-public function ()Size(const Instance& window, const int& w, const int& h) native;
+public function ()Delete(const Handle& window) native;
+public function ()SetTitle(const Handle& window, const string& title) native;
+public function ()Show(const Handle& window) native;
+public function ()Hide(const Handle& window) native;
+public function ()Move(const Handle& window, const Position& position) native;
+public function ()Size(const Handle& window, const int& w, const int& h) native;
 
-public event(const Instance& window) => function ()OnResize() native;
-public event(const Instance& window) => function ()OnClose() native;
+public event(const Handle& window) => function ()OnResize() native;
+public event(const Handle& window) => function ()OnClose() native;

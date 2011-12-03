@@ -5,4 +5,4 @@ namespace MainFrame;
 public struct Definition : Window::Definition {
 };
 
-public function (Window::Instance window)Create(const Definition& defn) native;
+public function (Window::Handle window)Create(const Definition& defn) native;

@@ -4,5 +4,5 @@ namespace Button;
 public struct Definition : Window::Definition {
 };
 
-public function (Window::Instance window)Create(const Window::Instance& parentWin, const Definition& defn) native;
-public event(const Window::Instance& button) => function ()OnClick() native;
+public function (Window::Handle window)Create(const Window::Handle& parentWin, const Definition& defn) native;
+public event(const Window::Handle& button) => function ()OnClick() native;

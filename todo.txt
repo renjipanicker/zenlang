@@ -1,5 +1,3 @@
-rename Instance to Handle
-
 anchor
 systray
 menubar
@@ -176,3 +174,4 @@ unit test - test
 implement typespec
 full gui definition
 remove protected
+rename Instance to Handle

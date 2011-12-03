@@ -7,9 +7,9 @@ include TextEdit;
 namespace WindowCreator;
 
 /*
-private routine Window::Instance createWindow(const Window::Instance& parentWin, const pointer<Window::Definition>& defn);
+private routine Window::Handle createWindow(const Window::Handle& parentWin, const pointer<Window::Definition>& defn);
 
-private routine void processWindow(const Window::Instance& parentWin, Window::Definition& defn) {
+private routine void processWindow(const Window::Handle& parentWin, Window::Definition& defn) {
     foreach(n,c in defn.child) {
         auto cw = createWindow(parentWin, c);
         Window::childList(parentWin)[n] = cw;
@@ -17,7 +17,7 @@ private routine void processWindow(const Window::Instance& parentWin, Window::De
 }
 */
 
-private routine Window::Instance createWindow(const Window::Instance& parentWin, const pointer<Window::Definition>& defn) {
+private routine Window::Handle createWindow(const Window::Handle& parentWin, const pointer<Window::Definition>& defn) {
     switch {
         case (typeof(defn) == typeof(MainFrame::Definition)): {
             auto d = <MainFrame::Definition>defn;
@@ -40,10 +40,10 @@ private routine Window::Instance createWindow(const Window::Instance& parentWin,
         }
     }
 
-    return Window::Instance();
+    return Window::Handle();
 }
 
-public function (Window::Instance window)Create(const Window::Instance& parentWin, const pointer<Window::Definition>& defn) {
+public function (Window::Handle window)Create(const Window::Handle& parentWin, const pointer<Window::Definition>& defn) {
     switch {
         case (typeof(defn) == typeof(MainFrame::Definition)): {
             auto d = <MainFrame::Definition>defn;
@@ -66,5 +66,5 @@ public function (Window::Instance window)Create(const Window::Instance& parentWi
         }
     }
 
-    return (Window::Instance());
+    return (Window::Handle());
 }
