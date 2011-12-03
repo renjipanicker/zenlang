@@ -7,16 +7,19 @@ single-outparam for functions.
 void out-param, do not generate _Out
 void in-param, do not generate _In
 
-bug-fix - gtk-textedit resizes parent window
 sizeof() function for container-expr.
 sizeof() function for types.
-bug-fix multiple #includes in guiTest.cpp
 "c++" as output code
 "cmake" as output project
-fix indents in definition-generator
 unit test - check
 verbose output from compiler
 interpreter
+
+bug-fix - gtk-textedit resizes parent window
+bug-fix - lexer does not recognize newlines in comments, screws up line numbering
+bug-fix - unit test runs functions multiple times
+bug-fix - multiple #includes in guiTest.cpp
+bug-fix - indentation in generated cpp file
 
 process
 application
