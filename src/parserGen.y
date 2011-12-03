@@ -49,10 +49,8 @@
 }
 
 //-------------------------------------------------
-// All keywords, etc
+// basic tokens
 %nonassoc ERR EOF RESERVED.
-%nonassoc OCTINT_CONST DECINT_CONST HEXINT_CONST DOUBLE_CONST FLOAT_CONST STRING_CONST.
-%nonassoc JOIN LINK RUN.
 
 //-------------------------------------------------
 // All operators, in increasing order of precedence
