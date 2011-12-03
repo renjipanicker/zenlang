@@ -2,7 +2,11 @@ anchor
 systray
 menubar
 menuitem
+
+infer type of rhs in auto-statement
 infer type of rhs in struct-init
+infer type of expr in function-call
+
 single-outparam for functions.
 void out-param, do not generate _Out
 void in-param, do not generate _In
@@ -118,6 +122,7 @@ zen --gui \
 ../../zenlang/lib/gui/Mainframe.zpp ../../zenlang/lib/gui/MainframeImpl.cpp \
 ../../zenlang/lib/gui/Button.zpp ../../zenlang/lib/gui/ButtonImpl.cpp \
 ../../zenlang/lib/gui/TextEdit.zpp ../../zenlang/lib/gui/TextEditImpl.cpp \
+../../zenlang/lib/gui/Systray.zpp ../../zenlang/lib/gui/SystrayImpl.cpp \
 ../../zenlang/lib/gui/WindowCreator.zpp \
 ../../zenlang/tests/guiTest.zpp && cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
 
