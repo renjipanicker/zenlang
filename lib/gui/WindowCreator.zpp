@@ -3,68 +3,40 @@ include Window public;
 include Mainframe;
 include Button;
 include TextEdit;
+include Systray;
 
 namespace WindowCreator;
 
-/*
-private routine Window::Handle createWindow(const Window::Handle& parentWin, const pointer<Window::Definition>& defn);
+routine const Window::Handle& processWindow(const Window::Handle& win, const Window::Definition& defn);
 
-private routine void processWindow(const Window::Handle& parentWin, Window::Definition& defn) {
-    foreach(n,c in defn.child) {
-        auto cw = createWindow(parentWin, c);
-        Window::childList(parentWin)[n] = cw;
-    }
-}
-*/
-
-private routine Window::Handle createWindow(const Window::Handle& parentWin, const pointer<Window::Definition>& defn) {
+routine void createWindow(const Window::Handle& parentWin, const string& name, const pointer<Window::Definition>& defn) {
     switch {
-        case (typeof(defn) == typeof(MainFrame::Definition)): {
-            auto d = <MainFrame::Definition>defn;
-            auto w = MainFrame::Create(d);
-            foreach(n,c in d.childList) {
-                auto cw = createWindow(w.window, c);
-                Window::childList(w.window)[n] = cw;
-            }
-            return w.window;
-        }
         case (typeof(defn) == typeof(Button::Definition)): {
-            auto d = <Button::Definition>defn;
-            auto w = Button::Create(parentWin, d);
-            return w.window;
+            auto w = Button::Create(parentWin, <Button::Definition>defn);
+            Window::childList(parentWin)[name] = w.window;
+            processWindow(w.window, *defn);
         }
         case (typeof(defn) == typeof(TextEdit::Definition)): {
-            auto d = <TextEdit::Definition>defn;
-            auto w = TextEdit::Create(parentWin, d);
-            return w.window;
+            auto w = TextEdit::Create(parentWin, <TextEdit::Definition>defn);
+            Window::childList(parentWin)[name] = w.window;
+            processWindow(w.window, *defn);
+        }
+        case (typeof(defn) == typeof(Systray::Definition)): {
+            auto st = Systray::Create(parentWin, <Systray::Definition>defn);
+            unused(st);
         }
     }
-
-    return Window::Handle();
 }
 
-public function (Window::Handle window)Create(const Window::Handle& parentWin, const pointer<Window::Definition>& defn) {
-    switch {
-        case (typeof(defn) == typeof(MainFrame::Definition)): {
-            auto d = <MainFrame::Definition>defn;
-            auto w = MainFrame::Create(d);
-            foreach(n,c in d.childList) {
-                auto cw = WindowCreator::Create(w.window, c);
-                Window::childList(w.window)[n] = cw.window;
-            }
-            return (w.window);
-        }
-        case (typeof(defn) == typeof(Button::Definition)): {
-            auto d = <Button::Definition>defn;
-            auto w = Button::Create(parentWin, d);
-            return (w.window);
-        }
-        case (typeof(defn) == typeof(TextEdit::Definition)): {
-            auto d = <TextEdit::Definition>defn;
-            auto w = TextEdit::Create(parentWin, d);
-            return (w.window);
-        }
+routine const Window::Handle& processWindow(const Window::Handle& win, const Window::Definition& defn) {
+    foreach(n,d in defn.childList) {
+        createWindow(win, n, d);
     }
+    return win;
+}
 
-    return (Window::Handle());
+public function (Window::Handle window)Create(const MainFrame::Definition& defn) {
+    auto w = MainFrame::Create(defn);
+    processWindow(w.window, defn);
+    return (w.window);
 }

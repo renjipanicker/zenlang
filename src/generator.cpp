@@ -1248,15 +1248,16 @@ private:
 
     virtual void visit(const Ast::ForeachDictStatement& node) {
         std::string constit = "";
-        if(node.expr().qTypeSpec().isConst())
-            constit = "const_";
         fprintf(fpDefn(), "%s{\n", Indent::get());
-        fprintf(fpDefn(), "%s%s& _list = ", Indent::get(), getQualifiedTypeSpecName(node.expr().qTypeSpec(), GenMode::Normal).c_str());
+        if(node.expr().qTypeSpec().isConst()) {
+            constit = "const_";
+        }
+        fprintf(fpDefn(), "%s  %s _list = ", Indent::get(), getQualifiedTypeSpecName(node.expr().qTypeSpec(), GenMode::Normal).c_str());
         ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
         fprintf(fpDefn(), ";\n");
-        fprintf(fpDefn(), "%sfor(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GenMode::Normal).c_str(), constit.c_str());
-        fprintf(fpDefn(), "%sconst %s& %s = _it->first;\n", Indent::get(), getQualifiedTypeSpecName(node.keyDef().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.keyDef().name().text());
-        fprintf(fpDefn(), "%s%s& %s = _it->second;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.valDef().name().text());
+        fprintf(fpDefn(), "%s  for(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GenMode::Normal).c_str(), constit.c_str());
+        fprintf(fpDefn(), "%s  %s %s = _it->first;\n", Indent::get(), getQualifiedTypeSpecName(node.keyDef().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.keyDef().name().text());
+        fprintf(fpDefn(), "%s  %s %s = _it->second;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.valDef().name().text());
 
         GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::IndentedBrace).run(_config, _fs, "", node.block());
 

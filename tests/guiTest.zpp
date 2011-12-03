@@ -23,7 +23,7 @@ main MyMain {
                            ];
              };
 
-    auto mainFrame = WindowCreator::Create(Window::Handle(), pointer<Window::Definition>(defn));
+    auto mainFrame = WindowCreator::Create(defn);
     auto checkBtn = Window::childList(mainFrame.window)[@checkBox];
     auto outputBox = Window::childList(mainFrame.window)[@outputBox];
 

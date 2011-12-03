@@ -5,8 +5,18 @@
 #include "Button.hpp"
 
 #if defined(WIN32)
-static int lastclassId = 1;
+int Window::Native::getNextWmID() {
+    static int lastWM = WM_APP;
+    return lastWM++;
+}
+
+int Window::Native::getNextResID() {
+    static int lastRes = 1000;
+    return lastRes++;
+}
+
 static std::string getNextClassID() {
+    static int lastclassId = 1;
     char name[128];
     snprintf(name, 128, "classX%d", lastclassId++);
     return name;

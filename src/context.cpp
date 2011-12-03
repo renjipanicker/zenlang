@@ -598,9 +598,7 @@ void Context::aStructMemberDefn(const Ast::UserDefinedTypeSpec& typeSpec) {
 
 Ast::RoutineDecl* Context::aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType) {
     Ast::RoutineDecl& routineDecl = _unit.addNode(new Ast::RoutineDecl(currentTypeSpec(), outType, name, in, defType));
-    if(defType == Ast::DefinitionType::Native) {
-        currentTypeSpec().addChild(routineDecl);
-    }
+    currentTypeSpec().addChild(routineDecl);
     return ptr(routineDecl);
 }
 
@@ -969,7 +967,7 @@ Ast::ForeachStatement* Context::aForeachStatement(Ast::ForeachStatement& stateme
 
 Ast::ForeachListStatement* Context::aEnterForeachInit(const Ast::Token& valName, const Ast::Expr& expr) {
     const Ast::TemplateDefn& templateDefn = getTemplateDefn(valName, expr, "list", 1);
-    const Ast::QualifiedTypeSpec& valTypeSpec = templateDefn.at(0);
+    const Ast::QualifiedTypeSpec& valTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), templateDefn.at(0).typeSpec(), true);
     const Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
     Ast::Scope& scope = addScope(Ast::ScopeType::Local);
     scope.addVariableDef(valDef);
@@ -981,8 +979,8 @@ Ast::ForeachListStatement* Context::aEnterForeachInit(const Ast::Token& valName,
 
 Ast::ForeachDictStatement* Context::aEnterForeachInit(const Ast::Token& keyName, const Ast::Token& valName, const Ast::Expr& expr) {
     const Ast::TemplateDefn& templateDefn = getTemplateDefn(valName, expr, "dict", 2);
-    const Ast::QualifiedTypeSpec& keyTypeSpec = templateDefn.at(0);
-    const Ast::QualifiedTypeSpec& valTypeSpec = templateDefn.at(1);
+    const Ast::QualifiedTypeSpec& keyTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), templateDefn.at(0).typeSpec(), true);
+    const Ast::QualifiedTypeSpec& valTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), templateDefn.at(1).typeSpec(), true);
     const Ast::VariableDefn& keyDef = addVariableDefn(keyTypeSpec, keyName);
     const Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
     Ast::Scope& scope = addScope(Ast::ScopeType::Local);
@@ -1470,7 +1468,8 @@ Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, con
             throw Exception("%s '%s' is not a member of struct '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
         }
 
-        Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(ref(vref).qualifiedTypeSpec(), expr, ref(vref)));
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), ref(vref).qualifiedTypeSpec().typeSpec(), true);
+        Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(qTypeSpec, expr, ref(vref)));
         return ptr(vdefExpr);
     }
 

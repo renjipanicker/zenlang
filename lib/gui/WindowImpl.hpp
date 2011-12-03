@@ -28,6 +28,9 @@ struct WndProc {
 #endif
 
 #if defined(WIN32)
+static int getNextWmID();
+static int getNextResID();
+
 Window::Handle::Impl& createWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, HWND parent);
 Window::Handle::Impl& createMainFrame(const Window::Definition& def, const int& style, const int& xstyle);
 Window::Handle::Impl& createChildFrame(const Window::Definition& def, const int &style, const int &xstyle, const Window::Handle &parent);

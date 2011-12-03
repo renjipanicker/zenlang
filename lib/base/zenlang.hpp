@@ -255,9 +255,14 @@ struct Creator {
 template <typename K, typename V, typename ListT>
 struct container {
     typedef ListT List;
+
     typedef typename List::iterator iterator;
     inline iterator begin() {return _list.begin();}
     inline iterator end() {return _list.end();}
+
+    typedef typename List::const_iterator const_iterator;
+    inline const_iterator begin() const {return _list.begin();}
+    inline const_iterator end() const {return _list.end();}
 
     inline V& get(const K& idx) {
         iterator it = _list.find(idx);
