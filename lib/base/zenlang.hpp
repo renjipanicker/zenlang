@@ -178,10 +178,6 @@ struct Pointer {
     }
 
     inline Pointer() : _val(0) {
-        if(_val == 0) {
-            int x = 0;
-            unused(x);
-        }
     }
 
     inline Pointer(value* val) : _val(val) {

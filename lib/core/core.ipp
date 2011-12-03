@@ -41,6 +41,8 @@ template <F> functor native;
 template <V>   pointer native;
 template <V>   value   native;
 
+template <V> ptr native;
+
 template <V>   list native;
 template <K,V> dict native;
 template <K,V> tree native;

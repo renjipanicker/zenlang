@@ -32,7 +32,7 @@ const Button::Create::_Out& Button::Create::run(const Window::Instance& parent, 
     Window::Instance::Impl& impl = Window::Native::createChildWindow(hWnd, def, parent);
 #endif
     Window::Instance win;
-    win.impl(impl);
+    win._wdata<Window::Instance>(ptr(impl));
     return out(_Out(win));
 }
 
@@ -48,9 +48,9 @@ static void onButtonClick(GtkMenuItem* item, gpointer phandler) {
 void Button::OnClick::addHandler(const Window::Instance& button, Handler* handler) {
     Button::OnClick::add(handler);
 #if defined(WIN32)
-    onButtonClickHandlerList.addHandler(button._impl->_hWindow, handler);
+    onButtonClickHandlerList.addHandler(button.wdata->_hWindow, handler);
 #endif
 #if defined(GTK)
-    g_signal_connect (G_OBJECT (button._impl->_hWindow), "clicked", G_CALLBACK (onButtonClick), handler);
+    g_signal_connect (G_OBJECT (button.wdata->_hWindow), "clicked", G_CALLBACK (onButtonClick), handler);
 #endif
 }

@@ -260,6 +260,11 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
             Ast::DictExpr& expr = _unit.addNode(new Ast::DictExpr(qTypeSpec, llist));
             return expr;
         }
+        if(tdName == "ptr") {
+            Ast::Token value(name.row(), name.col(), "0");
+            Ast::ConstantExpr& expr = aConstantExpr("int", value);
+            return expr;
+        }
     }
 
     const Ast::EnumDefn* ed = dynamic_cast<const Ast::EnumDefn*>(ts);
@@ -532,6 +537,7 @@ Ast::VariableDefn* Context::aEnumMemberDefn(const Ast::Token& name, const Ast::E
 
 Ast::StructDecl* Context::aStructDecl(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
     Ast::StructDecl& structDecl = _unit.addNode(new Ast::StructDecl(currentTypeSpec(), name, defType));
+    currentTypeSpec().addChild(structDecl);
     return ptr(structDecl);
 }
 
@@ -571,12 +577,23 @@ void Context::aStructMemberDefn(const Ast::VariableDefn& vdef) {
     Ast::TypeSpec& ts = currentTypeSpec();
     Ast::StructDefn* sd = dynamic_cast<Ast::StructDefn*>(ptr(ts));
     if(sd == 0) {
-        throw Exception("%s Internal error: not a struct type'%s'\n", err(_filename, vdef.name()).c_str(), ts.name().text());
+        throw Exception("%s Internal error: not a struct type(1)'%s'\n", err(_filename, vdef.name()).c_str(), ts.name().text());
     }
     ref(sd).addMember(vdef);
 
     Ast::StructMemberStatement& statement = _unit.addNode(new Ast::StructMemberStatement(ref(sd), vdef));
     ref(sd).block().addStatement(statement);
+}
+
+void Context::aStructMemberDefn(const Ast::UserDefinedTypeSpec& typeSpec) {
+    Ast::TypeSpec& ts = currentTypeSpec();
+    Ast::StructDefn* sd = dynamic_cast<Ast::StructDefn*>(ptr(ts));
+    if(sd == 0) {
+        throw Exception("%s Internal error: not a struct type(2) %s\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());
+    }
+
+    Ast::Statement* statement = aUserDefinedTypeSpecStatement(typeSpec);
+    ref(sd).block().addStatement(ref(statement));
 }
 
 Ast::RoutineDecl* Context::aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType) {

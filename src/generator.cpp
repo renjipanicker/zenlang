@@ -27,7 +27,7 @@ inline std::string getAccessType(const Ast::AccessType::T& accessType) {
         case Ast::AccessType::External:
             return "external";
         case Ast::AccessType::Parent:
-            return "parent";
+            return "";
     }
     throw Exception("Internal error: Unknown Access Type '%d'\n", accessType);
 }
@@ -258,12 +258,17 @@ private:
 
     virtual void visit(const Ast::PointerInstanceExpr& node) {
         const Ast::Expr& expr = node.exprList().at(0);
-        const std::string bname = getTypeSpecName(node.templateDefn().at(0).typeSpec(), _genMode);
         const std::string dname = getTypeSpecName(expr.qTypeSpec().typeSpec(), _genMode);
-        fprintf(_fp, "Creator<%s, %s>::get(", bname.c_str(), dname.c_str());
-        fprintf(_fp, "type(\"%s\"), ", dname.c_str());
-        ExprGenerator(_fp, _genMode).visitNode(expr);
-        fprintf(_fp, ")");
+
+        if(_genMode == GenMode::Import) {
+            fprintf(_fp, "&(%s())", dname.c_str());
+        } else {
+            const std::string bname = getTypeSpecName(node.templateDefn().at(0).typeSpec(), _genMode);
+            fprintf(_fp, "Creator<%s, %s>::get(", bname.c_str(), dname.c_str());
+            fprintf(_fp, "type(\"%s\"), ", dname.c_str());
+            ExprGenerator(_fp, _genMode).visitNode(expr);
+            fprintf(_fp, ")");
+        }
     }
 
     virtual void visit(const Ast::ValueInstanceExpr& node) {
@@ -611,6 +616,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
     inline void visitStructDefn(const Ast::StructDefn& node, const Ast::StructDefn* base) {
         if(node.defType() == Ast::DefinitionType::Native) {
+            fprintf(_fp, "%sstruct %s;\n", Indent::get(), node.name().text());
             return;
         }
 
@@ -621,7 +627,6 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
         fprintf(_fp, " {\n");
 
-        visitChildrenIndent(node);
         GeneratorContext(GeneratorContext::TargetMode::TypeDecl, GeneratorContext::IndentMode::NoBrace).run(_config, _fs, "", node.block());
 
         fprintf(_fp, "%s};\n", Indent::get());
@@ -1107,6 +1112,15 @@ private:
         }
     }
 
+    inline bool isPtr(const Ast::TypeSpec& typeSpec) const {
+        const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(ptr(typeSpec));
+        if(templateDefn) {
+            if(typeSpec.name().string() == "ptr") {
+                return true;
+            }
+        }
+        return false;
+    }
     virtual void visit(const Ast::StructMemberStatement& node) {
         if(_ctx._targetMode == GeneratorContext::TargetMode::Import) {
             fprintf(_fs._fpImp, "%s%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GenMode::Import).c_str(), node.defn().name().text());
@@ -1115,9 +1129,14 @@ private:
         }
 
         if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
-            fprintf(fpDecl(node.structDefn().accessType()), "%s%s %s; /**/ ", Indent::get(), getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.defn().name().text());
-            fprintf(fpDecl(node.structDefn().accessType()), "template <typename T> inline T& _%s(const %s& val) {%s = val; return ref(static_cast<T*>(this));}\n",
-                    node.defn().name().text(), getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GenMode::Normal).c_str(), node.defn().name().text());
+            std::string tname = getQualifiedTypeSpecName(node.defn().qualifiedTypeSpec(), GenMode::Normal);
+            std::string pname = "const " + tname + "&";
+            if(isPtr(node.defn().qualifiedTypeSpec().typeSpec())) {
+                pname = tname;
+            }
+            fprintf(fpDecl(node.structDefn().accessType()), "%s%s %s; /**/ ", Indent::get(), tname.c_str(), node.defn().name().text());
+            fprintf(fpDecl(node.structDefn().accessType()), "template <typename T> inline T& _%s(%s val) {%s = val; return ref(static_cast<T*>(this));}\n",
+                    node.defn().name().text(), pname.c_str(), node.defn().name().text());
         }
     }
 
@@ -1125,24 +1144,24 @@ private:
         if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
             // internal-impl
             if(node.structDefn().accessType() == Ast::AccessType::Protected) {
-                fprintf(fpDecl(node.structDefn().accessType()), "%sstruct Impl;\n", Indent::get());
-                fprintf(fpDecl(node.structDefn().accessType()), "%sImpl* _impl;\n", Indent::get());
-                fprintf(fpDecl(node.structDefn().accessType()), "%sinline void impl(Impl& val) {_impl = ptr(val);}\n", Indent::get());
+//                fprintf(fpDecl(node.structDefn().accessType()), "%sstruct Impl;\n", Indent::get());
+//                fprintf(fpDecl(node.structDefn().accessType()), "%sImpl* _impl;\n", Indent::get());
+//                fprintf(fpDecl(node.structDefn().accessType()), "%sinline void impl(Impl& val) {_impl = ptr(val);}\n", Indent::get());
             }
 
             // default-ctor
             fprintf(fpDecl(node.structDefn().accessType()), "%sexplicit inline %s()", Indent::get(), node.structDefn().name().text());
             std::string sep = " : ";
-            if(node.structDefn().accessType() == Ast::AccessType::Protected) {
-                fprintf(fpDecl(node.structDefn().accessType()), "%s_impl(0)", sep.c_str());
-                sep = ", ";
-            }
             for(Ast::Scope::List::const_iterator it = node.structDefn().list().begin(); it != node.structDefn().list().end(); ++it) {
                 const Ast::VariableDefn& vdef = ref(*it);
                 fprintf(fpDecl(node.structDefn().accessType()), "%s%s(", sep.c_str(), vdef.name().text());
                 ExprGenerator(fpDecl(node.structDefn().accessType()), GenMode::Normal).visitNode(vdef.initExpr());
                 fprintf(fpDecl(node.structDefn().accessType()), ")");
                 sep = ", ";
+            }
+            if(node.structDefn().accessType() == Ast::AccessType::Protected) {
+//                fprintf(fpDecl(node.structDefn().accessType()), "%s_impl(0)", sep.c_str());
+//                sep = ", ";
             }
             fprintf(fpDecl(node.structDefn().accessType()), " {}\n");
         }

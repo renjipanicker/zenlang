@@ -1,3 +1,7 @@
+remove protected
+enum-member-statement
+rename Instance to Handle
+
 anchor
 systray
 menubar

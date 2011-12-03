@@ -270,6 +270,7 @@ rStructMemberDefnList ::=                       rStructMemberDefn.
 
 //-------------------------------------------------
 rStructMemberDefn ::= rVariableDefn(R) SEMI. {ref(pctx).aStructMemberDefn(ref(R));}
+rStructMemberDefn ::= rBasicTypeSpecDef(R). {ref(pctx).aStructMemberDefn(ref(R));}
 
 //-------------------------------------------------
 // routine declarations

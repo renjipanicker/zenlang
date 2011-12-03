@@ -14,7 +14,9 @@ public struct Position {
     h = -1;
 };
 
-protected struct Instance {
+public struct Instance {
+    struct Impl native;
+    ptr<Impl> wdata;
 };
 
 public typedef ChildList dict<string,Instance>;
