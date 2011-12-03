@@ -8,7 +8,6 @@ namespace Ast {
         enum T {
             Private,     /// TypeSpec is visible only within current compilation unit (default)
             Public,      /// TypeSpec is visible outside current compilation unit
-            Protected,      /// TypeSpec is visible outside current compilation unit
             Internal,    /// TypeSpec is visible anywhere within current module
             External,    /// TypeSpec is visible outside current module (dllexport)
             Parent       /// TypeSpec inherits the access type of its parent

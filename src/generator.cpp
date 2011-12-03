@@ -20,8 +20,6 @@ inline std::string getAccessType(const Ast::AccessType::T& accessType) {
             return "public";
         case Ast::AccessType::Private:
             return "private";
-        case Ast::AccessType::Protected:
-            return "protected";
         case Ast::AccessType::Internal:
             return "internal";
         case Ast::AccessType::External:
@@ -1142,13 +1140,6 @@ private:
 
     virtual void visit(const Ast::StructInitStatement& node) {
         if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
-            // internal-impl
-            if(node.structDefn().accessType() == Ast::AccessType::Protected) {
-//                fprintf(fpDecl(node.structDefn().accessType()), "%sstruct Impl;\n", Indent::get());
-//                fprintf(fpDecl(node.structDefn().accessType()), "%sImpl* _impl;\n", Indent::get());
-//                fprintf(fpDecl(node.structDefn().accessType()), "%sinline void impl(Impl& val) {_impl = ptr(val);}\n", Indent::get());
-            }
-
             // default-ctor
             fprintf(fpDecl(node.structDefn().accessType()), "%sexplicit inline %s()", Indent::get(), node.structDefn().name().text());
             std::string sep = " : ";
@@ -1158,10 +1149,6 @@ private:
                 ExprGenerator(fpDecl(node.structDefn().accessType()), GenMode::Normal).visitNode(vdef.initExpr());
                 fprintf(fpDecl(node.structDefn().accessType()), ")");
                 sep = ", ";
-            }
-            if(node.structDefn().accessType() == Ast::AccessType::Protected) {
-//                fprintf(fpDecl(node.structDefn().accessType()), "%s_impl(0)", sep.c_str());
-//                sep = ", ";
             }
             fprintf(fpDecl(node.structDefn().accessType()), " {}\n");
         }
