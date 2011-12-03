@@ -223,7 +223,7 @@ re2c:condenumprefix          = EState;
 <Normal>   "++"    := feedToken(token(s, ZENTOK_INC)); continue;
 <Normal>   "--"    := feedToken(token(s, ZENTOK_DEC)); continue;
 <Normal>   "=>"    := feedToken(token(s, ZENTOK_LINK)); continue;
-<Normal>   "->"    := feedToken(token(s, ZENTOK_JOIN)); continue;
+//<Normal>   "->"    := feedToken(token(s, ZENTOK_JOIN)); continue;
 <Normal>   "&&"    := feedToken(token(s, ZENTOK_AND)); continue;
 <Normal>   "||"    := feedToken(token(s, ZENTOK_OR)); continue;
 <Normal>   "}"     := feedToken(token(s, ZENTOK_RCURLY)); continue;
