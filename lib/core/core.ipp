@@ -11,6 +11,7 @@ typedef double native;
 
 coerce bool => byte => short => int => long => float => double;
 
+default void = 0;
 default bool = false;
 default byte = 0;
 default short = 0;

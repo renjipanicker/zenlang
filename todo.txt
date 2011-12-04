@@ -7,9 +7,6 @@ infer type of rhs in auto-statement
 infer type of rhs in struct-init
 infer type of expr in function-call
 
-void out-param, do not generate _Out
-void in-param, do not generate _In
-
 sizeof() function for container-expr.
 sizeof() function for types.
 "c++" as output code
@@ -183,3 +180,5 @@ full gui definition
 remove protected
 rename Instance to Handle
 single-outparam for functions.
+void out-param, do not generate _Out
+void in-param, do not generate _In (obsolete)
