@@ -85,7 +85,7 @@ namespace Ast {
         typedef std::list<ChildTypeSpec*> ChildTypeSpecList;
         typedef std::map<std::string, TypeSpec*> ChildTypeSpecMap;
     public:
-        inline TypeSpec(const Token& name) : _accessType(AccessType::Parent), _name(name) {}
+        inline TypeSpec(const Token& name) : _accessType(AccessType::Private), _name(name) {}
     public:
         inline TypeSpec& accessType(const AccessType::T& val) {_accessType = val; return ref(this);}
         inline const Token& name() const {return _name;}
@@ -134,7 +134,7 @@ namespace Ast {
     class VariableDefn : public Node {
     public:
         inline VariableDefn(const QualifiedTypeSpec& qualifiedTypeSpec, const Token& name, const Ast::Expr& initExpr) : _qualifiedTypeSpec(qualifiedTypeSpec), _name(name), _initExpr(initExpr) {}
-        inline const QualifiedTypeSpec& qualifiedTypeSpec() const {return _qualifiedTypeSpec;}
+        inline const QualifiedTypeSpec& qTypeSpec() const {return _qualifiedTypeSpec;}
         inline const Token& name() const {return _name;}
         inline const Expr& initExpr() const {return _initExpr;}
     private:
@@ -147,16 +147,19 @@ namespace Ast {
     public:
         typedef std::list<const VariableDefn*> List;
     public:
-        inline Scope(const ScopeType::T& type) : _type(type), _posParam(0) {}
+        inline Scope(const ScopeType::T& type) : _type(type), _posParam(0), _isTuple(true) {}
         inline Scope& addVariableDef(const VariableDefn& variableDef) {_list.push_back(ptr(variableDef)); return ref(this);}
         inline const ScopeType::T& type() const {return _type;}
         inline const List& list() const {return _list;}
         inline void posParam(const Scope& val) {_posParam = ptr(val);}
         inline const Scope* posParam() const {return _posParam;}
+        inline void isTuple(const bool& val) {_isTuple = val;}
+        inline const bool& isTuple() const {return _isTuple;}
     private:
         const ScopeType::T _type;
         List _list;
         const Scope* _posParam;
+        bool _isTuple;
     };
 
     class RootTypeSpec : public TypeSpec {

@@ -24,12 +24,12 @@ main MyMain {
              };
 
     auto mainFrame = WindowCreator::Create(defn);
-    auto checkBtn = Window::childList(mainFrame.window)[@checkBox];
-    auto outputBox = Window::childList(mainFrame.window)[@outputBox];
+    auto checkBtn = Window::childList(mainFrame)[@checkBox];
+    auto outputBox = Window::childList(mainFrame)[@outputBox];
 
-    Window::OnResize(mainFrame.window) => Window::OnResize::Handler {
+    Window::OnResize(mainFrame) => Window::OnResize::Handler {
         print "on click\n";
-        auto pp = Window::getWindowPosition(mainFrame.window);
+        auto pp = Window::getWindowPosition(mainFrame);
         auto cp = Window::getChildPosition(outputBox);
         cp.w = pp.w - cp.x - 20;
         cp.h = pp.h - cp.y - 50;

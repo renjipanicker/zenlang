@@ -7,7 +7,6 @@ infer type of rhs in auto-statement
 infer type of rhs in struct-init
 infer type of expr in function-call
 
-single-outparam for functions.
 void out-param, do not generate _Out
 void in-param, do not generate _In
 
@@ -183,3 +182,4 @@ implement typespec
 full gui definition
 remove protected
 rename Instance to Handle
+single-outparam for functions.

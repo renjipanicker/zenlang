@@ -85,18 +85,18 @@ inline std::string ssprintf(const char* txt, ...) {
 }
 
 #if defined(DEBUG)
-#if defined(GUI) && defined(WIN32)
-inline void trace(const char* txt, ...) {
-    va_list vlist;
-    va_start(vlist, txt);
-    std::string buf = ssprintfv(txt, vlist);
-    OutputDebugStringA(buf.c_str());
-}
+    #if defined(GUI) && defined(WIN32)
+        inline void trace(const char* txt, ...) {
+            va_list vlist;
+            va_start(vlist, txt);
+            std::string buf = ssprintfv(txt, vlist);
+            OutputDebugStringA(buf.c_str());
+        }
+    #else
+        #define trace printf
+    #endif
 #else
-#define trace printf
-#endif
-#else
-#define trace(x)
+    #define trace(f)
 #endif
 
 namespace String {
@@ -130,7 +130,7 @@ public:
         va_list vlist;
         va_start(vlist, txt);
         _msg = ssprintfv(txt, vlist);
-        trace("%s\n", _msg.c_str());
+        printf("%s\n", _msg.c_str());
     }
     inline Exception(const std::string& msg) : _msg(msg) {}
 

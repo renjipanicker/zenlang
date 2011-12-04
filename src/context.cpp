@@ -319,6 +319,15 @@ inline const Ast::FunctionRetn& Context::getFunctionRetn(const Ast::Token& pos, 
     throw Exception("%s Unknown function return type '%s'\n", err(_filename, pos).c_str(), function.name().text());
 }
 
+inline const Ast::QualifiedTypeSpec& Context::getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function) {
+    if(function.sig().outScope().isTuple()) {
+        const Ast::FunctionRetn& functionRetn = getFunctionRetn(pos, function);
+        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionRetn, false);
+        return qTypeSpec;
+    }
+    return ref(function.sig().out().front()).qTypeSpec();
+}
+
 inline Ast::VariableDefn& Context::addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name) {
     const Ast::Expr& initExpr = getDefaultValue(qualifiedTypeSpec.typeSpec(), name);
     Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
@@ -585,7 +594,8 @@ void Context::aStructMemberDefn(const Ast::VariableDefn& vdef) {
     ref(sd).block().addStatement(statement);
 }
 
-void Context::aStructMemberDefn(const Ast::UserDefinedTypeSpec& typeSpec) {
+void Context::aStructMemberDefn(Ast::UserDefinedTypeSpec& typeSpec) {
+    typeSpec.accessType(Ast::AccessType::Parent);
     Ast::TypeSpec& ts = currentTypeSpec();
     Ast::StructDefn* sd = dynamic_cast<Ast::StructDefn*>(ptr(ts));
     if(sd == 0) {
@@ -710,6 +720,17 @@ Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDe
 Ast::FunctionSig* Context::aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in) {
     Ast::FunctionSig& functionSig = _unit.addNode(new Ast::FunctionSig(out, name, in));
     return ptr(functionSig);
+}
+
+Ast::FunctionSig* Context::aFunctionSig(const Ast::QualifiedTypeSpec& typeSpec, const Ast::Token& name, Ast::Scope& in) {
+    Ast::Scope& out = addScope(Ast::ScopeType::Param);
+    out.isTuple(false);
+
+    Ast::Token oname(name.row(), name.col(), "_out");
+    Ast::VariableDefn& vdef = addVariableDefn(typeSpec, oname);
+    out.addVariableDef(vdef);
+
+    return aFunctionSig(out, name, in);
 }
 
 Ast::Scope* Context::aInParamsList(Ast::Scope& scope) {
@@ -979,7 +1000,7 @@ Ast::ForeachListStatement* Context::aEnterForeachInit(const Ast::Token& valName,
 
 Ast::ForeachDictStatement* Context::aEnterForeachInit(const Ast::Token& keyName, const Ast::Token& valName, const Ast::Expr& expr) {
     const Ast::TemplateDefn& templateDefn = getTemplateDefn(valName, expr, "dict", 2);
-    const Ast::QualifiedTypeSpec& keyTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), templateDefn.at(0).typeSpec(), true);
+    const Ast::QualifiedTypeSpec& keyTypeSpec = addQualifiedTypeSpec(true, templateDefn.at(0).typeSpec(), true);
     const Ast::QualifiedTypeSpec& valTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), templateDefn.at(1).typeSpec(), true);
     const Ast::VariableDefn& keyDef = addVariableDefn(keyTypeSpec, keyName);
     const Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
@@ -1226,8 +1247,7 @@ Ast::FunctorCallExpr* Context::aFunctionCallExpr(const Ast::Token& pos, const As
     Ast::QualifiedTypeSpec& qExprTypeSpec = addQualifiedTypeSpec(false, function, false);
     Ast::FunctionInstanceExpr& functionInstanceExpr = _unit.addNode(new Ast::FunctionInstanceExpr(qExprTypeSpec, function, exprList));
 
-    const Ast::FunctionRetn& functionRetn = getFunctionRetn(pos, function);
-    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionRetn, false);
+    const Ast::QualifiedTypeSpec& qTypeSpec = getFunctionReturnType(pos, function);
     Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, functionInstanceExpr, exprList));
     return ptr(functorCallExpr);
 }
@@ -1235,8 +1255,7 @@ Ast::FunctorCallExpr* Context::aFunctionCallExpr(const Ast::Token& pos, const As
 Ast::FunctorCallExpr* Context::aFunctorCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(expr.qTypeSpec().typeSpec()));
     if(function != 0) {
-        const Ast::FunctionRetn& functionRetn = getFunctionRetn(pos, ref(function));
-        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionRetn, false);
+        const Ast::QualifiedTypeSpec& qTypeSpec = getFunctionReturnType(pos, ref(function));
         Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, expr, exprList));
         return ptr(functorCallExpr);
     }
@@ -1446,7 +1465,7 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
             }
 
             // create vref expression
-            Ast::VariableRefExpr& vrefExpr = _unit.addNode(new Ast::VariableRefExpr(ref(vref).qualifiedTypeSpec(), ref(vref), refType));
+            Ast::VariableRefExpr& vrefExpr = _unit.addNode(new Ast::VariableRefExpr(ref(vref).qTypeSpec(), ref(vref), refType));
             return ptr(vrefExpr);
         }
     }
@@ -1468,7 +1487,7 @@ Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, con
             throw Exception("%s '%s' is not a member of struct '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
         }
 
-        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), ref(vref).qualifiedTypeSpec().typeSpec(), true);
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), ref(vref).qTypeSpec().typeSpec(), true);
         Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(qTypeSpec, expr, ref(vref)));
         return ptr(vdefExpr);
     }
@@ -1479,7 +1498,7 @@ Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, con
         if(vref == 0) {
             throw Exception("%s '%s' is not a member of function: '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
         }
-        Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(ref(vref).qualifiedTypeSpec(), expr, ref(vref)));
+        Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(ref(vref).qTypeSpec(), expr, ref(vref)));
         return ptr(vdefExpr);
     }
 
@@ -1504,7 +1523,7 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
         if(vref == 0) {
             throw Exception("%s %s is not a member of type '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
         }
-        Ast::StructMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::StructMemberExpr(ref(vref).qualifiedTypeSpec(), typeSpec, ref(vref)));
+        Ast::StructMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::StructMemberExpr(ref(vref).qTypeSpec(), typeSpec, ref(vref)));
         return ptr(typeSpecMemberExpr);
     }
 
