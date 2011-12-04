@@ -10,6 +10,10 @@ main MyMain {
                 position  : Window::Position {x:10;y:10;w:400;h:200;};
                 visible   : true;
                 childList : [ string:pointer<Window::Definition>,
+                             @systray: &Systray::Definition {
+                                tooltip : "guiTest";
+                                visible : true;
+                             },
                              @checkBox: &Button::Definition {
                                 title   : "Check";
                                 position: Window::Position {x:10;y:10;w:60;h:22;};
@@ -28,7 +32,7 @@ main MyMain {
     auto outputBox = Window::childList(mainFrame)[@outputBox];
 
     Window::OnResize(mainFrame) => Window::OnResize::Handler {
-        print "on click\n";
+        print "on resize\n";
         auto pp = Window::getWindowPosition(mainFrame);
         auto cp = Window::getChildPosition(outputBox);
         cp.w = pp.w - cp.x - 20;

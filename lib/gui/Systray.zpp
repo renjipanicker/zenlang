@@ -1,0 +1,15 @@
+include Window public;
+namespace Systray;
+
+public struct Handle {
+    struct Impl native;
+    ptr<Impl> wdata;
+};
+
+public struct Definition : Window::Definition {
+    tooltip = "";
+    iconFile = "";
+};
+
+public function (Systray::Handle systray)Create(const Window::Handle& parentWin, const Definition& defn) native;
+public event(const Systray::Handle& systray) => function ()OnClick() native;
