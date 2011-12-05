@@ -11,5 +11,11 @@ public struct Definition : Window::Definition {
     iconFile = "";
 };
 
-public function (Systray::Handle systray)Create(const Window::Handle& parentWin, const Definition& defn) native;
-public event(const Systray::Handle& systray) => function ()OnClick() native;
+public function Systray::Handle Create(const Window::Handle& parentWin, const Definition& defn) native;
+public function void SetTooltip(const Systray::Handle& handle, const string& text) native;
+public function void SetIconfile(const Systray::Handle& handle, const string& filename) native;
+public function void Show(const Systray::Handle& handle) native;
+public function void Hide(const Systray::Handle& handle) native;
+
+public event(const Systray::Handle& systray) => function void OnActivation() native;
+public event(const Systray::Handle& systray) => function void OnContextMenu() native;

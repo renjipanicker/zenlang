@@ -4,26 +4,54 @@ include Mainframe;
 include Button;
 include TextEdit;
 include Systray;
+include Menu;
+include MenuItem;
 
 namespace WindowCreator;
 
 routine const Window::Handle& processWindow(const Window::Handle& win, const Window::Definition& defn);
 
-routine void createWindow(const Window::Handle& parentWin, const string& name, const pointer<Window::Definition>& defn) {
+routine void createMenuItem(const Menu::Handle& pmenu, const string& name, const pointer<Window::Definition>& defn) {
+    auto w = MenuItem::Create(pmenu, <MenuItem::Definition>defn);
+    unused(w);
+}
+
+routine Menu::Handle createMenu(const Window::Handle& pwin, const string& name, const pointer<Window::Definition>& defn) {
+    auto w = Menu::Create(pwin, <Menu::Definition>defn);
+    foreach(n,d in (*defn).childList) {
+        createMenuItem(w, n, d);
+    }
+    return w;
+}
+
+function void createWindow(const Window::Handle& pwin, const string& name, const pointer<Window::Definition>& defn) {
     switch {
         case (typeof(defn) == typeof(Button::Definition)): {
-            auto w = Button::Create(parentWin, <Button::Definition>defn);
-            Window::childList(parentWin)[name] = w.window;
+            auto w = Button::Create(pwin, <Button::Definition>defn);
+            Window::childList(pwin)[name] = w.window;
             processWindow(w.window, *defn);
         }
         case (typeof(defn) == typeof(TextEdit::Definition)): {
-            auto w = TextEdit::Create(parentWin, <TextEdit::Definition>defn);
-            Window::childList(parentWin)[name] = w.window;
+            auto w = TextEdit::Create(pwin, <TextEdit::Definition>defn);
+            Window::childList(pwin)[name] = w.window;
             processWindow(w.window, *defn);
         }
         case (typeof(defn) == typeof(Systray::Definition)): {
-            auto st = Systray::Create(parentWin, <Systray::Definition>defn);
-            unused(st);
+            auto st = Systray::Create(pwin, <Systray::Definition>defn);
+            foreach(n,d in (*defn).childList) {
+                if(typeof(d) == typeof(Menu::Definition)) {
+                    auto w = createMenu(pwin, n, d);
+                    Systray::OnContextMenu(st) => Systray::OnContextMenu::Handler {
+                        Menu::Show(w);
+                    };
+                }
+            }
+        }
+        case (typeof(defn) == typeof(Menu::Definition)): {
+            auto w = Menu::Create(pwin, <Menu::Definition>defn);
+            foreach(n,d in (*defn).childList) {
+                createMenuItem(w, n, d);
+            }
         }
     }
 }

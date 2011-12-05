@@ -113,12 +113,14 @@ multiple generators: python, php, js, java
 *** Selectively decide which header files to make private.
 
 =========================
-zen --gui \
+../debug/zen --gui \
 ../../zenlang/lib/gui/Window.zpp ../../zenlang/lib/gui/WindowImpl.cpp \
 ../../zenlang/lib/gui/Mainframe.zpp ../../zenlang/lib/gui/MainframeImpl.cpp \
 ../../zenlang/lib/gui/Button.zpp ../../zenlang/lib/gui/ButtonImpl.cpp \
 ../../zenlang/lib/gui/TextEdit.zpp ../../zenlang/lib/gui/TextEditImpl.cpp \
 ../../zenlang/lib/gui/Systray.zpp ../../zenlang/lib/gui/SystrayImpl.cpp \
+../../zenlang/lib/gui/Menu.zpp ../../zenlang/lib/gui/MenuImpl.cpp \
+../../zenlang/lib/gui/MenuItem.zpp ../../zenlang/lib/gui/MenuItemImpl.cpp \
 ../../zenlang/lib/gui/WindowCreator.zpp \
 ../../zenlang/tests/guiTest.zpp && cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
 

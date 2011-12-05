@@ -718,6 +718,7 @@ rOrderedExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedE
 // index expression
 %type rIndexExpr {Ast::IndexExpr*}
 rIndexExpr(L) ::= rExpr(E) LSQUARE(B) rExpr(innerExpr) RSQUARE. {L = ref(pctx).aIndexExpr(B, ref(E), ref(innerExpr));}
+rIndexExpr(L) ::= rExpr(E) AMP(B) rKeyConstantExpr(innerExpr). {L = ref(pctx).aIndexExpr(B, ref(E), ref(innerExpr));}
 
 //-------------------------------------------------
 // type expression

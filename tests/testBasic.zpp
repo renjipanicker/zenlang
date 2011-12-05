@@ -291,11 +291,11 @@ public test testDicts {
     return (true);
 }
 
-public function void testVoidFunction() {
-}
-
 public main MyMain {
     auto f = run runFunctionTest(908);
     unused(f);
     return (0);
+}
+
+public function void testVoidFunction() {
 }

@@ -757,42 +757,53 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
             fprintf(_fp, "%s};\n", Indent::get());
         }
 
-        std::string out;
-        if(node.sig().outScope().isTuple()) {
-            out = "const _Out&";
+        std::string out1;
+        std::string out2;
+        if(isVoid(node.sig().outScope())) {
+            out1 = "void";
+            out2 = "const _Out &";
+        } else if(node.sig().outScope().isTuple()) {
+            out1 = "const _Out&";
+            out2 = out1;
         } else {
             const Ast::VariableDefn& vdef = ref(node.sig().out().front());
-            out = getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Normal);
-        }
-
-        // run-function-type
-        fprintf(_fp, "%spublic:\n", Indent::get());
-        if(isTest) {
-            fprintf(_fp, "%s    %s test();\n", Indent::get(), out.c_str());
-        } else if((isDecl) && (node.defType() != Ast::DefinitionType::Native)) {
-            fprintf(_fp, "%s    virtual %s _run(const _In& _in) = 0;\n", Indent::get(), out.c_str());
-        } else {
-            fprintf(_fp, "%s    %s run(", Indent::get(), out.c_str());
-            writeScopeParamList(_fp, node.sig().inScope(), "p");
-            fprintf(_fp, ");\n");
-            fprintf(_fp, "%s    virtual %s _run(const _In& _in) {\n", Indent::get(), out.c_str());
-            fprintf(_fp, "%s        return run(", Indent::get());
-            writeScopeInCallList(node.sig().inScope());
-            fprintf(_fp, ");\n");
-            fprintf(_fp, "%s    }\n", Indent::get());
+            out1 = getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Normal);
+            out2 = out1;
         }
 
         if(!isTest) {
             // param-instance
             fprintf(_fp, "%s    Pointer<_Out> _out;\n", Indent::get());
-            fprintf(_fp, "%s    inline %s out(const _Out& val) {_out = Creator<_Out, _Out>::get(val);", Indent::get(), out.c_str());
-            if(!isVoid(node.sig().outScope())) {
-                fprintf(_fp, "return _out.get()");
-                if(!node.sig().outScope().isTuple()) {
-                    fprintf(_fp, "._out");
-                }
+            fprintf(_fp, "%s    inline %s out(const _Out& val) {_out = Creator<_Out, _Out>::get(val);", Indent::get(), out2.c_str());
+            fprintf(_fp, "return _out.get()");
+            if((!isVoid(node.sig().outScope())) && (!node.sig().outScope().isTuple())) {
+                fprintf(_fp, "._out");
             }
             fprintf(_fp, ";}\n");
+        }
+
+        // run-function-type
+        fprintf(_fp, "%spublic:\n", Indent::get());
+        if(isTest) {
+            fprintf(_fp, "%s    %s test();\n", Indent::get(), out2.c_str());
+        } else if((isDecl) && (node.defType() != Ast::DefinitionType::Native)) {
+            fprintf(_fp, "%s    virtual %s _run(const _In& _in) = 0;\n", Indent::get(), out2.c_str());
+        } else {
+            fprintf(_fp, "%s    %s run(", Indent::get(), out1.c_str());
+            writeScopeParamList(_fp, node.sig().inScope(), "p");
+            fprintf(_fp, ");\n");
+            fprintf(_fp, "%s    virtual %s _run(const _In& _in) {\n", Indent::get(), out2.c_str());
+            if(isVoid(node.sig().outScope())) {
+                fprintf(_fp, "%s        run(", Indent::get());
+                writeScopeInCallList(node.sig().inScope());
+                fprintf(_fp, ");\n");
+                fprintf(_fp, "%s        return out(_Out());\n", Indent::get());
+            } else {
+                fprintf(_fp, "%s        return run(", Indent::get());
+                writeScopeInCallList(node.sig().inScope());
+                fprintf(_fp, ");\n");
+            }
+            fprintf(_fp, "%s    }\n", Indent::get());
         }
     }
 

@@ -2,6 +2,8 @@ include Window public;
 include Mainframe;
 include Button;
 include TextEdit;
+include Menu;
+include MenuItem;
 include WindowCreator;
 
 main MyMain {
@@ -13,6 +15,21 @@ main MyMain {
                              @systray: &Systray::Definition {
                                 tooltip : "guiTest";
                                 visible : true;
+                                childList : [ string:pointer<Window::Definition>,
+                                    @menu: &Menu::Definition {
+                                    childList : [ string:pointer<Window::Definition>,
+                                        @showItem: &MenuItem::Definition {
+                                          label : "Show";
+                                        },
+                                        @hideItem: &MenuItem::Definition {
+                                          label : "Hide";
+                                        },
+                                        @exitItem: &MenuItem::Definition {
+                                          label : "Exit";
+                                        },
+                                    ];
+                                    },
+                                ];
                              },
                              @checkBox: &Button::Definition {
                                 title   : "Check";
@@ -30,6 +47,9 @@ main MyMain {
     auto mainFrame = WindowCreator::Create(defn);
     auto checkBtn = Window::childList(mainFrame)[@checkBox];
     auto outputBox = Window::childList(mainFrame)[@outputBox];
+//    auto checkBtn1 = Window::childList(mainFrame)@checkBox;
+
+//    auto showMenu = Window::childList(mainFrame)[@systray][@menu][@showItem];
 
     Window::OnResize(mainFrame) => Window::OnResize::Handler {
         print "on resize\n";

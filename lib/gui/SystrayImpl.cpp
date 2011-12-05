@@ -4,7 +4,7 @@
 #include "SystrayImpl.hpp"
 #include "Systray.hpp"
 
-const Systray::Create::_Out& Systray::Create::run(const Window::Handle& parent, const Systray::Definition& def) {
+Systray::Handle Systray::Create::run(const Window::Handle& parent, const Systray::Definition& def) {
 #if defined(WIN32)
     Systray::Handle::Impl* impl = new Systray::Handle::Impl();
 
@@ -63,7 +63,98 @@ const Systray::Create::_Out& Systray::Create::run(const Window::Handle& parent, 
         gtk_status_icon_set_visible(ref(impl)._icon, TRUE);
     }
 #endif
-    Systray::Handle st;
-    st._wdata<Systray::Handle>(impl);
-    return out(_Out(st));
+    Systray::Handle handle;
+    handle._wdata<Systray::Handle>(impl);
+    return handle;
+}
+
+void Systray::SetTooltip::run(const Systray::Handle& handle, const std::string& text) {
+#if defined(WIN32)
+    lstrcpyn(ni.szTip, text.c_str(), text.length());
+    ni.uFlags |= NIF_TIP;
+    //SysTray::Native::setIconFile(This._sysTray._impl->_ni, This._text);
+    ::Shell_NotifyIcon(NIM_MODIFY, ptr(ref(handle.wdata)._icon._ni));
+#endif
+#if defined(GTK)
+    gtk_status_icon_set_tooltip_text(ref(handle.wdata)._icon, text.c_str());
+    //SysTray::Native::setIconFile(This._sysTray, This._text);
+#endif
+}
+
+void Systray::SetIconfile::run(const Systray::Handle& handle, const std::string& filename) {
+#if defined(WIN32)
+    ni.hIcon = (HICON)LoadImageA(NULL, filename.c_str(), IMAGE_ICON,
+                                 GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
+                                 LR_LOADFROMFILE);
+    if(0 == ni.hIcon) {
+        throw Exception("Unable to load icon");
+    }
+
+    ni.uFlags |= NIF_ICON;
+    ::Shell_NotifyIcon(NIM_MODIFY, ptr(ref(handle.wdata)._icon._ni));
+#endif
+#if defined(GTK)
+    gtk_status_icon_set_from_icon_name(ref(handle.wdata)._icon, GTK_STOCK_MEDIA_STOP);
+#endif
+}
+
+void Systray::Show::run(const Systray::Handle& handle) {
+#if defined(WIN32)
+    ::Shell_NotifyIcon(NIM_ADD, ptr(ref(handle.wdata)._icon._ni));
+#endif
+#if defined(GTK)
+    gtk_status_icon_set_visible(ref(handle.wdata)._icon, TRUE);
+#endif
+}
+
+void Systray::Hide::run(const Systray::Handle& handle) {
+#if defined(WIN32)
+    ::Shell_NotifyIcon(NIM_DELETE, ptr(ref(handle.wdata)._icon._ni));
+#endif
+#if defined(GTK)
+    gtk_status_icon_set_visible(ref(handle.wdata)._icon, FALSE);
+#endif
+}
+
+#if defined(GTK)
+static gboolean onSystrayActivateEvent(GtkStatusIcon* status_icon, gpointer phandler) {
+    unused(status_icon);
+    Systray::OnActivation::Handler* handler = static_cast<Systray::OnActivation::Handler*>(phandler);
+    Systray::OnActivation::Handler::_In in;
+    ref(handler)._run(in);
+    return FALSE;
+}
+#endif
+
+void Systray::OnActivation::addHandler(const Systray::Handle& systray, Handler* handler) {
+    Systray::OnActivation::add(handler);
+#if defined(WIN32)
+    onCloseHandlerList.addHandler(ref(systray.wdata)._icon, handler);
+#endif
+#if defined(GTK)
+    g_signal_connect(G_OBJECT (ref(systray.wdata)._icon), "activate", G_CALLBACK (onSystrayActivateEvent), handler);
+#endif
+}
+
+#if defined(GTK)
+static gboolean onSystrayContextMenuEvent(GtkStatusIcon *status_icon, guint button, guint activate_time, gpointer phandler) {
+    unused(status_icon);
+    unused(button);
+    unused(activate_time);
+
+    Systray::OnContextMenu::Handler* handler = static_cast<Systray::OnContextMenu::Handler*>(phandler);
+    Systray::OnContextMenu::Handler::_In in;
+    ref(handler)._run(in);
+    return FALSE;
+}
+#endif
+
+void Systray::OnContextMenu::addHandler(const Systray::Handle& systray, Handler* handler) {
+    Systray::OnContextMenu::add(handler);
+#if defined(WIN32)
+    onCloseHandlerList.addHandler(ref(systray.wdata)._icon, handler);
+#endif
+#if defined(GTK)
+    g_signal_connect(G_OBJECT (ref(systray.wdata)._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), handler);
+#endif
 }

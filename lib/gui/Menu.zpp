@@ -1,0 +1,14 @@
+include Window public;
+namespace Menu;
+
+public struct Handle {
+    struct Impl native;
+    ptr<Impl> wdata;
+};
+
+public struct Definition : Window::Definition {
+};
+
+public function Menu::Handle Create(const Window::Handle& parentWin, const Definition& defn) native;
+public function void ShowAt(const Menu::Handle& handle, const int& x, const int& y) native;
+public function void Show(const Menu::Handle& handle) native;
