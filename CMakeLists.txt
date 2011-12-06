@@ -48,13 +48,28 @@ ELSE(WIN32)
     SET(re2c_cc "${CMAKE_CURRENT_SOURCE_DIR}/tools/re2c")
 ENDIF(WIN32)
 
-add_custom_target(cc_parser.y COMMAND "${lemon_cc}" -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y")
-SET(zen_DEPENDS ${zen_DEPENDS} cc_parser.y)
+ADD_CUSTOM_COMMAND(
+    COMMAND "${lemon_cc}" o=".hpp" -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
+    OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.hpp"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
+)
+SET(zen_SOURCES ${zen_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.hpp")
 
-add_custom_target(cc_lexer.re COMMAND "${re2c_cc}" -c -i -u -o "${parser_odir}/lexerGen.c" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re")
-SET(zen_DEPENDS ${zen_DEPENDS} cc_lexer.re)
+ADD_CUSTOM_COMMAND(
+    COMMAND "${re2c_cc}" -c -i -u -o "${parser_odir}/lexerGen.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
+    OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.hpp"
+    DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
+)
+SET(zen_SOURCES ${zen_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.hpp")
+
+#add_custom_target(cc_parser.y COMMAND "${lemon_cc}" -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y")
+#SET(zen_DEPENDS ${zen_DEPENDS} cc_parser.y)
+
+#add_custom_target(cc_lexer.re COMMAND "${re2c_cc}" -c -i -u -o "${parser_odir}/lexerGen.c" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re")
+#SET(zen_DEPENDS ${zen_DEPENDS} cc_lexer.re)
 
 ADD_EXECUTABLE(zen ${zen_SOURCES})
-ADD_DEPENDENCIES(zen ${zen_DEPENDS})
+#ADD_DEPENDENCIES(zen ${zen_DEPENDS})
+
 
 #-DCMAKE_BUILD_TYPE=Debug
