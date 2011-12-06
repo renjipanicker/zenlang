@@ -1,6 +1,8 @@
 *.user
-src/lexerGen.c
-src/parserGen.c
+src/lexerGen.hpp
+src/parserGen.hpp
 src/parserGen.h
 src/parserGen.out
 *~
+*.old
+
