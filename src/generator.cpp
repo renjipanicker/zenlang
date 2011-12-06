@@ -65,6 +65,29 @@ struct FileSet {
     FILE* _fpImp;
 };
 
+struct GeneratorContext {
+    struct TargetMode {
+        enum T {
+            Import,
+            TypeDecl,
+            TypeDefn,
+            Local
+        };
+    };
+    struct IndentMode {
+        enum T {
+            WithBrace,     /// display brace
+            IndentedBrace, /// indent and display brace
+            NoBrace        /// no braces
+        };
+    };
+
+    TargetMode::T _targetMode;
+    IndentMode::T _indentMode;
+    inline GeneratorContext(const TargetMode::T& targetMode, const IndentMode::T& indentMode) : _targetMode(targetMode), _indentMode(indentMode) {}
+    void run(const Ast::Config& config, FileSet& fs, const std::string& basename, const Ast::Statement& block);
+};
+
 struct ExprGenerator : public Ast::Expr::Visitor {
 public:
     inline ExprGenerator(FILE* fp, const GenMode::T& genMode, const std::string& sep2 = "", const std::string& sep1 = "") : _fp(fp), _genMode(genMode), _sep2(sep2), _sep1(sep1), _sep0(sep1) {}
@@ -332,6 +355,13 @@ private:
         fprintf(_fp, ")");
     }
 
+    virtual void visit(const Ast::AnonymousFunctionExpr& node) {
+        std::string fname = getTypeSpecName(node.function().base(), _genMode);
+        fprintf(_fp, "%s {", fname.c_str());
+//        GeneratorContext(GeneratorContext::TargetMode::Import, GeneratorContext::IndentMode::NoBrace).run(_config, _fs, "", node.block());
+        fprintf(_fp, "}");
+    }
+
     virtual void visit(const Ast::ConstantExpr& node) {
         if(getQualifiedTypeSpecName(node.qTypeSpec(), GenMode::Import) == "char") {
             fprintf(_fp, "\'%s\'", node.value().text());
@@ -355,29 +385,6 @@ private:
     const std::string _sep2;
     const std::string _sep1;
     std::string _sep0;
-};
-
-struct GeneratorContext {
-    struct TargetMode {
-        enum T {
-            Import,
-            TypeDecl,
-            TypeDefn,
-            Local
-        };
-    };
-    struct IndentMode {
-        enum T {
-            WithBrace,     /// display brace
-            IndentedBrace, /// indent and display brace
-            NoBrace        /// no braces
-        };
-    };
-
-    TargetMode::T _targetMode;
-    IndentMode::T _indentMode;
-    inline GeneratorContext(const TargetMode::T& targetMode, const IndentMode::T& indentMode) : _targetMode(targetMode), _indentMode(indentMode) {}
-    void run(const Ast::Config& config, FileSet& fs, const std::string& basename, const Ast::Statement& block);
 };
 
 struct ImportGenerator : public Ast::TypeSpec::Visitor {
@@ -633,6 +640,7 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
 
         fprintf(_fp, " {\n");
 
+        visitChildrenIndent(node);
         GeneratorContext(GeneratorContext::TargetMode::TypeDecl, GeneratorContext::IndentMode::NoBrace).run(_config, _fs, "", node.block());
 
         fprintf(_fp, "%s};\n", Indent::get());

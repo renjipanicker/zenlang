@@ -910,14 +910,30 @@ namespace Ast {
         const StructInitPartList& _list;
     };
 
-    class FunctionInstanceExpr : public TypeSpecInstanceExpr {
+    class FunctionTypeInstanceExpr : public TypeSpecInstanceExpr {
     public:
-        inline FunctionInstanceExpr(const QualifiedTypeSpec& qTypeSpec, const Function& function, const ExprList& exprList) : TypeSpecInstanceExpr(qTypeSpec, exprList), _function(function) {}
+        inline FunctionTypeInstanceExpr(const QualifiedTypeSpec& qTypeSpec, const ExprList& exprList) : TypeSpecInstanceExpr(qTypeSpec, exprList) {}
+    };
+
+    class FunctionInstanceExpr : public FunctionTypeInstanceExpr {
+    public:
+        inline FunctionInstanceExpr(const QualifiedTypeSpec& qTypeSpec, const Function& function, const ExprList& exprList) : FunctionTypeInstanceExpr(qTypeSpec, exprList), _function(function) {}
         inline const Function& function() const {return _function;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const Function& _function;
+    };
+
+    class AnonymousFunctionExpr : public FunctionTypeInstanceExpr {
+    public:
+        inline AnonymousFunctionExpr(const QualifiedTypeSpec& qTypeSpec, Ast::ChildFunctionDefn& function, const ExprList& exprList, const Ast::CompoundStatement& compoundStatement)
+            : FunctionTypeInstanceExpr(qTypeSpec, exprList), _function(function) {}
+        inline const ChildFunctionDefn& function() const {return _function;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        Ast::ChildFunctionDefn& _function;
     };
 
     class ConstantExpr : public Expr {
@@ -968,6 +984,7 @@ namespace Ast {
         virtual void visit(const EnumMemberExpr& node) = 0;
         virtual void visit(const StructInstanceExpr& node) = 0;
         virtual void visit(const FunctionInstanceExpr& node) = 0;
+        virtual void visit(const AnonymousFunctionExpr& node) = 0;
         virtual void visit(const ConstantExpr& node) = 0;
         virtual void sep() = 0;
     };
@@ -997,6 +1014,7 @@ namespace Ast {
     inline void EnumMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void StructInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void AnonymousFunctionExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ConstantExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
 
     //////////////////////////////////////////////////////////////////
@@ -1303,17 +1321,17 @@ namespace Ast {
 
     class AddEventHandlerStatement : public Statement {
     public:
-        inline AddEventHandlerStatement(const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionInstanceExpr& functor) : _event(event), _source(source), _functor(functor) {}
+        inline AddEventHandlerStatement(const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionTypeInstanceExpr& functor) : _event(event), _source(source), _functor(functor) {}
     public:
         inline const Ast::EventDecl& event() const {return _event;}
         inline const Ast::Expr& source() const {return _source;}
-        inline Ast::FunctionInstanceExpr& functor() const {return _functor;}
+        inline Ast::FunctionTypeInstanceExpr& functor() const {return _functor;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const Ast::EventDecl& _event;
         const Ast::Expr& _source;
-        Ast::FunctionInstanceExpr& _functor;
+        Ast::FunctionTypeInstanceExpr& _functor;
     };
 
     class ReturnStatement : public Statement {

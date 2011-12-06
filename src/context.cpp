@@ -1054,7 +1054,7 @@ Ast::ContinueStatement* Context::aContinueStatement() {
     return ptr(continueStatement);
 }
 
-Ast::AddEventHandlerStatement* Context::aAddEventHandlerStatement(const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionInstanceExpr& functor) {
+Ast::AddEventHandlerStatement* Context::aAddEventHandlerStatement(const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionTypeInstanceExpr& functor) {
     Ast::AddEventHandlerStatement& addEventHandlerStatement = _unit.addNode(new Ast::AddEventHandlerStatement(event, source, functor));
     return ptr(addEventHandlerStatement);
 }
@@ -1607,11 +1607,11 @@ Ast::FunctionInstanceExpr* Context::aFunctionInstanceExpr(const Ast::TypeSpec& t
     throw Exception("%s: Not a aggregate type '%s'\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());
 }
 
-Ast::FunctionInstanceExpr* Context::aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement) {
+Ast::AnonymousFunctionExpr* Context::aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement) {
     aChildFunctionDefn(functionDefn, compoundStatement);
     Ast::ExprList& exprList = addExprList();
     Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionDefn, false);
-    Ast::FunctionInstanceExpr& functionInstanceExpr = _unit.addNode(new Ast::FunctionInstanceExpr(qTypeSpec, functionDefn, exprList));
+    Ast::AnonymousFunctionExpr& functionInstanceExpr = _unit.addNode(new Ast::AnonymousFunctionExpr(qTypeSpec, functionDefn, exprList, compoundStatement));
     return ptr(functionInstanceExpr);
 }
 

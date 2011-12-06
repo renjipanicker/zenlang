@@ -762,7 +762,7 @@ rFunctionInstanceExpr(L) ::= rFunctionTypeSpec(R) LSQUARE rExprList(M) RSQUARE. 
 
 //-------------------------------------------------
 // function instance expressions
-%type rAnonymousFunctionExpr {Ast::FunctionInstanceExpr*}
+%type rAnonymousFunctionExpr {Ast::AnonymousFunctionExpr*}
 rAnonymousFunctionExpr(L) ::= rEnterAnonymousFunction(R) rCompoundStatement(C). {L = ref(pctx).aAnonymousFunctionExpr(ref(R), ref(C));}
 
 //-------------------------------------------------
