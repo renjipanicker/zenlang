@@ -26,20 +26,10 @@ inline std::string rpad(const T& t) {
     return ppad(ptr(t));
 }
 
-#if defined(_WIN32)
-extern "C" {
-    char* _unDName(char* outputString, const char* name, int maxStringLength, void* (*pAlloc)(size_t), void (*pFree)(void*), unsigned short disableFlags);
-}
-#endif
-
 inline std::string undecorate(const char* name) {
     std::string uname = name;
 #if defined(_WIN32)
-//    char * const dname = _unDName(0, name, 0, malloc, free, 0x2800);
-//    if (dname) {
-//        uname = dname;
-//        free(dname);
-//    }
+    // msvc-cl returns unmangled name by default
 #else
     int status = -4;
     char* dname = abi::__cxa_demangle(name, NULL, NULL, &status);
@@ -264,7 +254,7 @@ struct container {
     inline const_iterator begin() const {return _list.begin();}
     inline const_iterator end() const {return _list.end();}
 
-    inline V& get(const K& idx) {
+    inline V& at(const K& idx) {
         iterator it = _list.find(idx);
         if(it == _list.end()) {
             throw Exception(Formatter("%{idx} not found\n").add("idx", idx).get());
@@ -276,7 +266,7 @@ struct container {
         _list.insert(std::pair<K, V>(k, v));
     }
 
-    inline V& operator[](const K& idx) {return get(idx);}
+    inline V& operator[](const K& idx) {return at(idx);}
 
     inline void clone(const container& src) {
         for(typename List::const_iterator it = src._list.begin(); it != src._list.end(); ++it) {
@@ -309,6 +299,11 @@ struct list : public container<size_t, V, std::map<size_t, V> > {
     };
 };
 
+template <typename V>
+inline V& at(const list<V>& l, const size_t& idx) {
+    return l.at(idx);
+}
+
 template <typename K, typename V>
 struct dict : public container<K, V, std::map<K, V> > {
     typedef container<K, V, std::map<K, V> > BaseT;
@@ -323,6 +318,11 @@ struct dict : public container<K, V, std::map<K, V> > {
         dict _list;
     };
 };
+
+template <typename K, typename V>
+inline V& at(const dict<K, V>& l, const K& idx) {
+    return l.at(idx);
+}
 
 struct Future {
     virtual void run() = 0;

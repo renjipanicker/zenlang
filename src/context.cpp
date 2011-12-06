@@ -1610,7 +1610,7 @@ Ast::FunctionInstanceExpr* Context::aFunctionInstanceExpr(const Ast::TypeSpec& t
 Ast::AnonymousFunctionExpr* Context::aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement) {
     aChildFunctionDefn(functionDefn, compoundStatement);
     Ast::ExprList& exprList = addExprList();
-    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionDefn, false);
+    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionDefn.base(), false);
     Ast::AnonymousFunctionExpr& functionInstanceExpr = _unit.addNode(new Ast::AnonymousFunctionExpr(qTypeSpec, functionDefn, exprList, compoundStatement));
     return ptr(functionInstanceExpr);
 }

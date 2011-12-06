@@ -245,10 +245,24 @@ private:
     }
 
     virtual void visit(const Ast::IndexExpr& node) {
+        const Ast::TypeSpec* ts = ptr(node.qTypeSpec().typeSpec());
+        std::string at = "at";
+        if(dynamic_cast<const Ast::TemplateDefn*>(ts) != 0) {
+            const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ts);
+            if(ref(ts).name().string() == "list") {
+                const Ast::QualifiedTypeSpec& ts1 = ref(td).at(0);
+                at = "at<" + getQualifiedTypeSpecName(ts1, _genMode) + ">";
+            } else if(ref(ts).name().string() == "dict") {
+                const Ast::QualifiedTypeSpec& ts1 = ref(td).at(0);
+                const Ast::QualifiedTypeSpec& ts2 = ref(td).at(1);
+                at = "at<" + getQualifiedTypeSpecName(ts1, _genMode) + ", " + getQualifiedTypeSpecName(ts2, _genMode) + ">";
+            }
+        }
+        fprintf(_fp, "%s(", at.c_str());
         visitNode(node.expr());
-        fprintf(_fp, "[");
+        fprintf(_fp, ", ");
         visitNode(node.index());
-        fprintf(_fp, "]");
+        fprintf(_fp, ") /*%s */", typeid(*ts).name());
     }
 
     virtual void visit(const Ast::TypeofTypeExpr& node) {
@@ -343,11 +357,11 @@ private:
         }
     }
 
-    virtual void visit(const Ast::FunctionInstanceExpr& node) {
-        std::string fname = getTypeSpecName(node.function(), _genMode);
+    inline void visitFunctionTypeInstance(const Ast::Function& function) {
+        std::string fname = getTypeSpecName(function, _genMode);
         fprintf(_fp, "%s(", fname.c_str());
         std::string sep;
-        for(Ast::Scope::List::const_iterator it = node.function().xref().begin(); it != node.function().xref().end(); ++it) {
+        for(Ast::Scope::List::const_iterator it = function.xref().begin(); it != function.xref().end(); ++it) {
             const Ast::VariableDefn& vref = ref(*it);
             fprintf(_fp, "%s%s", sep.c_str(), vref.name().text());
             sep = ", ";
@@ -355,11 +369,12 @@ private:
         fprintf(_fp, ")");
     }
 
+    virtual void visit(const Ast::FunctionInstanceExpr& node) {
+        visitFunctionTypeInstance(node.function());
+    }
+
     virtual void visit(const Ast::AnonymousFunctionExpr& node) {
-        std::string fname = getTypeSpecName(node.function().base(), _genMode);
-        fprintf(_fp, "%s {", fname.c_str());
-//        GeneratorContext(GeneratorContext::TargetMode::Import, GeneratorContext::IndentMode::NoBrace).run(_config, _fs, "", node.block());
-        fprintf(_fp, "}");
+        visitFunctionTypeInstance(node.function());
     }
 
     virtual void visit(const Ast::ConstantExpr& node) {
