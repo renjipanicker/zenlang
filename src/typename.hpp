@@ -10,3 +10,12 @@ struct GenMode {
 
 std::string getTypeSpecName(const Ast::TypeSpec& typeSpec, const GenMode::T& mode, const std::string& sep = "::");
 std::string getQualifiedTypeSpecName(const Ast::QualifiedTypeSpec& qtypeSpec, const GenMode::T& mode, const std::string& sep = "::");
+
+inline const Ast::TypeSpec* resolveTypedef(const Ast::TypeSpec& typeSpec) {
+    const Ast::TypeSpec* subType = ptr(typeSpec);
+    for(const Ast::TypedefDefn* td = dynamic_cast<const Ast::TypedefDefn*>(subType);td != 0; td = dynamic_cast<const Ast::TypedefDefn*>(subType)) {
+        const Ast::QualifiedTypeSpec& qTypeSpec = ref(td).qTypeSpec();
+        subType = ptr(qTypeSpec.typeSpec());
+    }
+    return subType;
+}

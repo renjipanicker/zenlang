@@ -271,6 +271,10 @@ re2c:condenumprefix          = EState;
 <Normal>   "function"  := feedToken(token(s, ZENTOK_FUNCTION)); continue;
 <Normal>   "event"     := feedToken(token(s, ZENTOK_EVENT)); continue;
 
+<Normal>   "property"  := feedToken(token(s, ZENTOK_PROPERTY)); continue;
+<Normal>   "get"       := feedToken(token(s, ZENTOK_GET)); continue;
+<Normal>   "set"       := feedToken(token(s, ZENTOK_SET)); continue;
+
 <Normal>   "native"    := feedToken(token(s, ZENTOK_NATIVE)); continue;
 <Normal>   "const"     := feedToken(token(s, ZENTOK_CONST)); continue;
 

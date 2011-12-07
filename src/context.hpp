@@ -36,6 +36,7 @@ private:
     inline const Ast::Expr& getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
     inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
     inline const Ast::QualifiedTypeSpec& getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function);
+    inline Ast::StructDefn& getCurrentStructDefn(const Ast::Token& pos);
 
 private:
     inline Ast::Scope& addScope(const Ast::ScopeType::T& type);
@@ -53,7 +54,6 @@ private:
     inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len);
     inline Ast::FunctionDecl& addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
     inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr);
-    inline const Ast::TypeSpec* resolveTypedef(const Ast::TypeSpec& typeSpec);
 
 private:
     Compiler& _compiler;
@@ -109,8 +109,10 @@ public:
     Ast::ChildStructDefn*    aLeaveChildStructDefn(Ast::ChildStructDefn& structDefn);
     Ast::RootStructDefn*     aEnterRootStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::ChildStructDefn*    aEnterChildStructDefn(const Ast::Token& name, const Ast::StructDefn& base, const Ast::DefinitionType::T& defType);
-    void                     aStructMemberDefn(const Ast::VariableDefn& vdef);
-    void                     aStructMemberDefn(Ast::UserDefinedTypeSpec& typeSpec);
+    void                     aStructMemberVariableDefn(const Ast::VariableDefn& vdef);
+    void                     aStructMemberTypeDefn(Ast::UserDefinedTypeSpec& typeSpec);
+    Ast::PropertyDeclRW*     aStructPropertyDeclRW(const Ast::Token& pos, const Ast::QualifiedTypeSpec& propertyType, const Ast::Token& name, const Ast::DefinitionType::T& defType);
+    Ast::PropertyDeclRO*     aStructPropertyDeclRO(const Ast::Token& pos, const Ast::QualifiedTypeSpec& propertyType, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::RoutineDecl*        aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType);
     Ast::RoutineDefn*        aRoutineDefn(Ast::RoutineDefn& routineDefn, const Ast::CompoundStatement& block);
     Ast::RoutineDefn*        aEnterRoutineDefn(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType);

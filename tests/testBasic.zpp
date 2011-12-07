@@ -299,3 +299,7 @@ public main MyMain {
 
 public function void testVoidFunction() {
 }
+
+struct MyIndexStruct {
+    //routine const Handle& at(const string& k) native;
+};

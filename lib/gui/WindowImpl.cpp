@@ -271,6 +271,10 @@ Window::ChildList& Window::childList(const Window::Handle& window) {
     return ref(window.wdata)._childList;
 }
 
+const Window::Handle& Window::Handle::at(const std::string& name) {
+    return ref(wdata)._childList.at(name);
+}
+
 const Window::Delete::_Out& Window::Delete::run(const Window::Handle& window) {
     delete window.wdata;
    //window.wdata = 0;

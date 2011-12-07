@@ -50,7 +50,6 @@
 #include <stdarg.h>
 #include <memory.h>
 #include <assert.h>
-#include <typeinfo>
 
 #if defined(WIN32)
     #define snprintf _snprintf_s
@@ -58,7 +57,6 @@
     #pragma warning (disable:4355) // this used in base ctor initialization.
 #else
     #include <libgen.h>
-    #include <cxxabi.h>
 #endif
 
 #if defined __cplusplus
@@ -69,6 +67,11 @@
     #include <iostream>
     #include <iomanip>
     #include <sstream>
+    #include <typeinfo>
+    #if defined(WIN32)
+    #else
+        #include <cxxabi.h>
+    #endif
 #endif // __cplusplus
 
 #endif

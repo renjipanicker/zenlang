@@ -328,6 +328,15 @@ inline const Ast::QualifiedTypeSpec& Context::getFunctionReturnType(const Ast::T
     return ref(function.sig().out().front()).qTypeSpec();
 }
 
+inline Ast::StructDefn& Context::getCurrentStructDefn(const Ast::Token& pos) {
+    Ast::TypeSpec& ts = currentTypeSpec();
+    Ast::StructDefn* sd = dynamic_cast<Ast::StructDefn*>(ptr(ts));
+    if(sd == 0) {
+        throw Exception("%s Internal error: not a struct type'%s'\n", err(_filename, pos).c_str(), ts.name().text());
+    }
+    return ref(sd);
+}
+
 inline Ast::VariableDefn& Context::addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name) {
     const Ast::Expr& initExpr = getDefaultValue(qualifiedTypeSpec.typeSpec(), name);
     Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
@@ -367,15 +376,6 @@ inline Ast::ValueInstanceExpr& Context::getValueInstanceExpr(const Ast::Token& p
     const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(qTypeSpec.isConst(), qTypeSpec.typeSpec(), true);
     Ast::ValueInstanceExpr& valueInstanceExpr = _unit.addNode(new Ast::ValueInstanceExpr(typeSpec, templateDefn, exprList));
     return valueInstanceExpr;
-}
-
-inline const Ast::TypeSpec* Context::resolveTypedef(const Ast::TypeSpec& typeSpec) {
-    const Ast::TypeSpec* subType = ptr(typeSpec);
-    for(const Ast::TypedefDefn* td = dynamic_cast<const Ast::TypedefDefn*>(subType);td != 0; td = dynamic_cast<const Ast::TypedefDefn*>(subType)) {
-        const Ast::QualifiedTypeSpec& qTypeSpec = ref(td).qTypeSpec();
-        subType = ptr(qTypeSpec.typeSpec());
-    }
-    return subType;
 }
 
 ////////////////////////////////////////////////////////////
@@ -582,28 +582,29 @@ Ast::ChildStructDefn* Context::aEnterChildStructDefn(const Ast::Token& name, con
     return ptr(structDefn);
 }
 
-void Context::aStructMemberDefn(const Ast::VariableDefn& vdef) {
-    Ast::TypeSpec& ts = currentTypeSpec();
-    Ast::StructDefn* sd = dynamic_cast<Ast::StructDefn*>(ptr(ts));
-    if(sd == 0) {
-        throw Exception("%s Internal error: not a struct type(1)'%s'\n", err(_filename, vdef.name()).c_str(), ts.name().text());
-    }
-    ref(sd).addMember(vdef);
-
-    Ast::StructMemberStatement& statement = _unit.addNode(new Ast::StructMemberStatement(ref(sd), vdef));
-    ref(sd).block().addStatement(statement);
+void Context::aStructMemberVariableDefn(const Ast::VariableDefn& vdef) {
+    Ast::StructDefn& sd = getCurrentStructDefn(vdef.name());
+    sd.addMember(vdef);
+    Ast::StructMemberVariableStatement& statement = _unit.addNode(new Ast::StructMemberVariableStatement(sd, vdef));
+    sd.block().addStatement(statement);
 }
 
-void Context::aStructMemberDefn(Ast::UserDefinedTypeSpec& typeSpec) {
-    typeSpec.accessType(Ast::AccessType::Parent);
-    Ast::TypeSpec& ts = currentTypeSpec();
-    Ast::StructDefn* sd = dynamic_cast<Ast::StructDefn*>(ptr(ts));
-    if(sd == 0) {
-        throw Exception("%s Internal error: not a struct type(2) %s\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());
-    }
-
+void Context::aStructMemberTypeDefn(Ast::UserDefinedTypeSpec& typeSpec) {
+    Ast::StructDefn& sd = getCurrentStructDefn(typeSpec.name());
     Ast::Statement* statement = aUserDefinedTypeSpecStatement(typeSpec);
-    ref(sd).block().addStatement(ref(statement));
+    sd.block().addStatement(ref(statement));
+}
+
+Ast::PropertyDeclRW* Context::aStructPropertyDeclRW(const Ast::Token& pos, const Ast::QualifiedTypeSpec& propertyType, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    Ast::PropertyDeclRW& structPropertyDecl = _unit.addNode(new Ast::PropertyDeclRW(currentTypeSpec(), name, defType, propertyType));
+    currentTypeSpec().addChild(structPropertyDecl);
+    return ptr(structPropertyDecl);
+}
+
+Ast::PropertyDeclRO* Context::aStructPropertyDeclRO(const Ast::Token& pos, const Ast::QualifiedTypeSpec& propertyType, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    Ast::PropertyDeclRO& structPropertyDecl = _unit.addNode(new Ast::PropertyDeclRO(currentTypeSpec(), name, defType, propertyType));
+    currentTypeSpec().addChild(structPropertyDecl);
+    return ptr(structPropertyDecl);
 }
 
 Ast::RoutineDecl* Context::aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType) {
@@ -1299,6 +1300,16 @@ Ast::IndexExpr* Context::aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr
 
         if(ref(td).name().string() == "dict") {
             const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(ref(td).at(1).isConst(), ref(td).at(1).typeSpec(), true);
+            Ast::IndexExpr& indexExpr = _unit.addNode(new Ast::IndexExpr(qTypeSpec, expr, index));
+            return ptr(indexExpr);
+        }
+    }
+
+    const Ast::StructDefn* sd = dynamic_cast<const Ast::StructDefn*>(listTypeSpec);
+    if(sd) {
+        const Ast::Routine* routine = ref(sd).hasChild<const Ast::Routine>("at");
+        if(routine) {
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(ref(routine).outType().isConst(), ref(routine).outType().typeSpec(), true);
             Ast::IndexExpr& indexExpr = _unit.addNode(new Ast::IndexExpr(qTypeSpec, expr, index));
             return ptr(indexExpr);
         }

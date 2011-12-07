@@ -32,7 +32,7 @@ private:
     static const char* reservedWords[];
 };
 
-#include "lexerGen.c"
+#include "lexerGen.hpp"
 
 inline Lexer::Impl::Impl(Context& context, Parser& parser) : _s(0), _parser(parser), _context(context), _lastToken(0) {
     _s = new Scanner();

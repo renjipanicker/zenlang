@@ -254,6 +254,14 @@ struct container {
     inline const_iterator begin() const {return _list.begin();}
     inline const_iterator end() const {return _list.end();}
 
+    inline const V& at(const K& idx) const {
+        const_iterator it = _list.find(idx);
+        if(it == _list.end()) {
+            throw Exception(Formatter("%{idx} not found\n").add("idx", idx).get());
+        }
+        return it->second;
+    }
+
     inline V& at(const K& idx) {
         iterator it = _list.find(idx);
         if(it == _list.end()) {
@@ -300,11 +308,16 @@ struct list : public container<size_t, V, std::map<size_t, V> > {
 };
 
 template <typename V>
-inline V& at(const list<V>& l, const size_t& idx) {
+inline const V& at(const list<V>& l, const size_t& idx) {
     return l.at(idx);
 }
 
+template <typename V>
+inline V& at(list<V>& l, const size_t& idx) {
+    return l.at(idx);
+}
 template <typename K, typename V>
+
 struct dict : public container<K, V, std::map<K, V> > {
     typedef container<K, V, std::map<K, V> > BaseT;
 
@@ -320,7 +333,12 @@ struct dict : public container<K, V, std::map<K, V> > {
 };
 
 template <typename K, typename V>
-inline V& at(const dict<K, V>& l, const K& idx) {
+inline V& at(dict<K, V>& l, const K& idx) {
+    return l.at(idx);
+}
+
+template <typename K, typename V>
+inline const V& at(const dict<K, V>& l, const K& idx) {
     return l.at(idx);
 }
 

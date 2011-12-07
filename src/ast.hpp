@@ -103,8 +103,9 @@ namespace Ast {
         template <typename T>
         inline T* hasChild(const std::string& name) const {
             ChildTypeSpecMap::const_iterator it = _childTypeSpecMap.find(name);
-            if(it == _childTypeSpecMap.end())
+            if(it == _childTypeSpecMap.end()) {
                 return 0;
+            }
             return dynamic_cast<T*>(it->second);
         }
 
@@ -300,6 +301,38 @@ namespace Ast {
         const StructDefn& _base;
     };
 
+    class PropertyDecl : public UserDefinedTypeSpec {
+    protected:
+        inline PropertyDecl(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::QualifiedTypeSpec& propertyType) : UserDefinedTypeSpec(parent, name, defType), _propertyType(propertyType), _getBlock(0) {}
+    public:
+        inline const Ast::QualifiedTypeSpec& propertyType() const {return _propertyType;}
+    public:
+        inline const Ast::CompoundStatement& getBlock() const {return ref(_getBlock);}
+        inline void setGetBlock(const Ast::CompoundStatement& val) {_getBlock = ptr(val);}
+    private:
+        const QualifiedTypeSpec& _propertyType;
+        const Ast::CompoundStatement* _getBlock;
+    };
+
+    class PropertyDeclRW : public PropertyDecl {
+    public:
+        inline PropertyDeclRW(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::QualifiedTypeSpec& propertyType) : PropertyDecl(parent, name, defType, propertyType), _setBlock(0) {}
+    public:
+        inline const Ast::CompoundStatement& setBlock() const {return ref(_setBlock);}
+        inline void setSetBlock(const Ast::CompoundStatement& val) {_setBlock = ptr(val);}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ast::CompoundStatement* _setBlock;
+    };
+
+    class PropertyDeclRO : public PropertyDecl {
+    public:
+        inline PropertyDeclRO(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::QualifiedTypeSpec& propertyType) : PropertyDecl(parent, name, defType, propertyType) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
     class Routine : public UserDefinedTypeSpec {
     protected:
         inline Routine(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _outType(outType), _in(in) {}
@@ -467,6 +500,8 @@ namespace Ast {
         virtual void visit(const StructDecl& node) = 0;
         virtual void visit(const RootStructDefn& node) = 0;
         virtual void visit(const ChildStructDefn& node) = 0;
+        virtual void visit(const PropertyDeclRW& node) = 0;
+        virtual void visit(const PropertyDeclRO& node) = 0;
         virtual void visit(const RoutineDecl& node) = 0;
         virtual void visit(const RoutineDefn& node) = 0;
         virtual void visit(const FunctionDecl& node) = 0;
@@ -486,6 +521,8 @@ namespace Ast {
     inline void StructDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RootStructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ChildStructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void PropertyDeclRW::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void PropertyDeclRO::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void RoutineDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void FunctionDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
@@ -1086,15 +1123,21 @@ namespace Ast {
     };
 
     class StructMemberStatement : public Statement {
-    public:
+    protected:
         inline StructMemberStatement(const StructDefn& structDefn, const VariableDefn& defn) : _structDefn(structDefn), _defn(defn) {}
+    public:
         inline const StructDefn& structDefn() const {return _structDefn;}
         inline const VariableDefn& defn() const {return _defn;}
     private:
-        virtual void visit(Visitor& visitor) const;
-    private:
         const StructDefn& _structDefn;
         const VariableDefn& _defn;
+    };
+
+    class StructMemberVariableStatement : public StructMemberStatement {
+    public:
+        inline StructMemberVariableStatement(const StructDefn& structDefn, const VariableDefn& defn) :StructMemberStatement(structDefn, defn) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
     };
 
     class StructInitStatement : public Statement {
@@ -1379,7 +1422,7 @@ namespace Ast {
         virtual void visit(const NamespaceStatement& node) = 0;
         virtual void visit(const LeaveNamespaceStatement& node) = 0;
         virtual void visit(const UserDefinedTypeSpecStatement& node) = 0;
-        virtual void visit(const StructMemberStatement& node) = 0;
+        virtual void visit(const StructMemberVariableStatement& node) = 0;
         virtual void visit(const StructInitStatement& node) = 0;
         virtual void visit(const AutoStatement& node) = 0;
         virtual void visit(const ExprStatement& node) = 0;
@@ -1408,7 +1451,7 @@ namespace Ast {
     inline void NamespaceStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void LeaveNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void UserDefinedTypeSpecStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void StructMemberStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void StructMemberVariableStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void StructInitStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void AutoStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
@@ -1554,7 +1597,9 @@ namespace Ast {
     public:
         /// \brief Add a import statement to the unit
         /// \param statement A pointer to the node to add
-        inline void addStatement(const Statement& statement) {_statementList.push_back(ptr(statement));}
+        inline void addStatement(const Statement& statement) {
+            _statementList.push_back(ptr(statement));
+        }
 
         /// \brief Add a function implementation to the unit
         /// \param functionDefnBase the function implementation to add

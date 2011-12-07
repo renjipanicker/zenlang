@@ -173,8 +173,6 @@ rDefinitionType(L) ::= .       {L = Ast::DefinitionType::Direct;}
 //-------------------------------------------------
 %type rTypeSpecDef {Ast::UserDefinedTypeSpec*}
 rTypeSpecDef(L) ::= rBasicTypeSpecDef(R).  {L = R;}
-rTypeSpecDef(L) ::= rRoutineDecl(R).       {L = R;}
-rTypeSpecDef(L) ::= rRoutineDefn(R).       {L = R;}
 rTypeSpecDef(L) ::= rFunctionDecl(R).      {L = R;}
 rTypeSpecDef(L) ::= rRootFunctionDefn(R).  {L = R;}
 rTypeSpecDef(L) ::= rChildFunctionDefn(R). {L = R;}
@@ -191,6 +189,8 @@ rBasicTypeSpecDef(L) ::= rEnumDefn(R).          {L = R;}
 rBasicTypeSpecDef(L) ::= rStructDecl(R).        {L = R;}
 rBasicTypeSpecDef(L) ::= rRootStructDefn(R).    {L = R;}
 rBasicTypeSpecDef(L) ::= rChildStructDefn(R).   {L = R;}
+rBasicTypeSpecDef(L) ::= rRoutineDecl(R).       {L = R;}
+rBasicTypeSpecDef(L) ::= rRoutineDefn(R).       {L = R;}
 
 //-------------------------------------------------
 // typedef declarations
@@ -266,8 +266,15 @@ rStructMemberDefnList ::= rStructMemberDefnList rStructMemberDefn.
 rStructMemberDefnList ::=                       rStructMemberDefn.
 
 //-------------------------------------------------
-rStructMemberDefn ::= rVariableDefn(R) SEMI. {ref(pctx).aStructMemberDefn(ref(R));}
-rStructMemberDefn ::= rBasicTypeSpecDef(R). {ref(pctx).aStructMemberDefn(ref(R));}
+rStructMemberDefn ::= rVariableDefn(R) SEMI. {ref(pctx).aStructMemberVariableDefn(ref(R));}
+rStructMemberDefn ::= rBasicTypeSpecDef(R). {ref(pctx).aStructMemberTypeDefn(ref(R));}
+rStructMemberDefn ::= rStructPropertyDecl(R). {ref(pctx).aStructMemberTypeDefn(ref(R));}
+
+//-------------------------------------------------
+// struct index declarations
+%type rStructPropertyDecl {Ast::PropertyDecl*}
+rStructPropertyDecl(L) ::= PROPERTY(B) rQualifiedTypeSpec(T) ID(N) rDefinitionType(D) GET SET SEMI. {L = ref(pctx).aStructPropertyDeclRW(B, ref(T), N, D);}
+rStructPropertyDecl(L) ::= PROPERTY(B) rQualifiedTypeSpec(T) ID(N) rDefinitionType(D) GET     SEMI. {L = ref(pctx).aStructPropertyDeclRO(B, ref(T), N, D);}
 
 //-------------------------------------------------
 // routine declarations
