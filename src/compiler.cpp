@@ -14,21 +14,27 @@ bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int
 
     // if importing files...
     if(level > 0) {
-//        std::string msg = "   ";
-//        for(int i = 0; i < level; ++i) {
-//            msg += "  ";
-//        }
-//        printf("%s Importing %s", msg.c_str(), filename.c_str());
+        if(_project.verbose() > 0) {
+            std::string msg = "   ";
+            for(int i = 0; i < level; ++i) {
+                msg += "  ";
+            }
+            printf("%s Importing %s", msg.c_str(), filename.c_str());
+        }
 
         // check if file is already imported
         if(unit.headerFileList().find(filename) != unit.headerFileList().end()) {
-//            printf(" - skipped\n");
+            if(_project.verbose() > 0) {
+                printf(" - skipped\n");
+            }
             return true;
         }
 
         // if not, add it to list of files imported into this unit
         unit.addheaderFile(filename);
-//        printf("\n");
+        if(_project.verbose() > 0) {
+            printf("\n");
+        }
     }
 
     return lexer.readFile();

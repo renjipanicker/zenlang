@@ -1739,10 +1739,13 @@ namespace Ast {
         typedef std::map<std::string, Config*> ConfigList;
 
     public:
-        inline Project() : _name("main"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;") {}
+        inline Project() : _name("main"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;"), _verbose(0) {}
     public:
         inline Project& name(const std::string& val) { _name = val; return ref(this);}
         inline const std::string& name() const {return _name;}
+    public:
+        inline Project& verbose(const int& val) { _verbose = val; return ref(this);}
+        inline const int& verbose() const {return _verbose;}
     public:
         inline Config& config(const std::string& name) {
             ConfigList::iterator it = _configList.find(name);
@@ -1774,5 +1777,6 @@ namespace Ast {
         std::string _hppExt;
         std::string _cppExt;
         std::string _zppExt;
+        int _verbose;
     };
 }

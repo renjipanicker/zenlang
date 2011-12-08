@@ -16,6 +16,7 @@ static int showHelp(const Ast::Config& config) {
     fprintf(stdout, "  -n  --name      Project name\n");
     fprintf(stdout, "  -g  --gui       GUI application\n");
     fprintf(stdout, "  -d  --debug     Debug build\n");
+    fprintf(stdout, "  -v  --verbose   Display verbose output\n");
     fprintf(stdout, "  -t  --test      Don't generate unit tests (Note this is a negative switch)\n");
     fprintf(stdout, "  -z  --zenPath   Zen Library path\n");
     return 0;
@@ -68,6 +69,8 @@ int main(int argc, char* argv[]) {
             config.gui(true);
         } else if((t == "-d") || (t == "--debug")) {
             config.debug(true);
+        } else if((t == "-v") || (t == "--verbose")) {
+            project.verbose(1);
         } else if((t == "-t") || (t == "--test")) {
             config.test(false);
         } else if((t == "-z") || (t == "--zenPath")) {
