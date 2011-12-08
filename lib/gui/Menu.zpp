@@ -1,10 +1,6 @@
+include gui::MenuHandle public;
 include Window public;
 namespace Menu;
-
-public struct Handle {
-    struct Impl native;
-    ptr<Impl> wdata;
-};
 
 public struct Definition : Window::Definition {
 };

@@ -1,4 +1,5 @@
 include gui::WindowImpl native;
+include gui::MenuHandle public;
 namespace Window;
 
 public enum Style {
@@ -16,7 +17,8 @@ public struct Position {
 public struct Handle {
     struct Impl native;
     ptr<Impl> wdata;
-    property dict<string, Handle> childWin get;
+    property dict<string, Window::Handle> childWin get;
+    property dict<string, Menu::Handle> childMenu get;
 };
 
 public typedef ChildList dict<string,Handle>;
