@@ -95,7 +95,10 @@ namespace Ast {
     public:
         template <typename T>
         inline void addChild(T& typeSpec) {
+            ChildTypeSpecMap::const_iterator it = _childTypeSpecMap.find(typeSpec.name().string());
+            assert(it == _childTypeSpecMap.end());
             assert(ptr(typeSpec.parent()) == this);
+
             _childTypeSpecList.push_back(ptr(typeSpec));
             _childTypeSpecMap[typeSpec.name().text()] = ptr(typeSpec);
         }
