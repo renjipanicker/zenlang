@@ -271,8 +271,8 @@ Window::ChildList& Window::childList(const Window::Handle& window) {
     return ref(window.wdata)._childList;
 }
 
-const Window::Handle& Window::Handle::at(const std::string& name) {
-    return ref(wdata)._childList.at(name);
+dict<std::string, Window::Handle>& Window::Handle::_childWin() const {
+    return ref(wdata)._childList;
 }
 
 const Window::Delete::_Out& Window::Delete::run(const Window::Handle& window) {

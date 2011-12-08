@@ -111,6 +111,7 @@ public:
     Ast::ChildStructDefn*    aEnterChildStructDefn(const Ast::Token& name, const Ast::StructDefn& base, const Ast::DefinitionType::T& defType);
     void                     aStructMemberVariableDefn(const Ast::VariableDefn& vdef);
     void                     aStructMemberTypeDefn(Ast::UserDefinedTypeSpec& typeSpec);
+    void                     aStructMemberPropertyDefn(Ast::PropertyDecl& typeSpec);
     Ast::PropertyDeclRW*     aStructPropertyDeclRW(const Ast::Token& pos, const Ast::QualifiedTypeSpec& propertyType, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::PropertyDeclRO*     aStructPropertyDeclRO(const Ast::Token& pos, const Ast::QualifiedTypeSpec& propertyType, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::RoutineDecl*        aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType);
@@ -231,7 +232,7 @@ public:
     Ast::ValueInstanceExpr*   aValueInstanceExpr(const Ast::Token& pos, const Ast::Expr& expr);
     Ast::TemplateDefnInstanceExpr* aTemplateDefnInstanceExpr(const Ast::Token& pos, const Ast::TemplateDefn& templateDefn, const Ast::ExprList& exprList);
     Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);
-    Ast::VariableMemberExpr*  aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name);
+    Ast::MemberExpr*          aMemberVariableExpr(const Ast::Expr& expr, const Ast::Token& name);
     Ast::TypeSpecMemberExpr*  aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
     Ast::StructInstanceExpr*  aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list);
     Ast::StructInstanceExpr*  aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn);

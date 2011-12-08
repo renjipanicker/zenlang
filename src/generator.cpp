@@ -321,14 +321,14 @@ private:
         }
     }
 
-    virtual void visit(const Ast::VariableMemberExpr& node) {
+    virtual void visit(const Ast::MemberVariableExpr& node) {
         visitNode(node.expr());
         fprintf(_fp, ".%s", node.vref().name().text());
     }
 
-    virtual void visit(const Ast::StructMemberExpr& node) {
-        fprintf(_fp, "%s", getTypeSpecName(node.typeSpec(), GenMode::TypeSpecMemberRef).c_str());
-        fprintf(_fp, "::%s", node.vref().name().text());
+    virtual void visit(const Ast::MemberPropertyExpr& node) {
+        visitNode(node.expr());
+        fprintf(_fp, "._%s()", node.pref().name().text());
     }
 
     virtual void visit(const Ast::EnumMemberExpr& node) {
@@ -338,6 +338,11 @@ private:
         } else {
             fprintf(_fp, "::%s", node.vref().name().text());
         }
+    }
+
+    virtual void visit(const Ast::StructMemberExpr& node) {
+        fprintf(_fp, "%s", getTypeSpecName(node.typeSpec(), GenMode::TypeSpecMemberRef).c_str());
+        fprintf(_fp, "::%s", node.vref().name().text());
     }
 
     virtual void visit(const Ast::StructInstanceExpr& node) {
@@ -483,9 +488,9 @@ struct ImportGenerator : public Ast::TypeSpec::Visitor {
 
     void visit(const Ast::PropertyDeclRW& node) {
         if(canWrite(node.accessType())) {
-            fprintf(_fp, "%sproperty %s %s %s GET SET;\n",
+            fprintf(_fp, "%sproperty %s %s %s get set;\n",
                     getAccessType(node.accessType()).c_str(),
-                    getQualifiedTypeSpecName(node.propertyType(), GenMode::Import).c_str(),
+                    getQualifiedTypeSpecName(node.qTypeSpec(), GenMode::Import).c_str(),
                     node.name().text(),
                     getDefinitionType(node.defType()).c_str());
         }
@@ -493,9 +498,9 @@ struct ImportGenerator : public Ast::TypeSpec::Visitor {
 
     void visit(const Ast::PropertyDeclRO& node) {
         if(canWrite(node.accessType())) {
-            fprintf(_fp, "%sproperty %s %s %s GET;\n",
+            fprintf(_fp, "%sproperty %s %s %s get;\n",
                     getAccessType(node.accessType()).c_str(),
-                    getQualifiedTypeSpecName(node.propertyType(), GenMode::Import).c_str(),
+                    getQualifiedTypeSpecName(node.qTypeSpec(), GenMode::Import).c_str(),
                     node.name().text(),
                     getDefinitionType(node.defType()).c_str());
         }
@@ -690,13 +695,20 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         visitStructDefn(node, ptr(node.base()));
     }
 
+    inline void visitProperty(const Ast::PropertyDecl& node) {
+        std::string cnst;
+        if(node.qTypeSpec().isConst())
+            cnst = "const ";
+        fprintf(_fp, "%s%s%s& _%s() const;\n", Indent::get(), cnst.c_str(), getQualifiedTypeSpecName(node.qTypeSpec(), GenMode::Normal).c_str(), node.name().text());
+    }
+
     void visit(const Ast::PropertyDeclRW& node) {
-        fprintf(_fp, "%s%s _%s() const;\n", Indent::get(), getQualifiedTypeSpecName(node.propertyType(), GenMode::Normal).c_str(), node.name().text());
-        fprintf(_fp, "%svoid _%s(const %s& val);\n", Indent::get(), node.name().text(), getQualifiedTypeSpecName(node.propertyType(), GenMode::Normal).c_str());
+        visitProperty(node);
+        fprintf(_fp, "%svoid _%s(const %s& val);\n", Indent::get(), node.name().text(), getTypeSpecName(node.qTypeSpec().typeSpec(), GenMode::Normal).c_str());
     }
 
     void visit(const Ast::PropertyDeclRO& node) {
-        fprintf(_fp, "%s%s _%s() const;\n", Indent::get(), getQualifiedTypeSpecName(node.propertyType(), GenMode::Normal).c_str(), node.name().text());
+        visitProperty(node);
     }
 
     inline bool isVoid(const Ast::Scope& out) const {

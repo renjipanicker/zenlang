@@ -46,10 +46,10 @@ main MyMain {
 
     auto mainFrame = WindowCreator::Create(defn);
     auto checkBtn = mainFrame.childWin@@checkBox;
-    auto outputBox = mainFrame@@outputBox;
+    auto outputBox = mainFrame.childWin@@outputBox;
 
 //    auto showMenu = Window::childList(mainFrame)[@systray][@menu][@showItem];
-    auto showMenu = mainFrame@@systray@@menu@@showItem;
+//    auto showMenu = mainFrame@@systray@@menu@@showItem;
 
     Window::OnResize(mainFrame) => Window::OnResize::Handler {
         print "on resize\n";

@@ -584,15 +584,22 @@ Ast::ChildStructDefn* Context::aEnterChildStructDefn(const Ast::Token& name, con
 
 void Context::aStructMemberVariableDefn(const Ast::VariableDefn& vdef) {
     Ast::StructDefn& sd = getCurrentStructDefn(vdef.name());
-    sd.addMember(vdef);
+    sd.addVariable(vdef);
     Ast::StructMemberVariableStatement& statement = _unit.addNode(new Ast::StructMemberVariableStatement(sd, vdef));
     sd.block().addStatement(statement);
 }
 
 void Context::aStructMemberTypeDefn(Ast::UserDefinedTypeSpec& typeSpec) {
     Ast::StructDefn& sd = getCurrentStructDefn(typeSpec.name());
+    typeSpec.accessType(Ast::AccessType::Parent);
     Ast::Statement* statement = aUserDefinedTypeSpecStatement(typeSpec);
     sd.block().addStatement(ref(statement));
+}
+
+void Context::aStructMemberPropertyDefn(Ast::PropertyDecl& typeSpec) {
+    aStructMemberTypeDefn(typeSpec);
+    Ast::StructDefn& sd = getCurrentStructDefn(typeSpec.name());
+    sd.addProperty(typeSpec);
 }
 
 Ast::PropertyDeclRW* Context::aStructPropertyDeclRW(const Ast::Token& pos, const Ast::QualifiedTypeSpec& propertyType, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
@@ -1483,34 +1490,40 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
     throw Exception("%s Variable not found: '%s'\n", err(_filename, name).c_str(), name.text());
 }
 
-Ast::VariableMemberExpr* Context::aVariableMemberExpr(const Ast::Expr& expr, const Ast::Token& name) {
+Ast::MemberExpr* Context::aMemberVariableExpr(const Ast::Expr& expr, const Ast::Token& name) {
     const Ast::TypeSpec& typeSpec = expr.qTypeSpec().typeSpec();
 
     const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(ptr(typeSpec));
     if(structDefn != 0) {
-        const Ast::VariableDefn* vref = 0;
         for(StructBaseIterator sbi(structDefn); sbi.hasNext(); sbi.next()) {
-            vref = hasMember(sbi.get().scope(), name);
-            if(vref)
-                break;
-        }
-        if(vref == 0) {
-            throw Exception("%s '%s' is not a member of struct '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
+            const Ast::VariableDefn* vref = hasMember(sbi.get().scope(), name);
+            if(vref) {
+                const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), ref(vref).qTypeSpec().typeSpec(), true);
+                Ast::MemberVariableExpr& vdefExpr = _unit.addNode(new Ast::MemberVariableExpr(qTypeSpec, expr, ref(vref)));
+                return ptr(vdefExpr);
+            }
+
+            for(Ast::StructDefn::PropertyList::const_iterator it = sbi.get().propertyList().begin(); it != sbi.get().propertyList().end(); ++it) {
+                const Ast::PropertyDecl& pref = ref(*it);
+                if(pref.name().string() == name.string()) {
+                    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), pref.qTypeSpec().typeSpec(), true);
+                    Ast::MemberPropertyExpr& vdefExpr = _unit.addNode(new Ast::MemberPropertyExpr(qTypeSpec, expr, pref));
+                    return ptr(vdefExpr);
+                }
+            }
         }
 
-        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), ref(vref).qTypeSpec().typeSpec(), true);
-        Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(qTypeSpec, expr, ref(vref)));
-        return ptr(vdefExpr);
+        throw Exception("%s '%s' is not a member of struct '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
     }
 
     const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(ptr(typeSpec));
     if(functionRetn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(functionRetn).outScope(), name);
-        if(vref == 0) {
-            throw Exception("%s '%s' is not a member of function: '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
+        if(vref) {
+            Ast::MemberVariableExpr& vdefExpr = _unit.addNode(new Ast::MemberVariableExpr(ref(vref).qTypeSpec(), expr, ref(vref)));
+            return ptr(vdefExpr);
         }
-        Ast::VariableMemberExpr& vdefExpr = _unit.addNode(new Ast::VariableMemberExpr(ref(vref).qTypeSpec(), expr, ref(vref)));
-        return ptr(vdefExpr);
+        throw Exception("%s '%s' is not a member of function: '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
     }
 
     throw Exception("%s Not a aggregate expression type '%s'\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());

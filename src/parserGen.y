@@ -266,9 +266,9 @@ rStructMemberDefnList ::= rStructMemberDefnList rStructMemberDefn.
 rStructMemberDefnList ::=                       rStructMemberDefn.
 
 //-------------------------------------------------
-rStructMemberDefn ::= rVariableDefn(R) SEMI. {ref(pctx).aStructMemberVariableDefn(ref(R));}
-rStructMemberDefn ::= rBasicTypeSpecDef(R). {ref(pctx).aStructMemberTypeDefn(ref(R));}
-rStructMemberDefn ::= rStructPropertyDecl(R). {ref(pctx).aStructMemberTypeDefn(ref(R));}
+rStructMemberDefn ::= rVariableDefn(R) SEMI.  {ref(pctx).aStructMemberVariableDefn(ref(R));}
+rStructMemberDefn ::= rBasicTypeSpecDef(R).   {ref(pctx).aStructMemberTypeDefn(ref(R));}
+rStructMemberDefn ::= rStructPropertyDecl(R). {ref(pctx).aStructMemberPropertyDefn(ref(R));}
 
 //-------------------------------------------------
 // struct index declarations
@@ -589,7 +589,7 @@ rExpr(L) ::= rRunExpr(R).          {L = R;}
 rExpr(L) ::= rOrderedExpr(R).      {L = R;}
 rExpr(L) ::= rIndexExpr(R).        {L = R;}
 rExpr(L) ::= rVariableRefExpr(R).       {L = R;}
-rExpr(L) ::= rVariableMemberExpr(R).    {L = R;}
+rExpr(L) ::= rMemberVariableExpr(R).    {L = R;}
 rExpr(L) ::= rTypeSpecMemberExpr(R).    {L = R;}
 rExpr(L) ::= rStructInstanceExpr(R).    {L = R;}
 rExpr(L) ::= rFunctionInstanceExpr(R).  {L = R;}
@@ -754,8 +754,8 @@ rVariableRefExpr(L) ::= ID(I). {L = ref(pctx).aVariableRefExpr(I);}
 
 //-------------------------------------------------
 // variable member expressions
-%type rVariableMemberExpr {Ast::VariableMemberExpr*}
-rVariableMemberExpr(L) ::= rExpr(R) DOT ID(M). {L = ref(pctx).aVariableMemberExpr(ref(R), M);}
+%type rMemberVariableExpr {Ast::MemberExpr*}
+rMemberVariableExpr(L) ::= rExpr(R) DOT ID(M). {L = ref(pctx).aMemberVariableExpr(ref(R), M);}
 
 //-------------------------------------------------
 // type member expressions, e.g. enum member
