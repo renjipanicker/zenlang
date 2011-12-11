@@ -12,17 +12,21 @@ public:
 
 public:
     inline const std::string& filename() const {return _filename;}
-    inline const Ast::TypeSpec* currentTypeRef() const {return _currentTypeRef;}
+    const Ast::TypeSpec* currentTypeRefHasChild(const Ast::Token& name) const;
 
 private:
     inline Ast::ExprList& addExprList();
     inline Ast::Root& getRootNamespace() const;
-    template <typename T>
-    inline const T& getRootTypeSpec(const Ast::Token& name) const;
     inline const Ast::TypeSpec* findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
+    const Ast::TypeSpec* hasImportRootTypeSpec(const Ast::Token& name) const;
+    template <typename T>
+    inline const T& getRootTypeSpec(const Ast::Token &name) const;
+    inline Ast::Namespace& getUnitNamespace(const Ast::Token& name);
 
 public:
     const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const;
+
+public:
     inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
 
 private:
@@ -46,8 +50,12 @@ private:
     inline Ast::Scope& currentScope();
 
 private:
-    inline void setCurrentTypeRef(const Ast::TypeSpec& typeSpec);
-    inline void resetCurrentTypeRef();
+    template <typename T>
+    inline const T* setCurrentRootTypeRef(const Ast::Token& name);
+    template <typename T>
+    inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const std::string& extype);
+    template <typename T>
+    inline const T* resetCurrentTypeRef(const T& typeSpec);
     inline const Ast::QualifiedTypeSpec* canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
     inline const Ast::QualifiedTypeSpec& coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
     inline Ast::VariableDefn& addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
@@ -71,18 +79,21 @@ private:
     TypeSpecStack        _typeSpecStack;
     NamespaceStack       _namespaceStack;
     StructInitStack      _structInitStack;
+
+private:
     const Ast::TypeSpec* _currentTypeRef;
+    const Ast::TypeSpec* _currentImportedTypeRef;
 
 public:
-    void                     aUnitStatementList(const Ast::NamespaceStatement& ns);
-    Ast::NamespaceStatement* aNamespaceStatement(Ast::NamespaceStatement& statement);
-    Ast::NamespaceStatement* aNamespaceStatement();
-    Ast::NamespaceStatement* aUnitNamespaceId(Ast::NamespaceStatement& statement, const Ast::Token& name);
-    Ast::NamespaceStatement* aUnitNamespaceId(const Ast::Token& name);
+    void                     aUnitStatementList(const Ast::EnterNamespaceStatement& ns);
+    void                     aImportStatement(const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list);
+    Ast::NamespaceList*      aImportNamespaceList(Ast::NamespaceList& list, const Ast::Token& name);
+    Ast::NamespaceList*      aImportNamespaceList(const Ast::Token& name);
+    Ast::EnterNamespaceStatement* aNamespaceStatement(Ast::NamespaceList& list);
+    Ast::EnterNamespaceStatement* aNamespaceStatement();
+    Ast::NamespaceList*      aUnitNamespaceList(Ast::NamespaceList& list, const Ast::Token& name);
+    Ast::NamespaceList*      aUnitNamespaceList(const Ast::Token& name);
     void                     aLeaveNamespace();
-    void                     aImportStatement(const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, Ast::ImportStatement& statement, const Ast::DefinitionType::T& defType);
-    Ast::ImportStatement*    aImportNamespaceId(Ast::ImportStatement& statement, const Ast::Token& name);
-    Ast::ImportStatement*    aImportNamespaceId(const Ast::Token& name);
     Ast::Statement*          aGlobalTypeSpecStatement(const Ast::AccessType::T& accessType, Ast::UserDefinedTypeSpec& typeSpec);
     Ast::Statement*          aGlobalStatement(Ast::Statement& statement);
 

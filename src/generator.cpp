@@ -1141,6 +1141,7 @@ private:
     }
 private:
     virtual void visit(const Ast::ImportStatement& node) {
+        fprintf(_fs._fpImp, "// import\n");
         if(_ctx._targetMode == GeneratorContext::TargetMode::Import) {
             if(node.headerType() == Ast::HeaderType::Import) {
                 fprintf(_fs._fpImp, "import ");
@@ -1149,8 +1150,8 @@ private:
             }
 
             std::string sep = "";
-            for(Ast::ImportStatement::Part::const_iterator it = node.part().begin(); it != node.part().end(); ++it) {
-                const Ast::Token& name = *it;
+            for(Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                const Ast::Token& name = ref(*it).name();
                 fprintf(_fs._fpImp, "%s%s", sep.c_str(), name.text());
                 sep = "::";
             }
@@ -1167,8 +1168,8 @@ private:
             std::string qt = (node.headerType() == Ast::HeaderType::Import)?"<>":"\"\"";
             fprintf(fp, "#include %c", qt.at(0));
             std::string sep = "";
-            for(Ast::ImportStatement::Part::const_iterator it = node.part().begin(); it != node.part().end(); ++it) {
-                const Ast::Token& name = *it;
+            for(Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                const Ast::Token& name = ref(*it).name();
                 fprintf(fp, "%s%s", sep.c_str(), name.text());
                 sep = "/";
             }
@@ -1176,11 +1177,11 @@ private:
         }
     }
 
-    virtual void visit(const Ast::NamespaceStatement& node) {
+    virtual void visit(const Ast::EnterNamespaceStatement& node) {
         if(_ctx._targetMode == GeneratorContext::TargetMode::Import) {
             std::string fqn;
             std::string sep;
-            for(Ast::NamespaceStatement::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+            for(Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 const Ast::Namespace& ns = ref(*it);
                 fqn += sep;
                 fqn += ns.name().string();
@@ -1194,7 +1195,7 @@ private:
             assert(_basename.size() > 0);
             fprintf(_fs._fpSrc, "#include \"%s.hpp\"\n", _basename.c_str());
 
-            for(Ast::NamespaceStatement::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+            for(Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 const Ast::Namespace& ns = ref(*it);
                 fprintf(_fs._fpHdr, "namespace %s {", ns.name().text());
                 fprintf(_fs._fpSrc, "namespace %s {", ns.name().text());
@@ -1209,7 +1210,7 @@ private:
 
     virtual void visit(const Ast::LeaveNamespaceStatement& node) {
         if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
-            for(Ast::NamespaceStatement::List::const_reverse_iterator it = node.statement().list().rbegin(); it != node.statement().list().rend(); ++it) {
+            for(Ast::NamespaceList::List::const_reverse_iterator it = node.statement().list().rbegin(); it != node.statement().list().rend(); ++it) {
                 const Ast::Namespace& ns = ref(*it);
                 fprintf(_fs._fpHdr, "} /* %s */ ", ns.name().text());
                 fprintf(_fs._fpSrc, "} /* %s */ ", ns.name().text());

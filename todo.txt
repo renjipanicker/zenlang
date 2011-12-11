@@ -115,6 +115,7 @@ multiple generators: python, php, js, java
 
 =========================
 ../debug/zen --gui \
+../../zenlang/lib/gui/MenuHandle.zpp \
 ../../zenlang/lib/gui/Window.zpp ../../zenlang/lib/gui/WindowImpl.cpp \
 ../../zenlang/lib/gui/Mainframe.zpp ../../zenlang/lib/gui/MainframeImpl.cpp \
 ../../zenlang/lib/gui/Button.zpp ../../zenlang/lib/gui/ButtonImpl.cpp \

@@ -1,5 +1,5 @@
 include gui::WindowImpl native;
-include gui::MenuHandle public;
+include MenuHandle public;
 namespace Window;
 
 public enum Style {

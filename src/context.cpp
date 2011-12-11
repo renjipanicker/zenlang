@@ -25,16 +25,6 @@ inline Ast::Root& Context::getRootNamespace() const {
     return (_level == 0)?_unit.rootNS():_unit.importNS();
 }
 
-inline const Ast::TypeSpec* Context::findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
-    const Ast::TypeSpec* child = parent.hasChild<const Ast::TypeSpec>(name.text());
-    if(child)
-        return child;
-    const Ast::ChildTypeSpec* parentx = dynamic_cast<const Ast::ChildTypeSpec*>(ptr(parent));
-    if(!parentx)
-        return 0;
-    return findTypeSpec(ref(parentx).parent(), name);
-}
-
 inline Ast::TypeSpec& Context::currentTypeSpec() const {
     assert(_typeSpecStack.size() > 0);
     return ref(_typeSpecStack.back());
@@ -52,6 +42,110 @@ inline Ast::TypeSpec& Context::leaveTypeSpec(Ast::TypeSpec& typeSpec) {
     return ref(ct);
 }
 
+const Ast::TypeSpec* Context::currentTypeRefHasChild(const Ast::Token& name) const {
+    if(_currentTypeRef == 0)
+        return 0;
+    const Ast::TypeSpec* td = ref(_currentTypeRef).hasChild<const Ast::TypeSpec>(name.string());
+    if(td)
+        return td;
+
+    if(_currentImportedTypeRef) {
+        const Ast::TypeSpec* itd = ref(_currentImportedTypeRef).hasChild<const Ast::TypeSpec>(name.string());
+        if(itd) {
+            return itd;
+        }
+    }
+    return 0;
+}
+
+inline const Ast::TypeSpec* Context::findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
+    const Ast::TypeSpec* child = parent.hasChild<const Ast::TypeSpec>(name.string());
+    if(child)
+        return child;
+    const Ast::ChildTypeSpec* parentx = dynamic_cast<const Ast::ChildTypeSpec*>(ptr(parent));
+    if(!parentx)
+        return 0;
+    return findTypeSpec(ref(parentx).parent(), name);
+}
+
+inline const Ast::TypeSpec* Context::hasImportRootTypeSpec(const Ast::Token& name) const {
+    if(_level == 0) {
+        const Ast::TypeSpec* typeSpec = _unit.importNS().hasChild<const Ast::TypeSpec>(name.string());
+        if(typeSpec)
+            return typeSpec;
+    }
+
+    return 0;
+}
+
+const Ast::TypeSpec* Context::hasRootTypeSpec(const Ast::Token& name) const {
+    const Ast::TypeSpec* typeSpec = findTypeSpec(currentTypeSpec(), name);
+    if(typeSpec)
+        return typeSpec;
+
+    return hasImportRootTypeSpec(name);
+}
+
+template <typename T>
+inline const T& Context::getRootTypeSpec(const Ast::Token &name) const {
+    const Ast::TypeSpec* typeSpec = hasRootTypeSpec(name);
+    if(!typeSpec) {
+        throw Exception("%s Unknown root type '%s'\n", err(_filename, name).c_str(), name.text());
+    }
+    const T* tTypeSpec = dynamic_cast<const T*>(typeSpec);
+    if(!tTypeSpec) {
+        throw Exception("%s Type mismatch '%s'\n", err(_filename, name).c_str(), name.text());
+    }
+    return ref(tTypeSpec);
+}
+
+template <typename T>
+inline const T* Context::setCurrentRootTypeRef(const Ast::Token& name) {
+    const T& td = getRootTypeSpec<T>(name);
+    _currentTypeRef = ptr(td);
+    _currentImportedTypeRef = hasImportRootTypeSpec(name);
+    return ptr(td);
+}
+
+template <typename T>
+inline const T* Context::setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const std::string& extype) {
+    if(ptr(parent) != _currentTypeRef) {
+        throw Exception("%s Internal error: %s parent mismatch '%s'\n", err(_filename, name).c_str(), extype.c_str(), name.text());
+    }
+    const T* td = ref(_currentTypeRef).hasChild<const T>(name.string());
+    if(td) {
+        _currentTypeRef = td;
+        if(_currentImportedTypeRef) {
+            const T* itd = ref(_currentImportedTypeRef).hasChild<const T>(name.string());
+            if(itd) {
+                _currentImportedTypeRef = itd;
+            } else {
+                _currentImportedTypeRef = 0;
+            }
+        }
+        return td;
+    }
+
+    if(_currentImportedTypeRef) {
+        const T* itd = ref(_currentImportedTypeRef).hasChild<const T>(name.string());
+        if(itd) {
+            _currentImportedTypeRef = 0;
+            _currentTypeRef = itd;
+            return itd;
+        } else {
+            _currentImportedTypeRef = 0;
+        }
+    }
+
+    throw Exception("%s %s type expected '%s'\n", err(_filename, name).c_str(), extype.c_str(), name.text());
+}
+
+template <typename T>
+inline const T* Context::resetCurrentTypeRef(const T& typeSpec) {
+    _currentTypeRef = 0;
+    return ptr(typeSpec);
+}
+
 inline Ast::QualifiedTypeSpec& Context::addQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef) {
     Ast::QualifiedTypeSpec& qualifiedTypeSpec = _unit.addNode(new Ast::QualifiedTypeSpec(isConst, typeSpec, isRef));
     return qualifiedTypeSpec;
@@ -62,25 +156,6 @@ inline const Ast::QualifiedTypeSpec& Context::getQualifiedTypeSpec(const Ast::To
     const Ast::TypeSpec& typeSpec = getRootTypeSpec<Ast::TypeSpec>(token);
     const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
     return qTypeSpec;
-}
-
-inline void Context::setCurrentTypeRef(const Ast::TypeSpec& typeSpec) {
-    _currentTypeRef = ptr(typeSpec);
-}
-
-inline void Context::resetCurrentTypeRef() {
-    _currentTypeRef = 0;
-}
-
-Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0) {
-    Ast::Root& rootTypeSpec = getRootNamespace();
-    enterTypeSpec(rootTypeSpec);
-}
-
-Context::~Context() {
-    assert(_typeSpecStack.size() == 1);
-    Ast::Root& rootTypeSpec = getRootNamespace();
-    leaveTypeSpec(rootTypeSpec);
 }
 
 inline Ast::Scope& Context::addScope(const Ast::ScopeType::T& type) {
@@ -110,33 +185,6 @@ inline Ast::Scope& Context::currentScope() {
     assert(_scopeStack.size() > 0);
     Ast::Scope* scope = _scopeStack.back();
     return ref(scope);
-}
-
-const Ast::TypeSpec* Context::hasRootTypeSpec(const Ast::Token& name) const {
-    const Ast::TypeSpec* typeSpec = findTypeSpec(currentTypeSpec(), name);
-    if(typeSpec)
-        return typeSpec;
-
-    if(_level == 0) {
-        typeSpec = _unit.importNS().hasChild<const Ast::TypeSpec>(name.text());
-        if(typeSpec)
-            return typeSpec;
-    }
-
-    return 0;
-}
-
-template <typename T>
-inline const T& Context::getRootTypeSpec(const Ast::Token &name) const {
-    const Ast::TypeSpec* typeSpec = hasRootTypeSpec(name);
-    if(!typeSpec) {
-        throw Exception("%s Unknown root type '%s'\n", err(_filename, name).c_str(), name.text());
-    }
-    const T* tTypeSpec = dynamic_cast<const T*>(typeSpec);
-    if(!tTypeSpec) {
-        throw Exception("%s Type mismatch '%s'\n", err(_filename, name).c_str(), name.text());
-    }
-    return ref(tTypeSpec);
 }
 
 inline const Ast::VariableDefn* Context::hasMember(const Ast::Scope& scope, const Ast::Token& name) {
@@ -379,7 +427,19 @@ inline Ast::ValueInstanceExpr& Context::getValueInstanceExpr(const Ast::Token& p
 }
 
 ////////////////////////////////////////////////////////////
-void Context::aUnitStatementList(const Ast::NamespaceStatement& nss) {
+Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0) {
+    Ast::Root& rootTypeSpec = getRootNamespace();
+    enterTypeSpec(rootTypeSpec);
+}
+
+Context::~Context() {
+    assert(_typeSpecStack.size() == 1);
+    Ast::Root& rootTypeSpec = getRootNamespace();
+    leaveTypeSpec(rootTypeSpec);
+}
+
+////////////////////////////////////////////////////////////
+void Context::aUnitStatementList(const Ast::EnterNamespaceStatement& nss) {
     Ast::LeaveNamespaceStatement& lns = _unit.addNode(new Ast::LeaveNamespaceStatement(nss));
     if(_level == 0) {
         _unit.addStatement(lns);
@@ -392,16 +452,15 @@ void Context::aUnitStatementList(const Ast::NamespaceStatement& nss) {
     }
 }
 
-void Context::aImportStatement(const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, Ast::ImportStatement& statement, const Ast::DefinitionType::T& defType) {
-    statement.accessType(accessType);
-    statement.headerType(headerType);
-    statement.defType(defType);
+void Context::aImportStatement(const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list) {
+    Ast::ImportStatement& statement = _unit.addNode(new Ast::ImportStatement(accessType, headerType, defType, list));
+    _unit.addStatement(statement);
 
     if(statement.defType() != Ast::DefinitionType::Native) {
         std::string filename;
         std::string sep = "";
-        for(Ast::ImportStatement::Part::const_iterator it = statement.part().begin(); it != statement.part().end(); ++it) {
-            const Ast::Token& name = *it;
+        for(Ast::NamespaceList::List::const_iterator it = statement.list().begin(); it != statement.list().end(); ++it) {
+            const Ast::Token& name = ref(*it).name();
             filename += sep;
             filename += name.text();
             sep = "/";
@@ -411,43 +470,61 @@ void Context::aImportStatement(const Ast::AccessType::T& accessType, const Ast::
     }
 }
 
-Ast::ImportStatement* Context::aImportNamespaceId(Ast::ImportStatement& statement, const Ast::Token& name) {
-    statement.addPart(name);
-    return ptr(statement);
-}
-Ast::ImportStatement* Context::aImportNamespaceId(const Ast::Token& name) {
-    Ast::ImportStatement& statement = _unit.addNode(new Ast::ImportStatement());
-    _unit.addStatement(statement);
-    return aImportNamespaceId(statement, name);
+Ast::NamespaceList* Context::aImportNamespaceList(Ast::NamespaceList& list, const Ast::Token &name) {
+    Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(currentTypeSpec(), name));
+    list.addNamespace(ns);
+    return ptr(list);
 }
 
-Ast::NamespaceStatement* Context::aNamespaceStatement(Ast::NamespaceStatement& statement) {
+Ast::NamespaceList* Context::aImportNamespaceList(const Ast::Token &name) {
+    Ast::NamespaceList& list = _unit.addNode(new Ast::NamespaceList());
+    return aImportNamespaceList(list, name);
+}
+
+Ast::EnterNamespaceStatement* Context::aNamespaceStatement(Ast::NamespaceList& list) {
+    Ast::EnterNamespaceStatement& statement = _unit.addNode(new Ast::EnterNamespaceStatement(list));
     if(_level == 0) {
         _unit.addStatement(statement);
     }
     return ptr(statement);
 }
 
-Ast::NamespaceStatement* Context::aNamespaceStatement() {
-    Ast::NamespaceStatement& statement = _unit.addNode(new Ast::NamespaceStatement());
-    return aNamespaceStatement(statement);
+Ast::EnterNamespaceStatement* Context::aNamespaceStatement() {
+    Ast::NamespaceList& list = _unit.addNode(new Ast::NamespaceList());
+    return aNamespaceStatement(list);
 }
 
-Ast::NamespaceStatement* Context::aUnitNamespaceId(Ast::NamespaceStatement& statement, const Ast::Token &name) {
+inline Ast::Namespace& Context::getUnitNamespace(const Ast::Token& name) {
+    if(_level == 0) {
+        Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(currentTypeSpec(), name));
+        currentTypeSpec().addChild(ns);
+        return ns;
+    }
+
+    Ast::Namespace* cns = _unit.importNS().hasChild<Ast::Namespace>(name.string());
+    if(cns) {
+        return ref(cns);
+    }
+
     Ast::Namespace& ns = _unit.addNode(new Ast::Namespace(currentTypeSpec(), name));
     currentTypeSpec().addChild(ns);
+    return ns;
+}
+
+Ast::NamespaceList* Context::aUnitNamespaceList(Ast::NamespaceList& list, const Ast::Token& name) {
+    Ast::Namespace& ns = getUnitNamespace(name);
     enterTypeSpec(ns);
     if(_level == 0) {
         _unit.addNamespacePart(name);
     }
     _namespaceStack.push_back(ptr(ns));
-    statement.addNamespace(ns);
-    return ptr(statement);
+    list.addNamespace(ns);
+    return ptr(list);
 }
 
-Ast::NamespaceStatement* Context::aUnitNamespaceId(const Ast::Token &name) {
-    Ast::NamespaceStatement& statement = _unit.addNode(new Ast::NamespaceStatement());
-    return aUnitNamespaceId(statement, name);
+Ast::NamespaceList* Context::aUnitNamespaceList(const Ast::Token &name) {
+    Ast::NamespaceList& list = _unit.addNode(new Ast::NamespaceList());
+    return aUnitNamespaceList(list, name);
 }
 
 Ast::Statement* Context::aGlobalStatement(Ast::Statement& statement) {
@@ -791,123 +868,75 @@ Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const A
 }
 
 const Ast::TemplateDecl* Context::aTemplateTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
-    const Ast::TemplateDecl* templateDecl = parent.hasChild<const Ast::TemplateDecl>(name.text());
-    if(!templateDecl) {
-        throw Exception("%s template type expected '%s'\n", err(_filename, name).c_str(), name.text());
-    }
-    setCurrentTypeRef(ref(templateDecl));
-    return templateDecl;
+    return setCurrentChildTypeRef<Ast::TemplateDecl>(parent, name, "template");
 }
 
 const Ast::TemplateDecl* Context::aTemplateTypeSpec(const Ast::Token& name) {
-    const Ast::TemplateDecl& templateDecl = getRootTypeSpec<Ast::TemplateDecl>(name);
-    setCurrentTypeRef(templateDecl);
-    return ptr(templateDecl);
+    return setCurrentRootTypeRef<Ast::TemplateDecl>(name);
 }
 
 const Ast::TemplateDecl* Context::aTemplateTypeSpec(const Ast::TemplateDecl& templateDecl) {
-    resetCurrentTypeRef();
-    return ptr(templateDecl);
+    return resetCurrentTypeRef<Ast::TemplateDecl>(templateDecl);
 }
 
 const Ast::StructDefn* Context::aStructTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
-    const Ast::StructDefn* structDefn = parent.hasChild<const Ast::StructDefn>(name.text());
-    if(!structDefn) {
-        throw Exception("%s struct type expected '%s'\n", err(_filename, name).c_str(), name.text());
-    }
-    setCurrentTypeRef(ref(structDefn));
-    return structDefn;
+    return setCurrentChildTypeRef<Ast::StructDefn>(parent, name, "struct");
 }
 
 const Ast::StructDefn* Context::aStructTypeSpec(const Ast::Token& name) {
-    const Ast::StructDefn& structDefn = getRootTypeSpec<Ast::StructDefn>(name);
-    setCurrentTypeRef(structDefn);
-    return ptr(structDefn);
+    return setCurrentRootTypeRef<Ast::StructDefn>(name);
 }
 
 const Ast::StructDefn* Context::aStructTypeSpec(const Ast::StructDefn& structDefn) {
-    resetCurrentTypeRef();
-    return ptr(structDefn);
+    return resetCurrentTypeRef<Ast::StructDefn>(structDefn);
 }
 
 const Ast::Routine* Context::aRoutineTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
-    const Ast::Routine* routine = parent.hasChild<const Ast::Routine>(name.text());
-    if(!routine) {
-        throw Exception("%s routine type expected '%s'\n", err(_filename, name).c_str(), name.text());
-    }
-    setCurrentTypeRef(ref(routine));
-    return routine;
+    return setCurrentChildTypeRef<Ast::Routine>(parent, name, "routine");
 }
 
 const Ast::Routine* Context::aRoutineTypeSpec(const Ast::Token& name) {
-    const Ast::Routine& routine = getRootTypeSpec<Ast::Routine>(name);
-    setCurrentTypeRef(routine);
-    return ptr(routine);
+    return setCurrentRootTypeRef<Ast::Routine>(name);
 }
 
 const Ast::Routine* Context::aRoutineTypeSpec(const Ast::Routine& routine) {
-    resetCurrentTypeRef();
-    return ptr(routine);
+    return resetCurrentTypeRef<Ast::Routine>(routine);
 }
 
 const Ast::Function* Context::aFunctionTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
-    const Ast::Function* function = parent.hasChild<const Ast::Function>(name.text());
-    if(!function) {
-        throw Exception("%s function type expected '%s'\n", err(_filename, name).c_str(), name.text());
-    }
-    setCurrentTypeRef(ref(function));
-    return function;
+    return setCurrentChildTypeRef<Ast::Function>(parent, name, "function");
 }
 
 const Ast::Function* Context::aFunctionTypeSpec(const Ast::Token& name) {
-    const Ast::Function& function = getRootTypeSpec<Ast::Function>(name);
-    setCurrentTypeRef(function);
-    return ptr(function);
+    return setCurrentRootTypeRef<Ast::Function>(name);
 }
 
 const Ast::Function* Context::aFunctionTypeSpec(const Ast::Function& function) {
-    resetCurrentTypeRef();
-    return ptr(function);
+    return resetCurrentTypeRef<Ast::Function>(function);
 }
 
 const Ast::EventDecl* Context::aEventTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
-    const Ast::EventDecl* event = parent.hasChild<const Ast::EventDecl>(name.text());
-    if(!event) {
-        throw Exception("%s event type expected '%s'\n", err(_filename, name).c_str(), name.text());
-    }
-    setCurrentTypeRef(ref(event));
-    return event;
+    return setCurrentChildTypeRef<Ast::EventDecl>(parent, name, "event");
 }
 
 const Ast::EventDecl* Context::aEventTypeSpec(const Ast::Token& name) {
-    const Ast::EventDecl& event = getRootTypeSpec<Ast::EventDecl>(name);
-    setCurrentTypeRef(event);
-    return ptr(event);
+    return setCurrentRootTypeRef<Ast::EventDecl>(name);
 }
 
 const Ast::EventDecl* Context::aEventTypeSpec(const Ast::EventDecl& event) {
-    resetCurrentTypeRef();
-    return ptr(event);
+    return resetCurrentTypeRef<Ast::EventDecl>(event);
 }
 
 const Ast::TypeSpec* Context::aOtherTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
-    const Ast::TypeSpec* typeSpec = parent.hasChild<const Ast::TypeSpec>(name.text());
-    if(!typeSpec) {
-        throw Exception("%s Unknown child type '%s'\n", err(_filename, name).c_str(), name.text());
-    }
-    setCurrentTypeRef(ref(typeSpec));
-    return typeSpec;
+    return setCurrentChildTypeRef<Ast::TypeSpec>(parent, name, "parent");
 }
 
 const Ast::TypeSpec* Context::aOtherTypeSpec(const Ast::Token& name) {
-    const Ast::TypeSpec& typeSpec = getRootTypeSpec<Ast::TypeSpec>(name);
-    setCurrentTypeRef(typeSpec);
-    return ptr(typeSpec);
+    return setCurrentRootTypeRef<Ast::TypeSpec>(name);
 }
 
-const Ast::TypeSpec* Context::aTypeSpec(const Ast::TypeSpec& typeSpec) {
-    resetCurrentTypeRef();
-    return ptr(typeSpec);
+const Ast::TypeSpec* Context::aTypeSpec(const Ast::TypeSpec& TypeSpec) {
+    return resetCurrentTypeRef<Ast::TypeSpec>(TypeSpec);
 }
 
 const Ast::TemplateDefn* Context::aTemplateDefnTypeSpec(const Ast::TemplateDecl& typeSpec, const Ast::TemplateTypePartList& list) {

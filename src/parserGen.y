@@ -92,7 +92,13 @@ rImportStatementList ::= rImportStatementList rImportStatement.
 rImportStatementList ::= .
 
 //-------------------------------------------------
-rImportStatement ::= rHeaderType(headerType) rImportNamespaceId(id) rDefinitionType(defType) rOptionalAccessType(A) SEMI. {ref(pctx).aImportStatement(A, headerType, ref(id), defType);}
+rImportStatement ::= rHeaderType(headerType) rImportNamespaceList(L) rDefinitionType(defType) rOptionalAccessType(A) SEMI. {ref(pctx).aImportStatement(A, headerType, defType, ref(L));}
+
+//-------------------------------------------------
+// import namespace list
+%type rImportNamespaceList {Ast::NamespaceList*}
+rImportNamespaceList(L) ::= rImportNamespaceList(R) SCOPE rAnyId(name). {L = ref(pctx).aImportNamespaceList(ref(R), name);}
+rImportNamespaceList(L) ::=                               rAnyId(name). {L = ref(pctx).aImportNamespaceList(name);}
 
 //-------------------------------------------------
 // access specifiers
@@ -107,19 +113,16 @@ rHeaderType(L) ::= INCLUDE.   {L = Ast::HeaderType::Include;}
 rHeaderType(L) ::= IMPORT.    {L = Ast::HeaderType::Import;}
 
 //-------------------------------------------------
-%type rImportNamespaceId {Ast::ImportStatement*}
-rImportNamespaceId(L) ::= rImportNamespaceId(statement) SCOPE rAnyId(name). {L = ref(pctx).aImportNamespaceId(ref(statement), name);}
-rImportNamespaceId(L) ::=                                     rAnyId(name). {L = ref(pctx).aImportNamespaceId(name);}
+// namespace statement
+%type rNamespaceStatement {Ast::EnterNamespaceStatement*}
+rNamespaceStatement(L) ::= NAMESPACE rUnitNamespaceList(R) SEMI. {L = ref(pctx).aNamespaceStatement(ref(R));}
+rNamespaceStatement(L) ::=                                     . {L = ref(pctx).aNamespaceStatement();}
 
 //-------------------------------------------------
-// namespace statement
-%type rNamespaceStatement {Ast::NamespaceStatement*}
-rNamespaceStatement(L) ::= NAMESPACE rUnitNamespaceId(R) SEMI. {L = ref(pctx).aNamespaceStatement(ref(R));}
-rNamespaceStatement(L) ::=                                   . {L = ref(pctx).aNamespaceStatement();}
-
-%type rUnitNamespaceId {Ast::NamespaceStatement*}
-rUnitNamespaceId(L) ::= rUnitNamespaceId(R) TYPE_SCOPE rAnyId(name). {L = ref(pctx).aUnitNamespaceId(ref(R), name);}
-rUnitNamespaceId(L) ::=                                rAnyId(name). {L = ref(pctx).aUnitNamespaceId(name);}
+// namespace list
+%type rUnitNamespaceList {Ast::NamespaceList*}
+rUnitNamespaceList(L) ::= rUnitNamespaceList(R) SCOPE rAnyId(name). {L = ref(pctx).aUnitNamespaceList(ref(R), name);}
+rUnitNamespaceList(L) ::=                             rAnyId(name). {L = ref(pctx).aUnitNamespaceList(name);}
 
 //-------------------------------------------------
 rAnyId(L) ::= ID(R).            {L = R;}

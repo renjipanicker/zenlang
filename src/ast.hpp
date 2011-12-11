@@ -94,9 +94,12 @@ namespace Ast {
         inline size_t childCount() const {return _childTypeSpecList.size();}
     public:
         template <typename T>
-        inline void addChild(T& typeSpec) {
-            ChildTypeSpecMap::const_iterator it = _childTypeSpecMap.find(typeSpec.name().string());
-            assert(it == _childTypeSpecMap.end());
+        inline void addChild(T& typeSpec) {\
+            /// When a routine/function is pre-declared, it already exists in this map. Hence we cannot
+            /// check for its absence before adding it. \todo Find out way to ensure that we are not creating
+            /// a different type.
+            //ChildTypeSpecMap::const_iterator it = _childTypeSpecMap.find(typeSpec.name().string());
+            //assert(it == _childTypeSpecMap.end());
             assert(ptr(typeSpec.parent()) == this);
 
             _childTypeSpecList.push_back(ptr(typeSpec));
@@ -540,6 +543,16 @@ namespace Ast {
     inline void EventDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Namespace::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void Root::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+
+    //////////////////////////////////////////////////////////////////
+    class NamespaceList : public Node {
+    public:
+        typedef std::list<Ast::Namespace*> List;
+        inline void addNamespace(Ast::Namespace& ns) {_list.push_back(ptr(ns));}
+        inline const List& list() const {return _list;}
+    private:
+        List _list;
+    };
 
     //////////////////////////////////////////////////////////////////
     class CoerceList : public Node {
@@ -1096,47 +1109,41 @@ namespace Ast {
     public:
         typedef std::list<Token> Part;
     public:
-        inline ImportStatement() : _accessType(AccessType::Private), _headerType(HeaderType::Include), _defType(DefinitionType::Direct) {}
+        inline ImportStatement(const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list)
+            : _accessType(accessType), _headerType(headerType), _defType(defType), _list(list) {}
     public:
         inline const AccessType::T& accessType() const {return _accessType;}
-        inline ImportStatement& accessType(const AccessType::T& val) { _accessType = val; return ref(this);}
-    public:
         inline const HeaderType::T& headerType() const {return _headerType;}
-        inline ImportStatement& headerType(const HeaderType::T& val) { _headerType = val; return ref(this);}
-    public:
         inline const DefinitionType::T& defType() const {return _defType;}
-        inline ImportStatement& defType(const DefinitionType::T& val) { _defType = val; return ref(this);}
     public:
-        inline ImportStatement& addPart(const Token& name) {_part.push_back(name); return ref(this);}
-        inline const Part& part() const {return _part;}
+        inline const NamespaceList::List& list() const {return _list.list();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        Part _part;
-        AccessType::T _accessType;
-        HeaderType::T _headerType;
-        DefinitionType::T _defType;
+        const AccessType::T _accessType;
+        const HeaderType::T _headerType;
+        const DefinitionType::T _defType;
+        const NamespaceList& _list;
     };
 
-    class NamespaceStatement : public Statement {
+    class EnterNamespaceStatement : public Statement {
     public:
-        typedef std::list<const Namespace*> List;
-        inline void addNamespace(const Namespace& val) {_list.push_back(ptr(val));}
-        inline const List& list() const {return _list;}
+        inline EnterNamespaceStatement(NamespaceList& list) : _list(list) {}
+        inline const NamespaceList::List& list() const {return _list.list();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        List _list;
+        NamespaceList& _list;
     };
 
     class LeaveNamespaceStatement : public Statement {
     public:
-        inline LeaveNamespaceStatement(const NamespaceStatement& statement) : _statement(statement) {}
-        inline const NamespaceStatement& statement() const {return _statement;}
+        inline LeaveNamespaceStatement(const EnterNamespaceStatement& statement) : _statement(statement) {}
+        inline const EnterNamespaceStatement& statement() const {return _statement;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const NamespaceStatement& _statement;
+        const EnterNamespaceStatement& _statement;
     };
 
     class UserDefinedTypeSpecStatement : public Statement {
@@ -1446,7 +1453,7 @@ namespace Ast {
         }
 
         virtual void visit(const ImportStatement& node) = 0;
-        virtual void visit(const NamespaceStatement& node) = 0;
+        virtual void visit(const EnterNamespaceStatement& node) = 0;
         virtual void visit(const LeaveNamespaceStatement& node) = 0;
         virtual void visit(const UserDefinedTypeSpecStatement& node) = 0;
         virtual void visit(const StructMemberVariableStatement& node) = 0;
@@ -1475,7 +1482,7 @@ namespace Ast {
     };
 
     inline void ImportStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void NamespaceStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void EnterNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void LeaveNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void UserDefinedTypeSpecStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void StructMemberVariableStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}

@@ -1,4 +1,4 @@
-include gui::MenuHandle public;
+include MenuHandle public;
 include Window public;
 namespace Menu;
 

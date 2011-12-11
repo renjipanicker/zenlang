@@ -83,6 +83,9 @@ inline void Lexer::Impl::feedToken(const TokenData& t) {
 }
 
 inline bool Lexer::Impl::trySendId(Scanner* s, const Ast::TypeSpec* typeSpec) {
+    if(!typeSpec)
+        return false;
+
     if(dynamic_cast<const Ast::TemplateDecl*>(typeSpec) != 0) {
         feedToken(token(s, ZENTOK_TEMPLATE_TYPE));
         return true;
@@ -115,13 +118,10 @@ inline void Lexer::Impl::sendId(Scanner* s) {
     Ast::Token td = token(s, 0);
 
     if(_lastToken == ZENTOK_SCOPE) {
-        const Ast::TypeSpec* parent = _context.currentTypeRef();
-        if(parent) {
-            const Ast::ChildTypeSpec* child = ref(parent).hasChild<const Ast::ChildTypeSpec>(td.string());
-            if(child) {
-                if(trySendId(s, child))
-                    return;
-            }
+        const Ast::TypeSpec* child = _context.currentTypeRefHasChild(td);
+        if(child) {
+            if(trySendId(s, child))
+                return;
         }
     }
 
