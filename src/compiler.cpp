@@ -14,7 +14,7 @@ bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int
 
     // if importing files...
     if(level > 0) {
-        if(_project.verbose() > 0) {
+        if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
             std::string msg = "   ";
             for(int i = 0; i < level; ++i) {
                 msg += "  ";
@@ -24,7 +24,7 @@ bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int
 
         // check if file is already imported
         if(unit.headerFileList().find(filename) != unit.headerFileList().end()) {
-            if(_project.verbose() > 0) {
+            if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
                 printf(" - skipped\n");
             }
             return true;
@@ -32,7 +32,7 @@ bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int
 
         // if not, add it to list of files imported into this unit
         unit.addheaderFile(filename);
-        if(_project.verbose() > 0) {
+        if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
             printf("\n");
         }
     }
@@ -61,7 +61,9 @@ void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& l
 void Compiler::compile() {
     for(Ast::Config::PathList::const_iterator it = _config.sourceFileList().begin(); it != _config.sourceFileList().end(); ++it) {
         const std::string& filename = *it;
-        printf("-- Compiling %s\n", filename.c_str());
+        if(_project.verbosity() >= Ast::Project::Verbosity::Normal) {
+            printf("-- Compiling %s\n", filename.c_str());
+        }
         std::string ext = getExtention(filename);
         if(_project.zppExt().find(ext) != std::string::npos) {
             Ast::Unit unit(filename);

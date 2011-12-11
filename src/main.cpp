@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
         } else if((t == "-d") || (t == "--debug")) {
             config.debug(true);
         } else if((t == "-v") || (t == "--verbose")) {
-            project.verbose(1);
+            project.verbosity(Ast::Project::Verbosity::Detailed);
         } else if((t == "-t") || (t == "--test")) {
             config.test(false);
         } else if((t == "-z") || (t == "--zenPath")) {

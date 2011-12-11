@@ -1740,15 +1740,22 @@ namespace Ast {
     class Project {
     public:
         typedef std::map<std::string, Config*> ConfigList;
+        struct Verbosity {
+            enum T {
+                Silent,
+                Normal,
+                Detailed
+            };
+        };
 
     public:
-        inline Project() : _name("main"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;"), _verbose(0) {}
+        inline Project() : _name("main"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;"), _verbosity(Verbosity::Normal) {}
     public:
         inline Project& name(const std::string& val) { _name = val; return ref(this);}
         inline const std::string& name() const {return _name;}
     public:
-        inline Project& verbose(const int& val) { _verbose = val; return ref(this);}
-        inline const int& verbose() const {return _verbose;}
+        inline Project& verbosity(const Verbosity::T& val) { _verbosity = val; return ref(this);}
+        inline const Verbosity::T& verbosity() const {return _verbosity;}
     public:
         inline Config& config(const std::string& name) {
             ConfigList::iterator it = _configList.find(name);
@@ -1780,6 +1787,6 @@ namespace Ast {
         std::string _hppExt;
         std::string _cppExt;
         std::string _zppExt;
-        int _verbose;
+        Verbosity::T _verbosity;
     };
 }
