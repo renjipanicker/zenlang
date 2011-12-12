@@ -23,7 +23,7 @@ static WinProc s_winProc;
 
 #endif
 
-const Button::Create::_Out& Button::Create::run(const Window::Handle& parent, const Button::Definition& def) {
+Window::Handle Button::Create::run(const Window::Handle& parent, const Button::Definition& def) {
 #if defined(WIN32)
     Window::Handle::Impl& impl = Window::Native::createChildWindow(def, "BUTTON", BS_DEFPUSHBUTTON|WS_CHILD|WS_VISIBLE, 0, parent);
 #endif
@@ -33,7 +33,7 @@ const Button::Create::_Out& Button::Create::run(const Window::Handle& parent, co
 #endif
     Window::Handle win;
     win._wdata<Window::Handle>(ptr(impl));
-    return out(_Out(win));
+    return win;
 }
 
 #if defined(GTK)

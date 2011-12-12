@@ -1002,7 +1002,7 @@ namespace Ast {
 
     class AnonymousFunctionExpr : public FunctionTypeInstanceExpr {
     public:
-        inline AnonymousFunctionExpr(const QualifiedTypeSpec& qTypeSpec, Ast::ChildFunctionDefn& function, const ExprList& exprList, const Ast::CompoundStatement& compoundStatement)
+        inline AnonymousFunctionExpr(const QualifiedTypeSpec& qTypeSpec, Ast::ChildFunctionDefn& function, const ExprList& exprList)
             : FunctionTypeInstanceExpr(qTypeSpec, exprList), _function(function) {}
         inline const ChildFunctionDefn& function() const {return _function;}
     private:
@@ -1654,6 +1654,10 @@ namespace Ast {
         /// \return A reference to the newly added node
         template<typename T>
         inline T& addNode(T* node) {_nodeList.push_back(node); return ref(node);}
+
+        /// \brief Return count of nodes in unit
+        /// \return Count of nodes in unit
+        inline size_t nodeCount() const {return _nodeList.size();}
 
     private:
         /// \brief Unit Filename

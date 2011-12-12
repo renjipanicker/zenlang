@@ -267,12 +267,12 @@ Window::Position Window::getChildPosition(const Handle& window) {
 #endif
 }
 
-Window::ChildList& Window::childList(const Window::Handle& window) {
-    return ref(window.wdata)._childList;
+Window::Handle::ChildWinList& Window::Handle::_childWin() const {
+    return ref(wdata)._childWinList;
 }
 
-dict<std::string, Window::Handle>& Window::Handle::_childWin() const {
-    return ref(wdata)._childList;
+Window::Handle::ChildMenuList& Window::Handle::_childMenu() const {
+    return ref(wdata)._childMenuList;
 }
 
 const Window::Delete::_Out& Window::Delete::run(const Window::Handle& window) {

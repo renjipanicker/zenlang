@@ -753,19 +753,22 @@ Ast::ChildFunctionDefn* Context::aChildFunctionDefn(Ast::ChildFunctionDefn& func
     return ptr(functionDefn);
 }
 
+inline Ast::ChildFunctionDefn& Context::createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    Ast::Scope& xref = addScope(Ast::ScopeType::XRef);
+    Ast::ChildFunctionDefn& functionDefn = _unit.addNode(new Ast::ChildFunctionDefn(parent, name, defType, base.sig(), xref, base));
+    parent.addChild(functionDefn);
+    enterScope(functionDefn.xrefScope());
+    enterScope(base.sig().inScope());
+    enterTypeSpec(functionDefn);
+    return functionDefn;
+}
+
 Ast::ChildFunctionDefn* Context::aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(base));
     if(function == 0) {
         throw Exception("%s base type not a function '%s'\n", err(_filename, name).c_str(), base.name().text());
     }
-    Ast::Scope& xref = addScope(Ast::ScopeType::XRef);
-    Ast::ChildFunctionDefn& functionDefn = _unit.addNode(new Ast::ChildFunctionDefn(currentTypeSpec(), name, defType, ref(function).sig(), xref, ref(function)));
-    currentTypeSpec().addChild(functionDefn);
-    enterScope(functionDefn.xrefScope());
-    enterScope(ref(function).sig().inScope());
-    enterTypeSpec(functionDefn);
-
-
+    Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(currentTypeSpec(), ref(function), name, defType);
     return ptr(functionDefn);
 }
 
@@ -1415,7 +1418,6 @@ Ast::ValueInstanceExpr* Context::aValueInstanceExpr(const Ast::Token& pos, const
         }
     }
 
-    printf("%s\n", typeid(expr.qTypeSpec().typeSpec()).name());
     throw Exception("%s Expression is not a pointer to %s\n", err(_filename, pos).c_str(), expr.qTypeSpec().typeSpec().name().text());
 }
 
@@ -1664,16 +1666,28 @@ Ast::AnonymousFunctionExpr* Context::aAnonymousFunctionExpr(Ast::ChildFunctionDe
     aChildFunctionDefn(functionDefn, compoundStatement);
     Ast::ExprList& exprList = addExprList();
     Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionDefn.base(), false);
-    Ast::AnonymousFunctionExpr& functionInstanceExpr = _unit.addNode(new Ast::AnonymousFunctionExpr(qTypeSpec, functionDefn, exprList, compoundStatement));
+    Ast::AnonymousFunctionExpr& functionInstanceExpr = _unit.addNode(new Ast::AnonymousFunctionExpr(qTypeSpec, functionDefn, exprList));
     return ptr(functionInstanceExpr);
 }
 
 Ast::ChildFunctionDefn* Context::aEnterAnonymousFunction(const Ast::Function& function) {
     char namestr[128];
-    sprintf(namestr, "_anonymous_%lu", currentTypeSpec().childCount());
+    sprintf(namestr, "_anonymous_%lu", _unit.nodeCount());
     Ast::Token name(0, 0, namestr);
-    Ast::ChildFunctionDefn* functionDefn = aEnterChildFunctionDefn(function, name, Ast::DefinitionType::Direct);
-    return functionDefn;
+
+    Ast::TypeSpec* ts = 0;
+    for(TypeSpecStack::reverse_iterator it = _typeSpecStack.rbegin(); it != _typeSpecStack.rend(); ++it) {
+        ts = *it;
+        if(dynamic_cast<Ast::Root*>(ts) != 0)
+            break;
+    }
+
+    if(ts == 0) {
+        throw Exception("%s: Internal error: Unable to find parent for anonymous function %s\n", err(_filename, name).c_str(), getTypeSpecName(function, GenMode::Import).c_str());
+    }
+
+    Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(ref(ts), function, name, Ast::DefinitionType::Direct);
+    return ptr(functionDefn);
 }
 
 Ast::ConstantExpr& Context::aConstantExpr(const std::string& type, const Ast::Token& value) {

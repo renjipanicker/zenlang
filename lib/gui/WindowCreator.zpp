@@ -24,17 +24,18 @@ routine Menu::Handle createMenu(const Window::Handle& pwin, const string& name, 
     return w;
 }
 
-function void createWindow(const Window::Handle& pwin, const string& name, const pointer<Window::Definition>& defn) {
+routine void createWindow(Window::Handle& pwin, const string& name, const pointer<Window::Definition>& defn) {
     switch {
         case (typeof(defn) == typeof(Button::Definition)): {
             auto w = Button::Create(pwin, <Button::Definition>defn);
-            Window::childList(pwin)[name] = w.window;
-            processWindow(w.window, *defn);
+            pwin.childWin[name] = w;
+            pwin.childList[name] = &(w);
+            processWindow(w, *defn);
         }
         case (typeof(defn) == typeof(TextEdit::Definition)): {
             auto w = TextEdit::Create(pwin, <TextEdit::Definition>defn);
-            Window::childList(pwin)[name] = w.window;
-            processWindow(w.window, *defn);
+            pwin.childWin[name] = w;
+            processWindow(w, *defn);
         }
         case (typeof(defn) == typeof(Systray::Definition)): {
             auto st = Systray::Create(pwin, <Systray::Definition>defn);
@@ -49,6 +50,7 @@ function void createWindow(const Window::Handle& pwin, const string& name, const
         }
         case (typeof(defn) == typeof(Menu::Definition)): {
             auto w = Menu::Create(pwin, <Menu::Definition>defn);
+            pwin.childMenu[name] = w;
             foreach(n,d in (*defn).childList) {
                 createMenuItem(w, n, d);
             }

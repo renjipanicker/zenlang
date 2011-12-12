@@ -134,6 +134,7 @@ inline void Lexer::Impl::sendId(Scanner* s) {
             feedToken(token(s, ZENTOK_RESERVED));
         }
     }
+
     feedToken(token(s, ZENTOK_ID));
 }
 

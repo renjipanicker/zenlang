@@ -196,17 +196,31 @@ rBasicTypeSpecDef(L) ::= rRoutineDecl(R).       {L = R;}
 rBasicTypeSpecDef(L) ::= rRoutineDefn(R).       {L = R;}
 
 //-------------------------------------------------
-// typedef declarations
+// typedef declaration
 %type rTypedefDecl {Ast::TypedefDecl*}
-rTypedefDecl(L) ::= TYPEDEF ID(name) rDefinitionType(D) SEMI. {L = ref(pctx).aTypedefDecl(name, D);}
+rTypedefDecl(L) ::= rPreTypedefDecl(R) SEMI. {L = R;}
 
+//-------------------------------------------------
+// this pre- mechanism is required to force the action to get executed before the end-of-line.
+%type rPreTypedefDecl {Ast::TypedefDecl*}
+rPreTypedefDecl(L) ::= TYPEDEF ID(name) rDefinitionType(D). {L = ref(pctx).aTypedefDecl(name, D);}
+
+//-------------------------------------------------
+// typedef definition
 %type rTypedefDefn {Ast::TypedefDefn*}
-rTypedefDefn(L) ::= TYPEDEF ID(name) rQualifiedTypeSpec(Q) rDefinitionType(D) SEMI. {L = ref(pctx).aTypedefDefn(name, D, ref(Q));}
+rTypedefDefn(L) ::= rPreTypedefDefn(R) SEMI. {L = R;}
+
+%type rPreTypedefDefn {Ast::TypedefDefn*}
+rPreTypedefDefn(L) ::= TYPEDEF ID(name) rQualifiedTypeSpec(Q) rDefinitionType(D). {L = ref(pctx).aTypedefDefn(name, D, ref(Q));}
 
 //-------------------------------------------------
 // template declarations
 %type rTemplateDecl {Ast::TemplateDecl*}
-rTemplateDecl(L) ::= TEMPLATE LT rTemplatePartList(list) GT ID(name) rDefinitionType(D) SEMI. {L = ref(pctx).aTemplateDecl(name, D, ref(list));}
+rTemplateDecl(L) ::= rPreTemplateDecl(R) SEMI. {L = R;}
+
+//-------------------------------------------------
+%type rPreTemplateDecl {Ast::TemplateDecl*}
+rPreTemplateDecl(L) ::= TEMPLATE LT rTemplatePartList(list) GT ID(name) rDefinitionType(D). {L = ref(pctx).aTemplateDecl(name, D, ref(list));}
 
 //-------------------------------------------------
 %type rTemplatePartList {Ast::TemplatePartList*}
@@ -214,14 +228,22 @@ rTemplatePartList(L) ::= rTemplatePartList(R) COMMA ID(name). {L = ref(pctx).aTe
 rTemplatePartList(L) ::=                            ID(name). {L = ref(pctx).aTemplatePartList(name);}
 
 //-------------------------------------------------
-// enum declarations
+// enum declaration
 %type rEnumDecl {Ast::EnumDefn*}
-rEnumDecl(L) ::= ENUM ID(name) rDefinitionType(D) SEMI. {L = ref(pctx).aEnumDefn(name, D);}
+rEnumDecl(L) ::= rPreEnumDecl(R) SEMI. {L = R;}
+
+//-------------------------------------------------
+%type rPreEnumDecl {Ast::EnumDefn*}
+rPreEnumDecl(L) ::= ENUM ID(name) rDefinitionType(D). {L = ref(pctx).aEnumDefn(name, D);}
 
 //-------------------------------------------------
 // enum definition
 %type rEnumDefn {Ast::EnumDefn*}
-rEnumDefn(L) ::= ENUM ID(name) rDefinitionType(D) LCURLY rEnumMemberDefnList(list) RCURLY SEMI. {L = ref(pctx).aEnumDefn(name, D, ref(list));}
+rEnumDefn(L) ::= rPreEnumDefn(R) SEMI. {L = R;}
+
+//-------------------------------------------------
+%type rPreEnumDefn {Ast::EnumDefn*}
+rPreEnumDefn(L) ::= ENUM ID(name) rDefinitionType(D) LCURLY rEnumMemberDefnList(list) RCURLY. {L = ref(pctx).aEnumDefn(name, D, ref(list));}
 
 //-------------------------------------------------
 %type rEnumMemberDefnList {Ast::Scope*}
@@ -236,17 +258,29 @@ rEnumMemberDefn(L) ::= ID(name) ASSIGNEQUAL rExpr(I) SEMI. {L = ref(pctx).aEnumM
 //-------------------------------------------------
 // struct declarations
 %type rStructDecl {Ast::StructDecl*}
-rStructDecl(L) ::= STRUCT rStructId(name) rDefinitionType(D) SEMI. {L = ref(pctx).aStructDecl(name, D);}
+rStructDecl(L) ::= rPreStructDecl(R) SEMI. {L = R;}
+
+//-------------------------------------------------
+%type rPreStructDecl {Ast::StructDecl*}
+rPreStructDecl(L) ::= STRUCT rStructId(name) rDefinitionType(D). {L = ref(pctx).aStructDecl(name, D);}
 
 //-------------------------------------------------
 // root struct definitions
 %type rRootStructDefn {Ast::RootStructDefn*}
-rRootStructDefn(L) ::= rEnterRootStructDefn(S) rStructMemberDefnBlock SEMI. {L = ref(pctx).aLeaveRootStructDefn(ref(S));}
+rRootStructDefn(L) ::= rPreRootStructDefn(R) SEMI. {L = R;}
+
+//-------------------------------------------------
+%type rPreRootStructDefn {Ast::RootStructDefn*}
+rPreRootStructDefn(L) ::= rEnterRootStructDefn(S) rStructMemberDefnBlock. {L = ref(pctx).aLeaveRootStructDefn(ref(S));}
 
 //-------------------------------------------------
 // child struct definitions
 %type rChildStructDefn {Ast::ChildStructDefn*}
-rChildStructDefn(L) ::= rEnterChildStructDefn(S) rStructMemberDefnBlock SEMI. {L = ref(pctx).aLeaveChildStructDefn(ref(S));}
+rChildStructDefn(L) ::= rPreChildStructDefn(R) SEMI. {L = R;}
+
+//-------------------------------------------------
+%type rPreChildStructDefn {Ast::ChildStructDefn*}
+rPreChildStructDefn(L) ::= rEnterChildStructDefn(S) rStructMemberDefnBlock. {L = ref(pctx).aLeaveChildStructDefn(ref(S));}
 
 //-------------------------------------------------
 %type rEnterRootStructDefn {Ast::RootStructDefn*}
@@ -282,12 +316,20 @@ rStructPropertyDecl(L) ::= PROPERTY(B) rQualifiedTypeSpec(T) ID(N) rDefinitionTy
 //-------------------------------------------------
 // routine declarations
 %type rRoutineDecl {Ast::RoutineDecl*}
-rRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) rInParamsList(in) rDefinitionType(D) SEMI. {L = ref(pctx).aRoutineDecl(ref(out), name, ref(in), D);}
+rRoutineDecl(L) ::= rPreRoutineDecl(R) SEMI. {L = R;}
 
 //-------------------------------------------------
-// routine declarations
+%type rPreRoutineDecl {Ast::RoutineDecl*}
+rPreRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) rInParamsList(in) rDefinitionType(D). {L = ref(pctx).aRoutineDecl(ref(out), name, ref(in), D);}
+
+//-------------------------------------------------
+// routine definition
 %type rRoutineDefn {Ast::RoutineDefn*}
-rRoutineDefn(L) ::= rEnterRoutineDefn(routineDefn) rCompoundStatement(block). {L = ref(pctx).aRoutineDefn(ref(routineDefn), ref(block));}
+rRoutineDefn(L) ::= rPreRoutineDefn(R). {L = R;}
+
+//-------------------------------------------------
+%type rPreRoutineDefn {Ast::RoutineDefn*}
+rPreRoutineDefn(L) ::= rEnterRoutineDefn(routineDefn) rCompoundStatement(block). {L = ref(pctx).aRoutineDefn(ref(routineDefn), ref(block));}
 
 //-------------------------------------------------
 %type rEnterRoutineDefn {Ast::RoutineDefn*}

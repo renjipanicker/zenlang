@@ -1,0 +1,6 @@
+namespace Widget;
+
+public struct Handle {
+    typedef ChildList dict<string, pointer<Widget::Handle> >;
+    ChildList childList;
+};

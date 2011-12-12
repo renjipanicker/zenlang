@@ -11,7 +11,8 @@ struct Window::Handle::Impl {
     GtkWidget* _hWindow;
     GtkWidget* _hFixed;
 #endif
-    Window::ChildList _childList;
+    ChildWinList _childWinList;
+    ChildMenuList _childMenuList;
 private:
     inline Impl(const Impl& src) {}
 };

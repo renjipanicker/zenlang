@@ -3,7 +3,7 @@
 #include "WindowImpl.hpp"
 #include "TextEdit.hpp"
 
-const TextEdit::Create::_Out& TextEdit::Create::run(const Window::Handle& parent, const TextEdit::Definition& def) {
+Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdit::Definition& def) {
 #if defined(WIN32)
     int flags = WS_VISIBLE|WS_CHILD|WS_BORDER|WS_VSCROLL|WS_HSCROLL|ES_WANTRETURN|ES_AUTOHSCROLL|ES_AUTOVSCROLL;
     if(def.multiline) {
@@ -27,7 +27,7 @@ const TextEdit::Create::_Out& TextEdit::Create::run(const Window::Handle& parent
 #endif
     Window::Handle win;
     win._wdata<Window::Handle>(ptr(impl));
-    return out(_Out(win));
+    return win;
 }
 
 const TextEdit::AppendText::_Out& TextEdit::AppendText::run(const Window::Handle& window, const std::string& text) {

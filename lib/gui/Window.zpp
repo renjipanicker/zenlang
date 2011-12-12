@@ -1,4 +1,5 @@
 include gui::WindowImpl native;
+include Widget public;
 include MenuHandle public;
 namespace Window;
 
@@ -14,14 +15,16 @@ public struct Position {
     h = -1;
 };
 
-public struct Handle {
+public struct Handle : Widget::Handle {
     struct Impl native;
     ptr<Impl> wdata;
-    property dict<string, Window::Handle> childWin get;
+
+    typedef ChildWinList dict<string, Window::Handle>;
+    property ChildWinList childWin get;
+
+    typedef ChildMenuList dict<string, Menu::Handle>;
     property dict<string, Menu::Handle> childMenu get;
 };
-
-public typedef ChildList dict<string,Handle>;
 
 public struct Anchor {
     Handle window;
@@ -43,7 +46,6 @@ public struct Definition {
 
 public routine Position getWindowPosition(const Handle& window) native;
 public routine Position getChildPosition(const Handle& window) native;
-public routine ChildList& childList(const Handle& window) native;
 
 public function ()Delete(const Handle& window) native;
 public function ()SetTitle(const Handle& window, const string& title) native;
