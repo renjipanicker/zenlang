@@ -3,6 +3,7 @@
 
 struct Menu::Handle::Impl {
 #if defined(WIN32)
+    inline Impl() : _menu(0), _window(0) {}
     HMENU _menu;
     HWND _window;
 #endif

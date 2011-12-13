@@ -32,9 +32,9 @@ Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdi
 
 const TextEdit::AppendText::_Out& TextEdit::AppendText::run(const Window::Handle& window, const std::string& text) {
 #if defined(WIN32)
-    int len = Edit_GetTextLength(window._impl->_hWindow);
-    Edit_SetSel(window._impl->_hWindow, len, len);
-    Edit_ReplaceSel(window._impl->_hWindow, text.c_str());
+    int len = Edit_GetTextLength(ref(window.wdata)._hWindow);
+    Edit_SetSel(ref(window.wdata)._hWindow, len, len);
+    Edit_ReplaceSel(ref(window.wdata)._hWindow, text.c_str());
 #endif
 #if defined(GTK)
     GtkTextBuffer* buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (window.wdata->_hWindow));

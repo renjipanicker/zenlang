@@ -6,13 +6,13 @@
 #include "MenuImpl.hpp"
 
 #if defined(WIN32)
-static HandlerList<HWND, Button::OnClick::Handler> onMenuItemSelectHandlerList;
+static HandlerList<int, MenuItem::OnSelect::Handler> onMenuItemSelectHandlerList;
 struct WinProc : public Window::Native::WndProc {
     virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch (message) {
             case WM_COMMAND:
-                Button::OnClick::Handler::_In in;
-                if(onMenuItemSelectHandlerList.runHandler(LOWORD(Param), in))
+                MenuItem::OnSelect::Handler::_In in;
+                if(onMenuItemSelectHandlerList.runHandler(LOWORD(lParam), in))
                     return 1;
                 break;
         }

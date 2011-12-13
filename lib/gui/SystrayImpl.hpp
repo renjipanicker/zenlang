@@ -3,6 +3,8 @@
 
 struct Systray::Handle::Impl {
 #if defined(WIN32)
+    inline Impl() : _wm(0) {}
+    int _wm;
     NOTIFYICONDATA _ni;
 #endif
 #if defined(GTK)

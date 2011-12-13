@@ -9,7 +9,7 @@ Menu::Handle Menu::Create::run(const Window::Handle& window, const Menu::Definit
 #if defined(WIN32)
     Menu::Handle::Impl* impl = new Menu::Handle::Impl();
     ref(impl)._menu = ::CreatePopupMenu();
-    ref(impl)._window = window._hWindow;
+    ref(impl)._window = ref(window.wdata)._hWindow;
 #endif
 #if defined(GTK)
     Menu::Handle::Impl* impl = new Menu::Handle::Impl();

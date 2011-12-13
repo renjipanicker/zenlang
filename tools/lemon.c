@@ -1423,10 +1423,10 @@ char **argv;
     {OPT_FSTR, "o", (char*)handle_O_option, "Output file suffix."},
     {OPT_FLAG,0,0,0}
   };
-  memset(ofilesuffix, 0, OSUFFIX_LEN);
   int i;
   struct lemon lem;
 
+  memset(ofilesuffix, 0, OSUFFIX_LEN);
   OptInit(argv,options,stderr);
   if( version ){
      printf("Lemon version 1.0\n");

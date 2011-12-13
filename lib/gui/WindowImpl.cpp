@@ -22,14 +22,10 @@ static std::string getNextClassID() {
     return name;
 }
 
-//static HandlerList<int, MenuItem::SelectHandler> menuItemSelectHandlerList;
-//static HandlerList<int, SysTray::OnActivationHandler> sysTrayActivationHandlerList;
-//static HandlerList<int, SysTray::OnContextMenuHandler> sysTrayContextMenuHandlerList;
-
 static HandlerList<HWND, Window::OnResize::Handler> onResizeHandlerList;
 static HandlerList<HWND, Window::OnClose::Handler> onCloseHandlerList;
 
-static ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
+ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
     ULONGLONG ullVersion = 0;
     HINSTANCE hinstDll;
     hinstDll = LoadLibrary(lpszDllName);
@@ -89,16 +85,6 @@ static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
         ::SetWindowLongPtr(hWnd, GWL_USERDATA, reinterpret_cast<long>(impl));
     }
 
-    if(lParam == WM_LBUTTONDOWN) {
-//        if(sysTrayActivationHandlerList.runHandler(message))
-//            return 1;
-    }
-
-    if((lParam == WM_RBUTTONDOWN) || (lParam == WM_CONTEXTMENU)) {
-//        if(sysTrayContextMenuHandlerList.runHandler(message))
-//            return 1;
-    }
-
     s_WndProcList.begin();
     Window::Native::WndProc* wp = s_WndProcList.next();
 
@@ -124,13 +110,13 @@ std::string registerClass(HBRUSH bg) {
     wcx.lpfnWndProc = WinProc;     // points to window procedure
     wcx.cbClsExtra = 0;                // no extra class memory
     wcx.cbWndExtra = sizeof(Window::Handle*);        // store window data
-    wcx.hInstance = Application::Handle();           // handle to Handle
+    wcx.hInstance = Application::instance();           // handle to Handle
     wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION);              // predefined app. icon
     wcx.hCursor = LoadCursor(NULL, IDC_ARROW);                    // predefined arrow
     wcx.hbrBackground = bg;
     wcx.lpszMenuName =  _T("MainMenu");    // name of menu resource
     wcx.lpszClassName = className.c_str();  // name of window class
-    wcx.hIconSm = (HICON)LoadImage(Application::Handle(), MAKEINTRESOURCE(5), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+    wcx.hIconSm = (HICON)LoadImage(Application::instance(), MAKEINTRESOURCE(5), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 
     // Register the window class.
     if(!::RegisterClassEx(&wcx)) {
@@ -177,7 +163,7 @@ Window::Handle::Impl& Window::Native::createWindow(const Window::Definition& def
                                      style,
                                      pos.x, pos.y, pos.w, pos.h,
                                      parent, (HMENU)NULL,
-                                     Application::Handle(), (LPVOID)impl);
+                                     Application::instance(), (LPVOID)impl);
     return ref(impl);
 }
 
@@ -190,7 +176,7 @@ Window::Handle::Impl& Window::Native::createMainFrame(const Window::Definition& 
 Window::Handle::Impl& Window::Native::createChildFrame(const Window::Definition& def, const int &style, const int &xstyle, const Window::Handle &parent) {
     HBRUSH brush = (def.style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
     std::string className = registerClass(brush);
-    return createWindow(def, className, style, xstyle, ref(parent..wdata)._hWindow);
+    return createWindow(def, className, style, xstyle, ref(parent.wdata)._hWindow);
 }
 
 Window::Handle::Impl& Window::Native::createChildWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, const Window::Handle& parent) {

@@ -439,7 +439,7 @@ struct HandlerList {
         const List& list = it->second;
         for(typename List::const_iterator itl = list.begin(); itl != list.end(); ++itl) {
             ValT* handler = *itl;
-            handler->run(in);
+            handler->_run(in);
         }
         return true;
     }
