@@ -4,3 +4,8 @@ public struct Handle {
     typedef ChildList dict<string, pointer<Widget::Handle> >;
     ChildList childList;
 };
+
+public struct Definition {
+    name = "";
+    list< pointer<Widget::Definition> > childList;
+};

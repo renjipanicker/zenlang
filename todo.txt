@@ -3,6 +3,7 @@ systray
 menubar
 menuitem
 
+validate type when de-referencing pointer<>
 infer type of rhs in auto-statement
 infer type of rhs in struct-init
 infer type of expr in function-call

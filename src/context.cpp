@@ -264,7 +264,10 @@ inline const Ast::QualifiedTypeSpec* Context::canCoerce(const Ast::QualifiedType
 inline const Ast::QualifiedTypeSpec& Context::coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) {
     const Ast::QualifiedTypeSpec* val = canCoerce(lhs, rhs);
     if(!val) {
-        throw Exception("%s Cannot coerce '%s' and '%s'\n", err(_filename, pos).c_str(), lhs.typeSpec().name().text(), rhs.typeSpec().name().text());
+        throw Exception("%s Cannot coerce '%s' and '%s'\n",
+                        err(_filename, pos).c_str(),
+                        getQualifiedTypeSpecName(lhs, GenMode::Import).c_str(),
+                        getQualifiedTypeSpecName(rhs, GenMode::Import).c_str());
     }
     return ref(val);
 }
@@ -1624,7 +1627,7 @@ const Ast::VariableDefn* Context::aEnterStructInitPart(const Ast::Token& name) {
         }
     }
 
-    throw Exception("%s: struct-member %s not found in %s\n", err(_filename, name).c_str(), name.text(), ref(structDefn).name().text());
+    throw Exception("%s: struct-member '%s' not found in '%s'\n", err(_filename, name).c_str(), name.text(), getTypeSpecName(ref(structDefn), GenMode::Import).c_str());
 }
 
 void Context::aLeaveStructInitPart() {
@@ -1678,6 +1681,8 @@ Ast::ChildFunctionDefn* Context::aEnterAnonymousFunction(const Ast::Function& fu
     Ast::TypeSpec* ts = 0;
     for(TypeSpecStack::reverse_iterator it = _typeSpecStack.rbegin(); it != _typeSpecStack.rend(); ++it) {
         ts = *it;
+        if(dynamic_cast<Ast::Namespace*>(ts) != 0)
+            break;
         if(dynamic_cast<Ast::Root*>(ts) != 0)
             break;
     }
@@ -1687,6 +1692,8 @@ Ast::ChildFunctionDefn* Context::aEnterAnonymousFunction(const Ast::Function& fu
     }
 
     Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(ref(ts), function, name, Ast::DefinitionType::Direct);
+    Ast::Statement* statement = aGlobalTypeSpecStatement(Ast::AccessType::Private, functionDefn);
+    unused(statement);
     return ptr(functionDefn);
 }
 

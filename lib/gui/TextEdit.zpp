@@ -7,5 +7,3 @@ public struct Definition : Window::Definition {
 
 public function Window::Handle Create(const Window::Handle& parentWin, const Definition& defn) native;
 public function ()AppendText(const Window::Handle& window, const string& text) native;
-
-//public event(const Window::Handle& button) => function ()OnClick() native;

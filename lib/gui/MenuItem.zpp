@@ -1,14 +1,16 @@
+include Widget public;
 include Window public;
 include Menu public;
 namespace MenuItem;
 
-public struct Handle {
+public struct Handle : Widget::Handle {
     struct Impl native;
     ptr<Impl> wdata;
 };
 
-public struct Definition : Window::Definition {
+public struct Definition : Widget::Definition {
     label = "";
 };
 
 public function MenuItem::Handle Create(const Menu::Handle& pmenu, const Definition& defn) native;
+public event(const MenuItem::Handle& menuitem) => function ()OnSelect() native;

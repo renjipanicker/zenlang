@@ -1,6 +1,5 @@
 include gui::WindowImpl native;
 include Widget public;
-include MenuHandle public;
 namespace Window;
 
 public enum Style {
@@ -18,12 +17,6 @@ public struct Position {
 public struct Handle : Widget::Handle {
     struct Impl native;
     ptr<Impl> wdata;
-
-    typedef ChildWinList dict<string, Window::Handle>;
-    property ChildWinList childWin get;
-
-    typedef ChildMenuList dict<string, Menu::Handle>;
-    property dict<string, Menu::Handle> childMenu get;
 };
 
 public struct Anchor {
@@ -32,7 +25,7 @@ public struct Anchor {
     margin = 0;
 };
 
-public struct Definition {
+public struct Definition : Widget::Definition {
     title = "";
     position = Window::Position{};
     style = Style.Normal;
@@ -41,7 +34,6 @@ public struct Definition {
     Anchor right;
     Anchor top;
     Anchor bottom;
-    dict<string, pointer<Definition> > childList;
 };
 
 public routine Position getWindowPosition(const Handle& window) native;

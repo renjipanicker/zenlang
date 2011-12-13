@@ -122,7 +122,10 @@ public:
         _msg = ssprintfv(txt, vlist);
         printf("%s\n", _msg.c_str());
     }
-    inline Exception(const std::string& msg) : _msg(msg) {}
+
+    inline Exception(const std::string& msg) : _msg(msg) {
+        printf("%s\n", _msg.c_str());
+    }
 
 private:
     std::string _msg;
@@ -159,12 +162,6 @@ struct Pointer {
 
     inline V& get() const {
         return ref(_val).get();
-    }
-
-    template <typename DerT>
-    inline DerT& getT() const {
-        V& v = get();
-        return static_cast<DerT&>(v);
     }
 
     inline Pointer() : _val(0) {
@@ -216,6 +213,7 @@ struct pointer : public Pointer<V> {
     /// default-ctor is required when this struct is used as the value in a dict.
     /// \todo Find out way to avoid it.
     inline pointer() : Pointer<V>(), _tname("") {}
+
     inline pointer(const type& tname, typename Pointer<V>::value* val) : Pointer<V>(val), _tname(tname) {}
     inline pointer(const pointer& src) : Pointer<V>(src), _tname(src._tname) {}
     inline pointer& operator=(const pointer& val) {
@@ -225,6 +223,12 @@ struct pointer : public Pointer<V> {
 
     template <typename DerT>
     inline pointer(const pointer<DerT>& src) : Pointer<V>(src), _tname(src.tname()) {}
+
+    template <typename DerT>
+    inline DerT& getT() const {
+        V& v = Pointer<V>::get();
+        return static_cast<DerT&>(v);
+    }
 
     inline const type& tname() const {return _tname;}
 private:

@@ -1,8 +1,13 @@
-include MenuHandle public;
+include Widget public;
 include Window public;
 namespace Menu;
 
-public struct Definition : Window::Definition {
+public struct Handle : Widget::Handle {
+    struct Impl native;
+    ptr<Impl> wdata;
+};
+
+public struct Definition : Widget::Definition {
 };
 
 public function Menu::Handle Create(const Window::Handle& parentWin, const Definition& defn) native;

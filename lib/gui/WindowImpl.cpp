@@ -267,14 +267,6 @@ Window::Position Window::getChildPosition(const Handle& window) {
 #endif
 }
 
-Window::Handle::ChildWinList& Window::Handle::_childWin() const {
-    return ref(wdata)._childWinList;
-}
-
-Window::Handle::ChildMenuList& Window::Handle::_childMenu() const {
-    return ref(wdata)._childMenuList;
-}
-
 const Window::Delete::_Out& Window::Delete::run(const Window::Handle& window) {
     delete window.wdata;
    //window.wdata = 0;

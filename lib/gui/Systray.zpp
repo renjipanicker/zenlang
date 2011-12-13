@@ -1,7 +1,8 @@
+include Widget public;
 include Window public;
 namespace Systray;
 
-public struct Handle {
+public struct Handle : Widget::Handle {
     struct Impl native;
     ptr<Impl> wdata;
 };

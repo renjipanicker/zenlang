@@ -20,7 +20,6 @@ struct WinProc : public Window::Native::WndProc {
     }
 };
 static WinProc s_winProc;
-
 #endif
 
 Window::Handle Button::Create::run(const Window::Handle& parent, const Button::Definition& def) {
