@@ -37,12 +37,12 @@ public struct Definition : Widget::Definition {
 public routine Position getWindowPosition(const Handle& window) native;
 public routine Position getChildPosition(const Handle& window) native;
 
-public function ()Delete(const Handle& window) native;
-public function ()SetTitle(const Handle& window, const string& title) native;
-public function ()Show(const Handle& window) native;
-public function ()Hide(const Handle& window) native;
-public function ()Move(const Handle& window, const Position& position) native;
-public function ()Size(const Handle& window, const int& w, const int& h) native;
+public function void Delete(const Handle& window) native;
+public function void SetTitle(const Handle& window, const string& title) native;
+public function void Show(const Handle& window) native;
+public function void Hide(const Handle& window) native;
+public function void Move(const Handle& window, const Position& position) native;
+public function void Size(const Handle& window, const int& w, const int& h) native;
 
-public event(const Handle& window) => function ()OnResize() native;
-public event(const Handle& window) => function ()OnClose() native;
+public event(const Handle& window) => function void OnResize() native;
+public event(const Handle& window) => function void OnClose() native;

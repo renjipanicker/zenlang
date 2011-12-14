@@ -27,7 +27,7 @@ struct WinProc : public Window::Native::WndProc {
 static WinProc s_winProc;
 #endif
 
-void Systray::setTooltip(const Systray::Handle& handle, const std::string& text) {
+void Systray::SetTooltip::run(const Systray::Handle& handle, const std::string& text) {
 #if defined(WIN32)
     NOTIFYICONDATA& ni = Systray::impl(handle)._ni;
     lstrcpyn(ni.szTip, text.c_str(), text.length());
@@ -40,7 +40,7 @@ void Systray::setTooltip(const Systray::Handle& handle, const std::string& text)
 #endif
 }
 
-void Systray::setIconfile(const Systray::Handle& handle, const std::string& filename) {
+void Systray::SetIconfile::run(const Systray::Handle& handle, const std::string& filename) {
 #if defined(WIN32)
     NOTIFYICONDATA& ni = Systray::impl(handle)._ni;
     ni.hIcon = (HICON)LoadImageA(NULL, filename.c_str(), IMAGE_ICON,
@@ -58,7 +58,7 @@ void Systray::setIconfile(const Systray::Handle& handle, const std::string& file
 #endif
 }
 
-void Systray::show(const Systray::Handle& handle) {
+void Systray::Show::run(const Systray::Handle& handle) {
 #if defined(WIN32)
     ::Shell_NotifyIcon(NIM_ADD, ptr(Systray::impl(handle)._ni));
 #endif
@@ -67,7 +67,7 @@ void Systray::show(const Systray::Handle& handle) {
 #endif
 }
 
-void Systray::hide(const Systray::Handle& handle) {
+void Systray::Hide::run(const Systray::Handle& handle) {
 #if defined(WIN32)
     ::Shell_NotifyIcon(NIM_DELETE, ptr(Systray::impl(handle)._ni));
 #endif
@@ -123,15 +123,15 @@ Systray::Handle Systray::Create::run(const Window::Handle& parent, const Systray
 #endif
 
     if(def.tooltip.length() > 0) {
-        setTooltip(handle, def.tooltip);
+        SetTooltip().run(handle, def.tooltip);
     }
 
     if(def.iconFile.length() > 0) {
-        setIconfile(handle, def.iconFile);
+        SetIconfile().run(handle, def.iconFile);
     }
 
     if(def.visible) {
-        show(handle);
+        Show().run(handle);
     }
 
     return handle;

@@ -11,4 +11,4 @@ public struct Definition : Widget::Definition {
 };
 
 public function MenuItem::Handle Create(const Menu::Handle& pmenu, const Definition& defn) native;
-public event(const MenuItem::Handle& menuitem) => function ()OnSelect() native;
+public event(const MenuItem::Handle& menuitem) => function void OnSelect() native;

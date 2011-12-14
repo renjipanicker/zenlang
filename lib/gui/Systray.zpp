@@ -13,25 +13,9 @@ public struct Definition : Window::Definition {
     iconFile = "";
 };
 
-public routine void setTooltip(const Systray::Handle& handle, const string& text) native;
-public routine void setIconfile(const Systray::Handle& handle, const string& filename) native;
-public routine void show(const Systray::Handle& handle) native;
-public routine void hide(const Systray::Handle& handle) native;
-
 public function Systray::Handle Create(const Window::Handle& parentWin, const Definition& defn) native;
 
-public function void SetTooltip(const Systray::Handle& handle, const string& text) {
-    setTooltip(handle, text);
-}
-
-public function void SetIconfile(const Systray::Handle& handle, const string& filename) {
-    setIconfile(handle, filename);
-}
-
-public function void Show(const Systray::Handle& handle) {
-    show(handle);
-}
-
-public function void Hide(const Systray::Handle& handle) {
-    hide(handle);
-}
+public function void SetTooltip(const Systray::Handle& handle, const string& text) native;
+public function void SetIconfile(const Systray::Handle& handle, const string& filename) native;
+public function void Show(const Systray::Handle& handle) native;
+public function void Hide(const Systray::Handle& handle) native;

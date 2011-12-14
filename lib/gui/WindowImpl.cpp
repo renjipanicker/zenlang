@@ -253,23 +253,21 @@ Window::Position Window::getChildPosition(const Handle& window) {
 #endif
 }
 
-const Window::Delete::_Out& Window::Delete::run(const Window::Handle& window) {
+void Window::Delete::run(const Window::Handle& window) {
     delete window.wdata;
    //window.wdata = 0;
-   return out(_Out());
 }
 
-const Window::SetTitle::_Out& Window::SetTitle::run(const Window::Handle& window, const std::string& title) {
+void Window::SetTitle::run(const Window::Handle& window, const std::string& title) {
 #if defined(WIN32)
     ::SetWindowText(Window::impl(window)._hWindow, title.c_str());
 #endif
 #if defined(GTK)
     gtk_window_set_title (GTK_WINDOW (Window::impl(window)._hWindow), title.c_str());
 #endif
-   return out(_Out());
 }
 
-const Window::Show::_Out& Window::Show::run(const Window::Handle& window) {
+void Window::Show::run(const Window::Handle& window) {
 #if defined(WIN32)
     ::ShowWindow(Window::impl(window)._hWindow, SW_SHOW);
 #endif
@@ -277,20 +275,18 @@ const Window::Show::_Out& Window::Show::run(const Window::Handle& window) {
     gtk_widget_show(GTK_WIDGET(Window::impl(window)._hWindow));
     gtk_window_deiconify(GTK_WINDOW(Window::impl(window)._hWindow));
 #endif
-   return out(_Out());
 }
 
-const Window::Hide::_Out& Window::Hide::run(const Window::Handle& window) {
+void Window::Hide::run(const Window::Handle& window) {
 #if defined(WIN32)
     ::ShowWindow(Window::impl(window)._hWindow, SW_HIDE);
 #endif
 #if defined(GTK)
     gtk_widget_hide(GTK_WIDGET(Window::impl(window)._hWindow));
 #endif
-   return out(_Out());
 }
 
-const Window::Move::_Out& Window::Move::run(const Window::Handle& window, const Window::Position& position) {
+void Window::Move::run(const Window::Handle& window, const Window::Position& position) {
 #if defined(WIN32)
     ::MoveWindow(Window::impl(window)._hWindow, position.x, position.y, position.w, position.h, TRUE);
 #endif
@@ -299,10 +295,9 @@ const Window::Move::_Out& Window::Move::run(const Window::Handle& window, const 
     //gtk_widget_set_uposition(Window::impl(window)._hWindow, position.x, position.y);
     //gtk_window_set_default_size (Window::impl(window)._hWindow, position.w, position.h);
 #endif
-   return out(_Out());
 }
 
-const Window::Size::_Out& Window::Size::run(const Window::Handle& window, const int& w, const int& h) {
+void Window::Size::run(const Window::Handle& window, const int& w, const int& h) {
 #if defined(WIN32)
     RECT rc;
     ::GetWindowRect(Window::impl(window)._hWindow, &rc);
@@ -313,7 +308,6 @@ const Window::Size::_Out& Window::Size::run(const Window::Handle& window, const 
 #if defined(GTK)
     gtk_widget_set_size_request(Window::impl(window)._hWindow, w, h);
 #endif
-   return out(_Out());
 }
 
 #if defined(GTK)

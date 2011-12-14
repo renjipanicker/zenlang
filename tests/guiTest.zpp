@@ -69,13 +69,11 @@ main MyMain {
         cp.w = pp.w - cp.x - 20;
         cp.h = pp.h - cp.y - 50;
         run Window::Move(outputBox, cp);
-        return ();
     };
 
     Button::OnClick(checkBtn) => Button::OnClick::Handler {
         print "on click\n";
         TextEdit::AppendText(outputBox, "hello!\n");
-        return ();
     };
 
     Systray::OnContextMenu(sysTray) => Systray::OnContextMenu::Handler {
@@ -85,7 +83,6 @@ main MyMain {
 
     MenuItem::OnSelect(showMenu) => MenuItem::OnSelect::Handler {
         print "on show\n";
-        return ();
     };
 
     return (0);

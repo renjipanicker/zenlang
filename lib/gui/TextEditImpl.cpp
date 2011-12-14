@@ -30,7 +30,7 @@ Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdi
     return win;
 }
 
-const TextEdit::AppendText::_Out& TextEdit::AppendText::run(const Window::Handle& window, const std::string& text) {
+void TextEdit::AppendText::run(const Window::Handle& window, const std::string& text) {
 #if defined(WIN32)
     int len = Edit_GetTextLength(Window::impl(window)._hWindow);
     Edit_SetSel(Window::impl(window)._hWindow, len, len);
@@ -42,5 +42,4 @@ const TextEdit::AppendText::_Out& TextEdit::AppendText::run(const Window::Handle
     gtk_text_buffer_get_end_iter(buffer, &iter);
     gtk_text_buffer_insert(buffer, &iter, text.c_str(), text.size());
 #endif
-    return out(_Out());
 }
