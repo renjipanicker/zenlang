@@ -118,7 +118,7 @@ multiple generators: python, php, js, java
 
 =========================
 ../debug/zen --verbose --gui \
-../../zenlang/lib/gui/Widget.zpp \
+../../zenlang/lib/gui/Widget.zpp ../../zenlang/lib/gui/WidgetImpl.cpp \
 ../../zenlang/lib/gui/Window.zpp ../../zenlang/lib/gui/WindowImpl.cpp \
 ../../zenlang/lib/gui/Mainframe.zpp ../../zenlang/lib/gui/MainframeImpl.cpp \
 ../../zenlang/lib/gui/Button.zpp ../../zenlang/lib/gui/ButtonImpl.cpp \
