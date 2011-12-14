@@ -86,9 +86,10 @@ main MyMain {
         Menu::Show(systrayMenu);
     };
 
-//    MenuItem::OnSelect(showMenu) => MenuItem::OnSelect::Handler {
-//        print "on show\n";
-//        return ();
-//    };
+    MenuItem::OnSelect(showMenu) => MenuItem::OnSelect::Handler {
+        print "on show\n";
+        return ();
+    };
+
     return (0);
 }
