@@ -4,11 +4,6 @@
 #include "WindowImpl.hpp"
 #include "Button.hpp"
 
-/// \todo move to WidgetImpl.cpp
-Widget::Handle::Impl::ChildList& Widget::Handle::_child() const {
-    return ref(wdata).childList;
-}
-
 #if defined(WIN32)
 int Window::Native::getNextWmID() {
     static int lastWM = WM_APP;
@@ -86,7 +81,7 @@ static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     if(message == WM_NCCREATE) {
         LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
         void* p = ref(pcs).lpCreateParams;
-        WindowHandleImpl* impl = reinterpret_cast<WindowHandleImpl*>(p);
+        Window::HandleImpl* impl = reinterpret_cast<Window::HandleImpl*>(p);
         ::SetWindowLongPtr(hWnd, GWL_USERDATA, reinterpret_cast<long>(impl));
     }
 
@@ -145,7 +140,7 @@ std::string registerClass(HBRUSH bg) {
 #endif
 
 #if defined(WIN32)
-WindowHandleImpl& Window::Native::createWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, HWND parent) {
+Window::HandleImpl& Window::Native::createWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, HWND parent) {
     Position pos = Position()
             ._x<Position>(CW_USEDEFAULT)
             ._y<Position>(CW_USEDEFAULT)
@@ -161,7 +156,7 @@ WindowHandleImpl& Window::Native::createWindow(const Window::Definition& def, co
     if(def.position.h != -1)
         pos.h = def.position.h;
 
-    WindowHandleImpl* impl = new WindowHandleImpl();
+    Window::HandleImpl* impl = new Window::HandleImpl();
     ref(impl)._hWindow = ::CreateWindowEx(xstyle,
                                      className.c_str(),
                                      def.title.c_str(),
@@ -172,42 +167,42 @@ WindowHandleImpl& Window::Native::createWindow(const Window::Definition& def, co
     return ref(impl);
 }
 
-WindowHandleImpl& Window::Native::createMainFrame(const Window::Definition& def, const int& style, const int& xstyle) {
+Window::HandleImpl& Window::Native::createMainFrame(const Window::Definition& def, const int& style, const int& xstyle) {
     HBRUSH brush = (def.style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
     std::string className = registerClass(brush);
     return createWindow(def, className, style, xstyle, (HWND)NULL);
 }
 
-WindowHandleImpl& Window::Native::createChildFrame(const Window::Definition& def, const int &style, const int &xstyle, const Window::Handle &parent) {
+Window::HandleImpl& Window::Native::createChildFrame(const Window::Definition& def, const int &style, const int &xstyle, const Window::Handle &parent) {
     HBRUSH brush = (def.style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
     std::string className = registerClass(brush);
-    return createWindow(def, className, style, xstyle, wih(parent)._hWindow);
+    return createWindow(def, className, style, xstyle, impl(parent)._hWindow);
 }
 
-WindowHandleImpl& Window::Native::createChildWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, const Window::Handle& parent) {
-    return createWindow(def, className, style, xstyle, wih(parent)._hWindow);
+Window::HandleImpl& Window::Native::createChildWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, const Window::Handle& parent) {
+    return createWindow(def, className, style, xstyle, impl(parent)._hWindow);
 }
 #endif
 
 #if defined(GTK)
-WindowHandleImpl& Window::Native::initWindowImpl(GtkWidget* hwnd) {
-    WindowHandleImpl* impl = new WindowHandleImpl();
+Window::HandleImpl& Window::Native::initWindowImpl(GtkWidget* hwnd) {
+    Window::HandleImpl* impl = new Window::HandleImpl();
     ref(impl)._hWindow = hwnd;
     ref(impl)._hFixed = 0;
     g_object_set_data(G_OBJECT(ref(impl)._hWindow), "impl", impl);
     return ref(impl);
 }
 
-WindowHandleImpl& Window::Native::createWindow(const Window::Definition& def, GtkWidget *parent) {
+Window::HandleImpl& Window::Native::createWindow(const Window::Definition& def, GtkWidget *parent) {
     unused(parent);
     GtkWidget* hwnd = gtk_window_new (GTK_WINDOW_TOPLEVEL);
-    WindowHandleImpl& impl = initWindowImpl(hwnd);
+    Window::HandleImpl& impl = initWindowImpl(hwnd);
     return impl;
 }
 
-WindowHandleImpl& Window::Native::createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const Window::Handle& parent) {
-    gtk_fixed_put (GTK_FIXED (wih(parent)._hFixed), hwnd, def.position.x, def.position.y);
-    WindowHandleImpl& impl = initWindowImpl(hwnd);
+Window::HandleImpl& Window::Native::createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const Window::Handle& parent) {
+    gtk_fixed_put (GTK_FIXED (impl(parent)._hFixed), hwnd, def.position.x, def.position.y);
+    Window::HandleImpl& impl = initWindowImpl(hwnd);
     gtk_widget_show(impl._hWindow);
     return impl;
 }
@@ -217,7 +212,7 @@ WindowHandleImpl& Window::Native::createChildWindow(GtkWidget* hwnd, const Windo
 Window::Position Window::getWindowPosition(const Handle& window) {
 #if defined(WIN32)
     RECT rc;
-    ::GetWindowRect(wih(window)._hWindow, &rc);
+    ::GetWindowRect(impl(window)._hWindow, &rc);
     const Window::Position pos = Window::Position()
             ._x<Window::Position>(rc.left)
             ._y<Window::Position>(rc.top)
@@ -226,7 +221,7 @@ Window::Position Window::getWindowPosition(const Handle& window) {
 #endif
 #if defined(GTK)
     GtkRequisition req;
-    gtk_widget_size_request(wih(window)._hWindow, &req);
+    gtk_widget_size_request(impl(window)._hWindow, &req);
     const Window::Position pos = Window::Position()
             ._x<Window::Position>(0)
             ._y<Window::Position>(0)
@@ -239,8 +234,8 @@ Window::Position Window::getWindowPosition(const Handle& window) {
 Window::Position Window::getChildPosition(const Handle& window) {
 #if defined(WIN32)
     RECT rc;
-    ::GetClientRect(wih(window)._hWindow, &rc);
-    ::MapWindowPoints(wih(window)._hWindow, ::GetParent(wih(window)._hWindow), (LPPOINT) &rc, 2);
+    ::GetClientRect(impl(window)._hWindow, &rc);
+    ::MapWindowPoints(impl(window)._hWindow, ::GetParent(impl(window)._hWindow), (LPPOINT) &rc, 2);
     return Window::Position()
             ._x<Window::Position>(rc.left)
             ._y<Window::Position>(rc.top)
@@ -249,7 +244,7 @@ Window::Position Window::getChildPosition(const Handle& window) {
 #endif
 #if defined(GTK)
     GtkRequisition req;
-    gtk_widget_size_request(wih(window)._hWindow, &req);
+    gtk_widget_size_request(impl(window)._hWindow, &req);
     return Window::Position()
             ._x<Window::Position>(0)
             ._y<Window::Position>(0)
@@ -266,43 +261,43 @@ const Window::Delete::_Out& Window::Delete::run(const Window::Handle& window) {
 
 const Window::SetTitle::_Out& Window::SetTitle::run(const Window::Handle& window, const std::string& title) {
 #if defined(WIN32)
-    ::SetWindowText(wih(window)._hWindow, title.c_str());
+    ::SetWindowText(impl(window)._hWindow, title.c_str());
 #endif
 #if defined(GTK)
-    gtk_window_set_title (GTK_WINDOW (wih(window)._hWindow), title.c_str());
+    gtk_window_set_title (GTK_WINDOW (impl(window)._hWindow), title.c_str());
 #endif
    return out(_Out());
 }
 
 const Window::Show::_Out& Window::Show::run(const Window::Handle& window) {
 #if defined(WIN32)
-    ::ShowWindow(wih(window)._hWindow, SW_SHOW);
+    ::ShowWindow(impl(window)._hWindow, SW_SHOW);
 #endif
 #if defined(GTK)
-    gtk_widget_show(GTK_WIDGET(wih(window)._hWindow));
-    gtk_window_deiconify(GTK_WINDOW(wih(window)._hWindow));
+    gtk_widget_show(GTK_WIDGET(impl(window)._hWindow));
+    gtk_window_deiconify(GTK_WINDOW(impl(window)._hWindow));
 #endif
    return out(_Out());
 }
 
 const Window::Hide::_Out& Window::Hide::run(const Window::Handle& window) {
 #if defined(WIN32)
-    ::ShowWindow(wih(window)._hWindow, SW_HIDE);
+    ::ShowWindow(impl(window)._hWindow, SW_HIDE);
 #endif
 #if defined(GTK)
-    gtk_widget_hide(GTK_WIDGET(wih(window)._hWindow));
+    gtk_widget_hide(GTK_WIDGET(impl(window)._hWindow));
 #endif
    return out(_Out());
 }
 
 const Window::Move::_Out& Window::Move::run(const Window::Handle& window, const Window::Position& position) {
 #if defined(WIN32)
-    ::MoveWindow(wih(window)._hWindow, position.x, position.y, position.w, position.h, TRUE);
+    ::MoveWindow(impl(window)._hWindow, position.x, position.y, position.w, position.h, TRUE);
 #endif
 #if defined(GTK)
     unused(window); unused(position);
-    //gtk_widget_set_uposition(wih(window)._hWindow, position.x, position.y);
-    //gtk_window_set_default_size (wih(window)._hWindow, position.w, position.h);
+    //gtk_widget_set_uposition(impl(window)._hWindow, position.x, position.y);
+    //gtk_window_set_default_size (impl(window)._hWindow, position.w, position.h);
 #endif
    return out(_Out());
 }
@@ -310,13 +305,13 @@ const Window::Move::_Out& Window::Move::run(const Window::Handle& window, const 
 const Window::Size::_Out& Window::Size::run(const Window::Handle& window, const int& w, const int& h) {
 #if defined(WIN32)
     RECT rc;
-    ::GetWindowRect(wih(window)._hWindow, &rc);
+    ::GetWindowRect(impl(window)._hWindow, &rc);
     int tw = (w == -1)?(rc.right - rc.left): w;
     int th = (h == -1)?(rc.bottom - rc.top): h;
-    ::MoveWindow(wih(window)._hWindow, rc.left, rc.top, tw, th, TRUE);
+    ::MoveWindow(impl(window)._hWindow, rc.left, rc.top, tw, th, TRUE);
 #endif
 #if defined(GTK)
-    gtk_widget_set_size_request(wih(window)._hWindow, w, h);
+    gtk_widget_set_size_request(impl(window)._hWindow, w, h);
 #endif
    return out(_Out());
 }
@@ -335,10 +330,10 @@ static gboolean onConfigureEvent(GtkWindow* window, GdkEvent* event, gpointer ph
 void Window::OnResize::addHandler(const Window::Handle& window, Handler* handler) {
     Window::OnResize::add(handler);
 #if defined(WIN32)
-    onResizeHandlerList.addHandler(wih(window)._hWindow, handler);
+    onResizeHandlerList.addHandler(impl(window)._hWindow, handler);
 #endif
 #if defined(GTK)
-    g_signal_connect (G_OBJECT (wih(window)._hWindow), "configure-event", G_CALLBACK (onConfigureEvent), handler);
+    g_signal_connect (G_OBJECT (impl(window)._hWindow), "configure-event", G_CALLBACK (onConfigureEvent), handler);
 #endif
 }
 
@@ -355,9 +350,9 @@ static gboolean onWindowCloseEvent(GtkWindow* window, gpointer phandler) {
 void Window::OnClose::addHandler(const Window::Handle& window, Handler* handler) {
     Window::OnClose::add(handler);
 #if defined(WIN32)
-    onCloseHandlerList.addHandler(wih(window)._hWindow, handler);
+    onCloseHandlerList.addHandler(impl(window)._hWindow, handler);
 #endif
 #if defined(GTK)
-    g_signal_connect (G_OBJECT (wih(window)._hWindow), "closed", G_CALLBACK (onWindowCloseEvent), handler);
+    g_signal_connect (G_OBJECT (impl(window)._hWindow), "closed", G_CALLBACK (onWindowCloseEvent), handler);
 #endif
 }

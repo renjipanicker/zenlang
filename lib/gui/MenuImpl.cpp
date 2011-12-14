@@ -7,12 +7,12 @@
 Menu::Handle Menu::Create::run(const Window::Handle& window, const Menu::Definition& def) {
     unused(def);
 #if defined(WIN32)
-    Menu::Handle::Impl* impl = new Menu::Handle::Impl();
+    Menu::HandleImpl* impl = new Menu::HandleImpl();
     ref(impl)._menu = ::CreatePopupMenu();
-    ref(impl)._window = ref(window.wdata)._hWindow;
+    ref(impl)._window = Window::impl(window)._hWindow;
 #endif
 #if defined(GTK)
-    Menu::Handle::Impl* impl = new Menu::Handle::Impl();
+    Menu::HandleImpl* impl = new Menu::HandleImpl();
     ref(impl)._menu = gtk_menu_new();
     unused(window);
 #endif
@@ -44,13 +44,13 @@ static void getMenuPosition(GtkMenu* menu, gint* x, gint* y, gboolean* push_in, 
 
 void Menu::ShowAt::run(const Menu::Handle& handle, const int& x, const int& y) {
 #if defined(WIN32)
-    ::SetForegroundWindow(ref(handle.wdata)._window);
-    ::TrackPopupMenu(ref(handle.wdata)._menu, TPM_BOTTOMALIGN, x, y, 0, ref(handle.wdata)._window, NULL );
+    ::SetForegroundWindow(Menu::impl(handle)._window);
+    ::TrackPopupMenu(Menu::impl(handle)._menu, TPM_BOTTOMALIGN, x, y, 0, Menu::impl(handle)._window, NULL );
 #endif
 #if defined(GTK)
-    gtk_widget_show_all (ref(handle.wdata)._menu);
+    gtk_widget_show_all (Menu::impl(handle)._menu);
     pos p(x, y);
-    gtk_menu_popup(GTK_MENU(ref(handle.wdata)._menu), NULL, NULL, getMenuPosition, &p, 0, gtk_get_current_event_time());
+    gtk_menu_popup(GTK_MENU(Menu::impl(handle)._menu), NULL, NULL, getMenuPosition, &p, 0, gtk_get_current_event_time());
 #endif
 }
 
@@ -58,11 +58,11 @@ void Menu::Show::run(const Menu::Handle& handle) {
 #if defined(WIN32)
     POINT pt;
     ::GetCursorPos(&pt);
-    ::SetForegroundWindow(ref(handle.wdata)._window);
-    ::TrackPopupMenu(ref(handle.wdata)._menu, TPM_BOTTOMALIGN, pt.x, pt.y, 0, ref(handle.wdata)._window, NULL );
+    ::SetForegroundWindow(Menu::impl(handle)._window);
+    ::TrackPopupMenu(Menu::impl(handle)._menu, TPM_BOTTOMALIGN, pt.x, pt.y, 0, Menu::impl(handle)._window, NULL );
 #endif
 #if defined(GTK)
-    gtk_widget_show_all (ref(handle.wdata)._menu);
-    gtk_menu_popup(GTK_MENU(ref(handle.wdata)._menu), NULL, NULL, getMenuPosition, 0, 0, gtk_get_current_event_time());
+    gtk_widget_show_all (Menu::impl(handle)._menu);
+    gtk_menu_popup(GTK_MENU(Menu::impl(handle)._menu), NULL, NULL, getMenuPosition, 0, 0, gtk_get_current_event_time());
 #endif
 }

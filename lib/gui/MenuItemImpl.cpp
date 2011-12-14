@@ -24,15 +24,15 @@ static WinProc s_winProc;
 
 MenuItem::Handle MenuItem::Create::run(const Menu::Handle& pmenu, const MenuItem::Definition& def) {
 #if defined(WIN32)
-    MenuItem::Handle::Impl* impl = new MenuItem::Handle::Impl();
+    MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
     int wm = Window::Native::getNextWmID();
-    ::InsertMenu(ref(pmenu.wdata)._menu, -1, MF_BYPOSITION, wm, def.label.c_str());
+    ::InsertMenu(Menu::impl(pmenu)._menu, -1, MF_BYPOSITION, wm, def.label.c_str());
     ref(impl)._id = wm;
 #endif
 #if defined(GTK)
-    MenuItem::Handle::Impl* impl = new MenuItem::Handle::Impl();
+    MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
     ref(impl)._menuItem = gtk_menu_item_new_with_label(def.label.c_str());
-    gtk_menu_shell_append (GTK_MENU_SHELL (ref(pmenu.wdata)._menu), ref(impl)._menuItem);
+    gtk_menu_shell_append (GTK_MENU_SHELL (Menu::impl(pmenu)._menu), ref(impl)._menuItem);
 #endif
 
     MenuItem::Handle handle;
@@ -52,9 +52,9 @@ static void onMenuItemSelectClick(GtkMenuItem* item, gpointer phandler) {
 void MenuItem::OnSelect::addHandler(const MenuItem::Handle& menuitem, Handler* handler) {
     MenuItem::OnSelect::add(handler);
 #if defined(WIN32)
-    onMenuItemSelectHandlerList.addHandler(menuitem.wdata->_id, handler);
+    onMenuItemSelectHandlerList.addHandler(MenuItem::impl(menuitem)._id, handler);
 #endif
 #if defined(GTK)
-    g_signal_connect (G_OBJECT (menuitem.wdata->_menuItem), "clicked", G_CALLBACK (onMenuItemSelectClick), handler);
+    g_signal_connect (G_OBJECT (MenuItem::impl(menuitem)._menuItem), "clicked", G_CALLBACK (onMenuItemSelectClick), handler);
 #endif
 }

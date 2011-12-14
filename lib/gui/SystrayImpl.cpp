@@ -29,20 +29,20 @@ static WinProc s_winProc;
 
 void Systray::setTooltip(const Systray::Handle& handle, const std::string& text) {
 #if defined(WIN32)
-    NOTIFYICONDATA& ni = ref(handle.wdata)._ni;
+    NOTIFYICONDATA& ni = Systray::impl(handle)._ni;
     lstrcpyn(ni.szTip, text.c_str(), text.length());
     ni.uFlags |= NIF_TIP;
     //SysTray::Native::setIconFile(This._sysTray._impl->_ni, This._text);
     ::Shell_NotifyIcon(NIM_MODIFY, ptr(ni));
 #endif
 #if defined(GTK)
-    gtk_status_icon_set_tooltip_text(ref(handle.wdata)._icon, text.c_str());
+    gtk_status_icon_set_tooltip_text(Systray::impl(handle)._icon, text.c_str());
 #endif
 }
 
 void Systray::setIconfile(const Systray::Handle& handle, const std::string& filename) {
 #if defined(WIN32)
-    NOTIFYICONDATA& ni = ref(handle.wdata)._ni;
+    NOTIFYICONDATA& ni = Systray::impl(handle)._ni;
     ni.hIcon = (HICON)LoadImageA(NULL, filename.c_str(), IMAGE_ICON,
                                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
                                  LR_LOADFROMFILE);
@@ -54,30 +54,30 @@ void Systray::setIconfile(const Systray::Handle& handle, const std::string& file
     ::Shell_NotifyIcon(NIM_MODIFY, ptr(ni));
 #endif
 #if defined(GTK)
-    gtk_status_icon_set_from_icon_name(ref(handle.wdata)._icon, GTK_STOCK_MEDIA_STOP);
+    gtk_status_icon_set_from_icon_name(Systray::impl(handle)._icon, GTK_STOCK_MEDIA_STOP);
 #endif
 }
 
 void Systray::show(const Systray::Handle& handle) {
 #if defined(WIN32)
-    ::Shell_NotifyIcon(NIM_ADD, ptr(ref(handle.wdata)._ni));
+    ::Shell_NotifyIcon(NIM_ADD, ptr(Systray::impl(handle)._ni));
 #endif
 #if defined(GTK)
-    gtk_status_icon_set_visible(ref(handle.wdata)._icon, TRUE);
+    gtk_status_icon_set_visible(Systray::impl(handle)._icon, TRUE);
 #endif
 }
 
 void Systray::hide(const Systray::Handle& handle) {
 #if defined(WIN32)
-    ::Shell_NotifyIcon(NIM_DELETE, ptr(ref(handle.wdata)._ni));
+    ::Shell_NotifyIcon(NIM_DELETE, ptr(Systray::impl(handle)._ni));
 #endif
 #if defined(GTK)
-    gtk_status_icon_set_visible(ref(handle.wdata)._icon, FALSE);
+    gtk_status_icon_set_visible(Systray::impl(handle)._icon, FALSE);
 #endif
 }
 
 Systray::Handle Systray::Create::run(const Window::Handle& parent, const Systray::Definition& def) {
-    Systray::Handle::Impl* impl = new Systray::Handle::Impl();
+    Systray::HandleImpl* impl = new Systray::HandleImpl();
     Systray::Handle handle;
     handle._wdata<Systray::Handle>(impl);
 #if defined(WIN32)
@@ -113,7 +113,7 @@ Systray::Handle Systray::Create::run(const Window::Handle& parent, const Systray
     // the window to send messages to and the message to send
     //      note:   the message value should be in the
     //              range of WM_APP through 0xBFFF
-    ref(impl)._ni.hWnd = ref(parent.wdata)._hWindow;
+    ref(impl)._ni.hWnd = Window::impl(parent)._hWindow;
     ref(impl)._ni.uCallbackMessage = ref(impl)._wm;
     ::Shell_NotifyIcon(NIM_ADD, ptr(ref(impl)._ni));
 #endif
@@ -150,10 +150,10 @@ static gboolean onSystrayActivateEvent(GtkStatusIcon* status_icon, gpointer phan
 void Systray::OnActivation::addHandler(const Systray::Handle& systray, Handler* handler) {
     Systray::OnActivation::add(handler);
 #if defined(WIN32)
-    onSystrayActivationHandlerList.addHandler(ref(systray.wdata)._wm, handler);
+    onSystrayActivationHandlerList.addHandler(Systray::impl(systray)._wm, handler);
 #endif
 #if defined(GTK)
-    g_signal_connect(G_OBJECT (ref(systray.wdata)._icon), "activate", G_CALLBACK (onSystrayActivateEvent), handler);
+    g_signal_connect(G_OBJECT (Systray::impl(systray)._icon), "activate", G_CALLBACK (onSystrayActivateEvent), handler);
 #endif
 }
 
@@ -173,9 +173,9 @@ static gboolean onSystrayContextMenuEvent(GtkStatusIcon *status_icon, guint butt
 void Systray::OnContextMenu::addHandler(const Systray::Handle& systray, Handler* handler) {
     Systray::OnContextMenu::add(handler);
 #if defined(WIN32)
-    onSystrayContextMenuHandlerList.addHandler(ref(systray.wdata)._wm, handler);
+    onSystrayContextMenuHandlerList.addHandler(Systray::impl(systray)._wm, handler);
 #endif
 #if defined(GTK)
-    g_signal_connect(G_OBJECT (ref(systray.wdata)._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), handler);
+    g_signal_connect(G_OBJECT (Systray::impl(systray)._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), handler);
 #endif
 }

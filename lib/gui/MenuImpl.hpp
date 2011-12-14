@@ -1,16 +1,21 @@
 #pragma once
 #include "Menu.hpp"
+#include "WidgetImpl.hpp"
 
-struct MenuHandleImpl {
+namespace Menu {
+    struct HandleImpl : public Widget::Handle::Impl {
 #if defined(WIN32)
-    inline MenuHandleImpl() : _menu(0), _window(0) {}
-    HMENU _menu;
-    HWND _window;
+        inline HandleImpl() : _menu(0), _window(0) {}
+        HMENU _menu;
+        HWND _window;
 #endif
 #if defined(GTK)
-    inline MenuHandleImpl() : _menu(0) {}
-    GtkWidget* _menu;
+        inline HandleImpl() : _menu(0) {}
+        GtkWidget* _menu;
 #endif
-private:
-    inline MenuHandleImpl(const MenuHandleImpl& src) {}
-};
+    private:
+        inline HandleImpl(const HandleImpl& src) {}
+    };
+
+    inline HandleImpl& impl(const Widget::Handle& widget) {return Widget::impl<HandleImpl>(widget);}
+}

@@ -1,0 +1,11 @@
+#pragma once
+#include "Widget.hpp"
+
+namespace Widget {
+template <typename T>
+inline T& impl(const Widget::Handle& widget) {
+    Widget::Handle::Impl* wdata = widget.wdata;
+    T* wh = dynamic_cast<T*>(wdata);
+    return ref(wh);
+}
+}
