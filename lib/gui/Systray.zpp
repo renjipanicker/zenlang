@@ -3,8 +3,6 @@ include Window public;
 namespace Systray;
 
 public struct Handle : Widget::Handle {
-    struct Impl native;
-    ptr<Impl> wdata;
 };
 
 public event(const Systray::Handle& systray) => function void OnActivation() native;

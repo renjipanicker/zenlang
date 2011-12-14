@@ -3,8 +3,6 @@ include Window public;
 namespace Menu;
 
 public struct Handle : Widget::Handle {
-    struct Impl native;
-    ptr<Impl> wdata;
 };
 
 public struct Definition : Widget::Definition {

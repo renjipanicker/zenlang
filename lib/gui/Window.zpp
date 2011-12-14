@@ -15,8 +15,6 @@ public struct Position {
 };
 
 public struct Handle : Widget::Handle {
-    struct Impl native;
-    ptr<Impl> wdata;
 };
 
 public struct Anchor {

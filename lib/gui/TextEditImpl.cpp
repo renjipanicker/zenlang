@@ -9,7 +9,7 @@ Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdi
     if(def.multiline) {
         flags |= ES_MULTILINE;
     }
-    Window::Handle::Impl& impl = Window::Native::createChildWindow(def, "EDIT", flags, WS_EX_CLIENTEDGE, parent);
+    WindowHandleImpl& impl = Window::Native::createChildWindow(def, "EDIT", flags, WS_EX_CLIENTEDGE, parent);
 #endif
 #if defined(GTK)
     GtkWidget* hWnd = 0;
@@ -19,7 +19,7 @@ Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdi
         assert(false);
     }
 
-    Window::Handle::Impl& impl = Window::Native::createChildWindow(hWnd, def, parent);
+    WindowHandleImpl& impl = Window::Native::createChildWindow(hWnd, def, parent);
     if(def.title.size() > 0) {
         GtkTextBuffer* buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (impl._hWindow));
         gtk_text_buffer_set_text (buffer, def.title.c_str(), -1);
@@ -32,12 +32,12 @@ Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdi
 
 const TextEdit::AppendText::_Out& TextEdit::AppendText::run(const Window::Handle& window, const std::string& text) {
 #if defined(WIN32)
-    int len = Edit_GetTextLength(ref(window.wdata)._hWindow);
-    Edit_SetSel(ref(window.wdata)._hWindow, len, len);
-    Edit_ReplaceSel(ref(window.wdata)._hWindow, text.c_str());
+    int len = Edit_GetTextLength(wih(window)._hWindow);
+    Edit_SetSel(wih(window)._hWindow, len, len);
+    Edit_ReplaceSel(wih(window)._hWindow, text.c_str());
 #endif
 #if defined(GTK)
-    GtkTextBuffer* buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (window.wdata->_hWindow));
+    GtkTextBuffer* buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (wih(window)._hWindow));
     GtkTextIter iter;
     gtk_text_buffer_get_end_iter(buffer, &iter);
     gtk_text_buffer_insert(buffer, &iter, text.c_str(), text.size());

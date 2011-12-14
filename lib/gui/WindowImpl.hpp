@@ -1,19 +1,25 @@
 #pragma once
 #include "Window.hpp"
 
-struct Window::Handle::Impl {
+struct WindowHandleImpl : public Widget::Handle::Impl {
 #if defined(WIN32)
-    inline Impl() : _hWindow(0) {}
+    inline WindowHandleImpl() : _hWindow(0) {}
     HWND _hWindow;
 #endif
 #if defined(GTK)
-    inline Impl() : _hWindow(0), _hFixed(0) {}
+    inline WindowHandleImpl() : _hWindow(0), _hFixed(0) {}
     GtkWidget* _hWindow;
     GtkWidget* _hFixed;
 #endif
 private:
-    inline Impl(const Impl& src) {}
+    inline WindowHandleImpl(const WindowHandleImpl& src) {}
 };
+
+inline WindowHandleImpl& wih(const Widget::Handle& widget) {
+    Widget::Handle::Impl* wdata = widget.wdata;
+    WindowHandleImpl* wh = dynamic_cast<WindowHandleImpl*>(wdata);
+    return ref(wh);
+}
 
 namespace Window {
 namespace Native {
@@ -31,16 +37,16 @@ int getNextWmID();
 int getNextResID();
 ULONGLONG GetDllVersion(LPCTSTR lpszDllName);
 
-Window::Handle::Impl& createWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, HWND parent);
-Window::Handle::Impl& createMainFrame(const Window::Definition& def, const int& style, const int& xstyle);
-Window::Handle::Impl& createChildFrame(const Window::Definition& def, const int &style, const int &xstyle, const Window::Handle &parent);
-Window::Handle::Impl& createChildWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, const Window::Handle& parent);
+WindowHandleImpl& createWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, HWND parent);
+WindowHandleImpl& createMainFrame(const Window::Definition& def, const int& style, const int& xstyle);
+WindowHandleImpl& createChildFrame(const Window::Definition& def, const int &style, const int &xstyle, const Window::Handle &parent);
+WindowHandleImpl& createChildWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, const Window::Handle& parent);
 #endif
 
 #if defined(GTK)
-Window::Handle::Impl& initWindowImpl(GtkWidget* hwnd);
-Window::Handle::Impl& createWindow(const Window::Definition& def, GtkWidget *parent);
-Window::Handle::Impl& createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const Window::Handle& parent);
+WindowHandleImpl& initWindowImpl(GtkWidget* hwnd);
+WindowHandleImpl& createWindow(const Window::Definition& def, GtkWidget *parent);
+WindowHandleImpl& createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const Window::Handle& parent);
 #endif
 
 }

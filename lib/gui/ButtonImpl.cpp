@@ -24,11 +24,11 @@ static WinProc s_winProc;
 
 Window::Handle Button::Create::run(const Window::Handle& parent, const Button::Definition& def) {
 #if defined(WIN32)
-    Window::Handle::Impl& impl = Window::Native::createChildWindow(def, "BUTTON", BS_DEFPUSHBUTTON|WS_CHILD|WS_VISIBLE, 0, parent);
+    WindowHandleImpl& impl = Window::Native::createChildWindow(def, "BUTTON", BS_DEFPUSHBUTTON|WS_CHILD|WS_VISIBLE, 0, parent);
 #endif
 #if defined(GTK)
     GtkWidget* hWnd = gtk_button_new_with_label(def.title.c_str());
-    Window::Handle::Impl& impl = Window::Native::createChildWindow(hWnd, def, parent);
+    WindowHandleImpl& impl = Window::Native::createChildWindow(hWnd, def, parent);
 #endif
     Window::Handle win;
     win._wdata<Window::Handle>(ptr(impl));
@@ -47,9 +47,9 @@ static void onButtonClick(GtkMenuItem* item, gpointer phandler) {
 void Button::OnClick::addHandler(const Window::Handle& button, Handler* handler) {
     Button::OnClick::add(handler);
 #if defined(WIN32)
-    onButtonClickHandlerList.addHandler(button.wdata->_hWindow, handler);
+    onButtonClickHandlerList.addHandler(wih(button)._hWindow, handler);
 #endif
 #if defined(GTK)
-    g_signal_connect (G_OBJECT (button.wdata->_hWindow), "clicked", G_CALLBACK (onButtonClick), handler);
+    g_signal_connect (G_OBJECT (wih(button)._hWindow), "clicked", G_CALLBACK (onButtonClick), handler);
 #endif
 }

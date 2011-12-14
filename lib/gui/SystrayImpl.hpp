@@ -1,16 +1,16 @@
 #pragma once
 #include "Systray.hpp"
 
-struct Systray::Handle::Impl {
+struct SystrayHandleImpl {
 #if defined(WIN32)
-    inline Impl() : _wm(0) {}
+    inline SystrayHandleImpl() : _wm(0) {}
     int _wm;
     NOTIFYICONDATA _ni;
 #endif
 #if defined(GTK)
-    inline Impl() : _icon(0) {}
+    inline SystrayHandleImpl() : _icon(0) {}
     GtkStatusIcon* _icon;
 #endif
 private:
-    inline Impl(const Impl& src) {}
+    inline SystrayHandleImpl(const SystrayHandleImpl& src) {}
 };
