@@ -13,12 +13,14 @@ routine const Window::Handle& processWindow(Window::Handle& win, const Window::D
 
 routine void createMenuItem(Menu::Handle& pmenu, const pointer<Widget::Definition>& defn) {
     auto w = MenuItem::Create(pmenu, <MenuItem::Definition>defn);
-//    pmenu.childList[defn.name] = &(w);
+    print (*defn).name + " menuitem\n";
+    pmenu.childList[(*defn).name] = &(w);
 }
 
 routine Menu::Handle createMenu(Window::Handle& pwin, const pointer<Widget::Definition>& defn) {
     auto w = Menu::Create(pwin, <Menu::Definition>defn);
-//    pwin.childList[defn.name] = &(w);
+    pwin.childList[(*defn).name] = &(w);
+    print (*defn).name + " menu\n";
     foreach(d in (*defn).childList) {
         createMenuItem(w, d);
     }
@@ -48,6 +50,7 @@ routine void createWindow(Window::Handle& pwin, const pointer<Widget::Definition
 }
 
 routine const Window::Handle& processWindow(Window::Handle& win, const Window::Definition& defn) {
+    print defn.name + ": processWindow\n";
     foreach(d in defn.childList) {
         createWindow(win, d);
     }
@@ -55,6 +58,7 @@ routine const Window::Handle& processWindow(Window::Handle& win, const Window::D
 }
 
 public function Window::Handle Create(const MainFrame::Definition& defn) {
+    print "*** mainframe\n";
     auto w = MainFrame::Create(defn);
     processWindow(w.window, defn);
     return (w.window);

@@ -188,5 +188,6 @@ Log& Log::get() {
 
 Log& Log::operator<<(Log::Out) {
     printf("%s", _ss.str().c_str());
+    _ss.str("");
     return ref(this);
 }

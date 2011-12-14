@@ -54,12 +54,13 @@ main MyMain {
                 };
 
     auto mainFrame = WindowCreator::Create(defn);
-    auto checkBtn = <Window::Handle>mainFrame.childList@@checkBox;
+
+    auto checkBtn  = <Window::Handle>mainFrame.childList@@checkBox;
     auto outputBox = <Window::Handle>mainFrame.childList@@outputBox;
 
-    auto sysTray = <Systray::Handle>mainFrame.childList@@systray;
+    auto sysTray     = <Systray::Handle>mainFrame.childList@@systray;
     auto systrayMenu = <Menu::Handle>mainFrame.childList@@systrayMenu;
-    auto showMenu = <MenuItem::Handle>systrayMenu.childList@@showItem;
+    auto showMenu    = <MenuItem::Handle>systrayMenu.childList@@showItem;
 
 //    auto showMenu1 = <MenuItem::Handle>(mainFrame.childList[@systray].childList[@menu].childList[@showItem]);
 //    auto showMenu = mainFrame.childList@@systray][@menu][@showItem];

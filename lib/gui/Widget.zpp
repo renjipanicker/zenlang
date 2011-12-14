@@ -1,6 +1,13 @@
 namespace Widget;
 
 public struct Handle {
+    struct Impl {
+        typedef ChildList dict<string, pointer<Widget::Handle> >;
+        ChildList childList;
+    };
+    ptr<Impl> idata;
+
+    ptr<Impl> wdata;
     typedef ChildList dict<string, pointer<Widget::Handle> >;
     ChildList childList;
 };

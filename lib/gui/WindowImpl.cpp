@@ -4,6 +4,20 @@
 #include "WindowImpl.hpp"
 #include "Button.hpp"
 
+struct WindowHandle : public Widget::Handle::Impl {
+#if defined(WIN32)
+    inline WindowHandle() : _hWindow(0) {}
+    HWND _hWindow;
+#endif
+#if defined(GTK)
+    inline WindowHandle() : _hWindow(0), _hFixed(0) {}
+    GtkWidget* _hWindow;
+    GtkWidget* _hFixed;
+#endif
+private:
+    inline WindowHandle(const WindowHandle& src) {}
+};
+
 #if defined(WIN32)
 int Window::Native::getNextWmID() {
     static int lastWM = WM_APP;
