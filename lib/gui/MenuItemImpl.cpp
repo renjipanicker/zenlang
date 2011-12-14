@@ -55,6 +55,6 @@ void MenuItem::OnSelect::addHandler(const MenuItem::Handle& menuitem, Handler* h
     onMenuItemSelectHandlerList.addHandler(MenuItem::impl(menuitem)._id, handler);
 #endif
 #if defined(GTK)
-    g_signal_connect (G_OBJECT (MenuItem::impl(menuitem)._menuItem), "clicked", G_CALLBACK (onMenuItemSelectClick), handler);
+    g_signal_connect (G_OBJECT (MenuItem::impl(menuitem)._menuItem), "activate", G_CALLBACK (onMenuItemSelectClick), handler);
 #endif
 }

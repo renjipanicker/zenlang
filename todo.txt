@@ -3,13 +3,15 @@ systray
 menubar
 menuitem
 
-validate type when de-referencing pointer<>
 infer type of rhs in auto-statement
 infer type of rhs in struct-init
 infer type of expr in function-call
+infer type of event-handler
+
+validate type when de-referencing pointer<>
 iterate (foreach) on string
 put everything in namespaces
-bug - test list/dict inside struct does not copy in cctor
+bug - list/dict inside struct does not copy in cctor
 
 sizeof() function for container-expr.
 sizeof() function for types.

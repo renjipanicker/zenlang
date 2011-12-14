@@ -62,10 +62,6 @@ main MyMain {
     auto systrayMenu = <Menu::Handle>mainFrame.child@@systrayMenu;
     auto showMenu    = <MenuItem::Handle>systrayMenu.child@@showItem;
 
-//    auto showMenu1 = <MenuItem::Handle>(mainFrame.child[@systray].child[@menu].child[@showItem]);
-//    auto showMenu = mainFrame.child@@systray][@menu][@showItem];
-//    auto showMenu = mainFrame@@systray@@menu@@showItem;
-
     Window::OnResize(mainFrame) => Window::OnResize::Handler {
         print "on resize\n";
         auto pp = Window::getWindowPosition(mainFrame);
@@ -83,6 +79,7 @@ main MyMain {
     };
 
     Systray::OnContextMenu(sysTray) => Systray::OnContextMenu::Handler {
+        print "on sysmenu\n";
         Menu::Show(systrayMenu);
     };
 
