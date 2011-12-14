@@ -170,8 +170,14 @@ rGlobalDefaultStatement ::= DEFAULT rTypeSpec(T) ASSIGNEQUAL rExpr(E) SEMI. {ref
 //-------------------------------------------------
 // definition specifiers
 %type rDefinitionType {Ast::DefinitionType::T}
-rDefinitionType(L) ::= NATIVE. {L = Ast::DefinitionType::Native;}
-rDefinitionType(L) ::= .       {L = Ast::DefinitionType::Direct;}
+rDefinitionType(L) ::= NATIVE  . {L = Ast::DefinitionType::Native;}
+rDefinitionType(L) ::= .         {L = Ast::DefinitionType::Direct;}
+
+//-------------------------------------------------
+// definition specifiers
+%type rExDefinitionType {Ast::DefinitionType::T}
+rExDefinitionType(L) ::= ABSTRACT. {L = Ast::DefinitionType::Abstract;}
+rExDefinitionType(L) ::= rDefinitionType(R). {L = R;}
 
 //-------------------------------------------------
 %type rTypeSpecDef {Ast::UserDefinedTypeSpec*}
@@ -284,11 +290,11 @@ rPreChildStructDefn(L) ::= rEnterChildStructDefn(S) rStructMemberDefnBlock. {L =
 
 //-------------------------------------------------
 %type rEnterRootStructDefn {Ast::RootStructDefn*}
-rEnterRootStructDefn(L) ::= STRUCT rStructId(name) rDefinitionType(D). {L = ref(pctx).aEnterRootStructDefn(name, D);}
+rEnterRootStructDefn(L) ::= STRUCT rStructId(name) rExDefinitionType(D). {L = ref(pctx).aEnterRootStructDefn(name, D);}
 
 //-------------------------------------------------
 %type rEnterChildStructDefn {Ast::ChildStructDefn*}
-rEnterChildStructDefn(L) ::= STRUCT rStructId(name) COLON rStructTypeSpec(B) rDefinitionType(D). {L = ref(pctx).aEnterChildStructDefn(name, ref(B), D);}
+rEnterChildStructDefn(L) ::= STRUCT rStructId(name) COLON rStructTypeSpec(B) rExDefinitionType(D). {L = ref(pctx).aEnterChildStructDefn(name, ref(B), D);}
 
 //-------------------------------------------------
 rStructId(L) ::= STRUCT_TYPE(R). {L = R;}

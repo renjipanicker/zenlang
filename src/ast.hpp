@@ -19,6 +19,7 @@ namespace Ast {
         /// \brief The Definition type for any user-defined TypeSpec.
         enum T {
             Native,     /// TypeSpec is implemented in native code
+            Abstract,   /// TypeSpec is an abstract type (struct and function)
             Direct      /// TypeSpec is implemented directly
         };
     };

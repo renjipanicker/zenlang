@@ -10,6 +10,8 @@ inline std::string getDefinitionType(const Ast::DefinitionType::T& defType) {
             return "";
         case Ast::DefinitionType::Native:
             return " native";
+        case Ast::DefinitionType::Abstract:
+            return " abstract";
     }
     throw Exception("Internal error: Unknown Definition Type '%d'\n", defType);
 }
@@ -676,6 +678,11 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
         }
 
         fprintf(_fp, " {\n");
+
+        // if abstract type, generate virtual dtor
+        if(node.defType() == Ast::DefinitionType::Abstract) {
+            fprintf(_fp, "%s    virtual ~%s() {}\n", Indent::get(), node.name().text());
+        }
 
         GeneratorContext(GeneratorContext::TargetMode::TypeDecl, GeneratorContext::IndentMode::NoBrace).run(_config, _fs, "", node.block());
 

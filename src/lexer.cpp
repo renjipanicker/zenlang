@@ -98,7 +98,6 @@ const char* Lexer::Impl::reservedWords[] = {
     "interface"    ,
     "base"         ,
     "parent"       ,
-    "child"        ,
     "extends"      ,
     "union"        ,
     "system"       ,
