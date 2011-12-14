@@ -8,6 +8,8 @@ infer type of rhs in auto-statement
 infer type of rhs in struct-init
 infer type of expr in function-call
 iterate (foreach) on string
+put everything in namespaces
+bug - test list/dict inside struct does not copy in cctor
 
 sizeof() function for container-expr.
 sizeof() function for types.
