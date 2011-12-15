@@ -1,13 +1,12 @@
 anchor
-systray
 menubar
-menuitem
 
 infer type of rhs in auto-statement
 infer type of rhs in struct-init
 infer type of expr in function-call
 infer type of event-handler
 
+automatically de-reference pointer on lhs of member-expr
 validate type when de-referencing pointer<>
 iterate (foreach) on string
 put everything in namespaces
@@ -23,7 +22,6 @@ interpreter
 
 bug-fix - gtk-textedit resizes parent window
 bug-fix - lexer does not recognize newlines in comments, screws up line numbering
-bug-fix - unit test runs functions multiple times
 bug-fix - multiple #includes in guiTest.cpp
 bug-fix - indentation in generated cpp file
 
@@ -191,3 +189,6 @@ rename Instance to Handle
 single-outparam for functions.
 void out-param, do not generate _Out
 void in-param, do not generate _In (obsolete)
+menuitem
+systray
+bug-fix - unit test runs functions multiple times
