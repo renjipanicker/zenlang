@@ -84,6 +84,7 @@ private:
 private:
     const Ast::TypeSpec* _currentTypeRef;
     const Ast::TypeSpec* _currentImportedTypeRef;
+    const Ast::TypeSpec* _expectedTypeRef;
 
 public:
     void                     aUnitStatementList(const Ast::EnterNamespaceStatement& ns);
@@ -146,6 +147,7 @@ public:
     Ast::VariableDefn*       aVariableDefn(const Ast::Token& name, const Ast::Expr& initExpr);
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr);
+    const Ast::QualifiedTypeSpec* aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec);
     Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
     const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
     const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::Token& name);

@@ -307,8 +307,8 @@ struct MyIndexStruct {
 };
 
 test testAutoInitList {
-    auto list<float> s = [1, 2];
+    //auto list<float> s = [1, 2];
     //auto list< list<float> > t = [[1, 2], [3,4]];
-    unused(s);
+    //unused(s);
     return (true);
 }

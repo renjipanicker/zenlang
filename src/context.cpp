@@ -430,7 +430,7 @@ inline Ast::ValueInstanceExpr& Context::getValueInstanceExpr(const Ast::Token& p
 }
 
 ////////////////////////////////////////////////////////////
-Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0) {
+Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0), _expectedTypeRef(0) {
     Ast::Root& rootTypeSpec = getRootNamespace();
     enterTypeSpec(rootTypeSpec);
 }
@@ -857,15 +857,18 @@ Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifie
     return ptr(variableDef);
 }
 
-Ast::VariableDefn* Context::aVariableDefn(const Ast::Token& name, const Ast::Expr& initExpr) {
-    const Ast::QualifiedTypeSpec& qualifiedTypeSpec = initExpr.qTypeSpec();
-    Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
-    return ptr(variableDef);
+Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name) {
+    const Ast::Expr& initExpr = getDefaultValue(qualifiedTypeSpec.typeSpec(), name);
+    return aVariableDefn(qualifiedTypeSpec, name, initExpr);
 }
 
-Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name) {
-    Ast::VariableDefn& variableDef = addVariableDefn(qualifiedTypeSpec, name);
-    return ptr(variableDef);
+Ast::VariableDefn* Context::aVariableDefn(const Ast::Token& name, const Ast::Expr& initExpr) {
+    const Ast::QualifiedTypeSpec& qualifiedTypeSpec = initExpr.qTypeSpec();
+    return aVariableDefn(qualifiedTypeSpec, name, initExpr);
+}
+
+const Ast::QualifiedTypeSpec* Context::aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qTypeSpec) {
+    return ptr(qTypeSpec);
 }
 
 Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef) {
