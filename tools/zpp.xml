@@ -1,41 +1,48 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE language SYSTEM "language.dtd">
-<language name="C++" section="Sources"
-          version="1.48" kateversion="2.4"
+<language name="zenlang" section="Sources"
+          version="0.00" kateversion="2.4"
           indenter="cstyle"
-          mimetype="text/x-c++src;text/x-c++hdr;text/x-chdr"
-          extensions="*.c++;*.cxx;*.cpp;*.cc;*.C;*.h;*.hh;*.H;*.h++;*.hxx;*.hpp;*.hcc;*.moc"
+          mimetype="text/plain"
+          extensions="*.zpp;*.ipp"
           priority="9">
 <!--
 ##########################################################################
 ## Fixes by Sebastian Pipping (webmaster@hartwork.org)
 ##
 ## NOTE: Keep in sync with C highlighter! (c.xml)
+## Modified for zpp files by Renji Panicker
 ##########################################################################
 -->
   <highlighting>
     <list name="keywords">
-      <item> asm </item>
+      <item> routine </item>
+      <item> function </item>
+      <item> event </item>
+      <item> native </item>
+      <item> abstract </item>
+
+      <item> run </item>
+      <item> auto </item>
+      <item> mutable </item>
+      <item> static </item>
+      <item> assert </item>
+      <item> unused </item>
+
       <item> break </item>
       <item> case </item>
       <item> catch </item>
       <item> class </item>
-      <item> constexpr </item>
-      <item> const_cast </item>
       <item> continue </item>
       <item> default </item>
       <item> delete </item>
       <item> do </item>
-      <item> dynamic_cast</item>
       <item> else </item>
       <item> enum </item>
       <item> explicit </item>
       <item> export </item>
-      <item> extern </item>
       <item> false </item>
-      <item> friend </item>
       <item> for </item>
-      <item> goto </item>
       <item> if </item>
       <item> inline </item>
       <item> namespace </item>
@@ -44,12 +51,8 @@
       <item> private </item>
       <item> protected </item>
       <item> public </item>
-      <item> qobject_cast </item>
-      <item> reinterpret_cast </item>
       <item> return </item>
       <item> sizeof </item>
-      <item> static_assert </item>
-      <item> static_cast </item>
       <item> struct </item>
       <item> switch </item>
       <item> template </item>
@@ -59,114 +62,26 @@
       <item> try </item>
       <item> typedef </item>
       <item> typeid </item>
-      <item> type_info </item>
       <item> typename </item>
       <item> union </item>
       <item> using </item>
       <item> virtual </item>
       <item> while </item>
-
-      <item> and </item>
-      <item> and_eq </item>
-      <item> bad_cast </item>
-      <item> bad_typeid </item>
-      <item> bitand </item>
-      <item> bitor </item>
-      <item> compl </item>
-      <item> not </item>
-      <item> not_eq </item>
-      <item> or </item>
-      <item> or_eq </item>
-      <item> xor </item>
-      <item> xor_eq </item>
     </list>
     <list name="extensions">
-      <item> K_DCOP </item>
-      <item> Q_ARG </item>
-      <item> Q_ASSERT </item>
-      <item> Q_ASSERT_X </item>
-      <item> Q_CHECK_PTR </item>
-      <item> Q_CLASSINFO </item>
-      <item> Q_CLEANUP_RESOURCE </item>
-      <item> Q_D </item>
-      <item> Q_DECLARE_FLAGS </item>
-      <item> Q_DECLARE_FLAGS </item>
-      <item> Q_DECLARE_INTERFACE </item>
-      <item> Q_DECLARE_METATYPE </item>
-      <item> Q_DECLARE_OPERATORS_FOR_FLAGS </item>
-      <item> Q_DECLARE_PRIVATE </item>
-      <item> Q_DECLARE_PUBLIC </item>
-      <item> Q_DECLARE_SHARED </item>
-      <item> Q_DECLARE_TYPEINFO </item>
-      <item> Q_DISABLE_COPY </item>
-      <item> Q_ENUMS </item>
-      <item> Q_EXPORT </item>
-      <item> Q_FLAGS </item>
-      <item> Q_FOREACH </item>
-      <item> Q_FOREVER </item>
-      <item> Q_GADGET </item>
-      <item> Q_GLOBAL_STATIC </item>
-      <item> Q_GLOBAL_STATIC_WITH_ARGS </item>
-      <item> Q_INIT_RESOURCE </item>
-      <item> Q_INTERFACES </item>
-      <item> Q_INVOKABLE </item>
-      <item> Q_NOREPLY </item>
-      <item> Q_OBJECT </item>
-      <item> Q_OVERRIDE </item>
-      <item> Q_PRIVATE_SLOT </item>
-      <item> Q_PROPERTY </item>
-      <item> Q_Q </item>
-      <item> Q_RETURN_ARG </item>
-      <item> Q_SCRIPTABLE </item>
-      <item> Q_SETS </item>
-      <item> Q_SIGNALS </item>
-      <item> Q_SLOTS </item>
-      <item> Q_UNUSED </item>
-      <item> SIGNAL </item>
-      <item> SLOT </item>
-      <item> TRUE </item>
-      <item> FALSE </item>
-      <item> connect </item>
-      <item> disconnect </item>
-      <item> emit </item>
-      <item> signals </item>
-      <item> slots </item>
-      <item> foreach </item>
-      <item> forever </item>
-
-      <item> qint8 </item>
-      <item> qint16 </item>
-      <item> qint32 </item>
-      <item> qint64 </item>
-      <item> qlonglong </item>
-      <item> qptrdiff </item>
-      <item> qreal </item>
-      <item> quint8 </item>
-      <item> quint16 </item>
-      <item> quint32 </item>
-      <item> quint64 </item>
-      <item> quintptr </item>
-      <item> qulonglong </item>
     </list>
     <list name="types">
-      <item> auto </item>
       <item> bool </item>
       <item> char </item>
-      <item> char16_t </item>
-      <item> char32_t </item>
       <item> const </item>
       <item> double </item>
       <item> float </item>
       <item> int </item>
       <item> long </item>
-      <item> mutable </item>
-      <item> register </item>
       <item> short </item>
       <item> signed </item>
-      <item> static </item>
       <item> unsigned </item>
       <item> void </item>
-      <item> volatile </item>
       <item> uchar </item>
       <item> uint </item>
       <item> int8_t </item>
@@ -177,7 +92,15 @@
       <item> uint16_t </item>
       <item> uint32_t </item>
       <item> uint64_t </item>
-      <item> wchar_t </item>
+
+      <item> string </item>
+      <item> pointer </item>
+      <item> ptr </item>
+      <item> list </item>
+      <item> dict </item>
+
+      <item> test </item>
+      <item> main </item>
     </list>
     <contexts>
       <context attribute="Normal Text" lineEndContext="#stay" name="Normal">
