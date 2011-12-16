@@ -721,7 +721,7 @@ rFormatExpr(L) ::= rExpr(A) AMP(B) rTreeExpr(T). {L = ref(pctx).aFormatExpr(B, r
 //-------------------------------------------------
 // list expression
 %type rListExpr {Ast::ListExpr*}
-rListExpr(L) ::= LSQUARE(B) rListList(R) RSQUARE. {L = ref(pctx).aListExpr(B, ref(R));}
+rListExpr(L) ::= rListList(R) RSQUARE(B). {L = ref(pctx).aListExpr(B, ref(R));}
 
 %type rListList {Ast::ListList*}
 rListList(L) ::= rListsList(R)      . {L = R;}
@@ -729,9 +729,9 @@ rListList(L) ::= rListsList(R) COMMA. {L = R;}
 
 %type rListsList {Ast::ListList*}
 rListsList(L)  ::= rListsList(R) COMMA(B) rListItem(I). {L = ref(pctx).aListList(B, ref(R), ref(I));}
-rListsList(L)  ::=                        rListItem(I). {L = ref(pctx).aListList(ref(I));}
-rListsList(L)  ::=               rQualifiedTypeSpec(Q). {L = ref(pctx).aListList(ref(Q));}
-//rListsList(L)  ::=                                    . {L = ref(pctx).aListList();}
+rListsList(L)  ::=             LSQUARE(B) rListItem(I). {L = ref(pctx).aListList(B, ref(I));}
+rListsList(L)  ::=             LSQUARE(B) rQualifiedTypeSpec(Q). {L = ref(pctx).aListList(B, ref(Q));}
+rListsList(L)  ::=             LSQUARE(B)                      . {L = ref(pctx).aListList(B);}
 
 %type rListItem {Ast::ListItem*}
 rListItem(L)  ::= rExpr(E). {L = ref(pctx).aListItem(ref(E));}

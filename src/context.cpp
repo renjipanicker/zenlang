@@ -429,6 +429,38 @@ inline Ast::ValueInstanceExpr& Context::getValueInstanceExpr(const Ast::Token& p
     return valueInstanceExpr;
 }
 
+inline const Ast::QualifiedTypeSpec& Context::getListTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec) {
+    printf("_expectedTypeRef %lu\n", (unsigned long)_expectedTypeRef);
+    if(_expectedTypeRef == 0) {
+        if(qTypeSpec) {
+            _expectedTypeRef = qTypeSpec;
+            return ref(qTypeSpec);
+        }
+        throw Exception("%s Expected list type not specified\n", err(_filename, pos).c_str());
+    }
+
+    printf("_expectedTypeRef-name %s\n", getQualifiedTypeSpecName(ref(_expectedTypeRef), GenMode::Import).c_str());
+    const Ast::TypeSpec& ts = ref(_expectedTypeRef).typeSpec();
+    const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(ts));
+    if(td == 0) {
+        throw Exception("%s Expected type is not a template %s\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(ref(_expectedTypeRef), GenMode::Import).c_str());
+    }
+
+    if(ref(td).name().string() != "list") {
+        throw Exception("%s Expected type is not a list %s\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(ref(_expectedTypeRef), GenMode::Import).c_str());
+    }
+
+    const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
+    if(qTypeSpec == 0) {
+        _expectedTypeRef = ptr(valType);
+        return valType;
+    }
+
+    const Ast::QualifiedTypeSpec& qValType = coerce(pos, valType, ref(qTypeSpec));
+    _expectedTypeRef = ptr(qValType);
+    return qValType;
+}
+
 ////////////////////////////////////////////////////////////
 Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0), _expectedTypeRef(0) {
     Ast::Root& rootTypeSpec = getRootNamespace();
@@ -853,6 +885,7 @@ Ast::Scope* Context::aParam() {
 }
 
 Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr) {
+    _expectedTypeRef = 0;
     Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
     return ptr(variableDef);
 }
@@ -868,6 +901,7 @@ Ast::VariableDefn* Context::aVariableDefn(const Ast::Token& name, const Ast::Exp
 }
 
 const Ast::QualifiedTypeSpec* Context::aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qTypeSpec) {
+    _expectedTypeRef = ptr(qTypeSpec);
     return ptr(qTypeSpec);
 }
 
@@ -1208,25 +1242,32 @@ Ast::ListList* Context::aListList(const Ast::Token& pos, Ast::ListList& list, co
     return ptr(list);
 }
 
-Ast::ListList* Context::aListList(const Ast::ListItem& item) {
+Ast::ListList* Context::aListList(const Ast::Token& pos, const Ast::ListItem& item) {
+    unused(pos);
     Ast::ListList& list = _unit.addNode(new Ast::ListList());
     list.addItem(item);
-    list.valueType(item.valueExpr().qTypeSpec());
+    const Ast::QualifiedTypeSpec& valType = getListTypeSpec(pos, ptr(item.valueExpr().qTypeSpec()));
+    list.valueType(valType);
     return ptr(list);
 }
 
-Ast::ListList* Context::aListList(const Ast::QualifiedTypeSpec& qTypeSpec) {
+Ast::ListList* Context::aListList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec) {
+    unused(pos);
     Ast::ListList& list = _unit.addNode(new Ast::ListList());
-    list.valueType(qTypeSpec);
+    const Ast::QualifiedTypeSpec& valType = getListTypeSpec(pos, ptr(qTypeSpec));
+    list.valueType(valType);
     return ptr(list);
 }
 
-Ast::ListList* Context::aListList() {
+Ast::ListList* Context::aListList(const Ast::Token& pos) {
     Ast::ListList& list = _unit.addNode(new Ast::ListList());
+    const Ast::QualifiedTypeSpec& valType = getListTypeSpec(pos, 0);
+    list.valueType(valType);
     return ptr(list);
 }
 
 Ast::ListItem* Context::aListItem(const Ast::Expr& valueExpr) {
+    printf("ListItem: _expectedTypeRef %lu\n", (unsigned long)_expectedTypeRef);
     Ast::ListItem& item = _unit.addNode(new Ast::ListItem(valueExpr));
     return ptr(item);
 }

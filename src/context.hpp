@@ -63,6 +63,7 @@ private:
     inline Ast::FunctionDecl& addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
     inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr);
     inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
+    inline const Ast::QualifiedTypeSpec& getListTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec);
 
 private:
     Compiler& _compiler;
@@ -84,7 +85,7 @@ private:
 private:
     const Ast::TypeSpec* _currentTypeRef;
     const Ast::TypeSpec* _currentImportedTypeRef;
-    const Ast::TypeSpec* _expectedTypeRef;
+    const Ast::QualifiedTypeSpec* _expectedTypeRef;
 
 public:
     void                     aUnitStatementList(const Ast::EnterNamespaceStatement& ns);
@@ -214,9 +215,9 @@ public:
 
     Ast::ListExpr*            aListExpr(const Ast::Token& pos, const Ast::ListList& list);
     Ast::ListList*            aListList(const Ast::Token& pos, Ast::ListList& list, const Ast::ListItem& item);
-    Ast::ListList*            aListList(const Ast::ListItem& item);
-    Ast::ListList*            aListList(const Ast::QualifiedTypeSpec& qTypeSpec);
-    Ast::ListList*            aListList();
+    Ast::ListList*            aListList(const Ast::Token& pos, const Ast::ListItem& item);
+    Ast::ListList*            aListList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec);
+    Ast::ListList*            aListList(const Ast::Token& pos);
     Ast::ListItem*            aListItem(const Ast::Expr& valueExpr);
 
     Ast::DictExpr*            aDictExpr(const Ast::Token& pos, const Ast::DictList& list);
