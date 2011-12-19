@@ -429,40 +429,76 @@ inline Ast::ValueInstanceExpr& Context::getValueInstanceExpr(const Ast::Token& p
     return valueInstanceExpr;
 }
 
+inline void Context::addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec) {
+    printf("addExpectedTypeSpec %s\n", getQualifiedTypeSpecName(qTypeSpec, GenMode::Import).c_str());
+
+    _expectedTypeSpecStack.push_back(ptr(qTypeSpec));
+
+    const Ast::TypeSpec& ts = qTypeSpec.typeSpec();
+    const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(ts));
+    if(td == 0) {
+        return;
+    }
+
+    if(ref(td).name().string() != "list") {
+        return;
+    }
+
+    const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
+    addExpectedTypeSpec(valType);
+}
+
+inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec) {
+    const Ast::QualifiedTypeSpec* expectedTypeRef = 0;
+    if(_expectedTypeSpecStack.size() > 0) {
+        expectedTypeRef = _expectedTypeSpecStack.back();
+        _expectedTypeSpecStack.pop_back();
+    }
+
+    if(expectedTypeRef == 0) {
+        if(qTypeSpec == 0) {
+            throw Exception("%s Expected type not specified\n", err(_filename, pos).c_str());
+        }
+    }
+    return ref(qTypeSpec);
+}
+
 inline const Ast::QualifiedTypeSpec& Context::getListTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec) {
-    printf("_expectedTypeRef %lu\n", (unsigned long)_expectedTypeRef);
-    if(_expectedTypeRef == 0) {
+    const Ast::QualifiedTypeSpec* expectedTypeRef = 0;
+    if(_expectedTypeSpecStack.size() > 0) {
+        expectedTypeRef = _expectedTypeSpecStack.back();
+        _expectedTypeSpecStack.pop_back();
+    }
+
+    if(expectedTypeRef == 0) {
         if(qTypeSpec) {
-            _expectedTypeRef = qTypeSpec;
             return ref(qTypeSpec);
         }
         throw Exception("%s Expected list type not specified\n", err(_filename, pos).c_str());
     }
 
-    printf("_expectedTypeRef-name %s\n", getQualifiedTypeSpecName(ref(_expectedTypeRef), GenMode::Import).c_str());
-    const Ast::TypeSpec& ts = ref(_expectedTypeRef).typeSpec();
+    printf("expectedTypeRef-name %s\n", getQualifiedTypeSpecName(ref(expectedTypeRef), GenMode::Import).c_str());
+    const Ast::TypeSpec& ts = ref(expectedTypeRef).typeSpec();
     const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(ts));
     if(td == 0) {
-        throw Exception("%s Expected type is not a template %s\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(ref(_expectedTypeRef), GenMode::Import).c_str());
+        throw Exception("%s Expected type is not a template %s\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(ref(expectedTypeRef), GenMode::Import).c_str());
     }
 
     if(ref(td).name().string() != "list") {
-        throw Exception("%s Expected type is not a list %s\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(ref(_expectedTypeRef), GenMode::Import).c_str());
+        throw Exception("%s Expected type is not a list %s\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(ref(expectedTypeRef), GenMode::Import).c_str());
     }
 
     const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
     if(qTypeSpec == 0) {
-        _expectedTypeRef = ptr(valType);
         return valType;
     }
 
     const Ast::QualifiedTypeSpec& qValType = coerce(pos, valType, ref(qTypeSpec));
-    _expectedTypeRef = ptr(qValType);
     return qValType;
 }
 
 ////////////////////////////////////////////////////////////
-Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0), _expectedTypeRef(0) {
+Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0) {
     Ast::Root& rootTypeSpec = getRootNamespace();
     enterTypeSpec(rootTypeSpec);
 }
@@ -885,7 +921,6 @@ Ast::Scope* Context::aParam() {
 }
 
 Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr) {
-    _expectedTypeRef = 0;
     Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
     return ptr(variableDef);
 }
@@ -901,7 +936,7 @@ Ast::VariableDefn* Context::aVariableDefn(const Ast::Token& name, const Ast::Exp
 }
 
 const Ast::QualifiedTypeSpec* Context::aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qTypeSpec) {
-    _expectedTypeRef = ptr(qTypeSpec);
+    addExpectedTypeSpec(qTypeSpec);
     return ptr(qTypeSpec);
 }
 
@@ -1267,7 +1302,10 @@ Ast::ListList* Context::aListList(const Ast::Token& pos) {
 }
 
 Ast::ListItem* Context::aListItem(const Ast::Expr& valueExpr) {
-    printf("ListItem: _expectedTypeRef %lu\n", (unsigned long)_expectedTypeRef);
+    Ast::Token pos(0, 0, ""); /// \todo remove this
+    printf("Context::aListItem: \n");
+    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(pos, ptr(valueExpr.qTypeSpec()));
+    printf("Context::aListItem: %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
     Ast::ListItem& item = _unit.addNode(new Ast::ListItem(valueExpr));
     return ptr(item);
 }
@@ -1280,11 +1318,6 @@ Ast::DictExpr* Context::aDictExpr(const Ast::Token& pos, const Ast::DictList& li
 
     Ast::DictExpr& expr = _unit.addNode(new Ast::DictExpr(qTypeSpec, list));
     return ptr(expr);
-}
-
-Ast::DictExpr* Context::aDictExpr(const Ast::Token& pos) {
-    Ast::DictList& list = _unit.addNode(new Ast::DictList());
-    return aDictExpr(pos, list);
 }
 
 Ast::DictList* Context::aDictList(const Ast::Token& pos, Ast::DictList& list, const Ast::DictItem& item) {
@@ -1301,6 +1334,19 @@ Ast::DictList* Context::aDictList(const Ast::DictItem& item) {
     list.addItem(item);
     list.keyType(item.keyExpr().qTypeSpec());
     list.valueType(item.valueExpr().qTypeSpec());
+    return ptr(list);
+}
+
+Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::DictItem& item) {
+    unused(pos);
+    return aDictList(item);
+}
+
+Ast::DictList* Context::aDictList(const Ast::Token& pos) {
+    unused(pos);
+    Ast::DictList& list = _unit.addNode(new Ast::DictList());
+//    list.keyType(item.keyExpr().qTypeSpec());
+//    list.valueType(item.valueExpr().qTypeSpec());
     return ptr(list);
 }
 

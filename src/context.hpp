@@ -6,6 +6,7 @@
 class Context {
 public:
     typedef std::list<Ast::TypeSpec*> TypeSpecStack;
+    typedef std::list<const Ast::QualifiedTypeSpec*> ExpectedTypeSpecStack;
 public:
     Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename);
     ~Context();
@@ -63,6 +64,8 @@ private:
     inline Ast::FunctionDecl& addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
     inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr);
     inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
+    inline void addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec);
+    inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec);
     inline const Ast::QualifiedTypeSpec& getListTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec);
 
 private:
@@ -85,7 +88,7 @@ private:
 private:
     const Ast::TypeSpec* _currentTypeRef;
     const Ast::TypeSpec* _currentImportedTypeRef;
-    const Ast::QualifiedTypeSpec* _expectedTypeRef;
+    ExpectedTypeSpecStack _expectedTypeSpecStack;
 
 public:
     void                     aUnitStatementList(const Ast::EnterNamespaceStatement& ns);
@@ -221,9 +224,10 @@ public:
     Ast::ListItem*            aListItem(const Ast::Expr& valueExpr);
 
     Ast::DictExpr*            aDictExpr(const Ast::Token& pos, const Ast::DictList& list);
-    Ast::DictExpr*            aDictExpr(const Ast::Token& pos);
     Ast::DictList*            aDictList(const Ast::Token& pos, Ast::DictList& list, const Ast::DictItem& item);
+    Ast::DictList*            aDictList(const Ast::Token& pos, const Ast::DictItem& item);
     Ast::DictList*            aDictList(const Ast::DictItem& item);
+    Ast::DictList*            aDictList(const Ast::Token& pos);
     Ast::DictList*            aDictList(const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec);
     Ast::DictItem*            aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& valueExpr);
 
