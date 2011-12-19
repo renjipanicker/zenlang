@@ -429,72 +429,38 @@ inline Ast::ValueInstanceExpr& Context::getValueInstanceExpr(const Ast::Token& p
     return valueInstanceExpr;
 }
 
+inline void Context::pushExpectedTypeSpec() {
+    _expectedTypeSpecStack.push_back(ExpectedTypeSpecList());
+}
+
+inline void Context::popExpectedTypeSpec(const Ast::Token& pos) {
+    if(_expectedTypeSpecStack.size() == 0) {
+        throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, pos).c_str());
+    }
+    _expectedTypeSpecStack.pop_back();
+}
+
 inline void Context::addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec) {
-    printf("addExpectedTypeSpec %s\n", getQualifiedTypeSpecName(qTypeSpec, GenMode::Import).c_str());
-
-    _expectedTypeSpecStack.push_back(ptr(qTypeSpec));
-
-    const Ast::TypeSpec& ts = qTypeSpec.typeSpec();
-    const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(ts));
-    if(td == 0) {
-        return;
+    if(_expectedTypeSpecStack.size() == 0) {
+        Ast::Token pos(0, 0, ""); /// \todo remove this
+        throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, pos).c_str());
     }
-
-    if(ref(td).name().string() != "list") {
-        return;
-    }
-
-    const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
-    addExpectedTypeSpec(valType);
+    _expectedTypeSpecStack.back().push_back(ptr(qTypeSpec));
 }
 
-inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec) {
-    const Ast::QualifiedTypeSpec* expectedTypeRef = 0;
-    if(_expectedTypeSpecStack.size() > 0) {
-        expectedTypeRef = _expectedTypeSpecStack.back();
-        _expectedTypeSpecStack.pop_back();
+inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) {
+    if(_expectedTypeSpecStack.size() == 0) {
+        return ref(qTypeSpec);
     }
 
-    if(expectedTypeRef == 0) {
-        if(qTypeSpec == 0) {
-            throw Exception("%s Expected type not specified\n", err(_filename, pos).c_str());
-        }
-    }
-    return ref(qTypeSpec);
-}
-
-inline const Ast::QualifiedTypeSpec& Context::getListTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec) {
-    const Ast::QualifiedTypeSpec* expectedTypeRef = 0;
-    if(_expectedTypeSpecStack.size() > 0) {
-        expectedTypeRef = _expectedTypeSpecStack.back();
-        _expectedTypeSpecStack.pop_back();
+    ExpectedTypeSpecList& exl = _expectedTypeSpecStack.back();
+    if(idx >= exl.size()) {
+        return ref(qTypeSpec);
     }
 
-    if(expectedTypeRef == 0) {
-        if(qTypeSpec) {
-            return ref(qTypeSpec);
-        }
-        throw Exception("%s Expected list type not specified\n", err(_filename, pos).c_str());
-    }
-
-    printf("expectedTypeRef-name %s\n", getQualifiedTypeSpecName(ref(expectedTypeRef), GenMode::Import).c_str());
-    const Ast::TypeSpec& ts = ref(expectedTypeRef).typeSpec();
-    const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(ts));
-    if(td == 0) {
-        throw Exception("%s Expected type is not a template %s\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(ref(expectedTypeRef), GenMode::Import).c_str());
-    }
-
-    if(ref(td).name().string() != "list") {
-        throw Exception("%s Expected type is not a list %s\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(ref(expectedTypeRef), GenMode::Import).c_str());
-    }
-
-    const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
-    if(qTypeSpec == 0) {
-        return valType;
-    }
-
-    const Ast::QualifiedTypeSpec& qValType = coerce(pos, valType, ref(qTypeSpec));
-    return qValType;
+    assert(idx < exl.size());
+    const Ast::QualifiedTypeSpec* ts = exl.at(idx);
+    return ref(ts);
 }
 
 ////////////////////////////////////////////////////////////
@@ -507,6 +473,7 @@ Context::~Context() {
     assert(_typeSpecStack.size() == 1);
     Ast::Root& rootTypeSpec = getRootNamespace();
     leaveTypeSpec(rootTypeSpec);
+    assert(_expectedTypeSpecStack.size() == 0);
 }
 
 ////////////////////////////////////////////////////////////
@@ -922,6 +889,7 @@ Ast::Scope* Context::aParam() {
 
 Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr) {
     Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
+    popExpectedTypeSpec(name);
     return ptr(variableDef);
 }
 
@@ -936,8 +904,13 @@ Ast::VariableDefn* Context::aVariableDefn(const Ast::Token& name, const Ast::Exp
 }
 
 const Ast::QualifiedTypeSpec* Context::aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qTypeSpec) {
+    pushExpectedTypeSpec();
     addExpectedTypeSpec(qTypeSpec);
     return ptr(qTypeSpec);
+}
+
+void Context::aAutoQualifiedVariableDefn() {
+    pushExpectedTypeSpec();
 }
 
 Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef) {
@@ -1267,6 +1240,7 @@ Ast::ListExpr* Context::aListExpr(const Ast::Token& pos, const Ast::ListList& li
     const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
 
     Ast::ListExpr& expr = _unit.addNode(new Ast::ListExpr(qTypeSpec, list));
+    popExpectedTypeSpec(pos);
     return ptr(expr);
 }
 
@@ -1281,7 +1255,7 @@ Ast::ListList* Context::aListList(const Ast::Token& pos, const Ast::ListItem& it
     unused(pos);
     Ast::ListList& list = _unit.addNode(new Ast::ListList());
     list.addItem(item);
-    const Ast::QualifiedTypeSpec& valType = getListTypeSpec(pos, ptr(item.valueExpr().qTypeSpec()));
+    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(item.valueExpr().qTypeSpec()), 0);
     list.valueType(valType);
     return ptr(list);
 }
@@ -1289,23 +1263,20 @@ Ast::ListList* Context::aListList(const Ast::Token& pos, const Ast::ListItem& it
 Ast::ListList* Context::aListList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec) {
     unused(pos);
     Ast::ListList& list = _unit.addNode(new Ast::ListList());
-    const Ast::QualifiedTypeSpec& valType = getListTypeSpec(pos, ptr(qTypeSpec));
+    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(qTypeSpec), 0);
     list.valueType(valType);
     return ptr(list);
 }
 
 Ast::ListList* Context::aListList(const Ast::Token& pos) {
+    unused(pos);
     Ast::ListList& list = _unit.addNode(new Ast::ListList());
-    const Ast::QualifiedTypeSpec& valType = getListTypeSpec(pos, 0);
+    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(0, 0);
     list.valueType(valType);
     return ptr(list);
 }
 
 Ast::ListItem* Context::aListItem(const Ast::Expr& valueExpr) {
-    Ast::Token pos(0, 0, ""); /// \todo remove this
-    printf("Context::aListItem: \n");
-    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(pos, ptr(valueExpr.qTypeSpec()));
-    printf("Context::aListItem: %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
     Ast::ListItem& item = _unit.addNode(new Ast::ListItem(valueExpr));
     return ptr(item);
 }
@@ -1317,6 +1288,7 @@ Ast::DictExpr* Context::aDictExpr(const Ast::Token& pos, const Ast::DictList& li
     const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
 
     Ast::DictExpr& expr = _unit.addNode(new Ast::DictExpr(qTypeSpec, list));
+    popExpectedTypeSpec(pos);
     return ptr(expr);
 }
 
@@ -1332,8 +1304,12 @@ Ast::DictList* Context::aDictList(const Ast::Token& pos, Ast::DictList& list, co
 Ast::DictList* Context::aDictList(const Ast::DictItem& item) {
     Ast::DictList& list = _unit.addNode(new Ast::DictList());
     list.addItem(item);
-    list.keyType(item.keyExpr().qTypeSpec());
-    list.valueType(item.valueExpr().qTypeSpec());
+
+    const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(ptr(item.keyExpr().qTypeSpec()), 0);
+    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(item.valueExpr().qTypeSpec()), 1);
+
+    list.keyType(keyType);
+    list.valueType(valType);
     return ptr(list);
 }
 
@@ -1342,24 +1318,67 @@ Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::DictItem& it
     return aDictList(item);
 }
 
-Ast::DictList* Context::aDictList(const Ast::Token& pos) {
+Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec) {
     unused(pos);
     Ast::DictList& list = _unit.addNode(new Ast::DictList());
-//    list.keyType(item.keyExpr().qTypeSpec());
-//    list.valueType(item.valueExpr().qTypeSpec());
+
+    const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(ptr(qKeyTypeSpec), 0);
+    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(qValueTypeSpec), 1);
+
+    list.keyType(keyType);
+    list.valueType(valType);
     return ptr(list);
 }
 
-Ast::DictList* Context::aDictList(const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec) {
+Ast::DictList* Context::aDictList(const Ast::Token& pos) {
+    unused(pos);
     Ast::DictList& list = _unit.addNode(new Ast::DictList());
-    list.keyType(qKeyTypeSpec);
-    list.valueType(qValueTypeSpec);
+
+    const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(0, 0);
+    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(0, 1);
+
+    list.keyType(keyType);
+    list.valueType(valType);
     return ptr(list);
 }
 
 Ast::DictItem* Context::aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& valueExpr) {
     Ast::DictItem& item = _unit.addNode(new Ast::DictItem(keyExpr, valueExpr));
     return ptr(item);
+}
+
+const Ast::Token& Context::aEnterList(const Ast::Token& pos) {
+    if(_expectedTypeSpecStack.size() == 0) {
+        pushExpectedTypeSpec();
+        return pos;
+    }
+
+    ExpectedTypeSpecList& exl = _expectedTypeSpecStack.back();
+    pushExpectedTypeSpec();
+    if(exl.size() == 0) {
+        return pos;
+    }
+
+    const Ast::QualifiedTypeSpec* expectedTypeRef = exl.back();
+
+    const Ast::TypeSpec& ts = ref(expectedTypeRef).typeSpec();
+    const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(ts));
+    if(td) {
+        if(ref(td).name().string() == "list") {
+            const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
+            addExpectedTypeSpec(valType);
+            return pos;
+        }
+        if(ref(td).name().string() == "dict") {
+            const Ast::QualifiedTypeSpec& keyType = ref(td).at(0);
+            addExpectedTypeSpec(keyType);
+            const Ast::QualifiedTypeSpec& valType = ref(td).at(1);
+            addExpectedTypeSpec(valType);
+            return pos;
+        }
+    }
+
+    return pos;
 }
 
 Ast::FormatExpr* Context::aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr) {

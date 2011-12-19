@@ -404,13 +404,13 @@ rPosParam(L) ::=                       rPosVariableDefn(variableDef). {L = ref(p
 //-------------------------------------------------
 // variable def
 %type rPosVariableDefn {const Ast::VariableDefn*}
-rPosVariableDefn(L) ::=                                  ID(name) COLON rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
+rPosVariableDefn(L) ::= rAutoQualifiedVariableDefn       ID(name) COLON rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
 rPosVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) COLON rExpr(initExpr). {L = ref(pctx).aVariableDefn(ref(qTypeRef), name, ref(initExpr));}
 
 //-------------------------------------------------
 // variable def
 %type rVariableDefn {const Ast::VariableDefn*}
-rVariableDefn(L) ::=                                  ID(name) ASSIGNEQUAL rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
+rVariableDefn(L) ::= rAutoQualifiedVariableDefn       ID(name) ASSIGNEQUAL rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
 rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name).                             {L = ref(pctx).aVariableDefn(ref(qTypeRef), name);}
 rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) ASSIGNEQUAL rExpr(initExpr). {L = ref(pctx).aVariableDefn(ref(qTypeRef), name, ref(initExpr));}
 
@@ -418,6 +418,7 @@ rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) ASSIGNEQUAL rExpr
 // qualified variable def
 %type rQualifiedVariableDefn {const Ast::QualifiedTypeSpec*}
 rQualifiedVariableDefn(L) ::= rQualifiedTypeSpec(R). {L = ref(pctx).aQualifiedVariableDefn(ref(R));}
+rAutoQualifiedVariableDefn ::= . {ref(pctx).aAutoQualifiedVariableDefn();}
 
 //-------------------------------------------------
 // qualified types
@@ -729,9 +730,9 @@ rListList(L) ::= rListsList(R) COMMA. {L = R;}
 
 %type rListsList {Ast::ListList*}
 rListsList(L)  ::= rListsList(R) COMMA(B) rListItem(I).          {L = ref(pctx).aListList(B, ref(R), ref(I));}
-rListsList(L)  ::=     rEnterListItem(B) rListItem(I).          {L = ref(pctx).aListList(B, ref(I));}
-rListsList(L)  ::=     rEnterListItem(B) rQualifiedTypeSpec(Q). {L = ref(pctx).aListList(B, ref(Q));}
-rListsList(L)  ::=     rEnterListItem(B)                      . {L = ref(pctx).aListList(B);}
+rListsList(L)  ::=      rEnterList(B) rListItem(I).          {L = ref(pctx).aListList(B, ref(I));}
+rListsList(L)  ::=      rEnterList(B) rQualifiedTypeSpec(Q). {L = ref(pctx).aListList(B, ref(Q));}
+rListsList(L)  ::=      rEnterList(B)                      . {L = ref(pctx).aListList(B);}
 
 %type rListItem {Ast::ListItem*}
 rListItem(L)  ::= rExpr(E). {L = ref(pctx).aListItem(ref(E));}
@@ -747,15 +748,16 @@ rDictList(L) ::= rDictsList(R) COMMA . {L = R;}
 
 %type rDictsList {Ast::DictList*}
 rDictsList(L)  ::= rDictsList(R) COMMA(B) rDictItem(I). {L = ref(pctx).aDictList(B, ref(R), ref(I));}
-rDictsList(L)  ::=      rEnterListItem(B) rDictItem(I). {L = ref(pctx).aDictList(B, ref(I));}
+rDictsList(L)  ::=          rEnterList(B) rDictItem(I). {L = ref(pctx).aDictList(B, ref(I));}
 
 // first item in list can be a type specifier
-rDictsList(L) ::= rQualifiedTypeSpec(K) COLON rQualifiedTypeSpec(V). {L = ref(pctx).aDictList(ref(K), ref(V));}
+rDictsList(L) ::= rEnterList(B) rQualifiedTypeSpec(K) COLON rQualifiedTypeSpec(V). {L = ref(pctx).aDictList(B, ref(K), ref(V));}
 
 %type rDictItem {Ast::DictItem*}
 rDictItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(E));}
 
-rEnterListItem(L)  ::= LSQUARE(R). {L = R;}
+//-------------------------------------------------
+rEnterList(L)  ::= LSQUARE(R). {L = R; ref(pctx).aEnterList(R); }
 
 //-------------------------------------------------
 // tree (no type checking for key or value)
@@ -767,12 +769,15 @@ rTreeList(L) ::= rTreesList(R)       . {L = R;}
 rTreeList(L) ::= rTreesList(R) COMMA . {L = R;}
 
 %type rTreesList {Ast::DictList*}
-rTreesList(L)  ::= rTreesList(R) COMMA(B) rTreeItem(I). {L = ref(pctx).aDictList(B, ref(R), ref(I));}
-rTreesList(L)  ::=              LCURLY(B) rTreeItem(I). {L = ref(pctx).aDictList(ref(I)); unused(B);}
-rTreesList(L)  ::=              LCURLY(B) . {L = ref(pctx).aDictList(B);}
+rTreesList(L)  ::= rTreesList(R) COMMA(B) rTreeItem(I).     {L = ref(pctx).aDictList(B, ref(R), ref(I));}
+rTreesList(L)  ::=              rEnterTree(B) rTreeItem(I). {L = ref(pctx).aDictList(ref(I)); unused(B);}
+rTreesList(L)  ::=              rEnterTree(B).              {L = ref(pctx).aDictList(B);}
 
 %type rTreeItem {Ast::DictItem*}
 rTreeItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(E));}
+
+//-------------------------------------------------
+rEnterTree(L)  ::= LCURLY(R). {L = R; ref(pctx).aEnterList(R); }
 
 //-------------------------------------------------
 // ordered expression

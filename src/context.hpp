@@ -6,7 +6,8 @@
 class Context {
 public:
     typedef std::list<Ast::TypeSpec*> TypeSpecStack;
-    typedef std::list<const Ast::QualifiedTypeSpec*> ExpectedTypeSpecStack;
+    typedef std::vector<const Ast::QualifiedTypeSpec*> ExpectedTypeSpecList;
+    typedef std::list<ExpectedTypeSpecList> ExpectedTypeSpecStack;
 public:
     Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename);
     ~Context();
@@ -65,8 +66,9 @@ private:
     inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr);
     inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     inline void addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec);
-    inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec);
-    inline const Ast::QualifiedTypeSpec& getListTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec);
+    inline void pushExpectedTypeSpec();
+    inline void popExpectedTypeSpec(const Ast::Token& pos);
+    inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx);
 
 private:
     Compiler& _compiler;
@@ -152,6 +154,7 @@ public:
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr);
     const Ast::QualifiedTypeSpec* aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec);
+    void                          aAutoQualifiedVariableDefn();
     Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
     const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
     const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::Token& name);
@@ -228,8 +231,9 @@ public:
     Ast::DictList*            aDictList(const Ast::Token& pos, const Ast::DictItem& item);
     Ast::DictList*            aDictList(const Ast::DictItem& item);
     Ast::DictList*            aDictList(const Ast::Token& pos);
-    Ast::DictList*            aDictList(const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec);
+    Ast::DictList*            aDictList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec);
     Ast::DictItem*            aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& valueExpr);
+    const Ast::Token&         aEnterList(const Ast::Token& pos);
 
     Ast::FormatExpr*          aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr);
 

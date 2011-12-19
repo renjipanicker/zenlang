@@ -1,6 +1,5 @@
 namespace TestBasic;
 
-/*
 public routine int testNative(const string& s) native;
 
 public routine int testRoutine(const int& x) {
@@ -306,12 +305,25 @@ public function void testVoidFunction() {
 struct MyIndexStruct {
     //routine const Handle& at(const string& k) native;
 };
-*/
 
 test testAutoInitList {
-    //auto list<float> s = [1, 2];
-    //unused(s);
-    auto list< list<float> > t = [[1, 2], [3,4]];
+    auto float a = 3;
+    unused(a);
+
+    auto list<float> s = [1, 2];
+    unused(s);
+
+    auto list< list<float> > t = [[1, 2], [3, 4]];
     unused(t);
+
+    auto list< dict<string, float> > u = [["a":1, "b":2], ["c":3, "d":4]];
+    unused(u);
+
+    auto dict< string, list<float> > v = ["a":[1, 2], "b":[3, 4]];
+    unused(v);
+
+    auto dict< string, dict<string, float> > w = ["h":["a":1, "b":2], "i":["c":3, "d":4]];
+    unused(w);
+
     return (true);
 }

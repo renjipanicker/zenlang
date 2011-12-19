@@ -1,7 +1,6 @@
 anchor
 menubar
 
-infer type of rhs in auto-statement, struct-defn, for-init
 infer type of rhs in struct-init
 infer type of expr in function-call
 infer type of event-handler
@@ -192,3 +191,4 @@ void in-param, do not generate _In (obsolete)
 menuitem
 systray
 bug-fix - unit test runs functions multiple times
+infer type of rhs in auto-statement, struct-defn, for-init
