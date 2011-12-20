@@ -15,6 +15,7 @@ public:
 public:
     inline const std::string& filename() const {return _filename;}
     const Ast::TypeSpec* currentTypeRefHasChild(const Ast::Token& name) const;
+    const Ast::StructDefn* isStructExpected();
 
 private:
     inline Ast::ExprList& addExprList();
@@ -68,6 +69,7 @@ private:
     inline void addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec);
     inline void pushExpectedTypeSpec();
     inline void popExpectedTypeSpec(const Ast::Token& pos);
+    inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny(const size_t& idx);
     inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx);
 
 private:
@@ -257,12 +259,15 @@ public:
     Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);
     Ast::MemberExpr*          aMemberVariableExpr(const Ast::Expr& expr, const Ast::Token& name);
     Ast::TypeSpecMemberExpr*  aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
+    Ast::StructInstanceExpr*  aAutoStructInstanceExpr(const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list);
     Ast::StructInstanceExpr*  aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list);
     Ast::StructInstanceExpr*  aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn);
+    Ast::StructInstanceExpr*  aAutoStructInstanceExpr(const Ast::StructDefn& structDefn);
     const Ast::StructDefn*    aEnterStructInstanceExpr(const Ast::StructDefn& structDefn);
+    const Ast::StructDefn*    aEnterAutoStructInstanceExpr(const Ast::Token& pos);
     void                      aLeaveStructInstanceExpr();
     const Ast::VariableDefn*  aEnterStructInitPart(const Ast::Token& name);
-    void                      aLeaveStructInitPart();
+    void                      aLeaveStructInitPart(const Ast::Token& pos);
     Ast::StructInitPartList*  aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part);
     Ast::StructInitPartList*  aStructInitPartList(const Ast::StructInitPart& part);
     Ast::StructInitPartList*  aStructInitPartList();

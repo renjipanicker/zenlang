@@ -445,22 +445,50 @@ inline void Context::addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec
         Ast::Token pos(0, 0, ""); /// \todo remove this
         throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, pos).c_str());
     }
+    printf("addExpectedTypeSpec %s\n", getQualifiedTypeSpecName(qTypeSpec, GenMode::Import).c_str());
     _expectedTypeSpecStack.back().push_back(ptr(qTypeSpec));
 }
 
-inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) {
+inline const Ast::QualifiedTypeSpec* Context::getExpectedTypeSpecIfAny(const size_t& idx) {
     if(_expectedTypeSpecStack.size() == 0) {
-        return ref(qTypeSpec);
+        printf("Context::getExpectedTypeSpecIfAny(1)\n");
+        return 0;
     }
 
     ExpectedTypeSpecList& exl = _expectedTypeSpecStack.back();
     if(idx >= exl.size()) {
-        return ref(qTypeSpec);
+        printf("Context::getExpectedTypeSpecIfAny(2)\n");
+        return 0;
     }
 
     assert(idx < exl.size());
     const Ast::QualifiedTypeSpec* ts = exl.at(idx);
+    printf("Context::getExpectedTypeSpecIfAny(3)\n");
+    return ts;
+}
+
+inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) {
+    const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny(idx);
+    if(ts == 0) {
+        return ref(qTypeSpec);
+    }
     return ref(ts);
+}
+
+const Ast::StructDefn* Context::isStructExpected() {
+    const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny(0);
+    if(qts == 0) {
+        return 0;
+    }
+
+    const Ast::TypeSpec& ts = ref(qts).typeSpec();
+    const Ast::StructDefn* sd = dynamic_cast<const Ast::StructDefn*>(ptr(ts));
+    if(sd == 0) {
+        return 0;
+    }
+
+    printf("isStructExpected: true (%s)\n", getTypeSpecName(ref(sd), GenMode::Import).c_str());
+    return sd;
 }
 
 ////////////////////////////////////////////////////////////
@@ -1364,6 +1392,7 @@ const Ast::Token& Context::aEnterList(const Ast::Token& pos) {
     const Ast::TypeSpec& ts = ref(expectedTypeRef).typeSpec();
     const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(ts));
     if(td) {
+        printf("aEnterList %s\n", getTypeSpecName(ref(td), GenMode::Import).c_str());
         if(ref(td).name().string() == "list") {
             const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
             addExpectedTypeSpec(valType);
@@ -1697,22 +1726,38 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
     throw Exception("%s Not an aggregate type '%s'\n", err(_filename, name).c_str(), typeSpec.name().text());
 }
 
-Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list) {
+Ast::StructInstanceExpr* Context::aAutoStructInstanceExpr(const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list) {
     const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, structDefn, false);
     Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(qTypeSpec, structDefn, list));
     return ptr(structInstanceExpr);
 }
 
-Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn) {
+Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list) {
+    unused(pos);
+    return aAutoStructInstanceExpr(structDefn, list);
+}
+
+Ast::StructInstanceExpr* Context::aAutoStructInstanceExpr(const Ast::StructDefn& structDefn) {
     Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList());
-    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, structDefn, false);
-    Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(qTypeSpec, structDefn, list));
-    return ptr(structInstanceExpr);
+    return aAutoStructInstanceExpr(structDefn, list);
+}
+
+Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn) {
+    unused(pos);
+    return aAutoStructInstanceExpr(structDefn);
 }
 
 const Ast::StructDefn* Context::aEnterStructInstanceExpr(const Ast::StructDefn& structDefn) {
     _structInitStack.push_back(ptr(structDefn));
     return ptr(structDefn);
+}
+
+const Ast::StructDefn* Context::aEnterAutoStructInstanceExpr(const Ast::Token& pos) {
+    const Ast::StructDefn* sd = isStructExpected();
+    if(sd == 0) {
+        throw Exception("%s No struct type expected\n", err(_filename, pos).c_str());
+    }
+    return aEnterStructInstanceExpr(ref(sd));
 }
 
 void Context::aLeaveStructInstanceExpr() {
@@ -1731,6 +1776,9 @@ const Ast::VariableDefn* Context::aEnterStructInitPart(const Ast::Token& name) {
         for(Ast::Scope::List::const_iterator it = sbi.get().list().begin(); it != sbi.get().list().end(); ++it) {
             const Ast::VariableDefn& vdef = ref(*it);
             if(vdef.name().string() == name.string()) {
+                pushExpectedTypeSpec();
+                addExpectedTypeSpec(vdef.qTypeSpec());
+                printf("aEnterStructInitPart: %lu, type %s, name %s\n", _expectedTypeSpecStack.size(), getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Import).c_str(), vdef.name().text());
                 return ptr(vdef);
             }
         }
@@ -1739,7 +1787,9 @@ const Ast::VariableDefn* Context::aEnterStructInitPart(const Ast::Token& name) {
     throw Exception("%s: struct-member '%s' not found in '%s'\n", err(_filename, name).c_str(), name.text(), getTypeSpecName(ref(structDefn), GenMode::Import).c_str());
 }
 
-void Context::aLeaveStructInitPart() {
+void Context::aLeaveStructInitPart(const Ast::Token& pos) {
+    popExpectedTypeSpec(pos);
+    printf("aLeaveStructInitPart: %lu \n", _expectedTypeSpecStack.size());
 }
 
 Ast::StructInitPartList* Context::aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part) {

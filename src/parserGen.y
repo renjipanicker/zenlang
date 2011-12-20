@@ -386,7 +386,7 @@ rInParamsList(L) ::= rParamsList(scope). {L = ref(pctx).aInParamsList(ref(scope)
 // parameter lists
 %type rParamsList {Ast::Scope*}
 rParamsList(L) ::= LBRACKET rParam(R)                    RBRACKET. {L = ref(pctx).aParamsList(ref(R));}
-rParamsList(L) ::= LBRACKET rParam(R) COMMA rPosParam(P) RBRACKET. {L = ref(pctx).aParamsList(ref(R), ref(P));}
+//rParamsList(L) ::= LBRACKET rParam(R) COMMA rPosParam(P) RBRACKET. {L = ref(pctx).aParamsList(ref(R), ref(P));}
 
 //-------------------------------------------------
 // variable lists
@@ -397,15 +397,15 @@ rParam(L) ::= .                                              {L = ref(pctx).aPar
 
 //-------------------------------------------------
 // positional parameter list
-%type rPosParam {Ast::Scope*}
-rPosParam(L) ::= rPosParam(list) COMMA rPosVariableDefn(variableDef). {L = ref(pctx).aParam(ref(list), ref(variableDef));}
-rPosParam(L) ::=                       rPosVariableDefn(variableDef). {L = ref(pctx).aParam(ref(variableDef));}
+//%type rPosParam {Ast::Scope*}
+//rPosParam(L) ::= rPosParam(list) COMMA rPosVariableDefn(variableDef). {L = ref(pctx).aParam(ref(list), ref(variableDef));}
+//rPosParam(L) ::=                       rPosVariableDefn(variableDef). {L = ref(pctx).aParam(ref(variableDef));}
 
 //-------------------------------------------------
-// variable def
-%type rPosVariableDefn {const Ast::VariableDefn*}
-rPosVariableDefn(L) ::= rAutoQualifiedVariableDefn       ID(name) COLON rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
-rPosVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) COLON rExpr(initExpr). {L = ref(pctx).aVariableDefn(ref(qTypeRef), name, ref(initExpr));}
+// positional variable def
+//%type rPosVariableDefn {const Ast::VariableDefn*}
+//rPosVariableDefn(L) ::= rAutoQualifiedVariableDefn       ID(name) COLON rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
+//rPosVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) COLON rExpr(initExpr). {L = ref(pctx).aVariableDefn(ref(qTypeRef), name, ref(initExpr));}
 
 //-------------------------------------------------
 // variable def
@@ -816,7 +816,7 @@ rExpr(L) ::= rTemplateDefnTypeSpec(R) LBRACKET(B) rExprList(M) RBRACKET. {L = re
 rVariableRefExpr(L) ::= ID(I). {L = ref(pctx).aVariableRefExpr(I);}
 
 //-------------------------------------------------
-// variable member expressions
+// variable member expressions, e.g. struct member
 %type rMemberVariableExpr {Ast::MemberExpr*}
 rMemberVariableExpr(L) ::= rExpr(R) DOT ID(M). {L = ref(pctx).aMemberVariableExpr(ref(R), M);}
 
@@ -831,12 +831,11 @@ rTypeSpecMemberExpr(L) ::= rTypeSpec(R) DOT ID(M). {L = ref(pctx).aTypeSpecMembe
 rFunctionInstanceExpr(L) ::= rFunctionTypeSpec(R) LSQUARE rExprList(M) RSQUARE. {L = ref(pctx).aFunctionInstanceExpr(ref(R), ref(M));}
 
 //-------------------------------------------------
-// function instance expressions
+// anonymous function instance expressions
 %type rAnonymousFunctionExpr {Ast::AnonymousFunctionExpr*}
 rAnonymousFunctionExpr(L) ::= rEnterAnonymousFunction(R) rCompoundStatement(C). {L = ref(pctx).aAnonymousFunctionExpr(ref(R), ref(C));}
 
 //-------------------------------------------------
-// function instance expressions
 %type rEnterAnonymousFunction {Ast::ChildFunctionDefn*}
 rEnterAnonymousFunction(L) ::= rFunctionTypeSpec(R). {L = ref(pctx).aEnterAnonymousFunction(ref(R));}
 
@@ -846,6 +845,9 @@ rEnterAnonymousFunction(L) ::= rFunctionTypeSpec(R). {L = ref(pctx).aEnterAnonym
 rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
 rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B)                        rLeaveStructInstanceExpr. {L = ref(pctx).aStructInstanceExpr(B, ref(R));}
 
+rStructInstanceExpr(L) ::= rEnterAutoStructInstanceExpr(R) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(ref(R), ref(P));}
+//rStructInstanceExpr(L) ::= rEnterAutoStructInstanceExpr(R)                        rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(ref(R));}
+
 //-------------------------------------------------
 // special case - struct can be instantiated with {} or () for syntactic equivalence with C/C++.
 rStructInstanceExpr(L) ::= rStructTypeSpec(R) LBRACKET(B) rStructInitPartList(P) RBRACKET. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
@@ -854,6 +856,10 @@ rStructInstanceExpr(L) ::= rStructTypeSpec(R) LBRACKET(B)                       
 //-------------------------------------------------
 %type rEnterStructInstanceExpr {const Ast::StructDefn*}
 rEnterStructInstanceExpr(L) ::= rStructTypeSpec(R). {L = ref(pctx).aEnterStructInstanceExpr(ref(R));}
+
+//-------------------------------------------------
+%type rEnterAutoStructInstanceExpr {const Ast::StructDefn*}
+rEnterAutoStructInstanceExpr(L) ::= LCURLY(R). {L = ref(pctx).aEnterAutoStructInstanceExpr(R);}
 
 //-------------------------------------------------
 rLeaveStructInstanceExpr ::= RCURLY. {ref(pctx).aLeaveStructInstanceExpr();}
@@ -870,7 +876,7 @@ rStructInitPart(L) ::= rEnterStructInitPart(R) COLON rExpr(E) rLeaveStructInitPa
 //-------------------------------------------------
 %type rEnterStructInitPart {const Ast::VariableDefn*}
 rEnterStructInitPart(L) ::= ID(R). {L = ref(pctx).aEnterStructInitPart(R);}
-rLeaveStructInitPart    ::= SEMI. {ref(pctx).aLeaveStructInitPart();}
+rLeaveStructInitPart    ::= SEMI(B). {ref(pctx).aLeaveStructInitPart(B);}
 
 //-------------------------------------------------
 // functor call expressions

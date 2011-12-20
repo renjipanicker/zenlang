@@ -1,5 +1,6 @@
 namespace TestBasic;
 
+/*
 public routine int testNative(const string& s) native;
 
 public routine int testRoutine(const int& x) {
@@ -325,5 +326,23 @@ test testAutoInitList {
     auto dict< string, dict<string, float> > w = ["h":["a":1, "b":2], "i":["c":3, "d":4]];
     unused(w);
 
+    return (true);
+}
+*/
+
+struct MyAutoInnerStruct {
+    name = "";
+};
+
+struct MyAutoStruct {
+    i = 0;
+    s = "";
+    list<float> fl;
+    list<pointer<MyAutoInnerStruct> > lps;
+};
+
+test testAutoInitStruct {
+    auto list<MyAutoStruct> mys = [{i:123; s:"xx";}, {i:456; s:"yy";}];
+    //auto MyAutoStruct mys = {i:123; s:"xx"; fl:[1, 2]; lps:[{name:"n1";}];};
     return (true);
 }

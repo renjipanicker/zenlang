@@ -22,6 +22,7 @@ private:
     inline bool trySendId(Scanner* s, const Ast::TypeSpec* typeSpec);
     inline void sendId(Scanner* s);
     inline void sendLessThan(Scanner* s);
+    inline void sendOpenCurly(Scanner* s);
     inline void sendReturn(Scanner* s);
 
 private:

@@ -146,6 +146,15 @@ inline void Lexer::Impl::sendLessThan(Scanner* s) {
     feedToken(token(s, ZENTOK_LT));
 }
 
+inline void Lexer::Impl::sendOpenCurly(Scanner* s) {
+    printf("sendOpenCurly: _context.isStructExpected() = %lu\n", (unsigned long)_context.isStructExpected());
+    if(_context.isStructExpected()) {
+        feedToken(token(s, ZENTOK_LCURLY_STRUCT));
+        return;
+    }
+    feedToken(token(s, ZENTOK_LCURLY));
+}
+
 inline void Lexer::Impl::sendReturn(Scanner* s) {
     const Ast::RoutineDefn* rd = 0;
     const Ast::RootFunctionDefn* rfd = 0;
@@ -227,7 +236,6 @@ re2c:condenumprefix          = EState;
 <Normal>   "->"    := feedToken(token(s, ZENTOK_RESERVED)); continue;
 <Normal>   "&&"    := feedToken(token(s, ZENTOK_AND)); continue;
 <Normal>   "||"    := feedToken(token(s, ZENTOK_OR)); continue;
-<Normal>   "}"     := feedToken(token(s, ZENTOK_RCURLY)); continue;
 <Normal>   ";"     := feedToken(token(s, ZENTOK_SEMI)); continue;
 <Normal>   "!"     := feedToken(token(s, ZENTOK_NOT)); continue;
 <Normal>   "="     := feedToken(token(s, ZENTOK_ASSIGNEQUAL)); continue;
@@ -245,7 +253,7 @@ re2c:condenumprefix          = EState;
 <Normal>   ")"     := feedToken(token(s, ZENTOK_RBRACKET)); continue;
 <Normal>   "["     := feedToken(token(s, ZENTOK_LSQUARE)); continue;
 <Normal>   "]"     := feedToken(token(s, ZENTOK_RSQUARE)); continue;
-<Normal>   "{"     := feedToken(token(s, ZENTOK_LCURLY)); continue;
+<Normal>   "{"     := sendOpenCurly(s); continue;
 <Normal>   "}"     := feedToken(token(s, ZENTOK_RCURLY)); continue;
 <Normal>   "%"     := feedToken(token(s, ZENTOK_MOD)); continue;
 <Normal>   "<"     := sendLessThan(s); continue;
