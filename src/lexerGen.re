@@ -147,8 +147,9 @@ inline void Lexer::Impl::sendLessThan(Scanner* s) {
 }
 
 inline void Lexer::Impl::sendOpenCurly(Scanner* s) {
-    printf("sendOpenCurly: _context.isStructExpected() = %lu\n", (unsigned long)_context.isStructExpected());
-    if(_context.isStructExpected()) {
+    int level = (_lastToken == ZENTOK_LSQUARE)?1:0;
+    printf("sendOpenCurly: _context.isStructExpected() = %lu\n", (unsigned long)_context.isStructExpected(level));
+    if(_context.isStructExpected(level)) {
         feedToken(token(s, ZENTOK_LCURLY_STRUCT));
         return;
     }
@@ -342,9 +343,11 @@ re2c:condenumprefix          = EState;
 <String>   '\\' .           := continue;
 <String>   [^]              := continue;
 
-<Normal>    "/*"    :=> Comment
-<Comment>   "*" "/" :=> Normal
-<Comment>   [^]     :=> Comment
+<Normal>   "/*"    :=> Comment
+<Comment>  "*" "/" :=> Normal
+<Comment>  "\r" "\n"  => Comment :=  newLine(s); continue;
+<Comment>  "\n"       => Comment :=  newLine(s); continue;
+<Comment>  [^]       :=> Comment
 
 <Normal>      "//"            :=> Skiptoeol
 <Skiptoeol>   "\r" "\n"        => Normal      :=  newLine(s); continue;
