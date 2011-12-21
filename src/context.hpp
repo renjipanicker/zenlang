@@ -7,7 +7,7 @@ class Context {
 public:
     typedef std::list<Ast::TypeSpec*> TypeSpecStack;
     typedef std::vector<const Ast::QualifiedTypeSpec*> ExpectedTypeSpecList;
-    typedef std::list<ExpectedTypeSpecList> ExpectedTypeSpecStack;
+    typedef std::vector<ExpectedTypeSpecList> ExpectedTypeSpecStack;
 public:
     Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename);
     ~Context();
@@ -15,7 +15,8 @@ public:
 public:
     inline const std::string& filename() const {return _filename;}
     const Ast::TypeSpec* currentTypeRefHasChild(const Ast::Token& name) const;
-    const Ast::StructDefn* isStructExpected();
+    const Ast::StructDefn* isStructExpected() const;
+    const Ast::StructDefn* isListOfStructExpected() const;
 
 private:
     inline Ast::ExprList& addExprList();
@@ -69,8 +70,9 @@ private:
     inline void addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec);
     inline void pushExpectedTypeSpec();
     inline void popExpectedTypeSpec(const Ast::Token& pos);
-    inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny(const size_t& idx);
-    inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx);
+    inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny(const size_t& idx) const;
+    inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const;
+    inline const Ast::TemplateDefn* isEnteringList() const;
 
 private:
     Compiler& _compiler;

@@ -859,7 +859,7 @@ rEnterStructInstanceExpr(L) ::= rStructTypeSpec(R). {L = ref(pctx).aEnterStructI
 
 //-------------------------------------------------
 %type rEnterAutoStructInstanceExpr {const Ast::StructDefn*}
-rEnterAutoStructInstanceExpr(L) ::= LCURLY(R). {L = ref(pctx).aEnterAutoStructInstanceExpr(R);}
+rEnterAutoStructInstanceExpr(L) ::= LCURLY_STRUCT(R). {L = ref(pctx).aEnterAutoStructInstanceExpr(R);}
 
 //-------------------------------------------------
 rLeaveStructInstanceExpr ::= RCURLY. {ref(pctx).aLeaveStructInstanceExpr();}

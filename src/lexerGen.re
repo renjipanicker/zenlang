@@ -147,12 +147,20 @@ inline void Lexer::Impl::sendLessThan(Scanner* s) {
 }
 
 inline void Lexer::Impl::sendOpenCurly(Scanner* s) {
-    int level = (_lastToken == ZENTOK_LSQUARE)?1:0;
-    printf("sendOpenCurly: _context.isStructExpected() = %lu\n", (unsigned long)_context.isStructExpected(level));
-    if(_context.isStructExpected(level)) {
-        feedToken(token(s, ZENTOK_LCURLY_STRUCT));
-        return;
+    printf("sendOpenCurly: _context.isStructExpected() = %lu\n", (unsigned long)_context.isStructExpected());
+    printf("sendOpenCurly: _context.isListOfStructExpected() = %lu\n", (unsigned long)_context.isListOfStructExpected());
+    if(_lastToken == ZENTOK_LSQUARE) {
+        if(_context.isListOfStructExpected()) {
+            feedToken(token(s, ZENTOK_LCURLY_STRUCT));
+            return;
+        }
+    } else {
+        if(_context.isStructExpected()) {
+            feedToken(token(s, ZENTOK_LCURLY_STRUCT));
+            return;
+        }
     }
+
     feedToken(token(s, ZENTOK_LCURLY));
 }
 

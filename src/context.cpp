@@ -445,29 +445,25 @@ inline void Context::addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec
         Ast::Token pos(0, 0, ""); /// \todo remove this
         throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, pos).c_str());
     }
-    printf("addExpectedTypeSpec %s\n", getQualifiedTypeSpecName(qTypeSpec, GenMode::Import).c_str());
     _expectedTypeSpecStack.back().push_back(ptr(qTypeSpec));
 }
 
-inline const Ast::QualifiedTypeSpec* Context::getExpectedTypeSpecIfAny(const size_t& idx) {
+inline const Ast::QualifiedTypeSpec* Context::getExpectedTypeSpecIfAny(const size_t& idx) const {
     if(_expectedTypeSpecStack.size() == 0) {
-        printf("Context::getExpectedTypeSpecIfAny(1)\n");
         return 0;
     }
 
-    ExpectedTypeSpecList& exl = _expectedTypeSpecStack.back();
+    const ExpectedTypeSpecList& exl = _expectedTypeSpecStack.back();
     if(idx >= exl.size()) {
-        printf("Context::getExpectedTypeSpecIfAny(2)\n");
         return 0;
     }
 
     assert(idx < exl.size());
     const Ast::QualifiedTypeSpec* ts = exl.at(idx);
-    printf("Context::getExpectedTypeSpecIfAny(3)\n");
     return ts;
 }
 
-inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) {
+inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const {
     const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny(idx);
     if(ts == 0) {
         return ref(qTypeSpec);
@@ -475,7 +471,31 @@ inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::Qua
     return ref(ts);
 }
 
-const Ast::StructDefn* Context::isStructExpected() {
+inline const Ast::TemplateDefn* Context::isEnteringList() const {
+    if(_expectedTypeSpecStack.size() == 0) {
+        return 0;
+    }
+
+    const ExpectedTypeSpecList& exl = _expectedTypeSpecStack.back();
+    if(exl.size() == 0) {
+        return 0;
+    }
+
+    const Ast::QualifiedTypeSpec* expectedTypeRef = exl.back();
+    const Ast::TypeSpec& ts = ref(expectedTypeRef).typeSpec();
+    const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(ts));
+    if(td) {
+        if(ref(td).name().string() == "list") {
+            return td;
+        }
+        if(ref(td).name().string() == "dict") {
+            return td;
+        }
+    }
+    return 0;
+}
+
+const Ast::StructDefn* Context::isStructExpected() const {
     const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny(0);
     if(qts == 0) {
         return 0;
@@ -487,7 +507,23 @@ const Ast::StructDefn* Context::isStructExpected() {
         return 0;
     }
 
-    printf("isStructExpected: true (%s)\n", getTypeSpecName(ref(sd), GenMode::Import).c_str());
+    return sd;
+}
+
+const Ast::StructDefn* Context::isListOfStructExpected() const {
+    const Ast::TemplateDefn* td = isEnteringList();
+    const Ast::StructDefn* sd = 0;
+    if(td) {
+        if(ref(td).name().string() == "list") {
+            const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
+            sd = dynamic_cast<const Ast::StructDefn*>(ptr(valType.typeSpec()));
+        } else if(ref(td).name().string() == "dict") {
+            const Ast::QualifiedTypeSpec& valType = ref(td).at(1);
+            sd = dynamic_cast<const Ast::StructDefn*>(ptr(valType.typeSpec()));
+        } else {
+            assert(false);
+        }
+    }
     return sd;
 }
 
@@ -1376,34 +1412,20 @@ Ast::DictItem* Context::aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& val
 }
 
 const Ast::Token& Context::aEnterList(const Ast::Token& pos) {
-    if(_expectedTypeSpecStack.size() == 0) {
-        pushExpectedTypeSpec();
-        return pos;
-    }
-
-    ExpectedTypeSpecList& exl = _expectedTypeSpecStack.back();
+    const Ast::TemplateDefn* td = isEnteringList();
     pushExpectedTypeSpec();
-    if(exl.size() == 0) {
-        return pos;
-    }
-
-    const Ast::QualifiedTypeSpec* expectedTypeRef = exl.back();
-
-    const Ast::TypeSpec& ts = ref(expectedTypeRef).typeSpec();
-    const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(ts));
     if(td) {
         printf("aEnterList %s\n", getTypeSpecName(ref(td), GenMode::Import).c_str());
         if(ref(td).name().string() == "list") {
             const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
             addExpectedTypeSpec(valType);
-            return pos;
-        }
-        if(ref(td).name().string() == "dict") {
+        } else if(ref(td).name().string() == "dict") {
             const Ast::QualifiedTypeSpec& keyType = ref(td).at(0);
             addExpectedTypeSpec(keyType);
             const Ast::QualifiedTypeSpec& valType = ref(td).at(1);
             addExpectedTypeSpec(valType);
-            return pos;
+        } else {
+            assert(false);
         }
     }
 
