@@ -410,15 +410,22 @@ rParam(L) ::= .                                              {L = ref(pctx).aPar
 //-------------------------------------------------
 // variable def
 %type rVariableDefn {const Ast::VariableDefn*}
-rVariableDefn(L) ::= rAutoQualifiedVariableDefn       ID(name) ASSIGNEQUAL rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
-rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name).                             {L = ref(pctx).aVariableDefn(ref(qTypeRef), name);}
-rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) ASSIGNEQUAL rExpr(initExpr). {L = ref(pctx).aVariableDefn(ref(qTypeRef), name, ref(initExpr));}
+rVariableDefn(L) ::= rAutoQualifiedVariableDefn       ID(name) rVariableDefnAssign rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
+rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name).                                     {L = ref(pctx).aVariableDefn(ref(qTypeRef), name);}
+rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) rVariableDefnAssign rExpr(initExpr). {L = ref(pctx).aVariableDefn(ref(qTypeRef), name, ref(initExpr));}
 
 //-------------------------------------------------
 // qualified variable def
 %type rQualifiedVariableDefn {const Ast::QualifiedTypeSpec*}
 rQualifiedVariableDefn(L) ::= rQualifiedTypeSpec(R). {L = ref(pctx).aQualifiedVariableDefn(ref(R));}
+
+//-------------------------------------------------
+// auto qualified variable def
 rAutoQualifiedVariableDefn ::= . {ref(pctx).aAutoQualifiedVariableDefn();}
+
+//-------------------------------------------------
+// auto qualified variable def
+rVariableDefnAssign ::= ASSIGNEQUAL. {ref(pctx).aVariableDefnAssign();}
 
 //-------------------------------------------------
 // qualified types

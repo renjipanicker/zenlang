@@ -471,7 +471,7 @@ inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::Qua
     return ref(ts);
 }
 
-inline const Ast::TemplateDefn* Context::isEnteringList() const {
+inline const Ast::TemplateDefn* Context::isEnteringTemplate() const {
     if(_expectedTypeSpecStack.size() == 0) {
         return 0;
     }
@@ -484,13 +484,18 @@ inline const Ast::TemplateDefn* Context::isEnteringList() const {
     const Ast::QualifiedTypeSpec* expectedTypeRef = exl.back();
     const Ast::TypeSpec& ts = ref(expectedTypeRef).typeSpec();
     const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(ts));
+    return td;
+}
+
+inline const Ast::TemplateDefn* Context::isEnteringList() const {
+    const Ast::TemplateDefn* td = isEnteringTemplate();
     if(td) {
         if(ref(td).name().string() == "list") {
             return td;
         }
-        if(ref(td).name().string() == "dict") {
-            return td;
-        }
+//        if(ref(td).name().string() == "dict") {
+//            return td;
+//        }
     }
     return 0;
 }
@@ -510,6 +515,18 @@ const Ast::StructDefn* Context::isStructExpected() const {
     return sd;
 }
 
+const Ast::StructDefn* Context::isPointerToStructExpected() const {
+    const Ast::TemplateDefn* td = isEnteringTemplate();
+    const Ast::StructDefn* sd = 0;
+    if(td) {
+        if(ref(td).name().string() == "pointer") {
+            const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
+            sd = dynamic_cast<const Ast::StructDefn*>(ptr(valType.typeSpec()));
+        }
+    }
+    return sd;
+}
+
 const Ast::StructDefn* Context::isListOfStructExpected() const {
     const Ast::TemplateDefn* td = isEnteringList();
     const Ast::StructDefn* sd = 0;
@@ -517,9 +534,29 @@ const Ast::StructDefn* Context::isListOfStructExpected() const {
         if(ref(td).name().string() == "list") {
             const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
             sd = dynamic_cast<const Ast::StructDefn*>(ptr(valType.typeSpec()));
-        } else if(ref(td).name().string() == "dict") {
-            const Ast::QualifiedTypeSpec& valType = ref(td).at(1);
-            sd = dynamic_cast<const Ast::StructDefn*>(ptr(valType.typeSpec()));
+//        } else if(ref(td).name().string() == "dict") {
+//            const Ast::QualifiedTypeSpec& valType = ref(td).at(1);
+//            sd = dynamic_cast<const Ast::StructDefn*>(ptr(valType.typeSpec()));
+        } else {
+            assert(false);
+        }
+    }
+    return sd;
+}
+
+const Ast::StructDefn* Context::isListOfPointerToStructExpected() const {
+    const Ast::TemplateDefn* td = isEnteringList();
+    const Ast::StructDefn* sd = 0;
+    if(td) {
+        if(ref(td).name().string() == "list") {
+            const Ast::QualifiedTypeSpec& innerType = ref(td).at(0);
+            const Ast::TemplateDefn* td1 = dynamic_cast<const Ast::TemplateDefn*>(ptr(innerType.typeSpec()));
+            if(td1) {
+                if(ref(td1).name().string() == "pointer") {
+                    const Ast::QualifiedTypeSpec& valType = ref(td1).at(0);
+                    sd = dynamic_cast<const Ast::StructDefn*>(ptr(valType.typeSpec()));
+                }
+            }
         } else {
             assert(false);
         }
@@ -528,7 +565,7 @@ const Ast::StructDefn* Context::isListOfStructExpected() const {
 }
 
 ////////////////////////////////////////////////////////////
-Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0) {
+Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0), _isExpecting(0) {
     Ast::Root& rootTypeSpec = getRootNamespace();
     enterTypeSpec(rootTypeSpec);
 }
@@ -954,6 +991,7 @@ Ast::Scope* Context::aParam() {
 Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr) {
     Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
     popExpectedTypeSpec(name);
+    resetExpecting();
     return ptr(variableDef);
 }
 
@@ -970,11 +1008,17 @@ Ast::VariableDefn* Context::aVariableDefn(const Ast::Token& name, const Ast::Exp
 const Ast::QualifiedTypeSpec* Context::aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qTypeSpec) {
     pushExpectedTypeSpec();
     addExpectedTypeSpec(qTypeSpec);
+    setExpecting();
     return ptr(qTypeSpec);
 }
 
 void Context::aAutoQualifiedVariableDefn() {
     pushExpectedTypeSpec();
+}
+
+void Context::aVariableDefnAssign() {
+    printf("_expecting: %d\n", _isExpecting);
+    incExpecting();
 }
 
 Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef) {
@@ -1776,10 +1820,14 @@ const Ast::StructDefn* Context::aEnterStructInstanceExpr(const Ast::StructDefn& 
 
 const Ast::StructDefn* Context::aEnterAutoStructInstanceExpr(const Ast::Token& pos) {
     const Ast::StructDefn* sd = isStructExpected();
-    if(sd == 0) {
-        throw Exception("%s No struct type expected\n", err(_filename, pos).c_str());
+    if(sd) {
+        return aEnterStructInstanceExpr(ref(sd));
     }
-    return aEnterStructInstanceExpr(ref(sd));
+    sd = isPointerToStructExpected();
+    if(sd) {
+        return aEnterStructInstanceExpr(ref(sd));
+    }
+    throw Exception("%s No struct type expected\n", err(_filename, pos).c_str());
 }
 
 void Context::aLeaveStructInstanceExpr() {

@@ -16,7 +16,15 @@ public:
     inline const std::string& filename() const {return _filename;}
     const Ast::TypeSpec* currentTypeRefHasChild(const Ast::Token& name) const;
     const Ast::StructDefn* isStructExpected() const;
+    const Ast::StructDefn* isPointerToStructExpected() const;
     const Ast::StructDefn* isListOfStructExpected() const;
+    const Ast::StructDefn* isListOfPointerToStructExpected() const;
+    inline const int& isExpecting() const {return _isExpecting;}
+    inline void resetExpecting() {assert((_isExpecting == 1) || (_isExpecting == 2)); _isExpecting = 0;}
+
+private:
+    inline void setExpecting() {assert(_isExpecting == 0); _isExpecting = 1;}
+    inline void incExpecting() {assert((_isExpecting == 0) || (_isExpecting == 1)); ++_isExpecting;}
 
 private:
     inline Ast::ExprList& addExprList();
@@ -73,6 +81,7 @@ private:
     inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny(const size_t& idx) const;
     inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const;
     inline const Ast::TemplateDefn* isEnteringList() const;
+    inline const Ast::TemplateDefn* isEnteringTemplate() const;
 
 private:
     Compiler& _compiler;
@@ -95,6 +104,7 @@ private:
     const Ast::TypeSpec* _currentTypeRef;
     const Ast::TypeSpec* _currentImportedTypeRef;
     ExpectedTypeSpecStack _expectedTypeSpecStack;
+    int _isExpecting;
 
 public:
     void                     aUnitStatementList(const Ast::EnterNamespaceStatement& ns);
@@ -159,6 +169,7 @@ public:
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr);
     const Ast::QualifiedTypeSpec* aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec);
     void                          aAutoQualifiedVariableDefn();
+    void                     aVariableDefnAssign();
     Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
     const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
     const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::Token& name);
