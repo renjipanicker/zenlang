@@ -21,11 +21,6 @@ public:
     const Ast::StructDefn* isPointerToStructExpected() const;
     const Ast::StructDefn* isListOfStructExpected() const;
     const Ast::StructDefn* isListOfPointerToStructExpected() const;
-    inline const int& isExpecting() const {return _isExpecting;}
-    inline void resetExpecting() {assert((_isExpecting == 0) || (_isExpecting == 1)); _isExpecting = 0;}
-
-private:
-    inline void setExpecting() {assert(_isExpecting == 0); _isExpecting = 1;}
 
 private:
     inline Ast::ExprList& addExprList();
@@ -107,7 +102,6 @@ private:
     const Ast::TypeSpec* _currentTypeRef;
     const Ast::TypeSpec* _currentImportedTypeRef;
     ExpectedTypeSpecStack _expectedTypeSpecStack;
-    int _isExpecting;
 
 public:
     void                     aUnitStatementList(const Ast::EnterNamespaceStatement& ns);

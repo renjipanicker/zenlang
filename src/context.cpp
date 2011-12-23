@@ -574,7 +574,7 @@ const Ast::StructDefn* Context::isListOfPointerToStructExpected() const {
 }
 
 ////////////////////////////////////////////////////////////
-Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0), _isExpecting(0) {
+Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0) {
     Ast::Root& rootTypeSpec = getRootNamespace();
     enterTypeSpec(rootTypeSpec);
 }
@@ -1000,7 +1000,6 @@ Ast::Scope* Context::aParam() {
 Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr) {
     Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, initExpr));
     popExpectedTypeSpec(name);
-    resetExpecting();
     return ptr(variableDef);
 }
 
@@ -1017,7 +1016,6 @@ Ast::VariableDefn* Context::aVariableDefn(const Ast::Token& name, const Ast::Exp
 const Ast::QualifiedTypeSpec* Context::aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qTypeSpec) {
     pushExpectedTypeSpec();
     addExpectedTypeSpec(qTypeSpec);
-    setExpecting();
     return ptr(qTypeSpec);
 }
 
