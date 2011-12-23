@@ -342,12 +342,12 @@ struct MyAutoStruct {
 };
 
 test testAutoInitStruct {
-    //auto MyAutoStruct ps = {i:3;};
-    //auto list<MyAutoStruct> mys = [{i:123; s:"xx";fl:[1,2];}, {i:456; s:"yy";fl:[3,4];}];
-    //auto pointer<MyAutoStruct> ps = &MyAutoStruct{i:3;};
-    auto pointer<MyAutoStruct> ps = {i:3;};
+    auto MyAutoStruct aps = auto {i:3;};
+    auto list<MyAutoStruct> als = [ auto {i:123; s:"xx";fl:[1,2];}, auto {i:456; s:"yy";fl:[3,4];}];
+    auto pointer<MyAutoStruct> pps = &MyAutoStruct{i:3;};
+    auto pointer<MyAutoStruct> apps = auto {i:3;};
     auto list< pointer<MyAutoStruct> > lps = [&MyAutoStruct{i:4;}];
-    //auto list< pointer<MyAutoStruct> > lps = [{i:4;}];
+    auto list< pointer<MyAutoStruct> > alps = [auto {i:4;}];
     //auto MyAutoStruct mys = {i:123; s:"xx"; fl:[1, 2]; lps:[{name:"n1";}];};
     return (true);
 }

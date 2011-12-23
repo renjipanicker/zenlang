@@ -410,9 +410,9 @@ rParam(L) ::= .                                              {L = ref(pctx).aPar
 //-------------------------------------------------
 // variable def
 %type rVariableDefn {const Ast::VariableDefn*}
-rVariableDefn(L) ::= rAutoQualifiedVariableDefn       ID(name) rVariableDefnAssign rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
-rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name).                                     {L = ref(pctx).aVariableDefn(ref(qTypeRef), name);}
-rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) rVariableDefnAssign rExpr(initExpr). {L = ref(pctx).aVariableDefn(ref(qTypeRef), name, ref(initExpr));}
+rVariableDefn(L) ::= rAutoQualifiedVariableDefn       ID(name) ASSIGNEQUAL rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
+rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name).                             {L = ref(pctx).aVariableDefn(ref(qTypeRef), name);}
+rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) ASSIGNEQUAL rExpr(initExpr). {L = ref(pctx).aVariableDefn(ref(qTypeRef), name, ref(initExpr));}
 
 //-------------------------------------------------
 // qualified variable def
@@ -422,10 +422,6 @@ rQualifiedVariableDefn(L) ::= rQualifiedTypeSpec(R). {L = ref(pctx).aQualifiedVa
 //-------------------------------------------------
 // auto qualified variable def
 rAutoQualifiedVariableDefn ::= . {ref(pctx).aAutoQualifiedVariableDefn();}
-
-//-------------------------------------------------
-// auto qualified variable def
-rVariableDefnAssign ::= ASSIGNEQUAL. {ref(pctx).aVariableDefnAssign();}
 
 //-------------------------------------------------
 // qualified types
@@ -656,6 +652,7 @@ rExpr(L) ::= rVariableRefExpr(R).       {L = R;}
 rExpr(L) ::= rMemberVariableExpr(R).    {L = R;}
 rExpr(L) ::= rTypeSpecMemberExpr(R).    {L = R;}
 rExpr(L) ::= rStructInstanceExpr(R).    {L = R;}
+rExpr(L) ::= rAutoStructInstanceExpr(R).{L = R;}
 rExpr(L) ::= rFunctionInstanceExpr(R).  {L = R;}
 rExpr(L) ::= rAnonymousFunctionExpr(R). {L = R;}
 rExpr(L) ::= rConstantExpr(R).          {L = R;}
@@ -852,8 +849,11 @@ rEnterAnonymousFunction(L) ::= rFunctionTypeSpec(R). {L = ref(pctx).aEnterAnonym
 rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
 rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B)                        rLeaveStructInstanceExpr. {L = ref(pctx).aStructInstanceExpr(B, ref(R));}
 
-rStructInstanceExpr(L) ::= rEnterAutoStructInstanceExpr(R) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(ref(R), ref(P));}
-//rStructInstanceExpr(L) ::= rEnterAutoStructInstanceExpr(R)                        rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(ref(R));}
+//-------------------------------------------------
+// auto struct instance expressions
+%type rAutoStructInstanceExpr {Ast::Expr*}
+rAutoStructInstanceExpr(L) ::= AUTO(B) rEnterAutoStructInstanceExpr(R) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(B, ref(R), ref(P));}
+rAutoStructInstanceExpr(L) ::= AUTO(B) rEnterAutoStructInstanceExpr(R)                        rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(B, ref(R));}
 
 //-------------------------------------------------
 // special case - struct can be instantiated with {} or () for syntactic equivalence with C/C++.
@@ -866,7 +866,7 @@ rEnterStructInstanceExpr(L) ::= rStructTypeSpec(R). {L = ref(pctx).aEnterStructI
 
 //-------------------------------------------------
 %type rEnterAutoStructInstanceExpr {const Ast::StructDefn*}
-rEnterAutoStructInstanceExpr(L) ::= LCURLY_STRUCT(R). {L = ref(pctx).aEnterAutoStructInstanceExpr(R);}
+rEnterAutoStructInstanceExpr(L) ::= LCURLY(R). {L = ref(pctx).aEnterAutoStructInstanceExpr(R);}
 
 //-------------------------------------------------
 rLeaveStructInstanceExpr ::= RCURLY. {ref(pctx).aLeaveStructInstanceExpr();}

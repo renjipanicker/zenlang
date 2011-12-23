@@ -15,16 +15,17 @@ public:
 public:
     inline const std::string& filename() const {return _filename;}
     const Ast::TypeSpec* currentTypeRefHasChild(const Ast::Token& name) const;
+
+public:
     const Ast::StructDefn* isStructExpected() const;
     const Ast::StructDefn* isPointerToStructExpected() const;
     const Ast::StructDefn* isListOfStructExpected() const;
     const Ast::StructDefn* isListOfPointerToStructExpected() const;
     inline const int& isExpecting() const {return _isExpecting;}
-    inline void resetExpecting() {assert((_isExpecting == 1) || (_isExpecting == 2)); _isExpecting = 0;}
+    inline void resetExpecting() {assert((_isExpecting == 0) || (_isExpecting == 1)); _isExpecting = 0;}
 
 private:
     inline void setExpecting() {assert(_isExpecting == 0); _isExpecting = 1;}
-    inline void incExpecting() {assert((_isExpecting == 0) || (_isExpecting == 1)); ++_isExpecting;}
 
 private:
     inline Ast::ExprList& addExprList();
@@ -80,6 +81,8 @@ private:
     inline void popExpectedTypeSpec(const Ast::Token& pos);
     inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny(const size_t& idx) const;
     inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const;
+
+private:
     inline const Ast::TemplateDefn* isEnteringList() const;
     inline const Ast::TemplateDefn* isEnteringTemplate() const;
 
@@ -168,8 +171,7 @@ public:
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr);
     const Ast::QualifiedTypeSpec* aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec);
-    void                          aAutoQualifiedVariableDefn();
-    void                     aVariableDefnAssign();
+    void                     aAutoQualifiedVariableDefn();
     Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
     const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
     const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::Token& name);
@@ -272,10 +274,10 @@ public:
     Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);
     Ast::MemberExpr*          aMemberVariableExpr(const Ast::Expr& expr, const Ast::Token& name);
     Ast::TypeSpecMemberExpr*  aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
-    Ast::StructInstanceExpr*  aAutoStructInstanceExpr(const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list);
     Ast::StructInstanceExpr*  aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list);
     Ast::StructInstanceExpr*  aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn);
-    Ast::StructInstanceExpr*  aAutoStructInstanceExpr(const Ast::StructDefn& structDefn);
+    Ast::Expr*                aAutoStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list);
+    Ast::Expr*                aAutoStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn);
     const Ast::StructDefn*    aEnterStructInstanceExpr(const Ast::StructDefn& structDefn);
     const Ast::StructDefn*    aEnterAutoStructInstanceExpr(const Ast::Token& pos);
     void                      aLeaveStructInstanceExpr();

@@ -1016,11 +1016,6 @@ void Context::aAutoQualifiedVariableDefn() {
     pushExpectedTypeSpec();
 }
 
-void Context::aVariableDefnAssign() {
-    printf("_expecting: %d\n", _isExpecting);
-    incExpecting();
-}
-
 Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef) {
     Ast::QualifiedTypeSpec& qualifiedTypeSpec = addQualifiedTypeSpec(isConst, typeSpec, isRef);
     return ptr(qualifiedTypeSpec);
@@ -1459,7 +1454,6 @@ const Ast::Token& Context::aEnterList(const Ast::Token& pos) {
     const Ast::TemplateDefn* td = isEnteringList();
     pushExpectedTypeSpec();
     if(td) {
-        printf("aEnterList %s\n", getTypeSpecName(ref(td), GenMode::Import).c_str());
         if(ref(td).name().string() == "list") {
             const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
             addExpectedTypeSpec(valType);
@@ -1792,25 +1786,34 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
     throw Exception("%s Not an aggregate type '%s'\n", err(_filename, name).c_str(), typeSpec.name().text());
 }
 
-Ast::StructInstanceExpr* Context::aAutoStructInstanceExpr(const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list) {
+Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list) {
+    unused(pos);
     const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, structDefn, false);
     Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(qTypeSpec, structDefn, list));
     return ptr(structInstanceExpr);
 }
 
-Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list) {
-    unused(pos);
-    return aAutoStructInstanceExpr(structDefn, list);
-}
-
-Ast::StructInstanceExpr* Context::aAutoStructInstanceExpr(const Ast::StructDefn& structDefn) {
-    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList());
-    return aAutoStructInstanceExpr(structDefn, list);
-}
-
 Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn) {
-    unused(pos);
-    return aAutoStructInstanceExpr(structDefn);
+    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList());
+    return aStructInstanceExpr(pos, structDefn, list);
+}
+
+Ast::Expr* Context::aAutoStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list) {
+    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, structDefn, false);
+    Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(qTypeSpec, structDefn, list));
+
+    const Ast::StructDefn* sd = isPointerToStructExpected();
+    if(sd) {
+        Ast::PointerInstanceExpr* expr = aPointerInstanceExpr(pos, structInstanceExpr);
+        return expr;
+    }
+
+    return ptr(structInstanceExpr);
+}
+
+Ast::Expr* Context::aAutoStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn) {
+    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList());
+    return aAutoStructInstanceExpr(pos, structDefn, list);
 }
 
 const Ast::StructDefn* Context::aEnterStructInstanceExpr(const Ast::StructDefn& structDefn) {
@@ -1848,7 +1851,6 @@ const Ast::VariableDefn* Context::aEnterStructInitPart(const Ast::Token& name) {
             if(vdef.name().string() == name.string()) {
                 pushExpectedTypeSpec();
                 addExpectedTypeSpec(vdef.qTypeSpec());
-                printf("aEnterStructInitPart: %lu, type %s, name %s\n", _expectedTypeSpecStack.size(), getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Import).c_str(), vdef.name().text());
                 return ptr(vdef);
             }
         }
@@ -1859,7 +1861,6 @@ const Ast::VariableDefn* Context::aEnterStructInitPart(const Ast::Token& name) {
 
 void Context::aLeaveStructInitPart(const Ast::Token& pos) {
     popExpectedTypeSpec(pos);
-    printf("aLeaveStructInitPart: %lu \n", _expectedTypeSpecStack.size());
 }
 
 Ast::StructInitPartList* Context::aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part) {
