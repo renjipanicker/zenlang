@@ -493,9 +493,9 @@ inline const Ast::TemplateDefn* Context::isEnteringList() const {
         if(ref(td).name().string() == "list") {
             return td;
         }
-//        if(ref(td).name().string() == "dict") {
-//            return td;
-//        }
+        if(ref(td).name().string() == "dict") {
+            return td;
+        }
     }
     return 0;
 }
@@ -534,9 +534,9 @@ const Ast::StructDefn* Context::isListOfStructExpected() const {
         if(ref(td).name().string() == "list") {
             const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
             sd = dynamic_cast<const Ast::StructDefn*>(ptr(valType.typeSpec()));
-//        } else if(ref(td).name().string() == "dict") {
-//            const Ast::QualifiedTypeSpec& valType = ref(td).at(1);
-//            sd = dynamic_cast<const Ast::StructDefn*>(ptr(valType.typeSpec()));
+        } else if(ref(td).name().string() == "dict") {
+            const Ast::QualifiedTypeSpec& valType = ref(td).at(1);
+            sd = dynamic_cast<const Ast::StructDefn*>(ptr(valType.typeSpec()));
         } else {
             assert(false);
         }
@@ -550,6 +550,15 @@ const Ast::StructDefn* Context::isListOfPointerToStructExpected() const {
     if(td) {
         if(ref(td).name().string() == "list") {
             const Ast::QualifiedTypeSpec& innerType = ref(td).at(0);
+            const Ast::TemplateDefn* td1 = dynamic_cast<const Ast::TemplateDefn*>(ptr(innerType.typeSpec()));
+            if(td1) {
+                if(ref(td1).name().string() == "pointer") {
+                    const Ast::QualifiedTypeSpec& valType = ref(td1).at(0);
+                    sd = dynamic_cast<const Ast::StructDefn*>(ptr(valType.typeSpec()));
+                }
+            }
+        } else if(ref(td).name().string() == "dict") {
+            const Ast::QualifiedTypeSpec& innerType = ref(td).at(1);
             const Ast::TemplateDefn* td1 = dynamic_cast<const Ast::TemplateDefn*>(ptr(innerType.typeSpec()));
             if(td1) {
                 if(ref(td1).name().string() == "pointer") {

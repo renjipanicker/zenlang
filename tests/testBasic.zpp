@@ -1,6 +1,5 @@
 namespace TestBasic;
 
-/*
 public routine int testNative(const string& s) native;
 
 public routine int testRoutine(const int& x) {
@@ -328,7 +327,6 @@ test testAutoInitList {
 
     return (true);
 }
-*/
 
 struct MyAutoInnerStruct {
     name = "";
