@@ -1,7 +1,6 @@
 anchor
 menubar
 
-infer type of rhs in struct-init
 infer type of expr in function-call
 infer type of event-handler
 
@@ -193,3 +192,5 @@ bug-fix - unit test runs functions multiple times
 infer type of rhs in auto-statement, struct-defn, for-init
 bug-fix - lexer does not recognize newlines in comments, screws up line numbering
 infer type of rhs in auto-statement for list of struct's.
+infer type of rhs in struct-init
+infer pointer-type of rhs

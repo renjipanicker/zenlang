@@ -3,7 +3,6 @@
 <language name="zenlang" section="Sources"
           version="0.00" kateversion="2.4"
           indenter="cstyle"
-          mimetype="text/plain"
           extensions="*.zpp;*.ipp"
           priority="9">
 <!--

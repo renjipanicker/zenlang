@@ -19,3 +19,10 @@ inline const Ast::TypeSpec* resolveTypedef(const Ast::TypeSpec& typeSpec) {
     }
     return subType;
 }
+
+template <typename T>
+inline const T* resolveTypedefT(const Ast::TypeSpec& typeSpec) {
+    const Ast::TypeSpec* ts = resolveTypedef(typeSpec);
+    const T* td = dynamic_cast<const T*>(ts);
+    return td;
+}

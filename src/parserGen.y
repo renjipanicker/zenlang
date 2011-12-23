@@ -733,7 +733,7 @@ rListList(L) ::= rListsList(R)      . {L = R;}
 rListList(L) ::= rListsList(R) COMMA. {L = R;}
 
 %type rListsList {Ast::ListList*}
-rListsList(L)  ::= rListsList(R) COMMA(B) rListItem(I).          {L = ref(pctx).aListList(B, ref(R), ref(I));}
+rListsList(L)  ::= rListsList(R) COMMA(B) rListItem(I).      {L = ref(pctx).aListList(B, ref(R), ref(I));}
 rListsList(L)  ::=      rEnterList(B) rListItem(I).          {L = ref(pctx).aListList(B, ref(I));}
 rListsList(L)  ::=      rEnterList(B) rQualifiedTypeSpec(Q). {L = ref(pctx).aListList(B, ref(Q));}
 rListsList(L)  ::=      rEnterList(B)                      . {L = ref(pctx).aListList(B);}
@@ -878,7 +878,7 @@ rStructInitPartList(L) ::=                        rStructInitPart(P). {L = ref(p
 
 //-------------------------------------------------
 %type rStructInitPart {Ast::StructInitPart*}
-rStructInitPart(L) ::= rEnterStructInitPart(R) COLON rExpr(E) rLeaveStructInitPart. {L = ref(pctx).aStructInitPart(ref(R), ref(E));}
+rStructInitPart(L) ::= rEnterStructInitPart(R) COLON(B) rExpr(E) rLeaveStructInitPart. {L = ref(pctx).aStructInitPart(B, ref(R), ref(E));}
 
 //-------------------------------------------------
 %type rEnterStructInitPart {const Ast::VariableDefn*}

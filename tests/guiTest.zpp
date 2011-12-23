@@ -7,15 +7,15 @@ include MenuItem;
 include WindowCreator;
 
 main MyMain {
-    auto defn = MainFrame::Definition {
+    auto MainFrame::Definition defn = {
                 name: @mainFrame;
                 title     : "test";
-                position  : Window::Position {x:10;y:10;w:400;h:200;};
+                position  : {x:10;y:10;w:400;h:200;};
                 visible   : true;
-                childList : [ pointer<Widget::Definition>,
+                childList : [
                               &Menu::Definition {
-                                name: @systrayMenu;
-                                childList : [ pointer<Widget::Definition>,
+                                name      : @systrayMenu;
+                                childList : [
                                               &MenuItem::Definition {
                                                   name  : @showItem;
                                                   label : "Show";
@@ -32,7 +32,7 @@ main MyMain {
                               },
 
                               &Systray::Definition {
-                                name: @systray;
+                                name    : @systray;
                                 tooltip : "guiTest";
                                 visible : true;
                               },
@@ -40,14 +40,14 @@ main MyMain {
                               &Button::Definition {
                                 name    : @checkBox;
                                 title   : "Check";
-                                position: Window::Position {x:10;y:10;w:60;h:22;};
-                                left    : Window::Anchor {target:@parent;margin:10;};
+                                position: {x:10;y:10;w:60;h:22;};
+                                left    : {target:@parent;margin:10;};
                               },
 
                               &TextEdit::Definition {
-                                name    : @outputBox;
-                                title:"Output";
-                                position:Window::Position{x:10;y:50;w:300;h:100;};
+                                name     : @outputBox;
+                                title    :"Output";
+                                position :{x:10;y:50;w:300;h:100;};
                                 multiline:true;
                               }
                             ];

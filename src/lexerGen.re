@@ -80,10 +80,6 @@ inline TokenData Lexer::Impl::token(Scanner* s, const int& id) {
 inline void Lexer::Impl::feedToken(const TokenData& t) {
     _parser.feed(t);
     _lastToken = t.id();
-//@    if(_context.isExpecting() == 2) {
-//        _context.resetExpecting();
-//        printf("feedToken: _context.isExpecting() = %lu\n", (unsigned long)_context.isExpecting());
-//    }
 }
 
 inline bool Lexer::Impl::trySendId(Scanner* s, const Ast::TypeSpec* typeSpec) {
@@ -151,11 +147,11 @@ inline void Lexer::Impl::sendLessThan(Scanner* s) {
 }
 
 inline void Lexer::Impl::sendOpenCurly(Scanner* s) {
-//@    printf("sendOpenCurly: _context.isExpecting() = %lu\n", (unsigned long)_context.isExpecting());
-//    if(_context.isExpecting()) {
-//        _context.resetExpecting();
-//        feedToken(token(s, ZENTOK_AUTO));
-//    }
+    if(_context.isStructExpected() || _context.isPointerToStructExpected() || _context.isListOfStructExpected() || _context.isListOfPointerToStructExpected()) {
+        if((_lastToken != ZENTOK_STRUCT_TYPE) && (_lastToken != ZENTOK_AUTO)) {
+            feedToken(token(s, ZENTOK_AUTO));
+        }
+    }
 
     feedToken(token(s, ZENTOK_LCURLY));
 }

@@ -18,14 +18,11 @@ public:
 
 public:
     const Ast::StructDefn* isStructExpected() const;
+    const Ast::TemplateDefn* isPointerExpected() const;
+    const Ast::TemplateDefn* isPointerToExprExpected(const Ast::Expr& expr) const;
     const Ast::StructDefn* isPointerToStructExpected() const;
     const Ast::StructDefn* isListOfStructExpected() const;
     const Ast::StructDefn* isListOfPointerToStructExpected() const;
-    inline const int& isExpecting() const {return _isExpecting;}
-    inline void resetExpecting() {assert((_isExpecting == 0) || (_isExpecting == 1)); _isExpecting = 0;}
-
-private:
-    inline void setExpecting() {assert(_isExpecting == 0); _isExpecting = 1;}
 
 private:
     inline Ast::ExprList& addExprList();
@@ -54,6 +51,8 @@ private:
     inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
     inline const Ast::QualifiedTypeSpec& getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function);
     inline Ast::StructDefn& getCurrentStructDefn(const Ast::Token& pos);
+    inline const Ast::Expr& createPointerExprIfAny(const Ast::Token& pos, const Ast::Expr& initExpr);
+    inline const Ast::TypeSpec* isListOfPointerExpected() const;
 
 private:
     inline Ast::Scope& addScope(const Ast::ScopeType::T& type);
@@ -69,7 +68,8 @@ private:
     inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const std::string& extype);
     template <typename T>
     inline const T* resetCurrentTypeRef(const T& typeSpec);
-    inline const Ast::QualifiedTypeSpec* canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
+    inline const Ast::QualifiedTypeSpec* canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, int& side) const;
+    inline const Ast::QualifiedTypeSpec* canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) const;
     inline const Ast::QualifiedTypeSpec& coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
     inline Ast::VariableDefn& addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
     inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len);
@@ -107,7 +107,6 @@ private:
     const Ast::TypeSpec* _currentTypeRef;
     const Ast::TypeSpec* _currentImportedTypeRef;
     ExpectedTypeSpecStack _expectedTypeSpecStack;
-    int _isExpecting;
 
 public:
     void                     aUnitStatementList(const Ast::EnterNamespaceStatement& ns);
@@ -286,7 +285,7 @@ public:
     Ast::StructInitPartList*  aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part);
     Ast::StructInitPartList*  aStructInitPartList(const Ast::StructInitPart& part);
     Ast::StructInitPartList*  aStructInitPartList();
-    Ast::StructInitPart*      aStructInitPart(const Ast::VariableDefn& vdef, const Ast::Expr& expr);
+    Ast::StructInitPart*      aStructInitPart(const Ast::Token& pos, const Ast::VariableDefn& vdef, const Ast::Expr& initExpr);
     Ast::FunctionInstanceExpr*  aFunctionInstanceExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
     Ast::AnonymousFunctionExpr* aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement);
     Ast::ChildFunctionDefn*   aEnterAnonymousFunction(const Ast::Function& function);

@@ -249,8 +249,8 @@ private:
     virtual void visit(const Ast::IndexExpr& node) {
         std::string at = "at";
 
-        const Ast::TypeSpec* ts = resolveTypedef(node.expr().qTypeSpec().typeSpec());
-        if(dynamic_cast<const Ast::PropertyDecl*>(ts) != 0) {
+        const Ast::PropertyDecl* ts = resolveTypedefT<Ast::PropertyDecl>(node.expr().qTypeSpec().typeSpec());
+        if(ts != 0) {
             at = ref(ts).name().string();
         }
 
