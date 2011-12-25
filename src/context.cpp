@@ -1974,7 +1974,7 @@ Ast::FunctionInstanceExpr* Context::aFunctionInstanceExpr(const Ast::TypeSpec& t
         return ptr(functionInstanceExpr);
     }
 
-    throw Exception("%s: Not a aggregate type '%s'\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());
+    throw Exception("%s: Not a function type '%s'\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());
 }
 
 Ast::AnonymousFunctionExpr* Context::aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement) {
