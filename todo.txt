@@ -4,7 +4,8 @@ menubar
 infer type of expr in function-call
 infer type of event-handler
 
-automatically de-reference pointer on lhs of member-expr
+child-function syntax should be id:base-function {...}
+remove auto keyword in declaration statements
 validate type when de-referencing pointer<>
 iterate (foreach) on string
 put everything in namespaces
@@ -103,6 +104,7 @@ a public function cannot have a private type in its sig
 if a public type contains an imported type, the imported type's header file is public
 multiple code generators: python, php, js, java
 multiple generators: python, php, js, java
+automatically de-reference pointer on lhs of member-expr
 
 *** enum-init-expr
 *** move Formatter to String, Creator to List/Dict
