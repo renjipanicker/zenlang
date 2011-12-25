@@ -600,7 +600,11 @@ rContinueStatement(L) ::= CONTINUE SEMI. {L = ref(pctx).aContinueStatement();}
 
 //-------------------------------------------------
 %type rAddEventHandlerStatement {Ast::AddEventHandlerStatement*}
-rAddEventHandlerStatement(L) ::= rEventTypeSpec(E) LBRACKET rExpr(X) RBRACKET LINK rAnonymousFunctionExpr(F) SEMI. {L = ref(pctx).aAddEventHandlerStatement(ref(E), ref(X), ref(F));}
+rAddEventHandlerStatement(L) ::= rEnterAddEventHandler(E) LBRACKET(B) rExpr(X) RBRACKET LINK rAnonymousFunctionExpr(F) SEMI. {L = ref(pctx).aAddEventHandlerStatement(B, ref(E), ref(X), ref(F));}
+
+//-------------------------------------------------
+%type rEnterAddEventHandler {const Ast::EventDecl*}
+rEnterAddEventHandler(L) ::= rEventTypeSpec(R). {L = ref(pctx).aEnterAddEventHandler(ref(R));}
 
 //-------------------------------------------------
 %type rRoutineReturnStatement {Ast::RoutineReturnStatement*}
@@ -842,6 +846,7 @@ rAnonymousFunctionExpr(L) ::= rEnterAnonymousFunction(R) rCompoundStatement(C). 
 //-------------------------------------------------
 %type rEnterAnonymousFunction {Ast::ChildFunctionDefn*}
 rEnterAnonymousFunction(L) ::= rFunctionTypeSpec(R). {L = ref(pctx).aEnterAnonymousFunction(ref(R));}
+rEnterAnonymousFunction(L) ::= AUTO_FUNCTION(R). {L = ref(pctx).aEnterAutoAnonymousFunction(R);}
 
 //-------------------------------------------------
 // struct instance expressions
@@ -852,8 +857,8 @@ rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B)                
 //-------------------------------------------------
 // auto struct instance expressions
 %type rAutoStructInstanceExpr {Ast::Expr*}
-rAutoStructInstanceExpr(L) ::= AUTO(B) rEnterAutoStructInstanceExpr(R) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(B, ref(R), ref(P));}
-rAutoStructInstanceExpr(L) ::= AUTO(B) rEnterAutoStructInstanceExpr(R)                        rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(B, ref(R));}
+rAutoStructInstanceExpr(L) ::= AUTO_STRUCT(B) rEnterAutoStructInstanceExpr(R) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(B, ref(R), ref(P));}
+rAutoStructInstanceExpr(L) ::= AUTO_STRUCT(B) rEnterAutoStructInstanceExpr(R)                        rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(B, ref(R));}
 
 //-------------------------------------------------
 // special case - struct can be instantiated with {} or () for syntactic equivalence with C/C++.

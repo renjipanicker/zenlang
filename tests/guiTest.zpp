@@ -7,44 +7,44 @@ include MenuItem;
 include WindowCreator;
 
 main MyMain {
-    auto MainFrame::Definition defn = {
-                name: @mainFrame;
+    auto defn = MainFrame::Definition {
+                name      : @mainFrame;
                 title     : "test";
                 position  : {x:10;y:10;w:400;h:200;};
                 visible   : true;
                 childList : [
-                              &Menu::Definition {
+                              Menu::Definition {
                                 name      : @systrayMenu;
                                 childList : [
-                                              &MenuItem::Definition {
+                                              MenuItem::Definition {
                                                   name  : @showItem;
                                                   label : "Show";
                                               },
-                                              &MenuItem::Definition {
+                                              MenuItem::Definition {
                                                   name  : @hideItem;
                                                   label : "Hide";
                                               },
-                                              &MenuItem::Definition {
+                                              MenuItem::Definition {
                                                   name  : @exitItem;
                                                   label : "Exit";
                                               },
                                           ];
                               },
 
-                              &Systray::Definition {
+                              Systray::Definition {
                                 name    : @systray;
                                 tooltip : "guiTest";
                                 visible : true;
                               },
 
-                              &Button::Definition {
+                              Button::Definition {
                                 name    : @checkBox;
                                 title   : "Check";
                                 position: {x:10;y:10;w:60;h:22;};
                                 left    : {target:@parent;margin:10;};
                               },
 
-                              &TextEdit::Definition {
+                              TextEdit::Definition {
                                 name     : @outputBox;
                                 title    :"Output";
                                 position :{x:10;y:50;w:300;h:100;};
@@ -62,7 +62,7 @@ main MyMain {
     auto systrayMenu = <Menu::Handle>mainFrame.child@@systrayMenu;
     auto showMenu    = <MenuItem::Handle>systrayMenu.child@@showItem;
 
-    Window::OnResize(mainFrame) => Window::OnResize::Handler {
+    Window::OnResize(mainFrame) => {
         print "on resize\n";
         auto pp = Window::getWindowPosition(mainFrame);
         auto cp = Window::getChildPosition(outputBox);
@@ -71,17 +71,17 @@ main MyMain {
         run Window::Move(outputBox, cp);
     };
 
-    Button::OnClick(checkBtn) => Button::OnClick::Handler {
+    Button::OnClick(checkBtn) => {
         print "on click\n";
         TextEdit::AppendText(outputBox, "hello!\n");
     };
 
-    Systray::OnContextMenu(sysTray) => Systray::OnContextMenu::Handler {
+    Systray::OnContextMenu(sysTray) => {
         print "on sysmenu\n";
         Menu::Show(systrayMenu);
     };
 
-    MenuItem::OnSelect(showMenu) => MenuItem::OnSelect::Handler {
+    MenuItem::OnSelect(showMenu) => {
         print "on show\n";
     };
 

@@ -2,7 +2,6 @@ anchor
 menubar
 
 infer type of expr in function-call
-infer type of event-handler
 
 child-function syntax should be id:base-function {...}
 remove auto keyword in declaration statements
@@ -196,3 +195,4 @@ bug-fix - lexer does not recognize newlines in comments, screws up line numberin
 infer type of rhs in auto-statement for list of struct's.
 infer type of rhs in struct-init
 infer pointer-type of rhs
+infer type of event-handler

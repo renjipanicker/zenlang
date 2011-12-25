@@ -18,6 +18,7 @@ public:
 
 public:
     const Ast::StructDefn* isStructExpected() const;
+    const Ast::Function* isFunctionExpected() const;
     const Ast::TemplateDefn* isPointerExpected() const;
     const Ast::TemplateDefn* isPointerToExprExpected(const Ast::Expr& expr) const;
     const Ast::StructDefn* isPointerToStructExpected() const;
@@ -217,7 +218,8 @@ public:
     Ast::CaseStatement*                aCaseStatement(const Ast::CompoundStatement& block);
     Ast::BreakStatement*               aBreakStatement();
     Ast::ContinueStatement*            aContinueStatement();
-    Ast::AddEventHandlerStatement*     aAddEventHandlerStatement(const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionTypeInstanceExpr& functor);
+    Ast::AddEventHandlerStatement*     aAddEventHandlerStatement(const Ast::Token& pos, const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionTypeInstanceExpr& functor);
+    const Ast::EventDecl*              aEnterAddEventHandler(const Ast::EventDecl& eventDecl);
     Ast::RoutineReturnStatement*       aRoutineReturnStatement();
     Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Expr& expr);
     Ast::FunctionReturnStatement*      aFunctionReturnStatement(const Ast::ExprList& exprList);
@@ -289,5 +291,6 @@ public:
     Ast::FunctionInstanceExpr*  aFunctionInstanceExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
     Ast::AnonymousFunctionExpr* aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement);
     Ast::ChildFunctionDefn*   aEnterAnonymousFunction(const Ast::Function& function);
+    Ast::ChildFunctionDefn*   aEnterAutoAnonymousFunction(const Ast::Token& pos);
     Ast::ConstantExpr&        aConstantExpr(const std::string& type, const Ast::Token& value);
 };

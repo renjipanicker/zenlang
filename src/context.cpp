@@ -530,6 +530,21 @@ const Ast::StructDefn* Context::isStructExpected() const {
     return sd;
 }
 
+const Ast::Function* Context::isFunctionExpected() const {
+    const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny(0);
+    if(qts == 0) {
+        return 0;
+    }
+
+    const Ast::TypeSpec& ts = ref(qts).typeSpec();
+    const Ast::Function* ed = dynamic_cast<const Ast::Function*>(ptr(ts));
+    if(ed == 0) {
+        return 0;
+    }
+
+    return ed;
+}
+
 const Ast::TemplateDefn* Context::isPointerExpected() const {
     const Ast::TemplateDefn* td = isEnteringTemplate();
     if(td) {
@@ -616,6 +631,15 @@ const Ast::StructDefn* Context::isListOfPointerToStructExpected() const {
 
     const Ast::StructDefn* sd = dynamic_cast<const Ast::StructDefn*>(ts);
     return sd;
+}
+
+inline const Ast::Expr& Context::createPointerExprIfAny(const Ast::Token& pos, const Ast::Expr& initExpr) {
+    const Ast::TemplateDefn* ts = isPointerToExprExpected(initExpr);
+    if(ts) {
+        Ast::PointerInstanceExpr* expr = aPointerInstanceExpr(pos, initExpr);
+        return ref(expr);
+    }
+    return initExpr;
 }
 
 ////////////////////////////////////////////////////////////
@@ -1042,15 +1066,6 @@ Ast::Scope* Context::aParam() {
     return ptr(list);
 }
 
-inline const Ast::Expr& Context::createPointerExprIfAny(const Ast::Token& pos, const Ast::Expr& initExpr) {
-    const Ast::TemplateDefn* ts = isPointerToExprExpected(initExpr);
-    if(ts) {
-        Ast::PointerInstanceExpr* expr = aPointerInstanceExpr(pos, initExpr);
-        return ref(expr);
-    }
-    return initExpr;
-}
-
 Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr) {
     const Ast::Expr& expr = createPointerExprIfAny(name, initExpr);
     Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, expr));
@@ -1307,9 +1322,17 @@ Ast::ContinueStatement* Context::aContinueStatement() {
     return ptr(continueStatement);
 }
 
-Ast::AddEventHandlerStatement* Context::aAddEventHandlerStatement(const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionTypeInstanceExpr& functor) {
+Ast::AddEventHandlerStatement* Context::aAddEventHandlerStatement(const Ast::Token& pos, const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionTypeInstanceExpr& functor) {
     Ast::AddEventHandlerStatement& addEventHandlerStatement = _unit.addNode(new Ast::AddEventHandlerStatement(event, source, functor));
+    popExpectedTypeSpec(pos);
     return ptr(addEventHandlerStatement);
+}
+
+const Ast::EventDecl* Context::aEnterAddEventHandler(const Ast::EventDecl& eventDecl) {
+    pushExpectedTypeSpec();
+    Ast::QualifiedTypeSpec& qts = addQualifiedTypeSpec(false, eventDecl.handler(), false);
+    addExpectedTypeSpec(qts);
+    return ptr(eventDecl);
 }
 
 Ast::RoutineReturnStatement* Context::aRoutineReturnStatement() {
@@ -1984,6 +2007,14 @@ Ast::ChildFunctionDefn* Context::aEnterAnonymousFunction(const Ast::Function& fu
     Ast::Statement* statement = aGlobalTypeSpecStatement(Ast::AccessType::Private, functionDefn);
     unused(statement);
     return ptr(functionDefn);
+}
+
+Ast::ChildFunctionDefn* Context::aEnterAutoAnonymousFunction(const Ast::Token& pos) {
+    const Ast::Function* function = isFunctionExpected();
+    if(function == 0) {
+        throw Exception("%s Internal error: no function type expected\n", err(_filename, pos).c_str());
+    }
+    return aEnterAnonymousFunction(ref(function));
 }
 
 Ast::ConstantExpr& Context::aConstantExpr(const std::string& type, const Ast::Token& value) {

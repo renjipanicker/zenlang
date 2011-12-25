@@ -149,7 +149,13 @@ inline void Lexer::Impl::sendLessThan(Scanner* s) {
 inline void Lexer::Impl::sendOpenCurly(Scanner* s) {
     if(_context.isStructExpected() || _context.isPointerToStructExpected() || _context.isListOfStructExpected() || _context.isListOfPointerToStructExpected()) {
         if((_lastToken != ZENTOK_STRUCT_TYPE) && (_lastToken != ZENTOK_AUTO)) {
-            feedToken(token(s, ZENTOK_AUTO));
+            feedToken(token(s, ZENTOK_AUTO_STRUCT));
+        }
+    }
+
+    if(_context.isFunctionExpected()) {
+        if((_lastToken != ZENTOK_FUNCTION_TYPE) && (_lastToken != ZENTOK_AUTO)) {
+            feedToken(token(s, ZENTOK_AUTO_FUNCTION));
         }
     }
 
