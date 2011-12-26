@@ -1,7 +1,6 @@
 anchor
 menubar
 
-child-function syntax should be id:base-function {...}
 remove auto keyword in declaration statements
 automatically de-reference pointer on lhs of member-expr
 validate type when de-referencing pointer<>
@@ -195,3 +194,4 @@ infer type of rhs in struct-init
 infer pointer-type of rhs
 infer type of event-handler
 infer type of expr in function-call
+child-function syntax should be id:base-function {...}

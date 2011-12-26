@@ -6,7 +6,7 @@ include Menu;
 include MenuItem;
 include WindowCreator;
 
-main MyMain {
+function MyMain : main {
     auto defn = MainFrame::Definition {
                 name      : @mainFrame;
                 title     : "test";

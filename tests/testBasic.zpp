@@ -10,7 +10,7 @@ public function (int ri, string rs)testFunction(const int& x) {
     return (67890, "testfn");
 }
 
-public test testBasicExpr {
+public function testBasicExpr : test {
     auto i = 0;
     auto s = "xx";
     auto e = (1 + 2) * 3;
@@ -62,7 +62,7 @@ public function (int r)testAdvancedExpr(const int& x, const MyStruct& myStruct, 
     return (67890);
 }
 
-public test testFunction001 {
+public function testFunction001 : test {
     auto myStruct = MyStruct{i:0;};
     auto e = MyEnum.C1;
     auto c = testAdvancedExpr(321, myStruct, e);
@@ -70,7 +70,7 @@ public test testFunction001 {
     return (true);
 }
 
-public test testInnerRootFunction {
+public function testInnerRootFunction : test {
     function (int i)innerFunction(int j) {
         return (2);
     }
@@ -81,8 +81,8 @@ public test testInnerRootFunction {
     return (true);
 }
 
-public test testInnerChildFunction {
-    testFunction innerFunction {
+public function testInnerChildFunction : test {
+    function innerFunction : testFunction {
         return (2, "aa");
     }
     auto f = innerFunction(2);
@@ -92,9 +92,9 @@ public test testInnerChildFunction {
     return (true);
 }
 
-public test testInnerChildFunctionClosure {
+public function testInnerChildFunctionClosure : test {
     auto i = 0;
-    testFunction innerFunction {
+    function innerFunction : testFunction {
         return (i, "aa");
     }
     auto f = innerFunction(2);
@@ -104,7 +104,7 @@ public test testInnerChildFunctionClosure {
     return (true);
 }
 
-public test testAnonymousFunction {
+public function testAnonymousFunction : test {
     auto a = testFunction {
         return (2, "aa");
     };
@@ -113,7 +113,7 @@ public test testAnonymousFunction {
     return (true);
 }
 
-public test testAnonymousFunctionWithClosure {
+public function testAnonymousFunctionWithClosure : test {
     auto i = 0;
     auto a = testFunction {
         return (i, "aa");
@@ -123,7 +123,7 @@ public test testAnonymousFunctionWithClosure {
     return (true);
 }
 
-public test testIfStatement {
+public function testIfStatement : test {
     auto i = 0;
     auto j = 0;
     if(i > 2) {
@@ -133,7 +133,7 @@ public test testIfStatement {
     return (true);
 }
 
-public test testIfElseStatement {
+public function testIfElseStatement : test {
     auto i = 0;
     auto j = 0;
     if(i > 2) {
@@ -145,7 +145,7 @@ public test testIfElseStatement {
     return (true);
 }
 
-public test testWhileStatement {
+public function testWhileStatement : test {
     auto i = 0;
     while(i < 2) {
         i++;
@@ -153,7 +153,7 @@ public test testWhileStatement {
     return (true);
 }
 
-public test testDoWhileStatement {
+public function testDoWhileStatement : test {
     auto i = 0;
     do {
         i++;
@@ -161,7 +161,7 @@ public test testDoWhileStatement {
     return (true);
 }
 
-public test testForExprStatement {
+public function testForExprStatement : test {
     auto j = 0;
     auto i = 0;
     for(i = 0; i < 10; ++i) {
@@ -170,7 +170,7 @@ public test testForExprStatement {
     return (true);
 }
 
-public test testForInitStatement {
+public function testForInitStatement : test {
     auto j = 0;
     for(auto i = 0; i < 10; ++i) {
         j += i;
@@ -178,7 +178,7 @@ public test testForInitStatement {
     return (true);
 }
 
-public test testForeachListStatement {
+public function testForeachListStatement : test {
     auto j = 0;
     auto l = [1,2,3];
     //const list<int>& l2 = l; /// \todo should be valid
@@ -188,7 +188,7 @@ public test testForeachListStatement {
     return (true);
 }
 
-public test testForeachDictStatement {
+public function testForeachDictStatement : test {
     auto j = 0;
     auto l = ['a':1, 'b':2,'c':3];
     foreach(k,v in l) {
@@ -199,7 +199,7 @@ public test testForeachDictStatement {
     return (true);
 }
 
-public test testSwitchValueStatement {
+public function testSwitchValueStatement : test {
     auto j = 0;
     switch(j) {
         case 1: {
@@ -215,7 +215,7 @@ public test testSwitchValueStatement {
     return (true);
 }
 
-public test testSwitchExprStatement {
+public function testSwitchExprStatement : test {
     auto j = 0;
     switch {
         case j == 1: {
@@ -233,7 +233,7 @@ public function (int ri, string rs)runFunctionTest(const int& x) {
     return (67890, "run");
 }
 
-public test testFunctor {
+public function testFunctor : test {
     auto f = runFunctionTest[];
     unused(f);
     return (true);
@@ -243,17 +243,17 @@ public function ()getFunctor(const runFunctionTest& f) {
     return ();
 }
 
-public runFunctionTest derivedFunctionTest {
+public function derivedFunctionTest : runFunctionTest {
     return (12345, "derived");
 }
 
-public test testPassDerivedFuncion {
+public function testPassDerivedFuncion : test {
     auto f = derivedFunctionTest[];
     getFunctor(f);
     return (true);
 }
 
-public test testRunExpr {
+public function testRunExpr : test {
     auto f = run runFunctionTest(456);
     unused(f);
     return (true);
@@ -266,13 +266,13 @@ struct PtrStruct {
     pointer<InStruct> p;
 };
 
-test testPtrStruct {
+function testPtrStruct : test {
     auto s = PtrStruct{p : pointer<InStruct>(InStruct{});};
     unused(s);
     return (true);
 }
 
-public test testLists {
+public function testLists : test {
     auto s = [1,2];
     auto t = s[0];
     auto u = [float, 1,2];
@@ -283,7 +283,7 @@ public test testLists {
     return (true);
 }
 
-public test testDicts {
+public function testDicts : test {
     auto s = ["a":1, "b":2];
     auto t = s["b"];
     auto u = [string:float, "a":1, "b":2];
@@ -293,7 +293,7 @@ public test testDicts {
     return (true);
 }
 
-public main MyMain {
+public function MyMain : main {
     auto f = run runFunctionTest(908);
     unused(f);
     return (0);
@@ -306,7 +306,7 @@ struct MyIndexStruct {
     //routine const Handle& at(const string& k) native;
 };
 
-test testAutoInitList {
+function testAutoInitList : test {
     auto float a = 3;
     unused(a);
 
@@ -342,7 +342,7 @@ struct MyAutoStruct {
 struct MyDerivedStruct : MyAutoStruct {
 };
 
-test testAutoInitStruct {
+function testAutoInitStruct : test {
 //    auto MyAutoStruct aps0 = auto {i:3;};
     auto MyAutoStruct aps1 = {i:3;};
 

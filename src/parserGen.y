@@ -365,7 +365,7 @@ rChildFunctionDefn(L) ::= rEnterChildFunctionDefn(functionImpl) rCompoundStateme
 
 //-------------------------------------------------
 %type rEnterChildFunctionDefn {Ast::ChildFunctionDefn*}
-rEnterChildFunctionDefn(L) ::= rFunctionTypeSpec(base) ID(name). {L = ref(pctx).aEnterChildFunctionDefn(ref(base), name, Ast::DefinitionType::Direct);}
+rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base). {L = ref(pctx).aEnterChildFunctionDefn(ref(base), name, Ast::DefinitionType::Direct);}
 
 //-------------------------------------------------
 // event declarations
