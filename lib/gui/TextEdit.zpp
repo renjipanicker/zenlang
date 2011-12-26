@@ -2,7 +2,7 @@ include Window public;
 namespace TextEdit;
 
 public struct Definition : Window::Definition {
-    multiline = false;
+    auto multiline = false;
 };
 
 public function Window::Handle Create(const Window::Handle& parentWin, const Definition& defn) native;

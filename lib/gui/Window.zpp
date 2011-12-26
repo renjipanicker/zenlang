@@ -8,10 +8,10 @@ public enum Style {
 };
 
 public struct Position {
-    x = -1;
-    y = -1;
-    w = -1;
-    h = -1;
+    auto x = -1;
+    auto y = -1;
+    auto w = -1;
+    auto h = -1;
 };
 
 public struct Handle : Widget::Handle {
@@ -20,14 +20,14 @@ public struct Handle : Widget::Handle {
 public struct Anchor {
     Handle window;
     string target;
-    margin = 0;
+    auto margin = 0;
 };
 
 public struct Definition : Widget::Definition {
-    title = "";
-    position = Window::Position{};
-    style = Style.Normal;
-    visible = false;
+    auto title = "";
+    auto position = Window::Position{};
+    auto style = Style.Normal;
+    auto visible = false;
     Anchor left;
     Anchor right;
     Anchor top;

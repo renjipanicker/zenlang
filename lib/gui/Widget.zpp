@@ -10,6 +10,6 @@ public struct Handle {
 };
 
 public struct Definition {
-    name = "";
+    auto name = "";
     list< pointer<Widget::Definition> > childList;
 };

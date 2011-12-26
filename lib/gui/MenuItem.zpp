@@ -7,7 +7,7 @@ public struct Handle : Widget::Handle {
 };
 
 public struct Definition : Widget::Definition {
-    label = "";
+    auto label = "";
 };
 
 public function MenuItem::Handle Create(const Menu::Handle& pmenu, const Definition& defn) native;

@@ -9,8 +9,8 @@ public event(const Systray::Handle& systray) => function void OnActivation() nat
 public event(const Systray::Handle& systray) => function void OnContextMenu() native;
 
 public struct Definition : Window::Definition {
-    tooltip = "";
-    iconFile = "";
+    auto tooltip = "";
+    auto iconFile = "";
 };
 
 public function Systray::Handle Create(const Window::Handle& parentWin, const Definition& defn) native;

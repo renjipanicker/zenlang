@@ -422,7 +422,7 @@ rQualifiedVariableDefn(L) ::= rQualifiedTypeSpec(R). {L = ref(pctx).aQualifiedVa
 
 //-------------------------------------------------
 // auto qualified variable def
-rAutoQualifiedVariableDefn ::= . {ref(pctx).aAutoQualifiedVariableDefn();}
+rAutoQualifiedVariableDefn ::= AUTO. {ref(pctx).aAutoQualifiedVariableDefn();}
 
 //-------------------------------------------------
 // qualified types
@@ -534,7 +534,7 @@ rUserDefinedTypeSpecStatement(L) ::= rTypeSpecDef(typeSpec). {L = ref(pctx).aUse
 
 //-------------------------------------------------
 %type rAutoStatement {Ast::AutoStatement*}
-rAutoStatement(L) ::= AUTO rVariableDefn(defn) SEMI. {L = ref(pctx).aAutoStatement(ref(defn));}
+rAutoStatement(L) ::= rVariableDefn(defn) SEMI. {L = ref(pctx).aAutoStatement(ref(defn));}
 
 //-------------------------------------------------
 %type rExprStatement {Ast::ExprStatement*}
@@ -566,7 +566,7 @@ rForStatement(L) ::= FOR LBRACKET rExpr(init) SEMI rExpr(expr) SEMI rExpr(incr) 
 rForStatement(L) ::= FOR LBRACKET rEnterForInit(init) SEMI rExpr(expr) SEMI rExpr(incr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aForStatement(ref(init), ref(expr), ref(incr), ref(block));}
 
 %type rEnterForInit {const Ast::VariableDefn*}
-rEnterForInit(L) ::= AUTO rVariableDefn(init). {L = ref(pctx).aEnterForInit(ref(init));}
+rEnterForInit(L) ::= rVariableDefn(init). {L = ref(pctx).aEnterForInit(ref(init));}
 
 //-------------------------------------------------
 %type rForeachStatement {Ast::ForeachStatement*}

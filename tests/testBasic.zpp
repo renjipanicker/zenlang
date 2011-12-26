@@ -35,11 +35,11 @@ public enum MyEnum {
 public struct MyStructDecl;
 
 public struct MyBase {
-    j = 0;
+    auto j = 0;
 };
 
 public struct MyStruct : MyBase {
-    i = 0;
+    auto i = 0;
 };
 
 public function (int r)testAdvancedExpr(const int& x, const MyStruct& myStruct, const MyEnum& myEnum) {
@@ -307,34 +307,34 @@ struct MyIndexStruct {
 };
 
 function testAutoInitList : test {
-    auto float a = 3;
+    float a = 3;
     unused(a);
 
-    auto list<float> s = [1, 2];
+    list<float> s = [1, 2];
     unused(s);
 
-    auto list< list<float> > t = [[1, 2], [3, 4]];
+    list< list<float> > t = [[1, 2], [3, 4]];
     unused(t);
 
-    auto list< dict<string, float> > u = [["a":1, "b":2], ["c":3, "d":4]];
+    list< dict<string, float> > u = [["a":1, "b":2], ["c":3, "d":4]];
     unused(u);
 
-    auto dict< string, list<float> > v = ["a":[1, 2], "b":[3, 4]];
+    dict< string, list<float> > v = ["a":[1, 2], "b":[3, 4]];
     unused(v);
 
-    auto dict< string, dict<string, float> > w = ["h":["a":1, "b":2], "i":["c":3, "d":4]];
+    dict< string, dict<string, float> > w = ["h":["a":1, "b":2], "i":["c":3, "d":4]];
     unused(w);
 
     return (true);
 }
 
 struct MyAutoInnerStruct {
-    name = "";
+    auto name = "";
 };
 
 struct MyAutoStruct {
-    i = 0;
-    s = "";
+    auto i = 0;
+    auto s = "";
     list<float> fl;
     list<pointer<MyAutoInnerStruct> > lps;
 };
@@ -343,26 +343,26 @@ struct MyDerivedStruct : MyAutoStruct {
 };
 
 function testAutoInitStruct : test {
-//    auto MyAutoStruct aps0 = auto {i:3;};
-    auto MyAutoStruct aps1 = {i:3;};
+//    MyAutoStruct aps0 = auto {i:3;};
+    MyAutoStruct aps1 = {i:3;};
 
-//    auto list<MyAutoStruct> als0 = [ auto {i:123; s:"xx";fl:[1,2];}, auto {i:456; s:"yy";fl:[3,4];}];
-    auto list<MyAutoStruct> als1 = [ {i:123; s:"xx";fl:[1,2];}, {i:456; s:"yy";fl:[3,4];}];
+//    list<MyAutoStruct> als0 = [ auto {i:123; s:"xx";fl:[1,2];}, auto {i:456; s:"yy";fl:[3,4];}];
+    list<MyAutoStruct> als1 = [ {i:123; s:"xx";fl:[1,2];}, {i:456; s:"yy";fl:[3,4];}];
 
-    auto pointer<int> pi = 314;
-    auto pointer<MyAutoStruct> pps0 = &MyAutoStruct{i:3;};
-//    auto pointer<MyAutoStruct> apps0 = auto {i:3;};
-    auto pointer<MyAutoStruct> apps1 = {i:3;};
+    pointer<int> pi = 314;
+    pointer<MyAutoStruct> pps0 = &MyAutoStruct{i:3;};
+//    pointer<MyAutoStruct> apps0 = auto {i:3;};
+    pointer<MyAutoStruct> apps1 = {i:3;};
 
-    auto pointer<MyAutoStruct> pps1 = MyAutoStruct{i:3;};
+    pointer<MyAutoStruct> pps1 = MyAutoStruct{i:3;};
 
-    auto list< pointer<MyAutoStruct> > lps = [&MyAutoStruct{i:4;}];
-//    auto list< pointer<MyAutoStruct> > alps0 = [auto {i:4;}];
-    auto list< pointer<MyAutoStruct> > alps1 = [{i:4;}];
+    list< pointer<MyAutoStruct> > lps = [&MyAutoStruct{i:4;}];
+//    list< pointer<MyAutoStruct> > alps0 = [auto {i:4;}];
+    list< pointer<MyAutoStruct> > alps1 = [{i:4;}];
 
-//    auto MyAutoStruct mys0 = auto {i:123; s:"xx"; fl:[1, 2]; lps:[auto {name:"n1";}];};
-    auto MyAutoStruct mys1 = {i:123; s:"xx"; fl:[1, 2]; lps:[{name:"n1";}];};
+//    MyAutoStruct mys0 = auto {i:123; s:"xx"; fl:[1, 2]; lps:[auto {name:"n1";}];};
+    MyAutoStruct mys1 = {i:123; s:"xx"; fl:[1, 2]; lps:[{name:"n1";}];};
 
-    auto list< pointer<MyAutoStruct> > alpds1 = [MyDerivedStruct{i:4;}];
+    list< pointer<MyAutoStruct> > alpds1 = [MyDerivedStruct{i:4;}];
     return (true);
 }
