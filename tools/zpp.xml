@@ -27,6 +27,7 @@
       <item> static </item>
       <item> assert </item>
       <item> unused </item>
+      <item> check </item>
 
       <item> break </item>
       <item> case </item>
