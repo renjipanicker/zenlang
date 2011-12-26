@@ -1,10 +1,9 @@
 anchor
 menubar
 
-infer type of expr in function-call
-
 child-function syntax should be id:base-function {...}
 remove auto keyword in declaration statements
+automatically de-reference pointer on lhs of member-expr
 validate type when de-referencing pointer<>
 iterate (foreach) on string
 put everything in namespaces
@@ -103,7 +102,6 @@ a public function cannot have a private type in its sig
 if a public type contains an imported type, the imported type's header file is public
 multiple code generators: python, php, js, java
 multiple generators: python, php, js, java
-automatically de-reference pointer on lhs of member-expr
 
 *** enum-init-expr
 *** move Formatter to String, Creator to List/Dict
@@ -196,3 +194,4 @@ infer type of rhs in auto-statement for list of struct's.
 infer type of rhs in struct-init
 infer pointer-type of rhs
 infer type of event-handler
+infer type of expr in function-call

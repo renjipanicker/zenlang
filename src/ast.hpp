@@ -41,6 +41,7 @@ namespace Ast {
             Member,      /// Member of enum or struct
             XRef,        /// XRef scope
             Param,       /// Param scope
+            VarArg,      /// VarArg in-param
             Local        /// local scope
         };
     };

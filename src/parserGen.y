@@ -327,6 +327,7 @@ rRoutineDecl(L) ::= rPreRoutineDecl(R) SEMI. {L = R;}
 //-------------------------------------------------
 %type rPreRoutineDecl {Ast::RoutineDecl*}
 rPreRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) rInParamsList(in) rDefinitionType(D). {L = ref(pctx).aRoutineDecl(ref(out), name, ref(in), D);}
+rPreRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) LBRACKET ELIPSIS RBRACKET NATIVE. {L = ref(pctx).aVarArgRoutineDecl(ref(out), name, Ast::DefinitionType::Native);}
 
 //-------------------------------------------------
 // routine definition
@@ -896,6 +897,11 @@ rLeaveStructInitPart    ::= SEMI(B). {ref(pctx).aLeaveStructInitPart(B);}
 rCallExpr(L) ::= rCallPart(R).  {L = R;}
 
 //-------------------------------------------------
+// function call type
+%type rRunExpr {Ast::RunExpr*}
+rRunExpr(L) ::= RUN(B) rFunctorCallPart(F).  {L = ref(pctx).aRunExpr(B, ref(F));}
+
+//-------------------------------------------------
 // functor call expressions
 %type rCallPart {Ast::CallExpr*}
 rCallPart(L) ::= rRoutineCallPart(R). {L = R;}
@@ -904,19 +910,36 @@ rCallPart(L) ::= rFunctorCallPart(R). {L = R;}
 //-------------------------------------------------
 // routine call expressions
 %type rRoutineCallPart {Ast::RoutineCallExpr*}
-rRoutineCallPart(L) ::= rRoutineTypeSpec(typeSpec) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aRoutineCallExpr(B, ref(typeSpec), ref(exprList));}
+rRoutineCallPart(L) ::= rEnterRoutineCall(typeSpec) LBRACKET(B) rCallArgList(exprList) RBRACKET.  {L = ref(pctx).aRoutineCallExpr(B, ref(typeSpec), ref(exprList));}
 
 //-------------------------------------------------
-// function call type
-%type rRunExpr {Ast::RunExpr*}
-rRunExpr(L) ::= RUN(B) rFunctorCallPart(F).  {L = ref(pctx).aRunExpr(B, ref(F));}
+// functor expressions
+%type rEnterRoutineCall {const Ast::Routine*}
+rEnterRoutineCall(L) ::= rRoutineTypeSpec(typeSpec). { L = ref(pctx).aEnterRoutineCall(ref(typeSpec));}
 
 //-------------------------------------------------
 // functor call expressions
 %type rFunctorCallPart {Ast::FunctorCallExpr*}
-rFunctorCallPart(L) ::= ID(I)                       LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aFunctorCallExpr(B, I, ref(exprList));}
-rFunctorCallPart(L) ::= rOrderedExpr(expr)          LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aFunctorCallExpr(B, ref(expr), ref(exprList));}
-rFunctorCallPart(L) ::= rFunctionTypeSpec(typeSpec) LBRACKET(B) rExprList(exprList) RBRACKET.  {L = ref(pctx).aFunctionCallExpr(B, ref(typeSpec), ref(exprList));}
+rFunctorCallPart(L) ::= rEnterFunctorCall(expr) LBRACKET(B) rCallArgList(exprList) RBRACKET.  {L = ref(pctx).aFunctorCallExpr(B, ref(expr), ref(exprList));}
+
+//-------------------------------------------------
+// functor expressions
+%type rEnterFunctorCall {Ast::Expr*}
+rEnterFunctorCall(L) ::= rOrderedExpr(expr).          { L = ref(pctx).aEnterFunctorCall(ref(expr));}
+rEnterFunctorCall(L) ::= ID(I).                       { L = ref(pctx).aEnterFunctorCall(I);}
+rEnterFunctorCall(L) ::= rFunctionTypeSpec(typeSpec). { L = ref(pctx).aEnterFunctorCall(ref(typeSpec));}
+
+//-------------------------------------------------
+// comma-separated list of function-call args
+%type rCallArgList {Ast::ExprList*}
+rCallArgList(L) ::= rEnterNextArg(R) rExpr(E) rLeaveArg. {L = ref(pctx).aCallArgList(ref(R), ref(E));}
+rCallArgList(L) ::= rEnterInitArg    rExpr(E) rLeaveArg. {L = ref(pctx).aCallArgList(ref(E));}
+rCallArgList(L) ::= .                                    {L = ref(pctx).aCallArgList();}
+
+%type rEnterNextArg {Ast::ExprList*}
+rEnterNextArg(L) ::= rCallArgList(R) COMMA(B). {L = ref(pctx).aEnterNextArg(B, ref(R));}
+rEnterInitArg    ::= .                      {ref(pctx).aEnterInitArg();}
+rLeaveArg        ::= .                      {ref(pctx).aLeaveArg();}
 
 //-------------------------------------------------
 // constant expressions

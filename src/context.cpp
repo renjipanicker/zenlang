@@ -4,21 +4,30 @@
 #include "error.hpp"
 #include "typename.hpp"
 
-struct StructBaseIterator {
-    inline StructBaseIterator(const Ast::StructDefn* structDefn) : _structDefn(structDefn) {}
-    inline bool hasNext() const {return (_structDefn != 0);}
-    inline const Ast::StructDefn& get() const {return ref(_structDefn);}
+template <typename DefnT, typename ChildT>
+struct BaseIterator {
+    inline BaseIterator(const DefnT* defn) : _defn(defn) {}
+    inline bool hasNext() const {return (_defn != 0);}
+    inline const DefnT& get() const {return ref(_defn);}
     inline void next() {
-        const Ast::ChildStructDefn* csd = dynamic_cast<const Ast::ChildStructDefn*>(_structDefn);
+        const ChildT* csd = dynamic_cast<const ChildT*>(_defn);
         if(csd) {
-            _structDefn = ptr(ref(csd).base());
+            _defn = ptr(ref(csd).base());
         } else {
-            _structDefn = 0;
+            _defn = 0;
         }
     }
 
 private:
-    const Ast::StructDefn* _structDefn;
+    const DefnT* _defn;
+};
+
+struct StructBaseIterator : public BaseIterator<Ast::StructDefn, Ast::ChildStructDefn> {
+    inline StructBaseIterator(const Ast::StructDefn* defn) : BaseIterator(defn) {}
+};
+
+struct FunctionBaseIterator : public BaseIterator<Ast::Function, Ast::ChildFunctionDefn> {
+    inline FunctionBaseIterator(const Ast::FunctionDefn* defn) : BaseIterator(defn) {}
 };
 
 inline Ast::Root& Context::getRootNamespace() const {
@@ -249,6 +258,23 @@ inline const Ast::QualifiedTypeSpec* Context::canCoerceX(const Ast::QualifiedTyp
         }
     }
 
+    const Ast::FunctionDefn* lfd = dynamic_cast<const Ast::FunctionDefn*>(ptr(lhs.typeSpec()));
+    const Ast::FunctionDefn* rfd = dynamic_cast<const Ast::FunctionDefn*>(ptr(rhs.typeSpec()));
+    if((lfd != 0) && (rfd != 0)) {
+        for(FunctionBaseIterator fbi(lfd); fbi.hasNext(); fbi.next()) {
+            if(ptr(fbi.get()) == rfd) {
+                side = +1;
+                return ptr(rhs);
+            }
+        }
+        for(FunctionBaseIterator fbi(rfd); fbi.hasNext(); fbi.next()) {
+            if(ptr(fbi.get()) == lfd) {
+                side = -1;
+                return ptr(lhs);
+            }
+        }
+    }
+
     const Ast::TemplateDefn* ltd = dynamic_cast<const Ast::TemplateDefn*>(ptr(lhs.typeSpec()));
     const Ast::TemplateDefn* rtd = dynamic_cast<const Ast::TemplateDefn*>(ptr(rhs.typeSpec()));
     if((ltd != 0) && (rtd != 0)) {
@@ -455,12 +481,41 @@ inline void Context::popExpectedTypeSpec(const Ast::Token& pos) {
     _expectedTypeSpecStack.pop_back();
 }
 
+inline bool Context::isUnexpectedTypeSpec() const {
+    if(_expectedTypeSpecStack.size() == 0) {
+        return true;
+    }
+    if(_expectedTypeSpecStack.back().size() != 1) {
+        return true;
+    }
+    const Ast::QualifiedTypeSpec* qts = _expectedTypeSpecStack.back().back();
+    return (qts == 0);
+}
+
 inline void Context::addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec) {
     if(_expectedTypeSpecStack.size() == 0) {
-        Ast::Token pos(0, 0, ""); /// \todo remove this
-        throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, pos).c_str());
+        Ast::Token dummy_pos(0, 0, ""); /// \todo remove this
+        throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, dummy_pos).c_str());
     }
     _expectedTypeSpecStack.back().push_back(ptr(qTypeSpec));
+}
+
+inline void Context::addUnexpectedTypeSpec() {
+    if(_expectedTypeSpecStack.size() == 0) {
+        Ast::Token dummy_pos(0, 0, ""); /// \todo remove this
+        throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, dummy_pos).c_str());
+    }
+    assert(_expectedTypeSpecStack.back().size() == 0);
+    _expectedTypeSpecStack.back().push_back(0);
+}
+
+inline const Context::ExpectedTypeSpecList& Context::getExpectedTypeList(const Ast::Token& pos) const {
+    if(_expectedTypeSpecStack.size() == 0) {
+        throw Exception("%s Empty expected type stack\n", err(_filename, pos).c_str());
+    }
+
+    const ExpectedTypeSpecList& exl = _expectedTypeSpecStack.back();
+    return exl;
 }
 
 inline const Ast::QualifiedTypeSpec* Context::getExpectedTypeSpecIfAny(const size_t& idx) const {
@@ -482,6 +537,14 @@ inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::Qua
     const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny(idx);
     if(ts == 0) {
         return ref(qTypeSpec);
+    }
+    return ref(ts);
+}
+
+inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpecEx(const Ast::Token& pos, const size_t& idx) const {
+    const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny(idx);
+    if(ts == 0) {
+        throw Exception("%s Empty expected type stack\n", err(_filename, pos).c_str());
     }
     return ref(ts);
 }
@@ -640,6 +703,39 @@ inline const Ast::Expr& Context::createPointerExprIfAny(const Ast::Token& pos, c
         return ref(expr);
     }
     return initExpr;
+}
+
+inline void Context::enterArg(const Ast::Token& pos, const int& idx) {
+    if(!isUnexpectedTypeSpec()) {
+        const Ast::QualifiedTypeSpec& qts = getExpectedTypeSpecEx(pos, idx);
+        pushExpectedTypeSpec(); // this pushXX *must* be after the above getXX
+        addExpectedTypeSpec(qts);
+    } else {
+        pushExpectedTypeSpec();
+    }
+}
+
+inline void Context::leaveArg(const Ast::Token& pos) {
+    popExpectedTypeSpec(pos);
+}
+
+inline void Context::matchArg(const Ast::Token& pos, Ast::ExprList& list, const Ast::Expr& expr) {
+    if(isUnexpectedTypeSpec()) {
+        return;
+    }
+
+    const Ast::QualifiedTypeSpec& qts = getExpectedTypeSpecEx(pos, list.list().size());
+    int side = 0;
+    canCoerceX(qts, expr.qTypeSpec(), side);
+    if(side != -1) {
+        throw Exception("%s Cannot convert parameter %lu from '%s' to '%s' (%d)\n",
+                        err(_filename, pos).c_str(),
+                        list.list().size(),
+                        getQualifiedTypeSpecName(expr.qTypeSpec(), GenMode::Import).c_str(),
+                        getQualifiedTypeSpecName(qts, GenMode::Import).c_str(),
+                        side
+                        );
+    }
 }
 
 ////////////////////////////////////////////////////////////
@@ -909,6 +1005,13 @@ Ast::PropertyDeclRO* Context::aStructPropertyDeclRO(const Ast::Token& pos, const
 }
 
 Ast::RoutineDecl* Context::aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType) {
+    Ast::RoutineDecl& routineDecl = _unit.addNode(new Ast::RoutineDecl(currentTypeSpec(), outType, name, in, defType));
+    currentTypeSpec().addChild(routineDecl);
+    return ptr(routineDecl);
+}
+
+Ast::RoutineDecl* Context::aVarArgRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    Ast::Scope& in = addScope(Ast::ScopeType::VarArg);
     Ast::RoutineDecl& routineDecl = _unit.addNode(new Ast::RoutineDecl(currentTypeSpec(), outType, name, in, defType));
     currentTypeSpec().addChild(routineDecl);
     return ptr(routineDecl);
@@ -1379,8 +1482,7 @@ Ast::ExprList* Context::aExprList(Ast::ExprList& list, const Ast::Expr& expr) {
 
 Ast::ExprList* Context::aExprList(const Ast::Expr& expr) {
     Ast::ExprList& list = addExprList();
-    list.addExpr(expr);
-    return ptr(list);
+    return aExprList(list, expr);
 }
 
 Ast::ExprList* Context::aExprList() {
@@ -1564,35 +1666,98 @@ Ast::FormatExpr* Context::aFormatExpr(const Ast::Token& pos, const Ast::Expr& st
 }
 
 Ast::RoutineCallExpr* Context::aRoutineCallExpr(const Ast::Token& pos, const Ast::Routine& routine, const Ast::ExprList& exprList) {
-    unused(pos);
+    popExpectedTypeSpec(pos);
     const Ast::QualifiedTypeSpec& qTypeSpec = routine.outType();
     Ast::RoutineCallExpr& routineCallExpr = _unit.addNode(new Ast::RoutineCallExpr(qTypeSpec, routine, exprList));
     return ptr(routineCallExpr);
 }
 
-Ast::FunctorCallExpr* Context::aFunctionCallExpr(const Ast::Token& pos, const Ast::Function& function, const Ast::ExprList& exprList) {
-    unused(pos);
-    Ast::QualifiedTypeSpec& qExprTypeSpec = addQualifiedTypeSpec(false, function, false);
-    Ast::FunctionInstanceExpr& functionInstanceExpr = _unit.addNode(new Ast::FunctionInstanceExpr(qExprTypeSpec, function, exprList));
-
-    const Ast::QualifiedTypeSpec& qTypeSpec = getFunctionReturnType(pos, function);
-    Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, functionInstanceExpr, exprList));
-    return ptr(functorCallExpr);
+const Ast::Routine* Context::aEnterRoutineCall(const Ast::Routine& routine) {
+    pushExpectedTypeSpec();
+    if(routine.inScope().type() == Ast::ScopeType::VarArg) {
+        addUnexpectedTypeSpec();
+    } else {
+        for(Ast::Scope::List::const_iterator it = routine.in().begin(); it != routine.in().end(); ++it) {
+            const Ast::VariableDefn& def = ref(*it);
+            addExpectedTypeSpec(def.qTypeSpec());
+        }
+    }
+    return ptr(routine);
 }
 
 Ast::FunctorCallExpr* Context::aFunctorCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList) {
+    popExpectedTypeSpec(pos);
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(expr.qTypeSpec().typeSpec()));
-    if(function != 0) {
-        const Ast::QualifiedTypeSpec& qTypeSpec = getFunctionReturnType(pos, ref(function));
-        Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, expr, exprList));
-        return ptr(functorCallExpr);
+    if(function == 0) {
+        throw Exception("%s Unknown functor being called '%s'\n", err(_filename, pos).c_str(), expr.qTypeSpec().typeSpec().name().text());
     }
-    throw Exception("%s Unknown functor being called '%s'\n", err(_filename, pos).c_str(), expr.qTypeSpec().typeSpec().name().text());
+
+    const Ast::QualifiedTypeSpec& qTypeSpec = getFunctionReturnType(pos, ref(function));
+    Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, expr, exprList));
+    return ptr(functorCallExpr);
 }
 
-Ast::FunctorCallExpr* Context::aFunctorCallExpr(const Ast::Token& pos, const Ast::Token& name, const Ast::ExprList& exprList) {
+Ast::Expr* Context::aEnterFunctorCall(Ast::Expr& expr) {
+    const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(expr.qTypeSpec().typeSpec()));
+    if(function == 0) {
+        Ast::Token dummy_pos(0, 0, ""); /// \todo remove
+        throw Exception("%s Unknown functor being called '%s'\n", err(_filename, dummy_pos).c_str(), expr.qTypeSpec().typeSpec().name().text());
+    }
+
+    pushExpectedTypeSpec();
+    if(ref(function).sig().inScope().type() == Ast::ScopeType::VarArg) {
+        addUnexpectedTypeSpec();
+    } else {
+        for(Ast::Scope::List::const_iterator it = ref(function).sig().in().begin(); it != ref(function).sig().in().end(); ++it) {
+            const Ast::VariableDefn& def = ref(*it);
+            addExpectedTypeSpec(def.qTypeSpec());
+        }
+    }
+    return ptr(expr);
+}
+
+Ast::Expr* Context::aEnterFunctorCall(const Ast::Token& name) {
     Ast::VariableRefExpr* expr = aVariableRefExpr(name);
-    return aFunctorCallExpr(pos, ref(expr), exprList);
+    return aEnterFunctorCall(ref(expr));
+}
+
+Ast::Expr* Context::aEnterFunctorCall(const Ast::Function& function) {
+    Ast::QualifiedTypeSpec& qExprTypeSpec = addQualifiedTypeSpec(false, function, false);
+    Ast::ExprList& exprList = addExprList();
+    Ast::FunctionInstanceExpr& expr = _unit.addNode(new Ast::FunctionInstanceExpr(qExprTypeSpec, function, exprList));
+    return aEnterFunctorCall(expr);
+}
+
+Ast::ExprList* Context::aCallArgList(Ast::ExprList& list, const Ast::Expr& expr) {
+    Ast::Token dummy_pos(0, 0, "");
+    matchArg(dummy_pos, list, expr);
+    list.addExpr(expr);
+    leaveArg(dummy_pos);
+    return ptr(list);
+}
+
+Ast::ExprList* Context::aCallArgList(const Ast::Expr& expr) {
+    Ast::ExprList& list = addExprList();
+    return aCallArgList(list, expr);
+}
+
+Ast::ExprList* Context::aCallArgList() {
+    Ast::ExprList& list = addExprList();
+    return ptr(list);
+}
+
+Ast::ExprList* Context::aEnterNextArg(const Ast::Token& pos, Ast::ExprList& exprList) {
+    assert(exprList.list().size() > 0);
+    enterArg(pos, exprList.list().size());
+    return ptr(exprList);
+}
+
+void Context::aEnterInitArg() {
+    Ast::Token dummy_pos(0, 0, "");
+    enterArg(dummy_pos, 0);
+}
+
+void Context::aLeaveArg() {
 }
 
 Ast::RunExpr* Context::aRunExpr(const Ast::Token& pos, const Ast::FunctorCallExpr& callExpr) {
@@ -1755,6 +1920,7 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
                         refType = Ast::RefType::XRef;
                         break;
                     case Ast::ScopeType::Param:
+                    case Ast::ScopeType::VarArg:
                         throw Exception("%s Internal error: Invalid vref %s: Param-Param\n", err(_filename, name).c_str(), name.text());
                     case Ast::ScopeType::Local:
                         refType = Ast::RefType::XRef;
@@ -1770,6 +1936,7 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
                     case Ast::ScopeType::XRef:
                         throw Exception("%s Internal error: Invalid vref %s: Local-XRef\n", err(_filename, name).c_str(), name.text());
                     case Ast::ScopeType::Param:
+                    case Ast::ScopeType::VarArg:
                         refType = Ast::RefType::Param;
                         break;
                     case Ast::ScopeType::Local:

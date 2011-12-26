@@ -269,6 +269,7 @@ re2c:condenumprefix          = EState;
 <Normal>   "-"     := feedToken(token(s, ZENTOK_MINUS)); continue;
 <Normal>   "*"     := feedToken(token(s, ZENTOK_STAR)); continue;
 <Normal>   "/"     := feedToken(token(s, ZENTOK_DIVIDE)); continue;
+<Normal>   "..."   := feedToken(token(s, ZENTOK_ELIPSIS)); continue;
 
 <Normal>   "import"    := feedToken(token(s, ZENTOK_IMPORT)); continue;
 <Normal>   "include"   := feedToken(token(s, ZENTOK_INCLUDE)); continue;

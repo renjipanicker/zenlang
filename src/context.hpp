@@ -78,10 +78,17 @@ private:
     inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr);
     inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     inline void addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec);
+    inline void addUnexpectedTypeSpec();
     inline void pushExpectedTypeSpec();
     inline void popExpectedTypeSpec(const Ast::Token& pos);
+    inline bool isUnexpectedTypeSpec() const;
+    inline const ExpectedTypeSpecList& getExpectedTypeList(const Ast::Token& pos) const;
     inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny(const size_t& idx) const;
     inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const;
+    inline const Ast::QualifiedTypeSpec& getExpectedTypeSpecEx(const Ast::Token& pos, const size_t& idx) const;
+    inline void enterArg(const Ast::Token& pos, const int& idx);
+    inline void leaveArg(const Ast::Token& pos);
+    inline void matchArg(const Ast::Token& pos, Ast::ExprList& list, const Ast::Expr& expr);
 
 private:
     inline const Ast::TemplateDefn* isEnteringList() const;
@@ -151,6 +158,7 @@ public:
     Ast::PropertyDeclRW*     aStructPropertyDeclRW(const Ast::Token& pos, const Ast::QualifiedTypeSpec& propertyType, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::PropertyDeclRO*     aStructPropertyDeclRO(const Ast::Token& pos, const Ast::QualifiedTypeSpec& propertyType, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::RoutineDecl*        aRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType);
+    Ast::RoutineDecl*        aVarArgRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     Ast::RoutineDefn*        aRoutineDefn(Ast::RoutineDefn& routineDefn, const Ast::CompoundStatement& block);
     Ast::RoutineDefn*        aEnterRoutineDefn(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType);
     Ast::FunctionDecl*       aFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
@@ -257,10 +265,20 @@ public:
 
     Ast::RunExpr*             aRunExpr(const Ast::Token& pos, const Ast::FunctorCallExpr& callExpr);
 
-    Ast::FunctorCallExpr*     aFunctorCallExpr(const Ast::Token& pos, const Ast::Token& name, const Ast::ExprList& exprList);
     Ast::FunctorCallExpr*     aFunctorCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList);
-    Ast::FunctorCallExpr*     aFunctionCallExpr(const Ast::Token& pos, const Ast::Function& function, const Ast::ExprList& exprList);
+    Ast::Expr*                aEnterFunctorCall(Ast::Expr& expr);
+    Ast::Expr*                aEnterFunctorCall(const Ast::Token& name);
+    Ast::Expr*                aEnterFunctorCall(const Ast::Function& function);
+
     Ast::RoutineCallExpr*     aRoutineCallExpr(const Ast::Token& pos, const Ast::Routine& routine, const Ast::ExprList& exprList);
+    const Ast::Routine*       aEnterRoutineCall(const Ast::Routine& routine);
+
+    Ast::ExprList*            aCallArgList(Ast::ExprList& list, const Ast::Expr& expr);
+    Ast::ExprList*            aCallArgList(const Ast::Expr& expr);
+    Ast::ExprList*            aCallArgList();
+    Ast::ExprList*            aEnterNextArg(const Ast::Token& pos, Ast::ExprList& exprList);
+    void                      aEnterInitArg();
+    void                      aLeaveArg();
 
     Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
     Ast::IndexExpr*           aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::Expr& index);

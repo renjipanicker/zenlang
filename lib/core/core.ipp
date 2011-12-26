@@ -47,9 +47,9 @@ template <V>   list native;
 template <K,V> dict native;
 template <K,V> tree native;
 
-public routine void assert() native;
-public routine void unused() native;
-public routine void check() native;
+public routine void assert(...) native;
+public routine void unused(...) native;
+public routine void check(...) native;
 
 typedef ArgList list<string> native;
 public function (int code)main(const ArgList& argl);
