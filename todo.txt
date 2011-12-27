@@ -1,6 +1,9 @@
 anchor
 menubar
 
+abstract struct
+abstract function
+
 iterate (foreach) on string
 list indexing
 put everything in namespaces
@@ -8,9 +11,9 @@ sizeof() function for container-expr.
 sizeof() function for types.
 "c++" as output code
 "cmake" as output project
-unit test - verify
 verbose output from compiler
 interpreter
+error-handling
 
 bug - validate type when de-referencing pointer<>
 bug - list/dict inside struct does not copy in cctor
@@ -38,7 +41,6 @@ settings
 cmdline
 timer
 json
-error-handling
 network
 http
 database
@@ -196,3 +198,4 @@ infer type of expr in function-call
 child-function syntax should be id:base-function {...}
 remove auto keyword in declaration statements
 automatically de-reference pointer on lhs of member-expr
+unit test - verify

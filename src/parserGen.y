@@ -170,14 +170,21 @@ rGlobalDefaultStatement ::= DEFAULT rTypeSpec(T) ASSIGNEQUAL rExpr(E) SEMI. {ref
 //-------------------------------------------------
 // definition specifiers
 %type rDefinitionType {Ast::DefinitionType::T}
-rDefinitionType(L) ::= NATIVE  . {L = Ast::DefinitionType::Native;}
-rDefinitionType(L) ::= .         {L = Ast::DefinitionType::Direct;}
+rDefinitionType(L) ::= NATIVE. {L = Ast::DefinitionType::Native;}
+rDefinitionType(L) ::= FINAL.  {L = Ast::DefinitionType::Final;}
+rDefinitionType(L) ::= .       {L = Ast::DefinitionType::Final;}
 
 //-------------------------------------------------
 // definition specifiers
 %type rExDefinitionType {Ast::DefinitionType::T}
 rExDefinitionType(L) ::= ABSTRACT. {L = Ast::DefinitionType::Abstract;}
 rExDefinitionType(L) ::= rDefinitionType(R). {L = R;}
+
+//-------------------------------------------------
+// definition specifiers
+%type rAbstractDefinitionType {Ast::DefinitionType::T}
+rAbstractDefinitionType(L) ::= ABSTRACT. {L = Ast::DefinitionType::Abstract;}
+rAbstractDefinitionType(L) ::= . {L = Ast::DefinitionType::Abstract;}
 
 //-------------------------------------------------
 %type rTypeSpecDef {Ast::UserDefinedTypeSpec*}
@@ -347,7 +354,7 @@ rRoutineId(L) ::= ROUTINE_TYPE(R). {L = R;}
 //-------------------------------------------------
 // function definition
 %type rFunctionDecl {Ast::FunctionDecl*}
-rFunctionDecl(L) ::= rFunctionSig(functionSig) rDefinitionType(defType) SEMI. {L = ref(pctx).aFunctionDecl(ref(functionSig), defType);}
+rFunctionDecl(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType) SEMI. {L = ref(pctx).aFunctionDecl(ref(functionSig), defType);}
 
 //-------------------------------------------------
 // root function declarations
@@ -356,7 +363,7 @@ rRootFunctionDefn(L) ::= rEnterRootFunctionDefn(functionDefn) rCompoundStatement
 
 //-------------------------------------------------
 %type rEnterRootFunctionDefn {Ast::RootFunctionDefn*}
-rEnterRootFunctionDefn(L) ::= rFunctionSig(functionSig) rDefinitionType(defType). {L = ref(pctx).aEnterRootFunctionDefn(ref(functionSig), defType);}
+rEnterRootFunctionDefn(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType). {L = ref(pctx).aEnterRootFunctionDefn(ref(functionSig), defType);}
 
 //-------------------------------------------------
 // child function declaration
@@ -365,12 +372,12 @@ rChildFunctionDefn(L) ::= rEnterChildFunctionDefn(functionImpl) rCompoundStateme
 
 //-------------------------------------------------
 %type rEnterChildFunctionDefn {Ast::ChildFunctionDefn*}
-rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base). {L = ref(pctx).aEnterChildFunctionDefn(ref(base), name, Ast::DefinitionType::Direct);}
+rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType). {L = ref(pctx).aEnterChildFunctionDefn(ref(base), name, defType);}
 
 //-------------------------------------------------
 // event declarations
 %type rEventDecl {Ast::EventDecl*}
-rEventDecl(L) ::= EVENT(B) LBRACKET rVariableDefn(in) RBRACKET LINK rFunctionSig(functionSig) rDefinitionType(D) SEMI. {L = ref(pctx).aEventDecl(B, ref(in), ref(functionSig), D);}
+rEventDecl(L) ::= EVENT(B) LBRACKET rVariableDefn(in) RBRACKET rDefinitionType(ED) LINK rFunctionSig(functionSig) rAbstractDefinitionType(HD) SEMI. {L = ref(pctx).aEventDecl(B, ref(in), ED, ref(functionSig), HD);}
 
 //-------------------------------------------------
 // function signature.
@@ -675,6 +682,15 @@ rTernaryExpr(E) ::= rExpr(L) QUESTION(O1) rExpr(T) COLON(O2) rExpr(F). {E = ref(
 //-------------------------------------------------
 // binary operators
 %type rBinaryExpr {const Ast::Expr*}
+rBinaryExpr(E) ::= rExpr(L) AND(O)             rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) OR(O)              rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) EQUAL(O)           rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) NOTEQUAL(O)        rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) LT(O)              rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) GT(O)              rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) LTE(O)             rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) GTE(O)             rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) HAS(O)             rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
 rBinaryExpr(E) ::= rExpr(L) ASSIGNEQUAL(O)     rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
 rBinaryExpr(E) ::= rExpr(L) TIMESEQUAL(O)      rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
 rBinaryExpr(E) ::= rExpr(L) DIVIDEEQUAL(O)     rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
@@ -690,15 +706,6 @@ rBinaryExpr(E) ::= rExpr(L) BITWISEAND(O)      rExpr(R). {E = ptr(ref(pctx).aBin
 rBinaryExpr(E) ::= rExpr(L) BITWISEXOR(O)      rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
 rBinaryExpr(E) ::= rExpr(L) BITWISEOR(O)       rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
 rBinaryExpr(E) ::= rExpr(L) BITWISENOT(O)      rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) AND(O)             rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) OR(O)              rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) EQUAL(O)           rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) NOTEQUAL(O)        rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) LT(O)              rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) GT(O)              rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) LTE(O)             rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) GTE(O)             rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) HAS(O)             rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
 rBinaryExpr(E) ::= rExpr(L) SHL(O)             rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
 rBinaryExpr(E) ::= rExpr(L) SHR(O)             rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
 rBinaryExpr(E) ::= rExpr(L) PLUS(O)            rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
@@ -847,7 +854,7 @@ rAnonymousFunctionExpr(L) ::= rEnterAnonymousFunction(R) rCompoundStatement(C). 
 //-------------------------------------------------
 %type rEnterAnonymousFunction {Ast::ChildFunctionDefn*}
 rEnterAnonymousFunction(L) ::= rFunctionTypeSpec(R). {L = ref(pctx).aEnterAnonymousFunction(ref(R));}
-rEnterAnonymousFunction(L) ::= AUTO_FUNCTION(R). {L = ref(pctx).aEnterAutoAnonymousFunction(R);}
+rEnterAnonymousFunction(L) ::= FUNCTION(R). {L = ref(pctx).aEnterAutoAnonymousFunction(R);}
 
 //-------------------------------------------------
 // struct instance expressions
@@ -858,8 +865,8 @@ rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B)                
 //-------------------------------------------------
 // auto struct instance expressions
 %type rAutoStructInstanceExpr {Ast::Expr*}
-rAutoStructInstanceExpr(L) ::= AUTO_STRUCT(B) rEnterAutoStructInstanceExpr(R) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(B, ref(R), ref(P));}
-rAutoStructInstanceExpr(L) ::= AUTO_STRUCT(B) rEnterAutoStructInstanceExpr(R)                        rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(B, ref(R));}
+rAutoStructInstanceExpr(L) ::= STRUCT(B) rEnterAutoStructInstanceExpr(R) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(B, ref(R), ref(P));}
+rAutoStructInstanceExpr(L) ::= STRUCT(B) rEnterAutoStructInstanceExpr(R)                        rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(B, ref(R));}
 
 //-------------------------------------------------
 // special case - struct can be instantiated with {} or () for syntactic equivalence with C/C++.
@@ -964,6 +971,15 @@ rKeyConstantExpr(L) ::= KEY_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("str
 /*
 //-------------------------------------------------
 // binary operators
+rBinaryOp(L) ::= AND(R)             . {L = R;}
+rBinaryOp(L) ::= OR(R)              . {L = R;}
+rBinaryOp(L) ::= EQUAL(R)           . {L = R;}
+rBinaryOp(L) ::= NOTEQUAL(R)        . {L = R;}
+rBinaryOp(L) ::= LT(R)              . {L = R;}
+rBinaryOp(L) ::= GT(R)              . {L = R;}
+rBinaryOp(L) ::= LTE(R)             . {L = R;}
+rBinaryOp(L) ::= GTE(R)             . {L = R;}
+rBinaryOp(L) ::= HAS(R)             . {L = R;}
 rBinaryOp(L) ::= ASSIGNEQUAL(R)     . {L = R;}
 rBinaryOp(L) ::= TIMESEQUAL(R)      . {L = R;}
 rBinaryOp(L) ::= DIVIDEEQUAL(R)     . {L = R;}
@@ -979,15 +995,6 @@ rBinaryOp(L) ::= BITWISEAND(R)      . {L = R;}
 rBinaryOp(L) ::= BITWISEXOR(R)      . {L = R;}
 rBinaryOp(L) ::= BITWISEOR(R)       . {L = R;}
 rBinaryOp(L) ::= BITWISENOT(R)      . {L = R;}
-rBinaryOp(L) ::= AND(R)             . {L = R;}
-rBinaryOp(L) ::= OR(R)              . {L = R;}
-rBinaryOp(L) ::= EQUAL(R)           . {L = R;}
-rBinaryOp(L) ::= NOTEQUAL(R)        . {L = R;}
-rBinaryOp(L) ::= LT(R)              . {L = R;}
-rBinaryOp(L) ::= GT(R)              . {L = R;}
-rBinaryOp(L) ::= LTE(R)             . {L = R;}
-rBinaryOp(L) ::= GTE(R)             . {L = R;}
-rBinaryOp(L) ::= HAS(R)             . {L = R;}
 rBinaryOp(L) ::= SHL(R)             . {L = R;}
 rBinaryOp(L) ::= SHR(R)             . {L = R;}
 rBinaryOp(L) ::= PLUS(R)            . {L = R;}

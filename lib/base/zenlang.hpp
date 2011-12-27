@@ -204,6 +204,7 @@ struct type {
     explicit inline type(const std::string& name) : _name(name) {}
     inline const std::string& name() const {return _name;}
     inline bool operator==(const type& rhs) const {return (_name == rhs._name);}
+    inline bool operator!=(const type& rhs) const {return (_name != rhs._name);}
 private:
     std::string _name;
 };

@@ -44,5 +44,5 @@ public function void Hide(const Handle& window) native;
 public function void Move(const Handle& window, const Position& position) native;
 public function void Size(const Handle& window, const int& w, const int& h) native;
 
-public event(const Handle& window) => function void OnResize() native;
-public event(const Handle& window) => function void OnClose() native;
+public event(const Handle& window) native => function void OnResize();
+public event(const Handle& window) native => function void OnClose();

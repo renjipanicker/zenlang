@@ -20,7 +20,7 @@ namespace Ast {
         enum T {
             Native,     /// TypeSpec is implemented in native code
             Abstract,   /// TypeSpec is an abstract type (struct and function)
-            Direct      /// TypeSpec is implemented directly
+            Final       /// TypeSpec cannot be overridden and is implemented in zenlang code
         };
     };
 

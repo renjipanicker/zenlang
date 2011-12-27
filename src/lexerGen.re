@@ -27,27 +27,28 @@ inline void newLine(Scanner *s) {
 }
 
 static size_t fill(Scanner *s, size_t len) {
-    size_t got = 0, cnt;
+    size_t got = 0;
+    size_t count = 0;
 
-    if ((!(feof(s->fp))) && ((s->lim - s->tok) < (int)len)) {
+    if ((!feof(s->fp)) && ((s->lim - s->cur) < (int)len)) {
         if (s->tok > s->buffer) {
-            cnt = s->tok - s->buffer;
+            count = s->tok - s->buffer;
             memcpy(s->buffer, s->tok, s->lim - s->tok);
-            s->tok -= cnt;
-            s->cur -= cnt;
-            s->lim -= cnt;
-            s->sol -= cnt;
-            s->mar -= cnt;
+            s->tok -= count;
+            s->cur -= count;
+            s->lim -= count;
+            s->sol -= count;
+            s->mar -= count;
             if(s->text > 0) {
-                assert(s->text >= (s->buffer + cnt));
-                s->text -= cnt;
+                assert(s->text >= (s->buffer + count));
+                s->text -= count;
             }
-            cnt = &s->buffer[BSIZE] - s->lim;
+            count = &(s->buffer[BSIZE]) - s->lim;
         } else {
-            cnt = BSIZE;
+            count = BSIZE;
         }
 
-        got = fread(s->lim, 1, cnt, s->fp);
+        got = fread(s->lim, 1, count, s->fp);
         s->lim += got;
     }
     return got;
@@ -148,14 +149,14 @@ inline void Lexer::Impl::sendLessThan(Scanner* s) {
 
 inline void Lexer::Impl::sendOpenCurly(Scanner* s) {
     if(_context.isStructExpected() || _context.isPointerToStructExpected() || _context.isListOfStructExpected() || _context.isListOfPointerToStructExpected()) {
-        if((_lastToken != ZENTOK_STRUCT_TYPE) && (_lastToken != ZENTOK_AUTO)) {
-            feedToken(token(s, ZENTOK_AUTO_STRUCT));
+        if((_lastToken != ZENTOK_STRUCT_TYPE) && (_lastToken != ZENTOK_STRUCT)) {
+            feedToken(token(s, ZENTOK_STRUCT));
         }
     }
 
     if(_context.isFunctionExpected()) {
-        if((_lastToken != ZENTOK_FUNCTION_TYPE) && (_lastToken != ZENTOK_AUTO)) {
-            feedToken(token(s, ZENTOK_AUTO_FUNCTION));
+        if((_lastToken != ZENTOK_FUNCTION_TYPE) && (_lastToken != ZENTOK_FUNCTION)) {
+            feedToken(token(s, ZENTOK_FUNCTION));
         }
     }
 
@@ -197,7 +198,10 @@ re2c:cond:goto               = "continue;";
 
 /*!getstate:re2c */
 
-    while(s->cur < s->lim) {
+    while(1) {
+        if(s->cur >= s->lim) {
+            break;
+        }
         s->mar = s->tok = s->cur;
 
 /*!re2c
@@ -294,6 +298,7 @@ re2c:condenumprefix          = EState;
 
 <Normal>   "native"    := feedToken(token(s, ZENTOK_NATIVE)); continue;
 <Normal>   "abstract"  := feedToken(token(s, ZENTOK_ABSTRACT)); continue;
+<Normal>   "final"     := feedToken(token(s, ZENTOK_FINAL)); continue;
 <Normal>   "const"     := feedToken(token(s, ZENTOK_CONST)); continue;
 
 <Normal>   "coerce"    := feedToken(token(s, ZENTOK_COERCE)); continue;
@@ -367,11 +372,11 @@ re2c:condenumprefix          = EState;
 <Normal>   " "       := continue;
 <Normal>   "\t"      := continue;
 
-<Normal>   "\000" := feedToken(token(s, ZENTOK_EOF)); continue;
 <Normal>   [^]    := feedToken(token(s, ZENTOK_ERR)); continue;
 */
 
 /*
+<Normal>   "\000" := feedToken(token(s, ZENTOK_EOF)); continue;
 <!*>                 := fprintf(stderr, "Normal\n");
 <!Comment,Skiptoeol> := fprintf(stderr, "Comment\n");
 */

@@ -1426,7 +1426,7 @@ char **argv;
   int i;
   struct lemon lem;
 
-  memset(ofilesuffix, 0, OSUFFIX_LEN);
+  strncpy(ofilesuffix, ".c", OSUFFIX_LEN);
   OptInit(argv,options,stderr);
   if( version ){
      printf("Lemon version 1.0\n");

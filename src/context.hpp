@@ -78,10 +78,10 @@ private:
     inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr);
     inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     inline void addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec);
-    inline void addUnexpectedTypeSpec();
+    inline void addNoneExpectedTypeSpec();
     inline void pushExpectedTypeSpec();
     inline void popExpectedTypeSpec(const Ast::Token& pos);
-    inline bool isUnexpectedTypeSpec() const;
+    inline bool isNoneExpectedTypeSpec() const;
     inline const ExpectedTypeSpecList& getExpectedTypeList(const Ast::Token& pos) const;
     inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny(const size_t& idx) const;
     inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const;
@@ -167,7 +167,7 @@ public:
     Ast::RootFunctionDefn*   aEnterRootFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
     Ast::ChildFunctionDefn*  aChildFunctionDefn(Ast::ChildFunctionDefn& functionImpl, const Ast::CompoundStatement& block);
     Ast::ChildFunctionDefn*  aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
-    Ast::EventDecl*          aEventDecl(const Ast::Token& pos, const Ast::VariableDefn& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
+    Ast::EventDecl*          aEventDecl(const Ast::Token& pos, const Ast::VariableDefn& in, const Ast::DefinitionType::T& eventDefType, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& handlerDefType);
     Ast::FunctionSig*        aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in);
     Ast::FunctionSig*        aFunctionSig(const Ast::QualifiedTypeSpec& out, const Ast::Token& name, Ast::Scope& in);
     Ast::Scope*              aInParamsList(Ast::Scope& scope);
@@ -242,6 +242,7 @@ public:
 
 public:
     Ast::TernaryOpExpr*       aTernaryExpr(const Ast::Token& op1, const Ast::Token& op2, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2);
+    Ast::Expr&                aBooleanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
     Ast::Expr&                aBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
     Ast::PostfixOpExpr&       aPostfixExpr(const Ast::Token& op, const Ast::Expr& lhs);
     Ast::PrefixOpExpr&        aPrefixExpr(const Ast::Token& op, const Ast::Expr& rhs);

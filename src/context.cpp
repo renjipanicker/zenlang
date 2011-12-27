@@ -390,7 +390,7 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
 inline Ast::TemplateDefn& Context::createTemplateDefn(const Ast::Token& pos, const std::string& name) {
     Ast::Token token(pos.row(), pos.col(), name);
     const Ast::TemplateDecl& templateDecl = getRootTypeSpec<Ast::TemplateDecl>(token);
-    Ast::TemplateDefn& templateDefn = _unit.addNode(new Ast::TemplateDefn(currentTypeSpec(), token, Ast::DefinitionType::Direct, templateDecl));
+    Ast::TemplateDefn& templateDefn = _unit.addNode(new Ast::TemplateDefn(currentTypeSpec(), token, Ast::DefinitionType::Final, templateDecl));
     return templateDefn;
 }
 
@@ -481,7 +481,7 @@ inline void Context::popExpectedTypeSpec(const Ast::Token& pos) {
     _expectedTypeSpecStack.pop_back();
 }
 
-inline bool Context::isUnexpectedTypeSpec() const {
+inline bool Context::isNoneExpectedTypeSpec() const {
     if(_expectedTypeSpecStack.size() == 0) {
         return true;
     }
@@ -500,7 +500,7 @@ inline void Context::addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec
     _expectedTypeSpecStack.back().push_back(ptr(qTypeSpec));
 }
 
-inline void Context::addUnexpectedTypeSpec() {
+inline void Context::addNoneExpectedTypeSpec() {
     if(_expectedTypeSpecStack.size() == 0) {
         Ast::Token dummy_pos(0, 0, ""); /// \todo remove this
         throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, dummy_pos).c_str());
@@ -560,6 +560,10 @@ inline const Ast::TemplateDefn* Context::isEnteringTemplate() const {
     }
 
     const Ast::QualifiedTypeSpec* expectedTypeRef = exl.back();
+    if(expectedTypeRef == 0) {
+        return 0;
+    }
+
     const Ast::TypeSpec& ts = ref(expectedTypeRef).typeSpec();
     const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(ts));
     return td;
@@ -724,7 +728,7 @@ inline const Ast::Expr& Context::createPointerExprIfAny(const Ast::Token& pos, c
 }
 
 inline void Context::enterArg(const Ast::Token& pos, const int& idx) {
-    if(!isUnexpectedTypeSpec()) {
+    if(!isNoneExpectedTypeSpec()) {
         const Ast::QualifiedTypeSpec& qts = getExpectedTypeSpecEx(pos, idx);
         pushExpectedTypeSpec(); // this pushXX *must* be after the above getXX
         addExpectedTypeSpec(qts);
@@ -738,7 +742,7 @@ inline void Context::leaveArg(const Ast::Token& pos) {
 }
 
 inline void Context::matchArg(const Ast::Token& pos, Ast::ExprList& list, const Ast::Expr& expr) {
-    if(isUnexpectedTypeSpec()) {
+    if(isNoneExpectedTypeSpec()) {
         return;
     }
 
@@ -1110,16 +1114,16 @@ Ast::ChildFunctionDefn* Context::aEnterChildFunctionDefn(const Ast::TypeSpec& ba
     return ptr(functionDefn);
 }
 
-Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDefn& in, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
+Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDefn& in, const Ast::DefinitionType::T& eventDefType, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& handlerDefType) {
     const Ast::Token& name = functionSig.name();
 
     Ast::Token eventName(pos.row(), pos.col(), name.string());
-    Ast::EventDecl& eventDef = _unit.addNode(new Ast::EventDecl(currentTypeSpec(), eventName, in, defType));
+    Ast::EventDecl& eventDef = _unit.addNode(new Ast::EventDecl(currentTypeSpec(), eventName, in, eventDefType));
     currentTypeSpec().addChild(eventDef);
 
     Ast::Token handlerName(pos.row(), pos.col(), "Handler");
     Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, functionSig.inScope());
-    Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, ref(handlerSig), Ast::DefinitionType::Direct);
+    Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, ref(handlerSig), handlerDefType);
     eventDef.setHandler(funDecl);
 
     Ast::QualifiedTypeSpec& qFunTypeSpec = addQualifiedTypeSpec(false, funDecl, false);
@@ -1134,7 +1138,7 @@ Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDe
     Ast::Scope& inAdd  = addScope(Ast::ScopeType::Param);
     Ast::Token nameAdd(pos.row(), pos.col(), "Add");
     Ast::FunctionSig* addSig = aFunctionSig(outAdd, nameAdd, inAdd);
-    Ast::FunctionDecl& addDecl = addFunctionDecl(eventDef, ref(addSig), defType);
+    Ast::FunctionDecl& addDecl = addFunctionDecl(eventDef, ref(addSig), eventDefType);
     eventDef.setAddFunction(addDecl);
 
     inAdd.addVariableDef(in);
@@ -1212,6 +1216,7 @@ const Ast::QualifiedTypeSpec* Context::aQualifiedVariableDefn(const Ast::Qualifi
 
 void Context::aAutoQualifiedVariableDefn() {
     pushExpectedTypeSpec();
+    addNoneExpectedTypeSpec();
 }
 
 Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef) {
@@ -1292,7 +1297,7 @@ const Ast::TypeSpec* Context::aTypeSpec(const Ast::TypeSpec& TypeSpec) {
 }
 
 const Ast::TemplateDefn* Context::aTemplateDefnTypeSpec(const Ast::TemplateDecl& typeSpec, const Ast::TemplateTypePartList& list) {
-    Ast::TemplateDefn& templateDefn = _unit.addNode(new Ast::TemplateDefn(currentTypeSpec(), typeSpec.name(), Ast::DefinitionType::Direct, typeSpec));
+    Ast::TemplateDefn& templateDefn = _unit.addNode(new Ast::TemplateDefn(currentTypeSpec(), typeSpec.name(), Ast::DefinitionType::Final, typeSpec));
     for(Ast::TemplateTypePartList::List::const_iterator it = list.list().begin(); it != list.list().end(); ++it) {
         const Ast::QualifiedTypeSpec& part = ref(*it);
         templateDefn.addType(part);
@@ -1514,15 +1519,25 @@ Ast::TernaryOpExpr* Context::aTernaryExpr(const Ast::Token& op1, const Ast::Toke
     return ptr(expr);
 }
 
+Ast::Expr& Context::aBooleanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(op, "bool");
+    Ast::BinaryOpExpr& expr = _unit.addNode(new Ast::BinaryOpExpr(qTypeSpec, op, lhs, rhs));
+    return expr;
+}
+
 Ast::Expr& Context::aBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
     const Ast::QualifiedTypeSpec& qTypeSpec = coerce(op, lhs.qTypeSpec(), rhs.qTypeSpec());
 
     // if it is any of the assign-ops (=, +=, *=, etc). Check if last char is '='
-    if(op.string().at(op.string().size() - 1) == '=') {
-        const Ast::IndexExpr* indexExpr = dynamic_cast<const Ast::IndexExpr*>(ptr(lhs));
-        if(indexExpr) {
+    const Ast::IndexExpr* indexExpr = dynamic_cast<const Ast::IndexExpr*>(ptr(lhs));
+    if(indexExpr) {
+        if(op.string() == "=") {
             Ast::SetIndexExpr& expr = _unit.addNode(new Ast::SetIndexExpr(qTypeSpec, ref(indexExpr), rhs));
             return expr;
+        } else if(op.string() != "==") {
+            if(op.string().at(op.string().size() - 1) == '=') {
+                throw Exception("%s Operator '%s' on index expression not implemented\n", err(_filename, op).c_str(), op.text());
+            }
         }
     }
 
@@ -1693,7 +1708,7 @@ Ast::RoutineCallExpr* Context::aRoutineCallExpr(const Ast::Token& pos, const Ast
 const Ast::Routine* Context::aEnterRoutineCall(const Ast::Routine& routine) {
     pushExpectedTypeSpec();
     if(routine.inScope().type() == Ast::ScopeType::VarArg) {
-        addUnexpectedTypeSpec();
+        addNoneExpectedTypeSpec();
     } else {
         for(Ast::Scope::List::const_iterator it = routine.in().begin(); it != routine.in().end(); ++it) {
             const Ast::VariableDefn& def = ref(*it);
@@ -1724,7 +1739,7 @@ Ast::Expr* Context::aEnterFunctorCall(Ast::Expr& expr) {
 
     pushExpectedTypeSpec();
     if(ref(function).sig().inScope().type() == Ast::ScopeType::VarArg) {
-        addUnexpectedTypeSpec();
+        addNoneExpectedTypeSpec();
     } else {
         for(Ast::Scope::List::const_iterator it = ref(function).sig().in().begin(); it != ref(function).sig().in().end(); ++it) {
             const Ast::VariableDefn& def = ref(*it);
@@ -2018,7 +2033,7 @@ Ast::MemberExpr* Context::aMemberVariableExpr(const Ast::Expr& expr, const Ast::
             }
         }
 
-        throw Exception("%s '%s' is not a member of struct '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
+        throw Exception("%s '%s' is not a member of struct '%s'\n", err(_filename, name).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
     }
 
     const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(ptr(typeSpec));
@@ -2028,10 +2043,10 @@ Ast::MemberExpr* Context::aMemberVariableExpr(const Ast::Expr& expr, const Ast::
             Ast::MemberVariableExpr& vdefExpr = _unit.addNode(new Ast::MemberVariableExpr(ref(vref).qTypeSpec(), expr, ref(vref)));
             return ptr(vdefExpr);
         }
-        throw Exception("%s '%s' is not a member of function: '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
+        throw Exception("%s '%s' is not a member of function: '%s'\n", err(_filename, name).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
     }
 
-    throw Exception("%s Not a aggregate expression type '%s'\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());
+    throw Exception("%s Not an aggregate expression type '%s' (looking for member %s)\n", err(_filename, name).c_str(), typeSpec.name().text(), name.text());
 }
 
 Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
@@ -2039,7 +2054,7 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
     if(enumDefn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(enumDefn).scope(), name);
         if(vref == 0) {
-            throw Exception("%s %s is not a member of type '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
+            throw Exception("%s %s is not a member of type '%s'\n", err(_filename, name).c_str(), name.text(), typeSpec.name().text());
         }
         const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
         Ast::EnumMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::EnumMemberExpr(qTypeSpec, typeSpec, ref(vref)));
@@ -2050,13 +2065,13 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
     if(structDefn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(structDefn).scope(), name);
         if(vref == 0) {
-            throw Exception("%s %s is not a member of type '%s'\n", err(_filename, typeSpec.name()).c_str(), name.text(), typeSpec.name().text());
+            throw Exception("%s %s is not a member of type '%s'\n", err(_filename, name).c_str(), name.text(), typeSpec.name().text());
         }
         Ast::StructMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::StructMemberExpr(ref(vref).qTypeSpec(), typeSpec, ref(vref)));
         return ptr(typeSpecMemberExpr);
     }
 
-    throw Exception("%s Not an aggregate type '%s'\n", err(_filename, name).c_str(), typeSpec.name().text());
+    throw Exception("%s Not an aggregate type '%s' (looking for member %s)\n", err(_filename, name).c_str(), typeSpec.name().text(), name.text());
 }
 
 Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list) {
@@ -2166,7 +2181,7 @@ Ast::FunctionInstanceExpr* Context::aFunctionInstanceExpr(const Ast::TypeSpec& t
 Ast::AnonymousFunctionExpr* Context::aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement) {
     aChildFunctionDefn(functionDefn, compoundStatement);
     Ast::ExprList& exprList = addExprList();
-    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionDefn.base(), false);
+    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionDefn, false);
     Ast::AnonymousFunctionExpr& functionInstanceExpr = _unit.addNode(new Ast::AnonymousFunctionExpr(qTypeSpec, functionDefn, exprList));
     return ptr(functionInstanceExpr);
 }
@@ -2189,7 +2204,7 @@ Ast::ChildFunctionDefn* Context::aEnterAnonymousFunction(const Ast::Function& fu
         throw Exception("%s: Internal error: Unable to find parent for anonymous function %s\n", err(_filename, name).c_str(), getTypeSpecName(function, GenMode::Import).c_str());
     }
 
-    Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(ref(ts), function, name, Ast::DefinitionType::Direct);
+    Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(ref(ts), function, name, Ast::DefinitionType::Final);
     Ast::Statement* statement = aGlobalTypeSpecStatement(Ast::AccessType::Private, functionDefn);
     unused(statement);
     return ptr(functionDefn);

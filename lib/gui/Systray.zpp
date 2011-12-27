@@ -5,8 +5,8 @@ namespace Systray;
 public struct Handle : Widget::Handle {
 };
 
-public event(const Systray::Handle& systray) => function void OnActivation() native;
-public event(const Systray::Handle& systray) => function void OnContextMenu() native;
+public event(const Systray::Handle& systray) native => function void OnActivation();
+public event(const Systray::Handle& systray) native => function void OnContextMenu();
 
 public struct Definition : Window::Definition {
     auto tooltip = "";
