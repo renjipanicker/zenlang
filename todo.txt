@@ -9,7 +9,7 @@ sizeof() function for container-expr.
 sizeof() function for types.
 "c++" as output code
 "cmake" as output project
-unit test - check
+unit test - verify
 verbose output from compiler
 interpreter
 

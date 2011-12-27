@@ -204,19 +204,22 @@ private:
 
     virtual void visit(const Ast::RoutineCallExpr& node) {
         const std::string name = getTypeSpecName(node.routine(), _genMode);
-        if((name == "assert") || (name == "unused")) {
+        if((name == "assert") || (name == "unused") || (name == "verify")) {
             std::string sep;
             for(Ast::ExprList::List::const_iterator it = node.exprList().list().begin(); it != node.exprList().list().end(); ++it) {
                 const Ast::Expr& expr = ref(*it);
-                fprintf(_fp, "%s%s(", sep.c_str(), name.c_str());
+                if(name == "verify")
+                    fprintf(_fp, "if(!");
+                else
+                    fprintf(_fp, "%s", sep.c_str());
+                fprintf(_fp, "%s(", name.c_str());
                 ExprGenerator(_fp, _genMode).visitNode(expr);
                 fprintf(_fp, ")");
+                if(name == "verify")
+                    fprintf(_fp, ")return out(_Out(false));");
                 sep = ";";
             }
             return;
-        }
-
-        if(name == "check") {
         }
 
         fprintf(_fp, "%s(", name.c_str());

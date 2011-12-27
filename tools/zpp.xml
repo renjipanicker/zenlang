@@ -21,13 +21,15 @@
       <item> native </item>
       <item> abstract </item>
 
+      <item> coerce </item>
       <item> run </item>
       <item> auto </item>
       <item> mutable </item>
       <item> static </item>
+
       <item> assert </item>
       <item> unused </item>
-      <item> check </item>
+      <item> verify </item>
 
       <item> break </item>
       <item> case </item>
@@ -72,6 +74,7 @@
     </list>
     <list name="types">
       <item> bool </item>
+      <item> byte </item>
       <item> char </item>
       <item> const </item>
       <item> double </item>
@@ -95,12 +98,21 @@
 
       <item> string </item>
       <item> pointer </item>
+      <item> future </item>
+      <item> functor </item>
+      <item> value </item>
       <item> ptr </item>
       <item> list </item>
       <item> dict </item>
+      <item> tree </item>
+      <item> date </item>
+      <item> time </item>
+      <item> datetime </item>
+      <item> type </item>
 
       <item> test </item>
       <item> main </item>
+      <item> ArgList </item>
     </list>
     <contexts>
       <context attribute="Normal Text" lineEndContext="#stay" name="Normal">

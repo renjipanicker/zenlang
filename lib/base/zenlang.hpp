@@ -516,6 +516,10 @@ public:
         TestResult::end(t.name(), out._passed);
         return out;
     }
+protected:
+    inline bool verify(const bool& cond) {
+        return cond;
+    }
 };
 
 struct TestInstance {

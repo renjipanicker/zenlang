@@ -12,17 +12,31 @@ public function (int ri, string rs)testFunction(const int& x) {
 
 public function testBasicExpr : test {
     auto i = 0;
-    auto s = "xx";
-    auto e = (1 + 2) * 3;
-    auto n = (1 > 2) ? 1 : 2;
-    auto t = "yy %{x}\n" @ {"n":n};
-    auto l = [1,2,3];
-    auto d = ["a":1,"b":2,"c":3];
-    auto r = testRoutine(123);
-    auto f = testFunction(456);
+    verify(i == 0);
 
-    assert(i == 0, s == "xx", e == 9, n == 2);
-    unused(t, l, d, r, f);
+    auto s = "xx";
+    verify(s == "xx");
+
+    auto e = (1 + 2) * 3;
+    verify(e == 9);
+
+    auto n = (i > e) ? 1 : 2;
+    verify(n == 2);
+
+    auto t = "yy %{@n}" @ {@n:n};
+    verify(t == "yy 2");
+
+    auto l = [1,2,3];
+    //verify(l[0] == 1); /// \todo
+
+    auto d = ["a":1,"b":2,"c":3];
+
+    auto r = testRoutine(123);
+    verify(r == 12345);
+
+    auto f = testFunction(456);
+    verify(f.ri == 67890);
+    verify(f.rs == "testfn");
 
     return (true);
 }
@@ -277,7 +291,8 @@ public function testLists : test {
     auto t = s[0];
     auto u = [float, 1,2];
     s[1] = 3;
-//    s[3] = 4;
+    s[3] = 4;
+    verify(t == 1);
 //    print "testLists %{@t}\n" @ {@t:t};
     unused(s, t, u);
     return (true);

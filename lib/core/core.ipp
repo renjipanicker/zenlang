@@ -49,7 +49,7 @@ template <K,V> tree native;
 
 public routine void assert(...) native;
 public routine void unused(...) native;
-public routine void check(...) native;
+public routine void verify(...) native;
 
 typedef ArgList list<string> native;
 public function (int code)main(const ArgList& argl);
