@@ -1,7 +1,6 @@
 anchor
 menubar
 
-validate type when de-referencing pointer<>
 iterate (foreach) on string
 list indexing
 put everything in namespaces
@@ -13,6 +12,7 @@ unit test - verify
 verbose output from compiler
 interpreter
 
+bug - validate type when de-referencing pointer<>
 bug - list/dict inside struct does not copy in cctor
 bug - typecast operator should check if can coerce
 bug - gtk-textedit resizes parent window

@@ -55,12 +55,12 @@ function MyMain : main {
 
     auto mainFrame = WindowCreator::Create(defn);
 
-    auto checkBtn  = <Window::Handle>mainFrame.child@@checkBox;
-    auto outputBox = <Window::Handle>mainFrame.child@@outputBox;
+    Window::Handle checkBtn  = mainFrame.child@@checkBox;
+    Window::Handle outputBox = mainFrame.child@@outputBox;
 
-    auto sysTray     = <Systray::Handle>mainFrame.child@@systray;
-    auto systrayMenu = <Menu::Handle>mainFrame.child@@systrayMenu;
-    auto showMenu    = <MenuItem::Handle>systrayMenu.child@@showItem;
+    Systray::Handle sysTray     = mainFrame.child@@systray;
+    Menu::Handle systrayMenu    = mainFrame.child@@systrayMenu;
+    MenuItem::Handle showMenu   = systrayMenu.child@@showItem;
 
     Window::OnResize(mainFrame) => {
         print "on resize\n";
