@@ -89,6 +89,7 @@ private:
     inline void enterArg(const Ast::Token& pos, const int& idx);
     inline void leaveArg(const Ast::Token& pos);
     inline void matchArg(const Ast::Token& pos, Ast::ExprList& list, const Ast::Expr& expr);
+    inline Ast::TypecastExpr* getDynamicTypecastExpr(const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr);
 
 private:
     inline const Ast::TemplateDefn* isEnteringList() const;

@@ -697,11 +697,29 @@ const Ast::StructDefn* Context::isListOfPointerToStructExpected() const {
 }
 
 inline const Ast::Expr& Context::createPointerExprIfAny(const Ast::Token& pos, const Ast::Expr& initExpr) {
+    // check if lhs is a pointer to rhs, if so auto-convert
     const Ast::TemplateDefn* ts = isPointerToExprExpected(initExpr);
     if(ts) {
         Ast::PointerInstanceExpr* expr = aPointerInstanceExpr(pos, initExpr);
         return ref(expr);
     }
+
+    // check if rhs is a pointer to lhs, if so, auto-convert
+    const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(ptr(initExpr.qTypeSpec().typeSpec()));
+    if((templateDefn) && (ref(templateDefn).name().string() == "pointer")) {
+        const Ast::QualifiedTypeSpec* lhsQts = getExpectedTypeSpecIfAny(0);
+        const Ast::QualifiedTypeSpec& rhsQts = ref(templateDefn).at(0);
+        if(lhsQts) {
+            int side = 0;
+            canCoerceX(ref(lhsQts), rhsQts, side);
+            if(side == +1) {
+                const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(ref(lhsQts).isConst(), ref(lhsQts).typeSpec(), true);
+                Ast::TypecastExpr& typecastExpr = _unit.addNode(new Ast::DynamicTypecastExpr(typeSpec, initExpr));
+                return typecastExpr;
+            }
+        }
+    }
+
     return initExpr;
 }
 
@@ -1828,6 +1846,7 @@ Ast::TypeofExprExpr* Context::aTypeofExprExpr(const Ast::Token& pos, const Ast::
 
 Ast::TypecastExpr* Context::aTypecastExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) {
     unused(pos);
+    /// \todo check if canCoerce
     const Ast::TemplateDefn* subType = dynamic_cast<const Ast::TemplateDefn*>(ptr(expr.qTypeSpec().typeSpec()));
     if((subType) && (ref(subType).name().string() == "pointer")) {
         const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(qTypeSpec.isConst(), qTypeSpec.typeSpec(), true);

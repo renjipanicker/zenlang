@@ -1,12 +1,10 @@
 anchor
 menubar
 
-automatically de-reference pointer on lhs of member-expr
 validate type when de-referencing pointer<>
 iterate (foreach) on string
+list indexing
 put everything in namespaces
-bug - list/dict inside struct does not copy in cctor
-
 sizeof() function for container-expr.
 sizeof() function for types.
 "c++" as output code
@@ -15,9 +13,11 @@ unit test - check
 verbose output from compiler
 interpreter
 
-bug-fix - gtk-textedit resizes parent window
-bug-fix - multiple #includes in guiTest.cpp
-bug-fix - indentation in generated cpp file
+bug - list/dict inside struct does not copy in cctor
+bug - typecast operator should check if can coerce
+bug - gtk-textedit resizes parent window
+bug - multiple #includes in guiTest.cpp
+bug - indentation in generated cpp file
 
 process
 application
@@ -99,7 +99,7 @@ a public struct cannot contain a private type
 a public function cannot have a private type in its sig
 if a public type contains an imported type, the imported type's header file is public
 multiple code generators: python, php, js, java
-multiple generators: python, php, js, java
+multiple project generators: cmake, vcproj, xcode
 
 *** enum-init-expr
 *** move Formatter to String, Creator to List/Dict
@@ -195,3 +195,4 @@ infer type of event-handler
 infer type of expr in function-call
 child-function syntax should be id:base-function {...}
 remove auto keyword in declaration statements
+automatically de-reference pointer on lhs of member-expr

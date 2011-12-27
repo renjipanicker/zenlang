@@ -364,5 +364,11 @@ function testAutoInitStruct : test {
     MyAutoStruct mys1 = {i:123; s:"xx"; fl:[1, 2]; lps:[{name:"n1";}];};
 
     list< pointer<MyAutoStruct> > alpds1 = [MyDerivedStruct{i:4;}];
+
+    pointer<MyAutoStruct> pds0 = MyDerivedStruct{i:88;};
+    MyDerivedStruct& mas0 = <MyDerivedStruct&>pds0;
+    MyDerivedStruct& mas1 = pds0;
+
+    unused(mas0, mas1);
     return (true);
 }
