@@ -1,450 +1,450 @@
 namespace TestBasic;
 
-public routine int testNative(const string& s) native;
+//public routine int testNative(const string& s) native;
 
-public routine int testRoutine(const int& x) {
-    return 12345;
-}
+//public routine int testRoutine(const int& x) {
+//    return 12345;
+//}
 
-public function (int ri, string rs)testFunction(const int& x) {
-    return (67890, "testfn");
-}
+//public function (int ri, string rs)testFunction(const int& x) {
+//    return (67890, "testfn");
+//}
 
-public function testBasicExpr : test {
-    auto i = 0;
-    verify(i == 0);
+//public function testBasicExpr : test {
+//    auto i = 0;
+//    verify(i == 0);
 
-    auto j = i++;
-    verify(j == 0);
-    verify(i == 1);
+//    auto j = i++;
+//    verify(j == 0);
+//    verify(i == 1);
 
-    auto k = ++i;
-    verify(k == 2);
-    verify(i == 2);
+//    auto k = ++i;
+//    verify(k == 2);
+//    verify(i == 2);
 
-    auto s = "xx";
-    verify(s == "xx");
+//    auto s = "xx";
+//    verify(s == "xx");
 
-    auto e = (1 + 2) * 3;
-    verify(e == 9);
+//    auto e = (1 + 2) * 3;
+//    verify(e == 9);
 
-    auto n = (i > e) ? 1 : 2;
-    verify(n == 2);
+//    auto n = (i > e) ? 1 : 2;
+//    verify(n == 2);
 
-    auto t = "yy %{@n}" @ {@n:n};
-    verify(t == "yy 2");
+//    auto t = "yy %{@n}" @ {@n:n};
+//    verify(t == "yy 2");
 
-    auto l = [1,2,3];
-    auto x = l[0];
-    verify(x == 1);
+//    auto l = [1,2,3];
+//    auto x = l[0];
+//    verify(x == 1);
 
-    auto y = (l[0] == 1);
-    verify(y == true);
+//    auto y = (l[0] == 1);
+//    verify(y == true);
 
-    auto d = ["a":1,"b":2,"c":3];
+//    auto d = ["a":1,"b":2,"c":3];
 
-    auto r = testRoutine(123);
-    verify(r == 12345);
+//    auto r = testRoutine(123);
+//    verify(r == 12345);
 
-    auto f = testFunction(456);
-    verify(f.ri == 67890, f.rs == "testfn");
+//    auto f = testFunction(456);
+//    verify(f.ri == 67890, f.rs == "testfn");
 
-    return (true);
-}
+//    return (true);
+//}
 
-public enum MyEnum {
-    C1;
-    C2;
-};
+//public enum MyEnum {
+//    C1;
+//    C2;
+//};
 
-public struct MyStructDecl;
+//public struct MyStructDecl;
 
-public struct MyBase {
-    auto j = 0;
-};
+//public struct MyBase {
+//    auto j = 0;
+//};
 
-public struct MyStruct : MyBase {
-    auto i = 0;
-};
+//public struct MyStruct : MyBase {
+//    auto i = 0;
+//};
 
-public function int testAdvancedExpr(const int& x, const MyStruct& myStruct, const MyEnum& myEnum) {
-    auto v = x;
-    if(v != 321) {
-        return (1);
-    }
-
-    auto m = myStruct.i;
-    if(m != 240) {
-        return (2);
-    }
-
-    auto o = myStruct.j;
-    if(o != 540) {
-        return (3);
-    }
-
-    auto n = myEnum;
-    if(n != MyEnum.C1) {
-        return (4);
-    }
-
-    auto a = typeof(myStruct);
-//    if(a != typeof(MyStruct))  {
-//        return (5);
+//public function int testAdvancedExpr(const int& x, const MyStruct& myStruct, const MyEnum& myEnum) {
+//    auto v = x;
+//    if(v != 321) {
+//        return (1);
 //    }
 
-    auto p = pointer<MyBase>(myStruct);
-    if((*p).j != 540) {
-        return (6);
-    }
+//    auto m = myStruct.i;
+//    if(m != 240) {
+//        return (2);
+//    }
 
-    auto w = value<MyBase>(p);
-    if(w.j != 540) {
-        return (7);
-    }
+//    auto o = myStruct.j;
+//    if(o != 540) {
+//        return (3);
+//    }
 
-    auto u = value<MyStruct>(p);
-    if(u.j != 540) {
-        return (8);
-    }
-    if(u.i != 240) {
-        return (9);
-    }
+//    auto n = myEnum;
+//    if(n != MyEnum.C1) {
+//        return (4);
+//    }
 
-    auto t = <MyStruct>p;
-    if(t.j != 540) {
-        return (10);
-    }
-    if(t.i != 240) {
-        return (11);
-    }
+//    auto a = typeof(myStruct);
+////    if(a != typeof(MyStruct))  {
+////        return (5);
+////    }
 
-    auto y = <long>v;
-    if(y != 321) {
-        return (12);
-    }
+//    auto p = pointer<MyBase>(myStruct);
+//    if((*p).j != 540) {
+//        return (6);
+//    }
 
-    auto q = &myStruct;
-    if((*q).j != 540) {
-        return (13);
-    }
-    if((*q).i != 240) {
-        return (14);
-    }
+//    auto w = value<MyBase>(p);
+//    if(w.j != 540) {
+//        return (7);
+//    }
 
-    auto s = &q;
-    if((*(*s)).j != 540) {
-        return (15);
-    }
-    if((*(*s)).i != 240) {
-        return (16);
-    }
+//    auto u = value<MyStruct>(p);
+//    if(u.j != 540) {
+//        return (8);
+//    }
+//    if(u.i != 240) {
+//        return (9);
+//    }
 
-    auto z = &<MyStruct>p;
-    if((*z).j != 540) {
-        return (17);
-    }
-    if((*z).i != 240) {
-        return (18);
-    }
+//    auto t = <MyStruct>p;
+//    if(t.j != 540) {
+//        return (10);
+//    }
+//    if(t.i != 240) {
+//        return (11);
+//    }
 
-    auto r = *p;
-    if(r.j != 540) {
-        return (19);
-    }
+//    auto y = <long>v;
+//    if(y != 321) {
+//        return (12);
+//    }
 
-    return (67890);
-}
+//    auto q = &myStruct;
+//    if((*q).j != 540) {
+//        return (13);
+//    }
+//    if((*q).i != 240) {
+//        return (14);
+//    }
 
-public function testFunction001 : test {
-    auto myStruct = MyStruct{i:240;j:540;};
-    auto e = MyEnum.C1;
-    auto c = testAdvancedExpr(321, myStruct, e);
-    verify(c == 67890);
-    return (true);
-}
+//    auto s = &q;
+//    if((*(*s)).j != 540) {
+//        return (15);
+//    }
+//    if((*(*s)).i != 240) {
+//        return (16);
+//    }
 
-public function testInnerRootFunction : test {
-    function int innerFunction(int j) {
-        return (j*3);
-    }
-    auto f = innerFunction(3);
-    verify(f == 9);
+//    auto z = &<MyStruct>p;
+//    if((*z).j != 540) {
+//        return (17);
+//    }
+//    if((*z).i != 240) {
+//        return (18);
+//    }
 
-    auto o = innerFunction[];
-    auto r = o(5);
-    verify(r == 15);
+//    auto r = *p;
+//    if(r.j != 540) {
+//        return (19);
+//    }
 
-    return (true);
-}
+//    return (67890);
+//}
 
-public function testInnerChildFunction : test {
-    function innerFunction : testFunction {
-        return (214, "aa");
-    }
-    auto f = innerFunction(2);
-    verify(f.ri == 214, f.rs == "aa");
+//public function testFunction001 : test {
+//    auto myStruct = MyStruct{i:240;j:540;};
+//    auto e = MyEnum.C1;
+//    auto c = testAdvancedExpr(321, myStruct, e);
+//    verify(c == 67890);
+//    return (true);
+//}
 
-    auto o = innerFunction[];
-    auto r = o(2);
-    verify(r.ri == 214, r.rs == "aa");
+//public function testInnerRootFunction : test {
+//    function int innerFunction(int j) {
+//        return (j*3);
+//    }
+//    auto f = innerFunction(3);
+//    verify(f == 9);
 
-    return (true);
-}
+//    auto o = innerFunction[];
+//    auto r = o(5);
+//    verify(r == 15);
 
-public function testInnerChildFunctionClosure : test {
-    auto i = 3;
-    function innerFunction : testFunction {
-        return (i * x, "aa");
-    }
+//    return (true);
+//}
 
-    auto f = innerFunction(5);
-    verify(f.ri == (5*3), f.rs == "aa");
+//public function testInnerChildFunction : test {
+//    function innerFunction : testFunction {
+//        return (214, "aa");
+//    }
+//    auto f = innerFunction(2);
+//    verify(f.ri == 214, f.rs == "aa");
 
-    i = 5;
-    auto g = innerFunction(7);
-    verify(g.ri == (7*5), g.rs == "aa");
+//    auto o = innerFunction[];
+//    auto r = o(2);
+//    verify(r.ri == 214, r.rs == "aa");
 
-    auto o = innerFunction[];
+//    return (true);
+//}
 
-    auto r = o(9);
-    verify(r.ri == (9*5), r.rs == "aa");
+//public function testInnerChildFunctionClosure : test {
+//    auto i = 3;
+//    function innerFunction : testFunction {
+//        return (i * x, "aa");
+//    }
 
-    i = 11;
-    auto s = o(13);
-    verify(s.ri == (13*5), s.rs == "aa");
+//    auto f = innerFunction(5);
+//    verify(f.ri == (5*3), f.rs == "aa");
 
-    unused(f, o, r);
-    return (true);
-}
+//    i = 5;
+//    auto g = innerFunction(7);
+//    verify(g.ri == (7*5), g.rs == "aa");
 
-public function testAnonymousFunction : test {
-    auto a = testFunction {
-        return (3 * x, "aa");
-    };
+//    auto o = innerFunction[];
 
-    auto r = a(5);
-    print r.ri;
-    verify(r.ri == (3*5), r.rs == "aa");
+//    auto r = o(9);
+//    verify(r.ri == (9*5), r.rs == "aa");
 
-    return (true);
-}
+//    i = 11;
+//    auto s = o(13);
+//    verify(s.ri == (13*5), s.rs == "aa");
 
-public function testAnonymousFunctionWithClosure : test {
-    auto i = 3;
-    auto a = testFunction {
-        return (i * x, "aa");
-    };
+//    unused(f, o, r);
+//    return (true);
+//}
 
-    auto r = a(5);
-    verify(r.ri == (5*3), r.rs == "aa");
+//public function testAnonymousFunction : test {
+//    auto a = testFunction {
+//        return (3 * x, "aa");
+//    };
 
-    return (true);
-}
+//    auto r = a(5);
+//    print r.ri;
+//    verify(r.ri == (3*5), r.rs == "aa");
 
-public function testIfStatement : test {
-    auto i = 0;
-    auto j = 0;
-    if(i > 2) {
-        j = 3;
-    }
-    verify(j == 0);
-    if(i < 2) {
-        j = 3;
-    }
-    verify(j == 3);
-    return (true);
-}
+//    return (true);
+//}
 
-public function testIfElseStatement : test {
-    auto i = 0;
-    auto j = 0;
-    if(i > 2) {
-        j = 3;
-    } else {
-        j = 5;
-    }
-    verify(j == 5);
-    return (true);
-}
+//public function testAnonymousFunctionWithClosure : test {
+//    auto i = 3;
+//    auto a = testFunction {
+//        return (i * x, "aa");
+//    };
 
-public function testWhileStatement : test {
-    auto i = 0;
-    while(i < 2) {
-        i++;
-    }
-    return (true);
-}
+//    auto r = a(5);
+//    verify(r.ri == (5*3), r.rs == "aa");
 
-public function testDoWhileStatement : test {
-    auto i = 0;
-    do {
-        i++;
-    } while(i < 2);
-    return (true);
-}
+//    return (true);
+//}
 
-public function testForExprStatement : test {
-    auto j = 0;
-    auto i = 0;
-    for(i = 0; i < 10; ++i) {
-        j += i;
-    }
-    return (true);
-}
+//public function testIfStatement : test {
+//    auto i = 0;
+//    auto j = 0;
+//    if(i > 2) {
+//        j = 3;
+//    }
+//    verify(j == 0);
+//    if(i < 2) {
+//        j = 3;
+//    }
+//    verify(j == 3);
+//    return (true);
+//}
 
-public function testForInitStatement : test {
-    auto j = 0;
-    for(auto i = 0; i < 10; ++i) {
-        j += i;
-    }
-    return (true);
-}
+//public function testIfElseStatement : test {
+//    auto i = 0;
+//    auto j = 0;
+//    if(i > 2) {
+//        j = 3;
+//    } else {
+//        j = 5;
+//    }
+//    verify(j == 5);
+//    return (true);
+//}
 
-public function testForeachListStatement : test {
-    auto j = 0;
-    auto l = [1,2,3];
-    //const list<int>& l2 = l; /// \todo should be valid
-    foreach(i in l) {
-        j += i;
-    }
-    return (true);
-}
+//public function testWhileStatement : test {
+//    auto i = 0;
+//    while(i < 2) {
+//        i++;
+//    }
+//    return (true);
+//}
 
-public function testForeachDictStatement : test {
-    auto j = 0;
-    auto l = ['a':1, 'b':2,'c':3];
-    foreach(k,v in l) {
-        unused(k);
-        j += v;
-        continue;
-    }
-    return (true);
-}
+//public function testDoWhileStatement : test {
+//    auto i = 0;
+//    do {
+//        i++;
+//    } while(i < 2);
+//    return (true);
+//}
 
-public function testSwitchValueStatement : test {
-    auto j = 0;
-    switch(j) {
-        case 1: {
-            break;
-        }
-        case 2: {
-            break;
-        }
-        default: {
-            break;
-        }
-    }
-    return (true);
-}
+//public function testForExprStatement : test {
+//    auto j = 0;
+//    auto i = 0;
+//    for(i = 0; i < 10; ++i) {
+//        j += i;
+//    }
+//    return (true);
+//}
 
-public function testSwitchExprStatement : test {
-    auto j = 0;
-    switch {
-        case j == 1: {
-        }
-        case j == 2: {
-        }
-        default: {
-        }
-    }
-    return (true);
-}
+//public function testForInitStatement : test {
+//    auto j = 0;
+//    for(auto i = 0; i < 10; ++i) {
+//        j += i;
+//    }
+//    return (true);
+//}
 
-public function (int ri, string rs)runFunctionTest(const int& x) {
-    //print "runFunctionTest %{x}\n" @ {"x":x};
-    return (67890, "run");
-}
+//public function testForeachListStatement : test {
+//    auto j = 0;
+//    auto l = [1,2,3];
+//    //const list<int>& l2 = l; /// \todo should be valid
+//    foreach(i in l) {
+//        j += i;
+//    }
+//    return (true);
+//}
 
-public function testFunctor : test {
-    auto f = runFunctionTest[];
-    unused(f);
-    return (true);
-}
+//public function testForeachDictStatement : test {
+//    auto j = 0;
+//    auto l = ['a':1, 'b':2,'c':3];
+//    foreach(k,v in l) {
+//        unused(k);
+//        j += v;
+//        continue;
+//    }
+//    return (true);
+//}
 
-public function ()getFunctor(const runFunctionTest& f) {
-    return ();
-}
+//public function testSwitchValueStatement : test {
+//    auto j = 0;
+//    switch(j) {
+//        case 1: {
+//            break;
+//        }
+//        case 2: {
+//            break;
+//        }
+//        default: {
+//            break;
+//        }
+//    }
+//    return (true);
+//}
 
-public function derivedFunctionTest : runFunctionTest {
-    return (12345, "derived");
-}
+//public function testSwitchExprStatement : test {
+//    auto j = 0;
+//    switch {
+//        case j == 1: {
+//        }
+//        case j == 2: {
+//        }
+//        default: {
+//        }
+//    }
+//    return (true);
+//}
 
-public function testPassDerivedFuncion : test {
-    auto f = derivedFunctionTest[];
-    getFunctor(f);
-    return (true);
-}
+//public function (int ri, string rs)runFunctionTest(const int& x) {
+//    //print "runFunctionTest %{x}\n" @ {"x":x};
+//    return (67890, "run");
+//}
 
-public function testRunExpr : test {
-    auto f = run runFunctionTest(456);
-    unused(f);
-    return (true);
-}
+//public function testFunctor : test {
+//    auto f = runFunctionTest[];
+//    unused(f);
+//    return (true);
+//}
 
-struct InStruct {
-};
+//public function ()getFunctor(const runFunctionTest& f) {
+//    return ();
+//}
 
-struct PtrStruct {
-    pointer<InStruct> p;
-};
+//public function derivedFunctionTest : runFunctionTest {
+//    return (12345, "derived");
+//}
 
-function testPtrStruct : test {
-    auto s = PtrStruct{p : pointer<InStruct>(InStruct{});};
-    unused(s);
-    return (true);
-}
+//public function testPassDerivedFuncion : test {
+//    auto f = derivedFunctionTest[];
+//    getFunctor(f);
+//    return (true);
+//}
 
-public function testLists : test {
-    auto s = [1,2];
-    auto t = s[0];
-    auto u = [float, 1,2];
-    s[1] = 3;
-    s[3] = 4;
-    verify(t == 1);
-//    print "testLists %{@t}\n" @ {@t:t};
-    unused(s, t, u);
-    return (true);
-}
+//public function testRunExpr : test {
+//    auto f = run runFunctionTest(456);
+//    unused(f);
+//    return (true);
+//}
 
-public function testDicts : test {
-    auto s = ["a":1, "b":2];
-    auto t = s["b"];
-    auto u = [string:float, "a":1, "b":2];
-    s[@c] = 3;
-    auto v = s[@c];
-    unused(s, t, u, v);
-    return (true);
-}
+//struct InStruct {
+//};
 
-public function MyMain : main {
-    auto f = run runFunctionTest(908);
-    unused(f);
-    return (0);
-}
+//struct PtrStruct {
+//    pointer<InStruct> p;
+//};
 
-public function void testVoidFunction() {
-}
+//function testPtrStruct : test {
+//    auto s = PtrStruct{p : pointer<InStruct>(InStruct{});};
+//    unused(s);
+//    return (true);
+//}
 
-struct MyIndexStruct {
-    //routine const Handle& at(const string& k) native;
-};
+//public function testLists : test {
+//    auto s = [1,2];
+//    auto t = s[0];
+//    auto u = [float, 1,2];
+//    s[1] = 3;
+//    s[3] = 4;
+//    verify(t == 1);
+////    print "testLists %{@t}\n" @ {@t:t};
+//    unused(s, t, u);
+//    return (true);
+//}
+
+//public function testDicts : test {
+//    auto s = ["a":1, "b":2];
+//    auto t = s["b"];
+//    auto u = [string:float, "a":1, "b":2];
+//    s[@c] = 3;
+//    auto v = s[@c];
+//    unused(s, t, u, v);
+//    return (true);
+//}
+
+//public function MyMain : main {
+//    auto f = run runFunctionTest(908);
+//    unused(f);
+//    return (0);
+//}
+
+//public function void testVoidFunction() {
+//}
+
+//struct MyIndexStruct {
+//    //routine const Handle& at(const string& k) native;
+//};
 
 function testAutoInitList : test {
-    float a = 3;
-    unused(a);
+//    float a = 3;
+//    unused(a);
 
-    list<float> s = [1, 2];
-    unused(s);
+//    list<float> s = [1, 2];
+//    unused(s);
 
-    list< list<float> > t = [[1, 2], [3, 4]];
-    unused(t);
+//    list< list<float> > t = [[1, 2], [3, 4]];
+//    unused(t);
 
-    list< dict<string, float> > u = [["a":1, "b":2], ["c":3, "d":4]];
-    unused(u);
+//    list< dict<string, float> > u = [["a":1, "b":2], ["c":3, "d":4]];
+//    unused(u);
 
-//    dict< string, list<float> > v = ["a":[1, 2], "b":[3, 4]];
-//    unused(v);
+    dict< string, list<float> > v = ["a":[1, 2], "b":[3, 4]];
+    unused(v);
 
 //    dict< string, dict<string, float> > w = ["h":["a":1, "b":2], "i":["c":3, "d":4]];
 //    unused(w);
@@ -452,47 +452,47 @@ function testAutoInitList : test {
     return (true);
 }
 
-struct MyAutoInnerStruct {
-    auto name = "";
-};
+//struct MyAutoInnerStruct {
+//    auto name = "";
+//};
 
-struct MyAutoStruct {
-    auto i = 0;
-    auto s = "";
-    list<float> fl;
-    list<pointer<MyAutoInnerStruct> > lps;
-};
+//struct MyAutoStruct {
+//    auto i = 0;
+//    auto s = "";
+//    list<float> fl;
+//    list<pointer<MyAutoInnerStruct> > lps;
+//};
 
-struct MyDerivedStruct : MyAutoStruct {
-};
+//struct MyDerivedStruct : MyAutoStruct {
+//};
 
-function testAutoInitStruct : test {
-    MyAutoStruct aps0 = struct {i:3;};
-    MyAutoStruct aps1 = {i:3;};
+//function testAutoInitStruct : test {
+//    MyAutoStruct aps0 = struct {i:3;};
+//    MyAutoStruct aps1 = {i:3;};
 
-    list<MyAutoStruct> als0 = [ struct {i:123; s:"xx";fl:[1,2];}, struct {i:456; s:"yy";fl:[3,4];}];
-    list<MyAutoStruct> als1 = [ {i:123; s:"xx";fl:[1,2];}, {i:456; s:"yy";fl:[3,4];}];
+//    list<MyAutoStruct> als0 = [ struct {i:123; s:"xx";fl:[1,2];}, struct {i:456; s:"yy";fl:[3,4];}];
+//    list<MyAutoStruct> als1 = [ {i:123; s:"xx";fl:[1,2];}, {i:456; s:"yy";fl:[3,4];}];
 
-    pointer<int> pi = 314;
-    pointer<MyAutoStruct> pps0 = &MyAutoStruct{i:3;};
-    pointer<MyAutoStruct> apps0 = struct {i:3;};
-    pointer<MyAutoStruct> apps1 = {i:3;};
+//    pointer<int> pi = 314;
+//    pointer<MyAutoStruct> pps0 = &MyAutoStruct{i:3;};
+//    pointer<MyAutoStruct> apps0 = struct {i:3;};
+//    pointer<MyAutoStruct> apps1 = {i:3;};
 
-    pointer<MyAutoStruct> pps1 = MyAutoStruct{i:3;};
+//    pointer<MyAutoStruct> pps1 = MyAutoStruct{i:3;};
 
-    list< pointer<MyAutoStruct> > lps = [&MyAutoStruct{i:4;}];
-    list< pointer<MyAutoStruct> > alps0 = [struct {i:4;}];
-    list< pointer<MyAutoStruct> > alps1 = [{i:4;}];
+//    list< pointer<MyAutoStruct> > lps = [&MyAutoStruct{i:4;}];
+//    list< pointer<MyAutoStruct> > alps0 = [struct {i:4;}];
+//    list< pointer<MyAutoStruct> > alps1 = [{i:4;}];
 
-    MyAutoStruct mys0 = struct {i:123; s:"xx"; fl:[1, 2]; lps:[struct {name:"n1";}];};
-    MyAutoStruct mys1 = {i:123; s:"xx"; fl:[1, 2]; lps:[{name:"n1";}];};
+//    MyAutoStruct mys0 = struct {i:123; s:"xx"; fl:[1, 2]; lps:[struct {name:"n1";}];};
+//    MyAutoStruct mys1 = {i:123; s:"xx"; fl:[1, 2]; lps:[{name:"n1";}];};
 
-    list< pointer<MyAutoStruct> > alpds1 = [MyDerivedStruct{i:4;}];
+//    list< pointer<MyAutoStruct> > alpds1 = [MyDerivedStruct{i:4;}];
 
-    pointer<MyAutoStruct> pds0 = MyDerivedStruct{i:88;};
-    MyDerivedStruct& mas0 = <MyDerivedStruct&>pds0;
-    MyDerivedStruct& mas1 = pds0;
+//    pointer<MyAutoStruct> pds0 = MyDerivedStruct{i:88;};
+//    MyDerivedStruct& mas0 = <MyDerivedStruct&>pds0;
+//    MyDerivedStruct& mas1 = pds0;
 
-    unused(mas0, mas1);
-    return (true);
-}
+//    unused(mas0, mas1);
+//    return (true);
+//}

@@ -727,7 +727,7 @@ inline const Ast::Expr& Context::convertExprToExpectedTypeSpec(const Ast::Token&
 
         // check if initExpr can be converted to expected type, if any
         int side = 0;
-        canCoerceX(ref(qts), initExpr.qTypeSpec(), side);
+        const Ast::QualifiedTypeSpec* cqts = canCoerceX(ref(qts), initExpr.qTypeSpec(), side);
         if(side != -1) {
             throw Exception("%s Cannot convert parameter %lu from '%s' to '%s' (%d)\n",
                             err(_filename, pos).c_str(),
@@ -737,6 +737,7 @@ inline const Ast::Expr& Context::convertExprToExpectedTypeSpec(const Ast::Token&
                             side
                             );
         }
+        unused(cqts);
     }
 
     return initExpr;
@@ -1601,10 +1602,11 @@ Ast::DictExpr* Context::aDictExpr(const Ast::Token& pos, const Ast::DictList& li
 
 Ast::DictList* Context::aDictList(const Ast::Token& pos, Ast::DictList& list, const Ast::DictItem& item) {
     list.addItem(item);
-    const Ast::QualifiedTypeSpec& qKeyTypeSpec = coerce(pos, list.keyType(), item.keyExpr().qTypeSpec());
-    const Ast::QualifiedTypeSpec& qValueTypeSpec = coerce(pos, list.valueType(), item.valueExpr().qTypeSpec());
-    list.keyType(qKeyTypeSpec);
-    list.valueType(qValueTypeSpec);
+    const Ast::QualifiedTypeSpec& keyType = coerce(pos, list.keyType(), item.keyExpr().qTypeSpec());
+    const Ast::QualifiedTypeSpec& valType = coerce(pos, list.valueType(), item.valueExpr().qTypeSpec());
+    printf("dictlist(1): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
+    list.keyType(keyType);
+    list.valueType(valType);
     return ptr(list);
 }
 
@@ -1614,15 +1616,11 @@ Ast::DictList* Context::aDictList(const Ast::DictItem& item) {
 
     const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(ptr(item.keyExpr().qTypeSpec()), 0);
     const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(item.valueExpr().qTypeSpec()), 1);
+    printf("dictlist(2): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
 
     list.keyType(keyType);
     list.valueType(valType);
     return ptr(list);
-}
-
-Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::DictItem& item) {
-    unused(pos);
-    return aDictList(item);
 }
 
 Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec) {
@@ -1631,6 +1629,7 @@ Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::QualifiedTyp
 
     const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(ptr(qKeyTypeSpec), 0);
     const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(qValueTypeSpec), 1);
+    printf("dictlist(3): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
 
     list.keyType(keyType);
     list.valueType(valType);
@@ -1643,13 +1642,26 @@ Ast::DictList* Context::aDictList(const Ast::Token& pos) {
 
     const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(0, 0);
     const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(0, 1);
+    printf("dictlist(4): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
 
     list.keyType(keyType);
     list.valueType(valType);
     return ptr(list);
 }
 
-Ast::DictItem* Context::aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& valueExpr) {
+Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::DictItem& item) {
+    unused(pos);
+    printf("dictlist(5)\n");
+    Ast::DictList* list = aDictList(pos);
+    ref(list).addItem(item);
+    return aDictList(item);
+}
+
+Ast::DictItem* Context::aDictItem(const Ast::Token& pos, const Ast::Expr& keyExpr, const Ast::Expr& valueExpr) {
+    const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(0, 0);
+    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(0, 1);
+    printf("dictlist(6): keytype = %s\n", getQualifiedTypeSpecName(keyType, GenMode::Import).c_str());
+    printf("dictlist(6): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
     Ast::DictItem& item = _unit.addNode(new Ast::DictItem(keyExpr, valueExpr));
     return ptr(item);
 }
