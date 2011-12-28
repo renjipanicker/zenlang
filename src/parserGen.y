@@ -770,7 +770,7 @@ rDictsList(L)  ::=          rEnterList(B) rDictItem(I). {L = ref(pctx).aDictList
 rDictsList(L) ::= rEnterList(B) rQualifiedTypeSpec(K) COLON rQualifiedTypeSpec(V). {L = ref(pctx).aDictList(B, ref(K), ref(V));}
 
 %type rDictItem {Ast::DictItem*}
-rDictItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(E));}
+rDictItem(L)  ::= rExpr(K) COLON(B) rExpr(E). {L = ref(pctx).aDictItem(B, ref(K), ref(E));}
 
 //-------------------------------------------------
 rEnterList(L)  ::= LSQUARE(R). {L = R; ref(pctx).aEnterList(R); }
@@ -790,7 +790,7 @@ rTreesList(L)  ::=              rEnterTree(B) rTreeItem(I). {L = ref(pctx).aDict
 rTreesList(L)  ::=              rEnterTree(B).              {L = ref(pctx).aDictList(B);}
 
 %type rTreeItem {Ast::DictItem*}
-rTreeItem(L)  ::= rExpr(K) COLON rExpr(E). {L = ref(pctx).aDictItem(ref(K), ref(E));}
+rTreeItem(L)  ::= rExpr(K) COLON(B) rExpr(E). {L = ref(pctx).aDictItem(B, ref(K), ref(E));}
 
 //-------------------------------------------------
 rEnterTree(L)  ::= LCURLY(R). {L = R; ref(pctx).aEnterList(R); }

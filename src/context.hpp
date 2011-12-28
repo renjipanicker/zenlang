@@ -6,8 +6,33 @@
 class Context {
 public:
     typedef std::list<Ast::TypeSpec*> TypeSpecStack;
-    typedef std::vector<const Ast::QualifiedTypeSpec*> ExpectedTypeSpecList;
-    typedef std::vector<ExpectedTypeSpecList> ExpectedTypeSpecStack;
+
+private:
+    struct ExpectedTypeSpec {
+        enum Type {
+            etCallArg,
+            etList,
+            etDict,
+            etAssignment,
+            etEventHandler,
+            etStructInit,
+            etNone
+        };
+
+        inline ExpectedTypeSpec(const Type& type) : _type(type) {}
+        typedef std::vector<const Ast::QualifiedTypeSpec*> List;
+        inline size_t size() const {return _list.size();}
+        inline const Type& type() const {return _type;}
+        inline const Ast::QualifiedTypeSpec* at(const size_t& idx) const {assert(idx < _list.size()); return _list.at(idx);}
+        inline List& list() {return _list;}
+        inline const Ast::QualifiedTypeSpec* back() const {return _list.back();}
+        inline void push(const Ast::QualifiedTypeSpec& qTypeSpec) {_list.push_back(ptr(qTypeSpec));}
+    private:
+        Type _type;
+        List _list;
+    };
+    typedef std::vector<ExpectedTypeSpec> ExpectedTypeSpecStack;
+
 public:
     Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename);
     ~Context();
@@ -78,11 +103,10 @@ private:
     inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr);
     inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     inline void addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec);
-    inline void addNoneExpectedTypeSpec();
-    inline void pushExpectedTypeSpec();
+    inline void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type);
     inline void popExpectedTypeSpec(const Ast::Token& pos);
     inline bool isNoneExpectedTypeSpec() const;
-    inline const ExpectedTypeSpecList& getExpectedTypeList(const Ast::Token& pos) const;
+    inline const ExpectedTypeSpec& getExpectedTypeList(const Ast::Token& pos) const;
     inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny(const size_t& idx) const;
     inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const;
     inline const Ast::QualifiedTypeSpec& getExpectedTypeSpecEx(const Ast::Token& pos, const size_t& idx) const;
@@ -257,7 +281,7 @@ public:
     Ast::DictList*            aDictList(const Ast::DictItem& item);
     Ast::DictList*            aDictList(const Ast::Token& pos);
     Ast::DictList*            aDictList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec);
-    Ast::DictItem*            aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& valueExpr);
+    Ast::DictItem*            aDictItem(const Ast::Token& pos, const Ast::Expr& keyExpr, const Ast::Expr& valueExpr);
     const Ast::Token&         aEnterList(const Ast::Token& pos);
 
     Ast::FormatExpr*          aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr);

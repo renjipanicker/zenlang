@@ -473,8 +473,8 @@ inline Ast::ValueInstanceExpr& Context::getValueInstanceExpr(const Ast::Token& p
     return valueInstanceExpr;
 }
 
-inline void Context::pushExpectedTypeSpec() {
-    _expectedTypeSpecStack.push_back(ExpectedTypeSpecList());
+inline void Context::pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type) {
+    _expectedTypeSpecStack.push_back(ExpectedTypeSpec(type));
 }
 
 inline void Context::popExpectedTypeSpec(const Ast::Token& pos) {
@@ -485,17 +485,11 @@ inline void Context::popExpectedTypeSpec(const Ast::Token& pos) {
 }
 
 inline bool Context::isNoneExpectedTypeSpec() const {
-    printf("Context::isNoneExpectedTypeSpec()(0) %lu\n", _expectedTypeSpecStack.size());
     if(_expectedTypeSpecStack.size() == 0) {
         return false;
     }
-    printf("Context::isNoneExpectedTypeSpec()(1) %lu\n", _expectedTypeSpecStack.back().size());
-    if(_expectedTypeSpecStack.back().size() != 1) {
-        return false;
-    }
-    const Ast::QualifiedTypeSpec* qts = _expectedTypeSpecStack.back().back();
-    printf("Context::isNoneExpectedTypeSpec()(2) %lu\n", qts);
-    return (qts == 0);
+
+    return (_expectedTypeSpecStack.back().type() == ExpectedTypeSpec::etNone);
 }
 
 inline void Context::addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec) {
@@ -503,24 +497,15 @@ inline void Context::addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec
         Ast::Token dummy_pos(0, 0, ""); /// \todo remove this
         throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, dummy_pos).c_str());
     }
-    _expectedTypeSpecStack.back().push_back(ptr(qTypeSpec));
+    _expectedTypeSpecStack.back().push(qTypeSpec);
 }
 
-inline void Context::addNoneExpectedTypeSpec() {
-    if(_expectedTypeSpecStack.size() == 0) {
-        Ast::Token dummy_pos(0, 0, ""); /// \todo remove this
-        throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, dummy_pos).c_str());
-    }
-    assert(_expectedTypeSpecStack.back().size() == 0);
-    _expectedTypeSpecStack.back().push_back(0);
-}
-
-inline const Context::ExpectedTypeSpecList& Context::getExpectedTypeList(const Ast::Token& pos) const {
+inline const Context::ExpectedTypeSpec& Context::getExpectedTypeList(const Ast::Token& pos) const {
     if(_expectedTypeSpecStack.size() == 0) {
         throw Exception("%s Empty expected type stack\n", err(_filename, pos).c_str());
     }
 
-    const ExpectedTypeSpecList& exl = _expectedTypeSpecStack.back();
+    const ExpectedTypeSpec& exl = _expectedTypeSpecStack.back();
     return exl;
 }
 
@@ -529,12 +514,11 @@ inline const Ast::QualifiedTypeSpec* Context::getExpectedTypeSpecIfAny(const siz
         return 0;
     }
 
-    const ExpectedTypeSpecList& exl = _expectedTypeSpecStack.back();
+    const ExpectedTypeSpec& exl = _expectedTypeSpecStack.back();
     if(idx >= exl.size()) {
         return 0;
     }
 
-    assert(idx < exl.size());
     const Ast::QualifiedTypeSpec* ts = exl.at(idx);
     return ts;
 }
@@ -727,7 +711,7 @@ inline const Ast::Expr& Context::convertExprToExpectedTypeSpec(const Ast::Token&
 
         // check if initExpr can be converted to expected type, if any
         int side = 0;
-        canCoerceX(ref(qts), initExpr.qTypeSpec(), side);
+        const Ast::QualifiedTypeSpec* cqts = canCoerceX(ref(qts), initExpr.qTypeSpec(), side);
         if(side != -1) {
             throw Exception("%s Cannot convert parameter %lu from '%s' to '%s' (%d)\n",
                             err(_filename, pos).c_str(),
@@ -737,6 +721,7 @@ inline const Ast::Expr& Context::convertExprToExpectedTypeSpec(const Ast::Token&
                             side
                             );
         }
+        unused(cqts);
     }
 
     return initExpr;
@@ -1191,14 +1176,13 @@ Ast::VariableDefn* Context::aVariableDefn(const Ast::Token& name, const Ast::Exp
 }
 
 const Ast::QualifiedTypeSpec* Context::aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qTypeSpec) {
-    pushExpectedTypeSpec();
+    pushExpectedTypeSpec(ExpectedTypeSpec::etAssignment);
     addExpectedTypeSpec(qTypeSpec);
     return ptr(qTypeSpec);
 }
 
 void Context::aAutoQualifiedVariableDefn() {
-    pushExpectedTypeSpec();
-    addNoneExpectedTypeSpec();
+    pushExpectedTypeSpec(ExpectedTypeSpec::etNone);
 }
 
 Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef) {
@@ -1437,7 +1421,7 @@ Ast::AddEventHandlerStatement* Context::aAddEventHandlerStatement(const Ast::Tok
 }
 
 const Ast::EventDecl* Context::aEnterAddEventHandler(const Ast::EventDecl& eventDecl) {
-    pushExpectedTypeSpec();
+    pushExpectedTypeSpec(ExpectedTypeSpec::etEventHandler);
     Ast::QualifiedTypeSpec& qts = addQualifiedTypeSpec(false, eventDecl.handler(), false);
     addExpectedTypeSpec(qts);
     return ptr(eventDecl);
@@ -1601,10 +1585,11 @@ Ast::DictExpr* Context::aDictExpr(const Ast::Token& pos, const Ast::DictList& li
 
 Ast::DictList* Context::aDictList(const Ast::Token& pos, Ast::DictList& list, const Ast::DictItem& item) {
     list.addItem(item);
-    const Ast::QualifiedTypeSpec& qKeyTypeSpec = coerce(pos, list.keyType(), item.keyExpr().qTypeSpec());
-    const Ast::QualifiedTypeSpec& qValueTypeSpec = coerce(pos, list.valueType(), item.valueExpr().qTypeSpec());
-    list.keyType(qKeyTypeSpec);
-    list.valueType(qValueTypeSpec);
+    const Ast::QualifiedTypeSpec& keyType = coerce(pos, list.keyType(), item.keyExpr().qTypeSpec());
+    const Ast::QualifiedTypeSpec& valType = coerce(pos, list.valueType(), item.valueExpr().qTypeSpec());
+    printf("dictlist(1): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
+    list.keyType(keyType);
+    list.valueType(valType);
     return ptr(list);
 }
 
@@ -1614,15 +1599,11 @@ Ast::DictList* Context::aDictList(const Ast::DictItem& item) {
 
     const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(ptr(item.keyExpr().qTypeSpec()), 0);
     const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(item.valueExpr().qTypeSpec()), 1);
+    printf("dictlist(2): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
 
     list.keyType(keyType);
     list.valueType(valType);
     return ptr(list);
-}
-
-Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::DictItem& item) {
-    unused(pos);
-    return aDictList(item);
 }
 
 Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec) {
@@ -1631,6 +1612,7 @@ Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::QualifiedTyp
 
     const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(ptr(qKeyTypeSpec), 0);
     const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(qValueTypeSpec), 1);
+    printf("dictlist(3): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
 
     list.keyType(keyType);
     list.valueType(valType);
@@ -1643,28 +1625,69 @@ Ast::DictList* Context::aDictList(const Ast::Token& pos) {
 
     const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(0, 0);
     const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(0, 1);
+    printf("dictlist(4): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
 
     list.keyType(keyType);
     list.valueType(valType);
     return ptr(list);
 }
 
-Ast::DictItem* Context::aDictItem(const Ast::Expr& keyExpr, const Ast::Expr& valueExpr) {
+Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::DictItem& item) {
+    unused(pos);
+    printf("dictlist(5)\n");
+    Ast::DictList* list = aDictList(pos);
+    ref(list).addItem(item);
+    return aDictList(item);
+}
+
+Ast::DictItem* Context::aDictItem(const Ast::Token& pos, const Ast::Expr& keyExpr, const Ast::Expr& valueExpr) {
+    printf("dictlist(6): keyExpr = %s\n", getQualifiedTypeSpecName(keyExpr.qTypeSpec(), GenMode::Import).c_str());
+    printf("dictlist(6): valExpr = %s\n", getQualifiedTypeSpecName(valueExpr.qTypeSpec(), GenMode::Import).c_str());
+    const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(0, 0);
+    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(0, 1);
+    printf("dictlist(7): keytype = %s\n", getQualifiedTypeSpecName(keyType, GenMode::Import).c_str());
+    printf("dictlist(7): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
+    const Ast::Expr& kExpr = convertExprToExpectedTypeSpec(pos, 0, keyExpr);
+    const Ast::Expr& vExpr = convertExprToExpectedTypeSpec(pos, 1, valueExpr);
+    printf("dictlist(8): kExpr = %s\n", getQualifiedTypeSpecName(kExpr.qTypeSpec(), GenMode::Import).c_str());
+    printf("dictlist(8): vExpr = %s\n", getQualifiedTypeSpecName(vExpr.qTypeSpec(), GenMode::Import).c_str());
     Ast::DictItem& item = _unit.addNode(new Ast::DictItem(keyExpr, valueExpr));
     return ptr(item);
 }
 
 const Ast::Token& Context::aEnterList(const Ast::Token& pos) {
-    const Ast::TemplateDefn* td = isEnteringList(0);
-    pushExpectedTypeSpec();
-    if(td) {
-        if(ref(td).name().string() == "list") {
-            const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
+    const Ast::QualifiedTypeSpec* qts0 = getExpectedTypeSpecIfAny(0);
+    if(qts0 != 0) {
+        printf("Context::aEnterList(0): qts0 = %s\n", getQualifiedTypeSpecName(ref(qts0), GenMode::Import).c_str());
+    }
+
+    const Ast::QualifiedTypeSpec* qts1 = getExpectedTypeSpecIfAny(1);
+    if(qts1 != 0) {
+        printf("Context::aEnterList(0): qts1 = %s\n", getQualifiedTypeSpecName(ref(qts1), GenMode::Import).c_str());
+    }
+
+    const Ast::TemplateDefn* td0 = isEnteringList(0);
+    printf("Context::aEnterList(1): td0 = %lu\n", (unsigned long)td0);
+    if(td0) {
+        printf("Context::aEnterList(2): td0 = %s\n", getTypeSpecName(ref(td0), GenMode::Import).c_str());
+    }
+
+    const Ast::TemplateDefn* td1 = isEnteringList(1);
+    printf("Context::aEnterList(1): td1 = %lu\n", (unsigned long)td1);
+    if(td1) {
+        printf("Context::aEnterList(2): td1 = %s\n", getTypeSpecName(ref(td1), GenMode::Import).c_str());
+    }
+
+    if(td0) {
+        if(ref(td0).name().string() == "list") {
+            pushExpectedTypeSpec(ExpectedTypeSpec::etList);
+            const Ast::QualifiedTypeSpec& valType = ref(td0).at(0);
             addExpectedTypeSpec(valType);
-        } else if(ref(td).name().string() == "dict") {
-            const Ast::QualifiedTypeSpec& keyType = ref(td).at(0);
+        } else if(ref(td0).name().string() == "dict") {
+            pushExpectedTypeSpec(ExpectedTypeSpec::etDict);
+            const Ast::QualifiedTypeSpec& keyType = ref(td0).at(0);
             addExpectedTypeSpec(keyType);
-            const Ast::QualifiedTypeSpec& valType = ref(td).at(1);
+            const Ast::QualifiedTypeSpec& valType = ref(td0).at(1);
             addExpectedTypeSpec(valType);
         } else {
             assert(false);
@@ -1688,10 +1711,10 @@ Ast::RoutineCallExpr* Context::aRoutineCallExpr(const Ast::Token& pos, const Ast
 }
 
 const Ast::Routine* Context::aEnterRoutineCall(const Ast::Routine& routine) {
-    pushExpectedTypeSpec();
     if(routine.inScope().type() == Ast::ScopeType::VarArg) {
-        addNoneExpectedTypeSpec();
+        pushExpectedTypeSpec(ExpectedTypeSpec::etNone);
     } else {
+        pushExpectedTypeSpec(ExpectedTypeSpec::etCallArg);
         for(Ast::Scope::List::const_iterator it = routine.in().begin(); it != routine.in().end(); ++it) {
             const Ast::VariableDefn& def = ref(*it);
             addExpectedTypeSpec(def.qTypeSpec());
@@ -1719,10 +1742,10 @@ Ast::Expr* Context::aEnterFunctorCall(Ast::Expr& expr) {
         throw Exception("%s Unknown functor being called '%s'\n", err(_filename, dummy_pos).c_str(), expr.qTypeSpec().typeSpec().name().text());
     }
 
-    pushExpectedTypeSpec();
     if(ref(function).sig().inScope().type() == Ast::ScopeType::VarArg) {
-        addNoneExpectedTypeSpec();
+        pushExpectedTypeSpec(ExpectedTypeSpec::etNone);
     } else {
+        pushExpectedTypeSpec(ExpectedTypeSpec::etCallArg);
         for(Ast::Scope::List::const_iterator it = ref(function).sig().in().begin(); it != ref(function).sig().in().end(); ++it) {
             const Ast::VariableDefn& def = ref(*it);
             addExpectedTypeSpec(def.qTypeSpec());
@@ -2098,7 +2121,7 @@ const Ast::VariableDefn* Context::aEnterStructInitPart(const Ast::Token& name) {
         for(Ast::Scope::List::const_iterator it = sbi.get().list().begin(); it != sbi.get().list().end(); ++it) {
             const Ast::VariableDefn& vdef = ref(*it);
             if(vdef.name().string() == name.string()) {
-                pushExpectedTypeSpec();
+                pushExpectedTypeSpec(ExpectedTypeSpec::etStructInit);
                 addExpectedTypeSpec(vdef.qTypeSpec());
                 return ptr(vdef);
             }
