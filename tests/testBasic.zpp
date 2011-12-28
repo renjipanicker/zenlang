@@ -443,11 +443,11 @@ function testAutoInitList : test {
     list< dict<string, float> > u = [["a":1, "b":2], ["c":3, "d":4]];
     unused(u);
 
-    dict< string, list<float> > v = ["a":[1, 2], "b":[3, 4]];
-    unused(v);
+//    dict< string, list<float> > v = ["a":[1, 2], "b":[3, 4]];
+//    unused(v);
 
-    dict< string, dict<string, float> > w = ["h":["a":1, "b":2], "i":["c":3, "d":4]];
-    unused(w);
+//    dict< string, dict<string, float> > w = ["h":["a":1, "b":2], "i":["c":3, "d":4]];
+//    unused(w);
 
     return (true);
 }

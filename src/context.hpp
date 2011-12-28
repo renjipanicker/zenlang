@@ -17,13 +17,13 @@ public:
     const Ast::TypeSpec* currentTypeRefHasChild(const Ast::Token& name) const;
 
 public:
-    const Ast::StructDefn* isStructExpected() const;
-    const Ast::Function* isFunctionExpected() const;
-    const Ast::TemplateDefn* isPointerExpected() const;
-    const Ast::TemplateDefn* isPointerToExprExpected(const Ast::Expr& expr) const;
-    const Ast::StructDefn* isPointerToStructExpected() const;
-    const Ast::StructDefn* isListOfStructExpected() const;
-    const Ast::StructDefn* isListOfPointerToStructExpected() const;
+    const Ast::StructDefn* isStructExpected(const size_t& idx) const;
+    const Ast::Function* isFunctionExpected(const size_t& idx) const;
+    const Ast::TemplateDefn* isPointerExpected(const size_t& idx) const;
+    const Ast::TemplateDefn* isPointerToExprExpected(const size_t& idx, const Ast::Expr& expr) const;
+    const Ast::StructDefn* isPointerToStructExpected(const size_t& idx) const;
+    const Ast::StructDefn* isListOfStructExpected(const size_t& idx) const;
+    const Ast::StructDefn* isListOfPointerToStructExpected(const size_t& idx) const;
 
 private:
     inline Ast::ExprList& addExprList();
@@ -52,8 +52,8 @@ private:
     inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
     inline const Ast::QualifiedTypeSpec& getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function);
     inline Ast::StructDefn& getCurrentStructDefn(const Ast::Token& pos);
-    inline const Ast::Expr& createPointerExprIfAny(const Ast::Token& pos, const Ast::Expr& initExpr);
-    inline const Ast::TypeSpec* isListOfPointerExpected() const;
+    inline const Ast::Expr& convertExprToExpectedTypeSpec(const Ast::Token& pos, const size_t& idx, const Ast::Expr& initExpr);
+    inline const Ast::TypeSpec* isListOfPointerExpected(const size_t& idx) const;
 
 private:
     inline Ast::Scope& addScope(const Ast::ScopeType::T& type);
@@ -86,14 +86,11 @@ private:
     inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny(const size_t& idx) const;
     inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const;
     inline const Ast::QualifiedTypeSpec& getExpectedTypeSpecEx(const Ast::Token& pos, const size_t& idx) const;
-    inline void enterArg(const Ast::Token& pos, const int& idx);
-    inline void leaveArg(const Ast::Token& pos);
-    inline void matchArg(const Ast::Token& pos, Ast::ExprList& list, const Ast::Expr& expr);
     inline Ast::TypecastExpr* getDynamicTypecastExpr(const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr);
 
 private:
-    inline const Ast::TemplateDefn* isEnteringList() const;
-    inline const Ast::TemplateDefn* isEnteringTemplate() const;
+    inline const Ast::TemplateDefn* isEnteringList(const size_t& idx) const;
+    inline const Ast::TemplateDefn* isEnteringTemplate(const size_t& idx) const;
 
 private:
     Compiler& _compiler;
@@ -275,12 +272,9 @@ public:
     Ast::RoutineCallExpr*     aRoutineCallExpr(const Ast::Token& pos, const Ast::Routine& routine, const Ast::ExprList& exprList);
     const Ast::Routine*       aEnterRoutineCall(const Ast::Routine& routine);
 
-    Ast::ExprList*            aCallArgList(Ast::ExprList& list, const Ast::Expr& expr);
+    Ast::ExprList*            aCallArgList(const Ast::Token& pos, Ast::ExprList& list, const Ast::Expr& expr);
     Ast::ExprList*            aCallArgList(const Ast::Expr& expr);
     Ast::ExprList*            aCallArgList();
-    Ast::ExprList*            aEnterNextArg(const Ast::Token& pos, Ast::ExprList& exprList);
-    void                      aEnterInitArg();
-    void                      aLeaveArg();
 
     Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
     Ast::IndexExpr*           aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::Expr& index);

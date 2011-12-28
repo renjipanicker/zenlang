@@ -20,6 +20,11 @@ inline const Ast::TypeSpec* resolveTypedef(const Ast::TypeSpec& typeSpec) {
     return subType;
 }
 
+inline const Ast::TypeSpec& resolveTypedefR(const Ast::TypeSpec& typeSpec) {
+    const Ast::TypeSpec* ts = resolveTypedef(typeSpec);
+    return ref(ts);
+}
+
 template <typename T>
 inline const T* resolveTypedefT(const Ast::TypeSpec& typeSpec) {
     const Ast::TypeSpec* ts = resolveTypedef(typeSpec);

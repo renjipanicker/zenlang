@@ -939,14 +939,9 @@ rEnterFunctorCall(L) ::= rFunctionTypeSpec(typeSpec). { L = ref(pctx).aEnterFunc
 //-------------------------------------------------
 // comma-separated list of function-call args
 %type rCallArgList {Ast::ExprList*}
-rCallArgList(L) ::= rEnterNextArg(R) rExpr(E) rLeaveArg. {L = ref(pctx).aCallArgList(ref(R), ref(E));}
-rCallArgList(L) ::= rEnterInitArg    rExpr(E) rLeaveArg. {L = ref(pctx).aCallArgList(ref(E));}
-rCallArgList(L) ::= .                                    {L = ref(pctx).aCallArgList();}
-
-%type rEnterNextArg {Ast::ExprList*}
-rEnterNextArg(L) ::= rCallArgList(R) COMMA(B). {L = ref(pctx).aEnterNextArg(B, ref(R));}
-rEnterInitArg    ::= .                      {ref(pctx).aEnterInitArg();}
-rLeaveArg        ::= .                      {ref(pctx).aLeaveArg();}
+rCallArgList(L) ::= rCallArgList(R) COMMA(B) rExpr(E). {L = ref(pctx).aCallArgList(B, ref(R), ref(E));}
+rCallArgList(L) ::=                          rExpr(E). {L = ref(pctx).aCallArgList(ref(E));}
+rCallArgList(L) ::= .                                  {L = ref(pctx).aCallArgList();}
 
 //-------------------------------------------------
 // constant expressions
