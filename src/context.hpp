@@ -8,15 +8,34 @@ public:
     typedef std::list<Ast::TypeSpec*> TypeSpecStack;
 
 private:
+    struct CoercionResult {
+        enum T {
+            None,
+            Lhs,
+            Rhs
+        };
+    };
+
+//    struct CoercionMode {
+//        enum T {
+//            Exact,
+//            TypedefResolved,
+//            UserDefined,
+//            IsBase
+//        };
+//    };
+
     struct ExpectedTypeSpec {
         enum Type {
+            etNone,
             etCallArg,
-            etList,
-            etDict,
+            etListVal,
+            etDictKey,
+            etDictVal,
             etAssignment,
             etEventHandler,
             etStructInit,
-            etNone
+            etAny
         };
 
         inline ExpectedTypeSpec(const Type& type) : _type(type) {}
@@ -51,7 +70,7 @@ public:
     const Ast::StructDefn* isListOfPointerToStructExpected(const size_t& idx) const;
 
 private:
-    inline Ast::ExprList& addExprList();
+    inline Ast::ExprList& addExprList(const Ast::Token& pos);
     inline Ast::Root& getRootNamespace() const;
     inline const Ast::TypeSpec* findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
     const Ast::TypeSpec* hasImportRootTypeSpec(const Ast::Token& name) const;
@@ -66,10 +85,14 @@ public:
     inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
 
 private:
+    inline std::string getExpectedTypeName(const ExpectedTypeSpec::Type& exType);
+
+private:
+    inline const Ast::Token& getToken() const {return _lastToken;}
     inline Ast::TypeSpec& currentTypeSpec() const;
     inline Ast::TypeSpec& enterTypeSpec(Ast::TypeSpec& typeSpec);
     inline Ast::TypeSpec& leaveTypeSpec(Ast::TypeSpec& typeSpec);
-    inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
+    inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
     inline const Ast::QualifiedTypeSpec& getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name);
     inline const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name);
     inline Ast::TemplateDefn& createTemplateDefn(const Ast::Token& pos, const std::string& name);
@@ -77,11 +100,11 @@ private:
     inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
     inline const Ast::QualifiedTypeSpec& getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function);
     inline Ast::StructDefn& getCurrentStructDefn(const Ast::Token& pos);
-    inline const Ast::Expr& convertExprToExpectedTypeSpec(const Ast::Token& pos, const size_t& idx, const Ast::Expr& initExpr);
+    inline const Ast::Expr& convertExprToExpectedTypeSpec(const Ast::Token& pos, const size_t& lidx, const Ast::Expr& initExpr);
     inline const Ast::TypeSpec* isListOfPointerExpected(const size_t& idx) const;
 
 private:
-    inline Ast::Scope& addScope(const Ast::ScopeType::T& type);
+    inline Ast::Scope& addScope(const Ast::Token& pos, const Ast::ScopeType::T& type);
     inline Ast::Scope& enterScope(Ast::Scope& scope);
     inline Ast::Scope& leaveScope();
     inline Ast::Scope& leaveScope(Ast::Scope& scope);
@@ -94,7 +117,7 @@ private:
     inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const std::string& extype);
     template <typename T>
     inline const T* resetCurrentTypeRef(const T& typeSpec);
-    inline const Ast::QualifiedTypeSpec* canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, int& side) const;
+    inline const Ast::QualifiedTypeSpec* canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const;
     inline const Ast::QualifiedTypeSpec* canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) const;
     inline const Ast::QualifiedTypeSpec& coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
     inline Ast::VariableDefn& addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
@@ -104,8 +127,9 @@ private:
     inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
     inline void addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec);
     inline void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type);
-    inline void popExpectedTypeSpec(const Ast::Token& pos);
-    inline bool isNoneExpectedTypeSpec() const;
+    inline void popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
+    inline ExpectedTypeSpec::Type getExpectedType() const;
+    inline bool isAnyExpectedTypeSpec() const;
     inline const ExpectedTypeSpec& getExpectedTypeList(const Ast::Token& pos) const;
     inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny(const size_t& idx) const;
     inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const;
@@ -117,10 +141,16 @@ private:
     inline const Ast::TemplateDefn* isEnteringTemplate(const size_t& idx) const;
 
 private:
+    inline void pushCallArgList(const Ast::Scope& in);
+    inline void popCallArgList(const Ast::Token& pos, const Ast::Scope& in);
+    inline void popCallArg(const Ast::Token& pos);
+
+private:
     Compiler& _compiler;
     Ast::Unit& _unit;
     const int _level;
     const std::string _filename;
+    Ast::Token _lastToken;
 
 private:
     typedef std::list<Ast::Scope*> ScopeStack;
@@ -140,10 +170,10 @@ private:
 
 public:
     void                     aUnitStatementList(const Ast::EnterNamespaceStatement& ns);
-    void                     aImportStatement(const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list);
+    void                     aImportStatement(const Ast::Token& pos, const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list);
     Ast::NamespaceList*      aImportNamespaceList(Ast::NamespaceList& list, const Ast::Token& name);
     Ast::NamespaceList*      aImportNamespaceList(const Ast::Token& name);
-    Ast::EnterNamespaceStatement* aNamespaceStatement(Ast::NamespaceList& list);
+    Ast::EnterNamespaceStatement* aNamespaceStatement(const Ast::Token& pos, Ast::NamespaceList& list);
     Ast::EnterNamespaceStatement* aNamespaceStatement();
     Ast::NamespaceList*      aUnitNamespaceList(Ast::NamespaceList& list, const Ast::Token& name);
     Ast::NamespaceList*      aUnitNamespaceList(const Ast::Token& name);
@@ -202,6 +232,7 @@ public:
     Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr);
     const Ast::QualifiedTypeSpec* aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec);
     void                     aAutoQualifiedVariableDefn();
+    Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
     Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
     const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
     const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::Token& name);
@@ -229,33 +260,33 @@ public:
     Ast::UserDefinedTypeSpecStatement* aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec);
     Ast::AutoStatement*                aAutoStatement(const Ast::VariableDefn& defn);
     Ast::ExprStatement*                aExprStatement(const Ast::Expr& expr);
-    Ast::PrintStatement*               aPrintStatement(const Ast::Expr& expr);
-    Ast::IfStatement*                  aIfStatement(const Ast::Expr& expr, const Ast::CompoundStatement& tblock);
-    Ast::IfElseStatement*              aIfElseStatement(const Ast::Expr& expr, const Ast::CompoundStatement& tblock, const Ast::CompoundStatement& fblock);
-    Ast::WhileStatement*               aWhileStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block);
-    Ast::DoWhileStatement*             aDoWhileStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block);
-    Ast::ForStatement*                 aForStatement(const Ast::Expr& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block);
-    Ast::ForStatement*                 aForStatement(const Ast::VariableDefn& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block);
+    Ast::PrintStatement*               aPrintStatement(const Ast::Token& pos, const Ast::Expr& expr);
+    Ast::IfStatement*                  aIfStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& tblock);
+    Ast::IfElseStatement*              aIfElseStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& tblock, const Ast::CompoundStatement& fblock);
+    Ast::WhileStatement*               aWhileStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& block);
+    Ast::DoWhileStatement*             aDoWhileStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& block);
+    Ast::ForStatement*                 aForStatement(const Ast::Token& pos, const Ast::Expr& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block);
+    Ast::ForStatement*                 aForStatement(const Ast::Token& pos, const Ast::VariableDefn& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block);
     const Ast::VariableDefn*           aEnterForInit(const Ast::VariableDefn& init);
     Ast::ForeachStatement*             aForeachStatement(Ast::ForeachStatement& statement, const Ast::CompoundStatement& block);
     Ast::ForeachListStatement*         aEnterForeachInit(const Ast::Token& valName, const Ast::Expr& expr);
     Ast::ForeachDictStatement*         aEnterForeachInit(const Ast::Token& keyName, const Ast::Token& valName, const Ast::Expr& expr);
-    Ast::SwitchValueStatement*         aSwitchStatement(const Ast::Expr& expr, const Ast::CompoundStatement& list);
-    Ast::SwitchExprStatement*          aSwitchStatement(const Ast::CompoundStatement& list);
+    Ast::SwitchValueStatement*         aSwitchStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& list);
+    Ast::SwitchExprStatement*          aSwitchStatement(const Ast::Token& pos, const Ast::CompoundStatement& list);
     Ast::CompoundStatement*            aCaseList(Ast::CompoundStatement& list, const Ast::CaseStatement& stmt);
     Ast::CompoundStatement*            aCaseList(const Ast::CaseStatement& stmt);
-    Ast::CaseStatement*                aCaseStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block);
-    Ast::CaseStatement*                aCaseStatement(const Ast::CompoundStatement& block);
-    Ast::BreakStatement*               aBreakStatement();
-    Ast::ContinueStatement*            aContinueStatement();
+    Ast::CaseStatement*                aCaseStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& block);
+    Ast::CaseStatement*                aCaseStatement(const Ast::Token& pos, const Ast::CompoundStatement& block);
+    Ast::BreakStatement*               aBreakStatement(const Ast::Token& pos);
+    Ast::ContinueStatement*            aContinueStatement(const Ast::Token& pos);
     Ast::AddEventHandlerStatement*     aAddEventHandlerStatement(const Ast::Token& pos, const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionTypeInstanceExpr& functor);
     const Ast::EventDecl*              aEnterAddEventHandler(const Ast::EventDecl& eventDecl);
-    Ast::RoutineReturnStatement*       aRoutineReturnStatement();
-    Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Expr& expr);
-    Ast::FunctionReturnStatement*      aFunctionReturnStatement(const Ast::ExprList& exprList);
+    Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Token& pos);
+    Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Token& pos, const Ast::Expr& expr);
+    Ast::FunctionReturnStatement*      aFunctionReturnStatement(const Ast::Token& pos, const Ast::ExprList& exprList);
     Ast::CompoundStatement*            aStatementList();
     Ast::CompoundStatement*            aStatementList(Ast::CompoundStatement& list, const Ast::Statement& statement);
-    void                               aEnterCompoundStatement();
+    void                               aEnterCompoundStatement(const Ast::Token& pos);
     void                               aLeaveCompoundStatement();
     Ast::ExprList*                     aExprList(Ast::ExprList& list, const Ast::Expr& expr);
     Ast::ExprList*                     aExprList(const Ast::Expr& expr);
@@ -278,10 +309,9 @@ public:
     Ast::DictExpr*            aDictExpr(const Ast::Token& pos, const Ast::DictList& list);
     Ast::DictList*            aDictList(const Ast::Token& pos, Ast::DictList& list, const Ast::DictItem& item);
     Ast::DictList*            aDictList(const Ast::Token& pos, const Ast::DictItem& item);
-    Ast::DictList*            aDictList(const Ast::DictItem& item);
-    Ast::DictList*            aDictList(const Ast::Token& pos);
     Ast::DictList*            aDictList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec);
     Ast::DictItem*            aDictItem(const Ast::Token& pos, const Ast::Expr& keyExpr, const Ast::Expr& valueExpr);
+    const Ast::Expr*          aDictKey(const Ast::Expr& keyExpr);
     const Ast::Token&         aEnterList(const Ast::Token& pos);
 
     Ast::FormatExpr*          aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr);
@@ -300,9 +330,8 @@ public:
     Ast::ExprList*            aCallArgList(const Ast::Expr& expr);
     Ast::ExprList*            aCallArgList();
 
-    Ast::OrderedExpr*         aOrderedExpr(const Ast::Expr& expr);
+    Ast::OrderedExpr*         aOrderedExpr(const Ast::Token& pos, const Ast::Expr& expr);
     Ast::IndexExpr*           aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::Expr& index);
-    Ast::IndexExpr*           aKeyIndexExpr(const Ast::Expr& expr, const Ast::ConstantExpr& index);
     Ast::TypeofTypeExpr*      aTypeofTypeExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec);
     Ast::TypeofExprExpr*      aTypeofExprExpr(const Ast::Token& pos, const Ast::Expr& expr);
     Ast::TypecastExpr*        aTypecastExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr);
@@ -324,9 +353,8 @@ public:
     void                      aLeaveStructInitPart(const Ast::Token& pos);
     Ast::StructInitPartList*  aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part);
     Ast::StructInitPartList*  aStructInitPartList(const Ast::StructInitPart& part);
-    Ast::StructInitPartList*  aStructInitPartList();
     Ast::StructInitPart*      aStructInitPart(const Ast::Token& pos, const Ast::VariableDefn& vdef, const Ast::Expr& initExpr);
-    Ast::FunctionInstanceExpr*  aFunctionInstanceExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
+    Ast::FunctionInstanceExpr*  aFunctionInstanceExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
     Ast::AnonymousFunctionExpr* aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement);
     Ast::ChildFunctionDefn*   aEnterAnonymousFunction(const Ast::Function& function);
     Ast::ChildFunctionDefn*   aEnterAutoAnonymousFunction(const Ast::Token& pos);

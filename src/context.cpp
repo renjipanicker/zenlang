@@ -4,6 +4,30 @@
 #include "error.hpp"
 #include "typename.hpp"
 
+inline std::string Context::getExpectedTypeName(const Context::ExpectedTypeSpec::Type& exType) {
+    switch(exType) {
+        case Context::ExpectedTypeSpec::etNone:
+            return "etNone";
+        case Context::ExpectedTypeSpec::etCallArg:
+            return "etCallArg";
+        case Context::ExpectedTypeSpec::etListVal:
+            return "etListVal";
+        case Context::ExpectedTypeSpec::etDictKey:
+            return "etDictKey";
+        case Context::ExpectedTypeSpec::etDictVal:
+            return "etDictVal";
+        case Context::ExpectedTypeSpec::etAssignment:
+            return "etAssignment";
+        case Context::ExpectedTypeSpec::etEventHandler:
+            return "etEventHandler";
+        case Context::ExpectedTypeSpec::etStructInit:
+            return "etStructInit";
+        case Context::ExpectedTypeSpec::etAny:
+            return "etAny";
+    }
+    throw Exception("Internal error: Unknown Expected Type '%d'\n", exType);
+}
+
 template <typename DefnT, typename ChildT>
 struct BaseIterator {
     inline BaseIterator(const DefnT* defn) : _defn(defn) {}
@@ -155,20 +179,20 @@ inline const T* Context::resetCurrentTypeRef(const T& typeSpec) {
     return ptr(typeSpec);
 }
 
-inline Ast::QualifiedTypeSpec& Context::addQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef) {
-    Ast::QualifiedTypeSpec& qualifiedTypeSpec = _unit.addNode(new Ast::QualifiedTypeSpec(isConst, typeSpec, isRef));
+inline Ast::QualifiedTypeSpec& Context::addQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef) {
+    Ast::QualifiedTypeSpec& qualifiedTypeSpec = _unit.addNode(new Ast::QualifiedTypeSpec(pos, isConst, typeSpec, isRef));
     return qualifiedTypeSpec;
 }
 
 inline const Ast::QualifiedTypeSpec& Context::getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name) {
     Ast::Token token(pos.row(), pos.col(), name);
     const Ast::TypeSpec& typeSpec = getRootTypeSpec<Ast::TypeSpec>(token);
-    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
+    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, typeSpec, false);
     return qTypeSpec;
 }
 
-inline Ast::Scope& Context::addScope(const Ast::ScopeType::T& type) {
-    Ast::Scope& scope = _unit.addNode(new Ast::Scope(type));
+inline Ast::Scope& Context::addScope(const Ast::Token& pos, const Ast::ScopeType::T& type) {
+    Ast::Scope& scope = _unit.addNode(new Ast::Scope(pos, type));
     return scope;
 }
 
@@ -205,18 +229,18 @@ inline const Ast::VariableDefn* Context::hasMember(const Ast::Scope& scope, cons
     return 0;
 }
 
-inline Ast::ExprList& Context::addExprList() {
-    Ast::ExprList& exprList = _unit.addNode(new Ast::ExprList());
+inline Ast::ExprList& Context::addExprList(const Ast::Token& pos) {
+    Ast::ExprList& exprList = _unit.addNode(new Ast::ExprList(pos));
     return exprList;
 }
 
-inline const Ast::QualifiedTypeSpec* Context::canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, int& side) const {
+inline const Ast::QualifiedTypeSpec* Context::canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const {
     const Ast::TypeSpec& lts = resolveTypedefR(lhs.typeSpec());
     const Ast::TypeSpec& rts = resolveTypedefR(rhs.typeSpec());
 
-    side = 0;
+    mode = CoercionResult::None;
     if(ptr(lts) == ptr(rts)) {
-        side = -1;
+        mode = CoercionResult::Lhs;
         return ptr(lhs);
     }
 
@@ -236,10 +260,10 @@ inline const Ast::QualifiedTypeSpec* Context::canCoerceX(const Ast::QualifiedTyp
         }
         if((lidx >= 0) && (ridx >= 0)) {
             if(lidx >= ridx) {
-                side = -1;
+                mode = CoercionResult::Lhs;
                 return ptr(lhs);
             }
-            side = +1;
+            mode = CoercionResult::Rhs;
             return ptr(rhs);
         }
     }
@@ -249,13 +273,13 @@ inline const Ast::QualifiedTypeSpec* Context::canCoerceX(const Ast::QualifiedTyp
     if((lsd != 0) && (rsd != 0)) {
         for(StructBaseIterator sbi(lsd); sbi.hasNext(); sbi.next()) {
             if(ptr(sbi.get()) == rsd) {
-                side = +1;
+                mode = CoercionResult::Rhs;
                 return ptr(rhs);
             }
         }
         for(StructBaseIterator sbi(rsd); sbi.hasNext(); sbi.next()) {
             if(ptr(sbi.get()) == lsd) {
-                side = -1;
+                mode = CoercionResult::Lhs;
                 return ptr(lhs);
             }
         }
@@ -266,13 +290,13 @@ inline const Ast::QualifiedTypeSpec* Context::canCoerceX(const Ast::QualifiedTyp
     if((lfd != 0) && (rfd != 0)) {
         for(FunctionBaseIterator fbi(lfd); fbi.hasNext(); fbi.next()) {
             if(ptr(fbi.get()) == rfd) {
-                side = +1;
+                mode = CoercionResult::Rhs;
                 return ptr(rhs);
             }
         }
         for(FunctionBaseIterator fbi(rfd); fbi.hasNext(); fbi.next()) {
             if(ptr(fbi.get()) == lfd) {
-                side = -1;
+                mode = CoercionResult::Lhs;
                 return ptr(lhs);
             }
         }
@@ -284,26 +308,26 @@ inline const Ast::QualifiedTypeSpec* Context::canCoerceX(const Ast::QualifiedTyp
         if(ref(ltd).name().string() == ref(rtd).name().string()) {
             const Ast::QualifiedTypeSpec& lSubType = ref(ltd).at(0);
             const Ast::QualifiedTypeSpec& rSubType = ref(rtd).at(0);
-            int iside = 0;
-            const Ast::QualifiedTypeSpec* val = canCoerceX(lSubType, rSubType, iside);
+            CoercionResult::T imode = CoercionResult::None;
+            const Ast::QualifiedTypeSpec* val = canCoerceX(lSubType, rSubType, imode);
             unused(val);
-            if(iside == -1) {
-                side = -1;
+            if(imode == CoercionResult::Lhs) {
+                mode = CoercionResult::Lhs;
                 return ptr(lhs);
-            } else if (iside == +1) {
-                side = +1;
+            } else if (imode == CoercionResult::Rhs) {
+                mode = CoercionResult::Rhs;
                 return ptr(rhs);
             }
         }
     }
 
-    side = 0;
+    mode = CoercionResult::None;
     return 0;
 }
 
 inline const Ast::QualifiedTypeSpec* Context::canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) const {
-    int side = 0;
-    return canCoerceX(lhs, rhs, side);
+    CoercionResult::T mode = CoercionResult::None;
+    return canCoerceX(lhs, rhs, mode);
 }
 inline const Ast::QualifiedTypeSpec& Context::coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) {
     const Ast::QualifiedTypeSpec* val = canCoerce(lhs, rhs);
@@ -329,30 +353,30 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
     if(td != 0) {
         const std::string tdName = ref(td).name().string() ; // getTypeSpecName(ref(td), GenMode::Import); \todo this is incorrect, it will match any type called, say, list.
         if(tdName == "pointer") {
-            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(td), false);
-            Ast::ExprList& exprList = addExprList();
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, ref(td), false);
+            Ast::ExprList& exprList = addExprList(name);
             const Ast::QualifiedTypeSpec& subType = ref(td).at(0);
             const Ast::Expr& nameExpr = getDefaultValue(subType.typeSpec(), name);
             exprList.addExpr(nameExpr);
-            Ast::PointerInstanceExpr& expr = _unit.addNode(new Ast::PointerInstanceExpr(qTypeSpec, ref(td), exprList));
+            Ast::PointerInstanceExpr& expr = _unit.addNode(new Ast::PointerInstanceExpr(name, qTypeSpec, ref(td), exprList));
             return expr;
         }
         if(tdName == "list") {
-            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(td), false);
-            Ast::ListList& llist = _unit.addNode(new Ast::ListList());
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, ref(td), false);
+            Ast::ListList& llist = _unit.addNode(new Ast::ListList(name));
             const Ast::QualifiedTypeSpec* qlType = ref(td).list().at(0);
             llist.valueType(ref(qlType));
-            Ast::ListExpr& expr = _unit.addNode(new Ast::ListExpr(qTypeSpec, llist));
+            Ast::ListExpr& expr = _unit.addNode(new Ast::ListExpr(name, qTypeSpec, llist));
             return expr;
         }
         if(tdName == "dict") {
-            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(td), false);
-            Ast::DictList& llist = _unit.addNode(new Ast::DictList());
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, ref(td), false);
+            Ast::DictList& llist = _unit.addNode(new Ast::DictList(name));
             const Ast::QualifiedTypeSpec* qlType = ref(td).list().at(0);
             const Ast::QualifiedTypeSpec* qrType = ref(td).list().at(1);
             llist.keyType(ref(qlType));
             llist.valueType(ref(qrType));
-            Ast::DictExpr& expr = _unit.addNode(new Ast::DictExpr(qTypeSpec, llist));
+            Ast::DictExpr& expr = _unit.addNode(new Ast::DictExpr(name, qTypeSpec, llist));
             return expr;
         }
         if(tdName == "ptr") {
@@ -369,8 +393,8 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
             throw Exception("%s empty enum type '%s'\n", err(_filename, typeSpec.name()).c_str(), ref(ed).name().text());
         }
         const Ast::VariableDefn& vref = ref(*rit);
-        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
-        Ast::EnumMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::EnumMemberExpr(qTypeSpec, typeSpec, vref));
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, typeSpec, false);
+        Ast::EnumMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::EnumMemberExpr(name, qTypeSpec, typeSpec, vref));
         return typeSpecMemberExpr;
     }
 
@@ -382,8 +406,8 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
 
     const Ast::Function* fd = dynamic_cast<const Ast::Function*>(ts);
     if(fd != 0) {
-        Ast::ExprList& exprList = addExprList();
-        Ast::FunctionInstanceExpr* expr = aFunctionInstanceExpr(ref(fd), exprList);
+        Ast::ExprList& exprList = addExprList(name);
+        Ast::FunctionInstanceExpr* expr = aFunctionInstanceExpr(name, ref(fd), exprList);
         return ref(expr);
     }
 
@@ -417,7 +441,7 @@ inline const Ast::FunctionRetn& Context::getFunctionRetn(const Ast::Token& pos, 
 inline const Ast::QualifiedTypeSpec& Context::getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function) {
     if(function.sig().outScope().isTuple()) {
         const Ast::FunctionRetn& functionRetn = getFunctionRetn(pos, function);
-        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionRetn, false);
+        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, functionRetn, false);
         return qTypeSpec;
     }
     return ref(function.sig().out().front()).qTypeSpec();
@@ -455,7 +479,7 @@ inline const Ast::TemplateDefn& Context::getTemplateDefn(const Ast::Token& name,
 
 inline Ast::FunctionDecl& Context::addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
     const Ast::Token& name = functionSig.name();
-    Ast::Scope& xref = addScope(Ast::ScopeType::XRef);
+    Ast::Scope& xref = addScope(name, Ast::ScopeType::XRef);
     Ast::FunctionDecl& functionDecl = _unit.addNode(new Ast::FunctionDecl(parent, name, defType, functionSig, xref));
     Ast::Token token1(name.row(), name.col(), "_Out");
     Ast::FunctionRetn& functionRetn = _unit.addNode(new Ast::FunctionRetn(functionDecl, token1, functionSig.outScope()));
@@ -465,39 +489,54 @@ inline Ast::FunctionDecl& Context::addFunctionDecl(const Ast::TypeSpec& parent, 
 
 inline Ast::ValueInstanceExpr& Context::getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr) {
     unused(pos);
-    Ast::ExprList& exprList = addExprList();
+    Ast::ExprList& exprList = addExprList(pos);
     exprList.addExpr(expr);
 
-    const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(qTypeSpec.isConst(), qTypeSpec.typeSpec(), true);
-    Ast::ValueInstanceExpr& valueInstanceExpr = _unit.addNode(new Ast::ValueInstanceExpr(typeSpec, templateDefn, exprList));
+    const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(pos, qTypeSpec.isConst(), qTypeSpec.typeSpec(), true);
+    Ast::ValueInstanceExpr& valueInstanceExpr = _unit.addNode(new Ast::ValueInstanceExpr(pos, typeSpec, templateDefn, exprList));
     return valueInstanceExpr;
 }
 
 inline void Context::pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type) {
+    printf("Context::pushExpectedTypeSpec: type = %s\n", getExpectedTypeName(type).c_str());
     _expectedTypeSpecStack.push_back(ExpectedTypeSpec(type));
 }
 
-inline void Context::popExpectedTypeSpec(const Ast::Token& pos) {
+inline void Context::popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type) {
     if(_expectedTypeSpecStack.size() == 0) {
         throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, pos).c_str());
     }
-    _expectedTypeSpecStack.pop_back();
-}
-
-inline bool Context::isNoneExpectedTypeSpec() const {
-    if(_expectedTypeSpecStack.size() == 0) {
-        return false;
+    if(type != _expectedTypeSpecStack.back().type()) {
+        throw Exception("%s Internal error: Invalid expected type popped. Popping %s, got %s\n",
+                        err(_filename, pos).c_str(),
+                        getExpectedTypeName(type).c_str(),
+                        getExpectedTypeName(_expectedTypeSpecStack.back().type()).c_str());
     }
-
-    return (_expectedTypeSpecStack.back().type() == ExpectedTypeSpec::etNone);
+    printf("Context::popExpectedTypeSpec: type = %s\n", getExpectedTypeName(type).c_str());
+    _expectedTypeSpecStack.pop_back();
 }
 
 inline void Context::addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec) {
     if(_expectedTypeSpecStack.size() == 0) {
-        Ast::Token dummy_pos(0, 0, ""); /// \todo remove this
-        throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, dummy_pos).c_str());
+        throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, getToken()).c_str());
     }
+    if(_expectedTypeSpecStack.back().size() > 1) {
+        throw Exception("%s *** Internal error: Empty expected type stack %d\n", err(_filename, getToken()).c_str());
+    }
+    printf("Context::addExpectedTypeSpec: qTypeSpec = %s\n", getQualifiedTypeSpecName(qTypeSpec, GenMode::Import).c_str());
     _expectedTypeSpecStack.back().push(qTypeSpec);
+}
+
+inline Context::ExpectedTypeSpec::Type Context::getExpectedType() const {
+    if(_expectedTypeSpecStack.size() == 0) {
+        return ExpectedTypeSpec::etNone;
+    }
+
+    return _expectedTypeSpecStack.back().type();
+}
+
+inline bool Context::isAnyExpectedTypeSpec() const {
+    return (getExpectedType() == ExpectedTypeSpec::etAny);
 }
 
 inline const Context::ExpectedTypeSpec& Context::getExpectedTypeList(const Ast::Token& pos) const {
@@ -510,6 +549,7 @@ inline const Context::ExpectedTypeSpec& Context::getExpectedTypeList(const Ast::
 }
 
 inline const Ast::QualifiedTypeSpec* Context::getExpectedTypeSpecIfAny(const size_t& idx) const {
+    assert(idx == 0);
     if(_expectedTypeSpecStack.size() == 0) {
         return 0;
     }
@@ -520,10 +560,12 @@ inline const Ast::QualifiedTypeSpec* Context::getExpectedTypeSpecIfAny(const siz
     }
 
     const Ast::QualifiedTypeSpec* ts = exl.at(idx);
+//    printf("Context::getExpectedTypeSpecIfAny: qts = %s\n", getQualifiedTypeSpecName(ref(ts), GenMode::Import).c_str());
     return ts;
 }
 
 inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const {
+    assert(idx == 0);
     const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny(idx);
     if(ts == 0) {
         return ref(qTypeSpec);
@@ -532,6 +574,7 @@ inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::Qua
 }
 
 inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpecEx(const Ast::Token& pos, const size_t& idx) const {
+    assert(idx == 0);
     const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny(idx);
     if(ts == 0) {
         throw Exception("%s Empty expected type stack\n", err(_filename, pos).c_str());
@@ -540,6 +583,7 @@ inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpecEx(const Ast::T
 }
 
 inline const Ast::TemplateDefn* Context::isEnteringTemplate(const size_t& idx) const {
+    assert(idx == 0);
     const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny(idx);
     if(qts == 0) {
         return 0;
@@ -550,6 +594,7 @@ inline const Ast::TemplateDefn* Context::isEnteringTemplate(const size_t& idx) c
 }
 
 inline const Ast::TemplateDefn* Context::isEnteringList(const size_t& idx) const {
+    assert(idx == 0);
     const Ast::TemplateDefn* td = isEnteringTemplate(idx);
     if(td) {
         if(ref(td).name().string() == "list") {
@@ -563,6 +608,7 @@ inline const Ast::TemplateDefn* Context::isEnteringList(const size_t& idx) const
 }
 
 const Ast::StructDefn* Context::isStructExpected(const size_t& idx) const {
+    assert(idx == 0);
     const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny(idx);
     if(qts == 0) {
         return 0;
@@ -578,6 +624,7 @@ const Ast::StructDefn* Context::isStructExpected(const size_t& idx) const {
 }
 
 const Ast::Function* Context::isFunctionExpected(const size_t& idx) const {
+    assert(idx == 0);
     const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny(idx);
     if(qts == 0) {
         return 0;
@@ -593,6 +640,7 @@ const Ast::Function* Context::isFunctionExpected(const size_t& idx) const {
 }
 
 const Ast::TemplateDefn* Context::isPointerExpected(const size_t& idx) const {
+    assert(idx == 0);
     const Ast::TemplateDefn* td = isEnteringTemplate(idx);
     if(td) {
         if(ref(td).name().string() == "pointer") {
@@ -603,13 +651,14 @@ const Ast::TemplateDefn* Context::isPointerExpected(const size_t& idx) const {
 }
 
 const Ast::TemplateDefn* Context::isPointerToExprExpected(const size_t& idx, const Ast::Expr& expr) const {
+    assert(idx == 0);
     const Ast::TemplateDefn* ts = isPointerExpected(idx);
     if(ts) {
         const Ast::QualifiedTypeSpec& innerQts = ref(ts).at(0);
 
-        int side = 0;
-        const Ast::QualifiedTypeSpec* qts = canCoerceX(innerQts, expr.qTypeSpec(), side);
-        if(qts && (side == -1)) {
+        CoercionResult::T mode = CoercionResult::None;
+        const Ast::QualifiedTypeSpec* qts = canCoerceX(innerQts, expr.qTypeSpec(), mode);
+        if(qts && (mode == CoercionResult::Lhs)) {
             return ts;
         }
     }
@@ -617,6 +666,7 @@ const Ast::TemplateDefn* Context::isPointerToExprExpected(const size_t& idx, con
 }
 
 const Ast::StructDefn* Context::isPointerToStructExpected(const size_t& idx) const {
+    assert(idx == 0);
     const Ast::TemplateDefn* td = isPointerExpected(idx);
     if(td) {
         const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
@@ -627,6 +677,7 @@ const Ast::StructDefn* Context::isPointerToStructExpected(const size_t& idx) con
 }
 
 const Ast::StructDefn* Context::isListOfStructExpected(const size_t& idx) const {
+    assert(idx == 0);
     const Ast::TemplateDefn* td = isEnteringList(idx);
     const Ast::StructDefn* sd = 0;
     if(td) {
@@ -644,6 +695,7 @@ const Ast::StructDefn* Context::isListOfStructExpected(const size_t& idx) const 
 }
 
 inline const Ast::TypeSpec* Context::isListOfPointerExpected(const size_t& idx) const {
+    assert(idx == 0);
     const Ast::TemplateDefn* td = isEnteringList(idx);
     if(td) {
         if(ref(td).name().string() == "list") {
@@ -672,6 +724,7 @@ inline const Ast::TypeSpec* Context::isListOfPointerExpected(const size_t& idx) 
 }
 
 const Ast::StructDefn* Context::isListOfPointerToStructExpected(const size_t& idx) const {
+    assert(idx == 0);
     const Ast::TypeSpec* ts = isListOfPointerExpected(idx);
     if(!ts)
         return 0;
@@ -681,6 +734,7 @@ const Ast::StructDefn* Context::isListOfPointerToStructExpected(const size_t& id
 }
 
 inline const Ast::Expr& Context::convertExprToExpectedTypeSpec(const Ast::Token& pos, const size_t& idx, const Ast::Expr& initExpr) {
+    assert(idx == 0);
     // check if lhs is a pointer to rhs, if so auto-convert
     const Ast::TemplateDefn* ts = isPointerToExprExpected(idx, initExpr);
     if(ts) {
@@ -700,40 +754,74 @@ inline const Ast::Expr& Context::convertExprToExpectedTypeSpec(const Ast::Token&
         const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(ptr(initExpr.qTypeSpec().typeSpec()));
         if((templateDefn) && (ref(templateDefn).name().string() == "pointer")) {
             const Ast::QualifiedTypeSpec& rhsQts = ref(templateDefn).at(0);
-            int side = 0;
-            canCoerceX(ref(qts), rhsQts, side);
-            if(side == +1) {
-                const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(ref(qts).isConst(), ref(qts).typeSpec(), true);
-                Ast::TypecastExpr& typecastExpr = _unit.addNode(new Ast::DynamicTypecastExpr(typeSpec, initExpr));
+            CoercionResult::T mode = CoercionResult::None;
+            canCoerceX(ref(qts), rhsQts, mode);
+            if(mode == CoercionResult::Rhs) {
+                const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(pos, ref(qts).isConst(), ref(qts).typeSpec(), true);
+                Ast::TypecastExpr& typecastExpr = _unit.addNode(new Ast::DynamicTypecastExpr(pos, typeSpec, initExpr));
                 return typecastExpr;
             }
         }
 
         // check if initExpr can be converted to expected type, if any
-        int side = 0;
-        const Ast::QualifiedTypeSpec* cqts = canCoerceX(ref(qts), initExpr.qTypeSpec(), side);
-        if(side != -1) {
-            throw Exception("%s Cannot convert parameter %lu from '%s' to '%s' (%d)\n",
+        CoercionResult::T mode = CoercionResult::None;
+        const Ast::QualifiedTypeSpec* cqts = canCoerceX(ref(qts), initExpr.qTypeSpec(), mode);
+        if(mode != CoercionResult::Lhs) {
+            throw Exception("%s Cannot convert expression %lu from '%s' to '%s' (%d)\n",
                             err(_filename, pos).c_str(),
                             idx,
                             getQualifiedTypeSpecName(initExpr.qTypeSpec(), GenMode::Import).c_str(),
                             getQualifiedTypeSpecName(ref(qts), GenMode::Import).c_str(),
-                            side
+                            mode
                             );
         }
-        unused(cqts);
+//        printf("Context::convertExprToExpectedTypeSpec(0): cqts = %s\n", getQualifiedTypeSpecName(ref(cqts), GenMode::Import).c_str());
+//        printf("Context::convertExprToExpectedTypeSpec(0): initExpr = %s\n", getQualifiedTypeSpecName(initExpr.qTypeSpec(), GenMode::Import).c_str());
+        if(ptr(ref(cqts).typeSpec()) != ptr(initExpr.qTypeSpec().typeSpec())) {
+//            printf("Context::convertExprToExpectedTypeSpec(1): not equal ***** %lu %lu\n", ptr(ref(cqts).typeSpec()), ptr(initExpr.qTypeSpec().typeSpec()));
+            const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(pos, ref(cqts).isConst(), ref(qts).typeSpec(), false);
+            Ast::TypecastExpr& typecastExpr = _unit.addNode(new Ast::StaticTypecastExpr(pos, typeSpec, initExpr));
+            return typecastExpr;
+        } else {
+//            printf("Context::convertExprToExpectedTypeSpec(1): equal *****\n");
+        }
     }
 
     return initExpr;
 }
 
+inline void Context::pushCallArgList(const Ast::Scope& in) {
+    if(in.type() == Ast::ScopeType::VarArg) {
+        pushExpectedTypeSpec(ExpectedTypeSpec::etAny);
+    } else {
+        for(Ast::Scope::List::const_reverse_iterator it = in.list().rbegin(); it != in.list().rend(); ++it) {
+            const Ast::VariableDefn& def = ref(*it);
+            pushExpectedTypeSpec(ExpectedTypeSpec::etCallArg);
+            addExpectedTypeSpec(def.qTypeSpec());
+        }
+    }
+}
+
+inline void Context::popCallArgList(const Ast::Token& pos, const Ast::Scope& in) {
+    if(in.type() == Ast::ScopeType::VarArg) {
+        popExpectedTypeSpec(pos, ExpectedTypeSpec::etAny);
+    }
+}
+
+inline void Context::popCallArg(const Ast::Token& pos) {
+    if(getExpectedType() != ExpectedTypeSpec::etAny) {
+        popExpectedTypeSpec(pos, ExpectedTypeSpec::etCallArg);
+    }
+}
+
 ////////////////////////////////////////////////////////////
-Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0) {
+Context::Context(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename) : _compiler(compiler), _unit(unit), _level(level), _filename(filename), _lastToken(0, 0, ""),_currentTypeRef(0), _currentImportedTypeRef(0) {
     Ast::Root& rootTypeSpec = getRootNamespace();
     enterTypeSpec(rootTypeSpec);
 }
 
 Context::~Context() {
+    printf("Context::~Context(): %lu\n", _typeSpecStack.size());
     assert(_typeSpecStack.size() == 1);
     Ast::Root& rootTypeSpec = getRootNamespace();
     leaveTypeSpec(rootTypeSpec);
@@ -742,7 +830,8 @@ Context::~Context() {
 
 ////////////////////////////////////////////////////////////
 void Context::aUnitStatementList(const Ast::EnterNamespaceStatement& nss) {
-    Ast::LeaveNamespaceStatement& lns = _unit.addNode(new Ast::LeaveNamespaceStatement(nss));
+    printf("Context::aUnitStatementList(): %lu\n", _namespaceStack.size());
+    Ast::LeaveNamespaceStatement& lns = _unit.addNode(new Ast::LeaveNamespaceStatement(getToken(), nss));
     if(_level == 0) {
         _unit.addStatement(lns);
     }
@@ -754,8 +843,8 @@ void Context::aUnitStatementList(const Ast::EnterNamespaceStatement& nss) {
     }
 }
 
-void Context::aImportStatement(const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list) {
-    Ast::ImportStatement& statement = _unit.addNode(new Ast::ImportStatement(accessType, headerType, defType, list));
+void Context::aImportStatement(const Ast::Token& pos, const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list) {
+    Ast::ImportStatement& statement = _unit.addNode(new Ast::ImportStatement(pos, accessType, headerType, defType, list));
     _unit.addStatement(statement);
 
     if(statement.defType() != Ast::DefinitionType::Native) {
@@ -778,13 +867,13 @@ Ast::NamespaceList* Context::aImportNamespaceList(Ast::NamespaceList& list, cons
     return ptr(list);
 }
 
-Ast::NamespaceList* Context::aImportNamespaceList(const Ast::Token &name) {
-    Ast::NamespaceList& list = _unit.addNode(new Ast::NamespaceList());
+Ast::NamespaceList* Context::aImportNamespaceList(const Ast::Token& name) {
+    Ast::NamespaceList& list = _unit.addNode(new Ast::NamespaceList(name));
     return aImportNamespaceList(list, name);
 }
 
-Ast::EnterNamespaceStatement* Context::aNamespaceStatement(Ast::NamespaceList& list) {
-    Ast::EnterNamespaceStatement& statement = _unit.addNode(new Ast::EnterNamespaceStatement(list));
+Ast::EnterNamespaceStatement* Context::aNamespaceStatement(const Ast::Token& pos, Ast::NamespaceList& list) {
+    Ast::EnterNamespaceStatement& statement = _unit.addNode(new Ast::EnterNamespaceStatement(pos, list));
     if(_level == 0) {
         _unit.addStatement(statement);
     }
@@ -792,8 +881,8 @@ Ast::EnterNamespaceStatement* Context::aNamespaceStatement(Ast::NamespaceList& l
 }
 
 Ast::EnterNamespaceStatement* Context::aNamespaceStatement() {
-    Ast::NamespaceList& list = _unit.addNode(new Ast::NamespaceList());
-    return aNamespaceStatement(list);
+    Ast::NamespaceList& list = _unit.addNode(new Ast::NamespaceList(getToken()));
+    return aNamespaceStatement(getToken(), list);
 }
 
 inline Ast::Namespace& Context::getUnitNamespace(const Ast::Token& name) {
@@ -824,8 +913,8 @@ Ast::NamespaceList* Context::aUnitNamespaceList(Ast::NamespaceList& list, const 
     return ptr(list);
 }
 
-Ast::NamespaceList* Context::aUnitNamespaceList(const Ast::Token &name) {
-    Ast::NamespaceList& list = _unit.addNode(new Ast::NamespaceList());
+Ast::NamespaceList* Context::aUnitNamespaceList(const Ast::Token& name) {
+    Ast::NamespaceList& list = _unit.addNode(new Ast::NamespaceList(name));
     return aUnitNamespaceList(list, name);
 }
 
@@ -852,7 +941,7 @@ Ast::CoerceList* Context::aCoerceList(Ast::CoerceList& list, const Ast::TypeSpec
 }
 
 Ast::CoerceList* Context::aCoerceList(const Ast::TypeSpec& typeSpec) {
-    Ast::CoerceList& list = _unit.addNode(new Ast::CoerceList());
+    Ast::CoerceList& list = _unit.addNode(new Ast::CoerceList(typeSpec.pos()));
     list.addTypeSpec(typeSpec);
     return ptr(list);
 }
@@ -879,7 +968,7 @@ Ast::TemplatePartList* Context::aTemplatePartList(Ast::TemplatePartList& list, c
 }
 
 Ast::TemplatePartList* Context::aTemplatePartList(const Ast::Token& name) {
-    Ast::TemplatePartList& list = _unit.addNode(new Ast::TemplatePartList());
+    Ast::TemplatePartList& list = _unit.addNode(new Ast::TemplatePartList(name));
     list.addPart(name);
     return ptr(list);
 }
@@ -897,7 +986,7 @@ Ast::EnumDefn* Context::aEnumDefn(const Ast::Token& name, const Ast::DefinitionT
 }
 
 Ast::EnumDefn* Context::aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
-    Ast::Scope& scope = addScope(Ast::ScopeType::Member);
+    Ast::Scope& scope = addScope(name, Ast::ScopeType::Member);
     return aEnumDefn(name, defType, scope);
 }
 
@@ -907,7 +996,7 @@ Ast::Scope* Context::aEnumMemberDefnList(Ast::Scope& list, const Ast::VariableDe
 }
 
 Ast::Scope* Context::aEnumMemberDefnList(const Ast::VariableDefn& variableDefn) {
-    Ast::Scope& scope = addScope(Ast::ScopeType::Member);
+    Ast::Scope& scope = addScope(variableDefn.pos(), Ast::ScopeType::Member);
     return aEnumMemberDefnList(scope, variableDefn);
 }
 
@@ -931,21 +1020,21 @@ Ast::StructDecl* Context::aStructDecl(const Ast::Token& name, const Ast::Definit
 
 Ast::RootStructDefn* Context::aLeaveRootStructDefn(Ast::RootStructDefn& structDefn) {
     leaveTypeSpec(structDefn);
-    Ast::StructInitStatement& statement = _unit.addNode(new Ast::StructInitStatement(structDefn));
+    Ast::StructInitStatement& statement = _unit.addNode(new Ast::StructInitStatement(structDefn.pos(), structDefn));
     structDefn.block().addStatement(statement);
     return ptr(structDefn);
 }
 
 Ast::ChildStructDefn* Context::aLeaveChildStructDefn(Ast::ChildStructDefn& structDefn) {
     leaveTypeSpec(structDefn);
-    Ast::StructInitStatement& statement = _unit.addNode(new Ast::StructInitStatement(structDefn));
+    Ast::StructInitStatement& statement = _unit.addNode(new Ast::StructInitStatement(structDefn.pos(), structDefn));
     structDefn.block().addStatement(statement);
     return ptr(structDefn);
 }
 
 Ast::RootStructDefn* Context::aEnterRootStructDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
-    Ast::Scope& list = addScope(Ast::ScopeType::Member);
-    Ast::CompoundStatement& block = _unit.addNode(new Ast::CompoundStatement());
+    Ast::Scope& list = addScope(name, Ast::ScopeType::Member);
+    Ast::CompoundStatement& block = _unit.addNode(new Ast::CompoundStatement(name));
     Ast::RootStructDefn& structDefn = _unit.addNode(new Ast::RootStructDefn(currentTypeSpec(), name, defType, list, block));
     currentTypeSpec().addChild(structDefn);
     enterTypeSpec(structDefn);
@@ -953,8 +1042,8 @@ Ast::RootStructDefn* Context::aEnterRootStructDefn(const Ast::Token& name, const
 }
 
 Ast::ChildStructDefn* Context::aEnterChildStructDefn(const Ast::Token& name, const Ast::StructDefn& base, const Ast::DefinitionType::T& defType) {
-    Ast::Scope& list = addScope(Ast::ScopeType::Member);
-    Ast::CompoundStatement& block = _unit.addNode(new Ast::CompoundStatement());
+    Ast::Scope& list = addScope(name, Ast::ScopeType::Member);
+    Ast::CompoundStatement& block = _unit.addNode(new Ast::CompoundStatement(name));
     Ast::ChildStructDefn& structDefn = _unit.addNode(new Ast::ChildStructDefn(currentTypeSpec(), base, name, defType, list, block));
     currentTypeSpec().addChild(structDefn);
     enterTypeSpec(structDefn);
@@ -964,7 +1053,7 @@ Ast::ChildStructDefn* Context::aEnterChildStructDefn(const Ast::Token& name, con
 void Context::aStructMemberVariableDefn(const Ast::VariableDefn& vdef) {
     Ast::StructDefn& sd = getCurrentStructDefn(vdef.name());
     sd.addVariable(vdef);
-    Ast::StructMemberVariableStatement& statement = _unit.addNode(new Ast::StructMemberVariableStatement(sd, vdef));
+    Ast::StructMemberVariableStatement& statement = _unit.addNode(new Ast::StructMemberVariableStatement(vdef.pos(), sd, vdef));
     sd.block().addStatement(statement);
 }
 
@@ -1000,7 +1089,7 @@ Ast::RoutineDecl* Context::aRoutineDecl(const Ast::QualifiedTypeSpec& outType, c
 }
 
 Ast::RoutineDecl* Context::aVarArgRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
-    Ast::Scope& in = addScope(Ast::ScopeType::VarArg);
+    Ast::Scope& in = addScope(name, Ast::ScopeType::VarArg);
     Ast::RoutineDecl& routineDecl = _unit.addNode(new Ast::RoutineDecl(currentTypeSpec(), outType, name, in, defType));
     currentTypeSpec().addChild(routineDecl);
     return ptr(routineDecl);
@@ -1010,7 +1099,7 @@ Ast::RoutineDefn* Context::aRoutineDefn(Ast::RoutineDefn& routineDefn, const Ast
     routineDefn.setBlock(block);
     leaveScope(routineDefn.inScope());
     leaveTypeSpec(routineDefn);
-    _unit.addBody(_unit.addNode(new Ast::RoutineBody(routineDefn, block)));
+    _unit.addBody(_unit.addNode(new Ast::RoutineBody(block.pos(), routineDefn, block)));
     return ptr(routineDefn);
 }
 
@@ -1033,13 +1122,13 @@ Ast::RootFunctionDefn* Context::aRootFunctionDefn(Ast::RootFunctionDefn& functio
     leaveScope(functionDefn.sig().inScope());
     leaveScope(functionDefn.xrefScope());
     leaveTypeSpec(functionDefn);
-    _unit.addBody(_unit.addNode(new Ast::FunctionBody(functionDefn, block)));
+    _unit.addBody(_unit.addNode(new Ast::FunctionBody(block.pos(), functionDefn, block)));
     return ptr(functionDefn);
 }
 
 Ast::RootFunctionDefn* Context::aEnterRootFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
     const Ast::Token& name = functionSig.name();
-    Ast::Scope& xref = addScope(Ast::ScopeType::XRef);
+    Ast::Scope& xref = addScope(name, Ast::ScopeType::XRef);
     Ast::RootFunctionDefn& functionDefn = _unit.addNode(new Ast::RootFunctionDefn(currentTypeSpec(), name, defType, functionSig, xref));
     currentTypeSpec().addChild(functionDefn);
     enterScope(functionDefn.xrefScope());
@@ -1058,12 +1147,12 @@ Ast::ChildFunctionDefn* Context::aChildFunctionDefn(Ast::ChildFunctionDefn& func
     leaveScope(functionDefn.sig().inScope());
     leaveScope(functionDefn.xrefScope());
     leaveTypeSpec(functionDefn);
-    _unit.addBody(_unit.addNode(new Ast::FunctionBody(functionDefn, block)));
+    _unit.addBody(_unit.addNode(new Ast::FunctionBody(block.pos(), functionDefn, block)));
     return ptr(functionDefn);
 }
 
 inline Ast::ChildFunctionDefn& Context::createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
-    Ast::Scope& xref = addScope(Ast::ScopeType::XRef);
+    Ast::Scope& xref = addScope(name, Ast::ScopeType::XRef);
     Ast::ChildFunctionDefn& functionDefn = _unit.addNode(new Ast::ChildFunctionDefn(parent, name, defType, base.sig(), xref, base));
     parent.addChild(functionDefn);
     enterScope(functionDefn.xrefScope());
@@ -1093,16 +1182,16 @@ Ast::EventDecl* Context::aEventDecl(const Ast::Token& pos, const Ast::VariableDe
     Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, ref(handlerSig), handlerDefType);
     eventDef.setHandler(funDecl);
 
-    Ast::QualifiedTypeSpec& qFunTypeSpec = addQualifiedTypeSpec(false, funDecl, false);
+    Ast::QualifiedTypeSpec& qFunTypeSpec = addQualifiedTypeSpec(pos, false, funDecl, false);
     Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "pointer");
     templateDefn.addType(qFunTypeSpec);
-    const Ast::QualifiedTypeSpec& qFunctorTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
+    const Ast::QualifiedTypeSpec& qFunctorTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false);
 
     Ast::Token hVarName(pos.row(), pos.col(), "handler");
     Ast::VariableDefn& vdef = addVariableDefn(qFunctorTypeSpec, hVarName);
 
-    Ast::Scope& outAdd = addScope(Ast::ScopeType::Param);
-    Ast::Scope& inAdd  = addScope(Ast::ScopeType::Param);
+    Ast::Scope& outAdd = addScope(pos, Ast::ScopeType::Param);
+    Ast::Scope& inAdd  = addScope(pos, Ast::ScopeType::Param);
     Ast::Token nameAdd(pos.row(), pos.col(), "Add");
     Ast::FunctionSig* addSig = aFunctionSig(outAdd, nameAdd, inAdd);
     Ast::FunctionDecl& addDecl = addFunctionDecl(eventDef, ref(addSig), eventDefType);
@@ -1120,7 +1209,7 @@ Ast::FunctionSig* Context::aFunctionSig(const Ast::Scope& out, const Ast::Token&
 }
 
 Ast::FunctionSig* Context::aFunctionSig(const Ast::QualifiedTypeSpec& typeSpec, const Ast::Token& name, Ast::Scope& in) {
-    Ast::Scope& out = addScope(Ast::ScopeType::Param);
+    Ast::Scope& out = addScope(name, Ast::ScopeType::Param);
     out.isTuple(false);
 
     Ast::Token oname(name.row(), name.col(), "_out");
@@ -1149,19 +1238,19 @@ Ast::Scope* Context::aParam(Ast::Scope& list, const Ast::VariableDefn& variableD
 }
 
 Ast::Scope* Context::aParam(const Ast::VariableDefn& variableDefn) {
-    Ast::Scope& list = addScope(Ast::ScopeType::Param);
+    Ast::Scope& list = addScope(variableDefn.pos(), Ast::ScopeType::Param);
     return aParam(list, variableDefn);
 }
 
 Ast::Scope* Context::aParam() {
-    Ast::Scope& list = addScope(Ast::ScopeType::Param);
+    Ast::Scope& list = addScope(getToken(), Ast::ScopeType::Param);
     return ptr(list);
 }
 
 Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr) {
     const Ast::Expr& expr = convertExprToExpectedTypeSpec(name, 0, initExpr);
     Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, expr));
-    popExpectedTypeSpec(name);
+    popExpectedTypeSpec(name, ExpectedTypeSpec::etAssignment);
     return ptr(variableDef);
 }
 
@@ -1182,12 +1271,16 @@ const Ast::QualifiedTypeSpec* Context::aQualifiedVariableDefn(const Ast::Qualifi
 }
 
 void Context::aAutoQualifiedVariableDefn() {
-    pushExpectedTypeSpec(ExpectedTypeSpec::etNone);
+    pushExpectedTypeSpec(ExpectedTypeSpec::etAny);
+}
+
+Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef) {
+    Ast::QualifiedTypeSpec& qualifiedTypeSpec = addQualifiedTypeSpec(pos, isConst, typeSpec, isRef);
+    return ptr(qualifiedTypeSpec);
 }
 
 Ast::QualifiedTypeSpec* Context::aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef) {
-    Ast::QualifiedTypeSpec& qualifiedTypeSpec = addQualifiedTypeSpec(isConst, typeSpec, isRef);
-    return ptr(qualifiedTypeSpec);
+    return aQualifiedTypeSpec(getToken(), isConst, typeSpec, isRef);
 }
 
 const Ast::TemplateDecl* Context::aTemplateTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) {
@@ -1277,64 +1370,64 @@ Ast::TemplateTypePartList* Context::aTemplateTypePartList(Ast::TemplateTypePartL
 }
 
 Ast::TemplateTypePartList* Context::aTemplateTypePartList(const Ast::QualifiedTypeSpec& qTypeSpec) {
-    Ast::TemplateTypePartList& list = _unit.addNode(new Ast::TemplateTypePartList());
+    Ast::TemplateTypePartList& list = _unit.addNode(new Ast::TemplateTypePartList(getToken()));
     return aTemplateTypePartList(list, qTypeSpec);
 }
 
 Ast::UserDefinedTypeSpecStatement* Context::aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec) {
-    Ast::UserDefinedTypeSpecStatement& userDefinedTypeSpecStatement = _unit.addNode(new Ast::UserDefinedTypeSpecStatement(typeSpec));
+    Ast::UserDefinedTypeSpecStatement& userDefinedTypeSpecStatement = _unit.addNode(new Ast::UserDefinedTypeSpecStatement(typeSpec.pos(), typeSpec));
     return ptr(userDefinedTypeSpecStatement);
 }
 
 Ast::AutoStatement* Context::aAutoStatement(const Ast::VariableDefn& defn) {
-    Ast::AutoStatement& localStatement = _unit.addNode(new Ast::AutoStatement(defn));
+    Ast::AutoStatement& localStatement = _unit.addNode(new Ast::AutoStatement(defn.pos(), defn));
     currentScope().addVariableDef(defn);
     return ptr(localStatement);
 }
 
 Ast::ExprStatement* Context::aExprStatement(const Ast::Expr& expr) {
-    Ast::ExprStatement& exprStatement = _unit.addNode(new Ast::ExprStatement(expr));
+    Ast::ExprStatement& exprStatement = _unit.addNode(new Ast::ExprStatement(expr.pos(), expr));
     return ptr(exprStatement);
 }
 
-Ast::PrintStatement* Context::aPrintStatement(const Ast::Expr& expr) {
-    Ast::PrintStatement& printStatement = _unit.addNode(new Ast::PrintStatement(expr));
+Ast::PrintStatement* Context::aPrintStatement(const Ast::Token& pos, const Ast::Expr& expr) {
+    Ast::PrintStatement& printStatement = _unit.addNode(new Ast::PrintStatement(pos, expr));
     return ptr(printStatement);
 }
 
-Ast::IfStatement* Context::aIfStatement(const Ast::Expr& expr, const Ast::CompoundStatement& tblock) {
-    Ast::IfStatement& ifStatement = _unit.addNode(new Ast::IfStatement(expr, tblock));
+Ast::IfStatement* Context::aIfStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& tblock) {
+    Ast::IfStatement& ifStatement = _unit.addNode(new Ast::IfStatement(pos, expr, tblock));
     return ptr(ifStatement);
 }
 
-Ast::IfElseStatement* Context::aIfElseStatement(const Ast::Expr& expr, const Ast::CompoundStatement& tblock, const Ast::CompoundStatement& fblock) {
-    Ast::IfElseStatement& ifElseStatement = _unit.addNode(new Ast::IfElseStatement(expr, tblock, fblock));
+Ast::IfElseStatement* Context::aIfElseStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& tblock, const Ast::CompoundStatement& fblock) {
+    Ast::IfElseStatement& ifElseStatement = _unit.addNode(new Ast::IfElseStatement(pos, expr, tblock, fblock));
     return ptr(ifElseStatement);
 }
 
-Ast::WhileStatement* Context::aWhileStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block) {
-    Ast::WhileStatement& whileStatement = _unit.addNode(new Ast::WhileStatement(expr, block));
+Ast::WhileStatement* Context::aWhileStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& block) {
+    Ast::WhileStatement& whileStatement = _unit.addNode(new Ast::WhileStatement(pos, expr, block));
     return ptr(whileStatement);
 }
 
-Ast::DoWhileStatement* Context::aDoWhileStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block) {
-    Ast::DoWhileStatement& doWhileStatement = _unit.addNode(new Ast::DoWhileStatement(expr, block));
+Ast::DoWhileStatement* Context::aDoWhileStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& block) {
+    Ast::DoWhileStatement& doWhileStatement = _unit.addNode(new Ast::DoWhileStatement(pos, expr, block));
     return ptr(doWhileStatement);
 }
 
-Ast::ForStatement* Context::aForStatement(const Ast::Expr& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block) {
-    Ast::ForExprStatement& forStatement = _unit.addNode(new Ast::ForExprStatement(init, expr, incr, block));
+Ast::ForStatement* Context::aForStatement(const Ast::Token& pos, const Ast::Expr& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block) {
+    Ast::ForExprStatement& forStatement = _unit.addNode(new Ast::ForExprStatement(pos, init, expr, incr, block));
     return ptr(forStatement);
 }
 
-Ast::ForStatement* Context::aForStatement(const Ast::VariableDefn& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block) {
-    Ast::ForInitStatement& forStatement = _unit.addNode(new Ast::ForInitStatement(init, expr, incr, block));
+Ast::ForStatement* Context::aForStatement(const Ast::Token& pos, const Ast::VariableDefn& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block) {
+    Ast::ForInitStatement& forStatement = _unit.addNode(new Ast::ForInitStatement(pos, init, expr, incr, block));
     leaveScope();
     return ptr(forStatement);
 }
 
 const Ast::VariableDefn* Context::aEnterForInit(const Ast::VariableDefn& init) {
-    Ast::Scope& scope = addScope(Ast::ScopeType::Local);
+    Ast::Scope& scope = addScope(init.pos(), Ast::ScopeType::Local);
     scope.addVariableDef(init);
     enterScope(scope);
     return ptr(init);
@@ -1348,38 +1441,38 @@ Ast::ForeachStatement* Context::aForeachStatement(Ast::ForeachStatement& stateme
 
 Ast::ForeachListStatement* Context::aEnterForeachInit(const Ast::Token& valName, const Ast::Expr& expr) {
     const Ast::TemplateDefn& templateDefn = getTemplateDefn(valName, expr, "list", 1);
-    const Ast::QualifiedTypeSpec& valTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), templateDefn.at(0).typeSpec(), true);
+    const Ast::QualifiedTypeSpec& valTypeSpec = addQualifiedTypeSpec(valName, expr.qTypeSpec().isConst(), templateDefn.at(0).typeSpec(), true);
     const Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
-    Ast::Scope& scope = addScope(Ast::ScopeType::Local);
+    Ast::Scope& scope = addScope(valName, Ast::ScopeType::Local);
     scope.addVariableDef(valDef);
     enterScope(scope);
 
-    Ast::ForeachListStatement& foreachStatement = _unit.addNode(new Ast::ForeachListStatement(valDef, expr));
+    Ast::ForeachListStatement& foreachStatement = _unit.addNode(new Ast::ForeachListStatement(valName, valDef, expr));
     return ptr(foreachStatement);
 }
 
 Ast::ForeachDictStatement* Context::aEnterForeachInit(const Ast::Token& keyName, const Ast::Token& valName, const Ast::Expr& expr) {
     const Ast::TemplateDefn& templateDefn = getTemplateDefn(valName, expr, "dict", 2);
-    const Ast::QualifiedTypeSpec& keyTypeSpec = addQualifiedTypeSpec(true, templateDefn.at(0).typeSpec(), true);
-    const Ast::QualifiedTypeSpec& valTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), templateDefn.at(1).typeSpec(), true);
+    const Ast::QualifiedTypeSpec& keyTypeSpec = addQualifiedTypeSpec(keyName, true, templateDefn.at(0).typeSpec(), true);
+    const Ast::QualifiedTypeSpec& valTypeSpec = addQualifiedTypeSpec(keyName, expr.qTypeSpec().isConst(), templateDefn.at(1).typeSpec(), true);
     const Ast::VariableDefn& keyDef = addVariableDefn(keyTypeSpec, keyName);
     const Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
-    Ast::Scope& scope = addScope(Ast::ScopeType::Local);
+    Ast::Scope& scope = addScope(keyName, Ast::ScopeType::Local);
     scope.addVariableDef(keyDef);
     scope.addVariableDef(valDef);
     enterScope(scope);
 
-    Ast::ForeachDictStatement& foreachStatement = _unit.addNode(new Ast::ForeachDictStatement(keyDef, valDef, expr));
+    Ast::ForeachDictStatement& foreachStatement = _unit.addNode(new Ast::ForeachDictStatement(keyName, keyDef, valDef, expr));
     return ptr(foreachStatement);
 }
 
-Ast::SwitchValueStatement* Context::aSwitchStatement(const Ast::Expr& expr, const Ast::CompoundStatement& list) {
-    Ast::SwitchValueStatement& switchStatement = _unit.addNode(new Ast::SwitchValueStatement(expr, list));
+Ast::SwitchValueStatement* Context::aSwitchStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& list) {
+    Ast::SwitchValueStatement& switchStatement = _unit.addNode(new Ast::SwitchValueStatement(pos, expr, list));
     return ptr(switchStatement);
 }
 
-Ast::SwitchExprStatement* Context::aSwitchStatement(const Ast::CompoundStatement& list) {
-    Ast::SwitchExprStatement& switchStatement = _unit.addNode(new Ast::SwitchExprStatement(list));
+Ast::SwitchExprStatement* Context::aSwitchStatement(const Ast::Token& pos, const Ast::CompoundStatement& list) {
+    Ast::SwitchExprStatement& switchStatement = _unit.addNode(new Ast::SwitchExprStatement(pos, list));
     return ptr(switchStatement);
 }
 
@@ -1389,64 +1482,64 @@ Ast::CompoundStatement* Context::aCaseList(Ast::CompoundStatement& list, const A
 }
 
 Ast::CompoundStatement* Context::aCaseList(const Ast::CaseStatement& stmt) {
-    Ast::CompoundStatement& list = _unit.addNode(new Ast::CompoundStatement());
+    Ast::CompoundStatement& list = _unit.addNode(new Ast::CompoundStatement(stmt.pos()));
     list.addStatement(stmt);
     return ptr(list);
 }
 
-Ast::CaseStatement* Context::aCaseStatement(const Ast::Expr& expr, const Ast::CompoundStatement& block) {
-    Ast::CaseExprStatement& caseStatement = _unit.addNode(new Ast::CaseExprStatement(expr, block));
+Ast::CaseStatement* Context::aCaseStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& block) {
+    Ast::CaseExprStatement& caseStatement = _unit.addNode(new Ast::CaseExprStatement(pos, expr, block));
     return ptr(caseStatement);
 }
 
-Ast::CaseStatement* Context::aCaseStatement(const Ast::CompoundStatement& block) {
-    Ast::CaseDefaultStatement& caseStatement = _unit.addNode(new Ast::CaseDefaultStatement(block));
+Ast::CaseStatement* Context::aCaseStatement(const Ast::Token& pos, const Ast::CompoundStatement& block) {
+    Ast::CaseDefaultStatement& caseStatement = _unit.addNode(new Ast::CaseDefaultStatement(pos, block));
     return ptr(caseStatement);
 }
 
-Ast::BreakStatement* Context::aBreakStatement() {
-    Ast::BreakStatement& breakStatement = _unit.addNode(new Ast::BreakStatement());
+Ast::BreakStatement* Context::aBreakStatement(const Ast::Token& pos) {
+    Ast::BreakStatement& breakStatement = _unit.addNode(new Ast::BreakStatement(pos));
     return ptr(breakStatement);
 }
 
-Ast::ContinueStatement* Context::aContinueStatement() {
-    Ast::ContinueStatement& continueStatement = _unit.addNode(new Ast::ContinueStatement());
+Ast::ContinueStatement* Context::aContinueStatement(const Ast::Token& pos) {
+    Ast::ContinueStatement& continueStatement = _unit.addNode(new Ast::ContinueStatement(pos));
     return ptr(continueStatement);
 }
 
 Ast::AddEventHandlerStatement* Context::aAddEventHandlerStatement(const Ast::Token& pos, const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionTypeInstanceExpr& functor) {
-    Ast::AddEventHandlerStatement& addEventHandlerStatement = _unit.addNode(new Ast::AddEventHandlerStatement(event, source, functor));
-    popExpectedTypeSpec(pos);
+    Ast::AddEventHandlerStatement& addEventHandlerStatement = _unit.addNode(new Ast::AddEventHandlerStatement(pos, event, source, functor));
+    popExpectedTypeSpec(pos, ExpectedTypeSpec::etEventHandler);
     return ptr(addEventHandlerStatement);
 }
 
 const Ast::EventDecl* Context::aEnterAddEventHandler(const Ast::EventDecl& eventDecl) {
     pushExpectedTypeSpec(ExpectedTypeSpec::etEventHandler);
-    Ast::QualifiedTypeSpec& qts = addQualifiedTypeSpec(false, eventDecl.handler(), false);
+    Ast::QualifiedTypeSpec& qts = addQualifiedTypeSpec(getToken(), false, eventDecl.handler(), false);
     addExpectedTypeSpec(qts);
     return ptr(eventDecl);
 }
 
-Ast::RoutineReturnStatement* Context::aRoutineReturnStatement() {
-    Ast::ExprList& exprList = addExprList();
-    Ast::RoutineReturnStatement& returnStatement = _unit.addNode(new Ast::RoutineReturnStatement(exprList));
+Ast::RoutineReturnStatement* Context::aRoutineReturnStatement(const Ast::Token& pos) {
+    Ast::ExprList& exprList = addExprList(pos);
+    Ast::RoutineReturnStatement& returnStatement = _unit.addNode(new Ast::RoutineReturnStatement(pos, exprList));
     return ptr(returnStatement);
 }
 
-Ast::RoutineReturnStatement* Context::aRoutineReturnStatement(const Ast::Expr& expr) {
-    Ast::ExprList& exprList = addExprList();
+Ast::RoutineReturnStatement* Context::aRoutineReturnStatement(const Ast::Token& pos, const Ast::Expr& expr) {
+    Ast::ExprList& exprList = addExprList(pos);
     exprList.addExpr(expr);
-    Ast::RoutineReturnStatement& returnStatement = _unit.addNode(new Ast::RoutineReturnStatement(exprList));
+    Ast::RoutineReturnStatement& returnStatement = _unit.addNode(new Ast::RoutineReturnStatement(pos, exprList));
     return ptr(returnStatement);
 }
 
-Ast::FunctionReturnStatement* Context::aFunctionReturnStatement(const Ast::ExprList& exprList) {
-    Ast::FunctionReturnStatement& returnStatement = _unit.addNode(new Ast::FunctionReturnStatement(exprList));
+Ast::FunctionReturnStatement* Context::aFunctionReturnStatement(const Ast::Token& pos, const Ast::ExprList& exprList) {
+    Ast::FunctionReturnStatement& returnStatement = _unit.addNode(new Ast::FunctionReturnStatement(pos, exprList));
     return ptr(returnStatement);
 }
 
 Ast::CompoundStatement* Context::aStatementList() {
-    Ast::CompoundStatement& statement = _unit.addNode(new Ast::CompoundStatement());
+    Ast::CompoundStatement& statement = _unit.addNode(new Ast::CompoundStatement(getToken()));
     return ptr(statement);
 }
 
@@ -1455,8 +1548,8 @@ Ast::CompoundStatement* Context::aStatementList(Ast::CompoundStatement& list, co
     return ptr(list);
 }
 
-void Context::aEnterCompoundStatement() {
-    Ast::Scope& scope = addScope(Ast::ScopeType::Local);
+void Context::aEnterCompoundStatement(const Ast::Token& pos) {
+    Ast::Scope& scope = addScope(pos, Ast::ScopeType::Local);
     enterScope(scope);
 }
 
@@ -1470,12 +1563,12 @@ Ast::ExprList* Context::aExprList(Ast::ExprList& list, const Ast::Expr& expr) {
 }
 
 Ast::ExprList* Context::aExprList(const Ast::Expr& expr) {
-    Ast::ExprList& list = addExprList();
+    Ast::ExprList& list = addExprList(expr.pos());
     return aExprList(list, expr);
 }
 
 Ast::ExprList* Context::aExprList() {
-    Ast::ExprList& list = addExprList();
+    Ast::ExprList& list = addExprList(getToken());
     return ptr(list);
 }
 
@@ -1498,7 +1591,7 @@ Ast::Expr& Context::aBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, cons
     const Ast::IndexExpr* indexExpr = dynamic_cast<const Ast::IndexExpr*>(ptr(lhs));
     if(indexExpr) {
         if(op.string() == "=") {
-            Ast::SetIndexExpr& expr = _unit.addNode(new Ast::SetIndexExpr(qTypeSpec, ref(indexExpr), rhs));
+            Ast::SetIndexExpr& expr = _unit.addNode(new Ast::SetIndexExpr(op, qTypeSpec, ref(indexExpr), rhs));
             return expr;
         } else if(op.string() != "==") {
             if(op.string().at(op.string().size() - 1) == '=') {
@@ -1526,10 +1619,10 @@ Ast::PrefixOpExpr& Context::aPrefixExpr(const Ast::Token& op, const Ast::Expr& r
 Ast::ListExpr* Context::aListExpr(const Ast::Token& pos, const Ast::ListList& list) {
     Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "list");
     templateDefn.addType(list.valueType());
-    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
+    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false);
 
-    Ast::ListExpr& expr = _unit.addNode(new Ast::ListExpr(qTypeSpec, list));
-    popExpectedTypeSpec(pos);
+    Ast::ListExpr& expr = _unit.addNode(new Ast::ListExpr(pos, qTypeSpec, list));
+    popExpectedTypeSpec(pos, ExpectedTypeSpec::etListVal);
     return ptr(expr);
 }
 
@@ -1541,8 +1634,7 @@ Ast::ListList* Context::aListList(const Ast::Token& pos, Ast::ListList& list, co
 }
 
 Ast::ListList* Context::aListList(const Ast::Token& pos, const Ast::ListItem& item) {
-    unused(pos);
-    Ast::ListList& list = _unit.addNode(new Ast::ListList());
+    Ast::ListList& list = _unit.addNode(new Ast::ListList(pos));
     list.addItem(item);
     const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(item.valueExpr().qTypeSpec()), 0);
     list.valueType(valType);
@@ -1550,25 +1642,25 @@ Ast::ListList* Context::aListList(const Ast::Token& pos, const Ast::ListItem& it
 }
 
 Ast::ListList* Context::aListList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec) {
-    unused(pos);
-    Ast::ListList& list = _unit.addNode(new Ast::ListList());
+    Ast::ListList& list = _unit.addNode(new Ast::ListList(pos));
     const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(qTypeSpec), 0);
     list.valueType(valType);
     return ptr(list);
 }
 
 Ast::ListList* Context::aListList(const Ast::Token& pos) {
-    unused(pos);
-    Ast::ListList& list = _unit.addNode(new Ast::ListList());
+    Ast::ListList& list = _unit.addNode(new Ast::ListList(pos));
     const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(0, 0);
     list.valueType(valType);
     return ptr(list);
 }
 
 Ast::ListItem* Context::aListItem(const Ast::Expr& valueExpr) {
-    Ast::Token dummy_pos(0, 0, "");
-    const Ast::Expr& expr = convertExprToExpectedTypeSpec(dummy_pos, 0, valueExpr);
-    Ast::ListItem& item = _unit.addNode(new Ast::ListItem(expr));
+//    printf("Context::aListItem(0): getExpectedType() = %s\n", getExpectedTypeName(getExpectedType()).c_str());
+    const Ast::Expr& expr = convertExprToExpectedTypeSpec(valueExpr.pos(), 0, valueExpr);
+//    printf("Context::aListItem(1): valueExpr = %s, expr = %s\n", getQualifiedTypeSpecName(valueExpr.qTypeSpec(), GenMode::Import).c_str(), getQualifiedTypeSpecName(expr.qTypeSpec(), GenMode::Import).c_str());
+    Ast::ListItem& item = _unit.addNode(new Ast::ListItem(valueExpr.pos(), expr));
+//    popExpectedTypeSpec(valueExpr.pos(), ExpectedTypeSpec::etListVal);
     return ptr(item);
 }
 
@@ -1576,10 +1668,10 @@ Ast::DictExpr* Context::aDictExpr(const Ast::Token& pos, const Ast::DictList& li
     Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "dict");
     templateDefn.addType(list.keyType());
     templateDefn.addType(list.valueType());
-    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
+    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false);
 
-    Ast::DictExpr& expr = _unit.addNode(new Ast::DictExpr(qTypeSpec, list));
-    popExpectedTypeSpec(pos);
+    Ast::DictExpr& expr = _unit.addNode(new Ast::DictExpr(pos, qTypeSpec, list));
+//    popExpectedTypeSpec(pos);
     return ptr(expr);
 }
 
@@ -1587,108 +1679,66 @@ Ast::DictList* Context::aDictList(const Ast::Token& pos, Ast::DictList& list, co
     list.addItem(item);
     const Ast::QualifiedTypeSpec& keyType = coerce(pos, list.keyType(), item.keyExpr().qTypeSpec());
     const Ast::QualifiedTypeSpec& valType = coerce(pos, list.valueType(), item.valueExpr().qTypeSpec());
-    printf("dictlist(1): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
-    list.keyType(keyType);
-    list.valueType(valType);
-    return ptr(list);
-}
-
-Ast::DictList* Context::aDictList(const Ast::DictItem& item) {
-    Ast::DictList& list = _unit.addNode(new Ast::DictList());
-    list.addItem(item);
-
-    const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(ptr(item.keyExpr().qTypeSpec()), 0);
-    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(item.valueExpr().qTypeSpec()), 1);
-    printf("dictlist(2): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
-
-    list.keyType(keyType);
-    list.valueType(valType);
-    return ptr(list);
-}
-
-Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec) {
-    unused(pos);
-    Ast::DictList& list = _unit.addNode(new Ast::DictList());
-
-    const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(ptr(qKeyTypeSpec), 0);
-    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(qValueTypeSpec), 1);
-    printf("dictlist(3): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
-
-    list.keyType(keyType);
-    list.valueType(valType);
-    return ptr(list);
-}
-
-Ast::DictList* Context::aDictList(const Ast::Token& pos) {
-    unused(pos);
-    Ast::DictList& list = _unit.addNode(new Ast::DictList());
-
-    const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(0, 0);
-    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(0, 1);
-    printf("dictlist(4): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
-
+//    printf("dictlist(1): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
     list.keyType(keyType);
     list.valueType(valType);
     return ptr(list);
 }
 
 Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::DictItem& item) {
-    unused(pos);
-    printf("dictlist(5)\n");
-    Ast::DictList* list = aDictList(pos);
-    ref(list).addItem(item);
-    return aDictList(item);
+    Ast::DictList& list = _unit.addNode(new Ast::DictList(pos));
+    list.addItem(item);
+
+//    const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(ptr(item.keyExpr().qTypeSpec()), 0);
+//    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(item.valueExpr().qTypeSpec()), 1);
+//    printf("dictlist(2): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
+
+    list.keyType(item.keyExpr().qTypeSpec());
+    list.valueType(item.valueExpr().qTypeSpec());
+    return ptr(list);
+}
+
+Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec) {
+    Ast::DictList& list = _unit.addNode(new Ast::DictList(pos));
+
+//    const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(ptr(qKeyTypeSpec), 0);
+//    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(qValueTypeSpec), 1);
+//    printf("dictlist(3): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
+
+    list.keyType(qKeyTypeSpec);
+    list.valueType(qValueTypeSpec);
+    return ptr(list);
 }
 
 Ast::DictItem* Context::aDictItem(const Ast::Token& pos, const Ast::Expr& keyExpr, const Ast::Expr& valueExpr) {
-    printf("dictlist(6): keyExpr = %s\n", getQualifiedTypeSpecName(keyExpr.qTypeSpec(), GenMode::Import).c_str());
-    printf("dictlist(6): valExpr = %s\n", getQualifiedTypeSpecName(valueExpr.qTypeSpec(), GenMode::Import).c_str());
-    const Ast::QualifiedTypeSpec& keyType = getExpectedTypeSpec(0, 0);
-    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(0, 1);
-    printf("dictlist(7): keytype = %s\n", getQualifiedTypeSpecName(keyType, GenMode::Import).c_str());
-    printf("dictlist(7): valtype = %s\n", getQualifiedTypeSpecName(valType, GenMode::Import).c_str());
-    const Ast::Expr& kExpr = convertExprToExpectedTypeSpec(pos, 0, keyExpr);
-    const Ast::Expr& vExpr = convertExprToExpectedTypeSpec(pos, 1, valueExpr);
-    printf("dictlist(8): kExpr = %s\n", getQualifiedTypeSpecName(kExpr.qTypeSpec(), GenMode::Import).c_str());
-    printf("dictlist(8): vExpr = %s\n", getQualifiedTypeSpecName(vExpr.qTypeSpec(), GenMode::Import).c_str());
-    Ast::DictItem& item = _unit.addNode(new Ast::DictItem(keyExpr, valueExpr));
+    Ast::DictItem& item = _unit.addNode(new Ast::DictItem(pos, keyExpr, valueExpr));
+    popExpectedTypeSpec(pos, ExpectedTypeSpec::etDictVal);
     return ptr(item);
 }
 
+const Ast::Expr* Context::aDictKey(const Ast::Expr& keyExpr) {
+    popExpectedTypeSpec(keyExpr.pos(), ExpectedTypeSpec::etDictKey);
+    return ptr(keyExpr);
+}
+
 const Ast::Token& Context::aEnterList(const Ast::Token& pos) {
-    const Ast::QualifiedTypeSpec* qts0 = getExpectedTypeSpecIfAny(0);
-    if(qts0 != 0) {
-        printf("Context::aEnterList(0): qts0 = %s\n", getQualifiedTypeSpecName(ref(qts0), GenMode::Import).c_str());
-    }
-
-    const Ast::QualifiedTypeSpec* qts1 = getExpectedTypeSpecIfAny(1);
-    if(qts1 != 0) {
-        printf("Context::aEnterList(0): qts1 = %s\n", getQualifiedTypeSpecName(ref(qts1), GenMode::Import).c_str());
-    }
-
+//    printf("Context::aEnterList(0): getExpectedType() = %s\n", getExpectedTypeName(getExpectedType()).c_str());
     const Ast::TemplateDefn* td0 = isEnteringList(0);
-    printf("Context::aEnterList(1): td0 = %lu\n", (unsigned long)td0);
+//    printf("Context::aEnterList(1): td0 = %lu\n", (unsigned long)td0);
     if(td0) {
-        printf("Context::aEnterList(2): td0 = %s\n", getTypeSpecName(ref(td0), GenMode::Import).c_str());
-    }
-
-    const Ast::TemplateDefn* td1 = isEnteringList(1);
-    printf("Context::aEnterList(1): td1 = %lu\n", (unsigned long)td1);
-    if(td1) {
-        printf("Context::aEnterList(2): td1 = %s\n", getTypeSpecName(ref(td1), GenMode::Import).c_str());
-    }
-
-    if(td0) {
+//        printf("Context::aEnterList(2): td0 = %s\n", getTypeSpecName(ref(td0), GenMode::Import).c_str());
         if(ref(td0).name().string() == "list") {
-            pushExpectedTypeSpec(ExpectedTypeSpec::etList);
             const Ast::QualifiedTypeSpec& valType = ref(td0).at(0);
+            pushExpectedTypeSpec(ExpectedTypeSpec::etListVal);
             addExpectedTypeSpec(valType);
         } else if(ref(td0).name().string() == "dict") {
-            pushExpectedTypeSpec(ExpectedTypeSpec::etDict);
-            const Ast::QualifiedTypeSpec& keyType = ref(td0).at(0);
-            addExpectedTypeSpec(keyType);
             const Ast::QualifiedTypeSpec& valType = ref(td0).at(1);
+            pushExpectedTypeSpec(ExpectedTypeSpec::etDictVal);
             addExpectedTypeSpec(valType);
+
+            const Ast::QualifiedTypeSpec& keyType = ref(td0).at(0);
+            pushExpectedTypeSpec(ExpectedTypeSpec::etDictKey);
+            addExpectedTypeSpec(keyType);
         } else {
             assert(false);
         }
@@ -1699,58 +1749,42 @@ const Ast::Token& Context::aEnterList(const Ast::Token& pos) {
 
 Ast::FormatExpr* Context::aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr) {
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "string");
-    Ast::FormatExpr& formatExpr = _unit.addNode(new Ast::FormatExpr(qTypeSpec, stringExpr, dictExpr));
+    Ast::FormatExpr& formatExpr = _unit.addNode(new Ast::FormatExpr(pos, qTypeSpec, stringExpr, dictExpr));
     return ptr(formatExpr);
 }
 
 Ast::RoutineCallExpr* Context::aRoutineCallExpr(const Ast::Token& pos, const Ast::Routine& routine, const Ast::ExprList& exprList) {
-    popExpectedTypeSpec(pos);
+    popCallArgList(pos, routine.inScope());
     const Ast::QualifiedTypeSpec& qTypeSpec = routine.outType();
-    Ast::RoutineCallExpr& routineCallExpr = _unit.addNode(new Ast::RoutineCallExpr(qTypeSpec, routine, exprList));
+    Ast::RoutineCallExpr& routineCallExpr = _unit.addNode(new Ast::RoutineCallExpr(pos, qTypeSpec, routine, exprList));
     return ptr(routineCallExpr);
 }
 
 const Ast::Routine* Context::aEnterRoutineCall(const Ast::Routine& routine) {
-    if(routine.inScope().type() == Ast::ScopeType::VarArg) {
-        pushExpectedTypeSpec(ExpectedTypeSpec::etNone);
-    } else {
-        pushExpectedTypeSpec(ExpectedTypeSpec::etCallArg);
-        for(Ast::Scope::List::const_iterator it = routine.in().begin(); it != routine.in().end(); ++it) {
-            const Ast::VariableDefn& def = ref(*it);
-            addExpectedTypeSpec(def.qTypeSpec());
-        }
-    }
+    pushCallArgList(routine.inScope());
     return ptr(routine);
 }
 
 Ast::FunctorCallExpr* Context::aFunctorCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList) {
-    popExpectedTypeSpec(pos);
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(expr.qTypeSpec().typeSpec()));
     if(function == 0) {
         throw Exception("%s Unknown functor being called '%s'\n", err(_filename, pos).c_str(), expr.qTypeSpec().typeSpec().name().text());
     }
 
+    popCallArgList(pos, ref(function).sig().inScope());
+
     const Ast::QualifiedTypeSpec& qTypeSpec = getFunctionReturnType(pos, ref(function));
-    Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(qTypeSpec, expr, exprList));
+    Ast::FunctorCallExpr& functorCallExpr = _unit.addNode(new Ast::FunctorCallExpr(pos, qTypeSpec, expr, exprList));
     return ptr(functorCallExpr);
 }
 
 Ast::Expr* Context::aEnterFunctorCall(Ast::Expr& expr) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(expr.qTypeSpec().typeSpec()));
     if(function == 0) {
-        Ast::Token dummy_pos(0, 0, ""); /// \todo remove
-        throw Exception("%s Unknown functor being called '%s'\n", err(_filename, dummy_pos).c_str(), expr.qTypeSpec().typeSpec().name().text());
+        throw Exception("%s Unknown functor being called '%s'\n", err(_filename, expr.pos()).c_str(), expr.qTypeSpec().typeSpec().name().text());
     }
 
-    if(ref(function).sig().inScope().type() == Ast::ScopeType::VarArg) {
-        pushExpectedTypeSpec(ExpectedTypeSpec::etNone);
-    } else {
-        pushExpectedTypeSpec(ExpectedTypeSpec::etCallArg);
-        for(Ast::Scope::List::const_iterator it = ref(function).sig().in().begin(); it != ref(function).sig().in().end(); ++it) {
-            const Ast::VariableDefn& def = ref(*it);
-            addExpectedTypeSpec(def.qTypeSpec());
-        }
-    }
+    pushCallArgList(ref(function).sig().inScope());
     return ptr(expr);
 }
 
@@ -1760,46 +1794,46 @@ Ast::Expr* Context::aEnterFunctorCall(const Ast::Token& name) {
 }
 
 Ast::Expr* Context::aEnterFunctorCall(const Ast::Function& function) {
-    Ast::QualifiedTypeSpec& qExprTypeSpec = addQualifiedTypeSpec(false, function, false);
-    Ast::ExprList& exprList = addExprList();
-    Ast::FunctionInstanceExpr& expr = _unit.addNode(new Ast::FunctionInstanceExpr(qExprTypeSpec, function, exprList));
+    Ast::QualifiedTypeSpec& qExprTypeSpec = addQualifiedTypeSpec(getToken(), false, function, false);
+    Ast::ExprList& exprList = addExprList(getToken());
+    Ast::FunctionInstanceExpr& expr = _unit.addNode(new Ast::FunctionInstanceExpr(getToken(), qExprTypeSpec, function, exprList));
     return aEnterFunctorCall(expr);
 }
 
 Ast::ExprList* Context::aCallArgList(const Ast::Token& pos, Ast::ExprList& list, const Ast::Expr& expr) {
     const Ast::Expr& argExpr = convertExprToExpectedTypeSpec(pos, list.list().size(), expr);
     list.addExpr(argExpr);
+    popCallArg(pos);
     return ptr(list);
 }
 
 Ast::ExprList* Context::aCallArgList(const Ast::Expr& expr) {
-    Ast::ExprList& list = addExprList();
-    Ast::Token dummy_pos(0, 0, "");
-    return aCallArgList(dummy_pos, list, expr);
+    Ast::ExprList& list = addExprList(getToken());
+    return aCallArgList(getToken(), list, expr);
 }
 
 Ast::ExprList* Context::aCallArgList() {
-    Ast::ExprList& list = addExprList();
+    Ast::ExprList& list = addExprList(getToken());
     return ptr(list);
 }
 
 Ast::RunExpr* Context::aRunExpr(const Ast::Token& pos, const Ast::FunctorCallExpr& callExpr) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(callExpr.expr().qTypeSpec().typeSpec()));
     if(function != 0) {
-        Ast::QualifiedTypeSpec& qRetTypeSpec = addQualifiedTypeSpec(false, ref(function), false);
+        Ast::QualifiedTypeSpec& qRetTypeSpec = addQualifiedTypeSpec(pos, false, ref(function), false);
 
         Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "future");
         templateDefn.addType(qRetTypeSpec);
-        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false);
 
-        Ast::RunExpr& runExpr = _unit.addNode(new Ast::RunExpr(qTypeSpec, callExpr));
+        Ast::RunExpr& runExpr = _unit.addNode(new Ast::RunExpr(pos, qTypeSpec, callExpr));
         return ptr(runExpr);
     }
     throw Exception("%s Unknown functor in run expression '%s'\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(callExpr.expr().qTypeSpec(), GenMode::Import).c_str());
 }
 
-Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Expr& innerExpr) {
-    Ast::OrderedExpr& expr = _unit.addNode(new Ast::OrderedExpr(innerExpr.qTypeSpec(), innerExpr));
+Ast::OrderedExpr* Context::aOrderedExpr(const Ast::Token& pos, const Ast::Expr& innerExpr) {
+    Ast::OrderedExpr& expr = _unit.addNode(new Ast::OrderedExpr(pos, innerExpr.qTypeSpec(), innerExpr));
     return ptr(expr);
 }
 
@@ -1808,14 +1842,14 @@ Ast::IndexExpr* Context::aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr
     const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(listTypeSpec);
     if(td) {
         if(ref(td).name().string() == "list") {
-            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(ref(td).at(0).isConst(), ref(td).at(0).typeSpec(), true);
-            Ast::IndexExpr& indexExpr = _unit.addNode(new Ast::IndexExpr(qTypeSpec, expr, index));
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, ref(td).at(0).isConst(), ref(td).at(0).typeSpec(), true);
+            Ast::IndexExpr& indexExpr = _unit.addNode(new Ast::IndexExpr(pos, qTypeSpec, expr, index));
             return ptr(indexExpr);
         }
 
         if(ref(td).name().string() == "dict") {
-            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(ref(td).at(1).isConst(), ref(td).at(1).typeSpec(), true);
-            Ast::IndexExpr& indexExpr = _unit.addNode(new Ast::IndexExpr(qTypeSpec, expr, index));
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, ref(td).at(1).isConst(), ref(td).at(1).typeSpec(), true);
+            Ast::IndexExpr& indexExpr = _unit.addNode(new Ast::IndexExpr(pos, qTypeSpec, expr, index));
             return ptr(indexExpr);
         }
     }
@@ -1824,8 +1858,8 @@ Ast::IndexExpr* Context::aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr
     if(sd) {
         const Ast::Routine* routine = ref(sd).hasChild<const Ast::Routine>("at");
         if(routine) {
-            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(ref(routine).outType().isConst(), ref(routine).outType().typeSpec(), true);
-            Ast::IndexExpr& indexExpr = _unit.addNode(new Ast::IndexExpr(qTypeSpec, expr, index));
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, ref(routine).outType().isConst(), ref(routine).outType().typeSpec(), true);
+            Ast::IndexExpr& indexExpr = _unit.addNode(new Ast::IndexExpr(pos, qTypeSpec, expr, index));
             return ptr(indexExpr);
         }
     }
@@ -1833,19 +1867,15 @@ Ast::IndexExpr* Context::aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr
     throw Exception("%s '%s' is not an indexable type\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(expr.qTypeSpec(), GenMode::Import).c_str());
 }
 
-Ast::IndexExpr* Context::aKeyIndexExpr(const Ast::Expr& expr, const Ast::ConstantExpr& index) {
-    return aIndexExpr(index.value(), expr, index);
-}
-
 Ast::TypeofTypeExpr* Context::aTypeofTypeExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec) {
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "type");
-    Ast::TypeofTypeExpr& typeofExpr = _unit.addNode(new Ast::TypeofTypeExpr(qTypeSpec, typeSpec));
+    Ast::TypeofTypeExpr& typeofExpr = _unit.addNode(new Ast::TypeofTypeExpr(pos, qTypeSpec, typeSpec));
     return ptr(typeofExpr);
 }
 
 Ast::TypeofExprExpr* Context::aTypeofExprExpr(const Ast::Token& pos, const Ast::Expr& expr) {
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "type");
-    Ast::TypeofExprExpr& typeofExpr = _unit.addNode(new Ast::TypeofExprExpr(qTypeSpec, expr));
+    Ast::TypeofExprExpr& typeofExpr = _unit.addNode(new Ast::TypeofExprExpr(pos, qTypeSpec, expr));
     return ptr(typeofExpr);
 }
 
@@ -1854,25 +1884,25 @@ Ast::TypecastExpr* Context::aTypecastExpr(const Ast::Token& pos, const Ast::Qual
     /// \todo check if canCoerce
     const Ast::TemplateDefn* subType = dynamic_cast<const Ast::TemplateDefn*>(ptr(expr.qTypeSpec().typeSpec()));
     if((subType) && (ref(subType).name().string() == "pointer")) {
-        const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(qTypeSpec.isConst(), qTypeSpec.typeSpec(), true);
-        Ast::TypecastExpr& typecastExpr = _unit.addNode(new Ast::DynamicTypecastExpr(typeSpec, expr));
+        const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(pos, qTypeSpec.isConst(), qTypeSpec.typeSpec(), true);
+        Ast::TypecastExpr& typecastExpr = _unit.addNode(new Ast::DynamicTypecastExpr(pos, typeSpec, expr));
         return ptr(typecastExpr);
     }
 
-    Ast::TypecastExpr& typecastExpr = _unit.addNode(new Ast::StaticTypecastExpr(qTypeSpec, expr));
+    Ast::TypecastExpr& typecastExpr = _unit.addNode(new Ast::StaticTypecastExpr(pos, qTypeSpec, expr));
     return ptr(typecastExpr);
 }
 
 Ast::PointerInstanceExpr* Context::aPointerInstanceExpr(const Ast::Token& pos, const Ast::Expr& expr) {
     Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "pointer");
-    const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), expr.qTypeSpec().typeSpec(), true);
+    const Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(pos, expr.qTypeSpec().isConst(), expr.qTypeSpec().typeSpec(), true);
     templateDefn.addType(typeSpec);
 
-    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, templateDefn, false);
-    Ast::ExprList& exprList = addExprList();
+    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false);
+    Ast::ExprList& exprList = addExprList(pos);
     exprList.addExpr(expr);
 
-    Ast::PointerInstanceExpr& pointerExpr = _unit.addNode(new Ast::PointerInstanceExpr(qTypeSpec, templateDefn, exprList));
+    Ast::PointerInstanceExpr& pointerExpr = _unit.addNode(new Ast::PointerInstanceExpr(pos, qTypeSpec, templateDefn, exprList));
     return ptr(pointerExpr);
 }
 
@@ -1902,11 +1932,11 @@ Ast::TemplateDefnInstanceExpr* Context::aTemplateDefnInstanceExpr(const Ast::Tok
     std::string name = templateDefn.name().string();
     if(name == "pointer") {
         Ast::TemplateDefn& newTemplateDefn = createTemplateDefn(pos, "pointer");
-        const Ast::QualifiedTypeSpec& newTypeSpec = addQualifiedTypeSpec(false, templateDefn.at(0).typeSpec(), true);
+        const Ast::QualifiedTypeSpec& newTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn.at(0).typeSpec(), true);
         newTemplateDefn.addType(newTypeSpec);
 
-        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, newTemplateDefn, false);
-        Ast::PointerInstanceExpr& expr = _unit.addNode(new Ast::PointerInstanceExpr(qTypeSpec, newTemplateDefn, exprList));
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, newTemplateDefn, false);
+        Ast::PointerInstanceExpr& expr = _unit.addNode(new Ast::PointerInstanceExpr(pos, qTypeSpec, newTemplateDefn, exprList));
         return ptr(expr);
     }
 
@@ -1993,7 +2023,7 @@ Ast::VariableRefExpr* Context::aVariableRefExpr(const Ast::Token& name) {
             }
 
             // create vref expression
-            Ast::VariableRefExpr& vrefExpr = _unit.addNode(new Ast::VariableRefExpr(ref(vref).qTypeSpec(), ref(vref), refType));
+            Ast::VariableRefExpr& vrefExpr = _unit.addNode(new Ast::VariableRefExpr(name, ref(vref).qTypeSpec(), ref(vref), refType));
             return ptr(vrefExpr);
         }
     }
@@ -2008,16 +2038,16 @@ Ast::MemberExpr* Context::aMemberVariableExpr(const Ast::Expr& expr, const Ast::
         for(StructBaseIterator sbi(structDefn); sbi.hasNext(); sbi.next()) {
             const Ast::VariableDefn* vref = hasMember(sbi.get().scope(), name);
             if(vref) {
-                const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), ref(vref).qTypeSpec().typeSpec(), true);
-                Ast::MemberVariableExpr& vdefExpr = _unit.addNode(new Ast::MemberVariableExpr(qTypeSpec, expr, ref(vref)));
+                const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, expr.qTypeSpec().isConst(), ref(vref).qTypeSpec().typeSpec(), true);
+                Ast::MemberVariableExpr& vdefExpr = _unit.addNode(new Ast::MemberVariableExpr(name, qTypeSpec, expr, ref(vref)));
                 return ptr(vdefExpr);
             }
 
             for(Ast::StructDefn::PropertyList::const_iterator it = sbi.get().propertyList().begin(); it != sbi.get().propertyList().end(); ++it) {
                 const Ast::PropertyDecl& pref = ref(*it);
                 if(pref.name().string() == name.string()) {
-                    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(expr.qTypeSpec().isConst(), pref.qTypeSpec().typeSpec(), true);
-                    Ast::MemberPropertyExpr& vdefExpr = _unit.addNode(new Ast::MemberPropertyExpr(qTypeSpec, expr, pref));
+                    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, expr.qTypeSpec().isConst(), pref.qTypeSpec().typeSpec(), true);
+                    Ast::MemberPropertyExpr& vdefExpr = _unit.addNode(new Ast::MemberPropertyExpr(name, qTypeSpec, expr, pref));
                     return ptr(vdefExpr);
                 }
             }
@@ -2030,7 +2060,7 @@ Ast::MemberExpr* Context::aMemberVariableExpr(const Ast::Expr& expr, const Ast::
     if(functionRetn != 0) {
         const Ast::VariableDefn* vref = hasMember(ref(functionRetn).outScope(), name);
         if(vref) {
-            Ast::MemberVariableExpr& vdefExpr = _unit.addNode(new Ast::MemberVariableExpr(ref(vref).qTypeSpec(), expr, ref(vref)));
+            Ast::MemberVariableExpr& vdefExpr = _unit.addNode(new Ast::MemberVariableExpr(name, ref(vref).qTypeSpec(), expr, ref(vref)));
             return ptr(vdefExpr);
         }
         throw Exception("%s '%s' is not a member of function: '%s'\n", err(_filename, name).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
@@ -2046,8 +2076,8 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
         if(vref == 0) {
             throw Exception("%s %s is not a member of type '%s'\n", err(_filename, name).c_str(), name.text(), typeSpec.name().text());
         }
-        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, typeSpec, false);
-        Ast::EnumMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::EnumMemberExpr(qTypeSpec, typeSpec, ref(vref)));
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, typeSpec, false);
+        Ast::EnumMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::EnumMemberExpr(name, qTypeSpec, typeSpec, ref(vref)));
         return ptr(typeSpecMemberExpr);
     }
 
@@ -2057,7 +2087,7 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
         if(vref == 0) {
             throw Exception("%s %s is not a member of type '%s'\n", err(_filename, name).c_str(), name.text(), typeSpec.name().text());
         }
-        Ast::StructMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::StructMemberExpr(ref(vref).qTypeSpec(), typeSpec, ref(vref)));
+        Ast::StructMemberExpr& typeSpecMemberExpr = _unit.addNode(new Ast::StructMemberExpr(name, ref(vref).qTypeSpec(), typeSpec, ref(vref)));
         return ptr(typeSpecMemberExpr);
     }
 
@@ -2065,26 +2095,24 @@ Ast::TypeSpecMemberExpr* Context::aTypeSpecMemberExpr(const Ast::TypeSpec& typeS
 }
 
 Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list) {
-    unused(pos);
-    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, structDefn, false);
-    Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(qTypeSpec, structDefn, list));
+    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, structDefn, false);
+    Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(pos, qTypeSpec, structDefn, list));
     return ptr(structInstanceExpr);
 }
 
 Ast::StructInstanceExpr* Context::aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn) {
-    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList());
+    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList(pos));
     return aStructInstanceExpr(pos, structDefn, list);
 }
 
 Ast::Expr* Context::aAutoStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list) {
-    unused(pos);
-    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, structDefn, false);
-    Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(qTypeSpec, structDefn, list));
+    const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, structDefn, false);
+    Ast::StructInstanceExpr& structInstanceExpr = _unit.addNode(new Ast::StructInstanceExpr(pos, qTypeSpec, structDefn, list));
     return ptr(structInstanceExpr);
 }
 
 Ast::Expr* Context::aAutoStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn) {
-    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList());
+    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList(pos));
     return aAutoStructInstanceExpr(pos, structDefn, list);
 }
 
@@ -2140,46 +2168,41 @@ Ast::StructInitPartList* Context::aStructInitPartList(Ast::StructInitPartList& l
 }
 
 Ast::StructInitPartList* Context::aStructInitPartList(const Ast::StructInitPart& part) {
-    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList());
+    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList(getToken()));
     list.addPart(part);
-    return ptr(list);
-}
-
-Ast::StructInitPartList* Context::aStructInitPartList() {
-    Ast::StructInitPartList& list = _unit.addNode(new Ast::StructInitPartList());
     return ptr(list);
 }
 
 Ast::StructInitPart* Context::aStructInitPart(const Ast::Token& pos, const Ast::VariableDefn& vdef, const Ast::Expr& initExpr) {
     const Ast::Expr& expr = convertExprToExpectedTypeSpec(pos, 0, initExpr);
-    popExpectedTypeSpec(pos);
-    Ast::StructInitPart& part = _unit.addNode(new Ast::StructInitPart(vdef, expr));
+    popExpectedTypeSpec(pos, ExpectedTypeSpec::etStructInit);
+    Ast::StructInitPart& part = _unit.addNode(new Ast::StructInitPart(pos, vdef, expr));
     return ptr(part);
 }
 
-Ast::FunctionInstanceExpr* Context::aFunctionInstanceExpr(const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
+Ast::FunctionInstanceExpr* Context::aFunctionInstanceExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(ptr(typeSpec));
     if(function != 0) {
-        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, ref(function), false);
-        Ast::FunctionInstanceExpr& functionInstanceExpr = _unit.addNode(new Ast::FunctionInstanceExpr(qTypeSpec, ref(function), exprList));
+        Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, ref(function), false);
+        Ast::FunctionInstanceExpr& functionInstanceExpr = _unit.addNode(new Ast::FunctionInstanceExpr(pos, qTypeSpec, ref(function), exprList));
         return ptr(functionInstanceExpr);
     }
 
-    throw Exception("%s: Not a function type '%s'\n", err(_filename, typeSpec.name()).c_str(), typeSpec.name().text());
+    throw Exception("%s: Not a function type '%s'\n", err(_filename, pos).c_str(), typeSpec.name().text());
 }
 
 Ast::AnonymousFunctionExpr* Context::aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement) {
     aChildFunctionDefn(functionDefn, compoundStatement);
-    Ast::ExprList& exprList = addExprList();
-    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(false, functionDefn, false);
-    Ast::AnonymousFunctionExpr& functionInstanceExpr = _unit.addNode(new Ast::AnonymousFunctionExpr(qTypeSpec, functionDefn, exprList));
+    Ast::ExprList& exprList = addExprList(getToken());
+    Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(getToken(), false, functionDefn, false);
+    Ast::AnonymousFunctionExpr& functionInstanceExpr = _unit.addNode(new Ast::AnonymousFunctionExpr(getToken(), qTypeSpec, functionDefn, exprList));
     return ptr(functionInstanceExpr);
 }
 
 Ast::ChildFunctionDefn* Context::aEnterAnonymousFunction(const Ast::Function& function) {
     char namestr[128];
     sprintf(namestr, "_anonymous_%lu", _unit.nodeCount());
-    Ast::Token name(0, 0, namestr);
+    Ast::Token name(getToken().row(), getToken().col(), namestr);
 
     Ast::TypeSpec* ts = 0;
     for(TypeSpecStack::reverse_iterator it = _typeSpecStack.rbegin(); it != _typeSpecStack.rend(); ++it) {

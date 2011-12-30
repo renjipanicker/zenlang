@@ -440,11 +440,14 @@ function testAutoInitList : test {
 //    list< list<float> > t = [[1, 2], [3, 4]];
 //    unused(t);
 
+    dict< string, float > v = ["a":1, "b":2];
+    unused(v);
+
 //    list< dict<string, float> > u = [["a":1, "b":2], ["c":3, "d":4]];
 //    unused(u);
 
-    dict< string, list<float> > v = ["a":[1, 2], "b":[3, 4]];
-    unused(v);
+//    dict< string, list<float> > v = ["a":[1, 2], "b":[3, 4]];
+//    unused(v);
 
 //    dict< string, dict<string, float> > w = ["h":["a":1, "b":2], "i":["c":3, "d":4]];
 //    unused(w);

@@ -92,7 +92,7 @@ rImportStatementList ::= rImportStatementList rImportStatement.
 rImportStatementList ::= .
 
 //-------------------------------------------------
-rImportStatement ::= rHeaderType(headerType) rImportNamespaceList(L) rDefinitionType(defType) rOptionalAccessType(A) SEMI. {ref(pctx).aImportStatement(A, headerType, defType, ref(L));}
+rImportStatement ::= rHeaderType(headerType) rImportNamespaceList(L) rDefinitionType(defType) rOptionalAccessType(A) SEMI(B). {ref(pctx).aImportStatement(B, A, headerType, defType, ref(L));}
 
 //-------------------------------------------------
 // import namespace list
@@ -115,8 +115,8 @@ rHeaderType(L) ::= IMPORT.    {L = Ast::HeaderType::Import;}
 //-------------------------------------------------
 // namespace statement
 %type rNamespaceStatement {Ast::EnterNamespaceStatement*}
-rNamespaceStatement(L) ::= NAMESPACE rUnitNamespaceList(R) SEMI. {L = ref(pctx).aNamespaceStatement(ref(R));}
-rNamespaceStatement(L) ::=                                     . {L = ref(pctx).aNamespaceStatement();}
+rNamespaceStatement(L) ::= NAMESPACE(B) rUnitNamespaceList(R) SEMI. {L = ref(pctx).aNamespaceStatement(B, ref(R));}
+rNamespaceStatement(L) ::=                                        . {L = ref(pctx).aNamespaceStatement();}
 
 //-------------------------------------------------
 // namespace list
@@ -434,10 +434,10 @@ rAutoQualifiedVariableDefn ::= AUTO. {ref(pctx).aAutoQualifiedVariableDefn();}
 //-------------------------------------------------
 // qualified types
 %type rQualifiedTypeSpec {const Ast::QualifiedTypeSpec*}
-rQualifiedTypeSpec(L) ::=       rTypeSpec(typeSpec).               {L = ref(pctx).aQualifiedTypeSpec(false, ref(typeSpec), false);}
-rQualifiedTypeSpec(L) ::=       rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx).aQualifiedTypeSpec(false, ref(typeSpec), true );}
-rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec).               {L = ref(pctx).aQualifiedTypeSpec(true,  ref(typeSpec), false);}
-rQualifiedTypeSpec(L) ::= CONST rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx).aQualifiedTypeSpec(true,  ref(typeSpec), true );}
+rQualifiedTypeSpec(L) ::=          rTypeSpec(typeSpec).               {L = ref(pctx).aQualifiedTypeSpec(false, ref(typeSpec), false);}
+rQualifiedTypeSpec(L) ::=          rTypeSpec(typeSpec) BITWISEAND(B). {L = ref(pctx).aQualifiedTypeSpec(B, false, ref(typeSpec), true );}
+rQualifiedTypeSpec(L) ::= CONST(B) rTypeSpec(typeSpec).               {L = ref(pctx).aQualifiedTypeSpec(B, true,  ref(typeSpec), false);}
+rQualifiedTypeSpec(L) ::= CONST(B) rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx).aQualifiedTypeSpec(B, true,  ref(typeSpec), true );}
 
 //-------------------------------------------------
 // "public" type references, can be invoked from other rules
@@ -549,28 +549,28 @@ rExprStatement(L) ::= rExpr(expr) SEMI. {L = ref(pctx).aExprStatement(ref(expr))
 
 //-------------------------------------------------
 %type rPrintStatement {Ast::PrintStatement*}
-rPrintStatement(L) ::= PRINT rExpr(expr) SEMI. {L = ref(pctx).aPrintStatement(ref(expr));}
+rPrintStatement(L) ::= PRINT(B) rExpr(expr) SEMI. {L = ref(pctx).aPrintStatement(B, ref(expr));}
 
 //-------------------------------------------------
 %type rIfStatement {Ast::IfStatement*}
-rIfStatement(L) ::= IF LBRACKET rExpr(expr) RBRACKET rCompoundStatement(tblock). {L = ref(pctx).aIfStatement(ref(expr), ref(tblock));}
+rIfStatement(L) ::= IF(B) LBRACKET rExpr(expr) RBRACKET rCompoundStatement(tblock). {L = ref(pctx).aIfStatement(B, ref(expr), ref(tblock));}
 
 //-------------------------------------------------
 %type rIfElseStatement {Ast::IfElseStatement*}
-rIfElseStatement(L) ::= IF LBRACKET rExpr(expr) RBRACKET rCompoundStatement(tblock) ELSE rCompoundStatement(fblock). {L = ref(pctx).aIfElseStatement(ref(expr), ref(tblock), ref(fblock));}
+rIfElseStatement(L) ::= IF(B) LBRACKET rExpr(expr) RBRACKET rCompoundStatement(tblock) ELSE rCompoundStatement(fblock). {L = ref(pctx).aIfElseStatement(B, ref(expr), ref(tblock), ref(fblock));}
 
 //-------------------------------------------------
 %type rWhileStatement {Ast::WhileStatement*}
-rWhileStatement(L) ::= WHILE LBRACKET rExpr(expr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aWhileStatement(ref(expr), ref(block));}
+rWhileStatement(L) ::= WHILE(B) LBRACKET rExpr(expr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aWhileStatement(B, ref(expr), ref(block));}
 
 //-------------------------------------------------
 %type rDoWhileStatement {Ast::DoWhileStatement*}
-rDoWhileStatement(L) ::= DO rCompoundStatement(block) WHILE LBRACKET rExpr(expr) RBRACKET SEMI. {L = ref(pctx).aDoWhileStatement(ref(expr), ref(block));}
+rDoWhileStatement(L) ::= DO(B) rCompoundStatement(block) WHILE LBRACKET rExpr(expr) RBRACKET SEMI. {L = ref(pctx).aDoWhileStatement(B, ref(expr), ref(block));}
 
 //-------------------------------------------------
 %type rForStatement {Ast::ForStatement*}
-rForStatement(L) ::= FOR LBRACKET rExpr(init) SEMI rExpr(expr) SEMI rExpr(incr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aForStatement(ref(init), ref(expr), ref(incr), ref(block));}
-rForStatement(L) ::= FOR LBRACKET rEnterForInit(init) SEMI rExpr(expr) SEMI rExpr(incr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aForStatement(ref(init), ref(expr), ref(incr), ref(block));}
+rForStatement(L) ::= FOR(B) LBRACKET rExpr(init) SEMI rExpr(expr) SEMI rExpr(incr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aForStatement(B, ref(init), ref(expr), ref(incr), ref(block));}
+rForStatement(L) ::= FOR(B) LBRACKET rEnterForInit(init) SEMI rExpr(expr) SEMI rExpr(incr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aForStatement(B, ref(init), ref(expr), ref(incr), ref(block));}
 
 %type rEnterForInit {const Ast::VariableDefn*}
 rEnterForInit(L) ::= rVariableDefn(init). {L = ref(pctx).aEnterForInit(ref(init));}
@@ -585,8 +585,8 @@ rEnterForeachInit(L) ::= ID(K) COMMA ID(V) IN rExpr(list). {L = ref(pctx).aEnter
 
 //-------------------------------------------------
 %type rSwitchStatement {Ast::SwitchStatement*}
-rSwitchStatement(L) ::= SWITCH LBRACKET rExpr(expr) RBRACKET LCURLY rCaseList(list) RCURLY. {L = ref(pctx).aSwitchStatement(ref(expr), ref(list));}
-rSwitchStatement(L) ::= SWITCH                               LCURLY rCaseList(list) RCURLY. {L = ref(pctx).aSwitchStatement(ref(list));}
+rSwitchStatement(L) ::= SWITCH(B) LBRACKET rExpr(expr) RBRACKET LCURLY rCaseList(list) RCURLY. {L = ref(pctx).aSwitchStatement(B, ref(expr), ref(list));}
+rSwitchStatement(L) ::= SWITCH(B)                               LCURLY rCaseList(list) RCURLY. {L = ref(pctx).aSwitchStatement(B, ref(list));}
 
 //-------------------------------------------------
 %type rCaseList {Ast::CompoundStatement*}
@@ -595,16 +595,16 @@ rCaseList(L) ::=              rCaseStatement(S). {L = ref(pctx).aCaseList(ref(S)
 
 //-------------------------------------------------
 %type rCaseStatement {Ast::CaseStatement*}
-rCaseStatement(L) ::= CASE rExpr(expr) COLON rCompoundStatement(block). {L = ref(pctx).aCaseStatement(ref(expr), ref(block));}
-rCaseStatement(L) ::= DEFAULT          COLON rCompoundStatement(block). {L = ref(pctx).aCaseStatement(ref(block));}
+rCaseStatement(L) ::= CASE(B) rExpr(expr) COLON rCompoundStatement(block). {L = ref(pctx).aCaseStatement(B, ref(expr), ref(block));}
+rCaseStatement(L) ::= DEFAULT(B)          COLON rCompoundStatement(block). {L = ref(pctx).aCaseStatement(B, ref(block));}
 
 //-------------------------------------------------
 %type rBreakStatement {Ast::BreakStatement*}
-rBreakStatement(L) ::= BREAK SEMI. {L = ref(pctx).aBreakStatement();}
+rBreakStatement(L) ::= BREAK(B) SEMI. {L = ref(pctx).aBreakStatement(B);}
 
 //-------------------------------------------------
 %type rContinueStatement {Ast::ContinueStatement*}
-rContinueStatement(L) ::= CONTINUE SEMI. {L = ref(pctx).aContinueStatement();}
+rContinueStatement(L) ::= CONTINUE(B) SEMI. {L = ref(pctx).aContinueStatement(B);}
 
 //-------------------------------------------------
 %type rAddEventHandlerStatement {Ast::AddEventHandlerStatement*}
@@ -616,19 +616,19 @@ rEnterAddEventHandler(L) ::= rEventTypeSpec(R). {L = ref(pctx).aEnterAddEventHan
 
 //-------------------------------------------------
 %type rRoutineReturnStatement {Ast::RoutineReturnStatement*}
-rRoutineReturnStatement(L) ::= RRETURN          SEMI. {L = ref(pctx).aRoutineReturnStatement();}
-rRoutineReturnStatement(L) ::= RRETURN rExpr(S) SEMI. {L = ref(pctx).aRoutineReturnStatement(ref(S));}
+rRoutineReturnStatement(L) ::= RRETURN(B)          SEMI. {L = ref(pctx).aRoutineReturnStatement(B);}
+rRoutineReturnStatement(L) ::= RRETURN(B) rExpr(S) SEMI. {L = ref(pctx).aRoutineReturnStatement(B, ref(S));}
 
 //-------------------------------------------------
 %type rFunctionReturnStatement {Ast::FunctionReturnStatement*}
-rFunctionReturnStatement(L) ::= FRETURN rExprsList(S) SEMI. {L = ref(pctx).aFunctionReturnStatement(ref(S));}
+rFunctionReturnStatement(L) ::= FRETURN(B) rExprsList(S) SEMI. {L = ref(pctx).aFunctionReturnStatement(B, ref(S));}
 
 //-------------------------------------------------
 // simple list of statements
 %type rCompoundStatement {Ast::CompoundStatement*}
 rCompoundStatement(L)   ::= rEnterCompoundStatement rStatementList(R) rLeaveCompoundStatement. {L = R;}
-rEnterCompoundStatement ::= LCURLY. {ref(pctx).aEnterCompoundStatement();}
-rLeaveCompoundStatement ::= RCURLY. {ref(pctx).aLeaveCompoundStatement();}
+rEnterCompoundStatement ::= LCURLY(B). {ref(pctx).aEnterCompoundStatement(B);}
+rLeaveCompoundStatement ::= RCURLY.    {ref(pctx).aLeaveCompoundStatement();}
 
 %type rStatementList {Ast::CompoundStatement*}
 rStatementList(L) ::= rStatementList(list) rInnerStatement(statement). {L = ref(pctx).aStatementList(ref(list), ref(statement));}
@@ -770,7 +770,10 @@ rDictsList(L)  ::=          rEnterList(B) rDictItem(I). {L = ref(pctx).aDictList
 rDictsList(L) ::= rEnterList(B) rQualifiedTypeSpec(K) COLON rQualifiedTypeSpec(V). {L = ref(pctx).aDictList(B, ref(K), ref(V));}
 
 %type rDictItem {Ast::DictItem*}
-rDictItem(L)  ::= rExpr(K) COLON(B) rExpr(E). {L = ref(pctx).aDictItem(B, ref(K), ref(E));}
+rDictItem(L)  ::= rDictKey(K) COLON(B) rExpr(E). {L = ref(pctx).aDictItem(B, ref(K), ref(E));}
+
+%type rDictKey {const Ast::Expr*}
+rDictKey(L) ::= rExpr(R). {L = ref(pctx).aDictKey(ref(R));}
 
 //-------------------------------------------------
 rEnterList(L)  ::= LSQUARE(R). {L = R; ref(pctx).aEnterList(R); }
@@ -786,11 +789,10 @@ rTreeList(L) ::= rTreesList(R) COMMA . {L = R;}
 
 %type rTreesList {Ast::DictList*}
 rTreesList(L)  ::= rTreesList(R) COMMA(B) rTreeItem(I).     {L = ref(pctx).aDictList(B, ref(R), ref(I));}
-rTreesList(L)  ::=              rEnterTree(B) rTreeItem(I). {L = ref(pctx).aDictList(ref(I)); unused(B);}
-rTreesList(L)  ::=              rEnterTree(B).              {L = ref(pctx).aDictList(B);}
+rTreesList(L)  ::=              rEnterTree(B) rTreeItem(I). {L = ref(pctx).aDictList(B, ref(I));}
 
 %type rTreeItem {Ast::DictItem*}
-rTreeItem(L)  ::= rExpr(K) COLON(B) rExpr(E). {L = ref(pctx).aDictItem(B, ref(K), ref(E));}
+rTreeItem(L)  ::= rDictKey(K) COLON(B) rExpr(E). {L = ref(pctx).aDictItem(B, ref(K), ref(E));}
 
 //-------------------------------------------------
 rEnterTree(L)  ::= LCURLY(R). {L = R; ref(pctx).aEnterList(R); }
@@ -798,7 +800,7 @@ rEnterTree(L)  ::= LCURLY(R). {L = R; ref(pctx).aEnterList(R); }
 //-------------------------------------------------
 // ordered expression
 %type rOrderedExpr {Ast::OrderedExpr*}
-rOrderedExpr(L) ::= LBRACKET rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedExpr(ref(innerExpr));}
+rOrderedExpr(L) ::= LBRACKET(B) rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedExpr(B, ref(innerExpr));}
 
 //-------------------------------------------------
 // index expression
@@ -844,7 +846,7 @@ rTypeSpecMemberExpr(L) ::= rTypeSpec(R) DOT ID(M). {L = ref(pctx).aTypeSpecMembe
 //-------------------------------------------------
 // function instance expressions
 %type rFunctionInstanceExpr {Ast::TypeSpecInstanceExpr*}
-rFunctionInstanceExpr(L) ::= rFunctionTypeSpec(R) LSQUARE rExprList(M) RSQUARE. {L = ref(pctx).aFunctionInstanceExpr(ref(R), ref(M));}
+rFunctionInstanceExpr(L) ::= rFunctionTypeSpec(R) LSQUARE(B) rExprList(M) RSQUARE. {L = ref(pctx).aFunctionInstanceExpr(B, ref(R), ref(M));}
 
 //-------------------------------------------------
 // anonymous function instance expressions
