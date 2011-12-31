@@ -278,7 +278,11 @@ private:
     }
 
     virtual void visit(const Ast::StaticTypecastExpr& node) {
-        fprintf(_fp, "static_cast<%s>(", getQualifiedTypeSpecName(node.qTypeSpec(), _genMode).c_str());
+        if(_genMode == GenMode::Import) {
+            fprintf(_fp, "<%s>(", getQualifiedTypeSpecName(node.qTypeSpec(), _genMode).c_str());
+        } else {
+            fprintf(_fp, "static_cast<%s>(", getQualifiedTypeSpecName(node.qTypeSpec(), _genMode).c_str());
+        }
         ExprGenerator(_fp, _genMode).visitNode(node.expr());
         fprintf(_fp, ")");
     }

@@ -745,8 +745,8 @@ rListList(L) ::= rListsList(R)      . {L = R;}
 rListList(L) ::= rListsList(R) COMMA. {L = R;}
 
 %type rListsList {Ast::ListList*}
-rListsList(L)  ::= rListsList(R) COMMA(B) rListItem(I).      {L = ref(pctx).aListList(B, ref(R), ref(I));}
-rListsList(L)  ::=      rEnterList(B) rListItem(I).          {L = ref(pctx).aListList(B, ref(I));}
+rListsList(L)  ::= rListsList(R) COMMA(B) rListItem(I).  {L = ref(pctx).aListList(B, ref(R), ref(I));}
+rListsList(L)  ::=      rEnterList(B) rListItem(I).      {L = ref(pctx).aListList(B, ref(I));}
 rListsList(L)  ::=      rEnterList(B) rQualifiedTypeSpec(Q). {L = ref(pctx).aListList(B, ref(Q));}
 rListsList(L)  ::=      rEnterList(B)                      . {L = ref(pctx).aListList(B);}
 

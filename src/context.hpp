@@ -28,27 +28,26 @@ private:
     struct ExpectedTypeSpec {
         enum Type {
             etNone,
+            etAuto,
             etCallArg,
             etListVal,
             etDictKey,
             etDictVal,
             etAssignment,
             etEventHandler,
-            etStructInit,
-            etAny
+            etStructInit
         };
 
-        inline ExpectedTypeSpec(const Type& type) : _type(type) {}
         typedef std::vector<const Ast::QualifiedTypeSpec*> List;
-        inline size_t size() const {return _list.size();}
+
+        inline ExpectedTypeSpec(const Type& type, const Ast::QualifiedTypeSpec* typeSpec) : _type(type), _typeSpec(typeSpec) {}
+        inline ExpectedTypeSpec(const Type& type) : _type(type), _typeSpec(0) {}
         inline const Type& type() const {return _type;}
-        inline const Ast::QualifiedTypeSpec* at(const size_t& idx) const {assert(idx < _list.size()); return _list.at(idx);}
-        inline List& list() {return _list;}
-        inline const Ast::QualifiedTypeSpec* back() const {return _list.back();}
-        inline void push(const Ast::QualifiedTypeSpec& qTypeSpec) {_list.push_back(ptr(qTypeSpec));}
+        inline bool hasTypeSpec() const {return (_typeSpec != 0);}
+        inline const Ast::QualifiedTypeSpec& typeSpec() const {return ref(_typeSpec);}
     private:
         Type _type;
-        List _list;
+        const Ast::QualifiedTypeSpec* _typeSpec;
     };
     typedef std::vector<ExpectedTypeSpec> ExpectedTypeSpecStack;
 
@@ -125,16 +124,17 @@ private:
     inline Ast::FunctionDecl& addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
     inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr);
     inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
-    inline void addExpectedTypeSpec(const Ast::QualifiedTypeSpec& qTypeSpec);
+    inline void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type, const Ast::QualifiedTypeSpec& qTypeSpec);
     inline void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type);
     inline void popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
+    inline bool popExpectedTypeSpecOrAuto(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
     inline ExpectedTypeSpec::Type getExpectedType() const;
-    inline bool isAnyExpectedTypeSpec() const;
     inline const ExpectedTypeSpec& getExpectedTypeList(const Ast::Token& pos) const;
     inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny(const size_t& idx) const;
     inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const;
     inline const Ast::QualifiedTypeSpec& getExpectedTypeSpecEx(const Ast::Token& pos, const size_t& idx) const;
     inline Ast::TypecastExpr* getDynamicTypecastExpr(const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr);
+    inline const Ast::Expr& switchDictKeyValue(const Ast::Token& pos, const Context::ExpectedTypeSpec::Type& popType, const Context::ExpectedTypeSpec::Type& pushType, const size_t& idx, const Ast::Expr& initExpr);
 
 private:
     inline const Ast::TemplateDefn* isEnteringList(const size_t& idx) const;
