@@ -6,10 +6,10 @@
 
 inline std::string Context::getExpectedTypeName(const Context::ExpectedTypeSpec::Type& exType) {
     switch(exType) {
-        case Context::ExpectedTypeSpec::etNone:
-            return "etNone";
         case Context::ExpectedTypeSpec::etAuto:
             return "etAuto";
+        case Context::ExpectedTypeSpec::etVarArg:
+            return "etVarArg";
         case Context::ExpectedTypeSpec::etCallArg:
             return "etCallArg";
         case Context::ExpectedTypeSpec::etListVal:
@@ -497,6 +497,14 @@ inline Ast::ValueInstanceExpr& Context::getValueInstanceExpr(const Ast::Token& p
     return valueInstanceExpr;
 }
 
+inline Context::ExpectedTypeSpec::Type Context::getExpectedType(const Ast::Token& pos) const {
+    if(_expectedTypeSpecStack.size() == 0) {
+        throw Exception("%s Empty expected type stack\n", err(_filename, pos).c_str());
+    }
+
+    return _expectedTypeSpecStack.back().type();
+}
+
 inline void Context::pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type, const Ast::QualifiedTypeSpec& qTypeSpec) {
     _expectedTypeSpecStack.push_back(ExpectedTypeSpec(type, ptr(qTypeSpec)));
 }
@@ -506,10 +514,7 @@ inline void Context::pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type) {
 }
 
 inline void Context::popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type) {
-    if(_expectedTypeSpecStack.size() == 0) {
-        throw Exception("%s Internal error: Empty expected type stack\n", err(_filename, pos).c_str());
-    }
-    if(type != _expectedTypeSpecStack.back().type()) {
+    if(type != getExpectedType(pos)) {
         throw Exception("%s Internal error: Invalid expected type popped. Popping %s, got %s\n",
                         err(_filename, pos).c_str(),
                         getExpectedTypeName(type).c_str(),
@@ -520,20 +525,12 @@ inline void Context::popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTy
 }
 
 inline bool Context::popExpectedTypeSpecOrAuto(const Ast::Token& pos, const ExpectedTypeSpec::Type& type) {
-    if(getExpectedType() == ExpectedTypeSpec::etAuto) {
+    if(getExpectedType(pos) == ExpectedTypeSpec::etAuto) {
         popExpectedTypeSpec(pos, ExpectedTypeSpec::etAuto);
         return false;
     }
     popExpectedTypeSpec(pos, type);
     return true;
-}
-
-inline Context::ExpectedTypeSpec::Type Context::getExpectedType() const {
-    if(_expectedTypeSpecStack.size() == 0) {
-        return ExpectedTypeSpec::etNone;
-    }
-
-    return _expectedTypeSpecStack.back().type();
 }
 
 inline const Context::ExpectedTypeSpec& Context::getExpectedTypeList(const Ast::Token& pos) const {
@@ -545,8 +542,7 @@ inline const Context::ExpectedTypeSpec& Context::getExpectedTypeList(const Ast::
     return exl;
 }
 
-inline const Ast::QualifiedTypeSpec* Context::getExpectedTypeSpecIfAny(const size_t& idx) const {
-    assert(idx == 0);
+inline const Ast::QualifiedTypeSpec* Context::getExpectedTypeSpecIfAny() const {
     if(_expectedTypeSpecStack.size() == 0) {
         return 0;
     }
@@ -560,27 +556,24 @@ inline const Ast::QualifiedTypeSpec* Context::getExpectedTypeSpecIfAny(const siz
     return ptr(ts);
 }
 
-inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const {
-    assert(idx == 0);
-    const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny(idx);
+inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec) const {
+    const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny();
     if(ts == 0) {
         return ref(qTypeSpec);
     }
     return ref(ts);
 }
 
-inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpecEx(const Ast::Token& pos, const size_t& idx) const {
-    assert(idx == 0);
-    const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny(idx);
+inline const Ast::QualifiedTypeSpec& Context::getExpectedTypeSpecEx(const Ast::Token& pos) const {
+    const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny();
     if(ts == 0) {
         throw Exception("%s Empty expected type stack\n", err(_filename, pos).c_str());
     }
     return ref(ts);
 }
 
-inline const Ast::TemplateDefn* Context::isEnteringTemplate(const size_t& idx) const {
-    assert(idx == 0);
-    const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny(idx);
+inline const Ast::TemplateDefn* Context::isEnteringTemplate() const {
+    const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny();
     if(qts == 0) {
         return 0;
     }
@@ -589,9 +582,8 @@ inline const Ast::TemplateDefn* Context::isEnteringTemplate(const size_t& idx) c
     return td;
 }
 
-inline const Ast::TemplateDefn* Context::isEnteringList(const size_t& idx) const {
-    assert(idx == 0);
-    const Ast::TemplateDefn* td = isEnteringTemplate(idx);
+inline const Ast::TemplateDefn* Context::isEnteringList() const {
+    const Ast::TemplateDefn* td = isEnteringTemplate();
     if(td) {
         if(ref(td).name().string() == "list") {
             return td;
@@ -603,9 +595,8 @@ inline const Ast::TemplateDefn* Context::isEnteringList(const size_t& idx) const
     return 0;
 }
 
-const Ast::StructDefn* Context::isStructExpected(const size_t& idx) const {
-    assert(idx == 0);
-    const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny(idx);
+const Ast::StructDefn* Context::isStructExpected() const {
+    const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny();
     if(qts == 0) {
         return 0;
     }
@@ -619,9 +610,8 @@ const Ast::StructDefn* Context::isStructExpected(const size_t& idx) const {
     return sd;
 }
 
-const Ast::Function* Context::isFunctionExpected(const size_t& idx) const {
-    assert(idx == 0);
-    const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny(idx);
+const Ast::Function* Context::isFunctionExpected() const {
+    const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny();
     if(qts == 0) {
         return 0;
     }
@@ -635,9 +625,8 @@ const Ast::Function* Context::isFunctionExpected(const size_t& idx) const {
     return ed;
 }
 
-const Ast::TemplateDefn* Context::isPointerExpected(const size_t& idx) const {
-    assert(idx == 0);
-    const Ast::TemplateDefn* td = isEnteringTemplate(idx);
+const Ast::TemplateDefn* Context::isPointerExpected() const {
+    const Ast::TemplateDefn* td = isEnteringTemplate();
     if(td) {
         if(ref(td).name().string() == "pointer") {
             return td;
@@ -646,9 +635,8 @@ const Ast::TemplateDefn* Context::isPointerExpected(const size_t& idx) const {
     return 0;
 }
 
-const Ast::TemplateDefn* Context::isPointerToExprExpected(const size_t& idx, const Ast::Expr& expr) const {
-    assert(idx == 0);
-    const Ast::TemplateDefn* ts = isPointerExpected(idx);
+const Ast::TemplateDefn* Context::isPointerToExprExpected(const Ast::Expr& expr) const {
+    const Ast::TemplateDefn* ts = isPointerExpected();
     if(ts) {
         const Ast::QualifiedTypeSpec& innerQts = ref(ts).at(0);
 
@@ -661,9 +649,8 @@ const Ast::TemplateDefn* Context::isPointerToExprExpected(const size_t& idx, con
     return 0;
 }
 
-const Ast::StructDefn* Context::isPointerToStructExpected(const size_t& idx) const {
-    assert(idx == 0);
-    const Ast::TemplateDefn* td = isPointerExpected(idx);
+const Ast::StructDefn* Context::isPointerToStructExpected() const {
+    const Ast::TemplateDefn* td = isPointerExpected();
     if(td) {
         const Ast::QualifiedTypeSpec& valType = ref(td).at(0);
         const Ast::StructDefn* sd = dynamic_cast<const Ast::StructDefn*>(ptr(valType.typeSpec()));
@@ -672,9 +659,8 @@ const Ast::StructDefn* Context::isPointerToStructExpected(const size_t& idx) con
     return 0;
 }
 
-const Ast::StructDefn* Context::isListOfStructExpected(const size_t& idx) const {
-    assert(idx == 0);
-    const Ast::TemplateDefn* td = isEnteringList(idx);
+const Ast::StructDefn* Context::isListOfStructExpected() const {
+    const Ast::TemplateDefn* td = isEnteringList();
     const Ast::StructDefn* sd = 0;
     if(td) {
         if(ref(td).name().string() == "list") {
@@ -690,9 +676,8 @@ const Ast::StructDefn* Context::isListOfStructExpected(const size_t& idx) const 
     return sd;
 }
 
-inline const Ast::TypeSpec* Context::isListOfPointerExpected(const size_t& idx) const {
-    assert(idx == 0);
-    const Ast::TemplateDefn* td = isEnteringList(idx);
+inline const Ast::TypeSpec* Context::isListOfPointerExpected() const {
+    const Ast::TemplateDefn* td = isEnteringList();
     if(td) {
         if(ref(td).name().string() == "list") {
             const Ast::QualifiedTypeSpec& innerType = ref(td).at(0);
@@ -719,9 +704,8 @@ inline const Ast::TypeSpec* Context::isListOfPointerExpected(const size_t& idx) 
     return 0;
 }
 
-const Ast::StructDefn* Context::isListOfPointerToStructExpected(const size_t& idx) const {
-    assert(idx == 0);
-    const Ast::TypeSpec* ts = isListOfPointerExpected(idx);
+const Ast::StructDefn* Context::isListOfPointerToStructExpected() const {
+    const Ast::TypeSpec* ts = isListOfPointerExpected();
     if(!ts)
         return 0;
 
@@ -729,16 +713,15 @@ const Ast::StructDefn* Context::isListOfPointerToStructExpected(const size_t& id
     return sd;
 }
 
-inline const Ast::Expr& Context::convertExprToExpectedTypeSpec(const Ast::Token& pos, const size_t& idx, const Ast::Expr& initExpr) {
-    assert(idx == 0);
+inline const Ast::Expr& Context::convertExprToExpectedTypeSpec(const Ast::Token& pos, const Ast::Expr& initExpr) {
     // check if lhs is a pointer to rhs, if so auto-convert
-    const Ast::TemplateDefn* ts = isPointerToExprExpected(idx, initExpr);
+    const Ast::TemplateDefn* ts = isPointerToExprExpected(initExpr);
     if(ts) {
         Ast::PointerInstanceExpr* expr = aPointerInstanceExpr(pos, initExpr);
         return ref(expr);
     }
 
-    const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny(idx);
+    const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny();
     if(qts) {
         // if expected type is ptr, no checking
         const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ptr(ref(qts).typeSpec()));
@@ -763,9 +746,8 @@ inline const Ast::Expr& Context::convertExprToExpectedTypeSpec(const Ast::Token&
         CoercionResult::T mode = CoercionResult::None;
         const Ast::QualifiedTypeSpec* cqts = canCoerceX(ref(qts), initExpr.qTypeSpec(), mode);
         if(mode != CoercionResult::Lhs) {
-            throw Exception("%s Cannot convert expression %lu from '%s' to '%s' (%d)\n",
+            throw Exception("%s Cannot convert expression from '%s' to '%s' (%d)\n",
                             err(_filename, pos).c_str(),
-                            idx,
                             getQualifiedTypeSpecName(initExpr.qTypeSpec(), GenMode::Import).c_str(),
                             getQualifiedTypeSpecName(ref(qts), GenMode::Import).c_str(),
                             mode
@@ -783,7 +765,7 @@ inline const Ast::Expr& Context::convertExprToExpectedTypeSpec(const Ast::Token&
 
 inline void Context::pushCallArgList(const Ast::Scope& in) {
     if(in.type() == Ast::ScopeType::VarArg) {
-        pushExpectedTypeSpec(ExpectedTypeSpec::etAuto);
+        pushExpectedTypeSpec(ExpectedTypeSpec::etVarArg);
     } else {
         for(Ast::Scope::List::const_reverse_iterator it = in.list().rbegin(); it != in.list().rend(); ++it) {
             const Ast::VariableDefn& def = ref(*it);
@@ -794,12 +776,12 @@ inline void Context::pushCallArgList(const Ast::Scope& in) {
 
 inline void Context::popCallArgList(const Ast::Token& pos, const Ast::Scope& in) {
     if(in.type() == Ast::ScopeType::VarArg) {
-        popExpectedTypeSpec(pos, ExpectedTypeSpec::etAuto);
+        popExpectedTypeSpec(pos, ExpectedTypeSpec::etVarArg);
     }
 }
 
 inline void Context::popCallArg(const Ast::Token& pos) {
-    if(getExpectedType() != ExpectedTypeSpec::etAuto) {
+    if(getExpectedType(pos) != ExpectedTypeSpec::etVarArg) {
         popExpectedTypeSpec(pos, ExpectedTypeSpec::etCallArg);
     }
 }
@@ -1236,7 +1218,7 @@ Ast::Scope* Context::aParam() {
 }
 
 Ast::VariableDefn* Context::aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr) {
-    const Ast::Expr& expr = convertExprToExpectedTypeSpec(name, 0, initExpr);
+    const Ast::Expr& expr = convertExprToExpectedTypeSpec(name, initExpr);
     Ast::VariableDefn& variableDef = _unit.addNode(new Ast::VariableDefn(qualifiedTypeSpec, name, expr));
     popExpectedTypeSpecOrAuto(name, ExpectedTypeSpec::etAssignment);
     return ptr(variableDef);
@@ -1622,27 +1604,27 @@ Ast::ListList* Context::aListList(const Ast::Token& pos, Ast::ListList& list, co
 Ast::ListList* Context::aListList(const Ast::Token& pos, const Ast::ListItem& item) {
     Ast::ListList& list = _unit.addNode(new Ast::ListList(pos));
     list.addItem(item);
-    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(item.valueExpr().qTypeSpec()), 0);
+    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(item.valueExpr().qTypeSpec()));
     list.valueType(valType);
     return ptr(list);
 }
 
 Ast::ListList* Context::aListList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec) {
     Ast::ListList& list = _unit.addNode(new Ast::ListList(pos));
-    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(qTypeSpec), 0);
+    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(ptr(qTypeSpec));
     list.valueType(valType);
     return ptr(list);
 }
 
 Ast::ListList* Context::aListList(const Ast::Token& pos) {
     Ast::ListList& list = _unit.addNode(new Ast::ListList(pos));
-    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(0, 0);
+    const Ast::QualifiedTypeSpec& valType = getExpectedTypeSpec(0);
     list.valueType(valType);
     return ptr(list);
 }
 
 Ast::ListItem* Context::aListItem(const Ast::Expr& valueExpr) {
-    const Ast::Expr& expr = convertExprToExpectedTypeSpec(valueExpr.pos(), 0, valueExpr);
+    const Ast::Expr& expr = convertExprToExpectedTypeSpec(valueExpr.pos(), valueExpr);
     Ast::ListItem& item = _unit.addNode(new Ast::ListItem(valueExpr.pos(), expr));
 //    popExpectedTypeSpec(valueExpr.pos(), ExpectedTypeSpec::etListVal);
     return ptr(item);
@@ -1686,9 +1668,9 @@ Ast::DictList* Context::aDictList(const Ast::Token& pos, const Ast::QualifiedTyp
 
 /// The sequence of calls in this function is important.
 inline const Ast::Expr& Context::switchDictKeyValue(const Ast::Token& pos, const Context::ExpectedTypeSpec::Type& popType, const Context::ExpectedTypeSpec::Type& pushType, const size_t& idx, const Ast::Expr& initExpr) {
-    const Ast::Expr& expr = convertExprToExpectedTypeSpec(pos, 0, initExpr);
+    const Ast::Expr& expr = convertExprToExpectedTypeSpec(pos, initExpr);
     bool isExpected = popExpectedTypeSpecOrAuto(pos, popType);
-    const Ast::TemplateDefn* td0 = isEnteringList(0);
+    const Ast::TemplateDefn* td0 = isEnteringList();
 
     if(isExpected) {
         if((td0) && (ref(td0).name().string() == "dict")) {
@@ -1715,7 +1697,7 @@ const Ast::Expr* Context::aDictKey(const Ast::Expr& keyExpr) {
 }
 
 const Ast::Token& Context::aEnterList(const Ast::Token& pos) {
-    const Ast::TemplateDefn* td0 = isEnteringList(0);
+    const Ast::TemplateDefn* td0 = isEnteringList();
     if(td0) {
         if(ref(td0).name().string() == "list") {
             const Ast::QualifiedTypeSpec& valType = ref(td0).at(0);
@@ -1787,7 +1769,7 @@ Ast::Expr* Context::aEnterFunctorCall(const Ast::Function& function) {
 }
 
 Ast::ExprList* Context::aCallArgList(const Ast::Token& pos, Ast::ExprList& list, const Ast::Expr& expr) {
-    const Ast::Expr& argExpr = convertExprToExpectedTypeSpec(pos, 0, expr);
+    const Ast::Expr& argExpr = convertExprToExpectedTypeSpec(pos, expr);
     list.addExpr(argExpr);
     popCallArg(pos);
     return ptr(list);
@@ -2108,11 +2090,11 @@ const Ast::StructDefn* Context::aEnterStructInstanceExpr(const Ast::StructDefn& 
 }
 
 const Ast::StructDefn* Context::aEnterAutoStructInstanceExpr(const Ast::Token& pos) {
-    const Ast::StructDefn* sd = isStructExpected(0);
+    const Ast::StructDefn* sd = isStructExpected();
     if(sd) {
         return aEnterStructInstanceExpr(ref(sd));
     }
-    sd = isPointerToStructExpected(0);
+    sd = isPointerToStructExpected();
     if(sd) {
         return aEnterStructInstanceExpr(ref(sd));
     }
@@ -2159,7 +2141,7 @@ Ast::StructInitPartList* Context::aStructInitPartList(const Ast::StructInitPart&
 }
 
 Ast::StructInitPart* Context::aStructInitPart(const Ast::Token& pos, const Ast::VariableDefn& vdef, const Ast::Expr& initExpr) {
-    const Ast::Expr& expr = convertExprToExpectedTypeSpec(pos, 0, initExpr);
+    const Ast::Expr& expr = convertExprToExpectedTypeSpec(pos, initExpr);
     popExpectedTypeSpec(pos, ExpectedTypeSpec::etStructInit);
     Ast::StructInitPart& part = _unit.addNode(new Ast::StructInitPart(pos, vdef, expr));
     return ptr(part);
@@ -2209,7 +2191,7 @@ Ast::ChildFunctionDefn* Context::aEnterAnonymousFunction(const Ast::Function& fu
 }
 
 Ast::ChildFunctionDefn* Context::aEnterAutoAnonymousFunction(const Ast::Token& pos) {
-    const Ast::Function* function = isFunctionExpected(0);
+    const Ast::Function* function = isFunctionExpected();
     if(function == 0) {
         throw Exception("%s Internal error: no function type expected\n", err(_filename, pos).c_str());
     }

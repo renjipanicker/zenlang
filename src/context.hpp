@@ -16,19 +16,10 @@ private:
         };
     };
 
-//    struct CoercionMode {
-//        enum T {
-//            Exact,
-//            TypedefResolved,
-//            UserDefined,
-//            IsBase
-//        };
-//    };
-
     struct ExpectedTypeSpec {
         enum Type {
-            etNone,
             etAuto,
+            etVarArg,
             etCallArg,
             etListVal,
             etDictKey,
@@ -60,13 +51,13 @@ public:
     const Ast::TypeSpec* currentTypeRefHasChild(const Ast::Token& name) const;
 
 public:
-    const Ast::StructDefn* isStructExpected(const size_t& idx) const;
-    const Ast::Function* isFunctionExpected(const size_t& idx) const;
-    const Ast::TemplateDefn* isPointerExpected(const size_t& idx) const;
-    const Ast::TemplateDefn* isPointerToExprExpected(const size_t& idx, const Ast::Expr& expr) const;
-    const Ast::StructDefn* isPointerToStructExpected(const size_t& idx) const;
-    const Ast::StructDefn* isListOfStructExpected(const size_t& idx) const;
-    const Ast::StructDefn* isListOfPointerToStructExpected(const size_t& idx) const;
+    const Ast::StructDefn* isStructExpected() const;
+    const Ast::Function* isFunctionExpected() const;
+    const Ast::TemplateDefn* isPointerExpected() const;
+    const Ast::TemplateDefn* isPointerToExprExpected(const Ast::Expr& expr) const;
+    const Ast::StructDefn* isPointerToStructExpected() const;
+    const Ast::StructDefn* isListOfStructExpected() const;
+    const Ast::StructDefn* isListOfPointerToStructExpected() const;
 
 private:
     inline Ast::ExprList& addExprList(const Ast::Token& pos);
@@ -99,8 +90,8 @@ private:
     inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
     inline const Ast::QualifiedTypeSpec& getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function);
     inline Ast::StructDefn& getCurrentStructDefn(const Ast::Token& pos);
-    inline const Ast::Expr& convertExprToExpectedTypeSpec(const Ast::Token& pos, const size_t& lidx, const Ast::Expr& initExpr);
-    inline const Ast::TypeSpec* isListOfPointerExpected(const size_t& idx) const;
+    inline const Ast::Expr& convertExprToExpectedTypeSpec(const Ast::Token& pos, const Ast::Expr& initExpr);
+    inline const Ast::TypeSpec* isListOfPointerExpected() const;
 
 private:
     inline Ast::Scope& addScope(const Ast::Token& pos, const Ast::ScopeType::T& type);
@@ -128,17 +119,17 @@ private:
     inline void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type);
     inline void popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
     inline bool popExpectedTypeSpecOrAuto(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
-    inline ExpectedTypeSpec::Type getExpectedType() const;
+    inline ExpectedTypeSpec::Type getExpectedType(const Ast::Token& pos) const;
     inline const ExpectedTypeSpec& getExpectedTypeList(const Ast::Token& pos) const;
-    inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny(const size_t& idx) const;
-    inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec, const size_t& idx) const;
-    inline const Ast::QualifiedTypeSpec& getExpectedTypeSpecEx(const Ast::Token& pos, const size_t& idx) const;
+    inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny() const;
+    inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec) const;
+    inline const Ast::QualifiedTypeSpec& getExpectedTypeSpecEx(const Ast::Token& pos) const;
     inline Ast::TypecastExpr* getDynamicTypecastExpr(const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr);
     inline const Ast::Expr& switchDictKeyValue(const Ast::Token& pos, const Context::ExpectedTypeSpec::Type& popType, const Context::ExpectedTypeSpec::Type& pushType, const size_t& idx, const Ast::Expr& initExpr);
 
 private:
-    inline const Ast::TemplateDefn* isEnteringList(const size_t& idx) const;
-    inline const Ast::TemplateDefn* isEnteringTemplate(const size_t& idx) const;
+    inline const Ast::TemplateDefn* isEnteringList() const;
+    inline const Ast::TemplateDefn* isEnteringTemplate() const;
 
 private:
     inline void pushCallArgList(const Ast::Scope& in);

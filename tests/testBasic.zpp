@@ -31,8 +31,8 @@ public function testBasicExpr : test {
     auto n = (i > e) ? 1 : 2;
     verify(n == 2);
 
-    //auto t = "yy %{@n}" @ {@n:n};
-    //verify(t == "yy 2");
+    auto t = "yy %{@n}" @ {@n:n};
+    verify(t == "yy 2");
 
     auto l = [1,2,3];
     auto x = l[0];
@@ -352,7 +352,7 @@ public function testSwitchExprStatement : test {
 }
 
 public function (int ri, string rs)runFunctionTest(const int& x) {
-    //print "runFunctionTest %{x}\n" @ {"x":x};
+    print "runFunctionTest %{x}\n" @ {"x":x};
     return (67890, "run");
 }
 
