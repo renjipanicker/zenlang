@@ -30,6 +30,8 @@
       <item> assert </item>
       <item> unused </item>
       <item> verify </item>
+      <item> sizeof </item>
+      <item> length </item>
 
       <item> break </item>
       <item> case </item>
@@ -54,7 +56,6 @@
       <item> protected </item>
       <item> public </item>
       <item> return </item>
-      <item> sizeof </item>
       <item> struct </item>
       <item> switch </item>
       <item> template </item>

@@ -288,7 +288,7 @@ struct container {
         return (it != _list.end());
     }
 
-    inline size_t len() const {
+    inline size_t length() const {
         return _list.size();
     }
 
@@ -355,6 +355,11 @@ inline list<V> splice(const list<V>& l, const size_t& from, const size_t& to) {
     return l.splice(from, to);
 }
 
+template <typename V>
+inline size_t length(const list<V>& l) {
+    return l.length();
+}
+
 template <typename K, typename V>
 struct dict : public container<K, V, std::map<K, V> > {
     typedef container<K, V, std::map<K, V> > BaseT;
@@ -378,6 +383,11 @@ inline V& at(dict<K, V>& l, const K& idx) {
 template <typename K, typename V>
 inline const V& at(const dict<K, V>& l, const K& idx) {
     return l.at(idx);
+}
+
+template <typename K, typename V>
+inline size_t length(const dict<K, V>& l) {
+    return l.length();
 }
 
 struct Future {

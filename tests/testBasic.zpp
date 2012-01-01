@@ -35,6 +35,8 @@ public function testBasicExpr : test {
     verify(t == "yy 2");
 
     auto l = [1,2,3];
+    verify(length(l) == 3);
+
     auto x = l[0];
     verify(x == 1);
 
@@ -48,6 +50,7 @@ public function testBasicExpr : test {
     unused(z);
 
     auto d = ["a":1,"b":2,"c":3];
+    verify(length(d) == 3);
 
     auto r = testRoutine(123);
     verify(r == 12345);
@@ -230,7 +233,6 @@ public function testAnonymousFunction : test {
     };
 
     auto r = a(5);
-    print r.ri;
     verify(r.ri == (3*5), r.rs == "aa");
 
     return (true);
@@ -365,7 +367,6 @@ public function testSwitchExprStatement : test {
 }
 
 public function (int ri, string rs)runFunctionTest(const int& x) abstract {
-    print "runFunctionTest %{x}\n" @ {"x":x};
     return (67890, "run");
 }
 
