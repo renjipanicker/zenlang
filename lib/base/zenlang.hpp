@@ -275,6 +275,23 @@ struct container {
         return it->second;
     }
 
+    inline const_iterator find(const K& idx) const {
+        return _list.find(idx);
+    }
+
+    inline iterator find(K& idx) {
+        return _list.find(idx);
+    }
+
+    inline bool has(const K& idx) {
+        iterator it = _list.find(idx);
+        return (it != _list.end());
+    }
+
+    inline size_t len() const {
+        return _list.size();
+    }
+
     inline void set(const K& k, V v) {
         _list.insert(std::pair<K, V>(k, v));
     }
@@ -302,6 +319,17 @@ struct list : public container<size_t, V, std::map<size_t, V> > {
         BaseT::set(k, v);
     }
 
+    inline list<V> splice(const size_t& from, const size_t& to) const {
+        list<V> nl;
+        for(size_t i = from; i < to; ++i) {
+            typename list<V>::const_iterator it = BaseT::find(i);
+            if(it != BaseT::end()) {
+                nl.add(it->second);
+            }
+        }
+        return nl;
+    }
+
     struct creator {
         inline creator& add(const V& v) {
             _list.add(v);
@@ -321,8 +349,13 @@ template <typename V>
 inline V& at(list<V>& l, const size_t& idx) {
     return l.at(idx);
 }
-template <typename K, typename V>
 
+template <typename V>
+inline list<V> splice(const list<V>& l, const size_t& from, const size_t& to) {
+    return l.splice(from, to);
+}
+
+template <typename K, typename V>
 struct dict : public container<K, V, std::map<K, V> > {
     typedef container<K, V, std::map<K, V> > BaseT;
 

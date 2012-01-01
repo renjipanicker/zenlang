@@ -1,17 +1,11 @@
-anchor
-menubar
-
 abstract struct
 abstract function
 
-iterate (foreach) on string
-list indexing
-put everything in namespaces
 sizeof() function for container-expr.
 sizeof() function for types.
-"c++" as output code
+"stlcpp" as output mode
 "cmake" as output project
-verbose output from compiler
+put everything in namespaces
 interpreter
 error-handling
 
@@ -22,6 +16,8 @@ bug - gtk-textedit resizes parent window
 bug - multiple #includes in guiTest.cpp
 bug - indentation in generated cpp file
 
+anchor
+menubar
 process
 application
 unicode-char
@@ -67,7 +63,7 @@ web-view
 tab-widget
 
 *** make all ctors explicit
-*** Rename GenName::Import and Normal to ZenLang and StlCpp
+*** Rename GenName::Import and Normal to zenlang and stlcpp
 
 ==BACKLOG==
 enum-member-statement(?)
@@ -199,3 +195,6 @@ child-function syntax should be id:base-function {...}
 remove auto keyword in declaration statements
 automatically de-reference pointer on lhs of member-expr
 unit test - verify
+iterate (foreach) on string
+verbose output from compiler
+list splicing

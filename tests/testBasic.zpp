@@ -38,8 +38,14 @@ public function testBasicExpr : test {
     auto x = l[0];
     verify(x == 1);
 
+    const list<int>& l2 = l;
+    unused(l2);
+
     auto y = (l[0] == 1);
     verify(y == true);
+
+    auto z = l[0:3];
+    unused(z);
 
     auto d = ["a":1,"b":2,"c":3];
 
@@ -301,10 +307,17 @@ public function testForInitStatement : test {
     return (true);
 }
 
+public function testForeachStringStatement : test {
+    auto s = "this is a string";
+    foreach(c in s) {
+        unused(c);
+    }
+    return (true);
+}
+
 public function testForeachListStatement : test {
     auto j = 0;
     auto l = [1,2,3];
-    //const list<int>& l2 = l; /// \todo should be valid
     foreach(i in l) {
         j += i;
     }

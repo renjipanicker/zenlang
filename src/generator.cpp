@@ -262,6 +262,16 @@ private:
         fprintf(_fp, ")");
     }
 
+    virtual void visit(const Ast::SpliceExpr& node) {
+        fprintf(_fp, "splice(");
+        visitNode(node.expr());
+        fprintf(_fp, ", ");
+        visitNode(node.from());
+        fprintf(_fp, ", ");
+        visitNode(node.to());
+        fprintf(_fp, ")");
+    }
+
     virtual void visit(const Ast::TypeofTypeExpr& node) {
         fprintf(_fp, "type(\"%s\")", getQualifiedTypeSpecName(node.typeSpec(), _genMode).c_str());
     }
@@ -1363,6 +1373,27 @@ private:
         ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.incr());
         fprintf(fpDefn(), ")");
         GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
+    }
+
+    virtual void visit(const Ast::ForeachStringStatement& node) {
+        const std::string etype = getQualifiedTypeSpecName(node.expr().qTypeSpec(), GenMode::Normal);
+
+        std::string constit = "";
+        if(node.expr().qTypeSpec().isConst()) {
+            constit = "const_";
+        }
+
+        fprintf(fpDefn(), "%s{\n", Indent::get());
+        fprintf(fpDefn(), "%s  %s _str = ", Indent::get(), etype.c_str());
+        ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+        fprintf(fpDefn(), ";\n");
+        fprintf(fpDefn(), "%s  for(%s::%siterator _it = _str.begin(); _it != _str.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GenMode::Normal).c_str(), constit.c_str());
+        fprintf(fpDefn(), "%s  %s %s = *_it;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qTypeSpec(), GenMode::Normal).c_str(), node.valDef().name().text());
+
+        GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::IndentedBrace).run(_config, _fs, "", node.block());
+
+        fprintf(fpDefn(), "%s}\n", Indent::get());
+        fprintf(fpDefn(), "%s}\n", Indent::get());
     }
 
     virtual void visit(const Ast::ForeachListStatement& node) {

@@ -1408,14 +1408,23 @@ Ast::ForeachStatement* Context::aForeachStatement(Ast::ForeachStatement& stateme
     return ptr(statement);
 }
 
-Ast::ForeachListStatement* Context::aEnterForeachInit(const Ast::Token& valName, const Ast::Expr& expr) {
+Ast::ForeachStatement* Context::aEnterForeachInit(const Ast::Token& valName, const Ast::Expr& expr) {
+    if(getTypeSpecName(expr.qTypeSpec().typeSpec(), GenMode::Import) == "string") {
+        const Ast::QualifiedTypeSpec& valTypeSpec = getQualifiedTypeSpec(valName, "char");
+        const Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
+        Ast::Scope& scope = addScope(valName, Ast::ScopeType::Local);
+        scope.addVariableDef(valDef);
+        enterScope(scope);
+        Ast::ForeachStringStatement& foreachStatement = _unit.addNode(new Ast::ForeachStringStatement(valName, valDef, expr));
+        return ptr(foreachStatement);
+    }
+
     const Ast::TemplateDefn& templateDefn = getTemplateDefn(valName, expr, "list", 1);
     const Ast::QualifiedTypeSpec& valTypeSpec = addQualifiedTypeSpec(valName, expr.qTypeSpec().isConst(), templateDefn.at(0).typeSpec(), true);
     const Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
     Ast::Scope& scope = addScope(valName, Ast::ScopeType::Local);
     scope.addVariableDef(valDef);
     enterScope(scope);
-
     Ast::ForeachListStatement& foreachStatement = _unit.addNode(new Ast::ForeachListStatement(valName, valDef, expr));
     return ptr(foreachStatement);
 }
@@ -1833,6 +1842,18 @@ Ast::IndexExpr* Context::aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr
     }
 
     throw Exception("%s '%s' is not an indexable type\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(expr.qTypeSpec(), GenMode::Import).c_str());
+}
+
+Ast::SpliceExpr* Context::aSpliceExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::Expr& from, const Ast::Expr& to) {
+    const Ast::TypeSpec* listTypeSpec = resolveTypedef(expr.qTypeSpec().typeSpec());
+    const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(listTypeSpec);
+    if((td) && (ref(td).name().string() == "list")) {
+        const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, ref(td).at(0).isConst(), expr.qTypeSpec().typeSpec(), false);
+        Ast::SpliceExpr& spliceExpr = _unit.addNode(new Ast::SpliceExpr(pos, qTypeSpec, expr, from, to));
+        return ptr(spliceExpr);
+    }
+
+    throw Exception("%s '%s' is not a spliceable type\n", err(_filename, pos).c_str(), getQualifiedTypeSpecName(expr.qTypeSpec(), GenMode::Import).c_str());
 }
 
 Ast::TypeofTypeExpr* Context::aTypeofTypeExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec) {

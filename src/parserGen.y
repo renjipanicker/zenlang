@@ -660,6 +660,7 @@ rExpr(L) ::= rCallExpr(R).         {L = R;}
 rExpr(L) ::= rRunExpr(R).          {L = R;}
 rExpr(L) ::= rOrderedExpr(R).      {L = R;}
 rExpr(L) ::= rIndexExpr(R).        {L = R;}
+rExpr(L) ::= rSpliceExpr(R).        {L = R;}
 rExpr(L) ::= rVariableRefExpr(R).       {L = R;}
 rExpr(L) ::= rMemberVariableExpr(R).    {L = R;}
 rExpr(L) ::= rTypeSpecMemberExpr(R).    {L = R;}
@@ -807,6 +808,11 @@ rOrderedExpr(L) ::= LBRACKET(B) rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrder
 %type rIndexExpr {Ast::IndexExpr*}
 rIndexExpr(L) ::= rExpr(E) LSQUARE(B) rExpr(innerExpr) RSQUARE. {L = ref(pctx).aIndexExpr(B, ref(E), ref(innerExpr));}
 rIndexExpr(L) ::= rExpr(E) AMP(B) rKeyConstantExpr(innerExpr). {L = ref(pctx).aIndexExpr(B, ref(E), ref(innerExpr));}
+
+//-------------------------------------------------
+// splice expression
+%type rSpliceExpr {Ast::SpliceExpr*}
+rSpliceExpr(L) ::= rExpr(E) LSQUARE(B) rExpr(fromExpr) COLON rExpr(toExpr) RSQUARE. {L = ref(pctx).aSpliceExpr(B, ref(E), ref(fromExpr), ref(toExpr));}
 
 //-------------------------------------------------
 // type expression

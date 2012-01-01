@@ -764,6 +764,20 @@ namespace Ast {
         const Expr& _index;
     };
 
+    class SpliceExpr : public Expr {
+    public:
+        inline SpliceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr, const Ast::Expr& from, const Ast::Expr& to) : Expr(pos, qTypeSpec), _expr(expr), _from(from), _to(to) {}
+        inline const Expr& expr() const {return _expr;}
+        inline const Expr& from() const {return _from;}
+        inline const Expr& to() const {return _to;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Expr& _expr;
+        const Expr& _from;
+        const Expr& _to;
+    };
+
     class SetIndexExpr : public Expr {
     public:
         inline SetIndexExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const IndexExpr& lhs, const Expr& rhs) : Expr(pos, qTypeSpec), _lhs(lhs), _rhs(rhs) {}
@@ -1059,6 +1073,7 @@ namespace Ast {
         virtual void visit(const FunctorCallExpr& node) = 0;
         virtual void visit(const OrderedExpr& node) = 0;
         virtual void visit(const IndexExpr& node) = 0;
+        virtual void visit(const SpliceExpr& node) = 0;
         virtual void visit(const TypeofTypeExpr& node) = 0;
         virtual void visit(const TypeofExprExpr& node) = 0;
         virtual void visit(const StaticTypecastExpr& node) = 0;
@@ -1090,6 +1105,7 @@ namespace Ast {
     inline void FunctorCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void IndexExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void SpliceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TypeofTypeExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void TypeofExprExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void StaticTypecastExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
@@ -1318,6 +1334,16 @@ namespace Ast {
         const CompoundStatement* _block;
     };
 
+    class ForeachStringStatement : public ForeachStatement {
+    public:
+        inline ForeachStringStatement(const Token& pos, const Ast::VariableDefn& valDef, const Expr& expr) : ForeachStatement(pos, expr), _valDef(valDef) {}
+        inline const VariableDefn& valDef() const {return _valDef;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const VariableDefn& _valDef;
+    };
+
     class ForeachListStatement : public ForeachStatement {
     public:
         inline ForeachListStatement(const Token& pos, const Ast::VariableDefn& valDef, const Expr& expr) : ForeachStatement(pos, expr), _valDef(valDef) {}
@@ -1479,6 +1505,7 @@ namespace Ast {
         virtual void visit(const DoWhileStatement& node) = 0;
         virtual void visit(const ForExprStatement& node) = 0;
         virtual void visit(const ForInitStatement& node) = 0;
+        virtual void visit(const ForeachStringStatement& node) = 0;
         virtual void visit(const ForeachListStatement& node) = 0;
         virtual void visit(const ForeachDictStatement& node) = 0;
         virtual void visit(const CaseExprStatement& node) = 0;
@@ -1508,6 +1535,7 @@ namespace Ast {
     inline void DoWhileStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ForExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ForInitStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void ForeachStringStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ForeachListStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void ForeachDictStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
     inline void CaseExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
