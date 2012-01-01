@@ -23,7 +23,7 @@ public struct Anchor {
     auto margin = 0;
 };
 
-public struct Definition : Widget::Definition {
+public struct Definition : Widget::Definition abstract {
     auto title = "";
     auto position = Window::Position{};
     auto style = Style.Normal;

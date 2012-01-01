@@ -1,7 +1,4 @@
-abstract struct
-abstract function
-
-sizeof() function for container-expr.
+len() function for container-expr.
 sizeof() function for types.
 "stlcpp" as output mode
 "cmake" as output project
@@ -198,3 +195,5 @@ unit test - verify
 iterate (foreach) on string
 verbose output from compiler
 list splicing
+abstract struct
+abstract function

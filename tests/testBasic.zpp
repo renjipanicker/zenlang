@@ -6,7 +6,7 @@ public routine int testRoutine(const int& x) {
     return 12345;
 }
 
-public function (int ri, string rs)testFunction(const int& x) {
+public function (int ri, string rs)testFunction(const int& x) abstract {
     return (67890, "testfn");
 }
 
@@ -65,7 +65,7 @@ public enum MyEnum {
 
 public struct MyStructDecl;
 
-public struct MyBase {
+public struct MyBase abstract {
     auto j = 0;
 };
 
@@ -364,7 +364,7 @@ public function testSwitchExprStatement : test {
     return (true);
 }
 
-public function (int ri, string rs)runFunctionTest(const int& x) {
+public function (int ri, string rs)runFunctionTest(const int& x) abstract {
     print "runFunctionTest %{x}\n" @ {"x":x};
     return (67890, "run");
 }
@@ -472,7 +472,7 @@ struct MyAutoInnerStruct {
     auto name = "";
 };
 
-struct MyAutoStruct {
+struct MyAutoStruct abstract {
     auto i = 0;
     auto s = "";
     list<float> fl;

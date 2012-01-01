@@ -1012,6 +1012,9 @@ Ast::RootStructDefn* Context::aEnterRootStructDefn(const Ast::Token& name, const
 }
 
 Ast::ChildStructDefn* Context::aEnterChildStructDefn(const Ast::Token& name, const Ast::StructDefn& base, const Ast::DefinitionType::T& defType) {
+    if(base.defType() == Ast::DefinitionType::Final) {
+        throw Exception("%s base struct is not abstract '%s'\n", err(_filename, name).c_str(), base.name().text());
+    }
     Ast::Scope& list = addScope(name, Ast::ScopeType::Member);
     Ast::CompoundStatement& block = _unit.addNode(new Ast::CompoundStatement(name));
     Ast::ChildStructDefn& structDefn = _unit.addNode(new Ast::ChildStructDefn(currentTypeSpec(), base, name, defType, list, block));
@@ -1122,6 +1125,9 @@ Ast::ChildFunctionDefn* Context::aChildFunctionDefn(Ast::ChildFunctionDefn& func
 }
 
 inline Ast::ChildFunctionDefn& Context::createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    if(base.defType() == Ast::DefinitionType::Final) {
+        throw Exception("%s base function is not abstract '%s'\n", err(_filename, name).c_str(), base.name().text());
+    }
     Ast::Scope& xref = addScope(name, Ast::ScopeType::XRef);
     Ast::ChildFunctionDefn& functionDefn = _unit.addNode(new Ast::ChildFunctionDefn(parent, name, defType, base.sig(), xref, base));
     parent.addChild(functionDefn);
