@@ -1546,7 +1546,7 @@ void GeneratorContext::run(const Ast::Config& config, FileSet& fs, const std::st
     gen.visitNode(block);
 }
 
-struct Generator::Impl {
+struct StlCppGenerator::Impl {
     inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _project(project), _config(config), _unit(unit), _fpHdr(0), _fpSrc(0), _fpImp(0) {}
     inline void run();
 private:
@@ -1559,7 +1559,7 @@ private:
     FILE* _fpImp;
 };
 
-inline void Generator::Impl::run() {
+inline void StlCppGenerator::Impl::run() {
     Indent::init();
     std::string basename = getBaseName(_unit.filename());
     OutputFile ofImp(_fpImp, basename + ".ipp");unused(ofImp);
@@ -1590,6 +1590,6 @@ inline void Generator::Impl::run() {
 }
 
 //////////////////////////////////////////////
-Generator::Generator(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _impl(0) {_impl = new Impl(project, config, unit);}
-Generator::~Generator() {delete _impl;}
-void Generator::run() {return ref(_impl).run();}
+StlCppGenerator::StlCppGenerator(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _impl(0) {_impl = new Impl(project, config, unit);}
+StlCppGenerator::~StlCppGenerator() {delete _impl;}
+void StlCppGenerator::run() {return ref(_impl).run();}

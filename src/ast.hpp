@@ -1747,7 +1747,7 @@ namespace Ast {
         };
         typedef std::list<std::string> PathList;
     public:
-        inline Config(const std::string& name) : _name(name), _mode(Mode::Executable), _gui(false), _debug(true), _test(true), _zlibPath("../../zenlang/lib") {}
+        inline Config(const std::string& name) : _name(name), _mode(Mode::Executable), _gui(false), _debug(true), _test(true), _olanguage("stlcpp"), _zlibPath("../../zenlang/lib") {}
     public:
         inline const std::string& name() const {return _name;}
     public:
@@ -1760,6 +1760,9 @@ namespace Ast {
         inline const bool& debug() const {return _debug;}
         inline Config& test(const bool& val) { _test = val; return ref(this);}
         inline const bool& test() const {return _test;}
+    public:
+        inline Config& olanguage(const std::string& val) { _olanguage = val; return ref(this);}
+        inline const std::string& olanguage() const {return _olanguage;}
     public:
         inline Config& zexePath(const std::string& val) { _zexePath = val; return ref(this);}
         inline const std::string& zexePath() const {return _zexePath;}
@@ -1781,6 +1784,7 @@ namespace Ast {
         bool _gui;
         bool _debug;
         bool _test;
+        std::string _olanguage;
         std::string _zexePath;
         std::string _zlibPath;
         PathList _includePathList;
@@ -1800,10 +1804,13 @@ namespace Ast {
         };
 
     public:
-        inline Project() : _name("main"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;"), _verbosity(Verbosity::Normal) {}
+        inline Project() : _name("main"), _oproject("cmake"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;"), _verbosity(Verbosity::Normal) {}
     public:
         inline Project& name(const std::string& val) { _name = val; return ref(this);}
         inline const std::string& name() const {return _name;}
+    public:
+        inline Project& oproject(const std::string& val) { _oproject = val; return ref(this);}
+        inline const std::string& oproject() const {return _oproject;}
     public:
         inline Project& verbosity(const Verbosity::T& val) { _verbosity = val; return ref(this);}
         inline const Verbosity::T& verbosity() const {return _verbosity;}
@@ -1833,6 +1840,7 @@ namespace Ast {
         inline const std::string& zppExt() const {return _zppExt;}
     private:
         std::string _name;
+        std::string _oproject;
         ConfigList _configList;
     private:
         std::string _hppExt;

@@ -16,6 +16,8 @@ static int showHelp(const Ast::Config& config) {
     fprintf(stdout, "  -n  --name      Project name\n");
     fprintf(stdout, "  -g  --gui       GUI application\n");
     fprintf(stdout, "  -d  --debug     Debug build\n");
+    fprintf(stdout, "  -ol --language  Output language\n");
+    fprintf(stdout, "  -op --project   Output project\n");
     fprintf(stdout, "  -v  --verbose   Display verbose output\n");
     fprintf(stdout, "  -t  --test      Don't generate unit tests (Note this is a negative switch)\n");
     fprintf(stdout, "  -z  --zenPath   Zen Library path\n");
@@ -69,6 +71,12 @@ int main(int argc, char* argv[]) {
             config.gui(true);
         } else if((t == "-d") || (t == "--debug")) {
             config.debug(true);
+        } else if((t == "-ol") || (t == "--olanguage")) {
+            t = argv[i++];
+            config.olanguage(t);
+        } else if((t == "-op") || (t == "--oproject")) {
+            t = argv[i++];
+            project.oproject(t);
         } else if((t == "-v") || (t == "--verbose")) {
             project.verbosity(Ast::Project::Verbosity::Detailed);
         } else if((t == "-t") || (t == "--test")) {
@@ -81,7 +89,11 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    ProGen progen(project);
-    progen.run();
+    if(project.oproject() == "cmake") {
+        CmakeProGen progen(project);
+        progen.run();
+    } else {
+        throw Exception("Unknown project generator '%s'\n", project.oproject().c_str());
+    }
     return 0;
 }

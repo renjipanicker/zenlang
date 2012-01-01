@@ -1,5 +1,3 @@
-"stlcpp" as output mode
-"cmake" as output project
 put everything in namespaces
 interpreter
 error-handling
@@ -9,7 +7,6 @@ bug - list/dict inside struct does not copy in cctor
 bug - typecast operator should check if can coerce
 bug - gtk-textedit resizes parent window
 bug - multiple #includes in guiTest.cpp
-bug - indentation in generated cpp file
 
 anchor
 menubar
@@ -93,6 +90,7 @@ a public function cannot have a private type in its sig
 if a public type contains an imported type, the imported type's header file is public
 multiple code generators: python, php, js, java
 multiple project generators: cmake, vcproj, xcode
+fix indentation in generated cpp file
 
 *** enum-init-expr
 *** move Formatter to String, Creator to List/Dict
@@ -197,4 +195,5 @@ abstract struct
 abstract function
 length() function for container-expr.
 sizeof() function for types. (obsolete, no use case)
-
+"stlcpp" as output mode
+"cmake" as output project

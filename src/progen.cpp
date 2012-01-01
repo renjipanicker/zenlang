@@ -4,7 +4,7 @@
 #include "compiler.hpp"
 #include "outfile.hpp"
 
-class ProGen::Impl {
+class CmakeProGen::Impl {
 public:
     inline Impl(const Ast::Project& project) : _project(project), _fpPro(0) {}
 public:
@@ -17,7 +17,7 @@ private:
     FILE* _fpPro;
 };
 
-inline void ProGen::Impl::generateProject(const Ast::Config& config) {
+inline void CmakeProGen::Impl::generateProject(const Ast::Config& config) {
     OutputFile ofPro(_fpPro, "CMakeLists.txt");unused(ofPro);
     fprintf(_fpPro, "CMAKE_MINIMUM_REQUIRED(VERSION 2.6)\n");
     fprintf(_fpPro, "PROJECT(%s)\n", _project.name().c_str());
@@ -120,7 +120,7 @@ inline void ProGen::Impl::generateProject(const Ast::Config& config) {
         fprintf(_fpPro, "\n");
     }
 }
-inline void ProGen::Impl::generateConfig(const Ast::Config& config) {
+inline void CmakeProGen::Impl::generateConfig(const Ast::Config& config) {
     Compiler compiler(_project, config);
     compiler.compile();
     if(config.mode() != Ast::Config::Mode::Compile) {
@@ -128,13 +128,13 @@ inline void ProGen::Impl::generateConfig(const Ast::Config& config) {
     }
 }
 
-void ProGen::Impl::run() {
+void CmakeProGen::Impl::run() {
     for(Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
         const Ast::Config& config = ref(it->second);
         generateConfig(config);
     }
 }
 
-ProGen::ProGen(const Ast::Project& project) : _impl(0) {_impl = new Impl(project);}
-ProGen::~ProGen() {delete _impl;}
-void ProGen::run() {return ref(_impl).run();}
+CmakeProGen::CmakeProGen(const Ast::Project& project) : _impl(0) {_impl = new Impl(project);}
+CmakeProGen::~CmakeProGen() {delete _impl;}
+void CmakeProGen::run() {return ref(_impl).run();}

@@ -4,10 +4,15 @@
 
 class ProGen {
 public:
-    ProGen(const Ast::Project& project);
-    ~ProGen();
+    virtual void run() = 0;
+};
+
+class CmakeProGen : public ProGen {
 public:
-    void run();
+    CmakeProGen(const Ast::Project& project);
+    ~CmakeProGen();
+public:
+    virtual void run();
 private:
     class Impl;
     Impl* _impl;

@@ -70,8 +70,12 @@ void Compiler::compile() {
             import(unit, "core/core.ipp", 0);
             if(!parseFile(unit, filename, 0))
                 throw Exception("Cannot open source file '%s'\n", filename.c_str());
-            Generator generator(_project, _config, unit);
-            generator.run();
+            if(_config.olanguage() == "stlcpp") {
+                StlCppGenerator generator(_project, _config, unit);
+                generator.run();
+            } else {
+                throw Exception("Unknown code generator '%s'\n", _config.olanguage().c_str());
+            }
         }
     }
 }
