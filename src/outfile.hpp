@@ -4,7 +4,7 @@ struct OutputFile {
     inline OutputFile(FILE*& fp, const std::string& filename) : _fp(fp) {
         _fp = fopen(filename.c_str(), "w");
         if(_fp == 0) {
-            throw Exception("Unable to open output file %s\n", filename.c_str());
+            throw z::Exception("Unable to open output file %s\n", filename.c_str());
         }
     }
 

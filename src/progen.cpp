@@ -79,7 +79,7 @@ inline void CmakeProGen::Impl::generateProject(const Ast::Config& config) {
             fprintf(_fpPro, ")\n");
             fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s.cpp)\n", basename.c_str());
         } else {
-            throw Exception("Unknown file type for: %s", filename.c_str());
+            throw z::Exception("Unknown file type for: %s", filename.c_str());
         }
     }
     fprintf(_fpPro, "\n");
@@ -106,7 +106,7 @@ inline void CmakeProGen::Impl::generateProject(const Ast::Config& config) {
             fprintf(_fpPro, "ADD_LIBRARY(%s STATIC ${project_SOURCES})\n", _project.name().c_str());
             break;
         case Ast::Config::Mode::Compile:
-            throw Exception("Compile mode not allowed during project generaion");
+            throw z::Exception("Compile mode not allowed during project generaion");
     }
 
     if(config.gui()) {
@@ -130,11 +130,11 @@ inline void CmakeProGen::Impl::generateConfig(const Ast::Config& config) {
 
 void CmakeProGen::Impl::run() {
     for(Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
-        const Ast::Config& config = ref(it->second);
+        const Ast::Config& config = z::ref(it->second);
         generateConfig(config);
     }
 }
 
 CmakeProGen::CmakeProGen(const Ast::Project& project) : _impl(0) {_impl = new Impl(project);}
 CmakeProGen::~CmakeProGen() {delete _impl;}
-void CmakeProGen::run() {return ref(_impl).run();}
+void CmakeProGen::run() {return z::ref(_impl).run();}

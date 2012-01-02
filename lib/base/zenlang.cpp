@@ -5,17 +5,17 @@
 static int s_totalTests = 0;
 static int s_passedTests = 0;
 
-TestResult::~TestResult() {
+z::TestResult::~TestResult() {
 //    Log::get() << "PASSED: " << s_passedTests << "/" << s_totalTests << "\n" << Log::Out();
     printf("PASSED %d/%d\n", s_passedTests, s_totalTests);
 }
 
-void TestResult::begin(const std::string& name) {
+void z::TestResult::begin(const std::string& name) {
     Log::get() << name << Log::Out();
     ++s_totalTests;
 }
 
-void TestResult::end(const std::string& name, const bool& passed) {
+void z::TestResult::end(const std::string& name, const bool& passed) {
     if(passed)
         ++s_passedTests;
 
@@ -23,24 +23,24 @@ void TestResult::end(const std::string& name, const bool& passed) {
     Log::get() << r << "\n" << Log::Out();
 }
 
-static InitList<TestInstance> s_testList;
-TestInstance::TestInstance() : _next(0) {
+static z::InitList<z::TestInstance> s_testList;
+z::TestInstance::TestInstance() : _next(0) {
     s_testList.push(this);
 }
 #endif
 
-static InitList<MainInstance> s_mainList;
+static z::InitList<z::MainInstance> s_mainList;
 
-MainInstance::MainInstance() : _next(0) {
+z::MainInstance::MainInstance() : _next(0) {
     s_mainList.push(this);
 }
 
-CallContext g_context = CallContext();
-CallContext& CallContext::get() {
+z::CallContext g_context = z::CallContext();
+z::CallContext& z::CallContext::get() {
     return g_context;
 }
 
-void CallContext::run() {
+void z::CallContext::run() {
     while(_list.size() > 0) {
         FunctionList::Ptr ptr;
         if(_list.pop(ptr))
@@ -83,7 +83,7 @@ static gboolean onIdle(gpointer data) {
 #endif
 #endif
 
-Application::Application(int argc, char* argv[]) {
+z::Application::Application(int argc, char* argv[]) {
 #if defined(GUI)
 #if defined(WIN32)
 #endif
@@ -93,17 +93,17 @@ Application::Application(int argc, char* argv[]) {
 #endif
 }
 
-Application::~Application() {
+z::Application::~Application() {
 }
 
 #if defined(WIN32)
 static HINSTANCE s_hInstance = 0;
-HINSTANCE Application::instance() {
+HINSTANCE z::Application::instance() {
     return s_hInstance;
 }
 #endif
 
-int Application::exec() {
+int z::Application::exec() {
 #if defined(UNIT_TEST)
     TestResult tr; unused(tr);
 #endif
@@ -132,7 +132,7 @@ int Application::exec() {
     return code;
 }
 
-int Application::exit(const int& code) {
+int z::Application::exit(const int& code) {
 #if defined(GUI)
 #if defined(WIN32)
     ::PostQuitMessage(code);
@@ -146,15 +146,15 @@ int Application::exit(const int& code) {
 
 static void initMain(int argc, char* argv[]) {
 #if defined(UNIT_TEST)
-    TestInstance* ti = s_testList.next();
+    z::TestInstance* ti = s_testList.next();
     while(ti != 0) {
         ref(ti).enque(g_context);
         ti = s_testList.next();
     }
 #endif
 
-    ArgList argl;
-    MainInstance* mi = s_mainList.next();
+    z::ArgList argl;
+    z::MainInstance* mi = s_mainList.next();
     while(mi != 0) {
         ref(mi).enque(g_context, argl);
         mi = s_mainList.next();
@@ -174,19 +174,19 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 }
 #else
 int main(int argc, char* argv[]) {
-    Application a(argc, argv);
+    z::Application a(argc, argv);
     initMain(argc, argv);
     return a.exec();
 }
 #endif
 #endif
 
-static Log s_log;
-Log& Log::get() {
+static z::Log s_log;
+z::Log& z::Log::get() {
     return s_log;
 }
 
-Log& Log::operator<<(Log::Out) {
+z::Log& z::Log::operator<<(z::Log::Out) {
     printf("%s", _ss.str().c_str());
     _ss.str("");
     return ref(this);

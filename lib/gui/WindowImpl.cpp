@@ -187,10 +187,10 @@ Window::HandleImpl& Window::Native::createChildWindow(const Window::Definition& 
 #if defined(GTK)
 Window::HandleImpl& Window::Native::initWindowImpl(GtkWidget* hwnd) {
     Window::HandleImpl* impl = new Window::HandleImpl();
-    ref(impl)._hWindow = hwnd;
-    ref(impl)._hFixed = 0;
-    g_object_set_data(G_OBJECT(ref(impl)._hWindow), "impl", impl);
-    return ref(impl);
+    z::ref(impl)._hWindow = hwnd;
+    z::ref(impl)._hFixed = 0;
+    g_object_set_data(G_OBJECT(z::ref(impl)._hWindow), "impl", impl);
+    return z::ref(impl);
 }
 
 Window::HandleImpl& Window::Native::createWindow(const Window::Definition& def, GtkWidget *parent) {
@@ -316,7 +316,7 @@ static gboolean onConfigureEvent(GtkWindow* window, GdkEvent* event, gpointer ph
     unused(event);
     Window::OnResize::Handler* handler = static_cast<Window::OnResize::Handler*>(phandler);
     Window::OnResize::Handler::_In in;
-    ref(handler)._run(in);
+    z::ref(handler)._run(in);
     return FALSE;
 }
 #endif
@@ -336,7 +336,7 @@ static gboolean onWindowCloseEvent(GtkWindow* window, gpointer phandler) {
     unused(window);
     Window::OnClose::Handler* handler = static_cast<Window::OnClose::Handler*>(phandler);
     Window::OnClose::Handler::_In in;
-    ref(handler)._run(in);
+    z::ref(handler)._run(in);
     return FALSE;
 }
 #endif

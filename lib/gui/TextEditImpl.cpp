@@ -26,7 +26,7 @@ Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdi
     }
 #endif
     Window::Handle win;
-    win._wdata<Window::Handle>(ptr(impl));
+    win._wdata<Window::Handle>(z::ptr(impl));
     return win;
 }
 

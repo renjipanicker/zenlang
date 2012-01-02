@@ -1,4 +1,3 @@
-put everything in namespaces
 interpreter
 error-handling
 
@@ -197,3 +196,4 @@ length() function for container-expr.
 sizeof() function for types. (obsolete, no use case)
 "stlcpp" as output mode
 "cmake" as output project
+put everything in namespaces

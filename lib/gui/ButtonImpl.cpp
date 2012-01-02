@@ -31,7 +31,7 @@ Window::Handle Button::Create::run(const Window::Handle& parent, const Button::D
     Window::HandleImpl& impl = Window::Native::createChildWindow(hWnd, def, parent);
 #endif
     Window::Handle win;
-    win._wdata<Window::Handle>(ptr(impl));
+    win._wdata<Window::Handle>(z::ptr(impl));
     return win;
 }
 
@@ -40,7 +40,7 @@ static void onButtonClick(GtkMenuItem* item, gpointer phandler) {
     unused(item);
     Button::OnClick::Handler* handler = static_cast<Button::OnClick::Handler*>(phandler);
     Button::OnClick::Handler::_In in;
-    ref(handler)._run(in);
+    z::ref(handler)._run(in);
 }
 #endif
 

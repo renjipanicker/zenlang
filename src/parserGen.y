@@ -16,7 +16,7 @@
 %token_prefix ZENTOK_
 
 %syntax_error {
-    throw Exception("%s Syntax error at token: %d (%s)\n", err(ref(pctx).filename(), TOKEN).c_str(), TOKEN.id(), TOKEN.text());
+    throw z::Exception("%s Syntax error at token: %d (%s)\n", err(z::ref(pctx).filename(), TOKEN).c_str(), TOKEN.id(), TOKEN.text());
 }
 
 %parse_accept {
@@ -24,11 +24,11 @@
 }
 
 %parse_failure {
-//    throw z::exception(z::string::creator("%{err} Parse error").arg(z::any("err"), z::any(z::string(ref(pctx).err(TOKEN)))).value());
+//    throw z::exception(z::string::creator("%{err} Parse error").arg(z::any("err"), z::any(z::string(z::ref(pctx).err(TOKEN)))).value());
 }
 
 %stack_overflow {
-//    throw z::exception(z::string::creator("%{err} Stack overflow error").arg(z::any("err"), z::any(ref(pctx).err())).value());
+//    throw z::exception(z::string::creator("%{err} Stack overflow error").arg(z::any("err"), z::any(z::ref(pctx).err())).value());
 }
 
 %token_destructor {
@@ -84,7 +84,7 @@ rstart ::= rSubStart EOF.
 rSubStart ::= rUnitStatementList.
 
 //-------------------------------------------------
-rUnitStatementList ::= rImportStatementList rNamespaceStatement(N) rGlobalStatementList. {ref(pctx).aUnitStatementList(ref(N));}
+rUnitStatementList ::= rImportStatementList rNamespaceStatement(N) rGlobalStatementList. {z::ref(pctx).aUnitStatementList(z::ref(N));}
 
 //-------------------------------------------------
 // list of statements to specify imports
@@ -92,13 +92,13 @@ rImportStatementList ::= rImportStatementList rImportStatement.
 rImportStatementList ::= .
 
 //-------------------------------------------------
-rImportStatement ::= rHeaderType(headerType) rImportNamespaceList(L) rDefinitionType(defType) rOptionalAccessType(A) SEMI(B). {ref(pctx).aImportStatement(B, A, headerType, defType, ref(L));}
+rImportStatement ::= rHeaderType(headerType) rImportNamespaceList(L) rDefinitionType(defType) rOptionalAccessType(A) SEMI(B). {z::ref(pctx).aImportStatement(B, A, headerType, defType, z::ref(L));}
 
 //-------------------------------------------------
 // import namespace list
 %type rImportNamespaceList {Ast::NamespaceList*}
-rImportNamespaceList(L) ::= rImportNamespaceList(R) SCOPE rAnyId(name). {L = ref(pctx).aImportNamespaceList(ref(R), name);}
-rImportNamespaceList(L) ::=                               rAnyId(name). {L = ref(pctx).aImportNamespaceList(name);}
+rImportNamespaceList(L) ::= rImportNamespaceList(R) SCOPE rAnyId(name). {L = z::ref(pctx).aImportNamespaceList(z::ref(R), name);}
+rImportNamespaceList(L) ::=                               rAnyId(name). {L = z::ref(pctx).aImportNamespaceList(name);}
 
 //-------------------------------------------------
 // access specifiers
@@ -115,14 +115,14 @@ rHeaderType(L) ::= IMPORT.    {L = Ast::HeaderType::Import;}
 //-------------------------------------------------
 // namespace statement
 %type rNamespaceStatement {Ast::EnterNamespaceStatement*}
-rNamespaceStatement(L) ::= NAMESPACE(B) rUnitNamespaceList(R) SEMI. {L = ref(pctx).aNamespaceStatement(B, ref(R));}
-rNamespaceStatement(L) ::=                                        . {L = ref(pctx).aNamespaceStatement();}
+rNamespaceStatement(L) ::= NAMESPACE(B) rUnitNamespaceList(R) SEMI. {L = z::ref(pctx).aNamespaceStatement(B, z::ref(R));}
+rNamespaceStatement(L) ::=                                        . {L = z::ref(pctx).aNamespaceStatement();}
 
 //-------------------------------------------------
 // namespace list
 %type rUnitNamespaceList {Ast::NamespaceList*}
-rUnitNamespaceList(L) ::= rUnitNamespaceList(R) SCOPE rAnyId(name). {L = ref(pctx).aUnitNamespaceList(ref(R), name);}
-rUnitNamespaceList(L) ::=                             rAnyId(name). {L = ref(pctx).aUnitNamespaceList(name);}
+rUnitNamespaceList(L) ::= rUnitNamespaceList(R) SCOPE rAnyId(name). {L = z::ref(pctx).aUnitNamespaceList(z::ref(R), name);}
+rUnitNamespaceList(L) ::=                             rAnyId(name). {L = z::ref(pctx).aUnitNamespaceList(name);}
 
 //-------------------------------------------------
 rAnyId(L) ::= ID(R).            {L = R;}
@@ -144,8 +144,8 @@ rGlobalStatement ::= rGlobalDefaultStatement.
 
 //-------------------------------------------------
 %type rGlobalTypeSpecStatement {Ast::Statement*}
-rGlobalTypeSpecStatement(L) ::= rAccessType(accessType) rTypeSpecDef(typeSpec). {L = ref(pctx).aGlobalTypeSpecStatement(accessType, ref(typeSpec));}
-rGlobalTypeSpecStatement(L) ::= rInnerStatement(R).                             {L = ref(pctx).aGlobalStatement(ref(R));}
+rGlobalTypeSpecStatement(L) ::= rAccessType(accessType) rTypeSpecDef(typeSpec). {L = z::ref(pctx).aGlobalTypeSpecStatement(accessType, z::ref(typeSpec));}
+rGlobalTypeSpecStatement(L) ::= rInnerStatement(R).                             {L = z::ref(pctx).aGlobalStatement(z::ref(R));}
 
 //-------------------------------------------------
 // access specifiers
@@ -157,15 +157,15 @@ rAccessType(L) ::= EXTERNAL.  {L = Ast::AccessType::External;}
 
 //-------------------------------------------------
 // coercion statements
-rGlobalCoerceStatement ::= COERCE rCoerceList(T) SEMI. {ref(pctx).aGlobalCoerceStatement(ref(T));}
+rGlobalCoerceStatement ::= COERCE rCoerceList(T) SEMI. {z::ref(pctx).aGlobalCoerceStatement(z::ref(T));}
 
 %type rCoerceList {Ast::CoerceList*}
-rCoerceList(L) ::= rCoerceList(R) LINK rTypeSpec(T). {L = ref(pctx).aCoerceList(ref(R), ref(T));}
-rCoerceList(L) ::=                     rTypeSpec(T). {L = ref(pctx).aCoerceList(ref(T));}
+rCoerceList(L) ::= rCoerceList(R) LINK rTypeSpec(T). {L = z::ref(pctx).aCoerceList(z::ref(R), z::ref(T));}
+rCoerceList(L) ::=                     rTypeSpec(T). {L = z::ref(pctx).aCoerceList(z::ref(T));}
 
 //-------------------------------------------------
 // default values for types
-rGlobalDefaultStatement ::= DEFAULT rTypeSpec(T) ASSIGNEQUAL rExpr(E) SEMI. {ref(pctx).aGlobalDefaultStatement(ref(T), ref(E));}
+rGlobalDefaultStatement ::= DEFAULT rTypeSpec(T) ASSIGNEQUAL rExpr(E) SEMI. {z::ref(pctx).aGlobalDefaultStatement(z::ref(T), z::ref(E));}
 
 //-------------------------------------------------
 // definition specifiers
@@ -216,7 +216,7 @@ rTypedefDecl(L) ::= rPreTypedefDecl(R) SEMI. {L = R;}
 //-------------------------------------------------
 // this pre- mechanism is required to force the action to get executed before the end-of-line.
 %type rPreTypedefDecl {Ast::TypedefDecl*}
-rPreTypedefDecl(L) ::= TYPEDEF ID(name) rDefinitionType(D). {L = ref(pctx).aTypedefDecl(name, D);}
+rPreTypedefDecl(L) ::= TYPEDEF ID(name) rDefinitionType(D). {L = z::ref(pctx).aTypedefDecl(name, D);}
 
 //-------------------------------------------------
 // typedef definition
@@ -224,7 +224,7 @@ rPreTypedefDecl(L) ::= TYPEDEF ID(name) rDefinitionType(D). {L = ref(pctx).aType
 rTypedefDefn(L) ::= rPreTypedefDefn(R) SEMI. {L = R;}
 
 %type rPreTypedefDefn {Ast::TypedefDefn*}
-rPreTypedefDefn(L) ::= TYPEDEF ID(name) rQualifiedTypeSpec(Q) rDefinitionType(D). {L = ref(pctx).aTypedefDefn(name, D, ref(Q));}
+rPreTypedefDefn(L) ::= TYPEDEF ID(name) rQualifiedTypeSpec(Q) rDefinitionType(D). {L = z::ref(pctx).aTypedefDefn(name, D, z::ref(Q));}
 
 //-------------------------------------------------
 // template declarations
@@ -233,12 +233,12 @@ rTemplateDecl(L) ::= rPreTemplateDecl(R) SEMI. {L = R;}
 
 //-------------------------------------------------
 %type rPreTemplateDecl {Ast::TemplateDecl*}
-rPreTemplateDecl(L) ::= TEMPLATE LT rTemplatePartList(list) GT ID(name) rDefinitionType(D). {L = ref(pctx).aTemplateDecl(name, D, ref(list));}
+rPreTemplateDecl(L) ::= TEMPLATE LT rTemplatePartList(list) GT ID(name) rDefinitionType(D). {L = z::ref(pctx).aTemplateDecl(name, D, z::ref(list));}
 
 //-------------------------------------------------
 %type rTemplatePartList {Ast::TemplatePartList*}
-rTemplatePartList(L) ::= rTemplatePartList(R) COMMA ID(name). {L = ref(pctx).aTemplatePartList(ref(R), name);}
-rTemplatePartList(L) ::=                            ID(name). {L = ref(pctx).aTemplatePartList(name);}
+rTemplatePartList(L) ::= rTemplatePartList(R) COMMA ID(name). {L = z::ref(pctx).aTemplatePartList(z::ref(R), name);}
+rTemplatePartList(L) ::=                            ID(name). {L = z::ref(pctx).aTemplatePartList(name);}
 
 //-------------------------------------------------
 // enum declaration
@@ -247,7 +247,7 @@ rEnumDecl(L) ::= rPreEnumDecl(R) SEMI. {L = R;}
 
 //-------------------------------------------------
 %type rPreEnumDecl {Ast::EnumDefn*}
-rPreEnumDecl(L) ::= ENUM ID(name) rDefinitionType(D). {L = ref(pctx).aEnumDefn(name, D);}
+rPreEnumDecl(L) ::= ENUM ID(name) rDefinitionType(D). {L = z::ref(pctx).aEnumDefn(name, D);}
 
 //-------------------------------------------------
 // enum definition
@@ -256,17 +256,17 @@ rEnumDefn(L) ::= rPreEnumDefn(R) SEMI. {L = R;}
 
 //-------------------------------------------------
 %type rPreEnumDefn {Ast::EnumDefn*}
-rPreEnumDefn(L) ::= ENUM ID(name) rDefinitionType(D) LCURLY rEnumMemberDefnList(list) RCURLY. {L = ref(pctx).aEnumDefn(name, D, ref(list));}
+rPreEnumDefn(L) ::= ENUM ID(name) rDefinitionType(D) LCURLY rEnumMemberDefnList(list) RCURLY. {L = z::ref(pctx).aEnumDefn(name, D, z::ref(list));}
 
 //-------------------------------------------------
 %type rEnumMemberDefnList {Ast::Scope*}
-rEnumMemberDefnList(L) ::= rEnumMemberDefnList(list) rEnumMemberDefn(enumMemberDef). {L = ref(pctx).aEnumMemberDefnList(ref(list), ref(enumMemberDef));}
-rEnumMemberDefnList(L) ::=                           rEnumMemberDefn(enumMemberDef). {L = ref(pctx).aEnumMemberDefnList(ref(enumMemberDef));}
+rEnumMemberDefnList(L) ::= rEnumMemberDefnList(list) rEnumMemberDefn(enumMemberDef). {L = z::ref(pctx).aEnumMemberDefnList(z::ref(list), z::ref(enumMemberDef));}
+rEnumMemberDefnList(L) ::=                           rEnumMemberDefn(enumMemberDef). {L = z::ref(pctx).aEnumMemberDefnList(z::ref(enumMemberDef));}
 
 //-------------------------------------------------
 %type rEnumMemberDefn {Ast::VariableDefn*}
-rEnumMemberDefn(L) ::= ID(name)                      SEMI. {L = ref(pctx).aEnumMemberDefn(name);}
-rEnumMemberDefn(L) ::= ID(name) ASSIGNEQUAL rExpr(I) SEMI. {L = ref(pctx).aEnumMemberDefn(name, ref(I));}
+rEnumMemberDefn(L) ::= ID(name)                      SEMI. {L = z::ref(pctx).aEnumMemberDefn(name);}
+rEnumMemberDefn(L) ::= ID(name) ASSIGNEQUAL rExpr(I) SEMI. {L = z::ref(pctx).aEnumMemberDefn(name, z::ref(I));}
 
 //-------------------------------------------------
 // struct declarations
@@ -275,7 +275,7 @@ rStructDecl(L) ::= rPreStructDecl(R) SEMI. {L = R;}
 
 //-------------------------------------------------
 %type rPreStructDecl {Ast::StructDecl*}
-rPreStructDecl(L) ::= STRUCT rStructId(name) rDefinitionType(D). {L = ref(pctx).aStructDecl(name, D);}
+rPreStructDecl(L) ::= STRUCT rStructId(name) rDefinitionType(D). {L = z::ref(pctx).aStructDecl(name, D);}
 
 //-------------------------------------------------
 // root struct definitions
@@ -284,7 +284,7 @@ rRootStructDefn(L) ::= rPreRootStructDefn(R) SEMI. {L = R;}
 
 //-------------------------------------------------
 %type rPreRootStructDefn {Ast::RootStructDefn*}
-rPreRootStructDefn(L) ::= rEnterRootStructDefn(S) rStructMemberDefnBlock. {L = ref(pctx).aLeaveRootStructDefn(ref(S));}
+rPreRootStructDefn(L) ::= rEnterRootStructDefn(S) rStructMemberDefnBlock. {L = z::ref(pctx).aLeaveRootStructDefn(z::ref(S));}
 
 //-------------------------------------------------
 // child struct definitions
@@ -293,15 +293,15 @@ rChildStructDefn(L) ::= rPreChildStructDefn(R) SEMI. {L = R;}
 
 //-------------------------------------------------
 %type rPreChildStructDefn {Ast::ChildStructDefn*}
-rPreChildStructDefn(L) ::= rEnterChildStructDefn(S) rStructMemberDefnBlock. {L = ref(pctx).aLeaveChildStructDefn(ref(S));}
+rPreChildStructDefn(L) ::= rEnterChildStructDefn(S) rStructMemberDefnBlock. {L = z::ref(pctx).aLeaveChildStructDefn(z::ref(S));}
 
 //-------------------------------------------------
 %type rEnterRootStructDefn {Ast::RootStructDefn*}
-rEnterRootStructDefn(L) ::= STRUCT rStructId(name) rExDefinitionType(D). {L = ref(pctx).aEnterRootStructDefn(name, D);}
+rEnterRootStructDefn(L) ::= STRUCT rStructId(name) rExDefinitionType(D). {L = z::ref(pctx).aEnterRootStructDefn(name, D);}
 
 //-------------------------------------------------
 %type rEnterChildStructDefn {Ast::ChildStructDefn*}
-rEnterChildStructDefn(L) ::= STRUCT rStructId(name) COLON rStructTypeSpec(B) rExDefinitionType(D). {L = ref(pctx).aEnterChildStructDefn(name, ref(B), D);}
+rEnterChildStructDefn(L) ::= STRUCT rStructId(name) COLON rStructTypeSpec(B) rExDefinitionType(D). {L = z::ref(pctx).aEnterChildStructDefn(name, z::ref(B), D);}
 
 //-------------------------------------------------
 rStructId(L) ::= STRUCT_TYPE(R). {L = R;}
@@ -316,15 +316,15 @@ rStructMemberDefnList ::= rStructMemberDefnList rStructMemberDefn.
 rStructMemberDefnList ::=                       rStructMemberDefn.
 
 //-------------------------------------------------
-rStructMemberDefn ::= rVariableDefn(R) SEMI.  {ref(pctx).aStructMemberVariableDefn(ref(R));}
-rStructMemberDefn ::= rBasicTypeSpecDef(R).   {ref(pctx).aStructMemberTypeDefn(ref(R));}
-rStructMemberDefn ::= rStructPropertyDecl(R). {ref(pctx).aStructMemberPropertyDefn(ref(R));}
+rStructMemberDefn ::= rVariableDefn(R) SEMI.  {z::ref(pctx).aStructMemberVariableDefn(z::ref(R));}
+rStructMemberDefn ::= rBasicTypeSpecDef(R).   {z::ref(pctx).aStructMemberTypeDefn(z::ref(R));}
+rStructMemberDefn ::= rStructPropertyDecl(R). {z::ref(pctx).aStructMemberPropertyDefn(z::ref(R));}
 
 //-------------------------------------------------
 // struct index declarations
 %type rStructPropertyDecl {Ast::PropertyDecl*}
-rStructPropertyDecl(L) ::= PROPERTY(B) rQualifiedTypeSpec(T) ID(N) rDefinitionType(D) GET SET SEMI. {L = ref(pctx).aStructPropertyDeclRW(B, ref(T), N, D);}
-rStructPropertyDecl(L) ::= PROPERTY(B) rQualifiedTypeSpec(T) ID(N) rDefinitionType(D) GET     SEMI. {L = ref(pctx).aStructPropertyDeclRO(B, ref(T), N, D);}
+rStructPropertyDecl(L) ::= PROPERTY(B) rQualifiedTypeSpec(T) ID(N) rDefinitionType(D) GET SET SEMI. {L = z::ref(pctx).aStructPropertyDeclRW(B, z::ref(T), N, D);}
+rStructPropertyDecl(L) ::= PROPERTY(B) rQualifiedTypeSpec(T) ID(N) rDefinitionType(D) GET     SEMI. {L = z::ref(pctx).aStructPropertyDeclRO(B, z::ref(T), N, D);}
 
 //-------------------------------------------------
 // routine declarations
@@ -333,8 +333,8 @@ rRoutineDecl(L) ::= rPreRoutineDecl(R) SEMI. {L = R;}
 
 //-------------------------------------------------
 %type rPreRoutineDecl {Ast::RoutineDecl*}
-rPreRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) rInParamsList(in) rDefinitionType(D). {L = ref(pctx).aRoutineDecl(ref(out), name, ref(in), D);}
-rPreRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) LBRACKET ELIPSIS RBRACKET NATIVE. {L = ref(pctx).aVarArgRoutineDecl(ref(out), name, Ast::DefinitionType::Native);}
+rPreRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) rInParamsList(in) rDefinitionType(D). {L = z::ref(pctx).aRoutineDecl(z::ref(out), name, z::ref(in), D);}
+rPreRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) LBRACKET ELIPSIS RBRACKET NATIVE. {L = z::ref(pctx).aVarArgRoutineDecl(z::ref(out), name, Ast::DefinitionType::Native);}
 
 //-------------------------------------------------
 // routine definition
@@ -343,136 +343,136 @@ rRoutineDefn(L) ::= rPreRoutineDefn(R). {L = R;}
 
 //-------------------------------------------------
 %type rPreRoutineDefn {Ast::RoutineDefn*}
-rPreRoutineDefn(L) ::= rEnterRoutineDefn(routineDefn) rCompoundStatement(block). {L = ref(pctx).aRoutineDefn(ref(routineDefn), ref(block));}
+rPreRoutineDefn(L) ::= rEnterRoutineDefn(routineDefn) rCompoundStatement(block). {L = z::ref(pctx).aRoutineDefn(z::ref(routineDefn), z::ref(block));}
 
 //-------------------------------------------------
 %type rEnterRoutineDefn {Ast::RoutineDefn*}
-rEnterRoutineDefn(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) rInParamsList(in) rDefinitionType(D). {L = ref(pctx).aEnterRoutineDefn(ref(out), name, ref(in), D);}
+rEnterRoutineDefn(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) rInParamsList(in) rDefinitionType(D). {L = z::ref(pctx).aEnterRoutineDefn(z::ref(out), name, z::ref(in), D);}
 rRoutineId(L) ::= ID(R). {L = R;}
 rRoutineId(L) ::= ROUTINE_TYPE(R). {L = R;}
 
 //-------------------------------------------------
 // function definition
 %type rFunctionDecl {Ast::FunctionDecl*}
-rFunctionDecl(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType) SEMI. {L = ref(pctx).aFunctionDecl(ref(functionSig), defType);}
+rFunctionDecl(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType) SEMI. {L = z::ref(pctx).aFunctionDecl(z::ref(functionSig), defType);}
 
 //-------------------------------------------------
 // root function declarations
 %type rRootFunctionDefn {Ast::RootFunctionDefn*}
-rRootFunctionDefn(L) ::= rEnterRootFunctionDefn(functionDefn) rCompoundStatement(block). {L = ref(pctx).aRootFunctionDefn(ref(functionDefn), ref(block));}
+rRootFunctionDefn(L) ::= rEnterRootFunctionDefn(functionDefn) rCompoundStatement(block). {L = z::ref(pctx).aRootFunctionDefn(z::ref(functionDefn), z::ref(block));}
 
 //-------------------------------------------------
 %type rEnterRootFunctionDefn {Ast::RootFunctionDefn*}
-rEnterRootFunctionDefn(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType). {L = ref(pctx).aEnterRootFunctionDefn(ref(functionSig), defType);}
+rEnterRootFunctionDefn(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType). {L = z::ref(pctx).aEnterRootFunctionDefn(z::ref(functionSig), defType);}
 
 //-------------------------------------------------
 // child function declaration
 %type rChildFunctionDefn {Ast::ChildFunctionDefn*}
-rChildFunctionDefn(L) ::= rEnterChildFunctionDefn(functionImpl) rCompoundStatement(block). {L = ref(pctx).aChildFunctionDefn(ref(functionImpl), ref(block));}
+rChildFunctionDefn(L) ::= rEnterChildFunctionDefn(functionImpl) rCompoundStatement(block). {L = z::ref(pctx).aChildFunctionDefn(z::ref(functionImpl), z::ref(block));}
 
 //-------------------------------------------------
 %type rEnterChildFunctionDefn {Ast::ChildFunctionDefn*}
-rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType). {L = ref(pctx).aEnterChildFunctionDefn(ref(base), name, defType);}
+rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType). {L = z::ref(pctx).aEnterChildFunctionDefn(z::ref(base), name, defType);}
 
 //-------------------------------------------------
 // event declarations
 %type rEventDecl {Ast::EventDecl*}
-rEventDecl(L) ::= EVENT(B) LBRACKET rVariableDefn(in) RBRACKET rDefinitionType(ED) LINK rFunctionSig(functionSig) rAbstractDefinitionType(HD) SEMI. {L = ref(pctx).aEventDecl(B, ref(in), ED, ref(functionSig), HD);}
+rEventDecl(L) ::= EVENT(B) LBRACKET rVariableDefn(in) RBRACKET rDefinitionType(ED) LINK rFunctionSig(functionSig) rAbstractDefinitionType(HD) SEMI. {L = z::ref(pctx).aEventDecl(B, z::ref(in), ED, z::ref(functionSig), HD);}
 
 //-------------------------------------------------
 // function signature.
 %type rFunctionSig {Ast::FunctionSig*}
-rFunctionSig(T) ::= FUNCTION rParamsList(out)        ID(name) rInParamsList(in). {T = ref(pctx).aFunctionSig(ref(out), name, ref(in));}
-rFunctionSig(T) ::= FUNCTION rQualifiedTypeSpec(out) ID(name) rInParamsList(in). {T = ref(pctx).aFunctionSig(ref(out), name, ref(in));}
+rFunctionSig(T) ::= FUNCTION rParamsList(out)        ID(name) rInParamsList(in). {T = z::ref(pctx).aFunctionSig(z::ref(out), name, z::ref(in));}
+rFunctionSig(T) ::= FUNCTION rQualifiedTypeSpec(out) ID(name) rInParamsList(in). {T = z::ref(pctx).aFunctionSig(z::ref(out), name, z::ref(in));}
 
 //-------------------------------------------------
 // in parameter list
 %type rInParamsList {Ast::Scope*}
-rInParamsList(L) ::= rParamsList(scope). {L = ref(pctx).aInParamsList(ref(scope));}
+rInParamsList(L) ::= rParamsList(scope). {L = z::ref(pctx).aInParamsList(z::ref(scope));}
 
 //-------------------------------------------------
 // parameter lists
 %type rParamsList {Ast::Scope*}
-rParamsList(L) ::= LBRACKET rParam(R)                    RBRACKET. {L = ref(pctx).aParamsList(ref(R));}
-//rParamsList(L) ::= LBRACKET rParam(R) COMMA rPosParam(P) RBRACKET. {L = ref(pctx).aParamsList(ref(R), ref(P));}
+rParamsList(L) ::= LBRACKET rParam(R)                    RBRACKET. {L = z::ref(pctx).aParamsList(z::ref(R));}
+//rParamsList(L) ::= LBRACKET rParam(R) COMMA rPosParam(P) RBRACKET. {L = z::ref(pctx).aParamsList(z::ref(R), z::ref(P));}
 
 //-------------------------------------------------
 // variable lists
 %type rParam {Ast::Scope*}
-rParam(L) ::= rParam(list) COMMA rVariableDefn(variableDef). {L = ref(pctx).aParam(ref(list), ref(variableDef));}
-rParam(L) ::=                    rVariableDefn(variableDef). {L = ref(pctx).aParam(ref(variableDef));}
-rParam(L) ::= .                                              {L = ref(pctx).aParam();}
+rParam(L) ::= rParam(list) COMMA rVariableDefn(variableDef). {L = z::ref(pctx).aParam(z::ref(list), z::ref(variableDef));}
+rParam(L) ::=                    rVariableDefn(variableDef). {L = z::ref(pctx).aParam(z::ref(variableDef));}
+rParam(L) ::= .                                              {L = z::ref(pctx).aParam();}
 
 //-------------------------------------------------
 // positional parameter list
 //%type rPosParam {Ast::Scope*}
-//rPosParam(L) ::= rPosParam(list) COMMA rPosVariableDefn(variableDef). {L = ref(pctx).aParam(ref(list), ref(variableDef));}
-//rPosParam(L) ::=                       rPosVariableDefn(variableDef). {L = ref(pctx).aParam(ref(variableDef));}
+//rPosParam(L) ::= rPosParam(list) COMMA rPosVariableDefn(variableDef). {L = z::ref(pctx).aParam(z::ref(list), z::ref(variableDef));}
+//rPosParam(L) ::=                       rPosVariableDefn(variableDef). {L = z::ref(pctx).aParam(z::ref(variableDef));}
 
 //-------------------------------------------------
 // positional variable def
 //%type rPosVariableDefn {const Ast::VariableDefn*}
-//rPosVariableDefn(L) ::= rAutoQualifiedVariableDefn       ID(name) COLON rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
-//rPosVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) COLON rExpr(initExpr). {L = ref(pctx).aVariableDefn(ref(qTypeRef), name, ref(initExpr));}
+//rPosVariableDefn(L) ::= rAutoQualifiedVariableDefn       ID(name) COLON rExpr(initExpr). {L = z::ref(pctx).aVariableDefn(name, z::ref(initExpr));}
+//rPosVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) COLON rExpr(initExpr). {L = z::ref(pctx).aVariableDefn(z::ref(qTypeRef), name, z::ref(initExpr));}
 
 //-------------------------------------------------
 // variable def
 %type rVariableDefn {const Ast::VariableDefn*}
-rVariableDefn(L) ::= rAutoQualifiedVariableDefn       ID(name) ASSIGNEQUAL rExpr(initExpr). {L = ref(pctx).aVariableDefn(name, ref(initExpr));}
-rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name).                             {L = ref(pctx).aVariableDefn(ref(qTypeRef), name);}
-rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) ASSIGNEQUAL rExpr(initExpr). {L = ref(pctx).aVariableDefn(ref(qTypeRef), name, ref(initExpr));}
+rVariableDefn(L) ::= rAutoQualifiedVariableDefn       ID(name) ASSIGNEQUAL rExpr(initExpr). {L = z::ref(pctx).aVariableDefn(name, z::ref(initExpr));}
+rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name).                             {L = z::ref(pctx).aVariableDefn(z::ref(qTypeRef), name);}
+rVariableDefn(L) ::= rQualifiedVariableDefn(qTypeRef) ID(name) ASSIGNEQUAL rExpr(initExpr). {L = z::ref(pctx).aVariableDefn(z::ref(qTypeRef), name, z::ref(initExpr));}
 
 //-------------------------------------------------
 // qualified variable def
 %type rQualifiedVariableDefn {const Ast::QualifiedTypeSpec*}
-rQualifiedVariableDefn(L) ::= rQualifiedTypeSpec(R). {L = ref(pctx).aQualifiedVariableDefn(ref(R));}
+rQualifiedVariableDefn(L) ::= rQualifiedTypeSpec(R). {L = z::ref(pctx).aQualifiedVariableDefn(z::ref(R));}
 
 //-------------------------------------------------
 // auto qualified variable def
-rAutoQualifiedVariableDefn ::= AUTO. {ref(pctx).aAutoQualifiedVariableDefn();}
+rAutoQualifiedVariableDefn ::= AUTO. {z::ref(pctx).aAutoQualifiedVariableDefn();}
 
 //-------------------------------------------------
 // qualified types
 %type rQualifiedTypeSpec {const Ast::QualifiedTypeSpec*}
-rQualifiedTypeSpec(L) ::=          rTypeSpec(typeSpec).               {L = ref(pctx).aQualifiedTypeSpec(false, ref(typeSpec), false);}
-rQualifiedTypeSpec(L) ::=          rTypeSpec(typeSpec) BITWISEAND(B). {L = ref(pctx).aQualifiedTypeSpec(B, false, ref(typeSpec), true );}
-rQualifiedTypeSpec(L) ::= CONST(B) rTypeSpec(typeSpec).               {L = ref(pctx).aQualifiedTypeSpec(B, true,  ref(typeSpec), false);}
-rQualifiedTypeSpec(L) ::= CONST(B) rTypeSpec(typeSpec) BITWISEAND.    {L = ref(pctx).aQualifiedTypeSpec(B, true,  ref(typeSpec), true );}
+rQualifiedTypeSpec(L) ::=          rTypeSpec(typeSpec).               {L = z::ref(pctx).aQualifiedTypeSpec(false, z::ref(typeSpec), false);}
+rQualifiedTypeSpec(L) ::=          rTypeSpec(typeSpec) BITWISEAND(B). {L = z::ref(pctx).aQualifiedTypeSpec(B, false, z::ref(typeSpec), true );}
+rQualifiedTypeSpec(L) ::= CONST(B) rTypeSpec(typeSpec).               {L = z::ref(pctx).aQualifiedTypeSpec(B, true,  z::ref(typeSpec), false);}
+rQualifiedTypeSpec(L) ::= CONST(B) rTypeSpec(typeSpec) BITWISEAND.    {L = z::ref(pctx).aQualifiedTypeSpec(B, true,  z::ref(typeSpec), true );}
 
 //-------------------------------------------------
 // "public" type references, can be invoked from other rules
 %type rTypeSpec {const Ast::TypeSpec*}
-rTypeSpec(L) ::= rPreTypeSpec(R). {L = ref(pctx).aTypeSpec(ref(R));}
+rTypeSpec(L) ::= rPreTypeSpec(R). {L = z::ref(pctx).aTypeSpec(z::ref(R));}
 rTypeSpec(L) ::= rTemplateDefnTypeSpec(R). {L = R;}
 
 //-------------------------------------------------
 %type rTemplateDefnTypeSpec {const Ast::TemplateDefn*}
-rTemplateDefnTypeSpec(L) ::= rTemplateTypeSpec(R) TLT rTemplateTypePartList(P) GT. {L = ref(pctx).aTemplateDefnTypeSpec(ref(R), ref(P));}
+rTemplateDefnTypeSpec(L) ::= rTemplateTypeSpec(R) TLT rTemplateTypePartList(P) GT. {L = z::ref(pctx).aTemplateDefnTypeSpec(z::ref(R), z::ref(P));}
 
 //-------------------------------------------------
 %type rTemplateTypePartList {Ast::TemplateTypePartList*}
-rTemplateTypePartList(L) ::= rTemplateTypePartList(R) COMMA rQualifiedTypeSpec(P). {L = ref(pctx).aTemplateTypePartList(ref(R), ref(P));}
-rTemplateTypePartList(L) ::=                                rQualifiedTypeSpec(P). {L = ref(pctx).aTemplateTypePartList(ref(P));}
+rTemplateTypePartList(L) ::= rTemplateTypePartList(R) COMMA rQualifiedTypeSpec(P). {L = z::ref(pctx).aTemplateTypePartList(z::ref(R), z::ref(P));}
+rTemplateTypePartList(L) ::=                                rQualifiedTypeSpec(P). {L = z::ref(pctx).aTemplateTypePartList(z::ref(P));}
 
 //-------------------------------------------------
 %type rTemplateTypeSpec {const Ast::TemplateDecl*}
-rTemplateTypeSpec(L) ::= rPreTemplateTypeSpec(R). {L = ref(pctx).aTemplateTypeSpec(ref(R));}
+rTemplateTypeSpec(L) ::= rPreTemplateTypeSpec(R). {L = z::ref(pctx).aTemplateTypeSpec(z::ref(R));}
 
 //-------------------------------------------------
 %type rStructTypeSpec {const Ast::StructDefn*}
-rStructTypeSpec(L) ::= rPreStructTypeSpec(R). {L = ref(pctx).aStructTypeSpec(ref(R));}
+rStructTypeSpec(L) ::= rPreStructTypeSpec(R). {L = z::ref(pctx).aStructTypeSpec(z::ref(R));}
 
 //-------------------------------------------------
 %type rRoutineTypeSpec {const Ast::Routine*}
-rRoutineTypeSpec(L) ::= rPreRoutineTypeSpec(R). {L = ref(pctx).aRoutineTypeSpec(ref(R));}
+rRoutineTypeSpec(L) ::= rPreRoutineTypeSpec(R). {L = z::ref(pctx).aRoutineTypeSpec(z::ref(R));}
 
 //-------------------------------------------------
 %type rFunctionTypeSpec {const Ast::Function*}
-rFunctionTypeSpec(L) ::= rPreFunctionTypeSpec(R). {L = ref(pctx).aFunctionTypeSpec(ref(R));}
+rFunctionTypeSpec(L) ::= rPreFunctionTypeSpec(R). {L = z::ref(pctx).aFunctionTypeSpec(z::ref(R));}
 
 //-------------------------------------------------
 %type rEventTypeSpec {const Ast::EventDecl*}
-rEventTypeSpec(L) ::= rPreEventTypeSpec(R). {L = ref(pctx).aEventTypeSpec(ref(R));}
+rEventTypeSpec(L) ::= rPreEventTypeSpec(R). {L = z::ref(pctx).aEventTypeSpec(z::ref(R));}
 
 //-------------------------------------------------
 // "private" type references, can be only called by the public equivalent rules
@@ -486,33 +486,33 @@ rPreTypeSpec(L) ::= rPreOtherTypeSpec(R).    {L = R;}
 
 //-------------------------------------------------
 %type rPreTemplateTypeSpec {const Ast::TemplateDecl*}
-rPreTemplateTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE TEMPLATE_TYPE(name). {L = ref(pctx).aTemplateTypeSpec(ref(parent), name);}
-rPreTemplateTypeSpec(L) ::=                            TEMPLATE_TYPE(name). {L = ref(pctx).aTemplateTypeSpec(name);}
+rPreTemplateTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE TEMPLATE_TYPE(name). {L = z::ref(pctx).aTemplateTypeSpec(z::ref(parent), name);}
+rPreTemplateTypeSpec(L) ::=                            TEMPLATE_TYPE(name). {L = z::ref(pctx).aTemplateTypeSpec(name);}
 
 //-------------------------------------------------
 %type rPreStructTypeSpec {const Ast::StructDefn*}
-rPreStructTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE STRUCT_TYPE(name). {L = ref(pctx).aStructTypeSpec(ref(parent), name);}
-rPreStructTypeSpec(L) ::=                            STRUCT_TYPE(name). {L = ref(pctx).aStructTypeSpec(name);}
+rPreStructTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE STRUCT_TYPE(name). {L = z::ref(pctx).aStructTypeSpec(z::ref(parent), name);}
+rPreStructTypeSpec(L) ::=                            STRUCT_TYPE(name). {L = z::ref(pctx).aStructTypeSpec(name);}
 
 //-------------------------------------------------
 %type rPreRoutineTypeSpec {const Ast::Routine*}
-rPreRoutineTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE ROUTINE_TYPE(name). {L = ref(pctx).aRoutineTypeSpec(ref(parent), name);}
-rPreRoutineTypeSpec(L) ::=                            ROUTINE_TYPE(name). {L = ref(pctx).aRoutineTypeSpec(name);}
+rPreRoutineTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE ROUTINE_TYPE(name). {L = z::ref(pctx).aRoutineTypeSpec(z::ref(parent), name);}
+rPreRoutineTypeSpec(L) ::=                            ROUTINE_TYPE(name). {L = z::ref(pctx).aRoutineTypeSpec(name);}
 
 //-------------------------------------------------
 %type rPreFunctionTypeSpec {const Ast::Function*}
-rPreFunctionTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(ref(parent), name);}
-rPreFunctionTypeSpec(L) ::=                            FUNCTION_TYPE(name). {L = ref(pctx).aFunctionTypeSpec(name);}
+rPreFunctionTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE FUNCTION_TYPE(name). {L = z::ref(pctx).aFunctionTypeSpec(z::ref(parent), name);}
+rPreFunctionTypeSpec(L) ::=                            FUNCTION_TYPE(name). {L = z::ref(pctx).aFunctionTypeSpec(name);}
 
 //-------------------------------------------------
 %type rPreEventTypeSpec {const Ast::EventDecl*}
-rPreEventTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE EVENT_TYPE(name). {L = ref(pctx).aEventTypeSpec(ref(parent), name);}
-rPreEventTypeSpec(L) ::=                            EVENT_TYPE(name). {L = ref(pctx).aEventTypeSpec(name);}
+rPreEventTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE EVENT_TYPE(name). {L = z::ref(pctx).aEventTypeSpec(z::ref(parent), name);}
+rPreEventTypeSpec(L) ::=                            EVENT_TYPE(name). {L = z::ref(pctx).aEventTypeSpec(name);}
 
 //-------------------------------------------------
 %type rPreOtherTypeSpec {const Ast::TypeSpec*}
-rPreOtherTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE OTHER_TYPE(name). {L = ref(pctx).aOtherTypeSpec(ref(parent), name);}
-rPreOtherTypeSpec(L) ::=                            OTHER_TYPE(name). {L = ref(pctx).aOtherTypeSpec(name);}
+rPreOtherTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE OTHER_TYPE(name). {L = z::ref(pctx).aOtherTypeSpec(z::ref(parent), name);}
+rPreOtherTypeSpec(L) ::=                            OTHER_TYPE(name). {L = z::ref(pctx).aOtherTypeSpec(name);}
 
 //-------------------------------------------------
 // statements
@@ -537,102 +537,102 @@ rInnerStatement(L) ::= rCompoundStatement(R).            {L = R;}
 
 //-------------------------------------------------
 %type rUserDefinedTypeSpecStatement {Ast::UserDefinedTypeSpecStatement*}
-rUserDefinedTypeSpecStatement(L) ::= rTypeSpecDef(typeSpec). {L = ref(pctx).aUserDefinedTypeSpecStatement(ref(typeSpec));}
+rUserDefinedTypeSpecStatement(L) ::= rTypeSpecDef(typeSpec). {L = z::ref(pctx).aUserDefinedTypeSpecStatement(z::ref(typeSpec));}
 
 //-------------------------------------------------
 %type rAutoStatement {Ast::AutoStatement*}
-rAutoStatement(L) ::= rVariableDefn(defn) SEMI. {L = ref(pctx).aAutoStatement(ref(defn));}
+rAutoStatement(L) ::= rVariableDefn(defn) SEMI. {L = z::ref(pctx).aAutoStatement(z::ref(defn));}
 
 //-------------------------------------------------
 %type rExprStatement {Ast::ExprStatement*}
-rExprStatement(L) ::= rExpr(expr) SEMI. {L = ref(pctx).aExprStatement(ref(expr));}
+rExprStatement(L) ::= rExpr(expr) SEMI. {L = z::ref(pctx).aExprStatement(z::ref(expr));}
 
 //-------------------------------------------------
 %type rPrintStatement {Ast::PrintStatement*}
-rPrintStatement(L) ::= PRINT(B) rExpr(expr) SEMI. {L = ref(pctx).aPrintStatement(B, ref(expr));}
+rPrintStatement(L) ::= PRINT(B) rExpr(expr) SEMI. {L = z::ref(pctx).aPrintStatement(B, z::ref(expr));}
 
 //-------------------------------------------------
 %type rIfStatement {Ast::IfStatement*}
-rIfStatement(L) ::= IF(B) LBRACKET rExpr(expr) RBRACKET rCompoundStatement(tblock). {L = ref(pctx).aIfStatement(B, ref(expr), ref(tblock));}
+rIfStatement(L) ::= IF(B) LBRACKET rExpr(expr) RBRACKET rCompoundStatement(tblock). {L = z::ref(pctx).aIfStatement(B, z::ref(expr), z::ref(tblock));}
 
 //-------------------------------------------------
 %type rIfElseStatement {Ast::IfElseStatement*}
-rIfElseStatement(L) ::= IF(B) LBRACKET rExpr(expr) RBRACKET rCompoundStatement(tblock) ELSE rCompoundStatement(fblock). {L = ref(pctx).aIfElseStatement(B, ref(expr), ref(tblock), ref(fblock));}
+rIfElseStatement(L) ::= IF(B) LBRACKET rExpr(expr) RBRACKET rCompoundStatement(tblock) ELSE rCompoundStatement(fblock). {L = z::ref(pctx).aIfElseStatement(B, z::ref(expr), z::ref(tblock), z::ref(fblock));}
 
 //-------------------------------------------------
 %type rWhileStatement {Ast::WhileStatement*}
-rWhileStatement(L) ::= WHILE(B) LBRACKET rExpr(expr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aWhileStatement(B, ref(expr), ref(block));}
+rWhileStatement(L) ::= WHILE(B) LBRACKET rExpr(expr) RBRACKET rCompoundStatement(block). {L = z::ref(pctx).aWhileStatement(B, z::ref(expr), z::ref(block));}
 
 //-------------------------------------------------
 %type rDoWhileStatement {Ast::DoWhileStatement*}
-rDoWhileStatement(L) ::= DO(B) rCompoundStatement(block) WHILE LBRACKET rExpr(expr) RBRACKET SEMI. {L = ref(pctx).aDoWhileStatement(B, ref(expr), ref(block));}
+rDoWhileStatement(L) ::= DO(B) rCompoundStatement(block) WHILE LBRACKET rExpr(expr) RBRACKET SEMI. {L = z::ref(pctx).aDoWhileStatement(B, z::ref(expr), z::ref(block));}
 
 //-------------------------------------------------
 %type rForStatement {Ast::ForStatement*}
-rForStatement(L) ::= FOR(B) LBRACKET rExpr(init) SEMI rExpr(expr) SEMI rExpr(incr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aForStatement(B, ref(init), ref(expr), ref(incr), ref(block));}
-rForStatement(L) ::= FOR(B) LBRACKET rEnterForInit(init) SEMI rExpr(expr) SEMI rExpr(incr) RBRACKET rCompoundStatement(block). {L = ref(pctx).aForStatement(B, ref(init), ref(expr), ref(incr), ref(block));}
+rForStatement(L) ::= FOR(B) LBRACKET rExpr(init) SEMI rExpr(expr) SEMI rExpr(incr) RBRACKET rCompoundStatement(block). {L = z::ref(pctx).aForStatement(B, z::ref(init), z::ref(expr), z::ref(incr), z::ref(block));}
+rForStatement(L) ::= FOR(B) LBRACKET rEnterForInit(init) SEMI rExpr(expr) SEMI rExpr(incr) RBRACKET rCompoundStatement(block). {L = z::ref(pctx).aForStatement(B, z::ref(init), z::ref(expr), z::ref(incr), z::ref(block));}
 
 %type rEnterForInit {const Ast::VariableDefn*}
-rEnterForInit(L) ::= rVariableDefn(init). {L = ref(pctx).aEnterForInit(ref(init));}
+rEnterForInit(L) ::= rVariableDefn(init). {L = z::ref(pctx).aEnterForInit(z::ref(init));}
 
 //-------------------------------------------------
 %type rForeachStatement {Ast::ForeachStatement*}
-rForeachStatement(L) ::= FOREACH LBRACKET rEnterForeachInit(vdef) RBRACKET rCompoundStatement(block). {L = ref(pctx).aForeachStatement(ref(vdef), ref(block));}
+rForeachStatement(L) ::= FOREACH LBRACKET rEnterForeachInit(vdef) RBRACKET rCompoundStatement(block). {L = z::ref(pctx).aForeachStatement(z::ref(vdef), z::ref(block));}
 
 %type rEnterForeachInit {Ast::ForeachStatement*}
-rEnterForeachInit(L) ::= ID(I) IN rExpr(list). {L = ref(pctx).aEnterForeachInit(I, ref(list));}
-rEnterForeachInit(L) ::= ID(K) COMMA ID(V) IN rExpr(list). {L = ref(pctx).aEnterForeachInit(K, V, ref(list));}
+rEnterForeachInit(L) ::= ID(I) IN rExpr(list). {L = z::ref(pctx).aEnterForeachInit(I, z::ref(list));}
+rEnterForeachInit(L) ::= ID(K) COMMA ID(V) IN rExpr(list). {L = z::ref(pctx).aEnterForeachInit(K, V, z::ref(list));}
 
 //-------------------------------------------------
 %type rSwitchStatement {Ast::SwitchStatement*}
-rSwitchStatement(L) ::= SWITCH(B) LBRACKET rExpr(expr) RBRACKET LCURLY rCaseList(list) RCURLY. {L = ref(pctx).aSwitchStatement(B, ref(expr), ref(list));}
-rSwitchStatement(L) ::= SWITCH(B)                               LCURLY rCaseList(list) RCURLY. {L = ref(pctx).aSwitchStatement(B, ref(list));}
+rSwitchStatement(L) ::= SWITCH(B) LBRACKET rExpr(expr) RBRACKET LCURLY rCaseList(list) RCURLY. {L = z::ref(pctx).aSwitchStatement(B, z::ref(expr), z::ref(list));}
+rSwitchStatement(L) ::= SWITCH(B)                               LCURLY rCaseList(list) RCURLY. {L = z::ref(pctx).aSwitchStatement(B, z::ref(list));}
 
 //-------------------------------------------------
 %type rCaseList {Ast::CompoundStatement*}
-rCaseList(L) ::= rCaseList(R) rCaseStatement(S). {L = ref(pctx).aCaseList(ref(R), ref(S));}
-rCaseList(L) ::=              rCaseStatement(S). {L = ref(pctx).aCaseList(ref(S));}
+rCaseList(L) ::= rCaseList(R) rCaseStatement(S). {L = z::ref(pctx).aCaseList(z::ref(R), z::ref(S));}
+rCaseList(L) ::=              rCaseStatement(S). {L = z::ref(pctx).aCaseList(z::ref(S));}
 
 //-------------------------------------------------
 %type rCaseStatement {Ast::CaseStatement*}
-rCaseStatement(L) ::= CASE(B) rExpr(expr) COLON rCompoundStatement(block). {L = ref(pctx).aCaseStatement(B, ref(expr), ref(block));}
-rCaseStatement(L) ::= DEFAULT(B)          COLON rCompoundStatement(block). {L = ref(pctx).aCaseStatement(B, ref(block));}
+rCaseStatement(L) ::= CASE(B) rExpr(expr) COLON rCompoundStatement(block). {L = z::ref(pctx).aCaseStatement(B, z::ref(expr), z::ref(block));}
+rCaseStatement(L) ::= DEFAULT(B)          COLON rCompoundStatement(block). {L = z::ref(pctx).aCaseStatement(B, z::ref(block));}
 
 //-------------------------------------------------
 %type rBreakStatement {Ast::BreakStatement*}
-rBreakStatement(L) ::= BREAK(B) SEMI. {L = ref(pctx).aBreakStatement(B);}
+rBreakStatement(L) ::= BREAK(B) SEMI. {L = z::ref(pctx).aBreakStatement(B);}
 
 //-------------------------------------------------
 %type rContinueStatement {Ast::ContinueStatement*}
-rContinueStatement(L) ::= CONTINUE(B) SEMI. {L = ref(pctx).aContinueStatement(B);}
+rContinueStatement(L) ::= CONTINUE(B) SEMI. {L = z::ref(pctx).aContinueStatement(B);}
 
 //-------------------------------------------------
 %type rAddEventHandlerStatement {Ast::AddEventHandlerStatement*}
-rAddEventHandlerStatement(L) ::= rEnterAddEventHandler(E) LBRACKET(B) rExpr(X) RBRACKET LINK rAnonymousFunctionExpr(F) SEMI. {L = ref(pctx).aAddEventHandlerStatement(B, ref(E), ref(X), ref(F));}
+rAddEventHandlerStatement(L) ::= rEnterAddEventHandler(E) LBRACKET(B) rExpr(X) RBRACKET LINK rAnonymousFunctionExpr(F) SEMI. {L = z::ref(pctx).aAddEventHandlerStatement(B, z::ref(E), z::ref(X), z::ref(F));}
 
 //-------------------------------------------------
 %type rEnterAddEventHandler {const Ast::EventDecl*}
-rEnterAddEventHandler(L) ::= rEventTypeSpec(R). {L = ref(pctx).aEnterAddEventHandler(ref(R));}
+rEnterAddEventHandler(L) ::= rEventTypeSpec(R). {L = z::ref(pctx).aEnterAddEventHandler(z::ref(R));}
 
 //-------------------------------------------------
 %type rRoutineReturnStatement {Ast::RoutineReturnStatement*}
-rRoutineReturnStatement(L) ::= RRETURN(B)          SEMI. {L = ref(pctx).aRoutineReturnStatement(B);}
-rRoutineReturnStatement(L) ::= RRETURN(B) rExpr(S) SEMI. {L = ref(pctx).aRoutineReturnStatement(B, ref(S));}
+rRoutineReturnStatement(L) ::= RRETURN(B)          SEMI. {L = z::ref(pctx).aRoutineReturnStatement(B);}
+rRoutineReturnStatement(L) ::= RRETURN(B) rExpr(S) SEMI. {L = z::ref(pctx).aRoutineReturnStatement(B, z::ref(S));}
 
 //-------------------------------------------------
 %type rFunctionReturnStatement {Ast::FunctionReturnStatement*}
-rFunctionReturnStatement(L) ::= FRETURN(B) rExprsList(S) SEMI. {L = ref(pctx).aFunctionReturnStatement(B, ref(S));}
+rFunctionReturnStatement(L) ::= FRETURN(B) rExprsList(S) SEMI. {L = z::ref(pctx).aFunctionReturnStatement(B, z::ref(S));}
 
 //-------------------------------------------------
 // simple list of statements
 %type rCompoundStatement {Ast::CompoundStatement*}
 rCompoundStatement(L)   ::= rEnterCompoundStatement rStatementList(R) rLeaveCompoundStatement. {L = R;}
-rEnterCompoundStatement ::= LCURLY(B). {ref(pctx).aEnterCompoundStatement(B);}
-rLeaveCompoundStatement ::= RCURLY.    {ref(pctx).aLeaveCompoundStatement();}
+rEnterCompoundStatement ::= LCURLY(B). {z::ref(pctx).aEnterCompoundStatement(B);}
+rLeaveCompoundStatement ::= RCURLY.    {z::ref(pctx).aLeaveCompoundStatement();}
 
 %type rStatementList {Ast::CompoundStatement*}
-rStatementList(L) ::= rStatementList(list) rInnerStatement(statement). {L = ref(pctx).aStatementList(ref(list), ref(statement));}
-rStatementList(L) ::= .                                                {L = ref(pctx).aStatementList();}
+rStatementList(L) ::= rStatementList(list) rInnerStatement(statement). {L = z::ref(pctx).aStatementList(z::ref(list), z::ref(statement));}
+rStatementList(L) ::= .                                                {L = z::ref(pctx).aStatementList();}
 
 //-------------------------------------------------
 // expression list in brackets
@@ -642,9 +642,9 @@ rExprsList(L) ::= LBRACKET rExprList(R) RBRACKET. {L = R;}
 //-------------------------------------------------
 // comma-separated list of expressions
 %type rExprList {Ast::ExprList*}
-rExprList(R) ::= rExprList(L) COMMA rExpr(E). {R = ref(pctx).aExprList(ref(L), ref(E));}
-rExprList(R) ::=                    rExpr(E). {R = ref(pctx).aExprList(ref(E));}
-rExprList(R) ::= .                            {R = ref(pctx).aExprList();}
+rExprList(R) ::= rExprList(L) COMMA rExpr(E). {R = z::ref(pctx).aExprList(z::ref(L), z::ref(E));}
+rExprList(R) ::=                    rExpr(E). {R = z::ref(pctx).aExprList(z::ref(E));}
+rExprList(R) ::= .                            {R = z::ref(pctx).aExprList();}
 
 //-------------------------------------------------
 // expressions
@@ -673,238 +673,238 @@ rExpr(L) ::= rConstantExpr(R).          {L = R;}
 //-------------------------------------------------
 // It could be possible to implement creating local variables inline within expressions.
 // Not sure how to implement it in the generated code. Not a priority, so on hold for now.
-//rExpr(E) ::= ID(L) DEFINEEQUAL       rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(ref(L), z::string("="), ref(R)));}
+//rExpr(E) ::= ID(L) DEFINEEQUAL       rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(z::ref(L), z::string("="), z::ref(R)));}
 
 //-------------------------------------------------
 // ternary operators
 %type rTernaryExpr {const Ast::TernaryOpExpr*}
-rTernaryExpr(E) ::= rExpr(L) QUESTION(O1) rExpr(T) COLON(O2) rExpr(F). {E = ref(pctx).aTernaryExpr(O1, O2, ref(L), ref(T), ref(F));}
+rTernaryExpr(E) ::= rExpr(L) QUESTION(O1) rExpr(T) COLON(O2) rExpr(F). {E = z::ref(pctx).aTernaryExpr(O1, O2, z::ref(L), z::ref(T), z::ref(F));}
 
 //-------------------------------------------------
 // binary operators
 %type rBinaryExpr {const Ast::Expr*}
-rBinaryExpr(E) ::= rExpr(L) AND(O)             rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) OR(O)              rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) EQUAL(O)           rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) NOTEQUAL(O)        rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) LT(O)              rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) GT(O)              rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) LTE(O)             rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) GTE(O)             rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) HAS(O)             rExpr(R). {E = ptr(ref(pctx).aBooleanExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) ASSIGNEQUAL(O)     rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) TIMESEQUAL(O)      rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) DIVIDEEQUAL(O)     rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) MINUSEQUAL(O)      rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) PLUSEQUAL(O)       rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) MODEQUAL(O)        rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) SHIFTLEFTEQUAL(O)  rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) SHIFTRIGHTEQUAL(O) rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISEANDEQUAL(O) rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISEXOREQUAL(O) rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISEOREQUAL(O)  rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISEAND(O)      rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISEXOR(O)      rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISEOR(O)       rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISENOT(O)      rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) SHL(O)             rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) SHR(O)             rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) PLUS(O)            rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) MINUS(O)           rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) STAR(O)            rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) DIVIDE(O)          rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) MOD(O)             rExpr(R). {E = ptr(ref(pctx).aBinaryExpr(O, ref(L), ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) AND(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) OR(O)              rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) EQUAL(O)           rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) NOTEQUAL(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) LT(O)              rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) GT(O)              rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) LTE(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) GTE(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) HAS(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) ASSIGNEQUAL(O)     rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) TIMESEQUAL(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) DIVIDEEQUAL(O)     rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) MINUSEQUAL(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) PLUSEQUAL(O)       rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) MODEQUAL(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) SHIFTLEFTEQUAL(O)  rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) SHIFTRIGHTEQUAL(O) rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISEANDEQUAL(O) rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISEXOREQUAL(O) rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISEOREQUAL(O)  rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISEAND(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISEXOR(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISEOR(O)       rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISENOT(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) SHL(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) SHR(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) PLUS(O)            rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) MINUS(O)           rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) STAR(O)            rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) DIVIDE(O)          rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) MOD(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
 
 //-------------------------------------------------
 // postfix operators
 %type rPostfixExpr {const Ast::Expr*}
-rPostfixExpr(E) ::= rExpr(L) INC(O). {E = ptr(ref(pctx).aPostfixExpr(O, ref(L)));}
-rPostfixExpr(E) ::= rExpr(L) DEC(O). {E = ptr(ref(pctx).aPostfixExpr(O, ref(L)));}
+rPostfixExpr(E) ::= rExpr(L) INC(O). {E = z::ptr(z::ref(pctx).aPostfixExpr(O, z::ref(L)));}
+rPostfixExpr(E) ::= rExpr(L) DEC(O). {E = z::ptr(z::ref(pctx).aPostfixExpr(O, z::ref(L)));}
 
 //-------------------------------------------------
 // prefix operators
 %type rPrefixExpr {const Ast::Expr*}
-rPrefixExpr(E) ::= NOT(O)        rExpr(R). {E = ptr(ref(pctx).aPrefixExpr(O, ref(R)));}
-rPrefixExpr(E) ::= PLUS(O)       rExpr(R). {E = ptr(ref(pctx).aPrefixExpr(O, ref(R)));}
-rPrefixExpr(E) ::= MINUS(O)      rExpr(R). {E = ptr(ref(pctx).aPrefixExpr(O, ref(R)));}
-rPrefixExpr(E) ::= INC(O)        rExpr(R). {E = ptr(ref(pctx).aPrefixExpr(O, ref(R)));}
-rPrefixExpr(E) ::= DEC(O)        rExpr(R). {E = ptr(ref(pctx).aPrefixExpr(O, ref(R)));}
-rPrefixExpr(E) ::= BITWISENOT(O) rExpr(R). {E = ptr(ref(pctx).aPrefixExpr(O, ref(R)));}
+rPrefixExpr(E) ::= NOT(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixExpr(O, z::ref(R)));}
+rPrefixExpr(E) ::= PLUS(O)       rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixExpr(O, z::ref(R)));}
+rPrefixExpr(E) ::= MINUS(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixExpr(O, z::ref(R)));}
+rPrefixExpr(E) ::= INC(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixExpr(O, z::ref(R)));}
+rPrefixExpr(E) ::= DEC(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixExpr(O, z::ref(R)));}
+rPrefixExpr(E) ::= BITWISENOT(O) rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixExpr(O, z::ref(R)));}
 
 //-------------------------------------------------
 // string formatter
 %type rFormatExpr {Ast::FormatExpr*}
-rFormatExpr(L) ::= rExpr(A) AMP(B) rTreeExpr(T). {L = ref(pctx).aFormatExpr(B, ref(A), ref(T));}
+rFormatExpr(L) ::= rExpr(A) AMP(B) rTreeExpr(T). {L = z::ref(pctx).aFormatExpr(B, z::ref(A), z::ref(T));}
 
 //-------------------------------------------------
 // list expression
 %type rListExpr {Ast::ListExpr*}
-rListExpr(L) ::= rListList(R) RSQUARE(B). {L = ref(pctx).aListExpr(B, ref(R));}
+rListExpr(L) ::= rListList(R) RSQUARE(B). {L = z::ref(pctx).aListExpr(B, z::ref(R));}
 
 %type rListList {Ast::ListList*}
 rListList(L) ::= rListsList(R)      . {L = R;}
 rListList(L) ::= rListsList(R) COMMA. {L = R;}
 
 %type rListsList {Ast::ListList*}
-rListsList(L)  ::= rListsList(R) COMMA(B) rListItem(I).  {L = ref(pctx).aListList(B, ref(R), ref(I));}
-rListsList(L)  ::=      rEnterList(B) rListItem(I).      {L = ref(pctx).aListList(B, ref(I));}
-rListsList(L)  ::=      rEnterList(B) rQualifiedTypeSpec(Q). {L = ref(pctx).aListList(B, ref(Q));}
-rListsList(L)  ::=      rEnterList(B)                      . {L = ref(pctx).aListList(B);}
+rListsList(L)  ::= rListsList(R) COMMA(B) rListItem(I).  {L = z::ref(pctx).aListList(B, z::ref(R), z::ref(I));}
+rListsList(L)  ::=      rEnterList(B) rListItem(I).      {L = z::ref(pctx).aListList(B, z::ref(I));}
+rListsList(L)  ::=      rEnterList(B) rQualifiedTypeSpec(Q). {L = z::ref(pctx).aListList(B, z::ref(Q));}
+rListsList(L)  ::=      rEnterList(B)                      . {L = z::ref(pctx).aListList(B);}
 
 %type rListItem {Ast::ListItem*}
-rListItem(L)  ::= rExpr(E). {L = ref(pctx).aListItem(ref(E));}
+rListItem(L)  ::= rExpr(E). {L = z::ref(pctx).aListItem(z::ref(E));}
 
 //-------------------------------------------------
 // dict (strict type-checking for key and value)
 %type rDictExpr {Ast::DictExpr*}
-rDictExpr(L) ::= rDictList(R) RSQUARE(B). {L = ref(pctx).aDictExpr(B, ref(R));}
+rDictExpr(L) ::= rDictList(R) RSQUARE(B). {L = z::ref(pctx).aDictExpr(B, z::ref(R));}
 
 %type rDictList {Ast::DictList*}
 rDictList(L) ::= rDictsList(R)       . {L = R;}
 rDictList(L) ::= rDictsList(R) COMMA . {L = R;}
 
 %type rDictsList {Ast::DictList*}
-rDictsList(L)  ::= rDictsList(R) COMMA(B) rDictItem(I). {L = ref(pctx).aDictList(B, ref(R), ref(I));}
-rDictsList(L)  ::=          rEnterList(B) rDictItem(I). {L = ref(pctx).aDictList(B, ref(I));}
+rDictsList(L)  ::= rDictsList(R) COMMA(B) rDictItem(I). {L = z::ref(pctx).aDictList(B, z::ref(R), z::ref(I));}
+rDictsList(L)  ::=          rEnterList(B) rDictItem(I). {L = z::ref(pctx).aDictList(B, z::ref(I));}
 
 // first item in list can be a type specifier
-rDictsList(L) ::= rEnterList(B) rQualifiedTypeSpec(K) COLON rQualifiedTypeSpec(V). {L = ref(pctx).aDictList(B, ref(K), ref(V));}
+rDictsList(L) ::= rEnterList(B) rQualifiedTypeSpec(K) COLON rQualifiedTypeSpec(V). {L = z::ref(pctx).aDictList(B, z::ref(K), z::ref(V));}
 
 %type rDictItem {Ast::DictItem*}
-rDictItem(L)  ::= rDictKey(K) COLON(B) rExpr(E). {L = ref(pctx).aDictItem(B, ref(K), ref(E));}
+rDictItem(L)  ::= rDictKey(K) COLON(B) rExpr(E). {L = z::ref(pctx).aDictItem(B, z::ref(K), z::ref(E));}
 
 %type rDictKey {const Ast::Expr*}
-rDictKey(L) ::= rExpr(R). {L = ref(pctx).aDictKey(ref(R));}
+rDictKey(L) ::= rExpr(R). {L = z::ref(pctx).aDictKey(z::ref(R));}
 
 //-------------------------------------------------
-rEnterList(L)  ::= LSQUARE(R). {L = R; ref(pctx).aEnterList(R); }
+rEnterList(L)  ::= LSQUARE(R). {L = R; z::ref(pctx).aEnterList(R); }
 
 //-------------------------------------------------
 // tree (no type checking for key or value)
 %type rTreeExpr {Ast::DictExpr*}
-rTreeExpr(L) ::= rTreeList(R) RCURLY(B). {L = ref(pctx).aDictExpr(B, ref(R));}
+rTreeExpr(L) ::= rTreeList(R) RCURLY(B). {L = z::ref(pctx).aDictExpr(B, z::ref(R));}
 
 %type rTreeList {Ast::DictList*}
 rTreeList(L) ::= rTreesList(R)       . {L = R;}
 rTreeList(L) ::= rTreesList(R) COMMA . {L = R;}
 
 %type rTreesList {Ast::DictList*}
-rTreesList(L)  ::= rTreesList(R) COMMA(B) rTreeItem(I).     {L = ref(pctx).aDictList(B, ref(R), ref(I));}
-rTreesList(L)  ::=              rEnterTree(B) rTreeItem(I). {L = ref(pctx).aDictList(B, ref(I));}
+rTreesList(L)  ::= rTreesList(R) COMMA(B) rTreeItem(I).     {L = z::ref(pctx).aDictList(B, z::ref(R), z::ref(I));}
+rTreesList(L)  ::=              rEnterTree(B) rTreeItem(I). {L = z::ref(pctx).aDictList(B, z::ref(I));}
 
 %type rTreeItem {Ast::DictItem*}
-rTreeItem(L)  ::= rDictKey(K) COLON(B) rExpr(E). {L = ref(pctx).aDictItem(B, ref(K), ref(E));}
+rTreeItem(L)  ::= rDictKey(K) COLON(B) rExpr(E). {L = z::ref(pctx).aDictItem(B, z::ref(K), z::ref(E));}
 
 //-------------------------------------------------
-rEnterTree(L)  ::= LCURLY(R). {L = R; ref(pctx).aEnterList(R); }
+rEnterTree(L)  ::= LCURLY(R). {L = R; z::ref(pctx).aEnterList(R); }
 
 //-------------------------------------------------
 // ordered expression
 %type rOrderedExpr {Ast::OrderedExpr*}
-rOrderedExpr(L) ::= LBRACKET(B) rExpr(innerExpr) RBRACKET. {L = ref(pctx).aOrderedExpr(B, ref(innerExpr));}
+rOrderedExpr(L) ::= LBRACKET(B) rExpr(innerExpr) RBRACKET. {L = z::ref(pctx).aOrderedExpr(B, z::ref(innerExpr));}
 
 //-------------------------------------------------
 // index expression
 %type rIndexExpr {Ast::IndexExpr*}
-rIndexExpr(L) ::= rExpr(E) LSQUARE(B) rExpr(innerExpr) RSQUARE. {L = ref(pctx).aIndexExpr(B, ref(E), ref(innerExpr));}
-rIndexExpr(L) ::= rExpr(E) AMP(B) rKeyConstantExpr(innerExpr). {L = ref(pctx).aIndexExpr(B, ref(E), ref(innerExpr));}
+rIndexExpr(L) ::= rExpr(E) LSQUARE(B) rExpr(innerExpr) RSQUARE. {L = z::ref(pctx).aIndexExpr(B, z::ref(E), z::ref(innerExpr));}
+rIndexExpr(L) ::= rExpr(E) AMP(B) rKeyConstantExpr(innerExpr). {L = z::ref(pctx).aIndexExpr(B, z::ref(E), z::ref(innerExpr));}
 
 //-------------------------------------------------
 // splice expression
 %type rSpliceExpr {Ast::SpliceExpr*}
-rSpliceExpr(L) ::= rExpr(E) LSQUARE(B) rExpr(fromExpr) COLON rExpr(toExpr) RSQUARE. {L = ref(pctx).aSpliceExpr(B, ref(E), ref(fromExpr), ref(toExpr));}
+rSpliceExpr(L) ::= rExpr(E) LSQUARE(B) rExpr(fromExpr) COLON rExpr(toExpr) RSQUARE. {L = z::ref(pctx).aSpliceExpr(B, z::ref(E), z::ref(fromExpr), z::ref(toExpr));}
 
 //-------------------------------------------------
 // type expression
-rExpr(L) ::= TYPEOF(B) LBRACKET rQualifiedTypeSpec(T) RBRACKET. {L = ref(pctx).aTypeofTypeExpr(B, ref(T));}
-rExpr(L) ::= TYPEOF(B) LBRACKET rExpr(E)              RBRACKET. {L = ref(pctx).aTypeofExprExpr(B, ref(E));}
+rExpr(L) ::= TYPEOF(B) LBRACKET rQualifiedTypeSpec(T) RBRACKET. {L = z::ref(pctx).aTypeofTypeExpr(B, z::ref(T));}
+rExpr(L) ::= TYPEOF(B) LBRACKET rExpr(E)              RBRACKET. {L = z::ref(pctx).aTypeofExprExpr(B, z::ref(E));}
 
 //-------------------------------------------------
 // type-cast expression
-rExpr(L) ::= LT(B) rQualifiedTypeSpec(T) GT rExpr(E). {L = ref(pctx).aTypecastExpr(B, ref(T), ref(E));}
+rExpr(L) ::= LT(B) rQualifiedTypeSpec(T) GT rExpr(E). {L = z::ref(pctx).aTypecastExpr(B, z::ref(T), z::ref(E));}
 
 //-------------------------------------------------
 // address-of expression
-rExpr(L) ::= BITWISEAND(B)  rExpr(E). {L = ref(pctx).aPointerInstanceExpr(B, ref(E));}
+rExpr(L) ::= BITWISEAND(B)  rExpr(E). {L = z::ref(pctx).aPointerInstanceExpr(B, z::ref(E));}
 
 // value-of expression
-rExpr(L) ::= STAR(B) rExpr(E). {L = ref(pctx).aValueInstanceExpr(B, ref(E));}
+rExpr(L) ::= STAR(B) rExpr(E). {L = z::ref(pctx).aValueInstanceExpr(B, z::ref(E));}
 
 //-------------------------------------------------
 // template definition instance expression
-rExpr(L) ::= rTemplateDefnTypeSpec(R) LBRACKET(B) rExprList(M) RBRACKET. {L = ref(pctx).aTemplateDefnInstanceExpr(B, ref(R), ref(M));}
+rExpr(L) ::= rTemplateDefnTypeSpec(R) LBRACKET(B) rExprList(M) RBRACKET. {L = z::ref(pctx).aTemplateDefnInstanceExpr(B, z::ref(R), z::ref(M));}
 
 //-------------------------------------------------
-// variable ref expressions
+// variable z::ref expressions
 %type rVariableRefExpr {Ast::Expr*}
-rVariableRefExpr(L) ::= ID(I). {L = ref(pctx).aVariableRefExpr(I);}
+rVariableRefExpr(L) ::= ID(I). {L = z::ref(pctx).aVariableRefExpr(I);}
 
 //-------------------------------------------------
 // variable member expressions, e.g. struct member
 %type rMemberVariableExpr {Ast::MemberExpr*}
-rMemberVariableExpr(L) ::= rExpr(R) DOT ID(M). {L = ref(pctx).aMemberVariableExpr(ref(R), M);}
+rMemberVariableExpr(L) ::= rExpr(R) DOT ID(M). {L = z::ref(pctx).aMemberVariableExpr(z::ref(R), M);}
 
 //-------------------------------------------------
 // type member expressions, e.g. enum member
 %type rTypeSpecMemberExpr {Ast::TypeSpecMemberExpr*}
-rTypeSpecMemberExpr(L) ::= rTypeSpec(R) DOT ID(M). {L = ref(pctx).aTypeSpecMemberExpr(ref(R), M);}
+rTypeSpecMemberExpr(L) ::= rTypeSpec(R) DOT ID(M). {L = z::ref(pctx).aTypeSpecMemberExpr(z::ref(R), M);}
 
 //-------------------------------------------------
 // function instance expressions
 %type rFunctionInstanceExpr {Ast::TypeSpecInstanceExpr*}
-rFunctionInstanceExpr(L) ::= rFunctionTypeSpec(R) LSQUARE(B) rExprList(M) RSQUARE. {L = ref(pctx).aFunctionInstanceExpr(B, ref(R), ref(M));}
+rFunctionInstanceExpr(L) ::= rFunctionTypeSpec(R) LSQUARE(B) rExprList(M) RSQUARE. {L = z::ref(pctx).aFunctionInstanceExpr(B, z::ref(R), z::ref(M));}
 
 //-------------------------------------------------
 // anonymous function instance expressions
 %type rAnonymousFunctionExpr {Ast::AnonymousFunctionExpr*}
-rAnonymousFunctionExpr(L) ::= rEnterAnonymousFunction(R) rCompoundStatement(C). {L = ref(pctx).aAnonymousFunctionExpr(ref(R), ref(C));}
+rAnonymousFunctionExpr(L) ::= rEnterAnonymousFunction(R) rCompoundStatement(C). {L = z::ref(pctx).aAnonymousFunctionExpr(z::ref(R), z::ref(C));}
 
 //-------------------------------------------------
 %type rEnterAnonymousFunction {Ast::ChildFunctionDefn*}
-rEnterAnonymousFunction(L) ::= rFunctionTypeSpec(R). {L = ref(pctx).aEnterAnonymousFunction(ref(R));}
-rEnterAnonymousFunction(L) ::= FUNCTION(R). {L = ref(pctx).aEnterAutoAnonymousFunction(R);}
+rEnterAnonymousFunction(L) ::= rFunctionTypeSpec(R). {L = z::ref(pctx).aEnterAnonymousFunction(z::ref(R));}
+rEnterAnonymousFunction(L) ::= FUNCTION(R). {L = z::ref(pctx).aEnterAutoAnonymousFunction(R);}
 
 //-------------------------------------------------
 // struct instance expressions
 %type rStructInstanceExpr {Ast::StructInstanceExpr*}
-rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
-rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B)                        rLeaveStructInstanceExpr. {L = ref(pctx).aStructInstanceExpr(B, ref(R));}
+rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = z::ref(pctx).aStructInstanceExpr(B, z::ref(R), z::ref(P));}
+rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B)                        rLeaveStructInstanceExpr. {L = z::ref(pctx).aStructInstanceExpr(B, z::ref(R));}
 
 //-------------------------------------------------
 // auto struct instance expressions
 %type rAutoStructInstanceExpr {Ast::Expr*}
-rAutoStructInstanceExpr(L) ::= STRUCT(B) rEnterAutoStructInstanceExpr(R) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(B, ref(R), ref(P));}
-rAutoStructInstanceExpr(L) ::= STRUCT(B) rEnterAutoStructInstanceExpr(R)                        rLeaveStructInstanceExpr. {L = ref(pctx).aAutoStructInstanceExpr(B, ref(R));}
+rAutoStructInstanceExpr(L) ::= STRUCT(B) rEnterAutoStructInstanceExpr(R) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = z::ref(pctx).aAutoStructInstanceExpr(B, z::ref(R), z::ref(P));}
+rAutoStructInstanceExpr(L) ::= STRUCT(B) rEnterAutoStructInstanceExpr(R)                        rLeaveStructInstanceExpr. {L = z::ref(pctx).aAutoStructInstanceExpr(B, z::ref(R));}
 
 //-------------------------------------------------
 // special case - struct can be instantiated with {} or () for syntactic equivalence with C/C++.
-rStructInstanceExpr(L) ::= rStructTypeSpec(R) LBRACKET(B) rStructInitPartList(P) RBRACKET. {L = ref(pctx).aStructInstanceExpr(B, ref(R), ref(P));}
-rStructInstanceExpr(L) ::= rStructTypeSpec(R) LBRACKET(B)                        RBRACKET. {L = ref(pctx).aStructInstanceExpr(B, ref(R));}
+rStructInstanceExpr(L) ::= rStructTypeSpec(R) LBRACKET(B) rStructInitPartList(P) RBRACKET. {L = z::ref(pctx).aStructInstanceExpr(B, z::ref(R), z::ref(P));}
+rStructInstanceExpr(L) ::= rStructTypeSpec(R) LBRACKET(B)                        RBRACKET. {L = z::ref(pctx).aStructInstanceExpr(B, z::ref(R));}
 
 //-------------------------------------------------
 %type rEnterStructInstanceExpr {const Ast::StructDefn*}
-rEnterStructInstanceExpr(L) ::= rStructTypeSpec(R). {L = ref(pctx).aEnterStructInstanceExpr(ref(R));}
+rEnterStructInstanceExpr(L) ::= rStructTypeSpec(R). {L = z::ref(pctx).aEnterStructInstanceExpr(z::ref(R));}
 
 //-------------------------------------------------
 %type rEnterAutoStructInstanceExpr {const Ast::StructDefn*}
-rEnterAutoStructInstanceExpr(L) ::= LCURLY(R). {L = ref(pctx).aEnterAutoStructInstanceExpr(R);}
+rEnterAutoStructInstanceExpr(L) ::= LCURLY(R). {L = z::ref(pctx).aEnterAutoStructInstanceExpr(R);}
 
 //-------------------------------------------------
-rLeaveStructInstanceExpr ::= RCURLY. {ref(pctx).aLeaveStructInstanceExpr();}
+rLeaveStructInstanceExpr ::= RCURLY. {z::ref(pctx).aLeaveStructInstanceExpr();}
 
 //-------------------------------------------------
 %type rStructInitPartList {Ast::StructInitPartList*}
-rStructInitPartList(L) ::= rStructInitPartList(R) rStructInitPart(P). {L = ref(pctx).aStructInitPartList(ref(R), ref(P));}
-rStructInitPartList(L) ::=                        rStructInitPart(P). {L = ref(pctx).aStructInitPartList(ref(P));}
+rStructInitPartList(L) ::= rStructInitPartList(R) rStructInitPart(P). {L = z::ref(pctx).aStructInitPartList(z::ref(R), z::ref(P));}
+rStructInitPartList(L) ::=                        rStructInitPart(P). {L = z::ref(pctx).aStructInitPartList(z::ref(P));}
 
 //-------------------------------------------------
 %type rStructInitPart {Ast::StructInitPart*}
-rStructInitPart(L) ::= rEnterStructInitPart(R) COLON(B) rExpr(E) rLeaveStructInitPart. {L = ref(pctx).aStructInitPart(B, ref(R), ref(E));}
+rStructInitPart(L) ::= rEnterStructInitPart(R) COLON(B) rExpr(E) rLeaveStructInitPart. {L = z::ref(pctx).aStructInitPart(B, z::ref(R), z::ref(E));}
 
 //-------------------------------------------------
 %type rEnterStructInitPart {const Ast::VariableDefn*}
-rEnterStructInitPart(L) ::= ID(R). {L = ref(pctx).aEnterStructInitPart(R);}
-rLeaveStructInitPart    ::= SEMI(B). {ref(pctx).aLeaveStructInitPart(B);}
+rEnterStructInitPart(L) ::= ID(R). {L = z::ref(pctx).aEnterStructInitPart(R);}
+rLeaveStructInitPart    ::= SEMI(B). {z::ref(pctx).aLeaveStructInitPart(B);}
 
 //-------------------------------------------------
 // functor call expressions
@@ -914,7 +914,7 @@ rCallExpr(L) ::= rCallPart(R).  {L = R;}
 //-------------------------------------------------
 // function call type
 %type rRunExpr {Ast::RunExpr*}
-rRunExpr(L) ::= RUN(B) rFunctorCallPart(F).  {L = ref(pctx).aRunExpr(B, ref(F));}
+rRunExpr(L) ::= RUN(B) rFunctorCallPart(F).  {L = z::ref(pctx).aRunExpr(B, z::ref(F));}
 
 //-------------------------------------------------
 // functor call expressions
@@ -925,51 +925,51 @@ rCallPart(L) ::= rFunctorCallPart(R). {L = R;}
 //-------------------------------------------------
 // routine call expressions
 %type rRoutineCallPart {Ast::RoutineCallExpr*}
-rRoutineCallPart(L) ::= rEnterRoutineCall(typeSpec) LBRACKET(B) rCallArgList(exprList) RBRACKET.  {L = ref(pctx).aRoutineCallExpr(B, ref(typeSpec), ref(exprList));}
+rRoutineCallPart(L) ::= rEnterRoutineCall(typeSpec) LBRACKET(B) rCallArgList(exprList) RBRACKET.  {L = z::ref(pctx).aRoutineCallExpr(B, z::ref(typeSpec), z::ref(exprList));}
 
 //-------------------------------------------------
 // functor expressions
 %type rEnterRoutineCall {const Ast::Routine*}
-rEnterRoutineCall(L) ::= rRoutineTypeSpec(typeSpec). { L = ref(pctx).aEnterRoutineCall(ref(typeSpec));}
+rEnterRoutineCall(L) ::= rRoutineTypeSpec(typeSpec). { L = z::ref(pctx).aEnterRoutineCall(z::ref(typeSpec));}
 
 //-------------------------------------------------
 // functor call expressions
 %type rFunctorCallPart {Ast::FunctorCallExpr*}
-rFunctorCallPart(L) ::= rEnterFunctorCall(expr) LBRACKET(B) rCallArgList(exprList) RBRACKET.  {L = ref(pctx).aFunctorCallExpr(B, ref(expr), ref(exprList));}
+rFunctorCallPart(L) ::= rEnterFunctorCall(expr) LBRACKET(B) rCallArgList(exprList) RBRACKET.  {L = z::ref(pctx).aFunctorCallExpr(B, z::ref(expr), z::ref(exprList));}
 
 //-------------------------------------------------
 // functor expressions
 %type rEnterFunctorCall {Ast::Expr*}
-rEnterFunctorCall(L) ::= rOrderedExpr(expr).          { L = ref(pctx).aEnterFunctorCall(ref(expr));}
-rEnterFunctorCall(L) ::= ID(I).                       { L = ref(pctx).aEnterFunctorCall(I);}
-rEnterFunctorCall(L) ::= rFunctionTypeSpec(typeSpec). { L = ref(pctx).aEnterFunctorCall(ref(typeSpec));}
+rEnterFunctorCall(L) ::= rOrderedExpr(expr).          { L = z::ref(pctx).aEnterFunctorCall(z::ref(expr));}
+rEnterFunctorCall(L) ::= ID(I).                       { L = z::ref(pctx).aEnterFunctorCall(I);}
+rEnterFunctorCall(L) ::= rFunctionTypeSpec(typeSpec). { L = z::ref(pctx).aEnterFunctorCall(z::ref(typeSpec));}
 
 //-------------------------------------------------
 // comma-separated list of function-call args
 %type rCallArgList {Ast::ExprList*}
-rCallArgList(L) ::= rCallArgList(R) COMMA(B) rExpr(E). {L = ref(pctx).aCallArgList(B, ref(R), ref(E));}
-rCallArgList(L) ::=                          rExpr(E). {L = ref(pctx).aCallArgList(ref(E));}
-rCallArgList(L) ::= .                                  {L = ref(pctx).aCallArgList();}
+rCallArgList(L) ::= rCallArgList(R) COMMA(B) rExpr(E). {L = z::ref(pctx).aCallArgList(B, z::ref(R), z::ref(E));}
+rCallArgList(L) ::=                          rExpr(E). {L = z::ref(pctx).aCallArgList(z::ref(E));}
+rCallArgList(L) ::= .                                  {L = z::ref(pctx).aCallArgList();}
 
 //-------------------------------------------------
 // constant expressions
 %type rConstantExpr {const Ast::ConstantExpr*}
-rConstantExpr(L) ::= FLOAT_CONST  (value).  {L = ptr(ref(pctx).aConstantExpr("float",  value));}
-rConstantExpr(L) ::= DOUBLE_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("double", value));}
-rConstantExpr(L) ::= TRUE_CONST   (value).  {L = ptr(ref(pctx).aConstantExpr("bool",   value));}
-rConstantExpr(L) ::= FALSE_CONST  (value).  {L = ptr(ref(pctx).aConstantExpr("bool",   value));}
-rConstantExpr(L) ::= STRING_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("string", value));}
-rConstantExpr(L) ::= CHAR_CONST   (value).  {L = ptr(ref(pctx).aConstantExpr("char",   value));}
-rConstantExpr(L) ::= HEXINT_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("int",    value));}
-rConstantExpr(L) ::= DECINT_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("int",    value));}
-rConstantExpr(L) ::= OCTINT_CONST (value).  {L = ptr(ref(pctx).aConstantExpr("int",    value));}
-rConstantExpr(L) ::= LHEXINT_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("long",   value));}
-rConstantExpr(L) ::= LDECINT_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("long",   value));}
-rConstantExpr(L) ::= LOCTINT_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("long",   value));}
+rConstantExpr(L) ::= FLOAT_CONST  (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("float",  value));}
+rConstantExpr(L) ::= DOUBLE_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("double", value));}
+rConstantExpr(L) ::= TRUE_CONST   (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("bool",   value));}
+rConstantExpr(L) ::= FALSE_CONST  (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("bool",   value));}
+rConstantExpr(L) ::= STRING_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("string", value));}
+rConstantExpr(L) ::= CHAR_CONST   (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("char",   value));}
+rConstantExpr(L) ::= HEXINT_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("int",    value));}
+rConstantExpr(L) ::= DECINT_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("int",    value));}
+rConstantExpr(L) ::= OCTINT_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("int",    value));}
+rConstantExpr(L) ::= LHEXINT_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantExpr("long",   value));}
+rConstantExpr(L) ::= LDECINT_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantExpr("long",   value));}
+rConstantExpr(L) ::= LOCTINT_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantExpr("long",   value));}
 rConstantExpr(L) ::= rKeyConstantExpr(R).   {L = R;}
 
 %type rKeyConstantExpr {const Ast::ConstantExpr*}
-rKeyConstantExpr(L) ::= KEY_CONST(value).  {L = ptr(ref(pctx).aConstantExpr("string", value));}
+rKeyConstantExpr(L) ::= KEY_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantExpr("string", value));}
 
 /*
 //-------------------------------------------------

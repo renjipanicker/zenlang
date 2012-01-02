@@ -93,7 +93,7 @@ int main(int argc, char* argv[]) {
         CmakeProGen progen(project);
         progen.run();
     } else {
-        throw Exception("Unknown project generator '%s'\n", project.oproject().c_str());
+        throw z::Exception("Unknown project generator '%s'\n", project.oproject().c_str());
     }
     return 0;
 }

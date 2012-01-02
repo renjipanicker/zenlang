@@ -13,16 +13,16 @@ struct NameType {
 };
 
 static NameType::T getName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name, const GenMode::T& mode) {
-    const Ast::ChildTypeSpec* ctypeSpec = dynamic_cast<const Ast::ChildTypeSpec*>(ptr(typeSpec));
+    const Ast::ChildTypeSpec* ctypeSpec = dynamic_cast<const Ast::ChildTypeSpec*>(z::ptr(typeSpec));
     if(!ctypeSpec)
         return NameType::None;
 
-    if(getName(ref(ctypeSpec).parent(), sep, name, mode))
+    if(getName(z::ref(ctypeSpec).parent(), sep, name, mode))
         name += sep;
 
     name += typeSpec.name().string();
 
-    if(dynamic_cast<const Ast::EnumDefn*>(ptr(typeSpec)) != 0) {
+    if(dynamic_cast<const Ast::EnumDefn*>(z::ptr(typeSpec)) != 0) {
         if(mode == GenMode::Normal) {
             name += sep;
             name += "T";
@@ -34,15 +34,15 @@ static NameType::T getName(const Ast::TypeSpec& typeSpec, const std::string& sep
 }
 
 static NameType::T getRootName(const Ast::TypeSpec& typeSpec, const std::string& sep, std::string& name, const GenMode::T& mode) {
-    const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(ptr(typeSpec));
+    const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(z::ptr(typeSpec));
 
     if(mode == GenMode::Import) {
         if(templateDefn) {
-            name += ref(templateDefn).name().string();
+            name += z::ref(templateDefn).name().string();
             name += "<";
             std::string sep;
-            for(Ast::TemplateDefn::List::const_iterator it = ref(templateDefn).list().begin(); it != ref(templateDefn).list().end(); ++it) {
-                const Ast::QualifiedTypeSpec& qTypeSpec = ref(*it);
+            for(Ast::TemplateDefn::List::const_iterator it = z::ref(templateDefn).list().begin(); it != z::ref(templateDefn).list().end(); ++it) {
+                const Ast::QualifiedTypeSpec& qTypeSpec = z::ref(*it);
                 name += sep;
                 name += getQualifiedTypeSpecName(qTypeSpec, mode);
                 sep = ", ";
@@ -58,31 +58,41 @@ static NameType::T getRootName(const Ast::TypeSpec& typeSpec, const std::string&
         return NameType::Normal;
     }
 
+    if(typeSpec.name().string() == "type") {
+        name += "z::type";
+        return NameType::Normal;
+    }
+
+    if(typeSpec.name().string() == "ArgList") {
+        name += "z::ArgList";
+        return NameType::Normal;
+    }
+
     if(templateDefn) {
         if(typeSpec.name().string() == "ptr") {
-            const Ast::QualifiedTypeSpec* qTypeSpec = ref(templateDefn).list().front();
-            name += getTypeSpecName(ref(qTypeSpec).typeSpec(), mode);
+            const Ast::QualifiedTypeSpec* qTypeSpec = z::ref(templateDefn).list().front();
+            name += getTypeSpecName(z::ref(qTypeSpec).typeSpec(), mode);
             name += "*";
             return NameType::Ptr;
         }
 
         if(typeSpec.name().string() == "pointer") {
-            name += "pointer";
+            name += "z::pointer";
         } else if(typeSpec.name().string() == "list") {
-            name += "list";
+            name += "z::list";
         } else if(typeSpec.name().string() == "dict") {
-            name += "dict";
+            name += "z::dict";
         } else if(typeSpec.name().string() == "future") {
-            name += "FutureT";
+            name += "z::FutureT";
         } else if(typeSpec.name().string() == "functor") {
-            name += "FunctorT";
+            name += "z::FunctorT";
         } else {
             name += typeSpec.name().string();
         }
         name += "<";
         std::string sep;
-        for(Ast::TemplateDefn::List::const_iterator it = ref(templateDefn).list().begin(); it != ref(templateDefn).list().end(); ++it) {
-            const Ast::QualifiedTypeSpec& qTypeSpec = ref(*it);
+        for(Ast::TemplateDefn::List::const_iterator it = z::ref(templateDefn).list().begin(); it != z::ref(templateDefn).list().end(); ++it) {
+            const Ast::QualifiedTypeSpec& qTypeSpec = z::ref(*it);
             name += sep;
             if(typeSpec.name().string() == "pointer") {
                 name += getTypeSpecName(qTypeSpec.typeSpec(), mode);

@@ -35,7 +35,7 @@ private:
         inline ExpectedTypeSpec(const Type& type) : _type(type), _typeSpec(0) {}
         inline const Type& type() const {return _type;}
         inline bool hasTypeSpec() const {return (_typeSpec != 0);}
-        inline const Ast::QualifiedTypeSpec& typeSpec() const {return ref(_typeSpec);}
+        inline const Ast::QualifiedTypeSpec& typeSpec() const {return z::ref(_typeSpec);}
     private:
         Type _type;
         const Ast::QualifiedTypeSpec* _typeSpec;

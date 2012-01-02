@@ -118,8 +118,8 @@ Systray::Handle Systray::Create::run(const Window::Handle& parent, const Systray
     ::Shell_NotifyIcon(NIM_ADD, ptr(ref(impl)._ni));
 #endif
 #if defined(GTK)
-    ref(impl)._icon = gtk_status_icon_new_from_stock(GTK_STOCK_GO_UP);
-    g_object_set_data(G_OBJECT(ref(impl)._icon), "impl", impl);
+    z::ref(impl)._icon = gtk_status_icon_new_from_stock(GTK_STOCK_GO_UP);
+    g_object_set_data(G_OBJECT(z::ref(impl)._icon), "impl", impl);
 #endif
 
     if(def.tooltip.length() > 0) {
@@ -142,7 +142,7 @@ static gboolean onSystrayActivateEvent(GtkStatusIcon* status_icon, gpointer phan
     unused(status_icon);
     Systray::OnActivation::Handler* handler = static_cast<Systray::OnActivation::Handler*>(phandler);
     Systray::OnActivation::Handler::_In in;
-    ref(handler)._run(in);
+    z::ref(handler)._run(in);
     return FALSE;
 }
 #endif
@@ -165,7 +165,7 @@ static gboolean onSystrayContextMenuEvent(GtkStatusIcon *status_icon, guint butt
 
     Systray::OnContextMenu::Handler* handler = static_cast<Systray::OnContextMenu::Handler*>(phandler);
     Systray::OnContextMenu::Handler::_In in;
-    ref(handler)._run(in);
+    z::ref(handler)._run(in);
     return FALSE;
 }
 #endif

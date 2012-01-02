@@ -40,16 +40,16 @@ inline Lexer::Impl::Impl(Context& context, Parser& parser) : _s(0), _parser(pars
 }
 
 inline Lexer::Impl::~Impl() {
-    if(ref(_s).fp != 0) {
-        fclose(ref(_s).fp);
-        ref(_s).fp = 0;
+    if(z::ref(_s).fp != 0) {
+        fclose(z::ref(_s).fp);
+        z::ref(_s).fp = 0;
     }
     delete _s;
 }
 
 inline bool Lexer::Impl::openFile(const std::string& filename) {
-    if ((ref(_s).fp = fopen(filename.c_str(), "r")) == NULL) {
-        ref(_s).fp = 0;
+    if ((z::ref(_s).fp = fopen(filename.c_str(), "r")) == NULL) {
+        z::ref(_s).fp = 0;
         return false;
     }
     return true;
@@ -60,15 +60,15 @@ inline bool Lexer::Impl::readFile() {
         scan(_s);
     }
 
-    fclose(ref(_s).fp);
-    ref(_s).fp = 0;
+    fclose(z::ref(_s).fp);
+    z::ref(_s).fp = 0;
     return true;
 }
 
 Lexer::Lexer(Context& context, Parser& parser) : _impl(0) {_impl = new Impl(context, parser);}
 Lexer::~Lexer() {delete _impl;}
-bool Lexer::openFile(const std::string& filename) {return ref(_impl).openFile(filename);}
-bool Lexer::readFile() {return ref(_impl).readFile();}
+bool Lexer::openFile(const std::string& filename) {return z::ref(_impl).openFile(filename);}
+bool Lexer::readFile() {return z::ref(_impl).readFile();}
 
 //-------------------------------------------------
 // All keywords that are not used by zen, but are reserved because

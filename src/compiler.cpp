@@ -6,7 +6,7 @@
 #include "outfile.hpp"
 
 bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int& level) {
-    Context context(ref(this), unit, level, filename);
+    Context context(z::ref(this), unit, level, filename);
     Parser parser(context);
     Lexer lexer(context, parser);
     if(!lexer.openFile(filename))
@@ -55,7 +55,7 @@ void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& l
         if(parseFile(unit, dir + "/" + filename, level+1))
             return;
     }
-    throw Exception("Cannot open include file '%s'\n", filename.c_str());
+    throw z::Exception("Cannot open include file '%s'\n", filename.c_str());
 }
 
 void Compiler::compile() {
@@ -69,12 +69,12 @@ void Compiler::compile() {
             Ast::Unit unit(filename);
             import(unit, "core/core.ipp", 0);
             if(!parseFile(unit, filename, 0))
-                throw Exception("Cannot open source file '%s'\n", filename.c_str());
+                throw z::Exception("Cannot open source file '%s'\n", filename.c_str());
             if(_config.olanguage() == "stlcpp") {
                 StlCppGenerator generator(_project, _config, unit);
                 generator.run();
             } else {
-                throw Exception("Unknown code generator '%s'\n", _config.olanguage().c_str());
+                throw z::Exception("Unknown code generator '%s'\n", _config.olanguage().c_str());
             }
         }
     }

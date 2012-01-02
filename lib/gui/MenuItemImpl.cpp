@@ -31,8 +31,8 @@ MenuItem::Handle MenuItem::Create::run(const Menu::Handle& pmenu, const MenuItem
 #endif
 #if defined(GTK)
     MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
-    ref(impl)._menuItem = gtk_menu_item_new_with_label(def.label.c_str());
-    gtk_menu_shell_append (GTK_MENU_SHELL (Menu::impl(pmenu)._menu), ref(impl)._menuItem);
+    z::ref(impl)._menuItem = gtk_menu_item_new_with_label(def.label.c_str());
+    gtk_menu_shell_append (GTK_MENU_SHELL (Menu::impl(pmenu)._menu), z::ref(impl)._menuItem);
 #endif
 
     MenuItem::Handle handle;
@@ -45,7 +45,7 @@ static void onMenuItemSelectClick(GtkMenuItem* item, gpointer phandler) {
     unused(item);
     MenuItem::OnSelect::Handler* handler = static_cast<MenuItem::OnSelect::Handler*>(phandler);
     MenuItem::OnSelect::Handler::_In in;
-    ref(handler)._run(in);
+    z::ref(handler)._run(in);
 }
 #endif
 

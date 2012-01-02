@@ -3,6 +3,6 @@
 #include "WidgetImpl.hpp"
 
 Widget::Handle::Impl::ChildList& Widget::Handle::_child() const {
-    return ref(wdata).childList;
+    return z::ref(wdata).childList;
 }
 

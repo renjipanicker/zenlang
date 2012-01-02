@@ -15,11 +15,11 @@ Parser::~Parser() {
 
 void Parser::feed(const TokenData& td) {
     //trace("Parser::feed: %d %s\n", td.id(), td.text());
-    ZenParser(_parser, td.id(), td, ptr(_context));
+    ZenParser(_parser, td.id(), td, z::ptr(_context));
 }
 
 void Parser::done() {
     TokenData td;
     td.init();
-    ZenParser(_parser, 0, td, ptr(_context));
+    ZenParser(_parser, 0, td, z::ptr(_context));
 }

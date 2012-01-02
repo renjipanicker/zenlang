@@ -182,7 +182,7 @@ inline void Lexer::Impl::sendReturn(Scanner* s) {
             return;
         }
     }
-    throw Exception("Invalid return in lexer\n");
+    throw z::Exception("Invalid return in lexer\n");
 }
 
 void Lexer::Impl::scan(Scanner *s) {

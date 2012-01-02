@@ -13,7 +13,7 @@ Menu::Handle Menu::Create::run(const Window::Handle& window, const Menu::Definit
 #endif
 #if defined(GTK)
     Menu::HandleImpl* impl = new Menu::HandleImpl();
-    ref(impl)._menu = gtk_menu_new();
+    z::ref(impl)._menu = gtk_menu_new();
     unused(window);
 #endif
     Menu::Handle handle;
@@ -32,8 +32,8 @@ static void getMenuPosition(GtkMenu* menu, gint* x, gint* y, gboolean* push_in, 
     unused(menu);
     if(user_data) {
         pos* p = static_cast<pos*>(user_data);
-        *x = ref(p).x;
-        *y = ref(p).y;
+        *x = z::ref(p).x;
+        *y = z::ref(p).y;
     } else {
         GdkDisplay* display = gdk_display_get_default();
         gdk_display_get_pointer(display, NULL, x, y, NULL);

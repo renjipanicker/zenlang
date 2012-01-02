@@ -94,7 +94,7 @@ namespace Ast {
     public:
         inline TypeSpec(const Token& name) : Node(name), _accessType(AccessType::Private), _name(name) {}
     public:
-        inline TypeSpec& accessType(const AccessType::T& val) {_accessType = val; return ref(this);}
+        inline TypeSpec& accessType(const AccessType::T& val) {_accessType = val; return z::ref(this);}
         inline const Token& name() const {return _name;}
         inline const AccessType::T& accessType() const {return _accessType;}
         inline const ChildTypeSpecList& childTypeSpecList() const {return _childTypeSpecList;}
@@ -107,10 +107,10 @@ namespace Ast {
             /// a different type.
             //ChildTypeSpecMap::const_iterator it = _childTypeSpecMap.find(typeSpec.name().string());
             //assert(it == _childTypeSpecMap.end());
-            assert(ptr(typeSpec.parent()) == this);
+            assert(z::ptr(typeSpec.parent()) == this);
 
-            _childTypeSpecList.push_back(ptr(typeSpec));
-            _childTypeSpecMap[typeSpec.name().text()] = ptr(typeSpec);
+            _childTypeSpecList.push_back(z::ptr(typeSpec));
+            _childTypeSpecMap[typeSpec.name().text()] = z::ptr(typeSpec);
         }
 
         template <typename T>
@@ -162,10 +162,10 @@ namespace Ast {
         typedef std::list<const VariableDefn*> List;
     public:
         inline Scope(const Token& pos, const ScopeType::T& type) : Node(pos), _type(type), _posParam(0), _isTuple(true) {}
-        inline Scope& addVariableDef(const VariableDefn& variableDef) {_list.push_back(ptr(variableDef)); return ref(this);}
+        inline Scope& addVariableDef(const VariableDefn& variableDef) {_list.push_back(z::ptr(variableDef)); return z::ref(this);}
         inline const ScopeType::T& type() const {return _type;}
         inline const List& list() const {return _list;}
-        inline void posParam(const Scope& val) {_posParam = ptr(val);}
+        inline void posParam(const Scope& val) {_posParam = z::ptr(val);}
         inline const Scope* posParam() const {return _posParam;}
         inline void isTuple(const bool& val) {_isTuple = val;}
         inline const bool& isTuple() const {return _isTuple;}
@@ -221,7 +221,7 @@ namespace Ast {
     public:
         inline TemplatePartList(const Token& pos) : Node(pos) {}
     public:
-        inline TemplatePartList& addPart(const Token& name) {_list.push_back(name); return ref(this);}
+        inline TemplatePartList& addPart(const Token& name) {_list.push_back(name); return z::ref(this);}
         inline const List& list() const {return _list;}
     private:
         List _list;
@@ -244,7 +244,7 @@ namespace Ast {
     public:
         inline TemplateTypePartList(const Token& pos) : Node(pos) {}
     public:
-        inline void addType(const QualifiedTypeSpec& qTypeSpec) {_list.push_back(ptr(qTypeSpec));}
+        inline void addType(const QualifiedTypeSpec& qTypeSpec) {_list.push_back(z::ptr(qTypeSpec));}
         inline const List& list() const {return _list;}
     private:
         List _list;
@@ -256,9 +256,9 @@ namespace Ast {
     public:
         inline TemplateDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const TemplateDecl& templateDecl) : UserDefinedTypeSpec(parent, name, defType), _templateDecl(templateDecl) {}
     public:
-        inline void addType(const QualifiedTypeSpec& qTypeSpec) {_list.push_back(ptr(qTypeSpec));}
+        inline void addType(const QualifiedTypeSpec& qTypeSpec) {_list.push_back(z::ptr(qTypeSpec));}
         inline const List& list() const {return _list;}
-        inline const QualifiedTypeSpec& at(const size_t& idx) const {assert(idx < _list.size()); return ref(_list.at(idx));}
+        inline const QualifiedTypeSpec& at(const size_t& idx) const {assert(idx < _list.size()); return z::ref(_list.at(idx));}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
@@ -284,8 +284,8 @@ namespace Ast {
     public:
         inline const Ast::QualifiedTypeSpec& qTypeSpec() const {return _propertyType;}
     public:
-        inline const Ast::CompoundStatement& getBlock() const {return ref(_getBlock);}
-        inline void setGetBlock(const Ast::CompoundStatement& val) {_getBlock = ptr(val);}
+        inline const Ast::CompoundStatement& getBlock() const {return z::ref(_getBlock);}
+        inline void setGetBlock(const Ast::CompoundStatement& val) {_getBlock = z::ptr(val);}
     private:
         const QualifiedTypeSpec& _propertyType;
         const Ast::CompoundStatement* _getBlock;
@@ -295,8 +295,8 @@ namespace Ast {
     public:
         inline PropertyDeclRW(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::QualifiedTypeSpec& propertyType) : PropertyDecl(parent, name, defType, propertyType), _setBlock(0) {}
     public:
-        inline const Ast::CompoundStatement& setBlock() const {return ref(_setBlock);}
-        inline void setSetBlock(const Ast::CompoundStatement& val) {_setBlock = ptr(val);}
+        inline const Ast::CompoundStatement& setBlock() const {return z::ref(_setBlock);}
+        inline void setSetBlock(const Ast::CompoundStatement& val) {_setBlock = z::ptr(val);}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
@@ -329,7 +329,7 @@ namespace Ast {
         inline Ast::CompoundStatement& block() {return _block;}
         inline const Ast::CompoundStatement& block() const {return _block;}
         inline void addVariable(const VariableDefn& val) { _list.addVariableDef(val);}
-        inline void addProperty(const PropertyDecl& val) { _propertyList.push_back(ptr(val));}
+        inline void addProperty(const PropertyDecl& val) { _propertyList.push_back(z::ptr(val));}
     private:
         Ast::Scope& _list;
         PropertyList _propertyList;
@@ -378,8 +378,8 @@ namespace Ast {
         inline RoutineDefn(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const DefinitionType::T& defType)
             : Routine(parent, outType, name, in, defType), _block(0) {}
     public:
-        inline const Ast::CompoundStatement& block() const {return ref(_block);}
-        inline void setBlock(const Ast::CompoundStatement& block) {_block = ptr(block);}
+        inline const Ast::CompoundStatement& block() const {return z::ref(_block);}
+        inline void setBlock(const Ast::CompoundStatement& block) {_block = z::ptr(block);}
     private:
         virtual void visit(Visitor& visitor) const;
         const Ast::CompoundStatement* _block;
@@ -425,8 +425,8 @@ namespace Ast {
         inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref)
             : Function(parent, name, defType, sig, xref), _block(0) {}
     public:
-        inline const Ast::CompoundStatement& block() const {return ref(_block);}
-        inline void setBlock(const Ast::CompoundStatement& block) {_block = ptr(block);}
+        inline const Ast::CompoundStatement& block() const {return z::ref(_block);}
+        inline void setBlock(const Ast::CompoundStatement& block) {_block = z::ptr(block);}
     private:
         const Ast::CompoundStatement* _block;
     };
@@ -469,15 +469,15 @@ namespace Ast {
     public:
         inline void setHandler(Ast::FunctionDecl& funDecl) {
             addChild(funDecl);
-            _funDecl = ptr(funDecl);
+            _funDecl = z::ptr(funDecl);
         }
-        inline const Ast::FunctionDecl& handler() const {return ref(_funDecl);}
+        inline const Ast::FunctionDecl& handler() const {return z::ref(_funDecl);}
     public:
         inline void setAddFunction(Ast::FunctionDecl& funDecl) {
             addChild(funDecl);
-            _addDecl = ptr(funDecl);
+            _addDecl = z::ptr(funDecl);
         }
-        inline const Ast::FunctionDecl& addFunction() const {return ref(_addDecl);}
+        inline const Ast::FunctionDecl& addFunction() const {return z::ref(_addDecl);}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
@@ -502,12 +502,12 @@ namespace Ast {
 
     struct TypeSpec::Visitor {
         inline void visitNode(const TypeSpec& node) {
-            node.visit(ref(this));
+            node.visit(z::ref(this));
         }
 
         inline void visitChildren(const TypeSpec& typeSpec) {
             for(TypeSpec::ChildTypeSpecList::const_iterator it = typeSpec.childTypeSpecList().begin(); it != typeSpec.childTypeSpecList().end(); ++it) {
-                const TypeSpec& childTypeSpec = ref(*it);
+                const TypeSpec& childTypeSpec = z::ref(*it);
                 visitNode(childTypeSpec);
             }
         }
@@ -533,32 +533,32 @@ namespace Ast {
         virtual void visit(const Root& node) = 0;
     };
 
-    inline void TypedefDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void TypedefDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void TemplateDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void TemplateDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void EnumDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void StructDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void RootStructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void ChildStructDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void PropertyDeclRW::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void PropertyDeclRO::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void RoutineDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void RoutineDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void FunctionDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void RootFunctionDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void ChildFunctionDefn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void FunctionRetn::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void EventDecl::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void Namespace::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void Root::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void TypedefDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void TypedefDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void TemplateDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void TemplateDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void EnumDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void StructDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void RootStructDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ChildStructDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void PropertyDeclRW::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void PropertyDeclRO::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void RoutineDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void RoutineDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void FunctionDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void RootFunctionDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ChildFunctionDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void FunctionRetn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void EventDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void Namespace::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void Root::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 
     //////////////////////////////////////////////////////////////////
     class NamespaceList : public Node {
     public:
         inline NamespaceList(const Ast::Token& pos) : Node(pos) {}
         typedef std::list<Ast::Namespace*> List;
-        inline void addNamespace(Ast::Namespace& ns) {_list.push_back(ptr(ns));}
+        inline void addNamespace(Ast::Namespace& ns) {_list.push_back(z::ptr(ns));}
         inline const List& list() const {return _list;}
     private:
         List _list;
@@ -569,7 +569,7 @@ namespace Ast {
     public:
         inline CoerceList(const Ast::Token& pos) : Node(pos) {}
         typedef std::list<const Ast::TypeSpec*> List;
-        inline void addTypeSpec(const Ast::TypeSpec& typeSpec) {_list.push_back(ptr(typeSpec));}
+        inline void addTypeSpec(const Ast::TypeSpec& typeSpec) {_list.push_back(z::ptr(typeSpec));}
         inline const List& list() const {return _list;}
     private:
         List _list;
@@ -595,9 +595,9 @@ namespace Ast {
         typedef std::vector<const Expr*> List;
     public:
         inline ExprList(const Token& pos) : Node(pos) {}
-        inline ExprList& addExpr(const Expr& expr) {_list.push_back(ptr(expr)); return ref(this);}
+        inline ExprList& addExpr(const Expr& expr) {_list.push_back(z::ptr(expr)); return z::ref(this);}
         inline const List& list() const {return _list;}
-        inline const Expr& at(const size_t& idx) const {assert(idx < _list.size()); return ref(_list.at(idx));}
+        inline const Expr& at(const size_t& idx) const {assert(idx < _list.size()); return z::ref(_list.at(idx));}
     private:
         List _list;
     };
@@ -673,9 +673,9 @@ namespace Ast {
     public:
         inline ListList(const Token& pos) : Node(pos), _valueType(0) {}
     public:
-        inline ListList& valueType(const QualifiedTypeSpec& val) { _valueType = ptr(val); return ref(this);}
-        inline const QualifiedTypeSpec& valueType() const {return ref(_valueType);}
-        inline ListList& addItem(const ListItem& item) { _list.push_back(ptr(item)); return ref(this);}
+        inline ListList& valueType(const QualifiedTypeSpec& val) { _valueType = z::ptr(val); return z::ref(this);}
+        inline const QualifiedTypeSpec& valueType() const {return z::ref(_valueType);}
+        inline ListList& addItem(const ListItem& item) { _list.push_back(z::ptr(item)); return z::ref(this);}
         inline const List& list() const {return _list;}
     private:
         const QualifiedTypeSpec* _valueType;
@@ -708,11 +708,11 @@ namespace Ast {
     public:
         inline DictList(const Token& pos) : Node(pos), _keyType(0), _valueType(0) {}
     public:
-        inline DictList& keyType(const QualifiedTypeSpec& val) { _keyType = ptr(val); return ref(this);}
-        inline const QualifiedTypeSpec& keyType() const {return ref(_keyType);}
-        inline DictList& valueType(const QualifiedTypeSpec& val) { _valueType = ptr(val); return ref(this);}
-        inline const QualifiedTypeSpec& valueType() const {return ref(_valueType);}
-        inline DictList& addItem(const DictItem& item) { _list.push_back(ptr(item)); return ref(this);}
+        inline DictList& keyType(const QualifiedTypeSpec& val) { _keyType = z::ptr(val); return z::ref(this);}
+        inline const QualifiedTypeSpec& keyType() const {return z::ref(_keyType);}
+        inline DictList& valueType(const QualifiedTypeSpec& val) { _valueType = z::ptr(val); return z::ref(this);}
+        inline const QualifiedTypeSpec& valueType() const {return z::ref(_valueType);}
+        inline DictList& addItem(const DictItem& item) { _list.push_back(z::ptr(item)); return z::ref(this);}
         inline const List& list() const {return _list;}
     private:
         const QualifiedTypeSpec* _keyType;
@@ -994,7 +994,7 @@ namespace Ast {
     public:
         inline StructInitPartList(const Token& pos) : Node(pos) {}
         inline const List& list() const {return _list;}
-        inline void addPart(const StructInitPart& part) { _list.push_back(ptr(part));}
+        inline void addPart(const StructInitPart& part) { _list.push_back(z::ptr(part));}
     private:
         List _list;
     };
@@ -1049,12 +1049,12 @@ namespace Ast {
 
     struct Expr::Visitor {
         inline void visitNode(const Expr& node) {
-            node.visit(ref(this));
+            node.visit(z::ref(this));
         }
 
         inline void visitList(const ExprList& exprList) {
             for(ExprList::List::const_iterator it = exprList.list().begin(); it != exprList.list().end(); ++it) {
-                const Expr& expr = ref(*it);
+                const Expr& expr = z::ref(*it);
                 sep();
                 visitNode(expr);
             }
@@ -1092,35 +1092,35 @@ namespace Ast {
         virtual void sep() = 0;
     };
 
-    inline void TernaryOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void BinaryOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void SetIndexExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void PostfixOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void PrefixOpExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void ListExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void DictExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void FormatExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void RunExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void RoutineCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void FunctorCallExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void IndexExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void SpliceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void TypeofTypeExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void TypeofExprExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void StaticTypecastExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void DynamicTypecastExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void PointerInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void ValueInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void MemberVariableExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void MemberPropertyExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void EnumMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void StructMemberExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void StructInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void FunctionInstanceExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void AnonymousFunctionExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void ConstantExpr::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void TernaryOpExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryOpExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void SetIndexExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void PostfixOpExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void PrefixOpExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ListExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void DictExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void FormatExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void RunExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void RoutineCallExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void FunctorCallExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void IndexExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void SpliceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void TypeofTypeExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void TypeofExprExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void StaticTypecastExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void DynamicTypecastExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void PointerInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ValueInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void MemberVariableExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void MemberPropertyExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void EnumMemberExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void StructMemberExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void StructInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void FunctionInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void AnonymousFunctionExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ConstantExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
@@ -1327,8 +1327,8 @@ namespace Ast {
         inline ForeachStatement(const Token& pos, const Expr& expr) : Statement(pos), _expr(expr), _block(0) {}
     public:
         inline const Expr& expr() const {return _expr;}
-        inline const CompoundStatement& block() const {return ref(_block);}
-        inline void setBlock(const CompoundStatement& val) {_block = ptr(val);}
+        inline const CompoundStatement& block() const {return z::ref(_block);}
+        inline void setBlock(const CompoundStatement& val) {_block = z::ptr(val);}
     private:
         const Expr& _expr;
         const CompoundStatement* _block;
@@ -1477,7 +1477,7 @@ namespace Ast {
         typedef std::list<const Statement*> List;
     public:
         inline CompoundStatement(const Token& pos) : Statement(pos) {}
-        inline CompoundStatement& addStatement(const Statement& statement) {_list.push_back(ptr(statement)); return ref(this);}
+        inline CompoundStatement& addStatement(const Statement& statement) {_list.push_back(z::ptr(statement)); return z::ref(this);}
         inline const List& list() const {return _list;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1487,7 +1487,7 @@ namespace Ast {
 
     struct Statement::Visitor {
         inline void visitNode(const Statement& node) {
-            node.visit(ref(this));
+            node.visit(z::ref(this));
         }
 
         virtual void visit(const ImportStatement& node) = 0;
@@ -1520,34 +1520,34 @@ namespace Ast {
         virtual void visit(const CompoundStatement& node) = 0;
     };
 
-    inline void ImportStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void EnterNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void LeaveNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void UserDefinedTypeSpecStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void StructMemberVariableStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void StructInitStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void AutoStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void ExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void PrintStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void IfStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void IfElseStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void WhileStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void DoWhileStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void ForExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void ForInitStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void ForeachStringStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void ForeachListStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void ForeachDictStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void CaseExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void CaseDefaultStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void SwitchValueStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void SwitchExprStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void BreakStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void ContinueStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void AddEventHandlerStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void CompoundStatement::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void ImportStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void EnterNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void LeaveNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void UserDefinedTypeSpecStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void StructMemberVariableStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void StructInitStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void AutoStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ExprStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void PrintStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void IfStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void IfElseStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void WhileStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void DoWhileStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ForExprStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ForInitStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ForeachStringStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ForeachListStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ForeachDictStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void CaseExprStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void CaseDefaultStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void SwitchValueStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void SwitchExprStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BreakStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ContinueStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void AddEventHandlerStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void CompoundStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 
     //////////////////////////////////////////////////////////////////
     class Body : public Node {
@@ -1585,15 +1585,15 @@ namespace Ast {
 
     struct Body::Visitor {
         inline void visitNode(const Body& node) {
-            node.visit(ref(this));
+            node.visit(z::ref(this));
         }
 
         virtual void visit(const RoutineBody& node) = 0;
         virtual void visit(const FunctionBody& node) = 0;
     };
 
-    inline void RoutineBody::visit(Visitor& visitor) const {visitor.visit(ref(this));}
-    inline void FunctionBody::visit(Visitor& visitor) const {visitor.visit(ref(this));}
+    inline void RoutineBody::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void FunctionBody::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
@@ -1672,28 +1672,28 @@ namespace Ast {
         /// \brief Add a import statement to the unit
         /// \param statement A pointer to the node to add
         inline void addStatement(const Statement& statement) {
-            _statementList.push_back(ptr(statement));
+            _statementList.push_back(z::ptr(statement));
         }
 
         /// \brief Add a function implementation to the unit
         /// \param functionDefnBase the function implementation to add
-        inline void addBody(const Body& body) {_bodyList.push_back(ptr(body));}
+        inline void addBody(const Body& body) {_bodyList.push_back(z::ptr(body));}
 
         /// \brief Add a coercion list to the unit
         /// \param list the coercion list to add
-        inline void addCoercionList(const CoerceList& list) {_coerceListList.push_back(ptr(list));}
+        inline void addCoercionList(const CoerceList& list) {_coerceListList.push_back(z::ptr(list));}
 
         /// \brief Add a default value to the unit
         /// \param typeSpec the typeSpec to add
         /// \param expr the expr to add
-        inline void addDefaultValue(const TypeSpec& typeSpec, const Expr& expr) {_defaultValueList[ptr(typeSpec)] = ptr(expr);}
+        inline void addDefaultValue(const TypeSpec& typeSpec, const Expr& expr) {_defaultValueList[z::ptr(typeSpec)] = z::ptr(expr);}
 
     public:
         /// \brief Add an AST node to the unit
         /// \param node A pointer to the node to add
         /// \return A reference to the newly added node
         template<typename T>
-        inline T& addNode(T* node) {_nodeList.push_back(node); return ref(node);}
+        inline T& addNode(T* node) {_nodeList.push_back(node); return z::ref(node);}
 
         /// \brief Return count of nodes in unit
         /// \return Count of nodes in unit
@@ -1751,32 +1751,32 @@ namespace Ast {
     public:
         inline const std::string& name() const {return _name;}
     public:
-        inline Config& mode(const Mode::T& val) { _mode = val; return ref(this);}
+        inline Config& mode(const Mode::T& val) { _mode = val; return z::ref(this);}
         inline const Mode::T& mode() const {return _mode;}
     public:
-        inline Config& gui(const bool& val) { _gui = val; return ref(this);}
+        inline Config& gui(const bool& val) { _gui = val; return z::ref(this);}
         inline const bool& gui() const {return _gui;}
-        inline Config& debug(const bool& val) { _debug = val; return ref(this);}
+        inline Config& debug(const bool& val) { _debug = val; return z::ref(this);}
         inline const bool& debug() const {return _debug;}
-        inline Config& test(const bool& val) { _test = val; return ref(this);}
+        inline Config& test(const bool& val) { _test = val; return z::ref(this);}
         inline const bool& test() const {return _test;}
     public:
-        inline Config& olanguage(const std::string& val) { _olanguage = val; return ref(this);}
+        inline Config& olanguage(const std::string& val) { _olanguage = val; return z::ref(this);}
         inline const std::string& olanguage() const {return _olanguage;}
     public:
-        inline Config& zexePath(const std::string& val) { _zexePath = val; return ref(this);}
+        inline Config& zexePath(const std::string& val) { _zexePath = val; return z::ref(this);}
         inline const std::string& zexePath() const {return _zexePath;}
     public:
-        inline Config& zlibPath(const std::string& val) { _zlibPath = val; return ref(this);}
+        inline Config& zlibPath(const std::string& val) { _zlibPath = val; return z::ref(this);}
         inline const std::string& zlibPath() const {return _zlibPath;}
     public:
-        inline Config& addIncludePath(const std::string& dir) { _includePathList.push_back(dir); return ref(this);}
+        inline Config& addIncludePath(const std::string& dir) { _includePathList.push_back(dir); return z::ref(this);}
         inline const PathList& includePathList() const {return _includePathList;}
     public:
-        inline Config& addIncludeFile(const std::string& file) { _includeFileList.push_back(file); return ref(this);}
+        inline Config& addIncludeFile(const std::string& file) { _includeFileList.push_back(file); return z::ref(this);}
         inline const PathList& includeFileList() const {return _includeFileList;}
     public:
-        inline Config& addSourceFile(const std::string& file) { _sourceFileList.push_back(file); return ref(this);}
+        inline Config& addSourceFile(const std::string& file) { _sourceFileList.push_back(file); return z::ref(this);}
         inline const PathList& sourceFileList() const {return _sourceFileList;}
     private:
         const std::string _name;
@@ -1806,30 +1806,30 @@ namespace Ast {
     public:
         inline Project() : _name("main"), _oproject("cmake"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;"), _verbosity(Verbosity::Normal) {}
     public:
-        inline Project& name(const std::string& val) { _name = val; return ref(this);}
+        inline Project& name(const std::string& val) { _name = val; return z::ref(this);}
         inline const std::string& name() const {return _name;}
     public:
-        inline Project& oproject(const std::string& val) { _oproject = val; return ref(this);}
+        inline Project& oproject(const std::string& val) { _oproject = val; return z::ref(this);}
         inline const std::string& oproject() const {return _oproject;}
     public:
-        inline Project& verbosity(const Verbosity::T& val) { _verbosity = val; return ref(this);}
+        inline Project& verbosity(const Verbosity::T& val) { _verbosity = val; return z::ref(this);}
         inline const Verbosity::T& verbosity() const {return _verbosity;}
     public:
         inline Config& config(const std::string& name) {
             ConfigList::iterator it = _configList.find(name);
             if(it == _configList.end()) {
-                throw Exception("Config does not exist");
+                throw z::Exception("Config does not exist");
             }
-            return ref(it->second);
+            return z::ref(it->second);
         }
 
         inline Config& addConfig(const std::string& name) {
             ConfigList::iterator it = _configList.find(name);
             if(it != _configList.end()) {
-                throw Exception("Config already exists");
+                throw z::Exception("Config already exists");
             }
             _configList[name] = new Config(name);
-            return ref(_configList[name]);
+            return z::ref(_configList[name]);
         }
 
     public:

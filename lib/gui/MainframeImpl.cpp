@@ -18,7 +18,7 @@ const MainFrame::Create::_Out& MainFrame::Create::run(const MainFrame::Definitio
     gtk_widget_show(impl._hFixed);
 #endif
     Window::Handle win;
-    win._wdata<Window::Handle>(ptr(impl));
+    win._wdata<Window::Handle>(z::ptr(impl));
     if(def.visible) {
         Window::Show().run(win);
     }
