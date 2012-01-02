@@ -39,7 +39,7 @@
 %name ZenParser
 
 %token_type {TokenData}
-%extra_argument {Context* pctx}
+%extra_argument {Ast::NodeFactory* pctx}
 
 %include {
 #include "base/pch.hpp"

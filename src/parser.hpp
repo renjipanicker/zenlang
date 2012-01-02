@@ -5,13 +5,13 @@
 
 class Parser {
 public:
-    Parser(Context& context);
+    Parser(Ast::NodeFactory& context);
     ~Parser();
 public:
     void feed(const TokenData& td);
     void done();
-    inline Context& context() {return _context;}
+    inline Ast::NodeFactory& context() {return _context;}
 private:
-    Context& _context;
+    Ast::NodeFactory& _context;
     void* _parser;
 };

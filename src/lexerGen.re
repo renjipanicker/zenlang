@@ -168,7 +168,7 @@ inline void Lexer::Impl::sendReturn(Scanner* s) {
     const Ast::RoutineDefn* rd = 0;
     const Ast::RootFunctionDefn* rfd = 0;
     const Ast::ChildFunctionDefn* cfd = 0;
-    for(Context::TypeSpecStack::const_reverse_iterator it = _context.typeSpecStack().rbegin(); it != _context.typeSpecStack().rend(); ++it) {
+    for(Ast::NodeFactory::TypeSpecStack::const_reverse_iterator it = _context.typeSpecStack().rbegin(); it != _context.typeSpecStack().rend(); ++it) {
         const Ast::TypeSpec* ts = *it;
         if((rd = dynamic_cast<const Ast::RoutineDefn*>(ts)) != 0) {
             feedToken(token(s, ZENTOK_RRETURN));

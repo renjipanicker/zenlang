@@ -3,7 +3,7 @@
 #include "parser.hpp"
 #include "parserGen.hpp"
 
-Parser::Parser(Context& context) : _context(context), _parser(0) {
+Parser::Parser(Ast::NodeFactory& context) : _context(context), _parser(0) {
     _parser = ZenParserAlloc(malloc);
     //ZenParserTrace(stdout, "TP: ");
 }

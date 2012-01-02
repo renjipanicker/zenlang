@@ -3,7 +3,7 @@
 
 class Lexer {
 public:
-    Lexer(Context& context, Parser& parser);
+    Lexer(Ast::NodeFactory& context, Parser& parser);
     ~Lexer();
     bool openString(const std::string& data);
     bool openFile(const std::string& filename);

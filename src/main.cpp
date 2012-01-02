@@ -99,7 +99,7 @@ int main(int argc, char* argv[]) {
         while (quit == false) {
             std::cout << ">";
             std::string cmd;
-//            std::cin >> cmd;
+//            std::getline(std::cin, cmd);
             cmd = "auto i = 0;\n";
             if(cmd == ".q")
                 break;

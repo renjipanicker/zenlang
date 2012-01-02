@@ -6,7 +6,7 @@
 #include "outfile.hpp"
 
 bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int& level) {
-    Context context(z::ref(this), unit, level, filename);
+    Ast::NodeFactory context(z::ref(this), unit, level, filename);
     Parser parser(context);
     Lexer lexer(context, parser);
     if(!lexer.openFile(filename))
@@ -85,7 +85,7 @@ void Compiler::compile() {
 
 bool Compiler::parseString(Ast::Unit& unit, const std::string& data, const int& level) {
     import(unit, "core/core.ipp", 0);
-    Context context(z::ref(this), unit, level, "string");
+    Ast::NodeFactory context(z::ref(this), unit, level, "string");
     Parser parser(context);
     Lexer lexer(context, parser);
     if(!lexer.openString(data))

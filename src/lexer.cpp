@@ -13,7 +13,7 @@ public:
     inline bool read();
 
 public:
-    inline Impl(Context& context, Parser& parser);
+    inline Impl(Ast::NodeFactory& context, Parser& parser);
     inline ~Impl();
 
 private:
@@ -32,7 +32,7 @@ private:
 private:
     Scanner* _s;
     Parser& _parser;
-    Context& _context;
+    Ast::NodeFactory& _context;
     int _lastToken;
     static const char* reservedWords[];
 };
@@ -75,7 +75,7 @@ inline bool Lexer::Impl::read() {
     return true;
 }
 
-inline Lexer::Impl::Impl(Context& context, Parser& parser) : _s(0), _parser(parser), _context(context), _lastToken(0) {
+inline Lexer::Impl::Impl(Ast::NodeFactory& context, Parser& parser) : _s(0), _parser(parser), _context(context), _lastToken(0) {
     _s = new Scanner();
 }
 
@@ -84,7 +84,7 @@ inline Lexer::Impl::~Impl() {
     delete _s;
 }
 
-Lexer::Lexer(Context& context, Parser& parser) : _impl(0) {_impl = new Impl(context, parser);}
+Lexer::Lexer(Ast::NodeFactory& context, Parser& parser) : _impl(0) {_impl = new Impl(context, parser);}
 Lexer::~Lexer() {delete _impl;}
 bool Lexer::openString(const std::string& data) {return z::ref(_impl).openString(data);}
 bool Lexer::openFile(const std::string& filename) {return z::ref(_impl).openFile(filename);}
