@@ -37,7 +37,7 @@ bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int
         }
     }
 
-    return lexer.readFile();
+    return lexer.read();
 }
 
 void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& level) {
@@ -64,12 +64,15 @@ void Compiler::compile() {
         if(_project.verbosity() >= Ast::Project::Verbosity::Normal) {
             printf("-- Compiling %s\n", filename.c_str());
         }
+
         std::string ext = getExtention(filename);
         if(_project.zppExt().find(ext) != std::string::npos) {
             Ast::Unit unit(filename);
             import(unit, "core/core.ipp", 0);
+
             if(!parseFile(unit, filename, 0))
                 throw z::Exception("Cannot open source file '%s'\n", filename.c_str());
+
             if(_config.olanguage() == "stlcpp") {
                 StlCppGenerator generator(_project, _config, unit);
                 generator.run();
@@ -79,3 +82,14 @@ void Compiler::compile() {
         }
     }
 }
+
+bool Compiler::parseString(Ast::Unit& unit, const std::string& data, const int& level) {
+    import(unit, "core/core.ipp", 0);
+    Context context(z::ref(this), unit, level, "string");
+    Parser parser(context);
+    Lexer lexer(context, parser);
+    if(!lexer.openString(data))
+        return false;
+    return lexer.read();
+}
+

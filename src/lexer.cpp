@@ -7,10 +7,14 @@
 struct Scanner;
 class Lexer::Impl {
 public:
+    inline bool openString(const std::string& data);
+    inline bool openFile(const std::string& filename);
+    inline bool close();
+    inline bool read();
+
+public:
     inline Impl(Context& context, Parser& parser);
     inline ~Impl();
-    inline bool openFile(const std::string& filename);
-    inline bool readFile();
 
 private:
     size_t init(Scanner* s);
@@ -35,40 +39,56 @@ private:
 
 #include "lexerGen.hpp"
 
+inline bool Lexer::Impl::openString(const std::string& data) {
+    z::ref(_s).is = new std::stringstream(data);
+    return true;
+}
+
+inline bool Lexer::Impl::openFile(const std::string& filename) {
+    z::ref(_s).is = 0;
+    std::ifstream* is = new std::ifstream();
+    z::ref(is).open(filename.c_str(), std::ifstream::in);
+    if(z::ref(is).is_open() == false) {
+        delete is;
+        return false;
+    }
+    z::ref(_s).is = is;
+    return true;
+}
+
+inline bool Lexer::Impl::close() {
+    if(z::ref(_s).is != 0) {
+        /// \todo check if delete closes the file
+        //z::ref(z::ref(_s).is).close();
+        delete z::ref(_s).is;
+        z::ref(_s).is = 0;
+    }
+    return true;
+}
+
+inline bool Lexer::Impl::read() {
+    if(init(_s) > 0) {
+        scan(_s);
+    }
+
+    close();
+    return true;
+}
+
 inline Lexer::Impl::Impl(Context& context, Parser& parser) : _s(0), _parser(parser), _context(context), _lastToken(0) {
     _s = new Scanner();
 }
 
 inline Lexer::Impl::~Impl() {
-    if(z::ref(_s).fp != 0) {
-        fclose(z::ref(_s).fp);
-        z::ref(_s).fp = 0;
-    }
+    close();
     delete _s;
-}
-
-inline bool Lexer::Impl::openFile(const std::string& filename) {
-    if ((z::ref(_s).fp = fopen(filename.c_str(), "r")) == NULL) {
-        z::ref(_s).fp = 0;
-        return false;
-    }
-    return true;
-}
-
-inline bool Lexer::Impl::readFile() {
-    if(init(_s) > 0) {
-        scan(_s);
-    }
-
-    fclose(z::ref(_s).fp);
-    z::ref(_s).fp = 0;
-    return true;
 }
 
 Lexer::Lexer(Context& context, Parser& parser) : _impl(0) {_impl = new Impl(context, parser);}
 Lexer::~Lexer() {delete _impl;}
+bool Lexer::openString(const std::string& data) {return z::ref(_impl).openString(data);}
 bool Lexer::openFile(const std::string& filename) {return z::ref(_impl).openFile(filename);}
-bool Lexer::readFile() {return z::ref(_impl).readFile();}
+bool Lexer::read() {return z::ref(_impl).read();}
 
 //-------------------------------------------------
 // All keywords that are not used by zen, but are reserved because

@@ -65,8 +65,9 @@
     #include <list>
     #include <map>
     #include <iostream>
-    #include <iomanip>
+    #include <fstream>
     #include <sstream>
+    #include <iomanip>
     #include <typeinfo>
     #if defined(WIN32)
     #else

@@ -6,7 +6,7 @@
 /*!types:re2c */
 
 struct Scanner {
-    FILE* fp;
+    std::istream* is;
     char* cur;
     char* tok;
     char* lim;
@@ -30,7 +30,7 @@ static size_t fill(Scanner *s, size_t len) {
     size_t got = 0;
     size_t count = 0;
 
-    if ((!feof(s->fp)) && ((s->lim - s->cur) < (int)len)) {
+    if ((z::ref(s->is).eof() == false) && ((s->lim - s->cur) < (int)len)) {
         if (s->tok > s->buffer) {
             count = s->tok - s->buffer;
             memcpy(s->buffer, s->tok, s->lim - s->tok);
@@ -48,7 +48,8 @@ static size_t fill(Scanner *s, size_t len) {
             count = BSIZE;
         }
 
-        got = fread(s->lim, 1, count, s->fp);
+        z::ref(z::ref(s).is).read(s->lim, count);
+        got = z::ref(z::ref(s).is).gcount();
         s->lim += got;
     }
     return got;

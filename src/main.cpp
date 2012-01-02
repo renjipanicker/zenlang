@@ -1,26 +1,27 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "progen.hpp"
+#include "compiler.hpp"
 
 static int showHelp(const Ast::Config& config) {
-    fprintf(stdout, "zen compiler 0.1a");
-    fprintf(stdout, " (%s)", config.zexePath().c_str());
-    fprintf(stdout, "\n");
-    fprintf(stdout, "Copyright(c) 2011 Renji Panicker.\n");
-    fprintf(stdout, "Usage: zen <options> <files>\n");
-    fprintf(stdout, "  -h  --help      Show this message\n");
-    fprintf(stdout, "  -c              Compile only\n");
-    fprintf(stdout, "  -px --exe       Executable project (default)\n");
-    fprintf(stdout, "  -pd --dll       Shared library project\n");
-    fprintf(stdout, "  -pl --lib       Static library project\n");
-    fprintf(stdout, "  -n  --name      Project name\n");
-    fprintf(stdout, "  -g  --gui       GUI application\n");
-    fprintf(stdout, "  -d  --debug     Debug build\n");
-    fprintf(stdout, "  -ol --language  Output language\n");
-    fprintf(stdout, "  -op --project   Output project\n");
-    fprintf(stdout, "  -v  --verbose   Display verbose output\n");
-    fprintf(stdout, "  -t  --test      Don't generate unit tests (Note this is a negative switch)\n");
-    fprintf(stdout, "  -z  --zenPath   Zen Library path\n");
+    printf("zen compiler 0.1a");
+    printf(" (%s)", config.zexePath().c_str());
+    printf("\n");
+    printf("Copyright(c) 2011 Renji Panicker.\n");
+    printf("Usage: zen <options> <files>\n");
+    printf("  -h  --help      Show this message\n");
+    printf("  -c              Compile only\n");
+    printf("  -px --exe       Executable project (default)\n");
+    printf("  -pd --dll       Shared library project\n");
+    printf("  -pl --lib       Static library project\n");
+    printf("  -n  --name      Project name\n");
+    printf("  -g  --gui       GUI application\n");
+    printf("  -d  --debug     Debug build\n");
+    printf("  -ol --language  Output language\n");
+    printf("  -op --project   Output project\n");
+    printf("  -v  --verbose   Display verbose output\n");
+    printf("  -t  --test      Don't generate unit tests (Note this is a negative switch)\n");
+    printf("  -z  --zenPath   Zen Library path\n");
     return 0;
 }
 
@@ -33,12 +34,12 @@ int main(int argc, char* argv[]) {
 #ifdef WIN32
     GetModuleFileName(NULL, path, len);
     if(GetLastError() != ERROR_SUCCESS) {
-        fprintf(stdout, "Internal error retreiving process path\n");
+        printf("Internal error retreiving process path\n");
         return -1;
     }
 #else
     if (readlink ("/proc/self/exe", path, len) == -1) {
-        fprintf(stdout, "Internal error retreiving process path %s\n", path);
+        printf("Internal error retreiving process path %s\n", path);
         return -1;
     }
 #endif
@@ -51,6 +52,7 @@ int main(int argc, char* argv[]) {
         return showHelp(config);
     }
 
+    bool interpretor = false;
     int i = 1;
     while(i < argc) {
         std::string t = argv[i++];
@@ -58,6 +60,8 @@ int main(int argc, char* argv[]) {
             return showHelp(config);
         } else if(t == "-c") {
             config.mode(Ast::Config::Mode::Compile);
+        } else if(t == "-i") {
+            interpretor = true;
         } else if((t == "-n") || (t == "--name")) {
             t = argv[i++];
             project.name(t);
@@ -89,11 +93,30 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if(project.oproject() == "cmake") {
-        CmakeProGen progen(project);
-        progen.run();
+    if(interpretor) {
+        printf("Entering interpretor mode (not implemented)\n");
+        bool quit = false;
+        while (quit == false) {
+            std::cout << ">";
+            std::string cmd;
+//            std::cin >> cmd;
+            cmd = "auto i = 0;\n";
+            if(cmd == ".q")
+                break;
+            try {
+                Compiler c(project, config);
+                Ast::Unit unit("");
+                c.parseString(unit, cmd, 0);
+            } catch (...) {
+            }
+        }
     } else {
-        throw z::Exception("Unknown project generator '%s'\n", project.oproject().c_str());
+        if(project.oproject() == "cmake") {
+            CmakeProGen progen(project);
+            progen.run();
+        } else {
+            throw z::Exception("Unknown project generator '%s'\n", project.oproject().c_str());
+        }
     }
     return 0;
 }
