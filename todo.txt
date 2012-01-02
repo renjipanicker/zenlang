@@ -1,5 +1,6 @@
 interpreter
 error-handling
+rename GenName::Import and Normal to zenlang and stlcpp
 
 bug - validate type when de-referencing pointer<>
 bug - list/dict inside struct does not copy in cctor
@@ -53,9 +54,6 @@ tree-view
 web-view
 tab-widget
 
-*** make all ctors explicit
-*** Rename GenName::Import and Normal to zenlang and stlcpp
-
 ==BACKLOG==
 enum-member-statement(?)
 positional-paramlist
@@ -91,6 +89,7 @@ multiple code generators: python, php, js, java
 multiple project generators: cmake, vcproj, xcode
 fix indentation in generated cpp file
 
+*** make all ctors explicit
 *** enum-init-expr
 *** move Formatter to String, Creator to List/Dict
 *** merge enum and struct Ast's.

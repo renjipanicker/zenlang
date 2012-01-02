@@ -649,18 +649,19 @@ rExprList(R) ::= .                            {R = z::ref(pctx).aExprList();}
 //-------------------------------------------------
 // expressions
 %type rExpr {const Ast::Expr*}
-rExpr(L) ::= rTernaryExpr(R).      {L = R;}
-rExpr(L) ::= rBinaryExpr(R).       {L = R;}
-rExpr(L) ::= rPostfixExpr(R).      {L = R;}
-rExpr(L) ::= rPrefixExpr(R).       {L = R;}
-rExpr(L) ::= rListExpr(R).         {L = R;}
-rExpr(L) ::= rDictExpr(R).         {L = R;}
-rExpr(L) ::= rFormatExpr(R).       {L = R;}
-rExpr(L) ::= rCallExpr(R).         {L = R;}
-rExpr(L) ::= rRunExpr(R).          {L = R;}
-rExpr(L) ::= rOrderedExpr(R).      {L = R;}
-rExpr(L) ::= rIndexExpr(R).        {L = R;}
-rExpr(L) ::= rSpliceExpr(R).        {L = R;}
+rExpr(L) ::= rTernaryExpr(R).           {L = R;}
+rExpr(L) ::= rBooleanExpr(R).           {L = R;}
+rExpr(L) ::= rBinaryExpr(R).            {L = R;}
+rExpr(L) ::= rPostfixExpr(R).           {L = R;}
+rExpr(L) ::= rPrefixExpr(R).            {L = R;}
+rExpr(L) ::= rListExpr(R).              {L = R;}
+rExpr(L) ::= rDictExpr(R).              {L = R;}
+rExpr(L) ::= rFormatExpr(R).            {L = R;}
+rExpr(L) ::= rCallExpr(R).              {L = R;}
+rExpr(L) ::= rRunExpr(R).               {L = R;}
+rExpr(L) ::= rOrderedExpr(R).           {L = R;}
+rExpr(L) ::= rIndexExpr(R).             {L = R;}
+rExpr(L) ::= rSpliceExpr(R).            {L = R;}
 rExpr(L) ::= rVariableRefExpr(R).       {L = R;}
 rExpr(L) ::= rMemberVariableExpr(R).    {L = R;}
 rExpr(L) ::= rTypeSpecMemberExpr(R).    {L = R;}
@@ -678,58 +679,62 @@ rExpr(L) ::= rConstantExpr(R).          {L = R;}
 //-------------------------------------------------
 // ternary operators
 %type rTernaryExpr {const Ast::TernaryOpExpr*}
-rTernaryExpr(E) ::= rExpr(L) QUESTION(O1) rExpr(T) COLON(O2) rExpr(F). {E = z::ref(pctx).aTernaryExpr(O1, O2, z::ref(L), z::ref(T), z::ref(F));}
+rTernaryExpr(E) ::= rExpr(L) QUESTION(O1) rExpr(T) COLON(O2) rExpr(F). {E = z::ref(pctx).aConditionalExpr(O1, O2, z::ref(L), z::ref(T), z::ref(F));}
+
+//-------------------------------------------------
+// boolean operators
+%type rBooleanExpr {const Ast::Expr*}
+rBooleanExpr(E) ::= rExpr(L) AND(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanAndExpr(O, z::ref(L), z::ref(R)));}
+rBooleanExpr(E) ::= rExpr(L) OR(O)              rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanOrExpr(O, z::ref(L), z::ref(R)));}
+rBooleanExpr(E) ::= rExpr(L) EQUAL(O)           rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanEqualExpr(O, z::ref(L), z::ref(R)));}
+rBooleanExpr(E) ::= rExpr(L) NOTEQUAL(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanNotEqualExpr(O, z::ref(L), z::ref(R)));}
+rBooleanExpr(E) ::= rExpr(L) LT(O)              rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanLessThanExpr(O, z::ref(L), z::ref(R)));}
+rBooleanExpr(E) ::= rExpr(L) GT(O)              rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanGreaterThanExpr(O, z::ref(L), z::ref(R)));}
+rBooleanExpr(E) ::= rExpr(L) LTE(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanLessThanOrEqualExpr(O, z::ref(L), z::ref(R)));}
+rBooleanExpr(E) ::= rExpr(L) GTE(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanGreaterThanOrEqualExpr(O, z::ref(L), z::ref(R)));}
+rBooleanExpr(E) ::= rExpr(L) HAS(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanHasExpr(O, z::ref(L), z::ref(R)));}
 
 //-------------------------------------------------
 // binary operators
 %type rBinaryExpr {const Ast::Expr*}
-rBinaryExpr(E) ::= rExpr(L) AND(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) OR(O)              rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) EQUAL(O)           rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) NOTEQUAL(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) LT(O)              rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) GT(O)              rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) LTE(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) GTE(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) HAS(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBooleanExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) ASSIGNEQUAL(O)     rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) TIMESEQUAL(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) DIVIDEEQUAL(O)     rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) MINUSEQUAL(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) PLUSEQUAL(O)       rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) MODEQUAL(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) SHIFTLEFTEQUAL(O)  rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) SHIFTRIGHTEQUAL(O) rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISEANDEQUAL(O) rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISEXOREQUAL(O) rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISEOREQUAL(O)  rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISEAND(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISEXOR(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISEOR(O)       rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) BITWISENOT(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) SHL(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) SHR(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) PLUS(O)            rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) MINUS(O)           rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) STAR(O)            rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) DIVIDE(O)          rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
-rBinaryExpr(E) ::= rExpr(L) MOD(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) ASSIGNEQUAL(O)     rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryAssignEqualExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) PLUSEQUAL(O)       rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryPlusEqualExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) MINUSEQUAL(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryMinusEqualExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) TIMESEQUAL(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryTimesEqualExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) DIVIDEEQUAL(O)     rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryDivideEqualExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) MODEQUAL(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryModEqualExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISEANDEQUAL(O) rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryBitwiseAndEqualExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISEOREQUAL(O)  rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryBitwiseOrEqualExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISEXOREQUAL(O) rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryBitwiseXorEqualExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) SHIFTLEFTEQUAL(O)  rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryShiftLeftEqualExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) SHIFTRIGHTEQUAL(O) rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryShiftRightEqualExpr(O, z::ref(L), z::ref(R)));}
+
+rBinaryExpr(E) ::= rExpr(L) PLUS(O)            rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryPlusExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) MINUS(O)           rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryMinusExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) STAR(O)            rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryTimesExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) DIVIDE(O)          rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryDivideExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) MOD(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryModExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISEAND(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryBitwiseAndExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISEOR(O)       rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryBitwiseOrExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) BITWISEXOR(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryBitwiseXorExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) SHL(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryShiftLeftExpr(O, z::ref(L), z::ref(R)));}
+rBinaryExpr(E) ::= rExpr(L) SHR(O)             rExpr(R). {E = z::ptr(z::ref(pctx).aBinaryShiftRightExpr(O, z::ref(L), z::ref(R)));}
 
 //-------------------------------------------------
 // postfix operators
 %type rPostfixExpr {const Ast::Expr*}
-rPostfixExpr(E) ::= rExpr(L) INC(O). {E = z::ptr(z::ref(pctx).aPostfixExpr(O, z::ref(L)));}
-rPostfixExpr(E) ::= rExpr(L) DEC(O). {E = z::ptr(z::ref(pctx).aPostfixExpr(O, z::ref(L)));}
+rPostfixExpr(E) ::= rExpr(L) INC(O). {E = z::ptr(z::ref(pctx).aPostfixIncExpr(O, z::ref(L)));}
+rPostfixExpr(E) ::= rExpr(L) DEC(O). {E = z::ptr(z::ref(pctx).aPostfixDecExpr(O, z::ref(L)));}
 
 //-------------------------------------------------
 // prefix operators
 %type rPrefixExpr {const Ast::Expr*}
-rPrefixExpr(E) ::= NOT(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixExpr(O, z::ref(R)));}
-rPrefixExpr(E) ::= PLUS(O)       rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixExpr(O, z::ref(R)));}
-rPrefixExpr(E) ::= MINUS(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixExpr(O, z::ref(R)));}
-rPrefixExpr(E) ::= INC(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixExpr(O, z::ref(R)));}
-rPrefixExpr(E) ::= DEC(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixExpr(O, z::ref(R)));}
-rPrefixExpr(E) ::= BITWISENOT(O) rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixExpr(O, z::ref(R)));}
+rPrefixExpr(E) ::= NOT(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixNotExpr(O, z::ref(R)));}
+rPrefixExpr(E) ::= PLUS(O)       rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixPlusExpr(O, z::ref(R)));}
+rPrefixExpr(E) ::= MINUS(O)      rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixMinusExpr(O, z::ref(R)));}
+rPrefixExpr(E) ::= INC(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixIncExpr(O, z::ref(R)));}
+rPrefixExpr(E) ::= DEC(O)        rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixDecExpr(O, z::ref(R)));}
+rPrefixExpr(E) ::= BITWISENOT(O) rExpr(R). {E = z::ptr(z::ref(pctx).aPrefixBitwiseNotExpr(O, z::ref(R)));}
 
 //-------------------------------------------------
 // string formatter
@@ -954,22 +959,22 @@ rCallArgList(L) ::= .                                  {L = z::ref(pctx).aCallAr
 //-------------------------------------------------
 // constant expressions
 %type rConstantExpr {const Ast::ConstantExpr*}
-rConstantExpr(L) ::= FLOAT_CONST  (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("float",  value));}
-rConstantExpr(L) ::= DOUBLE_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("double", value));}
-rConstantExpr(L) ::= TRUE_CONST   (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("bool",   value));}
-rConstantExpr(L) ::= FALSE_CONST  (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("bool",   value));}
-rConstantExpr(L) ::= STRING_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("string", value));}
-rConstantExpr(L) ::= CHAR_CONST   (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("char",   value));}
-rConstantExpr(L) ::= HEXINT_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("int",    value));}
-rConstantExpr(L) ::= DECINT_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("int",    value));}
-rConstantExpr(L) ::= OCTINT_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantExpr("int",    value));}
-rConstantExpr(L) ::= LHEXINT_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantExpr("long",   value));}
-rConstantExpr(L) ::= LDECINT_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantExpr("long",   value));}
-rConstantExpr(L) ::= LOCTINT_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantExpr("long",   value));}
+rConstantExpr(L) ::= FLOAT_CONST  (value).  {L = z::ptr(z::ref(pctx).aConstantFloatExpr(value));}
+rConstantExpr(L) ::= DOUBLE_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantDoubleExpr(value));}
+rConstantExpr(L) ::= TRUE_CONST   (value).  {L = z::ptr(z::ref(pctx).aConstantBooleanExpr(value));}
+rConstantExpr(L) ::= FALSE_CONST  (value).  {L = z::ptr(z::ref(pctx).aConstantBooleanExpr(value));}
+rConstantExpr(L) ::= STRING_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantStringExpr(value));}
+rConstantExpr(L) ::= CHAR_CONST   (value).  {L = z::ptr(z::ref(pctx).aConstantCharExpr(value));}
+rConstantExpr(L) ::= LHEXINT_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantLongExpr(value));}
+rConstantExpr(L) ::= LDECINT_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantLongExpr(value));}
+rConstantExpr(L) ::= LOCTINT_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantLongExpr(value));}
+rConstantExpr(L) ::= HEXINT_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantIntExpr(value));}
+rConstantExpr(L) ::= DECINT_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantIntExpr(value));}
+rConstantExpr(L) ::= OCTINT_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantIntExpr(value));}
 rConstantExpr(L) ::= rKeyConstantExpr(R).   {L = R;}
 
 %type rKeyConstantExpr {const Ast::ConstantExpr*}
-rKeyConstantExpr(L) ::= KEY_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantExpr("string", value));}
+rKeyConstantExpr(L) ::= KEY_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantStringExpr(value));}
 
 /*
 //-------------------------------------------------

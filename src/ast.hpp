@@ -612,8 +612,6 @@ namespace Ast {
         inline const Expr& rhs1() const {return _rhs1;}
         inline const Expr& rhs2() const {return _rhs2;}
     private:
-        virtual void visit(Visitor& visitor) const;
-    private:
         const Token _op1;
         const Token _op2;
         const Expr& _lhs;
@@ -621,42 +619,310 @@ namespace Ast {
         const Expr& _rhs2;
     };
 
-    class BinaryOpExpr : public Expr {
+    class ConditionalExpr : public TernaryOpExpr {
     public:
-        inline BinaryOpExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : Expr(op, qTypeSpec), _op(op), _lhs(lhs), _rhs(rhs) {}
+        inline ConditionalExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op1, const Token& op2, const Expr& lhs, const Expr& rhs1, const Expr& rhs2)
+            : TernaryOpExpr(qTypeSpec, op1, op2, lhs, rhs1, rhs2) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryExpr : public Expr {
+    public:
+        inline BinaryExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : Expr(op, qTypeSpec), _op(op), _lhs(lhs), _rhs(rhs) {}
         inline const Token& op() const {return _op;}
         inline const Expr& lhs() const {return _lhs;}
         inline const Expr& rhs() const {return _rhs;}
-    private:
-        virtual void visit(Visitor& visitor) const;
     private:
         const Token _op;
         const Expr& _lhs;
         const Expr& _rhs;
     };
 
-    class PostfixOpExpr : public Expr {
+    class BooleanAndExpr : public BinaryExpr {
     public:
-        inline PostfixOpExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs) : Expr(op, qTypeSpec), _op(op), _lhs(lhs) {}
-        inline const Token& op() const {return _op;}
-        inline const Expr& lhs() const {return _lhs;}
+        inline BooleanAndExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
+    };
+
+    class BooleanOrExpr : public BinaryExpr {
+    public:
+        inline BooleanOrExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BooleanEqualExpr : public BinaryExpr {
+    public:
+        inline BooleanEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BooleanNotEqualExpr : public BinaryExpr {
+    public:
+        inline BooleanNotEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BooleanLessThanExpr : public BinaryExpr {
+    public:
+        inline BooleanLessThanExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BooleanGreaterThanExpr : public BinaryExpr {
+    public:
+        inline BooleanGreaterThanExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BooleanLessThanOrEqualExpr : public BinaryExpr {
+    public:
+        inline BooleanLessThanOrEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BooleanGreaterThanOrEqualExpr : public BinaryExpr {
+    public:
+        inline BooleanGreaterThanOrEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BooleanHasExpr : public BinaryExpr {
+    public:
+        inline BooleanHasExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryAssignEqualExpr : public BinaryExpr {
+    public:
+        inline BinaryAssignEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryPlusEqualExpr : public BinaryExpr {
+    public:
+        inline BinaryPlusEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryMinusEqualExpr : public BinaryExpr {
+    public:
+        inline BinaryMinusEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryTimesEqualExpr : public BinaryExpr {
+    public:
+        inline BinaryTimesEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryDivideEqualExpr : public BinaryExpr {
+    public:
+        inline BinaryDivideEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryModEqualExpr : public BinaryExpr {
+    public:
+        inline BinaryModEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryBitwiseAndEqualExpr : public BinaryExpr {
+    public:
+        inline BinaryBitwiseAndEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryBitwiseOrEqualExpr : public BinaryExpr {
+    public:
+        inline BinaryBitwiseOrEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryBitwiseXorEqualExpr : public BinaryExpr {
+    public:
+        inline BinaryBitwiseXorEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryShiftLeftEqualExpr : public BinaryExpr {
+    public:
+        inline BinaryShiftLeftEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryShiftRightEqualExpr : public BinaryExpr {
+    public:
+        inline BinaryShiftRightEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryPlusExpr : public BinaryExpr {
+    public:
+        inline BinaryPlusExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryMinusExpr : public BinaryExpr {
+    public:
+        inline BinaryMinusExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryTimesExpr : public BinaryExpr {
+    public:
+        inline BinaryTimesExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryDivideExpr : public BinaryExpr {
+    public:
+        inline BinaryDivideExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryModExpr : public BinaryExpr {
+    public:
+        inline BinaryModExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryBitwiseAndExpr : public BinaryExpr {
+    public:
+        inline BinaryBitwiseAndExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryBitwiseOrExpr : public BinaryExpr {
+    public:
+        inline BinaryBitwiseOrExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryBitwiseXorExpr : public BinaryExpr {
+    public:
+        inline BinaryBitwiseXorExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryShiftLeftExpr : public BinaryExpr {
+    public:
+        inline BinaryShiftLeftExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class BinaryShiftRightExpr : public BinaryExpr {
+    public:
+        inline BinaryShiftRightExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class PostfixExpr : public Expr {
+    public:
+        inline PostfixExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs) : Expr(op, qTypeSpec), _op(op), _lhs(lhs) {}
+        inline const Token& op() const {return _op;}
+        inline const Expr& lhs() const {return _lhs;}
     private:
         const Token _op;
         const Expr& _lhs;
     };
 
-    class PrefixOpExpr : public Expr {
+    class PostfixIncExpr : public PostfixExpr {
     public:
-        inline PrefixOpExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : Expr(op, qTypeSpec), _op(op), _rhs(rhs) {}
+        inline PostfixIncExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs) : PostfixExpr(qTypeSpec, op, lhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class PostfixDecExpr : public PostfixExpr {
+    public:
+        inline PostfixDecExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs) : PostfixExpr(qTypeSpec, op, lhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class PrefixExpr : public Expr {
+    public:
+        inline PrefixExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : Expr(op, qTypeSpec), _op(op), _rhs(rhs) {}
         inline const Token& op() const {return _op;}
         inline const Expr& rhs() const {return _rhs;}
     private:
-        virtual void visit(Visitor& visitor) const;
-    private:
         const Token _op;
         const Expr& _rhs;
+    };
+
+    class PrefixNotExpr : public PrefixExpr {
+    public:
+        inline PrefixNotExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class PrefixPlusExpr : public PrefixExpr {
+    public:
+        inline PrefixPlusExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class PrefixMinusExpr : public PrefixExpr {
+    public:
+        inline PrefixMinusExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class PrefixIncExpr : public PrefixExpr {
+    public:
+        inline PrefixIncExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class PrefixDecExpr : public PrefixExpr {
+    public:
+        inline PrefixDecExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class PrefixBitwiseNotExpr : public PrefixExpr {
+    public:
+        inline PrefixBitwiseNotExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
     };
 
     class ListItem : public Node {
@@ -1039,12 +1305,84 @@ namespace Ast {
 
     class ConstantExpr : public Expr {
     public:
-        inline ConstantExpr(const QualifiedTypeSpec& qTypeSpec, const Token& value) : Expr(value, qTypeSpec), _value(value) {}
-        inline const Token& value() const {return _value;}
+        inline ConstantExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token) : Expr(token, qTypeSpec), _token(token) {}
+        inline const Token& token() const {return _token;}
+    private:
+        const Token _token;
+    };
+
+    class ConstantFloatExpr : public ConstantExpr {
+    public:
+        inline ConstantFloatExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const float& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline const float& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Token _value;
+        const float _value;
+    };
+
+    class ConstantDoubleExpr : public ConstantExpr {
+    public:
+        inline ConstantDoubleExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const double& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline const double& value() const {return _value;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const double _value;
+    };
+
+    class ConstantBooleanExpr : public ConstantExpr {
+    public:
+        inline ConstantBooleanExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const bool& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline const bool& value() const {return _value;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const bool _value;
+    };
+
+    class ConstantStringExpr : public ConstantExpr {
+    public:
+        inline ConstantStringExpr(const QualifiedTypeSpec& qTypeSpec, const Token& value) : ConstantExpr(qTypeSpec, value) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class ConstantCharExpr : public ConstantExpr {
+    public:
+        inline ConstantCharExpr(const QualifiedTypeSpec& qTypeSpec, const Token& value) : ConstantExpr(qTypeSpec, value) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class ConstantLongExpr : public ConstantExpr {
+    public:
+        inline ConstantLongExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const long& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline const long& value() const {return _value;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const long _value;
+    };
+
+    class ConstantIntExpr : public ConstantExpr {
+    public:
+        inline ConstantIntExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const int& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline const int& value() const {return _value;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const int _value;
+    };
+
+    class ConstantShortExpr : public ConstantExpr {
+    public:
+        inline ConstantShortExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const short& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline const short& value() const {return _value;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const short _value;
     };
 
     struct Expr::Visitor {
@@ -1060,11 +1398,50 @@ namespace Ast {
             }
         }
 
-        virtual void visit(const TernaryOpExpr& node) = 0;
-        virtual void visit(const BinaryOpExpr& node) = 0;
+        virtual void visit(const ConditionalExpr& node) = 0;
+        virtual void visit(const BooleanAndExpr& node) = 0;
+        virtual void visit(const BooleanOrExpr& node) = 0;
+        virtual void visit(const BooleanEqualExpr& node) = 0;
+        virtual void visit(const BooleanNotEqualExpr& node) = 0;
+        virtual void visit(const BooleanLessThanExpr& node) = 0;
+        virtual void visit(const BooleanGreaterThanExpr& node) = 0;
+        virtual void visit(const BooleanLessThanOrEqualExpr& node) = 0;
+        virtual void visit(const BooleanGreaterThanOrEqualExpr& node) = 0;
+        virtual void visit(const BooleanHasExpr& node) = 0;
+        virtual void visit(const BinaryAssignEqualExpr& node) = 0;
+        virtual void visit(const BinaryPlusEqualExpr& node) = 0;
+        virtual void visit(const BinaryMinusEqualExpr& node) = 0;
+        virtual void visit(const BinaryTimesEqualExpr& node) = 0;
+        virtual void visit(const BinaryDivideEqualExpr& node) = 0;
+        virtual void visit(const BinaryModEqualExpr& node) = 0;
+        virtual void visit(const BinaryBitwiseAndEqualExpr& node) = 0;
+        virtual void visit(const BinaryBitwiseOrEqualExpr& node) = 0;
+        virtual void visit(const BinaryBitwiseXorEqualExpr& node) = 0;
+        virtual void visit(const BinaryShiftLeftEqualExpr& node) = 0;
+        virtual void visit(const BinaryShiftRightEqualExpr& node) = 0;
+
+        virtual void visit(const BinaryPlusExpr& node) = 0;
+        virtual void visit(const BinaryMinusExpr& node) = 0;
+        virtual void visit(const BinaryTimesExpr& node) = 0;
+        virtual void visit(const BinaryDivideExpr& node) = 0;
+        virtual void visit(const BinaryModExpr& node) = 0;
+        virtual void visit(const BinaryBitwiseAndExpr& node) = 0;
+        virtual void visit(const BinaryBitwiseOrExpr& node) = 0;
+        virtual void visit(const BinaryBitwiseXorExpr& node) = 0;
+        virtual void visit(const BinaryShiftLeftExpr& node) = 0;
+        virtual void visit(const BinaryShiftRightExpr& node) = 0;
+
+        virtual void visit(const PostfixIncExpr& node) = 0;
+        virtual void visit(const PostfixDecExpr& node) = 0;
+
+        virtual void visit(const PrefixNotExpr& node) = 0;
+        virtual void visit(const PrefixPlusExpr& node) = 0;
+        virtual void visit(const PrefixMinusExpr& node) = 0;
+        virtual void visit(const PrefixIncExpr& node) = 0;
+        virtual void visit(const PrefixDecExpr& node) = 0;
+        virtual void visit(const PrefixBitwiseNotExpr& node) = 0;
+
         virtual void visit(const SetIndexExpr& node) = 0;
-        virtual void visit(const PostfixOpExpr& node) = 0;
-        virtual void visit(const PrefixOpExpr& node) = 0;
         virtual void visit(const ListExpr& node) = 0;
         virtual void visit(const DictExpr& node) = 0;
         virtual void visit(const FormatExpr& node) = 0;
@@ -1088,15 +1465,64 @@ namespace Ast {
         virtual void visit(const StructInstanceExpr& node) = 0;
         virtual void visit(const FunctionInstanceExpr& node) = 0;
         virtual void visit(const AnonymousFunctionExpr& node) = 0;
-        virtual void visit(const ConstantExpr& node) = 0;
+
+        virtual void visit(const ConstantFloatExpr& node) = 0;
+        virtual void visit(const ConstantDoubleExpr& node) = 0;
+        virtual void visit(const ConstantBooleanExpr& node) = 0;
+        virtual void visit(const ConstantStringExpr& node) = 0;
+        virtual void visit(const ConstantCharExpr& node) = 0;
+        virtual void visit(const ConstantLongExpr& node) = 0;
+        virtual void visit(const ConstantIntExpr& node) = 0;
+        virtual void visit(const ConstantShortExpr& node) = 0;
+
         virtual void sep() = 0;
     };
 
-    inline void TernaryOpExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryOpExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ConditionalExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BooleanAndExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BooleanOrExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BooleanEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BooleanNotEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BooleanLessThanExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BooleanGreaterThanExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BooleanLessThanOrEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BooleanGreaterThanOrEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BooleanHasExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+
+    inline void BinaryAssignEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryPlusEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryMinusEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryTimesEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryDivideEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryModEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryBitwiseAndEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryBitwiseOrEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryBitwiseXorEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryShiftLeftEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryShiftRightEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+
+    inline void BinaryPlusExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryMinusExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryTimesExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryDivideExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryModExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryBitwiseAndExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryBitwiseOrExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryBitwiseXorExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryShiftLeftExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void BinaryShiftRightExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+
+    inline void PostfixIncExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void PostfixDecExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+
+    inline void PrefixNotExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void PrefixPlusExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void PrefixMinusExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void PrefixIncExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void PrefixDecExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void PrefixBitwiseNotExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+
     inline void SetIndexExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void PostfixOpExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void PrefixOpExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
     inline void ListExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
     inline void DictExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
     inline void FormatExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
@@ -1120,7 +1546,15 @@ namespace Ast {
     inline void StructInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
     inline void FunctionInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
     inline void AnonymousFunctionExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ConstantExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+
+    inline void ConstantFloatExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ConstantDoubleExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ConstantBooleanExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ConstantStringExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ConstantCharExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ConstantLongExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ConstantIntExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+    inline void ConstantShortExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////

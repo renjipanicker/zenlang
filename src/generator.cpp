@@ -94,7 +94,7 @@ struct ExprGenerator : public Ast::Expr::Visitor {
 public:
     inline ExprGenerator(FILE* fp, const GenMode::T& genMode, const std::string& sep2 = "", const std::string& sep1 = "") : _fp(fp), _genMode(genMode), _sep2(sep2), _sep1(sep1), _sep0(sep1) {}
 private:
-    virtual void visit(const Ast::TernaryOpExpr& node) {
+    inline void visitTernary(const Ast::TernaryOpExpr& node) {
         fprintf(_fp, "(");
         visitNode(node.lhs());
         fprintf(_fp, "%s", node.op1().text());
@@ -104,10 +104,176 @@ private:
         fprintf(_fp, ")");
     }
 
-    virtual void visit(const Ast::BinaryOpExpr& node) {
+    virtual void visit(const Ast::ConditionalExpr& node) {
+        return visitTernary(node);
+    }
+
+    virtual void visitBinary(const Ast::BinaryExpr& node) {
         visitNode(node.lhs());
         fprintf(_fp, "%s", node.op().text());
         visitNode(node.rhs());
+    }
+
+    virtual void visit(const Ast::BooleanAndExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BooleanOrExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BooleanEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BooleanNotEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BooleanLessThanExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BooleanGreaterThanExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BooleanLessThanOrEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BooleanGreaterThanOrEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BooleanHasExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryAssignEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryPlusEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryMinusEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryTimesEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryDivideEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryModEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryBitwiseAndEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryBitwiseOrEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryBitwiseXorEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryShiftLeftEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryShiftRightEqualExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryPlusExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryMinusExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryTimesExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryDivideExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryModExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryBitwiseAndExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryBitwiseOrExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryBitwiseXorExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryShiftLeftExpr& node) {
+        return visitBinary(node);
+    }
+
+    virtual void visit(const Ast::BinaryShiftRightExpr& node) {
+        return visitBinary(node);
+    }
+
+    inline void visitPostfix(const Ast::PostfixExpr& node) {
+        visitNode(node.lhs());
+        fprintf(_fp, "%s", node.op().text());
+    }
+
+    virtual void visit(const Ast::PostfixIncExpr& node) {
+        return visitPostfix(node);
+    }
+
+    virtual void visit(const Ast::PostfixDecExpr& node) {
+        return visitPostfix(node);
+    }
+
+    inline void visitPrefix(const Ast::PrefixExpr& node) {
+        fprintf(_fp, "%s", node.op().text());
+        visitNode(node.rhs());
+    }
+
+    virtual void visit(const Ast::PrefixNotExpr& node) {
+        return visitPrefix(node);
+    }
+
+    virtual void visit(const Ast::PrefixPlusExpr& node) {
+        return visitPrefix(node);
+    }
+
+    virtual void visit(const Ast::PrefixMinusExpr& node) {
+        return visitPrefix(node);
+    }
+
+    virtual void visit(const Ast::PrefixIncExpr& node) {
+        return visitPrefix(node);
+    }
+
+    virtual void visit(const Ast::PrefixDecExpr& node) {
+        return visitPrefix(node);
+    }
+
+    virtual void visit(const Ast::PrefixBitwiseNotExpr& node) {
+        return visitPrefix(node);
     }
 
     virtual void visit(const Ast::SetIndexExpr& node) {
@@ -117,16 +283,6 @@ private:
         fprintf(_fp, ", ");
         visitNode(node.rhs());
         fprintf(_fp, ")");
-    }
-
-    virtual void visit(const Ast::PostfixOpExpr& node) {
-        visitNode(node.lhs());
-        fprintf(_fp, "%s", node.op().text());
-    }
-
-    virtual void visit(const Ast::PrefixOpExpr& node) {
-        fprintf(_fp, "%s", node.op().text());
-        visitNode(node.rhs());
     }
 
     virtual void visit(const Ast::ListExpr& node) {
@@ -393,16 +549,40 @@ private:
         visitFunctionTypeInstance(node.function());
     }
 
-    virtual void visit(const Ast::ConstantExpr& node) {
-        if(getQualifiedTypeSpecName(node.qTypeSpec(), GenMode::Import) == "char") {
-            fprintf(_fp, "\'%s\'", node.value().text());
-            return;
-        }
-        if(getQualifiedTypeSpecName(node.qTypeSpec(), GenMode::Import) == "string") {
-            fprintf(_fp, "\"%s\"", node.value().text());
-            return;
-        }
-        fprintf(_fp, "%s", node.value().text());
+    inline void visitConstant(const Ast::ConstantExpr& node) {
+        fprintf(_fp, "%s", node.token().text());
+    }
+
+    virtual void visit(const Ast::ConstantFloatExpr& node) {
+        visitConstant(node);
+    }
+
+    virtual void visit(const Ast::ConstantDoubleExpr& node) {
+        visitConstant(node);
+    }
+
+    virtual void visit(const Ast::ConstantBooleanExpr& node) {
+        visitConstant(node);
+    }
+
+    virtual void visit(const Ast::ConstantStringExpr& node) {
+        fprintf(_fp, "\"%s\"", node.token().text());
+    }
+
+    virtual void visit(const Ast::ConstantCharExpr& node) {
+        fprintf(_fp, "\'%s\'", node.token().text());
+    }
+
+    virtual void visit(const Ast::ConstantLongExpr& node) {
+        visitConstant(node);
+    }
+
+    virtual void visit(const Ast::ConstantIntExpr& node) {
+        visitConstant(node);
+    }
+
+    virtual void visit(const Ast::ConstantShortExpr& node) {
+        visitConstant(node);
     }
 
     virtual void sep() {
@@ -465,8 +645,8 @@ struct ImportGenerator : public Ast::TypeSpec::Visitor {
             for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 const Ast::VariableDefn& def = z::ref(*it);
                 fprintf(_fp, "    %s", def.name().text());
-                const Ast::ConstantExpr* cexpr = dynamic_cast<const Ast::ConstantExpr*>(z::ptr(def.initExpr()));
-                if((cexpr == 0) || (z::ref(cexpr).value().string() != "#")) {
+                const Ast::ConstantIntExpr* cexpr = dynamic_cast<const Ast::ConstantIntExpr*>(z::ptr(def.initExpr()));
+                if((cexpr == 0) || (z::ref(cexpr).token().string() != "#")) {
                     fprintf(_fp, " = ");
                     ExprGenerator(_fp, GenMode::Import).visitNode(def.initExpr());
                 }
@@ -667,8 +847,8 @@ struct TypeDeclarationGenerator : public Ast::TypeSpec::Visitor {
                 INDENT;
                 const Ast::VariableDefn& def = z::ref(*it);
                 fprintf(_fp, "%s%s %s", Indent::get(), sep.c_str(), def.name().text());
-                const Ast::ConstantExpr* cexpr = dynamic_cast<const Ast::ConstantExpr*>(z::ptr(def.initExpr()));
-                if((cexpr == 0) || (z::ref(cexpr).value().string() != "#")) {
+                const Ast::ConstantIntExpr* cexpr = dynamic_cast<const Ast::ConstantIntExpr*>(z::ptr(def.initExpr()));
+                if((cexpr == 0) || (z::ref(cexpr).token().string() != "#")) {
                     fprintf(_fp, " = ");
                     ExprGenerator(_fp, GenMode::Normal).visitNode(def.initExpr());
                 }

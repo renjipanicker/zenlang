@@ -284,11 +284,72 @@ public:
     Ast::ExprList*                     aExprList();
 
 public:
-    Ast::TernaryOpExpr*       aTernaryExpr(const Ast::Token& op1, const Ast::Token& op2, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2);
-    Ast::Expr&                aBooleanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
-    Ast::Expr&                aBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
-    Ast::PostfixOpExpr&       aPostfixExpr(const Ast::Token& op, const Ast::Expr& lhs);
-    Ast::PrefixOpExpr&        aPrefixExpr(const Ast::Token& op, const Ast::Expr& rhs);
+    Ast::TernaryOpExpr* aConditionalExpr(const Ast::Token& op1, const Ast::Token& op2, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2);
+
+private:
+    template <typename T>
+    inline Ast::Expr& createBooleanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+
+    template <typename T>
+    inline Ast::Expr& createBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+
+    template <typename T>
+    inline Ast::Expr& createBinaryOpExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+
+    template <typename T>
+    inline T& createPostfixExpr(const Ast::Token& op, const Ast::Expr& lhs);
+
+    template <typename T>
+    inline T& createPrefixExpr(const Ast::Token& op, const Ast::Expr& lhs);
+
+public:
+
+    Ast::Expr& aBooleanAndExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBooleanOrExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBooleanEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBooleanNotEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBooleanLessThanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBooleanGreaterThanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBooleanLessThanOrEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBooleanGreaterThanOrEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBooleanHasExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+
+public:
+    Ast::Expr& aBinaryAssignEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryPlusEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryMinusEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryTimesEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryDivideEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryModEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryBitwiseAndEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryBitwiseOrEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryBitwiseXorEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryShiftLeftEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryShiftRightEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+
+public:
+    Ast::Expr& aBinaryAssignExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryPlusExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryMinusExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryTimesExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryDivideExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryModExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryBitwiseAndExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryBitwiseOrExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryBitwiseXorExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryShiftLeftExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+    Ast::Expr& aBinaryShiftRightExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+
+public:
+    Ast::PostfixIncExpr&       aPostfixIncExpr(const Ast::Token& op, const Ast::Expr& lhs);
+    Ast::PostfixDecExpr&       aPostfixDecExpr(const Ast::Token& op, const Ast::Expr& lhs);
+
+    Ast::PrefixNotExpr&        aPrefixNotExpr(const Ast::Token& op, const Ast::Expr& rhs);
+    Ast::PrefixPlusExpr&       aPrefixPlusExpr(const Ast::Token& op, const Ast::Expr& rhs);
+    Ast::PrefixMinusExpr&      aPrefixMinusExpr(const Ast::Token& op, const Ast::Expr& rhs);
+    Ast::PrefixIncExpr&        aPrefixIncExpr(const Ast::Token& op, const Ast::Expr& rhs);
+    Ast::PrefixDecExpr&        aPrefixDecExpr(const Ast::Token& op, const Ast::Expr& rhs);
+    Ast::PrefixBitwiseNotExpr& aPrefixBitwiseNotExpr(const Ast::Token& op, const Ast::Expr& rhs);
 
     Ast::ListExpr*            aListExpr(const Ast::Token& pos, const Ast::ListList& list);
     Ast::ListList*            aListList(const Ast::Token& pos, Ast::ListList& list, const Ast::ListItem& item);
@@ -350,5 +411,13 @@ public:
     Ast::AnonymousFunctionExpr* aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement);
     Ast::ChildFunctionDefn*   aEnterAnonymousFunction(const Ast::Function& function);
     Ast::ChildFunctionDefn*   aEnterAutoAnonymousFunction(const Ast::Token& pos);
-    Ast::ConstantExpr&        aConstantExpr(const std::string& type, const Ast::Token& value);
+
+    Ast::ConstantFloatExpr&   aConstantFloatExpr(const Ast::Token& value);
+    Ast::ConstantDoubleExpr&  aConstantDoubleExpr(const Ast::Token& value);
+    Ast::ConstantBooleanExpr& aConstantBooleanExpr(const Ast::Token& value);
+    Ast::ConstantStringExpr&  aConstantStringExpr(const Ast::Token& value);
+    Ast::ConstantCharExpr&    aConstantCharExpr(const Ast::Token& value);
+    Ast::ConstantLongExpr&    aConstantLongExpr(const Ast::Token& value);
+    Ast::ConstantIntExpr&     aConstantIntExpr(const Ast::Token& value);
+    Ast::ConstantShortExpr&   aConstantShortExpr(const Ast::Token& value);
 };

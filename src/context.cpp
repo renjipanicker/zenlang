@@ -381,7 +381,7 @@ inline const Ast::Expr& Context::getDefaultValue(const Ast::TypeSpec& typeSpec, 
         }
         if(tdName == "ptr") {
             Ast::Token value(name.row(), name.col(), "0");
-            Ast::ConstantExpr& expr = aConstantExpr("int", value);
+            Ast::ConstantIntExpr& expr = aConstantIntExpr(value);
             return expr;
         }
     }
@@ -972,7 +972,7 @@ Ast::Scope* Context::aEnumMemberDefnList(const Ast::VariableDefn& variableDefn) 
 
 Ast::VariableDefn* Context::aEnumMemberDefn(const Ast::Token& name) {
     Ast::Token value(name.row(), name.col(), "#");
-    const Ast::ConstantExpr& initExpr = aConstantExpr("int", value);
+    const Ast::ConstantIntExpr& initExpr = aConstantIntExpr(value);
     Ast::VariableDefn& variableDefn = _unit.addNode(new Ast::VariableDefn(initExpr.qTypeSpec(), name, initExpr));
     return z::ptr(variableDefn);
 }
@@ -1555,48 +1555,205 @@ Ast::ExprList* Context::aExprList() {
     return z::ptr(list);
 }
 
-Ast::TernaryOpExpr* Context::aTernaryExpr(const Ast::Token& op1, const Ast::Token& op2, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2) {
+Ast::TernaryOpExpr* Context::aConditionalExpr(const Ast::Token& op1, const Ast::Token& op2, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2) {
     const Ast::QualifiedTypeSpec& qTypeSpec = coerce(op2, rhs1.qTypeSpec(), rhs2.qTypeSpec());
-    Ast::TernaryOpExpr& expr = _unit.addNode(new Ast::TernaryOpExpr(qTypeSpec, op1, op2, lhs, rhs1, rhs2));
+    Ast::ConditionalExpr& expr = _unit.addNode(new Ast::ConditionalExpr(qTypeSpec, op1, op2, lhs, rhs1, rhs2));
     return z::ptr(expr);
 }
 
-Ast::Expr& Context::aBooleanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+template <typename T>
+inline Ast::Expr& Context::createBooleanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(op, "bool");
-    Ast::BinaryOpExpr& expr = _unit.addNode(new Ast::BinaryOpExpr(qTypeSpec, op, lhs, rhs));
+    T& expr = _unit.addNode(new T(qTypeSpec, op, lhs, rhs));
     return expr;
 }
 
-Ast::Expr& Context::aBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
-    const Ast::QualifiedTypeSpec& qTypeSpec = coerce(op, lhs.qTypeSpec(), rhs.qTypeSpec());
+Ast::Expr& Context::aBooleanAndExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBooleanExpr<Ast::BooleanAndExpr>(op, lhs, rhs);
+}
 
-    // if it is any of the assign-ops (=, +=, *=, etc). Check if last char is '='
+Ast::Expr& Context::aBooleanOrExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBooleanExpr<Ast::BooleanOrExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBooleanEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBooleanExpr<Ast::BooleanEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBooleanNotEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBooleanExpr<Ast::BooleanNotEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBooleanLessThanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBooleanExpr<Ast::BooleanLessThanExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBooleanGreaterThanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBooleanExpr<Ast::BooleanGreaterThanExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBooleanLessThanOrEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBooleanExpr<Ast::BooleanLessThanOrEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBooleanGreaterThanOrEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBooleanExpr<Ast::BooleanGreaterThanOrEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBooleanHasExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBooleanExpr<Ast::BooleanHasExpr>(op, lhs, rhs);
+}
+
+template <typename T>
+inline Ast::Expr& Context::createBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    const Ast::QualifiedTypeSpec& qTypeSpec = coerce(op, lhs.qTypeSpec(), rhs.qTypeSpec());
+    T& expr = _unit.addNode(new T(qTypeSpec, op, lhs, rhs));
+    return expr;
+}
+
+Ast::Expr& Context::aBinaryAssignEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
     const Ast::IndexExpr* indexExpr = dynamic_cast<const Ast::IndexExpr*>(z::ptr(lhs));
     if(indexExpr) {
-        if(op.string() == "=") {
-            Ast::SetIndexExpr& expr = _unit.addNode(new Ast::SetIndexExpr(op, qTypeSpec, z::ref(indexExpr), rhs));
-            return expr;
-        } else if(op.string() != "==") {
-            if(op.string().at(op.string().size() - 1) == '=') {
-                throw z::Exception("%s Operator '%s' on index expression not implemented\n", err(_filename, op).c_str(), op.text());
-            }
-        }
+        const Ast::QualifiedTypeSpec& qTypeSpec = coerce(op, lhs.qTypeSpec(), rhs.qTypeSpec());
+        Ast::SetIndexExpr& expr = _unit.addNode(new Ast::SetIndexExpr(op, qTypeSpec, z::ref(indexExpr), rhs));
+        return expr;
     }
-
-    Ast::BinaryOpExpr& expr = _unit.addNode(new Ast::BinaryOpExpr(qTypeSpec, op, lhs, rhs));
-    return expr;
+    return createBinaryExpr<Ast::BinaryAssignEqualExpr>(op, lhs, rhs);
 }
 
-Ast::PostfixOpExpr& Context::aPostfixExpr(const Ast::Token& op, const Ast::Expr& lhs) {
+template <typename T>
+inline Ast::Expr& Context::createBinaryOpExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    const Ast::IndexExpr* indexExpr = dynamic_cast<const Ast::IndexExpr*>(z::ptr(lhs));
+    if(indexExpr) {
+        throw z::Exception("%s Operator '%s' on index expression not implemented\n", err(_filename, op).c_str(), op.text());
+    }
+    return createBinaryExpr<T>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryPlusEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryOpExpr<Ast::BinaryPlusEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryMinusEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryOpExpr<Ast::BinaryMinusEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryTimesEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryOpExpr<Ast::BinaryTimesEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryDivideEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryOpExpr<Ast::BinaryDivideEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryModEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryOpExpr<Ast::BinaryModEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryBitwiseAndEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryOpExpr<Ast::BinaryBitwiseAndEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryBitwiseOrEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryOpExpr<Ast::BinaryBitwiseOrEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryBitwiseXorEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryOpExpr<Ast::BinaryBitwiseXorEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryShiftLeftEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryOpExpr<Ast::BinaryShiftLeftEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryShiftRightEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryOpExpr<Ast::BinaryShiftRightEqualExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryPlusExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryExpr<Ast::BinaryPlusExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryMinusExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryExpr<Ast::BinaryMinusExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryTimesExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryExpr<Ast::BinaryTimesExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryDivideExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryExpr<Ast::BinaryDivideExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryModExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryExpr<Ast::BinaryModExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryBitwiseAndExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryExpr<Ast::BinaryBitwiseAndExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryBitwiseOrExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryExpr<Ast::BinaryBitwiseOrExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryBitwiseXorExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryExpr<Ast::BinaryBitwiseXorExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryShiftLeftExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryExpr<Ast::BinaryShiftLeftExpr>(op, lhs, rhs);
+}
+
+Ast::Expr& Context::aBinaryShiftRightExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
+    return createBinaryExpr<Ast::BinaryShiftRightExpr>(op, lhs, rhs);
+}
+
+template <typename T>
+inline T& Context::createPostfixExpr(const Ast::Token& op, const Ast::Expr& lhs) {
     const Ast::QualifiedTypeSpec& qTypeSpec = lhs.qTypeSpec();
-    Ast::PostfixOpExpr& expr = _unit.addNode(new Ast::PostfixOpExpr(qTypeSpec, op, lhs));
+    T& expr = _unit.addNode(new T(qTypeSpec, op, lhs));
     return expr;
 }
 
-Ast::PrefixOpExpr& Context::aPrefixExpr(const Ast::Token& op, const Ast::Expr& rhs) {
+Ast::PostfixIncExpr& Context::aPostfixIncExpr(const Ast::Token& op, const Ast::Expr& lhs) {
+    return createPostfixExpr<Ast::PostfixIncExpr>(op, lhs);
+}
+
+Ast::PostfixDecExpr& Context::aPostfixDecExpr(const Ast::Token& op, const Ast::Expr& lhs) {
+    return createPostfixExpr<Ast::PostfixDecExpr>(op, lhs);
+}
+
+template <typename T>
+inline T& Context::createPrefixExpr(const Ast::Token& op, const Ast::Expr& rhs) {
     const Ast::QualifiedTypeSpec& qTypeSpec = rhs.qTypeSpec();
-    Ast::PrefixOpExpr& expr = _unit.addNode(new Ast::PrefixOpExpr(qTypeSpec, op, rhs));
+    T& expr = _unit.addNode(new T(qTypeSpec, op, rhs));
     return expr;
+}
+
+Ast::PrefixNotExpr& Context::aPrefixNotExpr(const Ast::Token& op, const Ast::Expr& rhs) {
+    return createPrefixExpr<Ast::PrefixNotExpr>(op, rhs);
+}
+
+Ast::PrefixPlusExpr& Context::aPrefixPlusExpr(const Ast::Token& op, const Ast::Expr& rhs) {
+    return createPrefixExpr<Ast::PrefixPlusExpr>(op, rhs);
+}
+
+Ast::PrefixMinusExpr& Context::aPrefixMinusExpr(const Ast::Token& op, const Ast::Expr& rhs) {
+    return createPrefixExpr<Ast::PrefixMinusExpr>(op, rhs);
+}
+
+Ast::PrefixIncExpr& Context::aPrefixIncExpr(const Ast::Token& op, const Ast::Expr& rhs) {
+    return createPrefixExpr<Ast::PrefixIncExpr>(op, rhs);
+}
+
+Ast::PrefixDecExpr& Context::aPrefixDecExpr(const Ast::Token& op, const Ast::Expr& rhs) {
+    return createPrefixExpr<Ast::PrefixDecExpr>(op, rhs);
+}
+
+Ast::PrefixBitwiseNotExpr& Context::aPrefixBitwiseNotExpr(const Ast::Token& op, const Ast::Expr& rhs) {
+    return createPrefixExpr<Ast::PrefixBitwiseNotExpr>(op, rhs);
 }
 
 Ast::ListExpr* Context::aListExpr(const Ast::Token& pos, const Ast::ListList& list) {
@@ -2225,8 +2382,67 @@ Ast::ChildFunctionDefn* Context::aEnterAutoAnonymousFunction(const Ast::Token& p
     return aEnterAnonymousFunction(z::ref(function));
 }
 
-Ast::ConstantExpr& Context::aConstantExpr(const std::string& type, const Ast::Token& value) {
-    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(value, type);
-    Ast::ConstantExpr& expr = _unit.addNode(new Ast::ConstantExpr(qTypeSpec, value));
+Ast::ConstantFloatExpr& Context::aConstantFloatExpr(const Ast::Token& token) {
+    float value = 0;
+    sscanf(token.text(), "%f", &value);
+
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "float");
+    Ast::ConstantFloatExpr& expr = _unit.addNode(new Ast::ConstantFloatExpr(qTypeSpec, token, value));
     return expr;
 }
+
+Ast::ConstantDoubleExpr& Context::aConstantDoubleExpr(const Ast::Token& token) {
+    double value = 0;
+    sscanf(token.text(), "%lf", &value);
+
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "double");
+    Ast::ConstantDoubleExpr& expr = _unit.addNode(new Ast::ConstantDoubleExpr(qTypeSpec, token, value));
+    return expr;
+}
+
+Ast::ConstantBooleanExpr& Context::aConstantBooleanExpr(const Ast::Token& token) {
+    const bool value = (token.string() == "true")?true:false;
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "bool");
+    Ast::ConstantBooleanExpr& expr = _unit.addNode(new Ast::ConstantBooleanExpr(qTypeSpec, token, value));
+    return expr;
+}
+
+Ast::ConstantStringExpr& Context::aConstantStringExpr(const Ast::Token& token) {
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "string");
+    Ast::ConstantStringExpr& expr = _unit.addNode(new Ast::ConstantStringExpr(qTypeSpec, token));
+    return expr;
+}
+
+Ast::ConstantCharExpr& Context::aConstantCharExpr(const Ast::Token& token) {
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "char");
+    Ast::ConstantCharExpr& expr = _unit.addNode(new Ast::ConstantCharExpr(qTypeSpec, token));
+    return expr;
+}
+
+Ast::ConstantLongExpr& Context::aConstantLongExpr(const Ast::Token& token) {
+    long value = 0;
+    sscanf(token.text(), "%ld", &value);
+
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "long");
+    Ast::ConstantLongExpr& expr = _unit.addNode(new Ast::ConstantLongExpr(qTypeSpec, token, value));
+    return expr;
+}
+
+Ast::ConstantIntExpr& Context::aConstantIntExpr(const Ast::Token& token) {
+    int value = 0;
+    sscanf(token.text(), "%d", &value);
+
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "int");
+    Ast::ConstantIntExpr& expr = _unit.addNode(new Ast::ConstantIntExpr(qTypeSpec, token, value));
+    return expr;
+}
+
+Ast::ConstantShortExpr& Context::aConstantShortExpr(const Ast::Token& token) {
+    int value = 0;
+    sscanf(token.text(), "%d", &value);
+
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "short");
+    Ast::ConstantShortExpr& expr = _unit.addNode(new Ast::ConstantShortExpr(qTypeSpec, token, value));
+    return expr;
+}
+
