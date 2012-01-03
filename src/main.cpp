@@ -94,13 +94,14 @@ int main(int argc, char* argv[]) {
     }
 
     if(interpretor) {
-        printf("Entering interpretor mode (not implemented)\n");
+        printf("Entering interpretor mode\n");
         bool quit = false;
         while (quit == false) {
             std::cout << ">";
             std::string cmd;
 //            std::getline(std::cin, cmd);
-            cmd = "auto i = 0;\n";
+            cmd = "auto i = 0;";
+            std::cout << cmd << std::endl;
             if(cmd == ".q")
                 break;
             try {
