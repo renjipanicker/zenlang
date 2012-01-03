@@ -26,6 +26,7 @@
       <item> auto </item>
       <item> mutable </item>
       <item> static </item>
+      <item> const </item>
 
       <item> assert </item>
       <item> unused </item>
@@ -74,20 +75,22 @@
     <list name="extensions">
     </list>
     <list name="types">
+      <item> void </item>
       <item> bool </item>
+
       <item> byte </item>
-      <item> char </item>
-      <item> const </item>
+      <item> int </item>
+      <item> short </item>
+      <item> long </item>
+
+      <item> ubyte </item>
+      <item> uint </item>
+      <item> ushort </item>
+      <item> ulong </item>
+
       <item> double </item>
       <item> float </item>
-      <item> int </item>
-      <item> long </item>
-      <item> short </item>
-      <item> signed </item>
-      <item> unsigned </item>
-      <item> void </item>
-      <item> uchar </item>
-      <item> uint </item>
+
       <item> int8_t </item>
       <item> int16_t </item>
       <item> int32_t </item>
@@ -97,6 +100,7 @@
       <item> uint32_t </item>
       <item> uint64_t </item>
 
+      <item> char </item>
       <item> string </item>
       <item> pointer </item>
       <item> future </item>
