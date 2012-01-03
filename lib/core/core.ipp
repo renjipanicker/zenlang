@@ -1,24 +1,37 @@
 typedef void native;
 
 typedef bool native;
+
 typedef byte native;
 typedef short native;
 typedef int native;
 typedef long native;
 
+typedef ubyte native;
+typedef ushort native;
+typedef uint native;
+typedef ulong native;
+
 typedef float native;
 typedef double native;
 
-coerce bool => byte => short => int => long => float => double;
-
 default void = 0;
 default bool = false;
+
 default byte = 0;
 default short = 0;
 default int = 0;
 default long = 0;
+
+default ubyte = 0;
+default ushort = 0;
+default uint = 0;
+default ulong = 0;
+
 default float = 0;
 default double = 0;
+
+coerce bool => ubyte => byte => ushort => short => uint => int => ulong => long => float => double;
 
 typedef char native;
 typedef string native;

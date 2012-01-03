@@ -4,6 +4,33 @@
 #include "compiler.hpp"
 
 namespace Ast {
+    class Context {
+    public:
+        typedef std::list<Ast::Scope*> ScopeStack;
+    protected:
+        inline Context() {}
+    public:
+        Ast::Scope& enterScope(Ast::Scope& scope);
+        Ast::Scope& leaveScope();
+        Ast::Scope& leaveScope(Ast::Scope& scope);
+        Ast::Scope& currentScope();
+        inline const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name) const;
+    public:
+        const Ast::VariableDefn* getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const;
+    private:
+        ScopeStack _scopeStack;
+    };
+
+    class CompilerContext : public Context {
+    public:
+        inline CompilerContext() {}
+    };
+
+    class InterpreterContext : public Context {
+    public:
+        inline InterpreterContext() {}
+    };
+
     class NodeFactory {
     public:
         typedef std::list<Ast::TypeSpec*> TypeSpecStack;
@@ -44,7 +71,7 @@ namespace Ast {
         typedef std::vector<ExpectedTypeSpec> ExpectedTypeSpecStack;
 
     public:
-        NodeFactory(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename);
+        NodeFactory(Context& ctx, Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename);
         ~NodeFactory();
 
     public:
@@ -85,7 +112,6 @@ namespace Ast {
         inline Ast::TypeSpec& leaveTypeSpec(Ast::TypeSpec& typeSpec);
         inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
         inline const Ast::QualifiedTypeSpec& getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name);
-        inline const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name);
         inline Ast::TemplateDefn& createTemplateDefn(const Ast::Token& pos, const std::string& name);
         inline const Ast::Expr& getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
         inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
@@ -96,10 +122,6 @@ namespace Ast {
 
     private:
         inline Ast::Scope& addScope(const Ast::Token& pos, const Ast::ScopeType::T& type);
-        inline Ast::Scope& enterScope(Ast::Scope& scope);
-        inline Ast::Scope& leaveScope();
-        inline Ast::Scope& leaveScope(Ast::Scope& scope);
-        inline Ast::Scope& currentScope();
 
     private:
         template <typename T>
@@ -138,6 +160,7 @@ namespace Ast {
         inline void popCallArg(const Ast::Token& pos);
 
     private:
+        Context& _ctx;
         Compiler& _compiler;
         Ast::Unit& _unit;
         const int _level;
@@ -145,12 +168,10 @@ namespace Ast {
         Ast::Token _lastToken;
 
     private:
-        typedef std::list<Ast::Scope*> ScopeStack;
         typedef std::list<Ast::Namespace*> NamespaceStack;
         typedef std::list<const Ast::StructDefn*> StructInitStack;
 
     private:
-        ScopeStack           _scopeStack;
         TypeSpecStack        _typeSpecStack;
         NamespaceStack       _namespaceStack;
         StructInitStack      _structInitStack;

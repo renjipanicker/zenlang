@@ -971,6 +971,9 @@ rConstantExpr(L) ::= LOCTINT_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantLo
 rConstantExpr(L) ::= HEXINT_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantIntExpr(value));}
 rConstantExpr(L) ::= DECINT_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantIntExpr(value));}
 rConstantExpr(L) ::= OCTINT_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantIntExpr(value));}
+
+rConstantExpr(L) ::= UDECINT_CONST(value).  {L = z::ptr(z::ref(pctx).aConstantIntExpr(value));}
+
 rConstantExpr(L) ::= rKeyConstantExpr(R).   {L = R;}
 
 %type rKeyConstantExpr {const Ast::ConstantExpr*}

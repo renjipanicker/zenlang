@@ -2068,19 +2068,39 @@ namespace Ast {
     public:
         /// \brief Return the statement list
         /// \return The statement list
-        inline const StatementList& statementList() const {return _statementList;}
+        inline const StatementList& globalStatementList() const {return _globalStatementList;}
 
+        /// \brief Add a import statement to the unit
+        /// \param statement A pointer to the node to add
+        inline void addGlobalStatement(const Statement& statement) {_globalStatementList.push_back(z::ptr(statement));}
+
+    public:
         /// \brief Return the function implementation list
         /// \return The function implementation list
         inline const BodyList& bodyList() const {return _bodyList;}
 
+        /// \brief Add a function implementation to the unit
+        /// \param functionDefnBase the function implementation to add
+        inline void addBody(const Body& body) {_bodyList.push_back(z::ptr(body));}
+
+    public:
         /// \brief Return the coercion list
         /// \return The coercion list
         inline const CoerceListList& coercionList() const {return _coerceListList;}
 
+        /// \brief Add a coercion list to the unit
+        /// \param list the coercion list to add
+        inline void addCoercionList(const CoerceList& list) {_coerceListList.push_back(z::ptr(list));}
+
+    public:
         /// \brief Return the default value list
         /// \return The default value  list
         inline const DefaultValueList& defaultValueList() const {return _defaultValueList;}
+
+        /// \brief Add a default value to the unit
+        /// \param typeSpec the typeSpec to add
+        /// \param expr the expr to add
+        inline void addDefaultValue(const TypeSpec& typeSpec, const Expr& expr) {_defaultValueList[z::ptr(typeSpec)] = z::ptr(expr);}
 
     public:
         /// \brief Return the root namespace
@@ -2088,7 +2108,6 @@ namespace Ast {
         inline Root& rootNS() {return _rootNS;}
         inline const Root& rootNS() const {return _rootNS;}
 
-    public:
         /// \brief Return the import namespace
         /// \return The import namespace
         inline Root& importNS() {return _importNS;}
@@ -2101,26 +2120,6 @@ namespace Ast {
         /// \brief Return the namespace part list
         /// \return The namespace part list
         inline const NsPartList& nsPartList() const {return _nsPartList;}
-
-    public:
-        /// \brief Add a import statement to the unit
-        /// \param statement A pointer to the node to add
-        inline void addStatement(const Statement& statement) {
-            _statementList.push_back(z::ptr(statement));
-        }
-
-        /// \brief Add a function implementation to the unit
-        /// \param functionDefnBase the function implementation to add
-        inline void addBody(const Body& body) {_bodyList.push_back(z::ptr(body));}
-
-        /// \brief Add a coercion list to the unit
-        /// \param list the coercion list to add
-        inline void addCoercionList(const CoerceList& list) {_coerceListList.push_back(z::ptr(list));}
-
-        /// \brief Add a default value to the unit
-        /// \param typeSpec the typeSpec to add
-        /// \param expr the expr to add
-        inline void addDefaultValue(const TypeSpec& typeSpec, const Expr& expr) {_defaultValueList[z::ptr(typeSpec)] = z::ptr(expr);}
 
     public:
         /// \brief Add an AST node to the unit
@@ -2150,7 +2149,7 @@ namespace Ast {
 
     private:
         /// \brief The list of all import statements in this unit
-        StatementList _statementList;
+        StatementList _globalStatementList;
 
         /// \brief The list of all function implementations in this unit
         BodyList _bodyList;

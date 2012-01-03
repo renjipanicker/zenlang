@@ -1753,17 +1753,17 @@ inline void StlCppGenerator::Impl::run() {
         fprintf(_fpSrc, "#include \"%s\"\n", filename.c_str());
     }
 
-    for(Ast::Unit::StatementList::const_iterator sit = _unit.statementList().begin(); sit != _unit.statementList().end(); ++sit) {
+    for(Ast::Unit::StatementList::const_iterator sit = _unit.globalStatementList().begin(); sit != _unit.globalStatementList().end(); ++sit) {
         const Ast::Statement& s = z::ref(*sit);
         GeneratorContext(GeneratorContext::TargetMode::Import, GeneratorContext::IndentMode::WithBrace).run(_config, fs, basename, s);
     }
 
-    for(Ast::Unit::StatementList::const_iterator sit = _unit.statementList().begin(); sit != _unit.statementList().end(); ++sit) {
+    for(Ast::Unit::StatementList::const_iterator sit = _unit.globalStatementList().begin(); sit != _unit.globalStatementList().end(); ++sit) {
         const Ast::Statement& s = z::ref(*sit);
         GeneratorContext(GeneratorContext::TargetMode::TypeDecl, GeneratorContext::IndentMode::WithBrace).run(_config, fs, basename, s);
     }
 
-    for(Ast::Unit::StatementList::const_iterator sit = _unit.statementList().begin(); sit != _unit.statementList().end(); ++sit) {
+    for(Ast::Unit::StatementList::const_iterator sit = _unit.globalStatementList().begin(); sit != _unit.globalStatementList().end(); ++sit) {
         const Ast::Statement& s = z::ref(*sit);
         GeneratorContext(GeneratorContext::TargetMode::TypeDefn, GeneratorContext::IndentMode::WithBrace).run(_config, fs, basename, s);
     }

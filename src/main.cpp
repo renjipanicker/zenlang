@@ -2,6 +2,7 @@
 #include "base/zenlang.hpp"
 #include "progen.hpp"
 #include "compiler.hpp"
+#include "context.hpp"
 
 static int showHelp(const Ast::Config& config) {
     printf("zen compiler 0.1a");
@@ -95,22 +96,29 @@ int main(int argc, char* argv[]) {
 
     if(interpretor) {
         printf("Entering interpretor mode\n");
+        Ast::InterpreterContext ctx;
+        Ast::Unit unit("");
+        Compiler c(project, config);
+        c.initContext(ctx, unit);
+        Ast::Token pos(0, 0, "");
+        Ast::Scope global(pos, Ast::ScopeType::Local);
+        ctx.enterScope(global);
         bool quit = false;
         while (quit == false) {
             std::cout << ">";
             std::string cmd;
-//            std::getline(std::cin, cmd);
-            cmd = "auto i = 0;";
+            std::getline(std::cin, cmd);
+//            cmd = "auto i = 0;";
+//            quit = true;
             std::cout << cmd << std::endl;
             if(cmd == ".q")
                 break;
             try {
-                Compiler c(project, config);
-                Ast::Unit unit("");
-                c.parseString(unit, cmd, 0);
+                c.parseString(ctx, unit, cmd, 0);
             } catch (...) {
             }
         }
+        ctx.leaveScope(global);
     } else {
         if(project.oproject() == "cmake") {
             CmakeProGen progen(project);

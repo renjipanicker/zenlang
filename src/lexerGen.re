@@ -331,11 +331,13 @@ re2c:condenumprefix          = EState;
 
 <Normal>       [a-zA-Z][a-zA-Z0-9_]* := sendId(s); continue;
 
-<Normal>   "0" [0-7]+      := feedToken(token(s, ZENTOK_OCTINT_CONST)); continue;
-<Normal>   "0" [0-7]+ [lL] := feedToken(token(s, ZENTOK_LOCTINT_CONST)); continue;
+<Normal>   "0" [0-7]+                                   := feedToken(token(s, ZENTOK_OCTINT_CONST)); continue;
+<Normal>   "0" [0-7]+ [uU]                              := feedToken(token(s, ZENTOK_OCTINT_CONST)); continue;
+<Normal>   "0" [0-7]+ [lL]                              := feedToken(token(s, ZENTOK_LOCTINT_CONST)); continue;
+<Normal>   "0" [0-7]+ [uU] [lL]                         := feedToken(token(s, ZENTOK_LOCTINT_CONST)); continue;
 
-<Normal>   [0-9]+      := feedToken(token(s, ZENTOK_DECINT_CONST)); continue;
-<Normal>   [0-9]+ [lL] := feedToken(token(s, ZENTOK_LDECINT_CONST)); continue;
+<Normal>   [0-9]+                                       := feedToken(token(s, ZENTOK_DECINT_CONST)); continue;
+<Normal>   [0-9]+ [lL]                                  := feedToken(token(s, ZENTOK_LDECINT_CONST)); continue;
 
 <Normal>   "0" [xX] [A-Za-z0-9]+                        := feedToken(token(s, ZENTOK_HEXINT_CONST)); continue;
 <Normal>   "0" [xX] [A-Za-z0-9]+ [lL]                   := feedToken(token(s, ZENTOK_LHEXINT_CONST)); continue;
