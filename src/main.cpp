@@ -11,6 +11,7 @@ static int showHelp(const Ast::Config& config) {
     printf("Copyright(c) 2011 Renji Panicker.\n");
     printf("Usage: zen <options> <files>\n");
     printf("  -h  --help      Show this message\n");
+    printf("  -i              Interpreter mode\n");
     printf("  -c              Compile only\n");
     printf("  -px --exe       Executable project (default)\n");
     printf("  -pd --dll       Shared library project\n");
