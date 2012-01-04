@@ -533,26 +533,6 @@ namespace Ast {
         virtual void visit(const Root& node) = 0;
     };
 
-    inline void TypedefDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void TypedefDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void TemplateDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void TemplateDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void EnumDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void StructDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void RootStructDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ChildStructDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void PropertyDeclRW::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void PropertyDeclRO::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void RoutineDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void RoutineDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void FunctionDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void RootFunctionDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ChildFunctionDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void FunctionRetn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void EventDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void Namespace::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void Root::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-
     //////////////////////////////////////////////////////////////////
     class NamespaceList : public Node {
     public:
@@ -1478,84 +1458,6 @@ namespace Ast {
         virtual void sep() = 0;
     };
 
-    inline void ConditionalExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BooleanAndExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BooleanOrExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BooleanEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BooleanNotEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BooleanLessThanExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BooleanGreaterThanExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BooleanLessThanOrEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BooleanGreaterThanOrEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BooleanHasExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-
-    inline void BinaryAssignEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryPlusEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryMinusEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryTimesEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryDivideEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryModEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryBitwiseAndEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryBitwiseOrEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryBitwiseXorEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryShiftLeftEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryShiftRightEqualExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-
-    inline void BinaryPlusExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryMinusExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryTimesExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryDivideExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryModExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryBitwiseAndExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryBitwiseOrExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryBitwiseXorExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryShiftLeftExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BinaryShiftRightExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-
-    inline void PostfixIncExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void PostfixDecExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-
-    inline void PrefixNotExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void PrefixPlusExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void PrefixMinusExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void PrefixIncExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void PrefixDecExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void PrefixBitwiseNotExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-
-    inline void SetIndexExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ListExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void DictExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void FormatExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void RunExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void RoutineCallExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void FunctorCallExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void OrderedExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void IndexExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void SpliceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void TypeofTypeExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void TypeofExprExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void StaticTypecastExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void DynamicTypecastExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void PointerInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ValueInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void MemberVariableExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void MemberPropertyExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void EnumMemberExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void StructMemberExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void StructInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void FunctionInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void AnonymousFunctionExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-
-    inline void ConstantFloatExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ConstantDoubleExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ConstantBooleanExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ConstantStringExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ConstantCharExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ConstantLongExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ConstantIntExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ConstantShortExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
     class Statement : public Node {
@@ -1954,35 +1856,6 @@ namespace Ast {
         virtual void visit(const CompoundStatement& node) = 0;
     };
 
-    inline void ImportStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void EnterNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void LeaveNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void UserDefinedTypeSpecStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void StructMemberVariableStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void StructInitStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void AutoStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ExprStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void PrintStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void IfStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void IfElseStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void WhileStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void DoWhileStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ForExprStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ForInitStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ForeachStringStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ForeachListStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ForeachDictStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void CaseExprStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void CaseDefaultStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void SwitchValueStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void SwitchExprStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void BreakStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void ContinueStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void AddEventHandlerStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void CompoundStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-
     //////////////////////////////////////////////////////////////////
     class Body : public Node {
     public:
@@ -2026,9 +1899,6 @@ namespace Ast {
         virtual void visit(const FunctionBody& node) = 0;
     };
 
-    inline void RoutineBody::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-    inline void FunctionBody::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
     /*! \brief AST Node for a compilation unit
@@ -2045,6 +1915,7 @@ namespace Ast {
         typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
         typedef std::list<Token> NsPartList;
         typedef std::map<std::string, int> HeaderFileList;
+        typedef std::list<Ast::Scope*> ScopeStack;
 
     public:
         inline Unit(const std::string& filename) : _filename(filename), _importNS("*import*"), _rootNS("*root*") {}
@@ -2073,6 +1944,9 @@ namespace Ast {
         /// \brief Add a import statement to the unit
         /// \param statement A pointer to the node to add
         inline void addGlobalStatement(const Statement& statement) {_globalStatementList.push_back(z::ptr(statement));}
+
+        /// \brief clear global statement list to the unit
+        inline void clearGlobalStatementList() {_globalStatementList.clear();}
 
     public:
         /// \brief Return the function implementation list
@@ -2132,6 +2006,16 @@ namespace Ast {
         /// \return Count of nodes in unit
         inline size_t nodeCount() const {return _nodeList.size();}
 
+    public:
+        Ast::Scope& enterScope(Ast::Scope& scope);
+        Ast::Scope& leaveScope();
+        Ast::Scope& leaveScope(Ast::Scope& scope);
+        Ast::Scope& currentScope();
+        const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name) const;
+
+    public:
+        const Ast::VariableDefn* getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const;
+
     private:
         /// \brief Unit Filename
         const std::string _filename;
@@ -2166,6 +2050,9 @@ namespace Ast {
 
         /// \brief The list of header files imported into this unit
         HeaderFileList _headerFileList;
+
+        /// \brief The scope stack for this unit
+        ScopeStack _scopeStack;
     };
 
     class Config {

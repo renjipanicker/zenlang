@@ -5,13 +5,8 @@
 #include "ZenlangGenerator.hpp"
 #include "StlcppGenerator.hpp"
 
-class CompilerContext : public Ast::Context {
-public:
-    inline CompilerContext() {}
-};
-
-bool Compiler::parseFile(Ast::Context& ctx, Ast::Unit& unit, const std::string& filename, const int& level) {
-    Ast::NodeFactory factory(ctx, z::ref(this), unit, level, filename);
+bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int& level) {
+    Ast::NodeFactory factory(z::ref(this), unit, level, filename);
     Parser parser(factory);
     Lexer lexer(factory, parser);
     if(!lexer.openFile(filename))
@@ -45,26 +40,26 @@ bool Compiler::parseFile(Ast::Context& ctx, Ast::Unit& unit, const std::string& 
     return lexer.read();
 }
 
-void Compiler::import(Ast::Context& ctx, Ast::Unit& unit, const std::string &filename, const int& level) {
+void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& level) {
     // first check current dir
-    if(parseFile(ctx, unit, "./" + filename, level+1))
+    if(parseFile(unit, "./" + filename, level+1))
         return;
 
     // next check zen lib dir
-    if(parseFile(ctx, unit, _config.zlibPath() + "/" + filename, level+1))
+    if(parseFile(unit, _config.zlibPath() + "/" + filename, level+1))
         return;
 
     // then all other include paths
     for(Ast::Config::PathList::const_iterator it = _config.includePathList().begin(); it != _config.includePathList().end(); ++it) {
         const std::string& dir = *it;
-        if(parseFile(ctx, unit, dir + "/" + filename, level+1))
+        if(parseFile(unit, dir + "/" + filename, level+1))
             return;
     }
     throw z::Exception("Cannot open include file '%s'\n", filename.c_str());
 }
 
-void Compiler::initContext(Ast::Context& ctx, Ast::Unit& unit) {
-    import(ctx, unit, "core/core.ipp", 0);
+void Compiler::initContext(Ast::Unit& unit) {
+    import(unit, "core/core.ipp", 0);
 }
 
 void Compiler::compile() {
@@ -76,11 +71,10 @@ void Compiler::compile() {
 
         std::string ext = getExtention(filename);
         if(_project.zppExt().find(ext) != std::string::npos) {
-            CompilerContext ctx;
             Ast::Unit unit(filename);
-            initContext(ctx, unit);
+            initContext(unit);
 
-            if(!parseFile(ctx, unit, filename, 0))
+            if(!parseFile(unit, filename, 0))
                 throw z::Exception("Cannot open source file '%s'\n", filename.c_str());
 
             ZenlangGenerator zgenerator(_project, _config, unit);
@@ -96,8 +90,8 @@ void Compiler::compile() {
     }
 }
 
-bool Compiler::parseString(Ast::Context& ctx, Ast::Unit& unit, const std::string& data, const int& level) {
-    Ast::NodeFactory factory(ctx, z::ref(this), unit, level, "string");
+bool Compiler::parseString(Ast::Unit& unit, const std::string& data, const int& level) {
+    Ast::NodeFactory factory(z::ref(this), unit, level, "string");
     Parser parser(factory);
     Lexer lexer(factory, parser);
     if(!lexer.openString(data))

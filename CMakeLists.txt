@@ -21,6 +21,7 @@ IF( CMAKE_BUILD_TYPE STREQUAL "Debug")
 ENDIF()
 
 SET(zen_SOURCES ${zen_SOURCES} src/ast.hpp)
+SET(zen_SOURCES ${zen_SOURCES} src/ast.cpp)
 SET(zen_SOURCES ${zen_SOURCES} src/error.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/typename.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/typename.cpp)

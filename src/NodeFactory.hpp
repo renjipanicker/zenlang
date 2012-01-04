@@ -45,7 +45,7 @@ namespace Ast {
         typedef std::vector<ExpectedTypeSpec> ExpectedTypeSpecStack;
 
     public:
-        NodeFactory(Context& ctx, Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename);
+        NodeFactory(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename);
         ~NodeFactory();
 
     public:
@@ -134,7 +134,6 @@ namespace Ast {
         inline void popCallArg(const Ast::Token& pos);
 
     private:
-        Context& _ctx;
         Compiler& _compiler;
         Ast::Unit& _unit;
         const int _level;

@@ -16,6 +16,12 @@ namespace z {
     }
 
     template <typename T>
+    inline unsigned long pad(T& t) {
+        assert(&t);
+        return (unsigned long)(&t);
+    }
+
+    template <typename T>
     inline std::string ppad(const T* t) {
         std::stringstream ss;
         ss << std::setw(16) << (unsigned long)(t);
