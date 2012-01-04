@@ -1,8 +1,8 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "CmakeGenerator.hpp"
-#include "compiler.hpp"
-#include "context.hpp"
+#include "NodeFactory.hpp"
+#include "Interpreter.hpp"
 
 static int showHelp(const Ast::Config& config) {
     printf("zen compiler 0.1a");
@@ -54,7 +54,7 @@ int main(int argc, char* argv[]) {
         return showHelp(config);
     }
 
-    bool interpretor = false;
+    bool interpreterMode = false;
     int i = 1;
     while(i < argc) {
         std::string t = argv[i++];
@@ -63,7 +63,7 @@ int main(int argc, char* argv[]) {
         } else if(t == "-c") {
             config.mode(Ast::Config::Mode::Compile);
         } else if(t == "-i") {
-            interpretor = true;
+            interpreterMode = true;
         } else if((t == "-n") || (t == "--name")) {
             t = argv[i++];
             project.name(t);
@@ -95,31 +95,9 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if(interpretor) {
-        printf("Entering interpretor mode\n");
-        Ast::InterpreterContext ctx;
-        Ast::Unit unit("");
-        Compiler c(project, config);
-        c.initContext(ctx, unit);
-        Ast::Token pos(0, 0, "");
-        Ast::Scope global(pos, Ast::ScopeType::Local);
-        ctx.enterScope(global);
-        bool quit = false;
-        while (quit == false) {
-            std::cout << ">";
-            std::string cmd;
-            std::getline(std::cin, cmd);
-//            cmd = "auto i = 0;";
-//            quit = true;
-            std::cout << cmd << std::endl;
-            if(cmd == ".q")
-                break;
-            try {
-                c.parseString(ctx, unit, cmd, 0);
-            } catch (...) {
-            }
-        }
-        ctx.leaveScope(global);
+    if(interpreterMode) {
+        Interpreter intp(project, config);
+        intp.run();
     } else {
         if(project.oproject() == "cmake") {
             CmakeGenerator progen(project);

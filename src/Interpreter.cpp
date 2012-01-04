@@ -2,8 +2,15 @@
 #include "base/zenlang.hpp"
 #include "Interpreter.hpp"
 #include "typename.hpp"
+#include "compiler.hpp"
+#include "Context.hpp"
 
 namespace {
+    class InterpreterContext : public Ast::Context {
+    public:
+        inline InterpreterContext() {}
+    };
+
     inline std::string getDefinitionType(const Ast::DefinitionType::T& defType) {
         switch(defType) {
             case Ast::DefinitionType::Final:
@@ -827,28 +834,45 @@ namespace {
 }
 
 struct Interpreter::Impl {
-    inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _project(project), _config(config), _unit(unit), _fpImp(0) {}
+    inline Impl(const Ast::Project& project, const Ast::Config& config) : _project(project), _config(config), _fpImp(0) {}
     inline void run();
 private:
     const Ast::Project& _project;
     const Ast::Config& _config;
-    const Ast::Unit& _unit;
 private:
     FILE* _fpImp;
 };
 
 inline void Interpreter::Impl::run() {
-    Indent::init();
-    std::string basename = getBaseName(_unit.filename());
-    OutputFile ofImp(_fpImp, basename + ".ipp");unused(ofImp);
-
-    for(Ast::Unit::StatementList::const_iterator sit = _unit.globalStatementList().begin(); sit != _unit.globalStatementList().end(); ++sit) {
-        const Ast::Statement& s = z::ref(*sit);
-        runStatementGenerator(_config, _fpImp, s);
+    printf("Entering interpretor mode\n");
+    InterpreterContext ctx;
+    Ast::Unit unit("");
+    Compiler c(_project, _config);
+    c.initContext(ctx, unit);
+    Ast::Token pos(0, 0, "");
+    Ast::Scope global(pos, Ast::ScopeType::Local);
+    ctx.enterScope(global);
+    bool quit = false;
+    while (quit == false) {
+        std::cout << ">";
+        std::string cmd;
+        std::getline(std::cin, cmd);
+        std::cout << cmd << std::endl;
+        if(cmd == ".q")
+            break;
+        try {
+            c.parseString(ctx, unit, cmd, 0);
+            for(Ast::Unit::StatementList::const_iterator sit = unit.globalStatementList().begin(); sit != unit.globalStatementList().end(); ++sit) {
+                const Ast::Statement& s = z::ref(*sit);
+                runStatementGenerator(_config, _fpImp, s);
+            }
+        } catch (...) {
+        }
     }
+    ctx.leaveScope(global);
 }
 
 //////////////////////////////////////////////
-Interpreter::Interpreter(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _impl(0) {_impl = new Impl(project, config, unit);}
+Interpreter::Interpreter(const Ast::Project& project, const Ast::Config& config) : _impl(0) {_impl = new Impl(project, config);}
 Interpreter::~Interpreter() {delete _impl;}
 void Interpreter::run() {return z::ref(_impl).run();}

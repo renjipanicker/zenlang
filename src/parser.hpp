@@ -1,17 +1,17 @@
 #pragma once
 
 #include "token.hpp"
-#include "context.hpp"
+#include "NodeFactory.hpp"
 
 class Parser {
 public:
-    Parser(Ast::NodeFactory& context);
+    Parser(Ast::NodeFactory& nodeFactory);
     ~Parser();
 public:
     void feed(const TokenData& td);
     void done();
-    inline Ast::NodeFactory& context() {return _context;}
+    inline Ast::NodeFactory& nodeFactory() {return _nodeFactory;}
 private:
-    Ast::NodeFactory& _context;
+    Ast::NodeFactory& _nodeFactory;
     void* _parser;
 };

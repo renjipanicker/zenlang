@@ -5,6 +5,11 @@
 #include "ZenlangGenerator.hpp"
 #include "StlcppGenerator.hpp"
 
+class CompilerContext : public Ast::Context {
+public:
+    inline CompilerContext() {}
+};
+
 bool Compiler::parseFile(Ast::Context& ctx, Ast::Unit& unit, const std::string& filename, const int& level) {
     Ast::NodeFactory factory(ctx, z::ref(this), unit, level, filename);
     Parser parser(factory);
@@ -71,7 +76,7 @@ void Compiler::compile() {
 
         std::string ext = getExtention(filename);
         if(_project.zppExt().find(ext) != std::string::npos) {
-            Ast::CompilerContext ctx;
+            CompilerContext ctx;
             Ast::Unit unit(filename);
             initContext(ctx, unit);
 

@@ -45,7 +45,7 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "error.hpp"
-#include "context.hpp"
+#include "NodeFactory.hpp"
 }
 
 //-------------------------------------------------
