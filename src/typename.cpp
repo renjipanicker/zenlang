@@ -1,7 +1,6 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "generator.hpp"
-#include "outfile.hpp"
 #include "typename.hpp"
 
 struct NameType {

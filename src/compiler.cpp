@@ -4,7 +4,6 @@
 #include "lexer.hpp"
 #include "ZenlangGenerator.hpp"
 #include "StlcppGenerator.hpp"
-#include "outfile.hpp"
 
 bool Compiler::parseFile(Ast::Context& ctx, Ast::Unit& unit, const std::string& filename, const int& level) {
     Ast::NodeFactory factory(ctx, z::ref(this), unit, level, filename);

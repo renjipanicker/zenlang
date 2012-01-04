@@ -1,6 +1,6 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "ZenlangGenerator.hpp"
+#include "Interpreter.hpp"
 #include "typename.hpp"
 
 namespace {
@@ -325,9 +325,7 @@ namespace {
         }
 
         virtual void visit(const Ast::TypeofExprExpr& node) {
-            fprintf(_fp, "typeof(");
-            ExprGenerator(_fp).visitNode(node.expr());
-            fprintf(_fp, ")");
+//            fprintf(_fp, "typeof(%s)", getQualifiedTypeSpecName(node.typeSpec(), GenMode::Import).c_str());
         }
 
         virtual void visit(const Ast::StaticTypecastExpr& node) {
@@ -351,7 +349,7 @@ namespace {
 
         virtual void visit(const Ast::ValueInstanceExpr& node) {
             fprintf(_fp, "<%s>(", getTypeSpecName(node.qTypeSpec().typeSpec(), GenMode::Import).c_str());
-            ExprGenerator(_fp).visitList(node.exprList());
+//            ExprGenerator(_fp).visitNode(node.expr());
             fprintf(_fp, ")");
         }
 
@@ -828,7 +826,7 @@ namespace {
     }
 }
 
-struct ZenlangGenerator::Impl {
+struct Interpreter::Impl {
     inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _project(project), _config(config), _unit(unit), _fpImp(0) {}
     inline void run();
 private:
@@ -839,7 +837,7 @@ private:
     FILE* _fpImp;
 };
 
-inline void ZenlangGenerator::Impl::run() {
+inline void Interpreter::Impl::run() {
     Indent::init();
     std::string basename = getBaseName(_unit.filename());
     OutputFile ofImp(_fpImp, basename + ".ipp");unused(ofImp);
@@ -851,6 +849,6 @@ inline void ZenlangGenerator::Impl::run() {
 }
 
 //////////////////////////////////////////////
-ZenlangGenerator::ZenlangGenerator(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _impl(0) {_impl = new Impl(project, config, unit);}
-ZenlangGenerator::~ZenlangGenerator() {delete _impl;}
-void ZenlangGenerator::run() {return z::ref(_impl).run();}
+Interpreter::Interpreter(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _impl(0) {_impl = new Impl(project, config, unit);}
+Interpreter::~Interpreter() {delete _impl;}
+void Interpreter::run() {return z::ref(_impl).run();}

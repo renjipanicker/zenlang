@@ -1,10 +1,9 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "progen.hpp"
+#include "CmakeGenerator.hpp"
 #include "compiler.hpp"
-#include "outfile.hpp"
 
-class CmakeProGen::Impl {
+class CmakeGenerator::Impl {
 public:
     inline Impl(const Ast::Project& project) : _project(project), _fpPro(0) {}
 public:
@@ -17,7 +16,7 @@ private:
     FILE* _fpPro;
 };
 
-inline void CmakeProGen::Impl::generateProject(const Ast::Config& config) {
+inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
     OutputFile ofPro(_fpPro, "CMakeLists.txt");unused(ofPro);
     fprintf(_fpPro, "CMAKE_MINIMUM_REQUIRED(VERSION 2.6)\n");
     fprintf(_fpPro, "PROJECT(%s)\n", _project.name().c_str());
@@ -120,7 +119,7 @@ inline void CmakeProGen::Impl::generateProject(const Ast::Config& config) {
         fprintf(_fpPro, "\n");
     }
 }
-inline void CmakeProGen::Impl::generateConfig(const Ast::Config& config) {
+inline void CmakeGenerator::Impl::generateConfig(const Ast::Config& config) {
     Compiler compiler(_project, config);
     compiler.compile();
     if(config.mode() != Ast::Config::Mode::Compile) {
@@ -128,13 +127,13 @@ inline void CmakeProGen::Impl::generateConfig(const Ast::Config& config) {
     }
 }
 
-void CmakeProGen::Impl::run() {
+void CmakeGenerator::Impl::run() {
     for(Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
         const Ast::Config& config = z::ref(it->second);
         generateConfig(config);
     }
 }
 
-CmakeProGen::CmakeProGen(const Ast::Project& project) : _impl(0) {_impl = new Impl(project);}
-CmakeProGen::~CmakeProGen() {delete _impl;}
-void CmakeProGen::run() {return z::ref(_impl).run();}
+CmakeGenerator::CmakeGenerator(const Ast::Project& project) : _impl(0) {_impl = new Impl(project);}
+CmakeGenerator::~CmakeGenerator() {delete _impl;}
+void CmakeGenerator::run() {return z::ref(_impl).run();}

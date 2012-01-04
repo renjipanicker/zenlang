@@ -1,6 +1,6 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "progen.hpp"
+#include "CmakeGenerator.hpp"
 #include "compiler.hpp"
 #include "context.hpp"
 
@@ -122,7 +122,7 @@ int main(int argc, char* argv[]) {
         ctx.leaveScope(global);
     } else {
         if(project.oproject() == "cmake") {
-            CmakeProGen progen(project);
+            CmakeGenerator progen(project);
             progen.run();
         } else {
             throw z::Exception("Unknown project generator '%s'\n", project.oproject().c_str());

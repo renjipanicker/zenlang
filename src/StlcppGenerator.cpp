@@ -1,7 +1,6 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "StlcppGenerator.hpp"
-#include "outfile.hpp"
 #include "typename.hpp"
 
 namespace {
@@ -14,7 +13,6 @@ namespace {
     struct GeneratorContext {
         struct TargetMode {
             enum T {
-                Import,
                 TypeDecl,
                 TypeDefn,
                 Local
