@@ -6,12 +6,28 @@ public:
     virtual void run() = 0;
 };
 
-class StlCppGenerator : public Generator {
-public:
-    StlCppGenerator(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit);
-    ~StlCppGenerator();
-    virtual void run();
+struct Indent {
+    inline Indent() {
+        ind[_indent] = 32;
+        _indent += 4;
+        ind[_indent] = 0;
+    }
+    inline ~Indent() {
+        ind[_indent] = 32;
+        _indent -= 4;
+        ind[_indent] = 0;
+    }
+    inline static const char* get() {return ind;}
+    inline static void init() {
+        if(_indent < 0) {
+            memset(ind, 32, Size);
+            _indent = 0;
+            ind[_indent] = 0;
+        }
+    }
 private:
-    struct Impl;
-    Impl* _impl;
+    static const int Size = 1024;
+    static char ind[Size];
+    static int _indent;
 };
+#define INDENT Indent _ind_

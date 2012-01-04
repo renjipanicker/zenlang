@@ -2,7 +2,8 @@
 #include "base/zenlang.hpp"
 #include "compiler.hpp"
 #include "lexer.hpp"
-#include "generator.hpp"
+#include "ZenlangGenerator.hpp"
+#include "StlcppGenerator.hpp"
 #include "outfile.hpp"
 
 bool Compiler::parseFile(Ast::Context& ctx, Ast::Unit& unit, const std::string& filename, const int& level) {
@@ -78,8 +79,11 @@ void Compiler::compile() {
             if(!parseFile(ctx, unit, filename, 0))
                 throw z::Exception("Cannot open source file '%s'\n", filename.c_str());
 
+            ZenlangGenerator zgenerator(_project, _config, unit);
+            zgenerator.run();
+
             if(_config.olanguage() == "stlcpp") {
-                StlCppGenerator generator(_project, _config, unit);
+                StlcppGenerator generator(_project, _config, unit);
                 generator.run();
             } else {
                 throw z::Exception("Unknown code generator '%s'\n", _config.olanguage().c_str());
