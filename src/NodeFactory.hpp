@@ -2,7 +2,6 @@
 
 #include "ast.hpp"
 #include "compiler.hpp"
-#include "Context.hpp"
 
 namespace Ast {
     class NodeFactory {
@@ -44,8 +43,11 @@ namespace Ast {
         };
         typedef std::vector<ExpectedTypeSpec> ExpectedTypeSpecStack;
 
+    private:
+        template<typename T>
+        inline T& addUnitNode(T* node) {return _module.unit().nodeList().add(node);}
     public:
-        NodeFactory(Compiler& compiler, Ast::Unit& unit, const int& level, const std::string& filename);
+        NodeFactory(Compiler& compiler, Ast::Module& module, const int& level, const std::string& filename);
         ~NodeFactory();
 
     public:
@@ -135,7 +137,7 @@ namespace Ast {
 
     private:
         Compiler& _compiler;
-        Ast::Unit& _unit;
+        Ast::Module& _module;
         const int _level;
         const std::string _filename;
         Ast::Token _lastToken;

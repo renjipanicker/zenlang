@@ -1901,6 +1901,26 @@ namespace Ast {
 
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
+    class NodeList {
+    public:
+        inline NodeList() {}
+        inline ~NodeList() {}
+    public:
+        /// \brief Add an AST node to the unit
+        /// \param node A pointer to the node to add
+        /// \return A reference to the newly added node
+        template<typename T>
+        inline T& add(T* node) {_nodeList.push_back(node); return z::ref(node);}
+
+        /// \brief Return count of nodes in unit
+        /// \return Count of nodes in unit
+        inline size_t size() const {return _nodeList.size();}
+
+    private:
+        /// \brief The owner list of all nodes in this unit
+        std::list<const Node*> _nodeList;
+    };
+
     /*! \brief AST Node for a compilation unit
       The Unit AST node is the owner for all AST nodes in the unit.
       This node maintains two namespace hierarchies
@@ -1910,7 +1930,6 @@ namespace Ast {
     class Unit {
     public:
         typedef std::list<const Body*> BodyList;
-        typedef std::list<const Statement*> StatementList;
         typedef std::list<const Ast::CoerceList*> CoerceListList;
         typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
         typedef std::list<Token> NsPartList;
@@ -1935,18 +1954,6 @@ namespace Ast {
         /// \brief Add a header file to the unit
         /// \param list the header file to add
         inline void addheaderFile(const std::string& filename) {_headerFileList[filename]++;}
-
-    public:
-        /// \brief Return the statement list
-        /// \return The statement list
-        inline const StatementList& globalStatementList() const {return _globalStatementList;}
-
-        /// \brief Add a import statement to the unit
-        /// \param statement A pointer to the node to add
-        inline void addGlobalStatement(const Statement& statement) {_globalStatementList.push_back(z::ptr(statement));}
-
-        /// \brief clear global statement list to the unit
-        inline void clearGlobalStatementList() {_globalStatementList.clear();}
 
     public:
         /// \brief Return the function implementation list
@@ -1996,17 +2003,6 @@ namespace Ast {
         inline const NsPartList& nsPartList() const {return _nsPartList;}
 
     public:
-        /// \brief Add an AST node to the unit
-        /// \param node A pointer to the node to add
-        /// \return A reference to the newly added node
-        template<typename T>
-        inline T& addNode(T* node) {_nodeList.push_back(node); return z::ref(node);}
-
-        /// \brief Return count of nodes in unit
-        /// \return Count of nodes in unit
-        inline size_t nodeCount() const {return _nodeList.size();}
-
-    public:
         Ast::Scope& enterScope(Ast::Scope& scope);
         Ast::Scope& leaveScope();
         Ast::Scope& leaveScope(Ast::Scope& scope);
@@ -2015,6 +2011,11 @@ namespace Ast {
 
     public:
         const Ast::VariableDefn* getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const;
+
+    public:
+        /// \brief Return the node list
+        /// \return The node list
+        inline NodeList& nodeList() {return _nodeList;}
 
     private:
         /// \brief Unit Filename
@@ -2032,16 +2033,10 @@ namespace Ast {
         Ast::Root _rootNS;
 
     private:
-        /// \brief The list of all import statements in this unit
-        StatementList _globalStatementList;
-
         /// \brief The list of all function implementations in this unit
         BodyList _bodyList;
 
     private:
-        /// \brief The owner list of all nodes in this unit
-        std::list<const Node*> _nodeList;
-
         /// \brief The coercion list for all types in this unit
         CoerceListList _coerceListList;
 
@@ -2053,6 +2048,33 @@ namespace Ast {
 
         /// \brief The scope stack for this unit
         ScopeStack _scopeStack;
+
+        /// \brief The list of nodes in this unit
+        NodeList _nodeList;
+    };
+
+    class Module {
+    public:
+        typedef std::list<const Statement*> StatementList;
+    public:
+        explicit inline Module(Ast::Unit& unit) : _unit(unit) {}
+    public:
+        /// \brief Return the statement list
+        /// \return The statement list
+        inline const StatementList& globalStatementList() const {return _globalStatementList;}
+
+        /// \brief Add a import statement to the unit
+        /// \param statement A pointer to the node to add
+        inline void addGlobalStatement(const Statement& statement) {_globalStatementList.push_back(z::ptr(statement));}
+
+        inline const Unit& unit() const {return _unit;}
+        inline Unit& unit() {return _unit;}
+    private:
+        /// \brief The list of all import statements in this unit
+        StatementList _globalStatementList;
+
+        /// \brief The unit
+        Ast::Unit& _unit;
     };
 
     class Config {

@@ -32,7 +32,6 @@ SET(zen_SOURCES ${zen_SOURCES} src/parser.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/parser.cpp)
 SET(zen_SOURCES ${zen_SOURCES} src/compiler.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/compiler.cpp)
-SET(zen_SOURCES ${zen_SOURCES} src/Context.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/NodeFactory.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/NodeFactory.cpp)
 SET(zen_SOURCES ${zen_SOURCES} src/generator.hpp)
@@ -63,7 +62,7 @@ ADD_CUSTOM_COMMAND(
 SET(zen_SOURCES ${zen_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.hpp")
 
 ADD_CUSTOM_COMMAND(
-    COMMAND "${re2c_cc}" -c -i -u -o "${parser_odir}/lexerGen.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
+    COMMAND "${re2c_cc}" -c -i -f -u -o "${parser_odir}/lexerGen.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
     OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.hpp"
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
 )

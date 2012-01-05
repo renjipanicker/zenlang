@@ -5,388 +5,420 @@
 
 /*!types:re2c */
 
-struct Scanner {
-    std::istream* is;
-    char* cur;
-    char* tok;
-    char* lim;
-    char buffer[BSIZE];
-    char yych;
-    enum ScanCondition cond;
-    int state;
-
-    char* sol; // start of line
-    int row;
-    char* text;
-    char* mar;
-};
-
-inline void newLine(Scanner *s) {
-    s->row++;
-    s->sol = s->cur;
+void Lexer::Impl::newLine() {
+//    s->row++;
+//    s->sol = s->cur;
 }
 
-static size_t fill(Scanner *s, size_t len) {
-    size_t got = 0;
-    size_t count = 0;
-
-    if ((z::ref(s->is).eof() == false) && ((s->lim - s->cur) < (int)len)) {
-        if (s->tok > s->buffer) {
-            count = s->tok - s->buffer;
-            memcpy(s->buffer, s->tok, s->lim - s->tok);
-            s->tok -= count;
-            s->cur -= count;
-            s->lim -= count;
-            s->sol -= count;
-            s->mar -= count;
-            if(s->text > 0) {
-                assert(s->text >= (s->buffer + count));
-                s->text -= count;
-            }
-            count = &(s->buffer[BSIZE]) - s->lim;
-        } else {
-            count = BSIZE;
-        }
-
-        z::ref(z::ref(s).is).read(s->lim, count);
-        got = z::ref(z::ref(s).is).gcount();
-        s->lim += got;
+void Lexer::Impl::send(const int& id) {
+    if(text > 0) {
+        char* t = text;
+        text = 0;
+        printf("send-text: t = %lu, cursor = %lu\n", (unsigned long)t, (unsigned long)cursor);
+        size_t tokenSize = cursor-t-1;
+        std::string s(t, tokenSize);
+        TokenData td = TokenData::createT(id, 0, 0, t, cursor-1);
+        printf("send-text: id = %d, s = '%s', td = %s\n", id, s.c_str(), td.text());
+        _parser.feed(td);
+        _lastToken = td.id();
+        return;
     }
-    return got;
+    size_t tokenSize = cursor-start;
+    std::string s(start, tokenSize);
+    printf("send: id = %d, '%s'\n", id, s.c_str());
+    TokenData td = TokenData::createT(id, 0, 0, start, cursor);
+    _parser.feed(td);
+    _lastToken = td.id();
 }
 
-size_t Lexer::Impl::init(Scanner *s) {
-    s->sol = s->cur = s->tok = s->lim = s->buffer;
-    s->text = 0;
-    s->mar = 0;
-    s->cond = EStateNormal;
-    s->state = -1;
-    s->row = 1;
-
-    return fill(s, 1);
-}
-
-inline TokenData createToken(const int& id, const int& row, const int& col, const char* start, const char* end) {
-    return TokenData::createT(id, row, col, start, end);
-}
-
-inline TokenData Lexer::Impl::token(Scanner* s, const int& id) {
-    if(s->text > 0) {
-        char* t = s->text;
-        s->text = 0;
-        return createToken(id, s->row, s->cur-s->sol, t, s->cur - 1);
-    }
-    return createToken(id, s->row, s->cur-s->sol, s->mar, s->cur);
-}
-
-inline void Lexer::Impl::feedToken(const TokenData& t) {
-    _parser.feed(t);
-    _lastToken = t.id();
-}
-
-inline bool Lexer::Impl::trySendId(Scanner* s, const Ast::TypeSpec* typeSpec) {
+inline bool Lexer::Impl::trySendId(const Ast::TypeSpec* typeSpec) {
     if(!typeSpec)
         return false;
 
     if(dynamic_cast<const Ast::TemplateDecl*>(typeSpec) != 0) {
-        feedToken(token(s, ZENTOK_TEMPLATE_TYPE));
+        send(ZENTOK_TEMPLATE_TYPE);
         return true;
     }
 
     if(dynamic_cast<const Ast::StructDefn*>(typeSpec) != 0) {
-        feedToken(token(s, ZENTOK_STRUCT_TYPE));
+        send(ZENTOK_STRUCT_TYPE);
         return true;
     }
     if(dynamic_cast<const Ast::Routine*>(typeSpec) != 0) {
-        feedToken(token(s, ZENTOK_ROUTINE_TYPE));
+        send(ZENTOK_ROUTINE_TYPE);
         return true;
     }
     if(dynamic_cast<const Ast::Function*>(typeSpec) != 0) {
-        feedToken(token(s, ZENTOK_FUNCTION_TYPE));
+        send(ZENTOK_FUNCTION_TYPE);
         return true;
     }
     if(dynamic_cast<const Ast::EventDecl*>(typeSpec) != 0) {
-        feedToken(token(s, ZENTOK_EVENT_TYPE));
+        send(ZENTOK_EVENT_TYPE);
         return true;
     }
     if(dynamic_cast<const Ast::TypeSpec*>(typeSpec) != 0) {
-        feedToken(token(s, ZENTOK_OTHER_TYPE));
+        send(ZENTOK_OTHER_TYPE);
         return true;
     }
     return false;
 }
 
-inline void Lexer::Impl::sendId(Scanner* s) {
-    Ast::Token td = token(s, 0);
+inline void Lexer::Impl::sendId() {
+    Ast::Token td = TokenData::createT(0, 0, 0, start, cursor);
 
     if(_lastToken == ZENTOK_SCOPE) {
         const Ast::TypeSpec* child = _context.currentTypeRefHasChild(td);
         if(child) {
-            if(trySendId(s, child))
+            if(trySendId(child))
                 return;
         }
     }
 
-    if(trySendId(s, _context.hasRootTypeSpec(td)))
+    if(trySendId(_context.hasRootTypeSpec(td)))
         return;
 
     for(int i = 0; reservedWords[i][0] != 0; ++i) {
         const char* res = reservedWords[i];
         if(td.string() == res) {
-            feedToken(token(s, ZENTOK_RESERVED));
+            return send(ZENTOK_RESERVED);
         }
     }
 
-    feedToken(token(s, ZENTOK_ID));
+    send(ZENTOK_ID);
 }
 
-inline void Lexer::Impl::sendLessThan(Scanner* s) {
+inline void Lexer::Impl::sendLessThan() {
     if(_lastToken == ZENTOK_TEMPLATE_TYPE) {
-        feedToken(token(s, ZENTOK_TLT));
-        return;
+        return send(ZENTOK_TLT);
     }
-    feedToken(token(s, ZENTOK_LT));
+    send(ZENTOK_LT);
 }
 
-inline void Lexer::Impl::sendOpenCurly(Scanner* s) {
+inline void Lexer::Impl::sendOpenCurly() {
     if(_context.isStructExpected() || _context.isPointerToStructExpected() || _context.isListOfStructExpected() || _context.isListOfPointerToStructExpected()) {
         if((_lastToken != ZENTOK_STRUCT_TYPE) && (_lastToken != ZENTOK_STRUCT)) {
-            feedToken(token(s, ZENTOK_STRUCT));
+            send(ZENTOK_STRUCT);
         }
     }
 
     if(_context.isFunctionExpected()) {
         if((_lastToken != ZENTOK_FUNCTION_TYPE) && (_lastToken != ZENTOK_FUNCTION)) {
-            feedToken(token(s, ZENTOK_FUNCTION));
+            send(ZENTOK_FUNCTION);
         }
     }
-
-    feedToken(token(s, ZENTOK_LCURLY));
+    send(ZENTOK_LCURLY);
 }
 
-inline void Lexer::Impl::sendReturn(Scanner* s) {
+inline void Lexer::Impl::sendReturn() {
     const Ast::RoutineDefn* rd = 0;
     const Ast::RootFunctionDefn* rfd = 0;
     const Ast::ChildFunctionDefn* cfd = 0;
     for(Ast::NodeFactory::TypeSpecStack::const_reverse_iterator it = _context.typeSpecStack().rbegin(); it != _context.typeSpecStack().rend(); ++it) {
         const Ast::TypeSpec* ts = *it;
         if((rd = dynamic_cast<const Ast::RoutineDefn*>(ts)) != 0) {
-            feedToken(token(s, ZENTOK_RRETURN));
-            return;
+            return send(ZENTOK_RRETURN);
         }
         if((rfd = dynamic_cast<const Ast::RootFunctionDefn*>(ts)) != 0) {
-            feedToken(token(s, ZENTOK_FRETURN));
-            return;
+            return send(ZENTOK_FRETURN);
         }
         if((cfd = dynamic_cast<const Ast::ChildFunctionDefn*>(ts)) != 0) {
-            feedToken(token(s, ZENTOK_FRETURN));
-            return;
+            return send(ZENTOK_FRETURN);
         }
     }
     throw z::Exception("Invalid return in lexer\n");
 }
 
-void Lexer::Impl::scan(Scanner *s) {
-    s->tok = s->cur;
+typedef char uint8_t;
 
+bool Lexer::Impl::push(const char* input, size_t inputSize, const bool& isEof) {
+    printf("Lexer::Impl::push: buffer %lu, marker %lu, start %lu, cursor %lu, limit %lu, state %d, input %lu, inputSize %lu, isEof %d\n",
+           (unsigned long)buffer, (unsigned long)marker, (unsigned long)start, (unsigned long)cursor, (unsigned long)limit, state, (unsigned long)input, inputSize, isEof);
+
+    /*
+     * Data source is signaling end of file when batch size
+     * is less than maxFill. This is slightly annoying because
+     * maxFill is a value that can only be known after re2c does
+     * its thing. Practically though, maxFill is never bigger than
+     * the longest keyword, so given our grammar, 32 is a safe bet.
+     */
+//    uint8_t nullstr[64];
+    const size_t maxFill = isEof?10:0;
+//    if(inputSize<maxFill)
+//    {
+//        printf("eof = true\n");
+//        eof = true;
+////        input = nullstr;
+////        inputSize = sizeof(nullstr);
+////        memset(nullstr, 0, sizeof(nullstr));
+//    }
+
+    /*
+     * When we get here, we have a partially
+     * consumed buffer which is in the following state:
+     *                                                                last valid char        last valid buffer spot
+     *                                                                v                      v
+     * +-------------------+-------------+---------------+-------------+----------------------+
+     * ^                   ^             ^               ^             ^                      ^
+     * buffer              start         marker          cursor        limit                  bufferEnd
+     *
+     * We need to stretch the buffer and concatenate the new chunk of input to it
+     *
+     */
+    size_t used = limit-buffer;
+    size_t needed = used+inputSize+maxFill;
+    size_t allocated = bufferEnd-buffer;
+    if(allocated<needed)
+    {
+        size_t limitOffset = limit-buffer;
+        size_t startOffset = start-buffer;
+        size_t markerOffset = marker-buffer;
+        size_t cursorOffset = cursor-buffer;
+        printf("** re-allocating, limitOffset %lu\n", limitOffset);
+
+        buffer = (uint8_t*)realloc(buffer, needed);
+        bufferEnd = buffer + needed;
+
+        marker = buffer + markerOffset;
+        cursor = buffer + cursorOffset;
+        start = buffer + startOffset;
+        limit = buffer + limitOffset;
+    }
+
+    size_t cpcnt = inputSize + maxFill;
+    memcpy(limit, input, cpcnt);
+    limit += cpcnt;
+
+    /////////////
+    printf("cursor %lu, *cursor %d, *cursor %c, buffer: '%s'\n", (unsigned long)cursor, *cursor, *cursor, buffer);
+    std::string ns(cursor, 9);
+    if(ns == "namespace") {
+        printf("** namespace\n");
+    }
+
+#define SKIP(x)         { start = cursor; goto yy0; }
+#define SEND(x)         { send(x); SKIP();          }
+#define YYFILL(n)       { goto do_fill;             }
+
+//do_start:
 /*!re2c
-re2c:define:YYGETSTATE       = "s->state";
+re2c:define:YYGETSTATE       = "state";
 re2c:define:YYGETSTATE:naked = 1;
 re2c:define:YYCONDTYPE       = ScanCondition;
 re2c:indent:top              = 1;
-re2c:cond:goto               = "continue;";
+re2c:cond:goto               = "SKIP();";
 */
 
 /*!getstate:re2c */
 
-    while(1) {
-        if(s->cur >= s->lim) {
-            break;
-        }
-        s->mar = s->tok = s->cur;
-
 /*!re2c
 
 re2c:define:YYCTYPE          = "char";
-re2c:define:YYCURSOR         = s->cur;
-re2c:define:YYLIMIT          = s->lim;
-re2c:define:YYMARKER         = s->tok;
+re2c:define:YYCURSOR         = cursor;
+re2c:define:YYLIMIT          = limit;
+re2c:define:YYMARKER         = marker;
 re2c:define:YYFILL@len       = #;
 re2c:define:YYFILL:naked     = 1;
-re2c:define:YYFILL           = "fill(s, #);";
+re2c:define:YYFILL           = "goto do_fill;";
 re2c:define:YYSETSTATE@state = #;
-re2c:define:YYSETSTATE           = "s->state = #;";
-re2c:define:YYSETCONDITION       = "s->cond = #;";
+re2c:define:YYSETSTATE           = "state = #;";
+re2c:define:YYSETCONDITION       = "cond = #;";
 re2c:define:YYSETCONDITION@cond  = #;
-re2c:define:YYGETCONDITION       = s->cond;
+re2c:define:YYGETCONDITION       = cond;
 re2c:define:YYGETCONDITION:naked = 1;
-re2c:variable:yych           = s->yych;
+re2c:variable:yych           = yych;
 re2c:yych:emit               = 0;
 re2c:indent:top              = 2;
 re2c:condenumprefix          = EState;
 
-<Normal>   "<<="   := feedToken(token(s, ZENTOK_SHIFTLEFTEQUAL)); continue;
-<Normal>   ">>="   := feedToken(token(s, ZENTOK_SHIFTRIGHTEQUAL)); continue;
-<Normal>   ":="    := feedToken(token(s, ZENTOK_DEFINEEQUAL)); continue;
-<Normal>   "*="    := feedToken(token(s, ZENTOK_TIMESEQUAL)); continue;
-<Normal>   "/="    := feedToken(token(s, ZENTOK_DIVIDEEQUAL)); continue;
-<Normal>   "-="    := feedToken(token(s, ZENTOK_MINUSEQUAL)); continue;
-<Normal>   "+="    := feedToken(token(s, ZENTOK_PLUSEQUAL)); continue;
-<Normal>   "%="    := feedToken(token(s, ZENTOK_MODEQUAL)); continue;
-<Normal>   "&="    := feedToken(token(s, ZENTOK_BITWISEANDEQUAL)); continue;
-<Normal>   "^="    := feedToken(token(s, ZENTOK_BITWISEXOREQUAL)); continue;
-<Normal>   "|="    := feedToken(token(s, ZENTOK_BITWISEOREQUAL)); continue;
-<Normal>   "!="    := feedToken(token(s, ZENTOK_NOTEQUAL)); continue;
-<Normal>   "=="    := feedToken(token(s, ZENTOK_EQUAL)); continue;
-<Normal>   "<="    := feedToken(token(s, ZENTOK_LTE)); continue;
-<Normal>   ">="    := feedToken(token(s, ZENTOK_GTE)); continue;
-<Normal>   ">>"    := feedToken(token(s, ZENTOK_SHR)); continue;
-<Normal>   "<<"    := feedToken(token(s, ZENTOK_SHL)); continue;
-<Normal>   "++"    := feedToken(token(s, ZENTOK_INC)); continue;
-<Normal>   "--"    := feedToken(token(s, ZENTOK_DEC)); continue;
-<Normal>   "=>"    := feedToken(token(s, ZENTOK_LINK)); continue;
-<Normal>   "->"    := feedToken(token(s, ZENTOK_RESERVED)); continue;
-<Normal>   "&&"    := feedToken(token(s, ZENTOK_AND)); continue;
-<Normal>   "||"    := feedToken(token(s, ZENTOK_OR)); continue;
-<Normal>   ";"     := feedToken(token(s, ZENTOK_SEMI)); continue;
-<Normal>   "!"     := feedToken(token(s, ZENTOK_NOT)); continue;
-<Normal>   "="     := feedToken(token(s, ZENTOK_ASSIGNEQUAL)); continue;
-<Normal>   "~"     := feedToken(token(s, ZENTOK_BITWISENOT)); continue;
-<Normal>   "^"     := feedToken(token(s, ZENTOK_BITWISEXOR)); continue;
-<Normal>   "|"     := feedToken(token(s, ZENTOK_BITWISEOR)); continue;
-<Normal>   "&"     := feedToken(token(s, ZENTOK_BITWISEAND)); continue;
-<Normal>   "?"     := feedToken(token(s, ZENTOK_QUESTION)); continue;
-<Normal>   ":"     := feedToken(token(s, ZENTOK_COLON)); continue;
-<Normal>   "::"    := feedToken(token(s, ZENTOK_SCOPE)); continue;
-<Normal>   "."     := feedToken(token(s, ZENTOK_DOT)); continue;
-<Normal>   ","     := feedToken(token(s, ZENTOK_COMMA)); continue;
-<Normal>   "@"     := feedToken(token(s, ZENTOK_AMP)); continue;
-<Normal>   "("     := feedToken(token(s, ZENTOK_LBRACKET)); continue;
-<Normal>   ")"     := feedToken(token(s, ZENTOK_RBRACKET)); continue;
-<Normal>   "["     := feedToken(token(s, ZENTOK_LSQUARE)); continue;
-<Normal>   "]"     := feedToken(token(s, ZENTOK_RSQUARE)); continue;
-<Normal>   "{"     := sendOpenCurly(s); continue;
-<Normal>   "}"     := feedToken(token(s, ZENTOK_RCURLY)); continue;
-<Normal>   "%"     := feedToken(token(s, ZENTOK_MOD)); continue;
-<Normal>   "<"     := sendLessThan(s); continue;
-<Normal>   ">"     := feedToken(token(s, ZENTOK_GT)); continue;
-<Normal>   "+"     := feedToken(token(s, ZENTOK_PLUS)); continue;
-<Normal>   "-"     := feedToken(token(s, ZENTOK_MINUS)); continue;
-<Normal>   "*"     := feedToken(token(s, ZENTOK_STAR)); continue;
-<Normal>   "/"     := feedToken(token(s, ZENTOK_DIVIDE)); continue;
-<Normal>   "..."   := feedToken(token(s, ZENTOK_ELIPSIS)); continue;
+<Normal>   "<<="   := send(ZENTOK_SHIFTLEFTEQUAL); SKIP();
+<Normal>   ">>="   := send(ZENTOK_SHIFTRIGHTEQUAL); SKIP();
+<Normal>   ":="    := send(ZENTOK_DEFINEEQUAL); SKIP();
+<Normal>   "*="    := send(ZENTOK_TIMESEQUAL); SKIP();
+<Normal>   "/="    := send(ZENTOK_DIVIDEEQUAL); SKIP();
+<Normal>   "-="    := send(ZENTOK_MINUSEQUAL); SKIP();
+<Normal>   "+="    := send(ZENTOK_PLUSEQUAL); SKIP();
+<Normal>   "%="    := send(ZENTOK_MODEQUAL); SKIP();
+<Normal>   "&="    := send(ZENTOK_BITWISEANDEQUAL); SKIP();
+<Normal>   "^="    := send(ZENTOK_BITWISEXOREQUAL); SKIP();
+<Normal>   "|="    := send(ZENTOK_BITWISEOREQUAL); SKIP();
+<Normal>   "!="    := send(ZENTOK_NOTEQUAL); SKIP();
+<Normal>   "=="    := send(ZENTOK_EQUAL); SKIP();
+<Normal>   "<="    := send(ZENTOK_LTE); SKIP();
+<Normal>   ">="    := send(ZENTOK_GTE); SKIP();
+<Normal>   ">>"    := send(ZENTOK_SHR); SKIP();
+<Normal>   "<<"    := send(ZENTOK_SHL); SKIP();
+<Normal>   "++"    := send(ZENTOK_INC); SKIP();
+<Normal>   "--"    := send(ZENTOK_DEC); SKIP();
+<Normal>   "=>"    := send(ZENTOK_LINK); SKIP();
+<Normal>   "->"    := send(ZENTOK_RESERVED); SKIP();
+<Normal>   "&&"    := send(ZENTOK_AND); SKIP();
+<Normal>   "||"    := send(ZENTOK_OR); SKIP();
+<Normal>   ";"     := send(ZENTOK_SEMI); SKIP();
+<Normal>   "!"     := send(ZENTOK_NOT); SKIP();
+<Normal>   "="     := send(ZENTOK_ASSIGNEQUAL); SKIP();
+<Normal>   "~"     := send(ZENTOK_BITWISENOT); SKIP();
+<Normal>   "^"     := send(ZENTOK_BITWISEXOR); SKIP();
+<Normal>   "|"     := send(ZENTOK_BITWISEOR); SKIP();
+<Normal>   "&"     := send(ZENTOK_BITWISEAND); SKIP();
+<Normal>   "?"     := send(ZENTOK_QUESTION); SKIP();
+<Normal>   ":"     := send(ZENTOK_COLON); SKIP();
+<Normal>   "::"    := send(ZENTOK_SCOPE); SKIP();
+<Normal>   "."     := send(ZENTOK_DOT); SKIP();
+<Normal>   ","     := send(ZENTOK_COMMA); SKIP();
+<Normal>   "@"     := send(ZENTOK_AMP); SKIP();
+<Normal>   "("     := send(ZENTOK_LBRACKET); SKIP();
+<Normal>   ")"     := send(ZENTOK_RBRACKET); SKIP();
+<Normal>   "["     := send(ZENTOK_LSQUARE); SKIP();
+<Normal>   "]"     := send(ZENTOK_RSQUARE); SKIP();
+<Normal>   "{"     := sendOpenCurly(); SKIP();
+<Normal>   "}"     := send(ZENTOK_RCURLY); SKIP();
+<Normal>   "%"     := send(ZENTOK_MOD); SKIP();
+<Normal>   "<"     := sendLessThan(); SKIP();
+<Normal>   ">"     := send(ZENTOK_GT); SKIP();
+<Normal>   "+"     := send(ZENTOK_PLUS); SKIP();
+<Normal>   "-"     := send(ZENTOK_MINUS); SKIP();
+<Normal>   "*"     := send(ZENTOK_STAR); SKIP();
+<Normal>   "/"     := send(ZENTOK_DIVIDE); SKIP();
+<Normal>   "..."   := send(ZENTOK_ELIPSIS); SKIP();
 
-<Normal>   "import"    := feedToken(token(s, ZENTOK_IMPORT)); continue;
-<Normal>   "include"   := feedToken(token(s, ZENTOK_INCLUDE)); continue;
-<Normal>   "namespace" := feedToken(token(s, ZENTOK_NAMESPACE)); continue;
+<Normal>   "import"    := send(ZENTOK_IMPORT); SKIP();
+<Normal>   "include"   := send(ZENTOK_INCLUDE); SKIP();
+<Normal>   "namespace" := send(ZENTOK_NAMESPACE); SKIP();
 
-<Normal>   "private"   := feedToken(token(s, ZENTOK_PRIVATE)); continue;
-<Normal>   "public"    := feedToken(token(s, ZENTOK_PUBLIC)); continue;
-<Normal>   "internal"  := feedToken(token(s, ZENTOK_INTERNAL)); continue;
-<Normal>   "external"  := feedToken(token(s, ZENTOK_EXTERNAL)); continue;
+<Normal>   "private"   := send(ZENTOK_PRIVATE); SKIP();
+<Normal>   "public"    := send(ZENTOK_PUBLIC); SKIP();
+<Normal>   "internal"  := send(ZENTOK_INTERNAL); SKIP();
+<Normal>   "external"  := send(ZENTOK_EXTERNAL); SKIP();
 
-<Normal>   "typedef"   := feedToken(token(s, ZENTOK_TYPEDEF)); continue;
-<Normal>   "template"  := feedToken(token(s, ZENTOK_TEMPLATE)); continue;
-<Normal>   "enum"      := feedToken(token(s, ZENTOK_ENUM)); continue;
-<Normal>   "struct"    := feedToken(token(s, ZENTOK_STRUCT)); continue;
-<Normal>   "routine"   := feedToken(token(s, ZENTOK_ROUTINE)); continue;
-<Normal>   "function"  := feedToken(token(s, ZENTOK_FUNCTION)); continue;
-<Normal>   "event"     := feedToken(token(s, ZENTOK_EVENT)); continue;
+<Normal>   "typedef"   := send(ZENTOK_TYPEDEF); SKIP();
+<Normal>   "template"  := send(ZENTOK_TEMPLATE); SKIP();
+<Normal>   "enum"      := send(ZENTOK_ENUM); SKIP();
+<Normal>   "struct"    := send(ZENTOK_STRUCT); SKIP();
+<Normal>   "routine"   := send(ZENTOK_ROUTINE); SKIP();
+<Normal>   "function"  := send(ZENTOK_FUNCTION); SKIP();
+<Normal>   "event"     := send(ZENTOK_EVENT); SKIP();
 
-<Normal>   "property"  := feedToken(token(s, ZENTOK_PROPERTY)); continue;
-<Normal>   "get"       := feedToken(token(s, ZENTOK_GET)); continue;
-<Normal>   "set"       := feedToken(token(s, ZENTOK_SET)); continue;
+<Normal>   "property"  := send(ZENTOK_PROPERTY); SKIP();
+<Normal>   "get"       := send(ZENTOK_GET); SKIP();
+<Normal>   "set"       := send(ZENTOK_SET); SKIP();
 
-<Normal>   "native"    := feedToken(token(s, ZENTOK_NATIVE)); continue;
-<Normal>   "abstract"  := feedToken(token(s, ZENTOK_ABSTRACT)); continue;
-<Normal>   "final"     := feedToken(token(s, ZENTOK_FINAL)); continue;
-<Normal>   "const"     := feedToken(token(s, ZENTOK_CONST)); continue;
+<Normal>   "native"    := send(ZENTOK_NATIVE); SKIP();
+<Normal>   "abstract"  := send(ZENTOK_ABSTRACT); SKIP();
+<Normal>   "final"     := send(ZENTOK_FINAL); SKIP();
+<Normal>   "const"     := send(ZENTOK_CONST); SKIP();
 
-<Normal>   "coerce"    := feedToken(token(s, ZENTOK_COERCE)); continue;
-<Normal>   "default"   := feedToken(token(s, ZENTOK_DEFAULT)); continue;
-<Normal>   "typeof"    := feedToken(token(s, ZENTOK_TYPEOF)); continue;
+<Normal>   "coerce"    := send(ZENTOK_COERCE); SKIP();
+<Normal>   "default"   := send(ZENTOK_DEFAULT); SKIP();
+<Normal>   "typeof"    := send(ZENTOK_TYPEOF); SKIP();
 
-<Normal>   "auto"      := feedToken(token(s, ZENTOK_AUTO)); continue;
-<Normal>   "print"     := feedToken(token(s, ZENTOK_PRINT)); continue;
-<Normal>   "if"        := feedToken(token(s, ZENTOK_IF)); continue;
-<Normal>   "else"      := feedToken(token(s, ZENTOK_ELSE)); continue;
-<Normal>   "while"     := feedToken(token(s, ZENTOK_WHILE)); continue;
-<Normal>   "do"        := feedToken(token(s, ZENTOK_DO)); continue;
-<Normal>   "for"       := feedToken(token(s, ZENTOK_FOR)); continue;
-<Normal>   "foreach"   := feedToken(token(s, ZENTOK_FOREACH)); continue;
-<Normal>   "in"        := feedToken(token(s, ZENTOK_IN)); continue;
-<Normal>   "has"       := feedToken(token(s, ZENTOK_HAS)); continue;
-<Normal>   "switch"    := feedToken(token(s, ZENTOK_SWITCH)); continue;
-<Normal>   "case"      := feedToken(token(s, ZENTOK_CASE)); continue;
-<Normal>   "break"     := feedToken(token(s, ZENTOK_BREAK)); continue;
-<Normal>   "continue"  := feedToken(token(s, ZENTOK_CONTINUE)); continue;
-<Normal>   "run"       := feedToken(token(s, ZENTOK_RUN)); continue;
+<Normal>   "auto"      := send(ZENTOK_AUTO); SKIP();
+<Normal>   "print"     := send(ZENTOK_PRINT); SKIP();
+<Normal>   "if"        := send(ZENTOK_IF); SKIP();
+<Normal>   "else"      := send(ZENTOK_ELSE); SKIP();
+<Normal>   "while"     := send(ZENTOK_WHILE); SKIP();
+<Normal>   "do"        := send(ZENTOK_DO); SKIP();
+<Normal>   "for"       := send(ZENTOK_FOR); SKIP();
+<Normal>   "foreach"   := send(ZENTOK_FOREACH); SKIP();
+<Normal>   "in"        := send(ZENTOK_IN); SKIP();
+<Normal>   "has"       := send(ZENTOK_HAS); SKIP();
+<Normal>   "switch"    := send(ZENTOK_SWITCH); SKIP();
+<Normal>   "case"      := send(ZENTOK_CASE); SKIP();
+<Normal>   "break"     := send(ZENTOK_BREAK); SKIP();
+<Normal>   "continue"  := send(ZENTOK_CONTINUE); SKIP();
+<Normal>   "run"       := send(ZENTOK_RUN); SKIP();
 
-<Normal>   "return"    := sendReturn(s); continue;
+<Normal>   "return"    := sendReturn(); SKIP();
 
-<Normal>   "false"     := feedToken(token(s, ZENTOK_FALSE_CONST)); continue;
-<Normal>   "true"      := feedToken(token(s, ZENTOK_TRUE_CONST)); continue;
+<Normal>   "false"     := send(ZENTOK_FALSE_CONST); SKIP();
+<Normal>   "true"      := send(ZENTOK_TRUE_CONST); SKIP();
 
-<Normal>   "@" [a-zA-Z][a-zA-Z0-9_]* := feedToken(token(s, ZENTOK_KEY_CONST)); continue;
+<Normal>   "@" [a-zA-Z][a-zA-Z0-9_]* := send(ZENTOK_KEY_CONST); SKIP();
 
-<Normal>       [a-zA-Z][a-zA-Z0-9_]* := sendId(s); continue;
+<Normal>       [a-zA-Z][a-zA-Z0-9_]* := sendId(); SKIP();
 
-<Normal>   "0" [0-7]+                                   := feedToken(token(s, ZENTOK_OCTINT_CONST)); continue;
-<Normal>   "0" [0-7]+ [uU]                              := feedToken(token(s, ZENTOK_OCTINT_CONST)); continue;
-<Normal>   "0" [0-7]+ [lL]                              := feedToken(token(s, ZENTOK_LOCTINT_CONST)); continue;
-<Normal>   "0" [0-7]+ [uU] [lL]                         := feedToken(token(s, ZENTOK_LOCTINT_CONST)); continue;
+<Normal>   "0" [0-7]+                                   := send(ZENTOK_OCTINT_CONST); SKIP();
+<Normal>   "0" [0-7]+ [uU]                              := send(ZENTOK_OCTINT_CONST); SKIP();
+<Normal>   "0" [0-7]+ [lL]                              := send(ZENTOK_LOCTINT_CONST); SKIP();
+<Normal>   "0" [0-7]+ [uU] [lL]                         := send(ZENTOK_LOCTINT_CONST); SKIP();
 
-<Normal>   [0-9]+                                       := feedToken(token(s, ZENTOK_DECINT_CONST)); continue;
-<Normal>   [0-9]+ [lL]                                  := feedToken(token(s, ZENTOK_LDECINT_CONST)); continue;
+<Normal>   [0-9]+                                       := send(ZENTOK_DECINT_CONST); SKIP();
+<Normal>   [0-9]+ [lL]                                  := send(ZENTOK_LDECINT_CONST); SKIP();
 
-<Normal>   "0" [xX] [A-Za-z0-9]+                        := feedToken(token(s, ZENTOK_HEXINT_CONST)); continue;
-<Normal>   "0" [xX] [A-Za-z0-9]+ [lL]                   := feedToken(token(s, ZENTOK_LHEXINT_CONST)); continue;
+<Normal>   "0" [xX] [A-Za-z0-9]+                        := send(ZENTOK_HEXINT_CONST); SKIP();
+<Normal>   "0" [xX] [A-Za-z0-9]+ [lL]                   := send(ZENTOK_LHEXINT_CONST); SKIP();
 
-<Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [fF]  := feedToken(token(s, ZENTOK_FLOAT_CONST)); continue;
-<Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [fF]                := feedToken(token(s, ZENTOK_FLOAT_CONST)); continue;
+<Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [fF]  := send(ZENTOK_FLOAT_CONST); SKIP();
+<Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [fF]                := send(ZENTOK_FLOAT_CONST); SKIP();
 
-<Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [dD]? := feedToken(token(s, ZENTOK_DOUBLE_CONST)); continue;
-<Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [dD]?               := feedToken(token(s, ZENTOK_DOUBLE_CONST)); continue;
+<Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [dD]? := send(ZENTOK_DOUBLE_CONST); SKIP();
+<Normal>   [0-9]+ [Ee] [+-]? [0-9]+ [dD]?               := send(ZENTOK_DOUBLE_CONST); SKIP();
 
-<Normal>   '\''    => Char  := s->text = s->cur; continue;
-<Char>     '\\' .           := continue;
-<Char>     '\''   => Normal := feedToken(token(s, ZENTOK_CHAR_CONST)); continue;
-<Char>     [^]              := continue;
+<Normal>   '\''    => Char  := text = cursor; SKIP();
+<Char>     '\\' .           := SKIP();
+<Char>     '\''   => Normal := send(ZENTOK_CHAR_CONST); SKIP();
+<Char>     [^]              := SKIP();
 
-<Normal>   '"'    => String := s->text = s->cur; continue;
-<String>   '"'    => Normal := feedToken(token(s, ZENTOK_STRING_CONST)); continue;
-<String>   '\\' .           := continue;
-<String>   [^]              := continue;
+<Normal>   '"'    => String := text = cursor; SKIP();
+<String>   '"'    => Normal := send(ZENTOK_STRING_CONST); SKIP();
+<String>   '\\' .           := SKIP();
+<String>   [^]              := SKIP();
 
 <Normal>   "/*"    :=> Comment
 <Comment>  "*" "/" :=> Normal
-<Comment>  "\r" "\n"  => Comment :=  newLine(s); continue;
-<Comment>  "\n"       => Comment :=  newLine(s); continue;
+<Comment>  "\r" "\n"  => Comment :=  newLine(); SKIP();
+<Comment>  "\n"       => Comment :=  newLine(); SKIP();
 <Comment>  [^]       :=> Comment
 
 <Normal>      "//"            :=> Skiptoeol
-<Skiptoeol>   "\r" "\n"        => Normal      :=  newLine(s); continue;
-<Skiptoeol>   "\n"             => Normal      :=  newLine(s); continue;
+<Skiptoeol>   "\r" "\n"        => Normal      :=  newLine(); SKIP();
+<Skiptoeol>   "\n"             => Normal      :=  newLine(); SKIP();
 <Skiptoeol>   "\\" "\r"? "\n" :=> Skiptoeol
 <Skiptoeol>   [^]             :=> Skiptoeol
 
-<Normal>   "\r" "\n" := newLine(s); continue;
-<Normal>   "\n"      := newLine(s); continue;
-<Normal>   " "       := continue;
-<Normal>   "\t"      := continue;
+<Normal>   "\r" "\n" := newLine(); SKIP();
+<Normal>   "\n"      := newLine(); SKIP();
+<Normal>   " "       := SKIP();
+<Normal>   "\t"      := SKIP();
 
-<Normal>   [^]    := feedToken(token(s, ZENTOK_ERR)); continue;
+<Normal>   "\000" := send(ZENTOK_EOF); SKIP();
+<Normal>   [^]    := send(ZENTOK_ERR); SKIP();
 */
 
-/*
-<Normal>   "\000" := feedToken(token(s, ZENTOK_EOF)); continue;
-<!*>                 := fprintf(stderr, "Normal\n");
-<!Comment,Skiptoeol> := fprintf(stderr, "Comment\n");
-*/
+do_fill:
+    printf("Lexer::Impl::push/do_fill: buffer %lu, marker %lu, start %lu, cursor %lu, limit %lu, state %d, input %lu, inputSize %lu, isEof %d\n",
+           (unsigned long)buffer, (unsigned long)marker, (unsigned long)start, (unsigned long)cursor, (unsigned long)limit, state, (unsigned long)input, inputSize, isEof);
+    printf("do_fill: limit - cursor %ld\n", limit - cursor);
+    size_t unfinishedSize = cursor-start;
+    printf(
+        "scanner needs a refill. Exiting for now with:\n"
+        "    saved fill state = %d\n"
+        "    unfinished token size = %ld\n",
+        state,
+        unfinishedSize
+    );
+
+    if(0<unfinishedSize && start<limit)
+    {
+        printf("    unfinished token is :");
+        fwrite(start, 1, cursor-start, stdout);
+        putchar('\n');
     }
-    feedToken(token(s, ZENTOK_EOF));
-}
 
-/*
-//ESC = [\\] ([abfnrtv?'"\\] | "x" HEX+ | OCT+);
-*/
+    //    if(eof==true) goto do_start;
+
+    /*
+     * Once we get here, we can get rid of
+     * everything before start and after limit.
+     */
+    if(buffer<start)
+    {
+        size_t startOffset = start-buffer;
+        printf("** cleanup, startOffset = %lu\n", startOffset);
+        memmove(buffer, start, limit-start);
+        marker -= startOffset;
+        cursor -= startOffset;
+        limit -= startOffset;
+        start -= startOffset;
+    }
+    return true;
+}

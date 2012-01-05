@@ -29,6 +29,7 @@ public:
 
 public:
     static TokenData createT(const int& id, const int& row, const int& col, const char* start, const char* end) {
+//        printf("createT(%d, %d): start: %lu, end %lu, end-start: %ld\n", row, col, (unsigned long)start, (unsigned long)end, end-start);
         TokenData td;
         td.init();
         td._id = id;
@@ -53,7 +54,7 @@ public:
             *s = *t;
         }
         *s = 0;
-//        printf("Token(%d, %d): %d: %s\n", row, col, id, buf);
+//        printf("Token(%d, %d): id: %d: text: %s\n", row, col, id, buf);
         return td;
     }
 

@@ -3,7 +3,6 @@
 #include "Interpreter.hpp"
 #include "typename.hpp"
 #include "compiler.hpp"
-#include "Context.hpp"
 
 namespace {
     class InterpreterContext {
@@ -567,12 +566,12 @@ inline void Interpreter::Impl::run() {
         if(cmd == ".q")
             break;
         try {
-            c.parseString(unit, cmd, 0);
-            for(Ast::Unit::StatementList::const_iterator sit = unit.globalStatementList().begin(); sit != unit.globalStatementList().end(); ++sit) {
+            Ast::Module module(unit);
+            c.parseString(module, cmd, 0);
+            for(Ast::Module::StatementList::const_iterator sit = module.globalStatementList().begin(); sit != module.globalStatementList().end(); ++sit) {
                 const Ast::Statement& s = z::ref(*sit);
                 runStatementGenerator(_config, ctx, s);
             }
-            unit.clearGlobalStatementList();
         } catch (...) {
         }
     }

@@ -5,12 +5,19 @@
 #include "ZenlangGenerator.hpp"
 #include "StlcppGenerator.hpp"
 
-bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int& level) {
-    Ast::NodeFactory factory(z::ref(this), unit, level, filename);
+bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const int& level) {
+    Ast::NodeFactory factory(z::ref(this), module, level, filename);
     Parser parser(factory);
     Lexer lexer(factory, parser);
-    if(!lexer.openFile(filename))
+//    if(!lexer.openFile(filename))
+//        return false;
+//    lexer.init();
+
+    std::ifstream is;
+    is.open(filename.c_str(), std::ifstream::in);
+    if(is.is_open() == false) {
         return false;
+    }
 
     // if importing files...
     if(level > 0) {
@@ -23,7 +30,7 @@ bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int
         }
 
         // check if file is already imported
-        if(unit.headerFileList().find(filename) != unit.headerFileList().end()) {
+        if(module.unit().headerFileList().find(filename) != module.unit().headerFileList().end()) {
             if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
                 printf(" - skipped\n");
             }
@@ -31,35 +38,47 @@ bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int
         }
 
         // if not, add it to list of files imported into this unit
-        unit.addheaderFile(filename);
+        module.unit().addheaderFile(filename);
         if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
             printf("\n");
         }
     }
+//    return lexer.read();
 
-    return lexer.read();
+    while(!is.eof()) {
+        char buf[1024];
+        memset(buf, 0, 1024);
+        is.read(buf, 1024);
+        size_t got = is.gcount();
+        printf("compiler: got = %lu\n", got);
+        if(lexer.push(buf, got, is.eof()) == false) {
+            return false;
+        }
+    }
+    return true;
 }
 
-void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& level) {
+void Compiler::import(Ast::Module& module, const std::string &filename, const int& level) {
     // first check current dir
-    if(parseFile(unit, "./" + filename, level+1))
+    if(parseFile(module, "./" + filename, level+1))
         return;
 
     // next check zen lib dir
-    if(parseFile(unit, _config.zlibPath() + "/" + filename, level+1))
+    if(parseFile(module, _config.zlibPath() + "/" + filename, level+1))
         return;
 
     // then all other include paths
     for(Ast::Config::PathList::const_iterator it = _config.includePathList().begin(); it != _config.includePathList().end(); ++it) {
         const std::string& dir = *it;
-        if(parseFile(unit, dir + "/" + filename, level+1))
+        if(parseFile(module, dir + "/" + filename, level+1))
             return;
     }
     throw z::Exception("Cannot open include file '%s'\n", filename.c_str());
 }
 
 void Compiler::initContext(Ast::Unit& unit) {
-    import(unit, "core/core.ipp", 0);
+    Ast::Module module(unit);
+    import(module, "core/core.ipp", 0);
 }
 
 void Compiler::compile() {
@@ -74,14 +93,15 @@ void Compiler::compile() {
             Ast::Unit unit(filename);
             initContext(unit);
 
-            if(!parseFile(unit, filename, 0))
+            Ast::Module module(unit);
+            if(!parseFile(module, filename, 0))
                 throw z::Exception("Cannot open source file '%s'\n", filename.c_str());
 
-            ZenlangGenerator zgenerator(_project, _config, unit);
+            ZenlangGenerator zgenerator(_project, _config, module);
             zgenerator.run();
 
             if(_config.olanguage() == "stlcpp") {
-                StlcppGenerator generator(_project, _config, unit);
+                StlcppGenerator generator(_project, _config, module);
                 generator.run();
             } else {
                 throw z::Exception("Unknown code generator '%s'\n", _config.olanguage().c_str());
@@ -90,12 +110,13 @@ void Compiler::compile() {
     }
 }
 
-bool Compiler::parseString(Ast::Unit& unit, const std::string& data, const int& level) {
-    Ast::NodeFactory factory(z::ref(this), unit, level, "string");
+bool Compiler::parseString(Ast::Module& module, const std::string& data, const int& level) {
+    Ast::NodeFactory factory(z::ref(this), module, level, "string");
     Parser parser(factory);
     Lexer lexer(factory, parser);
-    if(!lexer.openString(data))
-        return false;
-    return lexer.read();
+//    lexer.init();
+//    if(!lexer.openString(data))
+//        return false;
+    return lexer.push(data.c_str(), data.size(), true);
 }
 
