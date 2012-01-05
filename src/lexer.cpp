@@ -18,7 +18,7 @@ public:
     inline ~Impl();
 
 private:
-//    bool push(const char* buffer, size_t len, const bool& isEof);
+    TokenData token(const int& id);
     void send(const int& id);
     bool trySendId(const Ast::TypeSpec* typeSpec);
     void sendId();
@@ -47,60 +47,15 @@ private:
     char* buffer;
     char* bufferEnd;
 
+    int row;
+    char* sol;
     char  yych;
     unsigned int yyaccept;
 };
 
 #include "lexerGen.hpp"
 
-//inline bool Lexer::Impl::openString(const std::string& data) {
-//    z::ref(_s).is = new std::stringstream(data);
-//    return true;
-//}
-
-//inline bool Lexer::Impl::openFile(const std::string& filename) {
-//    z::ref(_s).is = 0;
-//    std::ifstream* is = new std::ifstream();
-//    z::ref(is).open(filename.c_str(), std::ifstream::in);
-//    if(z::ref(is).is_open() == false) {
-//        delete is;
-//        return false;
-//    }
-//    z::ref(_s).is = is;
-//    return true;
-//}
-
-//inline bool Lexer::Impl::close() {
-//    if(z::ref(_s).is != 0) {
-//        /// \todo check if delete closes the file
-//        //z::ref(z::ref(_s).is).close();
-//        delete z::ref(_s).is;
-//        z::ref(_s).is = 0;
-//    }
-//    return true;
-//}
-
-//inline bool Lexer::Impl::read() {
-//    if(init(_s) > 0) {
-//        scan(_s);
-//    }
-
-//    close();
-//    return true;
-//}
-
-//inline bool Lexer::Impl::init() {
-//    return init(_s) > 0;
-//    return true;
-//}
-
-//inline bool Lexer::Impl::push(const char* buffer, const size_t& len, const bool& isEof) {
-//    return push(_s, buffer, len, isEof);
-//}
-
-inline Lexer::Impl::Impl(Ast::NodeFactory& context, Parser& parser) : /*_s(0), */_parser(parser), _context(context), _lastToken(0) {
-//    _s = new Scanner();
-
+inline Lexer::Impl::Impl(Ast::NodeFactory& context, Parser& parser) : _parser(parser), _context(context), _lastToken(0) {
     limit = 0;
     start = 0;
     state = -1;
@@ -109,21 +64,17 @@ inline Lexer::Impl::Impl(Ast::NodeFactory& context, Parser& parser) : /*_s(0), *
     buffer = 0;
     eof = false;
     bufferEnd = 0;
+    row = 1;
+    sol = 0;
     text = 0;
     cond = 0;
 }
 
 inline Lexer::Impl::~Impl() {
-//    close();
-//    delete _s;
 }
 
 Lexer::Lexer(Ast::NodeFactory& context, Parser& parser) : _impl(0) {_impl = new Impl(context, parser);}
 Lexer::~Lexer() {delete _impl;}
-//bool Lexer::openString(const std::string& data) {return z::ref(_impl).openString(data);}
-//bool Lexer::openFile(const std::string& filename) {return z::ref(_impl).openFile(filename);}
-//bool Lexer::read() {return z::ref(_impl).read();}
-//bool Lexer::init() {return z::ref(_impl).init();}
 bool Lexer::push(const char* buffer, const size_t& len, const bool& isEof) {return z::ref(_impl).push(buffer, len, isEof);}
 
 //-------------------------------------------------

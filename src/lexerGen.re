@@ -1,32 +1,24 @@
 // if first line is a #include, QtCreator recognizes this as a C/C++ file for syntax highlighting.
 #include <typeinfo>
 
-#define	BSIZE	8192
-
 /*!types:re2c */
 
 void Lexer::Impl::newLine() {
-//    s->row++;
-//    s->sol = s->cur;
+    row++;
+    sol = cursor;
 }
 
-void Lexer::Impl::send(const int& id) {
+TokenData Lexer::Impl::token(const int& id) {
     if(text > 0) {
         char* t = text;
         text = 0;
-        printf("send-text: t = %lu, cursor = %lu\n", (unsigned long)t, (unsigned long)cursor);
-        size_t tokenSize = cursor-t-1;
-        std::string s(t, tokenSize);
-        TokenData td = TokenData::createT(id, 0, 0, t, cursor-1);
-        printf("send-text: id = %d, s = '%s', td = %s\n", id, s.c_str(), td.text());
-        _parser.feed(td);
-        _lastToken = td.id();
-        return;
+        return TokenData::createT(id, row, cursor-sol, t, cursor-1);
     }
-    size_t tokenSize = cursor-start;
-    std::string s(start, tokenSize);
-    printf("send: id = %d, '%s'\n", id, s.c_str());
-    TokenData td = TokenData::createT(id, 0, 0, start, cursor);
+    return TokenData::createT(id, row, cursor-sol, start, cursor);
+}
+
+void Lexer::Impl::send(const int& id) {
+    TokenData td = token(id);
     _parser.feed(td);
     _lastToken = td.id();
 }
@@ -64,7 +56,7 @@ inline bool Lexer::Impl::trySendId(const Ast::TypeSpec* typeSpec) {
 }
 
 inline void Lexer::Impl::sendId() {
-    Ast::Token td = TokenData::createT(0, 0, 0, start, cursor);
+    Ast::Token td = token(0);
 
     if(_lastToken == ZENTOK_SCOPE) {
         const Ast::TypeSpec* child = _context.currentTypeRefHasChild(td);
@@ -130,10 +122,11 @@ inline void Lexer::Impl::sendReturn() {
 
 typedef char uint8_t;
 
-bool Lexer::Impl::push(const char* input, size_t inputSize, const bool& isEof) {
-    printf("Lexer::Impl::push: buffer %lu, marker %lu, start %lu, cursor %lu, limit %lu, state %d, input %lu, inputSize %lu, isEof %d\n",
-           (unsigned long)buffer, (unsigned long)marker, (unsigned long)start, (unsigned long)cursor, (unsigned long)limit, state, (unsigned long)input, inputSize, isEof);
+#define SKIP(x)         { start = cursor; goto yy0; }
+#define SEND(x)         { send(x); SKIP();          }
+#define YYFILL(n)       { goto do_fill;             }
 
+bool Lexer::Impl::push(const char* input, size_t inputSize, const bool& isEof) {
     /*
      * Data source is signaling end of file when batch size
      * is less than maxFill. This is slightly annoying because
@@ -141,16 +134,7 @@ bool Lexer::Impl::push(const char* input, size_t inputSize, const bool& isEof) {
      * its thing. Practically though, maxFill is never bigger than
      * the longest keyword, so given our grammar, 32 is a safe bet.
      */
-//    uint8_t nullstr[64];
     const size_t maxFill = isEof?10:0;
-//    if(inputSize<maxFill)
-//    {
-//        printf("eof = true\n");
-//        eof = true;
-////        input = nullstr;
-////        inputSize = sizeof(nullstr);
-////        memset(nullstr, 0, sizeof(nullstr));
-//    }
 
     /*
      * When we get here, we have a partially
@@ -173,7 +157,6 @@ bool Lexer::Impl::push(const char* input, size_t inputSize, const bool& isEof) {
         size_t startOffset = start-buffer;
         size_t markerOffset = marker-buffer;
         size_t cursorOffset = cursor-buffer;
-        printf("** re-allocating, limitOffset %lu\n", limitOffset);
 
         buffer = (uint8_t*)realloc(buffer, needed);
         bufferEnd = buffer + needed;
@@ -188,18 +171,6 @@ bool Lexer::Impl::push(const char* input, size_t inputSize, const bool& isEof) {
     memcpy(limit, input, cpcnt);
     limit += cpcnt;
 
-    /////////////
-    printf("cursor %lu, *cursor %d, *cursor %c, buffer: '%s'\n", (unsigned long)cursor, *cursor, *cursor, buffer);
-    std::string ns(cursor, 9);
-    if(ns == "namespace") {
-        printf("** namespace\n");
-    }
-
-#define SKIP(x)         { start = cursor; goto yy0; }
-#define SEND(x)         { send(x); SKIP();          }
-#define YYFILL(n)       { goto do_fill;             }
-
-//do_start:
 /*!re2c
 re2c:define:YYGETSTATE       = "state";
 re2c:define:YYGETSTATE:naked = 1;
@@ -211,7 +182,6 @@ re2c:cond:goto               = "SKIP();";
 /*!getstate:re2c */
 
 /*!re2c
-
 re2c:define:YYCTYPE          = "char";
 re2c:define:YYCURSOR         = cursor;
 re2c:define:YYLIMIT          = limit;
@@ -385,27 +355,6 @@ re2c:condenumprefix          = EState;
 */
 
 do_fill:
-    printf("Lexer::Impl::push/do_fill: buffer %lu, marker %lu, start %lu, cursor %lu, limit %lu, state %d, input %lu, inputSize %lu, isEof %d\n",
-           (unsigned long)buffer, (unsigned long)marker, (unsigned long)start, (unsigned long)cursor, (unsigned long)limit, state, (unsigned long)input, inputSize, isEof);
-    printf("do_fill: limit - cursor %ld\n", limit - cursor);
-    size_t unfinishedSize = cursor-start;
-    printf(
-        "scanner needs a refill. Exiting for now with:\n"
-        "    saved fill state = %d\n"
-        "    unfinished token size = %ld\n",
-        state,
-        unfinishedSize
-    );
-
-    if(0<unfinishedSize && start<limit)
-    {
-        printf("    unfinished token is :");
-        fwrite(start, 1, cursor-start, stdout);
-        putchar('\n');
-    }
-
-    //    if(eof==true) goto do_start;
-
     /*
      * Once we get here, we can get rid of
      * everything before start and after limit.
@@ -413,7 +362,6 @@ do_fill:
     if(buffer<start)
     {
         size_t startOffset = start-buffer;
-        printf("** cleanup, startOffset = %lu\n", startOffset);
         memmove(buffer, start, limit-start);
         marker -= startOffset;
         cursor -= startOffset;

@@ -9,9 +9,6 @@ bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const
     Ast::NodeFactory factory(z::ref(this), module, level, filename);
     Parser parser(factory);
     Lexer lexer(factory, parser);
-//    if(!lexer.openFile(filename))
-//        return false;
-//    lexer.init();
 
     std::ifstream is;
     is.open(filename.c_str(), std::ifstream::in);
@@ -43,14 +40,12 @@ bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const
             printf("\n");
         }
     }
-//    return lexer.read();
 
     while(!is.eof()) {
         char buf[1024];
         memset(buf, 0, 1024);
         is.read(buf, 1024);
         size_t got = is.gcount();
-        printf("compiler: got = %lu\n", got);
         if(lexer.push(buf, got, is.eof()) == false) {
             return false;
         }
@@ -114,9 +109,6 @@ bool Compiler::parseString(Ast::Module& module, const std::string& data, const i
     Ast::NodeFactory factory(z::ref(this), module, level, "string");
     Parser parser(factory);
     Lexer lexer(factory, parser);
-//    lexer.init();
-//    if(!lexer.openString(data))
-//        return false;
     return lexer.push(data.c_str(), data.size(), true);
 }
 
