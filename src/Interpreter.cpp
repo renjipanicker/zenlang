@@ -8,7 +8,7 @@ namespace {
     class InterpreterContext {
     public:
         inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
-            : _config(config), _ctx(_unit), _lexer(_parser), _unit(""), _c(project, config), _global(pos, Ast::ScopeType::Local) {
+            : _config(config), _ctx(_unit, "", 0), _lexer(_parser), _unit(""), _c(project, config), _global(pos, Ast::ScopeType::Local) {
             _c.initContext(_unit);
             _ctx.enterScope(_global);
         }

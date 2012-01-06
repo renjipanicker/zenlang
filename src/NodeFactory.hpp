@@ -6,9 +6,44 @@ class Compiler;
 namespace Ast {
     class Context {
     public:
-        typedef std::list<Ast::Scope*> ScopeStack;
+        struct CoercionResult {
+            enum T {
+                None,
+                Lhs,
+                Rhs
+            };
+        };
     public:
-        inline Context(Ast::Unit& unit) : _unit(unit) {}
+        typedef std::list<Ast::Namespace*> NamespaceStack;
+        typedef std::list<Ast::Scope*> ScopeStack;
+        typedef std::list<Ast::TypeSpec*> TypeSpecStack;
+
+    public:
+        inline Context(Ast::Unit& unit, const std::string& filename, const int& level)
+            : _unit(unit), _filename(filename), _level(level), _currentTypeRef(0), _currentImportedTypeRef(0) {
+            Ast::Root& rootTypeSpec = getRootNamespace();
+            enterTypeSpec(rootTypeSpec);
+        }
+        inline ~Context() {
+            assert(_typeSpecStack.size() == 1);
+            Ast::Root& rootTypeSpec = getRootNamespace();
+            leaveTypeSpec(rootTypeSpec);
+        }
+
+        inline const std::string& filename() const {return _filename;}
+        inline const int& level() const {return _level;}
+    private:
+        Ast::Unit& _unit;
+        const std::string _filename;
+        const int _level;
+
+    // Various helpers
+    public:
+        inline const Ast::QualifiedTypeSpec* canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const;
+        inline const Ast::QualifiedTypeSpec* canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) const;
+        inline const Ast::QualifiedTypeSpec& coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
+
+    // everything related to scope stack
     public:
         Ast::Scope& enterScope(Ast::Scope& scope);
         Ast::Scope& leaveScope();
@@ -17,24 +52,59 @@ namespace Ast {
         const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name) const;
         const Ast::VariableDefn* getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const;
     private:
-        Ast::Unit& _unit;
-        /// \brief The scope stack for this unit
         ScopeStack _scopeStack;
+
+    // everything related to namespace stack
+    public:
+        inline NamespaceStack& namespaceStack() {return _namespaceStack;}
+        inline void addNamespace(Ast::Namespace& ns) {_namespaceStack.push_back(z::ptr(ns));}
+        void leaveNamespace();
+    private:
+        NamespaceStack _namespaceStack;
+
+    // everything related to struct-init stack
+    public:
+        inline void pushStructInit(const Ast::StructDefn& structDefn) {_structInitStack.push_back(z::ptr(structDefn));}
+        inline void popStructInit() {_structInitStack.pop_back();}
+        inline const Ast::StructDefn* structInit() {if(_structInitStack.size() == 0) return 0; return _structInitStack.back();}
+    private:
+        typedef std::list<const Ast::StructDefn*> StructInitStack;
+        StructInitStack _structInitStack;
+
+    // everything related to current typespec
+    public:
+        template <typename T> inline const T* setCurrentRootTypeRef(const Ast::Token& name);
+        template <typename T> inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const std::string& extype);
+        template <typename T> inline const T* resetCurrentTypeRef(const T& typeSpec);
+        const Ast::TypeSpec* currentTypeRefHasChild(const Ast::Token& name) const;
+    private:
+        const Ast::TypeSpec* _currentTypeRef;
+        const Ast::TypeSpec* _currentImportedTypeRef;
+
+    // everything related to typespec-stack
+    public:
+        Ast::Root& getRootNamespace() const;
+        const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const;
+        inline TypeSpecStack& typeSpecStack() {return _typeSpecStack;}
+        inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
+
+    public:
+        const Ast::TypeSpec* hasImportRootTypeSpec(const Ast::Token& name) const;
+        template <typename T> inline const T& getRootTypeSpec(const Ast::Token &name) const;
+        inline const Ast::TypeSpec* findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
+
+    public:
+        inline Ast::TypeSpec& currentTypeSpec() const;
+        Ast::TypeSpec& enterTypeSpec(Ast::TypeSpec& typeSpec);
+        Ast::TypeSpec& leaveTypeSpec(Ast::TypeSpec& typeSpec);
+        inline Ast::StructDefn& getCurrentStructDefn(const Ast::Token& pos);
+
+    private:
+        TypeSpecStack _typeSpecStack;
     };
 
     class NodeFactory {
-    public:
-        typedef std::list<Ast::TypeSpec*> TypeSpecStack;
-
     private:
-        struct CoercionResult {
-            enum T {
-                None,
-                Lhs,
-                Rhs
-            };
-        };
-
         struct ExpectedTypeSpec {
             enum Type {
                 etAuto,
@@ -65,11 +135,8 @@ namespace Ast {
         template<typename T>
         inline T& addUnitNode(T* node) {return _module.unit().nodeList().add(node);}
     public:
-        NodeFactory(Context& ctx, Compiler& compiler, Ast::Module& module, const int& level, const std::string& filename);
+        NodeFactory(Context& ctx, Compiler& compiler, Ast::Module& module);
         ~NodeFactory();
-
-    public:
-        const Ast::TypeSpec* currentTypeRefHasChild(const Ast::Token& name) const;
 
     public:
         const Ast::StructDefn* isStructExpected() const;
@@ -80,35 +147,9 @@ namespace Ast {
         const Ast::StructDefn* isListOfStructExpected() const;
         const Ast::StructDefn* isListOfPointerToStructExpected() const;
 
-    public:
-        const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const;
-        inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
-
     private:
-        inline const Ast::TypeSpec* findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
-        const Ast::TypeSpec* hasImportRootTypeSpec(const Ast::Token& name) const;
-        template <typename T> inline const T& getRootTypeSpec(const Ast::Token &name) const;
-
-    private:
-        inline std::string getExpectedTypeName(const ExpectedTypeSpec::Type& exType);
-
-    private:
-        inline Ast::TypeSpec& currentTypeSpec() const;
-        inline Ast::TypeSpec& enterTypeSpec(Ast::TypeSpec& typeSpec);
-        inline Ast::TypeSpec& leaveTypeSpec(Ast::TypeSpec& typeSpec);
-        inline const Ast::Expr& getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
-        inline Ast::StructDefn& getCurrentStructDefn(const Ast::Token& pos);
         inline const Ast::Expr& convertExprToExpectedTypeSpec(const Ast::Token& pos, const Ast::Expr& initExpr);
         inline const Ast::TypeSpec* isListOfPointerExpected() const;
-
-    private:
-        template <typename T> inline const T* setCurrentRootTypeRef(const Ast::Token& name);
-        template <typename T> inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const std::string& extype);
-        template <typename T> inline const T* resetCurrentTypeRef(const T& typeSpec);
-        inline const Ast::QualifiedTypeSpec* canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const;
-        inline const Ast::QualifiedTypeSpec* canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) const;
-        inline const Ast::QualifiedTypeSpec& coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
-        inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len);
         inline void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type, const Ast::QualifiedTypeSpec& qTypeSpec);
         inline void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type);
         inline void popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
@@ -129,25 +170,18 @@ namespace Ast {
         inline void popCallArg(const Ast::Token& pos);
 
     private:
-        typedef std::list<Ast::Namespace*> NamespaceStack;
-        typedef std::list<const Ast::StructDefn*> StructInitStack;
-
-    private:
-        TypeSpecStack        _typeSpecStack;
-        NamespaceStack       _namespaceStack;
-        StructInitStack      _structInitStack;
-
-    private:
-        const Ast::TypeSpec* _currentTypeRef;
-        const Ast::TypeSpec* _currentImportedTypeRef;
         ExpectedTypeSpecStack _expectedTypeSpecStack;
 
     public:
-        inline const std::string& filename() const {return _filename;}
+        inline const std::string& filename() const {return _ctx.filename();}
+        inline const Context& ctx() const {return _ctx;}
+    private:
+        inline std::string getExpectedTypeName(const ExpectedTypeSpec::Type& exType);
+        inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len);
+        inline const Ast::Expr& getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
     private:
         inline const Ast::Token& getToken() const {return _lastToken;}
         inline Ast::Namespace& getUnitNamespace(const Ast::Token& name);
-        inline Ast::Root& getRootNamespace() const;
         inline Ast::ExprList& addExprList(const Ast::Token& pos);
         inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
         inline const Ast::QualifiedTypeSpec& getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name);
@@ -165,8 +199,6 @@ namespace Ast {
         Context& _ctx;
         Compiler& _compiler;
         Ast::Module& _module;
-        const int _level;
-        const std::string _filename;
         Ast::Token _lastToken;
 
     public:

@@ -106,14 +106,14 @@ inline void Lexer::Impl::sendId(Ast::NodeFactory& factory) {
     Ast::Token td = token(0);
 
     if(_lastToken == ZENTOK_SCOPE) {
-        const Ast::TypeSpec* child = factory.currentTypeRefHasChild(td);
+        const Ast::TypeSpec* child = factory.ctx().currentTypeRefHasChild(td);
         if(child) {
             if(trySendId(factory, child))
                 return;
         }
     }
 
-    if(trySendId(factory, factory.hasRootTypeSpec(td)))
+    if(trySendId(factory, factory.ctx().hasRootTypeSpec(td)))
         return;
 
     for(int i = 0; reservedWords[i][0] != 0; ++i) {
@@ -152,7 +152,7 @@ inline void Lexer::Impl::sendReturn(Ast::NodeFactory& factory) {
     const Ast::RoutineDefn* rd = 0;
     const Ast::RootFunctionDefn* rfd = 0;
     const Ast::ChildFunctionDefn* cfd = 0;
-    for(Ast::NodeFactory::TypeSpecStack::const_reverse_iterator it = factory.typeSpecStack().rbegin(); it != factory.typeSpecStack().rend(); ++it) {
+    for(Ast::Context::TypeSpecStack::const_reverse_iterator it = factory.ctx().typeSpecStack().rbegin(); it != factory.ctx().typeSpecStack().rend(); ++it) {
         const Ast::TypeSpec* ts = *it;
         if((rd = dynamic_cast<const Ast::RoutineDefn*>(ts)) != 0) {
             return send(factory, ZENTOK_RRETURN);

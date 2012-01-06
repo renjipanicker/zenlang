@@ -63,10 +63,10 @@ bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const
         }
     }
 
-    Ast::Context ctx(module.unit());
+    Ast::Context ctx(module.unit(), filename, level);
     Parser parser;
     Lexer lexer(parser);
-    Ast::NodeFactory factory(ctx, z::ref(this), module, level, filename);
+    Ast::NodeFactory factory(ctx, z::ref(this), module);
     while(!is.eof()) {
         char buf[1024];
         memset(buf, 0, 1024);
@@ -117,6 +117,6 @@ void Compiler::compile() {
 }
 
 void Compiler::parseString(Ast::Context& ctx, Lexer& lexer, Ast::Module& module, const std::string& data, const int& level, const bool& isEof) {
-    Ast::NodeFactory factory(ctx, z::ref(this), module, level, "string");
+    Ast::NodeFactory factory(ctx, z::ref(this), module);
     lexer.push(factory, data.c_str(), data.size(), isEof);
 }
