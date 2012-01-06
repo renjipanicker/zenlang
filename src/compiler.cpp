@@ -31,7 +31,7 @@ inline std::string Compiler::findImport(const std::string& filename) {
     throw z::Exception("Cannot open include file '%s'\n", filename.c_str());
 }
 
-bool Compiler::parseFile(Lexer& lexer, Ast::Module& module, const std::string& filename, const int& level) {
+bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const int& level) {
     std::ifstream is;
     is.open(filename.c_str(), std::ifstream::in);
     if(is.is_open() == false) {
@@ -63,7 +63,10 @@ bool Compiler::parseFile(Lexer& lexer, Ast::Module& module, const std::string& f
         }
     }
 
-    Ast::NodeFactory factory(z::ref(this), module, level, filename);
+    Ast::Context ctx(module.unit());
+    Parser parser;
+    Lexer lexer(parser);
+    Ast::NodeFactory factory(ctx, z::ref(this), module, level, filename);
     while(!is.eof()) {
         char buf[1024];
         memset(buf, 0, 1024);
@@ -72,12 +75,6 @@ bool Compiler::parseFile(Lexer& lexer, Ast::Module& module, const std::string& f
         lexer.push(factory, buf, got, is.eof());
     }
     return true;
-}
-
-bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const int& level) {
-    Parser parser;
-    Lexer lexer(parser);
-    return parseFile(lexer, module, filename, level);
 }
 
 void Compiler::import(Ast::Module& module, const std::string &filename, const int& level) {
@@ -119,7 +116,7 @@ void Compiler::compile() {
     }
 }
 
-void Compiler::parseString(Lexer& lexer, Ast::Module& module, const std::string& data, const int& level) {
-    Ast::NodeFactory factory(z::ref(this), module, level, "string");
-    lexer.push(factory, data.c_str(), data.size(), true);
+void Compiler::parseString(Ast::Context& ctx, Lexer& lexer, Ast::Module& module, const std::string& data, const int& level, const bool& isEof) {
+    Ast::NodeFactory factory(ctx, z::ref(this), module, level, "string");
+    lexer.push(factory, data.c_str(), data.size(), isEof);
 }

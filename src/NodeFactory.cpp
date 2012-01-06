@@ -5,6 +5,121 @@
 #include "typename.hpp"
 #include "compiler.hpp"
 
+Ast::Scope& Ast::Context::enterScope(Ast::Scope& scope) {
+    _scopeStack.push_back(z::ptr(scope));
+    return scope;
+}
+
+Ast::Scope& Ast::Context::leaveScope() {
+    Ast::Scope* s = _scopeStack.back();
+    assert(_scopeStack.size() > 0);
+    _scopeStack.pop_back();
+    return z::ref(s);
+}
+
+Ast::Scope& Ast::Context::leaveScope(Ast::Scope& scope) {
+    Ast::Scope& s = leaveScope();
+    assert(z::ptr(s) == z::ptr(scope));
+    return s;
+}
+
+Ast::Scope& Ast::Context::currentScope() {
+    assert(_scopeStack.size() > 0);
+    Ast::Scope* scope = _scopeStack.back();
+    return z::ref(scope);
+}
+
+const Ast::VariableDefn* Ast::Context::hasMember(const Ast::Scope& scope, const Ast::Token& name) const {
+    for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
+        const Ast::VariableDefn& vref = z::ref(*it);
+        if(vref.name().string() == name.string())
+            return z::ptr(vref);
+    }
+    return 0;
+}
+
+const Ast::VariableDefn* Ast::Context::getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const {
+    refType = Ast::RefType::Local;
+    typedef std::list<Ast::Scope*> ScopeList;
+    ScopeList scopeList;
+
+    for(Context::ScopeStack::const_reverse_iterator it = _scopeStack.rbegin(); it != _scopeStack.rend(); ++it) {
+        Ast::Scope& scope = z::ref(*it);
+
+        if(scope.type() == Ast::ScopeType::XRef) {
+            scopeList.push_back(z::ptr(scope));
+        }
+
+        switch(refType) {
+            case Ast::RefType::Global:
+                break;
+            case Ast::RefType::XRef:
+                break;
+            case Ast::RefType::Param:
+                switch(scope.type()) {
+                    case Ast::ScopeType::Global:
+                        throw z::Exception("%s Internal error: Invalid vref %s: Param-Global\n", err(filename, name).c_str(), name.text());
+                    case Ast::ScopeType::Member:
+                        throw z::Exception("%s Internal error: Invalid vref %s: Param-Member\n", err(filename, name).c_str(), name.text());
+                    case Ast::ScopeType::XRef:
+                        refType = Ast::RefType::XRef;
+                        break;
+                    case Ast::ScopeType::Param:
+                    case Ast::ScopeType::VarArg:
+                        throw z::Exception("%s Internal error: Invalid vref %s: Param-Param\n", err(filename, name).c_str(), name.text());
+                    case Ast::ScopeType::Local:
+                        refType = Ast::RefType::XRef;
+                        break;
+                }
+                break;
+            case Ast::RefType::Local:
+                switch(scope.type()) {
+                    case Ast::ScopeType::Global:
+                        throw z::Exception("%s Internal error: Invalid vref %s: Local-Global\n", err(filename, name).c_str(), name.text());
+                    case Ast::ScopeType::Member:
+                        throw z::Exception("%s Internal error: Invalid vref %s: Local-Member\n", err(filename, name).c_str(), name.text());
+                    case Ast::ScopeType::XRef:
+                        throw z::Exception("%s Internal error: Invalid vref %s: Local-XRef\n", err(filename, name).c_str(), name.text());
+                    case Ast::ScopeType::Param:
+                    case Ast::ScopeType::VarArg:
+                        refType = Ast::RefType::Param;
+                        break;
+                    case Ast::ScopeType::Local:
+                        break;
+                }
+                break;
+        }
+
+        const Ast::VariableDefn* vref = hasMember(scope, name);
+        if(vref != 0) {
+            if(refType == Ast::RefType::XRef) {
+                assert(scopeList.size() > 0);
+                for(ScopeList::iterator it = scopeList.begin(); it != scopeList.end(); ++it) {
+                    Ast::Scope& scope = z::ref(*it);
+
+                    // check if vref already exists in this scope
+                    bool found = false;
+                    for(Ast::Scope::List::const_iterator xit = scope.list().begin(); xit != scope.list().end(); ++xit) {
+                        const Ast::VariableDefn* xref = *xit;
+                        if(vref == xref) {
+                            found = true;
+                            break;
+                        }
+                    }
+
+                    // if not exists, add it
+                    if(!found)
+                        scope.addVariableDef(z::ref(vref));
+                }
+            }
+
+            assert(vref);
+            return vref;
+        }
+    }
+    return 0;
+}
+
 inline std::string Ast::NodeFactory::getExpectedTypeName(const Ast::NodeFactory::ExpectedTypeSpec::Type& exType) {
     switch(exType) {
         case Ast::NodeFactory::ExpectedTypeSpec::etAuto:
@@ -390,6 +505,7 @@ inline Ast::TemplateDefn& Ast::NodeFactory::createTemplateDefn(const Ast::Token&
 }
 
 inline const Ast::FunctionRetn& Ast::NodeFactory::getFunctionRetn(const Ast::Token& pos, const Ast::Function& function) {
+    /// \todo use FunctionBaseIterator here
     const Ast::Function* base = z::ptr(function);
     while(base != 0) {
         const Ast::ChildFunctionDefn* childFunctionDefn = dynamic_cast<const Ast::ChildFunctionDefn*>(base);
@@ -755,7 +871,9 @@ inline void Ast::NodeFactory::popCallArg(const Ast::Token& pos) {
 }
 
 ////////////////////////////////////////////////////////////
-Ast::NodeFactory::NodeFactory(Compiler& compiler, Ast::Module& module, const int& level, const std::string& filename) : _compiler(compiler), _module(module), _level(level), _filename(filename), _lastToken(0, 0, ""),_currentTypeRef(0), _currentImportedTypeRef(0) {
+Ast::NodeFactory::NodeFactory(Context& ctx, Compiler& compiler, Ast::Module& module, const int& level, const std::string& filename)
+    : _currentTypeRef(0), _currentImportedTypeRef(0),
+      _ctx(ctx), _compiler(compiler), _module(module), _level(level), _filename(filename), _lastToken(0, 0, "") {
     Ast::Root& rootTypeSpec = getRootNamespace();
     enterTypeSpec(rootTypeSpec);
 }
@@ -1038,7 +1156,7 @@ Ast::RoutineDecl* Ast::NodeFactory::aVarArgRoutineDecl(const Ast::QualifiedTypeS
 
 Ast::RoutineDefn* Ast::NodeFactory::aRoutineDefn(Ast::RoutineDefn& routineDefn, const Ast::CompoundStatement& block) {
     routineDefn.setBlock(block);
-    _module.unit().leaveScope(routineDefn.inScope());
+    _ctx.leaveScope(routineDefn.inScope());
     leaveTypeSpec(routineDefn);
     _module.unit().addBody(addUnitNode(new Ast::RoutineBody(block.pos(), routineDefn, block)));
     return z::ptr(routineDefn);
@@ -1047,7 +1165,7 @@ Ast::RoutineDefn* Ast::NodeFactory::aRoutineDefn(Ast::RoutineDefn& routineDefn, 
 Ast::RoutineDefn* Ast::NodeFactory::aEnterRoutineDefn(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType) {
     Ast::RoutineDefn& routineDefn = addUnitNode(new Ast::RoutineDefn(currentTypeSpec(), outType, name, in, defType));
     currentTypeSpec().addChild(routineDefn);
-    _module.unit().enterScope(in);
+    _ctx.enterScope(in);
     enterTypeSpec(routineDefn);
     return z::ptr(routineDefn);
 }
@@ -1060,8 +1178,8 @@ Ast::FunctionDecl* Ast::NodeFactory::aFunctionDecl(const Ast::FunctionSig& funct
 
 Ast::RootFunctionDefn* Ast::NodeFactory::aRootFunctionDefn(Ast::RootFunctionDefn& functionDefn, const Ast::CompoundStatement& block) {
     functionDefn.setBlock(block);
-    _module.unit().leaveScope(functionDefn.sig().inScope());
-    _module.unit().leaveScope(functionDefn.xrefScope());
+    _ctx.leaveScope(functionDefn.sig().inScope());
+    _ctx.leaveScope(functionDefn.xrefScope());
     leaveTypeSpec(functionDefn);
     _module.unit().addBody(addUnitNode(new Ast::FunctionBody(block.pos(), functionDefn, block)));
     return z::ptr(functionDefn);
@@ -1072,8 +1190,8 @@ Ast::RootFunctionDefn* Ast::NodeFactory::aEnterRootFunctionDefn(const Ast::Funct
     Ast::Scope& xref = addScope(name, Ast::ScopeType::XRef);
     Ast::RootFunctionDefn& functionDefn = addUnitNode(new Ast::RootFunctionDefn(currentTypeSpec(), name, defType, functionSig, xref));
     currentTypeSpec().addChild(functionDefn);
-    _module.unit().enterScope(functionDefn.xrefScope());
-    _module.unit().enterScope(functionSig.inScope());
+    _ctx.enterScope(functionDefn.xrefScope());
+    _ctx.enterScope(functionSig.inScope());
     enterTypeSpec(functionDefn);
 
     Ast::Token token1(name.row(), name.col(), "_Out");
@@ -1085,8 +1203,8 @@ Ast::RootFunctionDefn* Ast::NodeFactory::aEnterRootFunctionDefn(const Ast::Funct
 
 Ast::ChildFunctionDefn* Ast::NodeFactory::aChildFunctionDefn(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& block) {
     functionDefn.setBlock(block);
-    _module.unit().leaveScope(functionDefn.sig().inScope());
-    _module.unit().leaveScope(functionDefn.xrefScope());
+    _ctx.leaveScope(functionDefn.sig().inScope());
+    _ctx.leaveScope(functionDefn.xrefScope());
     leaveTypeSpec(functionDefn);
     _module.unit().addBody(addUnitNode(new Ast::FunctionBody(block.pos(), functionDefn, block)));
     return z::ptr(functionDefn);
@@ -1099,8 +1217,8 @@ inline Ast::ChildFunctionDefn& Ast::NodeFactory::createChildFunctionDefn(Ast::Ty
     Ast::Scope& xref = addScope(name, Ast::ScopeType::XRef);
     Ast::ChildFunctionDefn& functionDefn = addUnitNode(new Ast::ChildFunctionDefn(parent, name, defType, base.sig(), xref, base));
     parent.addChild(functionDefn);
-    _module.unit().enterScope(functionDefn.xrefScope());
-    _module.unit().enterScope(base.sig().inScope());
+    _ctx.enterScope(functionDefn.xrefScope());
+    _ctx.enterScope(base.sig().inScope());
     enterTypeSpec(functionDefn);
     return functionDefn;
 }
@@ -1324,7 +1442,7 @@ Ast::UserDefinedTypeSpecStatement* Ast::NodeFactory::aUserDefinedTypeSpecStateme
 
 Ast::AutoStatement* Ast::NodeFactory::aAutoStatement(const Ast::VariableDefn& defn) {
     Ast::AutoStatement& localStatement = addUnitNode(new Ast::AutoStatement(defn.pos(), defn));
-    _module.unit().currentScope().addVariableDef(defn);
+    _ctx.currentScope().addVariableDef(defn);
     return z::ptr(localStatement);
 }
 
@@ -1365,20 +1483,20 @@ Ast::ForStatement* Ast::NodeFactory::aForStatement(const Ast::Token& pos, const 
 
 Ast::ForStatement* Ast::NodeFactory::aForStatement(const Ast::Token& pos, const Ast::VariableDefn& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block) {
     Ast::ForInitStatement& forStatement = addUnitNode(new Ast::ForInitStatement(pos, init, expr, incr, block));
-    _module.unit().leaveScope();
+    _ctx.leaveScope();
     return z::ptr(forStatement);
 }
 
 const Ast::VariableDefn* Ast::NodeFactory::aEnterForInit(const Ast::VariableDefn& init) {
     Ast::Scope& scope = addScope(init.pos(), Ast::ScopeType::Local);
     scope.addVariableDef(init);
-    _module.unit().enterScope(scope);
+    _ctx.enterScope(scope);
     return z::ptr(init);
 }
 
 Ast::ForeachStatement* Ast::NodeFactory::aForeachStatement(Ast::ForeachStatement& statement, const Ast::CompoundStatement& block) {
     statement.setBlock(block);
-    _module.unit().leaveScope();
+    _ctx.leaveScope();
     return z::ptr(statement);
 }
 
@@ -1388,7 +1506,7 @@ Ast::ForeachStatement* Ast::NodeFactory::aEnterForeachInit(const Ast::Token& val
         const Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
         Ast::Scope& scope = addScope(valName, Ast::ScopeType::Local);
         scope.addVariableDef(valDef);
-        _module.unit().enterScope(scope);
+        _ctx.enterScope(scope);
         Ast::ForeachStringStatement& foreachStatement = addUnitNode(new Ast::ForeachStringStatement(valName, valDef, expr));
         return z::ptr(foreachStatement);
     }
@@ -1398,7 +1516,7 @@ Ast::ForeachStatement* Ast::NodeFactory::aEnterForeachInit(const Ast::Token& val
     const Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
     Ast::Scope& scope = addScope(valName, Ast::ScopeType::Local);
     scope.addVariableDef(valDef);
-    _module.unit().enterScope(scope);
+    _ctx.enterScope(scope);
     Ast::ForeachListStatement& foreachStatement = addUnitNode(new Ast::ForeachListStatement(valName, valDef, expr));
     return z::ptr(foreachStatement);
 }
@@ -1412,7 +1530,7 @@ Ast::ForeachDictStatement* Ast::NodeFactory::aEnterForeachInit(const Ast::Token&
     Ast::Scope& scope = addScope(keyName, Ast::ScopeType::Local);
     scope.addVariableDef(keyDef);
     scope.addVariableDef(valDef);
-    _module.unit().enterScope(scope);
+    _ctx.enterScope(scope);
 
     Ast::ForeachDictStatement& foreachStatement = addUnitNode(new Ast::ForeachDictStatement(keyName, keyDef, valDef, expr));
     return z::ptr(foreachStatement);
@@ -1501,11 +1619,11 @@ Ast::CompoundStatement* Ast::NodeFactory::aStatementList(Ast::CompoundStatement&
 
 void Ast::NodeFactory::aEnterCompoundStatement(const Ast::Token& pos) {
     Ast::Scope& scope = addScope(pos, Ast::ScopeType::Local);
-    _module.unit().enterScope(scope);
+    _ctx.enterScope(scope);
 }
 
 void Ast::NodeFactory::aLeaveCompoundStatement() {
-    _module.unit().leaveScope();
+    _ctx.leaveScope();
 }
 
 Ast::ExprList* Ast::NodeFactory::aExprList(Ast::ExprList& list, const Ast::Expr& expr) {
@@ -2069,7 +2187,7 @@ Ast::TemplateDefnInstanceExpr* Ast::NodeFactory::aTemplateDefnInstanceExpr(const
 
 Ast::VariableRefExpr* Ast::NodeFactory::aVariableRefExpr(const Ast::Token& name) {
     Ast::RefType::T refType = Ast::RefType::Local;
-    const Ast::VariableDefn* vref = _module.unit().getVariableDef(_filename, name, refType);
+    const Ast::VariableDefn* vref = _ctx.getVariableDef(_filename, name, refType);
     if(vref == 0) {
         throw z::Exception("%s Variable not found: '%s'\n", err(_filename, name).c_str(), name.text());
     }
@@ -2085,7 +2203,7 @@ Ast::MemberExpr* Ast::NodeFactory::aMemberVariableExpr(const Ast::Expr& expr, co
     const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(z::ptr(typeSpec));
     if(structDefn != 0) {
         for(StructBaseIterator sbi(structDefn); sbi.hasNext(); sbi.next()) {
-            const Ast::VariableDefn* vref = _module.unit().hasMember(sbi.get().scope(), name);
+            const Ast::VariableDefn* vref = _ctx.hasMember(sbi.get().scope(), name);
             if(vref) {
                 const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, expr.qTypeSpec().isConst(), z::ref(vref).qTypeSpec().typeSpec(), true);
                 Ast::MemberVariableExpr& vdefExpr = addUnitNode(new Ast::MemberVariableExpr(name, qTypeSpec, expr, z::ref(vref)));
@@ -2107,7 +2225,7 @@ Ast::MemberExpr* Ast::NodeFactory::aMemberVariableExpr(const Ast::Expr& expr, co
 
     const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(z::ptr(typeSpec));
     if(functionRetn != 0) {
-        const Ast::VariableDefn* vref = _module.unit().hasMember(z::ref(functionRetn).outScope(), name);
+        const Ast::VariableDefn* vref = _ctx.hasMember(z::ref(functionRetn).outScope(), name);
         if(vref) {
             Ast::MemberVariableExpr& vdefExpr = addUnitNode(new Ast::MemberVariableExpr(name, z::ref(vref).qTypeSpec(), expr, z::ref(vref)));
             return z::ptr(vdefExpr);
@@ -2121,7 +2239,7 @@ Ast::MemberExpr* Ast::NodeFactory::aMemberVariableExpr(const Ast::Expr& expr, co
 Ast::TypeSpecMemberExpr* Ast::NodeFactory::aTypeSpecMemberExpr(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
     const Ast::EnumDefn* enumDefn = dynamic_cast<const Ast::EnumDefn*>(z::ptr(typeSpec));
     if(enumDefn != 0) {
-        const Ast::VariableDefn* vref = _module.unit().hasMember(z::ref(enumDefn).scope(), name);
+        const Ast::VariableDefn* vref = _ctx.hasMember(z::ref(enumDefn).scope(), name);
         if(vref == 0) {
             throw z::Exception("%s %s is not a member of type '%s'\n", err(_filename, name).c_str(), name.text(), typeSpec.name().text());
         }
@@ -2132,7 +2250,7 @@ Ast::TypeSpecMemberExpr* Ast::NodeFactory::aTypeSpecMemberExpr(const Ast::TypeSp
 
     const Ast::StructDefn* structDefn = dynamic_cast<const Ast::StructDefn*>(z::ptr(typeSpec));
     if(structDefn != 0) {
-        const Ast::VariableDefn* vref = _module.unit().hasMember(z::ref(structDefn).scope(), name);
+        const Ast::VariableDefn* vref = _ctx.hasMember(z::ref(structDefn).scope(), name);
         if(vref == 0) {
             throw z::Exception("%s %s is not a member of type '%s'\n", err(_filename, name).c_str(), name.text(), typeSpec.name().text());
         }

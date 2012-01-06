@@ -8,22 +8,23 @@ namespace {
     class InterpreterContext {
     public:
         inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
-            : _config(config), _unit(""), _c(project, config), _global(pos, Ast::ScopeType::Local), _lexer(_parser) {
+            : _config(config), _ctx(_unit), _lexer(_parser), _unit(""), _c(project, config), _global(pos, Ast::ScopeType::Local) {
             _c.initContext(_unit);
-            _unit.enterScope(_global);
+            _ctx.enterScope(_global);
         }
         inline ~InterpreterContext() {
-            _unit.leaveScope(_global);
+            _ctx.leaveScope(_global);
         }
 
         void process(const std::string& cmd);
     private:
         const Ast::Config& _config;
+        Ast::Context _ctx;
+        Parser _parser;
+        Lexer _lexer;
         Ast::Unit _unit;
         Compiler _c;
         Ast::Scope _global;
-        Parser _parser;
-        Lexer _lexer;
     };
 
     struct ExprGenerator : public Ast::Expr::Visitor {
@@ -552,6 +553,16 @@ namespace {
         StatementGenerator gen(config, ctx);
         gen.visitNode(block);
     }
+
+    void InterpreterContext::process(const std::string& cmd) {
+        std::cout << cmd << std::endl;
+        Ast::Module module(_unit);
+        _c.parseString(_ctx, _lexer, module, cmd, 0, false);
+        for(Ast::Module::StatementList::const_iterator sit = module.globalStatementList().begin(); sit != module.globalStatementList().end(); ++sit) {
+            const Ast::Statement& s = z::ref(*sit);
+            runStatementGenerator(_config, z::ref(this), s);
+        }
+    }
 }
 
 struct Interpreter::Impl {
@@ -562,27 +573,22 @@ private:
     const Ast::Config& _config;
 };
 
-void InterpreterContext::process(const std::string& cmd) {
-    Ast::Module module(_unit);
-    _c.parseString(_lexer, module, cmd, 0);
-    for(Ast::Module::StatementList::const_iterator sit = module.globalStatementList().begin(); sit != module.globalStatementList().end(); ++sit) {
-        const Ast::Statement& s = z::ref(*sit);
-        runStatementGenerator(_config, z::ref(this), s);
-    }
-}
-
 inline void Interpreter::Impl::run() {
     printf("Entering interpretor mode\n");
 
     Ast::Token pos(0, 0, "");
     InterpreterContext ctx(_project, _config, pos);
 
+// Test code
+//    ctx.process("auto i = 0;\n");
+//    ctx.process("i = 123;\n");
+//    return;
+
     bool quit = false;
     while (quit == false) {
         std::cout << ">";
         std::string cmd;
         std::getline(std::cin, cmd);
-        std::cout << cmd << std::endl;
         if(cmd == ".q")
             break;
         try {

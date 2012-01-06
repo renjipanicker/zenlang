@@ -1934,7 +1934,6 @@ namespace Ast {
         typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
         typedef std::list<Token> NsPartList;
         typedef std::map<std::string, int> HeaderFileList;
-        typedef std::list<Ast::Scope*> ScopeStack;
 
     public:
         inline Unit(const std::string& filename) : _filename(filename), _importNS("*import*"), _rootNS("*root*") {}
@@ -2003,16 +2002,6 @@ namespace Ast {
         inline const NsPartList& nsPartList() const {return _nsPartList;}
 
     public:
-        Ast::Scope& enterScope(Ast::Scope& scope);
-        Ast::Scope& leaveScope();
-        Ast::Scope& leaveScope(Ast::Scope& scope);
-        Ast::Scope& currentScope();
-        const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name) const;
-
-    public:
-        const Ast::VariableDefn* getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const;
-
-    public:
         /// \brief Return the node list
         /// \return The node list
         inline NodeList& nodeList() {return _nodeList;}
@@ -2045,9 +2034,6 @@ namespace Ast {
 
         /// \brief The list of header files imported into this unit
         HeaderFileList _headerFileList;
-
-        /// \brief The scope stack for this unit
-        ScopeStack _scopeStack;
 
         /// \brief The list of nodes in this unit
         NodeList _nodeList;
