@@ -134,13 +134,13 @@ inline void Lexer::Impl::sendLessThan(Ast::NodeFactory& factory) {
 }
 
 inline void Lexer::Impl::sendOpenCurly(Ast::NodeFactory& factory) {
-    if(factory.isStructExpected() || factory.isPointerToStructExpected() || factory.isListOfStructExpected() || factory.isListOfPointerToStructExpected()) {
+    if(factory.ctx().isStructExpected() || factory.ctx().isPointerToStructExpected() || factory.ctx().isListOfStructExpected() || factory.ctx().isListOfPointerToStructExpected()) {
         if((_lastToken != ZENTOK_STRUCT_TYPE) && (_lastToken != ZENTOK_STRUCT)) {
             send(factory, ZENTOK_STRUCT);
         }
     }
 
-    if(factory.isFunctionExpected()) {
+    if(factory.ctx().isFunctionExpected()) {
         if((_lastToken != ZENTOK_FUNCTION_TYPE) && (_lastToken != ZENTOK_FUNCTION)) {
             send(factory, ZENTOK_FUNCTION);
         }

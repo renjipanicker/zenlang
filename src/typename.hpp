@@ -31,3 +31,29 @@ inline const T* resolveTypedefT(const Ast::TypeSpec& typeSpec) {
     const T* td = dynamic_cast<const T*>(ts);
     return td;
 }
+
+template <typename DefnT, typename ChildT>
+struct BaseIterator {
+    inline BaseIterator(const DefnT* defn) : _defn(defn) {}
+    inline bool hasNext() const {return (_defn != 0);}
+    inline const DefnT& get() const {return z::ref(_defn);}
+    inline void next() {
+        const ChildT* csd = dynamic_cast<const ChildT*>(_defn);
+        if(csd) {
+            _defn = z::ptr(z::ref(csd).base());
+        } else {
+            _defn = 0;
+        }
+    }
+
+private:
+    const DefnT* _defn;
+};
+
+struct StructBaseIterator : public BaseIterator<Ast::StructDefn, Ast::ChildStructDefn> {
+    inline StructBaseIterator(const Ast::StructDefn* defn) : BaseIterator(defn) {}
+};
+
+struct FunctionBaseIterator : public BaseIterator<Ast::Function, Ast::ChildFunctionDefn> {
+    inline FunctionBaseIterator(const Ast::FunctionDefn* defn) : BaseIterator(defn) {}
+};

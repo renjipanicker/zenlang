@@ -1,136 +1,10 @@
 #pragma once
 
 #include "ast.hpp"
-
+#include "CompilerContext.hpp"
 class Compiler;
 namespace Ast {
-    class Context {
-    public:
-        struct CoercionResult {
-            enum T {
-                None,
-                Lhs,
-                Rhs
-            };
-        };
-    public:
-        typedef std::list<Ast::Namespace*> NamespaceStack;
-        typedef std::list<Ast::Scope*> ScopeStack;
-        typedef std::list<Ast::TypeSpec*> TypeSpecStack;
-
-    public:
-        inline Context(Ast::Unit& unit, const std::string& filename, const int& level)
-            : _unit(unit), _filename(filename), _level(level), _currentTypeRef(0), _currentImportedTypeRef(0) {
-            Ast::Root& rootTypeSpec = getRootNamespace();
-            enterTypeSpec(rootTypeSpec);
-        }
-        inline ~Context() {
-            assert(_typeSpecStack.size() == 1);
-            Ast::Root& rootTypeSpec = getRootNamespace();
-            leaveTypeSpec(rootTypeSpec);
-        }
-
-        inline const std::string& filename() const {return _filename;}
-        inline const int& level() const {return _level;}
-    private:
-        Ast::Unit& _unit;
-        const std::string _filename;
-        const int _level;
-
-    // Various helpers
-    public:
-        inline const Ast::QualifiedTypeSpec* canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const;
-        inline const Ast::QualifiedTypeSpec* canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) const;
-        inline const Ast::QualifiedTypeSpec& coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
-
-    // everything related to scope stack
-    public:
-        Ast::Scope& enterScope(Ast::Scope& scope);
-        Ast::Scope& leaveScope();
-        Ast::Scope& leaveScope(Ast::Scope& scope);
-        Ast::Scope& currentScope();
-        const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name) const;
-        const Ast::VariableDefn* getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const;
-    private:
-        ScopeStack _scopeStack;
-
-    // everything related to namespace stack
-    public:
-        inline NamespaceStack& namespaceStack() {return _namespaceStack;}
-        inline void addNamespace(Ast::Namespace& ns) {_namespaceStack.push_back(z::ptr(ns));}
-        void leaveNamespace();
-    private:
-        NamespaceStack _namespaceStack;
-
-    // everything related to struct-init stack
-    public:
-        inline void pushStructInit(const Ast::StructDefn& structDefn) {_structInitStack.push_back(z::ptr(structDefn));}
-        inline void popStructInit() {_structInitStack.pop_back();}
-        inline const Ast::StructDefn* structInit() {if(_structInitStack.size() == 0) return 0; return _structInitStack.back();}
-    private:
-        typedef std::list<const Ast::StructDefn*> StructInitStack;
-        StructInitStack _structInitStack;
-
-    // everything related to current typespec
-    public:
-        template <typename T> inline const T* setCurrentRootTypeRef(const Ast::Token& name);
-        template <typename T> inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const std::string& extype);
-        template <typename T> inline const T* resetCurrentTypeRef(const T& typeSpec);
-        const Ast::TypeSpec* currentTypeRefHasChild(const Ast::Token& name) const;
-    private:
-        const Ast::TypeSpec* _currentTypeRef;
-        const Ast::TypeSpec* _currentImportedTypeRef;
-
-    // everything related to typespec-stack
-    public:
-        Ast::Root& getRootNamespace() const;
-        const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const;
-        inline TypeSpecStack& typeSpecStack() {return _typeSpecStack;}
-        inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
-
-    public:
-        const Ast::TypeSpec* hasImportRootTypeSpec(const Ast::Token& name) const;
-        template <typename T> inline const T& getRootTypeSpec(const Ast::Token &name) const;
-        inline const Ast::TypeSpec* findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
-
-    public:
-        inline Ast::TypeSpec& currentTypeSpec() const;
-        Ast::TypeSpec& enterTypeSpec(Ast::TypeSpec& typeSpec);
-        Ast::TypeSpec& leaveTypeSpec(Ast::TypeSpec& typeSpec);
-        inline Ast::StructDefn& getCurrentStructDefn(const Ast::Token& pos);
-
-    private:
-        TypeSpecStack _typeSpecStack;
-    };
-
     class NodeFactory {
-    private:
-        struct ExpectedTypeSpec {
-            enum Type {
-                etAuto,
-                etVarArg,
-                etCallArg,
-                etListVal,
-                etDictKey,
-                etDictVal,
-                etAssignment,
-                etEventHandler,
-                etStructInit
-            };
-
-            typedef std::vector<const Ast::QualifiedTypeSpec*> List;
-
-            inline ExpectedTypeSpec(const Type& type, const Ast::QualifiedTypeSpec* typeSpec) : _type(type), _typeSpec(typeSpec) {}
-            inline ExpectedTypeSpec(const Type& type) : _type(type), _typeSpec(0) {}
-            inline const Type& type() const {return _type;}
-            inline bool hasTypeSpec() const {return (_typeSpec != 0);}
-            inline const Ast::QualifiedTypeSpec& typeSpec() const {return z::ref(_typeSpec);}
-        private:
-            Type _type;
-            const Ast::QualifiedTypeSpec* _typeSpec;
-        };
-        typedef std::vector<ExpectedTypeSpec> ExpectedTypeSpecStack;
-
     private:
         template<typename T>
         inline T& addUnitNode(T* node) {return _module.unit().nodeList().add(node);}
@@ -139,46 +13,12 @@ namespace Ast {
         ~NodeFactory();
 
     public:
-        const Ast::StructDefn* isStructExpected() const;
-        const Ast::Function* isFunctionExpected() const;
-        const Ast::TemplateDefn* isPointerExpected() const;
-        const Ast::TemplateDefn* isPointerToExprExpected(const Ast::Expr& expr) const;
-        const Ast::StructDefn* isPointerToStructExpected() const;
-        const Ast::StructDefn* isListOfStructExpected() const;
-        const Ast::StructDefn* isListOfPointerToStructExpected() const;
-
-    private:
-        inline const Ast::Expr& convertExprToExpectedTypeSpec(const Ast::Token& pos, const Ast::Expr& initExpr);
-        inline const Ast::TypeSpec* isListOfPointerExpected() const;
-        inline void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type, const Ast::QualifiedTypeSpec& qTypeSpec);
-        inline void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type);
-        inline void popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
-        inline bool popExpectedTypeSpecOrAuto(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
-        inline ExpectedTypeSpec::Type getExpectedType(const Ast::Token& pos) const;
-        inline const ExpectedTypeSpec& getExpectedTypeList(const Ast::Token& pos) const;
-        inline const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny() const;
-        inline const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec) const;
-        inline const Ast::QualifiedTypeSpec& getExpectedTypeSpecEx(const Ast::Token& pos) const;
-
-    private:
-        inline const Ast::TemplateDefn* isEnteringList() const;
-        inline const Ast::TemplateDefn* isEnteringTemplate() const;
-
-    private:
-        inline void pushCallArgList(const Ast::Scope& in);
-        inline void popCallArgList(const Ast::Token& pos, const Ast::Scope& in);
-        inline void popCallArg(const Ast::Token& pos);
-
-    private:
-        ExpectedTypeSpecStack _expectedTypeSpecStack;
-
-    public:
         inline const std::string& filename() const {return _ctx.filename();}
         inline const Context& ctx() const {return _ctx;}
     private:
-        inline std::string getExpectedTypeName(const ExpectedTypeSpec::Type& exType);
         inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len);
         inline const Ast::Expr& getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
+        inline const Ast::Expr& convertExprToExpectedTypeSpec(const Ast::Token& pos, const Ast::Expr& initExpr);
     private:
         inline const Ast::Token& getToken() const {return _lastToken;}
         inline Ast::Namespace& getUnitNamespace(const Ast::Token& name);
@@ -190,10 +30,17 @@ namespace Ast {
         inline Ast::FunctionDecl& addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
         inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr);
         inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
-        inline const Ast::Expr& switchDictKeyValue(const Ast::Token& pos, const NodeFactory::ExpectedTypeSpec::Type& popType, const NodeFactory::ExpectedTypeSpec::Type& pushType, const size_t& idx, const Ast::Expr& initExpr);
+        inline const Ast::Expr& switchDictKeyValue(const Ast::Token& pos, const Context::ExpectedTypeSpec::Type& popType, const Context::ExpectedTypeSpec::Type& pushType, const size_t& idx, const Ast::Expr& initExpr);
         inline const Ast::QualifiedTypeSpec& getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function);
         inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
         inline Ast::TemplateDefn& createTemplateDefn(const Ast::Token& pos, const std::string& name);
+
+    private:
+        template <typename T> inline Ast::Expr& createBooleanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+        template <typename T> inline Ast::Expr& createBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+        template <typename T> inline Ast::Expr& createBinaryOpExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
+        template <typename T> inline T& createPostfixExpr(const Ast::Token& op, const Ast::Expr& lhs);
+        template <typename T> inline T& createPrefixExpr(const Ast::Token& op, const Ast::Expr& lhs);
 
     private:
         Context& _ctx;
@@ -328,24 +175,7 @@ namespace Ast {
     public:
         Ast::TernaryOpExpr* aConditionalExpr(const Ast::Token& op1, const Ast::Token& op2, const Ast::Expr& lhs, const Ast::Expr& rhs1, const Ast::Expr& rhs2);
 
-    private:
-        template <typename T>
-        inline Ast::Expr& createBooleanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
-
-        template <typename T>
-        inline Ast::Expr& createBinaryExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
-
-        template <typename T>
-        inline Ast::Expr& createBinaryOpExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
-
-        template <typename T>
-        inline T& createPostfixExpr(const Ast::Token& op, const Ast::Expr& lhs);
-
-        template <typename T>
-        inline T& createPrefixExpr(const Ast::Token& op, const Ast::Expr& lhs);
-
     public:
-
         Ast::Expr& aBooleanAndExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
         Ast::Expr& aBooleanOrExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
         Ast::Expr& aBooleanEqualExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
