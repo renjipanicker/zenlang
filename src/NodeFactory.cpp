@@ -3,6 +3,7 @@
 #include "NodeFactory.hpp"
 #include "error.hpp"
 #include "typename.hpp"
+#include "compiler.hpp"
 
 inline std::string Ast::NodeFactory::getExpectedTypeName(const Ast::NodeFactory::ExpectedTypeSpec::Type& exType) {
     switch(exType) {

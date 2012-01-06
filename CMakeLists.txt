@@ -62,7 +62,11 @@ ADD_CUSTOM_COMMAND(
 SET(zen_SOURCES ${zen_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.hpp")
 
 ADD_CUSTOM_COMMAND(
-    COMMAND "${re2c_cc}" -c -i -f -u -o "${parser_odir}/lexerGen.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
+    # -c conditions-mode
+    # -f use storable-state
+    # -u unicode char-width
+    # -i no line-numbers
+    COMMAND "${re2c_cc}" -c -f -u -o "${parser_odir}/lexerGen.hpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
     OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.hpp"
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re"
 )

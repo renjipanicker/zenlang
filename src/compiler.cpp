@@ -1,19 +1,41 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "compiler.hpp"
-#include "lexer.hpp"
 #include "ZenlangGenerator.hpp"
 #include "StlcppGenerator.hpp"
 
-bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const int& level) {
-    Ast::NodeFactory factory(z::ref(this), module, level, filename);
-    Parser parser(factory);
-    Lexer lexer(factory, parser);
+inline bool checkFile(const std::string& filename) {
+    return std::ifstream( filename.c_str() ).is_open();
+}
 
+inline std::string Compiler::findImport(const std::string& filename) {
+    std::string cfile;
+
+    // first check current dir
+    cfile = "./" + filename;
+    if(checkFile(cfile))
+        return cfile;
+
+    // next check zen lib dir
+    cfile = _config.zlibPath() + "/" + filename;
+    if(checkFile(cfile))
+        return cfile;
+
+    // then all other include paths
+    for(Ast::Config::PathList::const_iterator it = _config.includePathList().begin(); it != _config.includePathList().end(); ++it) {
+        const std::string& dir = *it;
+        cfile = dir + "/" + filename;
+        if(checkFile(cfile))
+            return cfile;
+    }
+    throw z::Exception("Cannot open include file '%s'\n", filename.c_str());
+}
+
+bool Compiler::parseFile(Lexer& lexer, Ast::Module& module, const std::string& filename, const int& level) {
     std::ifstream is;
     is.open(filename.c_str(), std::ifstream::in);
     if(is.is_open() == false) {
-        return false;
+        throw z::Exception("Error opening file '%s'\n", filename.c_str());
     }
 
     // if importing files...
@@ -41,34 +63,26 @@ bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const
         }
     }
 
+    Ast::NodeFactory factory(z::ref(this), module, level, filename);
     while(!is.eof()) {
         char buf[1024];
         memset(buf, 0, 1024);
         is.read(buf, 1024);
         size_t got = is.gcount();
-        if(lexer.push(buf, got, is.eof()) == false) {
-            return false;
-        }
+        lexer.push(factory, buf, got, is.eof());
     }
     return true;
 }
 
+bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const int& level) {
+    Parser parser;
+    Lexer lexer(parser);
+    return parseFile(lexer, module, filename, level);
+}
+
 void Compiler::import(Ast::Module& module, const std::string &filename, const int& level) {
-    // first check current dir
-    if(parseFile(module, "./" + filename, level+1))
-        return;
-
-    // next check zen lib dir
-    if(parseFile(module, _config.zlibPath() + "/" + filename, level+1))
-        return;
-
-    // then all other include paths
-    for(Ast::Config::PathList::const_iterator it = _config.includePathList().begin(); it != _config.includePathList().end(); ++it) {
-        const std::string& dir = *it;
-        if(parseFile(module, dir + "/" + filename, level+1))
-            return;
-    }
-    throw z::Exception("Cannot open include file '%s'\n", filename.c_str());
+    std::string ifilename = findImport(filename);
+    parseFile(module, ifilename, level+1);
 }
 
 void Compiler::initContext(Ast::Unit& unit) {
@@ -105,10 +119,7 @@ void Compiler::compile() {
     }
 }
 
-bool Compiler::parseString(Ast::Module& module, const std::string& data, const int& level) {
+void Compiler::parseString(Lexer& lexer, Ast::Module& module, const std::string& data, const int& level) {
     Ast::NodeFactory factory(z::ref(this), module, level, "string");
-    Parser parser(factory);
-    Lexer lexer(factory, parser);
-    return lexer.push(data.c_str(), data.size(), true);
+    lexer.push(factory, data.c_str(), data.size(), true);
 }
-

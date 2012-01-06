@@ -3,7 +3,7 @@
 #include "parser.hpp"
 #include "parserGen.hpp"
 
-Parser::Parser(Ast::NodeFactory& nodeFactory) : _nodeFactory(nodeFactory), _parser(0) {
+Parser::Parser() : _factory(0), _parser(0) {
     _parser = ZenParserAlloc(malloc);
     //ZenParserTrace(stdout, "TP: ");
 }
@@ -13,13 +13,13 @@ Parser::~Parser() {
     _parser = 0;
 }
 
-void Parser::feed(const TokenData& td) {
+void Parser::feed(Ast::NodeFactory& factory, const TokenData& td) {
     //trace("Parser::feed: %d %s\n", td.id(), td.text());
-    ZenParser(_parser, td.id(), td, z::ptr(_nodeFactory));
+    ZenParser(_parser, td.id(), td, z::ptr(factory));
 }
 
-void Parser::done() {
+void Parser::done(Ast::NodeFactory& factory) {
     TokenData td;
     td.init();
-    ZenParser(_parser, 0, td, z::ptr(_nodeFactory));
+    ZenParser(_parser, 0, td, z::ptr(factory));
 }

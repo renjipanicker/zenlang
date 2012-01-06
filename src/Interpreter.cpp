@@ -7,7 +7,23 @@
 namespace {
     class InterpreterContext {
     public:
-        inline InterpreterContext() {}
+        inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
+            : _config(config), _unit(""), _c(project, config), _global(pos, Ast::ScopeType::Local), _lexer(_parser) {
+            _c.initContext(_unit);
+            _unit.enterScope(_global);
+        }
+        inline ~InterpreterContext() {
+            _unit.leaveScope(_global);
+        }
+
+        void process(const std::string& cmd);
+    private:
+        const Ast::Config& _config;
+        Ast::Unit _unit;
+        Compiler _c;
+        Ast::Scope _global;
+        Parser _parser;
+        Lexer _lexer;
     };
 
     struct ExprGenerator : public Ast::Expr::Visitor {
@@ -546,16 +562,20 @@ private:
     const Ast::Config& _config;
 };
 
+void InterpreterContext::process(const std::string& cmd) {
+    Ast::Module module(_unit);
+    _c.parseString(_lexer, module, cmd, 0);
+    for(Ast::Module::StatementList::const_iterator sit = module.globalStatementList().begin(); sit != module.globalStatementList().end(); ++sit) {
+        const Ast::Statement& s = z::ref(*sit);
+        runStatementGenerator(_config, z::ref(this), s);
+    }
+}
+
 inline void Interpreter::Impl::run() {
     printf("Entering interpretor mode\n");
 
-    InterpreterContext ctx;
-    Ast::Unit unit("");
-    Compiler c(_project, _config);
-    c.initContext(unit);
     Ast::Token pos(0, 0, "");
-    Ast::Scope global(pos, Ast::ScopeType::Local);
-    unit.enterScope(global);
+    InterpreterContext ctx(_project, _config, pos);
 
     bool quit = false;
     while (quit == false) {
@@ -566,16 +586,10 @@ inline void Interpreter::Impl::run() {
         if(cmd == ".q")
             break;
         try {
-            Ast::Module module(unit);
-            c.parseString(module, cmd, 0);
-            for(Ast::Module::StatementList::const_iterator sit = module.globalStatementList().begin(); sit != module.globalStatementList().end(); ++sit) {
-                const Ast::Statement& s = z::ref(*sit);
-                runStatementGenerator(_config, ctx, s);
-            }
+            ctx.process(cmd);
         } catch (...) {
         }
     }
-    unit.leaveScope(global);
 }
 
 //////////////////////////////////////////////

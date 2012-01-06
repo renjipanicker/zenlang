@@ -1,8 +1,8 @@
 #pragma once
 
 #include "ast.hpp"
-#include "compiler.hpp"
 
+class Compiler;
 namespace Ast {
     class NodeFactory {
     public:
