@@ -15,6 +15,8 @@ re2c:define:YYCURSOR         = _cursor;
 re2c:define:YYLIMIT          = _limit;
 re2c:define:YYMARKER         = _marker;
 re2c:define:YYFILL           = "return;";
+//re2c:define:YYFILL@len         = #;
+//re2c:define:YYFILL           = "if(isEof(#)) return;";
 re2c:define:YYFILL:naked     = 1; // Emit just the FILL command as specified above. No braces, arguments, etc
 
 re2c:define:YYGETSTATE       = "_state";

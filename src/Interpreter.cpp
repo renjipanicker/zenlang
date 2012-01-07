@@ -564,7 +564,7 @@ namespace {
     void InterpreterContext::process(const std::string& cmd) {
         std::cout << cmd << std::endl;
         Ast::Module module(_unit);
-        _c.parseString(_ctx, _lexer, module, cmd, 0, true);
+        _c.parseString(_ctx, _lexer, module, cmd, 0, false);
 //        for(Ast::Module::StatementList::const_iterator sit = module.globalStatementList().begin(); sit != module.globalStatementList().end(); ++sit) {
 //            const Ast::Statement& s = z::ref(*sit);
 //            runStatementGenerator(_config, z::ref(this), s);
@@ -587,7 +587,7 @@ inline void Interpreter::Impl::run() {
     InterpreterContext ctx(_project, _config, pos);
     StatementGenerator gen(_config, ctx);
     ctx.setVisitor(gen);
-    ctx.process("typedef int native;");
+    ctx.process("typedef int native; /***************/");
 //    return;
 
     bool quit = false;
