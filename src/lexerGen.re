@@ -3,7 +3,7 @@
 // if first non-comment line is a #include, QtCreator recognizes this as a C/C++ file for syntax highlighting.
 #include <typeinfo>
 
-// this causes the conditon enum to be defined
+// this causes the conditon enum to be generated
 /*!types:re2c */
 
 #define NEXT() { _start = _cursor; goto yy0; }
@@ -141,25 +141,26 @@ id_seq = [a-zA-Z][a-zA-Z0-9_]*;
 <Normal>   "@" id_seq := send(factory, ZENTOK_KEY_CONST); NEXT();
 <Normal>       id_seq := sendId(factory); NEXT();
 
-<Normal>   "0" [0-7]+ [uU]?                              := send(factory, ZENTOK_OCTINT_CONST); NEXT();
-<Normal>   "0" [0-7]+ [uU]? [lL]                         := send(factory, ZENTOK_LOCTINT_CONST); NEXT();
+<Normal>   "0" [0-7]+ [uU]?      := send(factory, ZENTOK_OCTINT_CONST); NEXT();
+<Normal>   "0" [0-7]+ [uU]? [lL] := send(factory, ZENTOK_LOCTINT_CONST); NEXT();
 
 dec_digit = [0-9];
-<Normal>   dec_digit+                                       := send(factory, ZENTOK_DECINT_CONST); NEXT();
-<Normal>   dec_digit+ [lL]                                  := send(factory, ZENTOK_LDECINT_CONST); NEXT();
+dec_seq = dec_digit+;
+<Normal>   dec_seq      := send(factory, ZENTOK_DECINT_CONST); NEXT();
+<Normal>   dec_seq [lL] := send(factory, ZENTOK_LDECINT_CONST); NEXT();
 
-<Normal>   "0" [xX] [A-Za-z0-9]+                        := send(factory, ZENTOK_HEXINT_CONST); NEXT();
-<Normal>   "0" [xX] [A-Za-z0-9]+ [lL]                   := send(factory, ZENTOK_LHEXINT_CONST); NEXT();
+<Normal>   "0" [xX] [A-Za-z0-9]+      := send(factory, ZENTOK_HEXINT_CONST); NEXT();
+<Normal>   "0" [xX] [A-Za-z0-9]+ [lL] := send(factory, ZENTOK_LHEXINT_CONST); NEXT();
 
-<Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [fF]  := send(factory, ZENTOK_FLOAT_CONST); NEXT();
-<Normal>              [0-9]+  [Ee] [+-]? [0-9]+   [fF]  := send(factory, ZENTOK_FLOAT_CONST); NEXT();
+exp_seq = [Ee] [+-]? dec_seq;
+<Normal>   dec_digit* "." dec_seq (exp_seq)? [fF]  := send(factory, ZENTOK_FLOAT_CONST); NEXT();
+<Normal>                  dec_seq  exp_seq   [fF]  := send(factory, ZENTOK_FLOAT_CONST); NEXT();
+<Normal>   dec_digit* "." dec_seq (exp_seq)? [dD]  := send(factory, ZENTOK_DOUBLE_CONST); NEXT();
+<Normal>                  dec_seq  exp_seq   [dD]  := send(factory, ZENTOK_DOUBLE_CONST); NEXT();
 
-<Normal>   [0-9]* "." [0-9]+ ([Ee] [+-]? [0-9]+)? [dD]? := send(factory, ZENTOK_DOUBLE_CONST); NEXT();
-<Normal>              [0-9]+  [Ee] [+-]? [0-9]+   [dD]? := send(factory, ZENTOK_DOUBLE_CONST); NEXT();
-
-<Normal>   '\''    => Char  := _text = _cursor; NEXT();
-<Char>     '\\' .           := NEXT();
+<Normal>   '\''   => Char   := _text = _cursor; NEXT();
 <Char>     '\''   => Normal := send(factory, ZENTOK_CHAR_CONST); NEXT();
+<Char>     '\\' .           := NEXT();
 <Char>     [^]              := NEXT();
 
 <Normal>   '"'    => String := _text = _cursor; NEXT();
@@ -167,17 +168,17 @@ dec_digit = [0-9];
 <String>   '\\' .           := NEXT();
 <String>   [^]              := NEXT();
 
-<Normal>   "/*"    :=> Comment
-<Comment>  "*" "/" :=> Normal
-<Comment>  "\r" "\n"  => Comment :=  newLine(); NEXT();
-<Comment>  "\n"       => Comment :=  newLine(); NEXT();
-<Comment>  [^]       :=> Comment
+<Normal>        "/*"            :=> MultiComment
+<MultiComment>  "*" "/"         :=> Normal
+<MultiComment>  "\r" "\n"        => MultiComment :=  newLine(); NEXT();
+<MultiComment>  "\n"             => MultiComment :=  newLine(); NEXT();
+<MultiComment>  [^]             :=> MultiComment
 
-<Normal>      "//"            :=> Skiptoeol
-<Skiptoeol>   "\r" "\n"        => Normal      :=  newLine(); NEXT();
-<Skiptoeol>   "\n"             => Normal      :=  newLine(); NEXT();
-<Skiptoeol>   "\\" "\r"? "\n" :=> Skiptoeol
-<Skiptoeol>   [^]             :=> Skiptoeol
+<Normal>        "//"            :=> SingleComment
+<SingleComment> "\r" "\n"        => Normal      :=  newLine(); NEXT();
+<SingleComment> "\n"             => Normal      :=  newLine(); NEXT();
+<SingleComment> "\\" "\r"? "\n" :=> SingleComment
+<SingleComment> [^]             :=> SingleComment
 
 <Normal>   "\r" "\n" := newLine(); NEXT();
 <Normal>   "\n"      := newLine(); NEXT();
