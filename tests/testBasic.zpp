@@ -1,5 +1,12 @@
 namespace TestBasic;
 
+// This is a single line comment
+
+/* This is
+   a multi line
+   comment
+*/
+
 public routine int testNative(const string& s) native;
 
 public routine int testRoutine(const int& x) {

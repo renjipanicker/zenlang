@@ -1,6 +1,7 @@
 interpreter
 error-handling
 rename GenName::Import and Normal to zenlang and stlcpp
+change lexer to use std::string
 
 bug - validate type when de-referencing pointer<>
 bug - list/dict inside struct does not copy in cctor
