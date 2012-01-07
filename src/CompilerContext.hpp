@@ -6,6 +6,33 @@
 namespace Ast {
     class Context {
     public:
+        typedef std::list<Ast::Namespace*> NamespaceStack;
+        typedef std::list<Ast::Scope*> ScopeStack;
+        typedef std::list<Ast::TypeSpec*> TypeSpecStack;
+
+    public:
+        Context(Ast::Unit& unit, const std::string& filename, const int& level);
+        ~Context();
+
+    public:
+        inline const std::string& filename() const {return _filename;}
+        inline const int& level() const {return _level;}
+
+    private:
+        Ast::Unit& _unit;
+        const std::string _filename;
+        const int _level;
+
+    // everything related to statement-callback
+    public:
+        inline void setStatementVisitor(Ast::Statement::Visitor& val) { _statementVisitor = z::ptr(val);}
+        inline bool hasStatementVisitor() {return (0 != _statementVisitor);}
+        inline Ast::Statement::Visitor& statementVisitor() {return z::ref(_statementVisitor);}
+    private:
+        Ast::Statement::Visitor* _statementVisitor;
+
+    // everything related to type coercion
+    public:
         struct CoercionResult {
             enum T {
                 None,
@@ -13,32 +40,6 @@ namespace Ast {
                 Rhs
             };
         };
-    public:
-        typedef std::list<Ast::Namespace*> NamespaceStack;
-        typedef std::list<Ast::Scope*> ScopeStack;
-        typedef std::list<Ast::TypeSpec*> TypeSpecStack;
-
-    public:
-        inline Context(Ast::Unit& unit, const std::string& filename, const int& level)
-            : _unit(unit), _filename(filename), _level(level), _currentTypeRef(0), _currentImportedTypeRef(0) {
-            Ast::Root& rootTypeSpec = getRootNamespace();
-            enterTypeSpec(rootTypeSpec);
-        }
-        inline ~Context() {
-            assert(_expectedTypeSpecStack.size() == 0);
-            assert(_typeSpecStack.size() == 1);
-            Ast::Root& rootTypeSpec = getRootNamespace();
-            leaveTypeSpec(rootTypeSpec);
-        }
-
-        inline const std::string& filename() const {return _filename;}
-        inline const int& level() const {return _level;}
-    private:
-        Ast::Unit& _unit;
-        const std::string _filename;
-        const int _level;
-
-    // Various helpers
     public:
         const Ast::QualifiedTypeSpec* canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const;
         inline const Ast::QualifiedTypeSpec* canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) const;
