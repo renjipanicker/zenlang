@@ -323,6 +323,11 @@ Ast::Statement* Ast::NodeFactory::aGlobalStatement(Ast::Statement& statement) {
     if(_ctx.level() == 0) {
         _module.addGlobalStatement(statement);
     }
+    printf("xx1\n");
+    if(_ctx.hasStatementVisitor()) {
+        printf("xx2\n");
+        _ctx.statementVisitor().visitNode(statement);
+    }
     return z::ptr(statement);
 }
 

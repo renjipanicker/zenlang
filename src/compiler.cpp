@@ -38,31 +38,6 @@ bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const
         throw z::Exception("Error opening file '%s'\n", filename.c_str());
     }
 
-    // if importing files...
-    if(level > 0) {
-        if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
-            std::string msg = "   ";
-            for(int i = 0; i < level; ++i) {
-                msg += "  ";
-            }
-            printf("%s Importing %s", msg.c_str(), filename.c_str());
-        }
-
-        // check if file is already imported
-        if(module.unit().headerFileList().find(filename) != module.unit().headerFileList().end()) {
-            if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
-                printf(" - skipped\n");
-            }
-            return true;
-        }
-
-        // if not, add it to list of files imported into this unit
-        module.unit().addheaderFile(filename);
-        if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
-            printf("\n");
-        }
-    }
-
     Ast::Context ctx(module.unit(), filename, level);
     Parser parser;
     Lexer lexer(parser);
@@ -79,6 +54,29 @@ bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const
 
 void Compiler::import(Ast::Module& module, const std::string &filename, const int& level) {
     std::string ifilename = findImport(filename);
+
+    if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
+        std::string msg = "   ";
+        for(int i = 0; i < level; ++i) {
+            msg += "  ";
+        }
+        printf("%s Importing %s", msg.c_str(), filename.c_str());
+    }
+
+    // check if file is already imported
+    if(module.unit().headerFileList().find(filename) != module.unit().headerFileList().end()) {
+        if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
+            printf(" - skipped\n");
+        }
+        return;
+    }
+
+    // if not, add it to list of files imported into this unit
+    module.unit().addheaderFile(filename);
+    if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
+        printf("\n");
+    }
+
     parseFile(module, ifilename, level+1);
 }
 

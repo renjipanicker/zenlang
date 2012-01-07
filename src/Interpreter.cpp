@@ -8,22 +8,29 @@ namespace {
     class InterpreterContext {
     public:
         inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
-            : _config(config), _ctx(_unit, "", 0), _lexer(_parser), _unit(""), _c(project, config), _global(pos, Ast::ScopeType::Local) {
-            _c.initContext(_unit);
+            : _config(config), _ctx(_unit, "", 0), _unit(""), _c(project, config), _lexer(_parser), _global(pos, Ast::ScopeType::Local) {
+//            _c.initContext(_unit);
             _ctx.enterScope(_global);
         }
         inline ~InterpreterContext() {
             _ctx.leaveScope(_global);
         }
 
+        void setVisitor(Ast::Statement::Visitor& visitor) {
+            _ctx.setStatementVisitor(visitor);
+        }
+
+        void reset() {
+        }
+
         void process(const std::string& cmd);
     private:
         const Ast::Config& _config;
         Ast::Context _ctx;
-        Parser _parser;
-        Lexer _lexer;
         Ast::Unit _unit;
         Compiler _c;
+        Parser _parser;
+        Lexer _lexer;
         Ast::Scope _global;
     };
 
@@ -557,11 +564,11 @@ namespace {
     void InterpreterContext::process(const std::string& cmd) {
         std::cout << cmd << std::endl;
         Ast::Module module(_unit);
-        _c.parseString(_ctx, _lexer, module, cmd, 0, false);
-        for(Ast::Module::StatementList::const_iterator sit = module.globalStatementList().begin(); sit != module.globalStatementList().end(); ++sit) {
-            const Ast::Statement& s = z::ref(*sit);
-            runStatementGenerator(_config, z::ref(this), s);
-        }
+        _c.parseString(_ctx, _lexer, module, cmd, 0, true);
+//        for(Ast::Module::StatementList::const_iterator sit = module.globalStatementList().begin(); sit != module.globalStatementList().end(); ++sit) {
+//            const Ast::Statement& s = z::ref(*sit);
+//            runStatementGenerator(_config, z::ref(this), s);
+//        }
     }
 }
 
@@ -578,10 +585,9 @@ inline void Interpreter::Impl::run() {
 
     Ast::Token pos(0, 0, "");
     InterpreterContext ctx(_project, _config, pos);
-
-// Test code
-//    ctx.process("auto i = 0;\n");
-//    ctx.process("i = 123;\n");
+    StatementGenerator gen(_config, ctx);
+    ctx.setVisitor(gen);
+    ctx.process("typedef int native;");
 //    return;
 
     bool quit = false;
@@ -594,6 +600,7 @@ inline void Interpreter::Impl::run() {
         try {
             ctx.process(cmd);
         } catch (...) {
+            ctx.reset();
         }
     }
 }
