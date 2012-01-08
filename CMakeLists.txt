@@ -57,7 +57,9 @@ ELSE(WIN32)
 ENDIF(WIN32)
 
 ADD_CUSTOM_COMMAND(
-    COMMAND "${lemon_cc}" o=".hpp" -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
+    # -l no line numbers
+    # -q don't print report
+    COMMAND "${lemon_cc}" o=".hpp" -l -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
     OUTPUT "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.hpp"
     DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y"
 )

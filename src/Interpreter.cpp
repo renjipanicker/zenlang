@@ -8,10 +8,11 @@ namespace {
     class InterpreterContext {
     public:
         inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
-            : _config(config), _ctx(_unit, "", 0), _unit(""), _c(project, config), _lexer(_parser), _global(pos, Ast::ScopeType::Local) {
-//            _c.initContext(_unit);
+            : _config(config), _ctx(_unit, "<cmd>", 0), _unit(""), _c(project, config), _lexer(_parser, Lexer::lmInterpreter), _global(pos, Ast::ScopeType::Local) {
+            _c.initContext(_unit);
             _ctx.enterScope(_global);
         }
+
         inline ~InterpreterContext() {
             _ctx.leaveScope(_global);
         }
@@ -21,9 +22,12 @@ namespace {
         }
 
         void reset() {
+            _lexer.reset();
+            _parser.reset();
         }
 
         void process(const std::string& cmd);
+
     private:
         const Ast::Config& _config;
         Ast::Context _ctx;
@@ -34,10 +38,7 @@ namespace {
         Ast::Scope _global;
     };
 
-    struct ExprGenerator : public Ast::Expr::Visitor {
-    public:
-        inline ExprGenerator(InterpreterContext& ctx) : _ctx(ctx) {}
-    private:
+    class ExprGenerator : public Ast::Expr::Visitor {
         inline void visitTernary(const Ast::TernaryOpExpr& node) {
             unused(node);
         }
@@ -335,101 +336,12 @@ namespace {
 
     private:
         InterpreterContext& _ctx;
-    };
-
-    void runStatementGenerator(const Ast::Config& config, InterpreterContext& ctx, const Ast::Statement& block);
-
-    struct ImportGenerator : public Ast::TypeSpec::Visitor {
-        inline void visitChildrenIndent(const Ast::TypeSpec& node) {
-            visitChildren(node);
-        }
-
-        void visit(const Ast::TypedefDecl& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::TypedefDefn& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::TemplateDecl& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::TemplateDefn& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::EnumDefn& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::StructDecl& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::RootStructDefn& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::ChildStructDefn& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::PropertyDeclRW& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::PropertyDeclRO& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::RoutineDecl& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::RoutineDefn& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::FunctionRetn& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::FunctionDecl& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::RootFunctionDefn& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::ChildFunctionDefn& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::EventDecl& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::Namespace& node) {
-            visitChildrenIndent(node);
-        }
-
-        void visit(const Ast::Root& node) {
-            visitChildrenIndent(node);
-        }
 
     public:
-        inline ImportGenerator(const Ast::Config& config, InterpreterContext& ctx) : _config(config), _ctx(ctx) {}
-
-    private:
-        const Ast::Config& _config;
-        InterpreterContext& _ctx;
+        inline ExprGenerator(InterpreterContext& ctx) : _ctx(ctx) {}
     };
 
-    struct StatementGenerator : public Ast::Statement::Visitor {
-    private:
+    class StatementGenerator : public Ast::Statement::Visitor {
         virtual void visit(const Ast::ImportStatement& node) {
             unused(node);
         }
@@ -443,7 +355,7 @@ namespace {
         }
 
         virtual void visit(const Ast::UserDefinedTypeSpecStatement& node) {
-            ImportGenerator(_config, _ctx).visitNode(node.typeSpec());
+            unused(node);
         }
 
         virtual void visit(const Ast::StructMemberVariableStatement& node) {
@@ -451,6 +363,10 @@ namespace {
         }
 
         virtual void visit(const Ast::StructInitStatement& node) {
+            unused(node);
+        }
+
+        virtual void visit(const Ast::EmptyStatement& node) {
             unused(node);
         }
 
@@ -542,33 +458,24 @@ namespace {
         }
 
         virtual void visit(const Ast::CompoundStatement& node) {
-            INDENT;
             for(Ast::CompoundStatement::List::const_iterator sit = node.list().begin(); sit != node.list().end(); ++sit) {
                 const Ast::Statement& s = z::ref(*sit);
                 z::ref(this).visitNode(s);
             }
         }
 
-    public:
-        inline StatementGenerator(const Ast::Config& config, InterpreterContext& ctx) : _config(config), _ctx(ctx) {}
     private:
         const Ast::Config& _config;
         InterpreterContext& _ctx;
-    };
 
-    void runStatementGenerator(const Ast::Config& config, InterpreterContext& ctx, const Ast::Statement& block) {
-        StatementGenerator gen(config, ctx);
-        gen.visitNode(block);
-    }
+    public:
+        inline StatementGenerator(const Ast::Config& config, InterpreterContext& ctx) : _config(config), _ctx(ctx) {}
+    };
 
     void InterpreterContext::process(const std::string& cmd) {
         std::cout << cmd << std::endl;
         Ast::Module module(_unit);
         _c.parseString(_ctx, _lexer, module, cmd, 0, false);
-//        for(Ast::Module::StatementList::const_iterator sit = module.globalStatementList().begin(); sit != module.globalStatementList().end(); ++sit) {
-//            const Ast::Statement& s = z::ref(*sit);
-//            runStatementGenerator(_config, z::ref(this), s);
-//        }
     }
 }
 
@@ -587,8 +494,6 @@ inline void Interpreter::Impl::run() {
     InterpreterContext ctx(_project, _config, pos);
     StatementGenerator gen(_config, ctx);
     ctx.setVisitor(gen);
-    ctx.process("typedef int native; /***************/");
-//    return;
 
     bool quit = false;
     while (quit == false) {

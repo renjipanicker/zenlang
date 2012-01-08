@@ -323,9 +323,7 @@ Ast::Statement* Ast::NodeFactory::aGlobalStatement(Ast::Statement& statement) {
     if(_ctx.level() == 0) {
         _module.addGlobalStatement(statement);
     }
-    printf("xx1\n");
     if(_ctx.hasStatementVisitor()) {
-        printf("xx2\n");
         _ctx.statementVisitor().visitNode(statement);
     }
     return z::ptr(statement);
@@ -790,10 +788,15 @@ Ast::UserDefinedTypeSpecStatement* Ast::NodeFactory::aUserDefinedTypeSpecStateme
     return z::ptr(userDefinedTypeSpecStatement);
 }
 
+Ast::EmptyStatement* Ast::NodeFactory::aEmptyStatement(const Ast::Token& pos) {
+    Ast::EmptyStatement& emptyStatement = addUnitNode(new Ast::EmptyStatement(pos));
+    return z::ptr(emptyStatement);
+}
+
 Ast::AutoStatement* Ast::NodeFactory::aAutoStatement(const Ast::VariableDefn& defn) {
-    Ast::AutoStatement& localStatement = addUnitNode(new Ast::AutoStatement(defn.pos(), defn));
+    Ast::AutoStatement& defnStatement = addUnitNode(new Ast::AutoStatement(defn.pos(), defn));
     _ctx.currentScope().addVariableDef(defn);
-    return z::ptr(localStatement);
+    return z::ptr(defnStatement);
 }
 
 Ast::ExprStatement* Ast::NodeFactory::aExprStatement(const Ast::Expr& expr) {
@@ -1537,6 +1540,7 @@ Ast::TemplateDefnInstanceExpr* Ast::NodeFactory::aTemplateDefnInstanceExpr(const
 
 Ast::VariableRefExpr* Ast::NodeFactory::aVariableRefExpr(const Ast::Token& name) {
     Ast::RefType::T refType = Ast::RefType::Local;
+    printf("Ast::NodeFactory::aVariableRefExpr: %s\n", name.text());
     const Ast::VariableDefn* vref = _ctx.getVariableDef(_ctx.filename(), name, refType);
     if(vref == 0) {
         throw z::Exception("%s Variable not found: '%s'\n", err(_ctx.filename(), name).c_str(), name.text());

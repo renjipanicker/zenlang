@@ -1548,6 +1548,13 @@ namespace Ast {
         const StructDefn& _structDefn;
     };
 
+    class EmptyStatement : public Statement {
+    public:
+        inline EmptyStatement(const Token& pos) : Statement(pos) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
     class AutoStatement : public Statement {
     public:
         inline AutoStatement(const Token& pos, const VariableDefn& defn) : Statement(pos), _defn(defn) {}
@@ -1832,6 +1839,7 @@ namespace Ast {
         virtual void visit(const UserDefinedTypeSpecStatement& node) = 0;
         virtual void visit(const StructMemberVariableStatement& node) = 0;
         virtual void visit(const StructInitStatement& node) = 0;
+        virtual void visit(const EmptyStatement& node) = 0;
         virtual void visit(const AutoStatement& node) = 0;
         virtual void visit(const ExprStatement& node) = 0;
         virtual void visit(const PrintStatement& node) = 0;

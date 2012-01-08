@@ -723,6 +723,10 @@ namespace {
             unused(node);
         }
 
+        virtual void visit(const Ast::EmptyStatement& node) {
+            unused(node);
+        }
+
         virtual void visit(const Ast::AutoStatement& node) {
             unused(node);
         }

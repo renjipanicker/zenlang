@@ -518,6 +518,7 @@ rPreOtherTypeSpec(L) ::=                            OTHER_TYPE(name). {L = z::re
 // statements
 %type rInnerStatement {Ast::Statement*}
 rInnerStatement(L) ::= rUserDefinedTypeSpecStatement(R). {L = R;}
+rInnerStatement(L) ::= rEmptyStatement(R).               {L = R;}
 rInnerStatement(L) ::= rAutoStatement(R).                {L = R;}
 rInnerStatement(L) ::= rExprStatement(R).                {L = R;}
 rInnerStatement(L) ::= rPrintStatement(R).               {L = R;}
@@ -538,6 +539,10 @@ rInnerStatement(L) ::= rCompoundStatement(R).            {L = R;}
 //-------------------------------------------------
 %type rUserDefinedTypeSpecStatement {Ast::UserDefinedTypeSpecStatement*}
 rUserDefinedTypeSpecStatement(L) ::= rTypeSpecDef(typeSpec). {L = z::ref(pctx).aUserDefinedTypeSpecStatement(z::ref(typeSpec));}
+
+//-------------------------------------------------
+%type rEmptyStatement {Ast::EmptyStatement*}
+rEmptyStatement(L) ::= SEMI(B). {L = z::ref(pctx).aEmptyStatement(B);}
 
 //-------------------------------------------------
 %type rAutoStatement {Ast::AutoStatement*}

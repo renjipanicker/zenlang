@@ -138,6 +138,7 @@ namespace Ast {
 
     public:
         Ast::UserDefinedTypeSpecStatement* aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec);
+        Ast::EmptyStatement*               aEmptyStatement(const Ast::Token& pos);
         Ast::AutoStatement*                aAutoStatement(const Ast::VariableDefn& defn);
         Ast::ExprStatement*                aExprStatement(const Ast::Expr& expr);
         Ast::PrintStatement*               aPrintStatement(const Ast::Token& pos, const Ast::Expr& expr);

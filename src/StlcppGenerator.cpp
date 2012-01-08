@@ -1171,6 +1171,11 @@ namespace {
             }
         }
 
+        virtual void visit(const Ast::EmptyStatement& node) {
+            unused(node);
+            fprintf(fpDefn(), ";\n");
+        }
+
         virtual void visit(const Ast::AutoStatement& node) {
             fprintf(fpDefn(), "%s%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.defn().qTypeSpec(), GenMode::Normal).c_str(), node.defn().name().text());
             ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.defn().initExpr());

@@ -101,6 +101,7 @@ void Ast::LeaveNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(
 void Ast::UserDefinedTypeSpecStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::StructMemberVariableStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::StructInitStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void Ast::EmptyStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::AutoStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::ExprStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::PrintStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}

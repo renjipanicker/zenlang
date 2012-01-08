@@ -14,7 +14,7 @@ Parser::~Parser() {
 }
 
 void Parser::feed(Ast::NodeFactory& factory, const TokenData& td) {
-    //trace("Parser::feed: %d %s\n", td.id(), td.text());
+//    printf("Parser::feed: %d %s\n", td.id(), td.text());
     ZenParser(_parser, td.id(), td, z::ptr(factory));
 }
 
@@ -22,4 +22,9 @@ void Parser::done(Ast::NodeFactory& factory) {
     TokenData td;
     td.init();
     ZenParser(_parser, 0, td, z::ptr(factory));
+}
+
+void Parser::reset() {
+    ZenParserFree(_parser, free);
+    _parser = ZenParserAlloc(malloc);
 }
