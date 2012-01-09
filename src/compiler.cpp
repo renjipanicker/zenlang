@@ -40,7 +40,7 @@ bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const
 
     Ast::Context ctx(module.unit(), filename, level);
     Parser parser;
-    Lexer lexer(parser, Lexer::lmCompiler);
+    Lexer lexer(parser);
     Ast::NodeFactory factory(ctx, z::ref(this), module);
     while(!is.eof()) {
         char buf[1024];

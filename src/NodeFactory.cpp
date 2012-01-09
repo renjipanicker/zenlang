@@ -1540,7 +1540,6 @@ Ast::TemplateDefnInstanceExpr* Ast::NodeFactory::aTemplateDefnInstanceExpr(const
 
 Ast::VariableRefExpr* Ast::NodeFactory::aVariableRefExpr(const Ast::Token& name) {
     Ast::RefType::T refType = Ast::RefType::Local;
-    printf("Ast::NodeFactory::aVariableRefExpr: %s\n", name.text());
     const Ast::VariableDefn* vref = _ctx.getVariableDef(_ctx.filename(), name, refType);
     if(vref == 0) {
         throw z::Exception("%s Variable not found: '%s'\n", err(_ctx.filename(), name).c_str(), name.text());
@@ -1776,13 +1775,13 @@ Ast::ConstantBooleanExpr& Ast::NodeFactory::aConstantBooleanExpr(const Ast::Toke
 
 Ast::ConstantStringExpr& Ast::NodeFactory::aConstantStringExpr(const Ast::Token& token) {
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "string");
-    Ast::ConstantStringExpr& expr = addUnitNode(new Ast::ConstantStringExpr(qTypeSpec, token));
+    Ast::ConstantStringExpr& expr = addUnitNode(new Ast::ConstantStringExpr(qTypeSpec, token, token.string()));
     return expr;
 }
 
 Ast::ConstantCharExpr& Ast::NodeFactory::aConstantCharExpr(const Ast::Token& token) {
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "char");
-    Ast::ConstantCharExpr& expr = addUnitNode(new Ast::ConstantCharExpr(qTypeSpec, token));
+    Ast::ConstantCharExpr& expr = addUnitNode(new Ast::ConstantCharExpr(qTypeSpec, token, token.string()));
     return expr;
 }
 

@@ -1,14 +1,113 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "Interpreter.hpp"
+#include "ZenlangGenerator.hpp"
 #include "typename.hpp"
 #include "compiler.hpp"
 
 namespace {
+    struct ValuePtr {
+        inline ValuePtr() : _value(0) {}
+        inline ~ValuePtr() {delete _value;}
+
+        inline void reset(const Ast::Expr* value) {
+            assert(_value == 0);
+            _value = value;
+        }
+
+        template <typename T> inline bool check() const {
+            return (dynamic_cast<const T*>(_value) != 0);
+        }
+
+        template <typename T>
+        inline const T& value() const {
+            assert(_value != 0);
+            return z::ref(dynamic_cast<const T*>(_value));
+        }
+
+        template <typename T> inline operator T() const {
+            return value<T>();
+        }
+
+        virtual std::string str() const {
+            assert(_value != 0);
+            std::string estr = ZenlangGenerator::convertExprToString(z::ref(_value));
+            return estr;
+        }
+
+    private:
+        inline ValuePtr(const ValuePtr& src) : _value(0) {}
+        const Ast::Expr* _value;
+    };
+
+    template <> inline ValuePtr::operator long() const {
+        const Ast::ConstantLongExpr& val = value<Ast::ConstantLongExpr>();
+        return val.value();
+    }
+
+    struct BinaryOperator {
+        inline const Ast::Expr* run(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+            if(lhs.check<Ast::ConstantLongExpr>() && rhs.check<Ast::ConstantLongExpr>()) {
+                long nv = runLong((long)lhs, (long)rhs, qTypeSpec);
+                return new Ast::ConstantLongExpr(qTypeSpec, op, nv);
+            }
+            throw z::Exception("Type mismatch\n");
+        }
+        virtual long runLong(const long& lhs, const long& rhs, const Ast::QualifiedTypeSpec& qTypeSpec) const = 0;
+    };
+
+    struct BooleanAndOperator : public BinaryOperator {
+        virtual long runLong(const long& lhs, const long& rhs, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+            return (long)lhs && (long)rhs;
+        }
+    };
+
+    struct BooleanOrOperator : public BinaryOperator {
+        virtual long runLong(const long& lhs, const long& rhs, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+            return (long)lhs || (long)rhs;
+        }
+    };
+
+    struct BooleanEqualOperator : public BinaryOperator {
+        virtual long runLong(const long& lhs, const long& rhs, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+            return (long)lhs == (long)rhs;
+        }
+    };
+
+    struct BooleanNotEqualOperator : public BinaryOperator {
+        virtual long runLong(const long& lhs, const long& rhs, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+            return (long)lhs != (long)rhs;
+        }
+    };
+
+    struct BinaryPlusOperator : public BinaryOperator {
+        virtual long runLong(const long& lhs, const long& rhs, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+            return (long)lhs + (long)rhs;
+        }
+    };
+
+    struct BinaryMinusOperator : public BinaryOperator {
+        virtual long runLong(const long& lhs, const long& rhs, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+            return (long)lhs - (long)rhs;
+        }
+    };
+
+    struct BinaryTimesOperator : public BinaryOperator {
+        virtual long runLong(const long& lhs, const long& rhs, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+            return (long)lhs * (long)rhs;
+        }
+    };
+
+    struct BinaryDivideOperator : public BinaryOperator {
+        virtual long runLong(const long& lhs, const long& rhs, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+            return (long)lhs / (long)rhs;
+        }
+    };
+
     class InterpreterContext {
     public:
         inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
-            : _config(config), _ctx(_unit, "<cmd>", 0), _unit(""), _c(project, config), _lexer(_parser, Lexer::lmInterpreter), _global(pos, Ast::ScopeType::Local) {
+            : _config(config), _ctx(_unit, "<cmd>", 0), _unit(""), _c(project, config), _global(pos, Ast::ScopeType::Local) {
             _c.initContext(_unit);
             _ctx.enterScope(_global);
         }
@@ -22,8 +121,6 @@ namespace {
         }
 
         void reset() {
-            _lexer.reset();
-            _parser.reset();
         }
 
         void process(const std::string& cmd);
@@ -33,142 +130,233 @@ namespace {
         Ast::Context _ctx;
         Ast::Unit _unit;
         Compiler _c;
-        Parser _parser;
-        Lexer _lexer;
         Ast::Scope _global;
     };
 
     class ExprGenerator : public Ast::Expr::Visitor {
-        inline void visitTernary(const Ast::TernaryOpExpr& node) {
-            unused(node);
+    private:
+        typedef std::list<const Ast::Expr*> Stack;
+        Stack _stack;
+    private:
+        inline void push(const Ast::Expr* value) {
+            _stack.push_back(value);
         }
 
+        inline void pop(ValuePtr& ptr) {
+            assert(_stack.size() > 0);
+            const Ast::Expr* val = _stack.back();
+            _stack.pop_back();
+            ptr.reset(val);
+        }
+
+    private:
         virtual void visit(const Ast::ConditionalExpr& node) {
-            return visitTernary(node);
+            visitNode(node.lhs());
+            ValuePtr lhs;
+            pop(lhs);
+
+            bool cond = false;
+//            if(lhs.check<IntValue>()) {
+//                cond = ((long)lhs != 0);
+//            } else /*if*/ { //add more here
+//            }
+
+            if(cond) {
+                visitNode(node.rhs1());
+            } else {
+                visitNode(node.rhs2());
+            }
         }
 
-        virtual void visitBinary(const Ast::BinaryExpr& node) {
-            unused(node);
+        inline void visitBinary(const Ast::BinaryExpr& node, ValuePtr& lhs, ValuePtr& rhs) {
+            visitNode(node.lhs());
+            pop(lhs);
+            visitNode(node.rhs());
+            pop(rhs);
+        }
+
+        inline void visitBinary(const Ast::BinaryExpr& node, const BinaryOperator& op) {
+            visitNode(node.lhs());
+            ValuePtr lhs;
+            pop(lhs);
+
+            visitNode(node.rhs());
+            ValuePtr rhs;
+            pop(rhs);
+
+            push(op.run(lhs, rhs, node.op(), node.qTypeSpec()));
         }
 
         virtual void visit(const Ast::BooleanAndExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BooleanOrExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BooleanEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BooleanNotEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BooleanLessThanExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BooleanGreaterThanExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BooleanLessThanOrEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BooleanGreaterThanOrEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BooleanHasExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryAssignEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryPlusEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryMinusEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryTimesEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryDivideEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryModEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryBitwiseAndEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryBitwiseOrEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryBitwiseXorEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryShiftLeftEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryShiftRightEqualExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryPlusExpr& node) {
-            return visitBinary(node);
+            return visitBinary(node, BinaryPlusOperator());
         }
 
         virtual void visit(const Ast::BinaryMinusExpr& node) {
-            return visitBinary(node);
+            return visitBinary(node, BinaryMinusOperator());
         }
 
         virtual void visit(const Ast::BinaryTimesExpr& node) {
-            return visitBinary(node);
+            return visitBinary(node, BinaryTimesOperator());
         }
 
         virtual void visit(const Ast::BinaryDivideExpr& node) {
-            return visitBinary(node);
+            return visitBinary(node, BinaryDivideOperator());
         }
 
         virtual void visit(const Ast::BinaryModExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryBitwiseAndExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryBitwiseOrExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryBitwiseXorExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryShiftLeftExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::BinaryShiftRightExpr& node) {
-            return visitBinary(node);
+            ValuePtr lhs;
+            ValuePtr rhs;
+            visitBinary(node, lhs, rhs);
         }
 
         virtual void visit(const Ast::PostfixIncExpr& node) {
@@ -268,7 +456,7 @@ namespace {
         }
 
         virtual void visit(const Ast::VariableRefExpr& node) {
-            printf("var-ref %s (%lu)\n", node.vref().name().text(), z::pad(node.vref()));
+            trace("var-ref %s (%lu)\n", node.vref().name().text(), z::pad(node.vref()));
         }
 
         virtual void visit(const Ast::MemberVariableExpr& node) {
@@ -308,7 +496,7 @@ namespace {
         }
 
         virtual void visit(const Ast::ConstantBooleanExpr& node) {
-            unused(node);
+            push(new Ast::ConstantLongExpr(node.qTypeSpec(), node.token(), node.value()));
         }
 
         virtual void visit(const Ast::ConstantStringExpr& node) {
@@ -320,15 +508,15 @@ namespace {
         }
 
         virtual void visit(const Ast::ConstantLongExpr& node) {
-            unused(node);
+            push(new Ast::ConstantLongExpr(node.qTypeSpec(), node.token(), node.value()));
         }
 
         virtual void visit(const Ast::ConstantIntExpr& node) {
-            unused(node);
+            push(new Ast::ConstantLongExpr(node.qTypeSpec(), node.token(), node.value()));
         }
 
         virtual void visit(const Ast::ConstantShortExpr& node) {
-            unused(node);
+            push(new Ast::ConstantLongExpr(node.qTypeSpec(), node.token(), node.value()));
         }
 
         virtual void sep() {
@@ -339,6 +527,7 @@ namespace {
 
     public:
         inline ExprGenerator(InterpreterContext& ctx) : _ctx(ctx) {}
+        inline void value(ValuePtr& ptr) {return pop(ptr);}
     };
 
     class StatementGenerator : public Ast::Statement::Visitor {
@@ -371,18 +560,21 @@ namespace {
         }
 
         virtual void visit(const Ast::AutoStatement& node) {
-            printf("auto statement %s (%lu)\n", node.defn().name().text(), z::pad(node.defn()));
+            trace("auto statement %s (%lu)\n", node.defn().name().text(), z::pad(node.defn()));
             ExprGenerator(_ctx).visitNode(node.defn().initExpr());
         }
 
         virtual void visit(const Ast::ExprStatement& node) {
-            printf("expr statement\n");
+            trace("expr statement\n");
             ExprGenerator(_ctx).visitNode(node.expr());
         }
 
         virtual void visit(const Ast::PrintStatement& node) {
-            printf("print statement\n");
-            ExprGenerator(_ctx).visitNode(node.expr());
+            ExprGenerator g(_ctx);
+            g.visitNode(node.expr());
+            ValuePtr p;
+            g.value(p);
+            printf("%s\n", p.str().c_str());
         }
 
         virtual void visit(const Ast::IfStatement& node) {
@@ -475,7 +667,9 @@ namespace {
     void InterpreterContext::process(const std::string& cmd) {
         std::cout << cmd << std::endl;
         Ast::Module module(_unit);
-        _c.parseString(_ctx, _lexer, module, cmd, 0, false);
+        Parser parser;
+        Lexer lexer(parser);
+        _c.parseString(_ctx, lexer, module, cmd, 0, true);
     }
 }
 

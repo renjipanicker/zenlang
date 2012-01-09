@@ -1323,16 +1323,22 @@ namespace Ast {
 
     class ConstantStringExpr : public ConstantExpr {
     public:
-        inline ConstantStringExpr(const QualifiedTypeSpec& qTypeSpec, const Token& value) : ConstantExpr(qTypeSpec, value) {}
+        inline ConstantStringExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const std::string& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline const std::string& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
+    private:
+        const std::string _value;
     };
 
     class ConstantCharExpr : public ConstantExpr {
     public:
-        inline ConstantCharExpr(const QualifiedTypeSpec& qTypeSpec, const Token& value) : ConstantExpr(qTypeSpec, value) {}
+        inline ConstantCharExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const std::string& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline const std::string& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
+    private:
+        const std::string _value;
     };
 
     class ConstantLongExpr : public ConstantExpr {

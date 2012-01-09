@@ -9,7 +9,7 @@ typedef char inputChar_t;
 
 class Lexer::Impl {
 public:
-    inline Impl(Parser& parser, const Mode& mode);
+    inline Impl(Parser& parser);
     void push(Ast::NodeFactory& factory, const char* _buffer, size_t len, const bool& isEof);
     void reset();
 
@@ -17,7 +17,6 @@ private:
     TokenData token(const int& id);
     void newLine();
     void dump(const std::string& x) const;
-    bool isEof(const size_t& len) const;
 
 private:
     void send(Ast::NodeFactory& factory, const int& id);
@@ -33,7 +32,6 @@ private:
 
 private:
     Parser& _parser;
-    const Mode _mode;
     int _lastToken;
     static const char* reservedWords[];
 
@@ -188,7 +186,7 @@ inline void Lexer::Impl::reset() {
     _yyaccept = 0;
 }
 
-inline Lexer::Impl::Impl(Parser& parser, const Mode& mode) : _parser(parser), _mode(mode), _lastToken(0) {
+inline Lexer::Impl::Impl(Parser& parser) : _parser(parser), _lastToken(0) {
     _buffer = 0;
     _bufferEnd = 0;
     reset();
@@ -197,17 +195,6 @@ inline Lexer::Impl::Impl(Parser& parser, const Mode& mode) : _parser(parser), _m
 inline void Lexer::Impl::dump(const std::string& x) const {
 //    trace("%s: buffer %lu, bufferEnd %lu, start %lu, marker %lu, cursor %lu, limit %lu, limit-cursor %ld, text '%s'\n",
 //           x.c_str(), (unsigned long)_buffer, (unsigned long)_bufferEnd, (unsigned long)_start, (unsigned long)_marker, (unsigned long)_cursor, (unsigned long)_limit, _limit - _cursor, _buffer);
-}
-
-bool Lexer::Impl::isEof(const size_t& len) const {
-    if(_mode == lmCompiler) {
-        if((_limit - _cursor) < len)
-            return true;
-    }
-    dump("isEof");
-    if(_cursor >= _limit)
-        return true;
-    return false;
 }
 
 // the lex() function
@@ -276,15 +263,15 @@ void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inpu
     _limit += required;
     *_limit = 0;
 
+//    for(char* x = _buffer; x <= _bufferEnd; x++) {
+//        trace("%ld %d %c\n", x - _buffer + 1, *x, *x);
+//    }
+
     dump("push(3)");
 
     lex(factory);
 
     dump("push(4)");
-
-    for(char* x = _buffer; x <= _bufferEnd; x++) {
-//        trace("%ld %d %c\n", x - _buffer + 1, *x, *x);
-    }
 
     //  Once we get here, we can get rid of everything before start and after limit.
     size_t consumed = _start - _buffer;
@@ -299,7 +286,7 @@ void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inpu
     dump("push(5)");
 }
 
-Lexer::Lexer(Parser& parser, const Mode& mode) : _impl(0) {_impl = new Impl(parser, mode);}
+Lexer::Lexer(Parser& parser) : _impl(0) {_impl = new Impl(parser);}
 Lexer::~Lexer() {delete _impl;}
 void Lexer::push(Ast::NodeFactory& factory, const char* buffer, const size_t& len, const bool& isEof) {return z::ref(_impl).push(factory, buffer, len, isEof);}
 void Lexer::reset() {return z::ref(_impl).reset();}
