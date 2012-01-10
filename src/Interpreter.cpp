@@ -7,8 +7,9 @@
 
 namespace {
     struct ValuePtr {
-        inline ValuePtr() : _value(0) {}
-        inline ~ValuePtr() {delete _value;}
+        inline ValuePtr() : _value(0) {printf("ValuePtr %lu\n", (unsigned long)_value);}
+        inline ValuePtr(const Ast::Expr* value) : _value(value) {printf("ValuePtr %lu\n", (unsigned long)_value);}
+        inline ~ValuePtr() {printf("~ValuePtr %lu\n", (unsigned long)_value); delete _value;}
 
         inline void reset(const Ast::Expr* value) {
             assert(_value == 0);
@@ -43,6 +44,8 @@ namespace {
             return estr;
         }
 
+        static inline const Ast::Expr* clone(const Ast::Expr* value);
+        inline const Ast::Expr* clone() const;
     private:
         inline ValuePtr(const ValuePtr& src) : _value(0) {}
         const Ast::Expr* _value;
@@ -61,6 +64,19 @@ namespace {
                 return true;
         }
         return false;
+    }
+
+    inline const Ast::Expr* ValuePtr::clone(const Ast::Expr* value) {
+        assert(value != 0);
+        const Ast::ConstantLongExpr* le = dynamic_cast<const Ast::ConstantLongExpr*>(value);
+        if(le) {
+            return new Ast::ConstantLongExpr(z::ref(le).qTypeSpec(), z::ref(le).token(), z::ref(le).value());
+        }
+        throw z::Exception("Cloning unknown type %s\n", getQualifiedTypeSpecName(z::ref(value).qTypeSpec(), GenMode::Import).c_str());
+    }
+
+    inline const Ast::Expr* ValuePtr::clone() const {
+        return clone(_value);
     }
 
     struct BooleanOperator {
@@ -238,14 +254,28 @@ namespace {
             _ctx.leaveScope(_global);
         }
 
-        void setVisitor(Ast::Statement::Visitor& visitor) {
+        inline void setVisitor(Ast::Statement::Visitor& visitor) {
             _ctx.setStatementVisitor(visitor);
         }
 
-        void reset() {
+        inline void reset() {
         }
 
-        void process(const std::string& cmd);
+        inline void processCmd(const std::string& cmd);
+        inline void processFile(const std::string& filename);
+
+        inline void addValue(const Ast::VariableDefn& key, const Ast::Expr* val) {
+            printf("InterpreterContext::addValue %lu\n", (unsigned long)val);
+            _valueMap[z::ptr(key)] =  val;
+        }
+
+        inline const Ast::Expr* getValue(const Ast::VariableDefn& key) {
+            ValueMap::iterator it = _valueMap.find(z::ptr(key));
+            if(it == _valueMap.end())
+                return 0;
+            printf("InterpreterContext::getValue %lu\n", (unsigned long)it->second);
+            return it->second;
+        }
 
     private:
         const Ast::Config& _config;
@@ -253,6 +283,10 @@ namespace {
         Ast::Unit _unit;
         Compiler _c;
         Ast::Scope _global;
+
+    private:
+        typedef std::map<const Ast::VariableDefn*, const Ast::Expr*> ValueMap;
+        ValueMap _valueMap;
     };
 
     class ExprGenerator : public Ast::Expr::Visitor {
@@ -261,6 +295,7 @@ namespace {
         Stack _stack;
     private:
         inline void push(const Ast::Expr* value) {
+            printf("ExprGenerator::push %lu\n", (unsigned long)value);
             _stack.push_back(value);
         }
 
@@ -268,6 +303,7 @@ namespace {
             assert(_stack.size() > 0);
             const Ast::Expr* val = _stack.back();
             _stack.pop_back();
+            printf("ExprGenerator::pop %lu\n", (unsigned long)val);
             ptr.reset(val);
         }
 
@@ -534,6 +570,8 @@ namespace {
 
         virtual void visit(const Ast::VariableRefExpr& node) {
             trace("var-ref %s (%lu)\n", node.vref().name().text(), z::pad(node.vref()));
+            const Ast::Expr* val = _ctx.getValue(node.vref());
+            push(ValuePtr::clone(val));
         }
 
         virtual void visit(const Ast::MemberVariableExpr& node) {
@@ -604,6 +642,10 @@ namespace {
 
     public:
         inline ExprGenerator(InterpreterContext& ctx) : _ctx(ctx) {}
+        inline ~ExprGenerator() {
+            assert(_stack.size() == 0);
+        }
+
         inline void value(ValuePtr& ptr) {return pop(ptr);}
     };
 
@@ -638,12 +680,19 @@ namespace {
 
         virtual void visit(const Ast::AutoStatement& node) {
             trace("auto statement %s (%lu)\n", node.defn().name().text(), z::pad(node.defn()));
-            ExprGenerator(_ctx).visitNode(node.defn().initExpr());
+            ExprGenerator g(_ctx);
+            g.visitNode(node.defn().initExpr());
+            ValuePtr p;
+            g.value(p);
+            _ctx.addValue(node.defn(), p.clone());
         }
 
         virtual void visit(const Ast::ExprStatement& node) {
             trace("expr statement\n");
-            ExprGenerator(_ctx).visitNode(node.expr());
+            ExprGenerator g(_ctx);
+            g.visitNode(node.expr());
+            ValuePtr p;
+            g.value(p);
         }
 
         virtual void visit(const Ast::PrintStatement& node) {
@@ -741,12 +790,17 @@ namespace {
         inline StatementGenerator(const Ast::Config& config, InterpreterContext& ctx) : _config(config), _ctx(ctx) {}
     };
 
-    void InterpreterContext::process(const std::string& cmd) {
+    inline void InterpreterContext::processCmd(const std::string& cmd) {
         std::cout << cmd << std::endl;
-        Ast::Module module(_unit);
         Parser parser;
         Lexer lexer(parser);
-        _c.parseString(_ctx, lexer, module, cmd, 0, true);
+        _c.parseString(_ctx, lexer, _unit, cmd, 0, true);
+    }
+
+    inline void InterpreterContext::processFile(const std::string& filename) {
+        Parser parser;
+        Lexer lexer(parser);
+        _c.parseFile(_ctx, _unit, lexer, filename, 0, "Loading");
     }
 }
 
@@ -766,17 +820,24 @@ inline void Interpreter::Impl::run() {
     StatementGenerator gen(_config, ctx);
     ctx.setVisitor(gen);
 
-    bool quit = false;
-    while (quit == false) {
-        std::cout << ">";
-        std::string cmd;
-        std::getline(std::cin, cmd);
-        if(cmd == ".q")
-            break;
-        try {
-            ctx.process(cmd);
-        } catch (...) {
-            ctx.reset();
+    if(_config.sourceFileList().size() > 0) {
+        for(Ast::Config::PathList::const_iterator it = _config.sourceFileList().begin(); it != _config.sourceFileList().end(); ++it) {
+            const std::string& filename = *it;
+            ctx.processFile(filename);
+        }
+    } else {
+        bool quit = false;
+        while (quit == false) {
+            std::cout << ">";
+            std::string cmd;
+            std::getline(std::cin, cmd);
+            if(cmd == ".q")
+                break;
+            try {
+                ctx.processCmd(cmd);
+            } catch (...) {
+                ctx.reset();
+            }
         }
     }
 }

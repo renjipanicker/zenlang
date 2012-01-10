@@ -10,6 +10,7 @@ typedef char inputChar_t;
 class Lexer::Impl {
 public:
     inline Impl(Parser& parser);
+    inline ~Impl();
     void push(Ast::NodeFactory& factory, const char* _buffer, size_t len, const bool& isEof);
     void reset();
 
@@ -192,6 +193,12 @@ inline Lexer::Impl::Impl(Parser& parser) : _parser(parser), _lastToken(0) {
     reset();
 }
 
+inline Lexer::Impl::~Impl() {
+    if(_buffer)
+        free(_buffer);
+    _buffer = 0;
+}
+
 inline void Lexer::Impl::dump(const std::string& x) const {
 //    trace("%s: buffer %lu, bufferEnd %lu, start %lu, marker %lu, cursor %lu, limit %lu, limit-cursor %ld, text '%s'\n",
 //           x.c_str(), (unsigned long)_buffer, (unsigned long)_bufferEnd, (unsigned long)_start, (unsigned long)_marker, (unsigned long)_cursor, (unsigned long)_limit, _limit - _cursor, _buffer);
@@ -201,7 +208,7 @@ inline void Lexer::Impl::dump(const std::string& x) const {
 #include "lexerGen.hpp"
 
 void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inputSize, const bool& isEof) {
-//    trace("push(0): isEof %d, inputSize %lu, input '%s'\n", isEof, inputSize, input);
+    trace("push(0): isEof %d, inputSize %lu, input '%s'\n", isEof, inputSize, input);
 
     /*
      * We need a small overhang after EOF on the stream which is
@@ -259,9 +266,15 @@ void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inpu
 
     dump("push(2)");
 
-    memcpy(_limit, input, required);
-    _limit += required;
-    *_limit = 0;
+    assert(_buffer <= _limit);
+    assert(_limit <= _bufferEnd);
+    assert((_limit + required) <= _bufferEnd);
+    memcpy(_limit, input, inputSize);
+    _limit += inputSize;
+    assert(_limit <= _bufferEnd);
+    memset(_limit, 0, _bufferEnd - _limit + 1);
+    _limit += maxFill;
+    assert(_limit <= _bufferEnd);
 
 //    for(char* x = _buffer; x <= _bufferEnd; x++) {
 //        trace("%ld %d %c\n", x - _buffer + 1, *x, *x);

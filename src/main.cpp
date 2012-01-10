@@ -32,7 +32,7 @@ int main(int argc, char* argv[]) {
     Ast::Config& config = project.addConfig("");
 
     static const int len = 1024;
-    char path[len];
+    char path[len] = "";
 #ifdef WIN32
     GetModuleFileName(NULL, path, len);
     if(GetLastError() != ERROR_SUCCESS) {

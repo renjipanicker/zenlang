@@ -31,19 +31,25 @@ inline std::string Compiler::findImport(const std::string& filename) {
     throw z::Exception("Cannot open include file '%s'\n", filename.c_str());
 }
 
-bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const int& level) {
+bool Compiler::parseFile(Ast::Context& ctx, Ast::Unit& unit, Lexer& lexer, const std::string& filename, const int& level, const std::string& msg) {
+    if(_project.verbosity() >= Ast::Project::Verbosity::Normal) {
+        std::string indent = "   ";
+        for(int i = 0; i < level; ++i) {
+            indent += "  ";
+        }
+        indent += msg;
+        printf("-- %s %s\n", indent.c_str(), filename.c_str());
+    }
+
     std::ifstream is;
     is.open(filename.c_str(), std::ifstream::in);
     if(is.is_open() == false) {
         throw z::Exception("Error opening file '%s'\n", filename.c_str());
     }
 
-    Ast::Context ctx(module.unit(), filename, level);
-    Parser parser;
-    Lexer lexer(parser);
-    Ast::NodeFactory factory(ctx, z::ref(this), module);
+    Ast::NodeFactory factory(ctx, z::ref(this), unit);
     while(!is.eof()) {
-        char buf[1024];
+        char buf[1025];
         memset(buf, 0, 1024);
         is.read(buf, 1024);
         size_t got = is.gcount();
@@ -52,19 +58,18 @@ bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const
     return true;
 }
 
-void Compiler::import(Ast::Module& module, const std::string &filename, const int& level) {
+inline bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int& level, const std::string& msg) {
+    Parser parser;
+    Lexer lexer(parser);
+    Ast::Context ctx(unit, filename, level);
+    return parseFile(ctx, unit, lexer, filename, level, msg);
+}
+
+void Compiler::import(Ast::Unit& unit, const std::string &filename, const int& level) {
     std::string ifilename = findImport(filename);
 
-    if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
-        std::string msg = "   ";
-        for(int i = 0; i < level; ++i) {
-            msg += "  ";
-        }
-        printf("%s Importing %s", msg.c_str(), filename.c_str());
-    }
-
     // check if file is already imported
-    if(module.unit().headerFileList().find(filename) != module.unit().headerFileList().end()) {
+    if(unit.headerFileList().find(filename) != unit.headerFileList().end()) {
         if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
             printf(" - skipped\n");
         }
@@ -72,40 +77,35 @@ void Compiler::import(Ast::Module& module, const std::string &filename, const in
     }
 
     // if not, add it to list of files imported into this unit
-    module.unit().addheaderFile(filename);
+    unit.addheaderFile(filename);
     if(_project.verbosity() >= Ast::Project::Verbosity::Detailed) {
         printf("\n");
     }
 
-    parseFile(module, ifilename, level+1);
+    parseFile(unit, ifilename, level+1, "Importing");
 }
 
 void Compiler::initContext(Ast::Unit& unit) {
-    Ast::Module module(unit);
-    import(module, "core/core.ipp", 0);
+    import(unit, "core/core.ipp", 0);
 }
 
 void Compiler::compile() {
     for(Ast::Config::PathList::const_iterator it = _config.sourceFileList().begin(); it != _config.sourceFileList().end(); ++it) {
         const std::string& filename = *it;
-        if(_project.verbosity() >= Ast::Project::Verbosity::Normal) {
-            printf("-- Compiling %s\n", filename.c_str());
-        }
 
         std::string ext = getExtention(filename);
         if(_project.zppExt().find(ext) != std::string::npos) {
             Ast::Unit unit(filename);
             initContext(unit);
 
-            Ast::Module module(unit);
-            if(!parseFile(module, filename, 0))
+            if(!parseFile(unit, filename, 0, "Compiling"))
                 throw z::Exception("Cannot open source file '%s'\n", filename.c_str());
 
-            ZenlangGenerator zgenerator(_project, _config, module);
+            ZenlangGenerator zgenerator(_project, _config, unit);
             zgenerator.run();
 
             if(_config.olanguage() == "stlcpp") {
-                StlcppGenerator generator(_project, _config, module);
+                StlcppGenerator generator(_project, _config, unit);
                 generator.run();
             } else {
                 throw z::Exception("Unknown code generator '%s'\n", _config.olanguage().c_str());
@@ -114,7 +114,7 @@ void Compiler::compile() {
     }
 }
 
-void Compiler::parseString(Ast::Context& ctx, Lexer& lexer, Ast::Module& module, const std::string& data, const int& level, const bool& isEof) {
-    Ast::NodeFactory factory(ctx, z::ref(this), module);
+void Compiler::parseString(Ast::Context& ctx, Lexer& lexer, Ast::Unit& unit, const std::string& data, const int& level, const bool& isEof) {
+    Ast::NodeFactory factory(ctx, z::ref(this), unit);
     lexer.push(factory, data.c_str(), data.size(), isEof);
 }

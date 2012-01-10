@@ -21,7 +21,7 @@ inline const Ast::QualifiedTypeSpec& Ast::NodeFactory::getQualifiedTypeSpec(cons
 inline const Ast::Expr& Ast::NodeFactory::getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
     const Ast::TypeSpec* ts = resolveTypedef(typeSpec);
 
-    const Ast::Unit::DefaultValueList& list = _module.unit().defaultValueList();
+    const Ast::Unit::DefaultValueList& list = _unit.defaultValueList();
     Ast::Unit::DefaultValueList::const_iterator it = list.find(ts);
     if(it != list.end()) {
         return z::ref(it->second);
@@ -228,8 +228,8 @@ inline Ast::ValueInstanceExpr& Ast::NodeFactory::getValueInstanceExpr(const Ast:
 }
 
 ////////////////////////////////////////////////////////////
-Ast::NodeFactory::NodeFactory(Context& ctx, Compiler& compiler, Ast::Module& module)
-    : _ctx(ctx), _compiler(compiler), _module(module), _lastToken(0, 0, "") {
+Ast::NodeFactory::NodeFactory(Context& ctx, Compiler& compiler, Ast::Unit& unit)
+    : _ctx(ctx), _compiler(compiler), _unit(unit), _lastToken(0, 0, "") {
 }
 
 Ast::NodeFactory::~NodeFactory() {
@@ -239,14 +239,14 @@ Ast::NodeFactory::~NodeFactory() {
 void Ast::NodeFactory::aUnitStatementList(const Ast::EnterNamespaceStatement& nss) {
     Ast::LeaveNamespaceStatement& lns = addUnitNode(new Ast::LeaveNamespaceStatement(getToken(), nss));
     if(_ctx.level() == 0) {
-        _module.addGlobalStatement(lns);
+        _unit.addGlobalStatement(lns);
     }
     _ctx.leaveNamespace();
 }
 
 void Ast::NodeFactory::aImportStatement(const Ast::Token& pos, const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list) {
     Ast::ImportStatement& statement = addUnitNode(new Ast::ImportStatement(pos, accessType, headerType, defType, list));
-    _module.addGlobalStatement(statement);
+    _unit.addGlobalStatement(statement);
 
     if(statement.defType() != Ast::DefinitionType::Native) {
         std::string filename;
@@ -258,7 +258,7 @@ void Ast::NodeFactory::aImportStatement(const Ast::Token& pos, const Ast::Access
             sep = "/";
         }
         filename += ".ipp";
-        _compiler.import(_module, filename, _ctx.level());
+        _compiler.import(_unit, filename, _ctx.level());
     }
 }
 
@@ -276,7 +276,7 @@ Ast::NamespaceList* Ast::NodeFactory::aImportNamespaceList(const Ast::Token& nam
 Ast::EnterNamespaceStatement* Ast::NodeFactory::aNamespaceStatement(const Ast::Token& pos, Ast::NamespaceList& list) {
     Ast::EnterNamespaceStatement& statement = addUnitNode(new Ast::EnterNamespaceStatement(pos, list));
     if(_ctx.level() == 0) {
-        _module.addGlobalStatement(statement);
+        _unit.addGlobalStatement(statement);
     }
     return z::ptr(statement);
 }
@@ -293,7 +293,7 @@ inline Ast::Namespace& Ast::NodeFactory::getUnitNamespace(const Ast::Token& name
         return ns;
     }
 
-    Ast::Namespace* cns = _module.unit().importNS().hasChild<Ast::Namespace>(name.string());
+    Ast::Namespace* cns = _unit.importNS().hasChild<Ast::Namespace>(name.string());
     if(cns) {
         return z::ref(cns);
     }
@@ -307,7 +307,7 @@ Ast::NamespaceList* Ast::NodeFactory::aUnitNamespaceList(Ast::NamespaceList& lis
     Ast::Namespace& ns = getUnitNamespace(name);
     _ctx.enterTypeSpec(ns);
     if(_ctx.level() == 0) {
-        _module.unit().addNamespacePart(name);
+        _unit.addNamespacePart(name);
     }
     _ctx.addNamespace(ns);
     list.addNamespace(ns);
@@ -321,7 +321,7 @@ Ast::NamespaceList* Ast::NodeFactory::aUnitNamespaceList(const Ast::Token& name)
 
 Ast::Statement* Ast::NodeFactory::aGlobalStatement(Ast::Statement& statement) {
     if(_ctx.level() == 0) {
-        _module.addGlobalStatement(statement);
+        _unit.addGlobalStatement(statement);
     }
     if(_ctx.hasStatementVisitor()) {
         _ctx.statementVisitor().visitNode(statement);
@@ -336,7 +336,7 @@ Ast::Statement* Ast::NodeFactory::aGlobalTypeSpecStatement(const Ast::AccessType
 }
 
 void Ast::NodeFactory::aGlobalCoerceStatement(Ast::CoerceList& list) {
-    _module.unit().addCoercionList(list);
+    _unit.addCoercionList(list);
 }
 
 Ast::CoerceList* Ast::NodeFactory::aCoerceList(Ast::CoerceList& list, const Ast::TypeSpec& typeSpec) {
@@ -351,7 +351,7 @@ Ast::CoerceList* Ast::NodeFactory::aCoerceList(const Ast::TypeSpec& typeSpec) {
 }
 
 void Ast::NodeFactory::aGlobalDefaultStatement(const Ast::TypeSpec& typeSpec, const Ast::Expr& expr) {
-    _module.unit().addDefaultValue(typeSpec, expr);
+    _unit.addDefaultValue(typeSpec, expr);
 }
 
 Ast::TypedefDecl* Ast::NodeFactory::aTypedefDecl(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
@@ -506,7 +506,7 @@ Ast::RoutineDefn* Ast::NodeFactory::aRoutineDefn(Ast::RoutineDefn& routineDefn, 
     routineDefn.setBlock(block);
     _ctx.leaveScope(routineDefn.inScope());
     _ctx.leaveTypeSpec(routineDefn);
-    _module.unit().addBody(addUnitNode(new Ast::RoutineBody(block.pos(), routineDefn, block)));
+    _unit.addBody(addUnitNode(new Ast::RoutineBody(block.pos(), routineDefn, block)));
     return z::ptr(routineDefn);
 }
 
@@ -529,7 +529,7 @@ Ast::RootFunctionDefn* Ast::NodeFactory::aRootFunctionDefn(Ast::RootFunctionDefn
     _ctx.leaveScope(functionDefn.sig().inScope());
     _ctx.leaveScope(functionDefn.xrefScope());
     _ctx.leaveTypeSpec(functionDefn);
-    _module.unit().addBody(addUnitNode(new Ast::FunctionBody(block.pos(), functionDefn, block)));
+    _unit.addBody(addUnitNode(new Ast::FunctionBody(block.pos(), functionDefn, block)));
     return z::ptr(functionDefn);
 }
 
@@ -554,7 +554,7 @@ Ast::ChildFunctionDefn* Ast::NodeFactory::aChildFunctionDefn(Ast::ChildFunctionD
     _ctx.leaveScope(functionDefn.sig().inScope());
     _ctx.leaveScope(functionDefn.xrefScope());
     _ctx.leaveTypeSpec(functionDefn);
-    _module.unit().addBody(addUnitNode(new Ast::FunctionBody(block.pos(), functionDefn, block)));
+    _unit.addBody(addUnitNode(new Ast::FunctionBody(block.pos(), functionDefn, block)));
     return z::ptr(functionDefn);
 }
 
@@ -1718,7 +1718,7 @@ Ast::AnonymousFunctionExpr* Ast::NodeFactory::aAnonymousFunctionExpr(Ast::ChildF
 
 Ast::ChildFunctionDefn* Ast::NodeFactory::aEnterAnonymousFunction(const Ast::Function& function) {
     char namestr[128];
-    sprintf(namestr, "_anonymous_%lu", _module.unit().nodeList().size());
+    sprintf(namestr, "_anonymous_%lu", _unit.nodeList().size());
     Ast::Token name(getToken().row(), getToken().col(), namestr);
 
     Ast::TypeSpec* ts = 0;

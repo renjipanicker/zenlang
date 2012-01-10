@@ -7,9 +7,9 @@ namespace Ast {
     class NodeFactory {
     private:
         template<typename T>
-        inline T& addUnitNode(T* node) {return _module.unit().nodeList().add(node);}
+        inline T& addUnitNode(T* node) {return _unit.nodeList().add(node);}
     public:
-        NodeFactory(Context& ctx, Compiler& compiler, Ast::Module& module);
+        NodeFactory(Context& ctx, Compiler& compiler, Ast::Unit& unit);
         ~NodeFactory();
 
     public:
@@ -45,7 +45,7 @@ namespace Ast {
     private:
         Context& _ctx;
         Compiler& _compiler;
-        Ast::Module& _module;
+        Ast::Unit& _unit;
         Ast::Token _lastToken;
 
     public:

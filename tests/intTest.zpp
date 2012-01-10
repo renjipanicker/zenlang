@@ -1,0 +1,12 @@
+// This is a single line comment
+
+/* This is
+   a multi line
+   comment
+*/
+
+auto i = 10;
+i = 12;
+print i;
+i = 13;
+print i;

@@ -1948,6 +1948,7 @@ namespace Ast {
         typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
         typedef std::list<Token> NsPartList;
         typedef std::map<std::string, int> HeaderFileList;
+        typedef std::list<const Statement*> StatementList;
 
     public:
         inline Unit(const std::string& filename) : _filename(filename), _importNS("*import*"), _rootNS("*root*") {}
@@ -1997,6 +1998,15 @@ namespace Ast {
         inline void addDefaultValue(const TypeSpec& typeSpec, const Expr& expr) {_defaultValueList[z::ptr(typeSpec)] = z::ptr(expr);}
 
     public:
+        /// \brief Return the statement list
+        /// \return The statement list
+        inline const StatementList& globalStatementList() const {return _globalStatementList;}
+
+        /// \brief Add a import statement to the unit
+        /// \param statement A pointer to the node to add
+        inline void addGlobalStatement(const Statement& statement) {_globalStatementList.push_back(z::ptr(statement));}
+
+    public:
         /// \brief Return the root namespace
         /// \return The root namespace
         inline Root& rootNS() {return _rootNS;}
@@ -2040,6 +2050,9 @@ namespace Ast {
         BodyList _bodyList;
 
     private:
+        /// \brief The list of all import statements in this unit
+        StatementList _globalStatementList;
+
         /// \brief The coercion list for all types in this unit
         CoerceListList _coerceListList;
 
@@ -2051,30 +2064,6 @@ namespace Ast {
 
         /// \brief The list of nodes in this unit
         NodeList _nodeList;
-    };
-
-    class Module {
-    public:
-        typedef std::list<const Statement*> StatementList;
-    public:
-        explicit inline Module(Ast::Unit& unit) : _unit(unit) {}
-    public:
-        /// \brief Return the statement list
-        /// \return The statement list
-        inline const StatementList& globalStatementList() const {return _globalStatementList;}
-
-        /// \brief Add a import statement to the unit
-        /// \param statement A pointer to the node to add
-        inline void addGlobalStatement(const Statement& statement) {_globalStatementList.push_back(z::ptr(statement));}
-
-        inline const Unit& unit() const {return _unit;}
-        inline Unit& unit() {return _unit;}
-    private:
-        /// \brief The list of all import statements in this unit
-        StatementList _globalStatementList;
-
-        /// \brief The unit
-        Ast::Unit& _unit;
     };
 
     class Config {
