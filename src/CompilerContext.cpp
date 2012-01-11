@@ -4,8 +4,8 @@
 #include "typename.hpp"
 #include "compiler.hpp"
 
-Ast::Context::Context(Ast::Unit& unit, const std::string& filename, const int& level)
-    : _unit(unit), _filename(filename), _level(level), _statementVisitor(0), _currentTypeRef(0), _currentImportedTypeRef(0) {
+Ast::Context::Context(Ast::Unit& unit, const std::string& filename)
+    : _unit(unit), _filename(filename), _statementVisitor(0), _currentTypeRef(0), _currentImportedTypeRef(0) {
 }
 
 Ast::Context::~Context() {
@@ -242,12 +242,12 @@ void Ast::Context::leaveNamespace() {
     }
 }
 
-Ast::Root& Ast::Context::getRootNamespace() const {
-    return (_level == 0)?_unit.rootNS():_unit.importNS();
+Ast::Root& Ast::Context::getRootNamespace(const int& level) const {
+    return (level == 0)?_unit.rootNS():_unit.importNS();
 }
 
-inline const Ast::TypeSpec* Ast::Context::hasImportRootTypeSpec(const Ast::Token& name) const {
-    if(_level == 0) {
+inline const Ast::TypeSpec* Ast::Context::hasImportRootTypeSpec(const int& level, const Ast::Token& name) const {
+    if(level == 0) {
         const Ast::TypeSpec* typeSpec = _unit.importNS().hasChild<const Ast::TypeSpec>(name.string());
         if(typeSpec)
             return typeSpec;
@@ -299,12 +299,12 @@ Ast::TypeSpec& Ast::Context::leaveTypeSpec(Ast::TypeSpec& typeSpec) {
     return z::ref(ct);
 }
 
-const Ast::TypeSpec* Ast::Context::hasRootTypeSpec(const Ast::Token& name) const {
+const Ast::TypeSpec* Ast::Context::hasRootTypeSpec(const int& level, const Ast::Token& name) const {
     const Ast::TypeSpec* typeSpec = findTypeSpec(currentTypeSpec(), name);
     if(typeSpec)
         return typeSpec;
 
-    return hasImportRootTypeSpec(name);
+    return hasImportRootTypeSpec(level, name);
 }
 
 Ast::StructDefn& Ast::Context::getCurrentStructDefn(const Ast::Token& pos) {

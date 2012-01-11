@@ -19,7 +19,7 @@ inline Ast::QualifiedTypeSpec& Ast::NodeFactory::addQualifiedTypeSpec(const Ast:
 
 inline const Ast::QualifiedTypeSpec& Ast::NodeFactory::getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name) {
     Ast::Token token(pos.row(), pos.col(), name);
-    const Ast::TypeSpec& typeSpec = _ctx.getRootTypeSpec<Ast::TypeSpec>(token);
+    const Ast::TypeSpec& typeSpec = _ctx.getRootTypeSpec<Ast::TypeSpec>(_level, token);
     const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, typeSpec, false);
     return qTypeSpec;
 }
@@ -161,7 +161,7 @@ inline Ast::ExprList& Ast::NodeFactory::addExprList(const Ast::Token& pos) {
 
 inline Ast::TemplateDefn& Ast::NodeFactory::createTemplateDefn(const Ast::Token& pos, const std::string& name) {
     Ast::Token token(pos.row(), pos.col(), name);
-    const Ast::TemplateDecl& templateDecl = _ctx.getRootTypeSpec<Ast::TemplateDecl>(token);
+    const Ast::TemplateDecl& templateDecl = _ctx.getRootTypeSpec<Ast::TemplateDecl>(_level, token);
     Ast::TemplateDefn& templateDefn = addUnitNode(new Ast::TemplateDefn(_ctx.currentTypeSpec(), token, Ast::DefinitionType::Final, templateDecl));
     return templateDefn;
 }
@@ -235,21 +235,21 @@ inline Ast::ValueInstanceExpr& Ast::NodeFactory::getValueInstanceExpr(const Ast:
 }
 
 ////////////////////////////////////////////////////////////
-Ast::NodeFactory::NodeFactory(Context& ctx, Compiler& compiler, Ast::Unit& unit)
-    : _ctx(ctx), _compiler(compiler), _unit(unit), _lastToken(0, 0, "") {
-    Ast::Root& rootTypeSpec = _ctx.getRootNamespace();
+Ast::NodeFactory::NodeFactory(Context& ctx, Compiler& compiler, Ast::Unit& unit, const int& level)
+    : _ctx(ctx), _compiler(compiler), _unit(unit), _level(level), _lastToken(0, 0, "") {
+    Ast::Root& rootTypeSpec = _ctx.getRootNamespace(_level);
     _ctx.enterTypeSpec(rootTypeSpec);
 }
 
 Ast::NodeFactory::~NodeFactory() {
-    Ast::Root& rootTypeSpec = _ctx.getRootNamespace();
+    Ast::Root& rootTypeSpec = _ctx.getRootNamespace(_level);
     _ctx.leaveTypeSpec(rootTypeSpec);
 }
 
 ////////////////////////////////////////////////////////////
 void Ast::NodeFactory::aUnitStatementList(const Ast::EnterNamespaceStatement& nss) {
     Ast::LeaveNamespaceStatement& lns = addUnitNode(new Ast::LeaveNamespaceStatement(getToken(), nss));
-    if(_ctx.level() == 0) {
+    if(_level == 0) {
         _unit.addGlobalStatement(lns);
     }
     _ctx.leaveNamespace();
@@ -269,7 +269,7 @@ void Ast::NodeFactory::aImportStatement(const Ast::Token& pos, const Ast::Access
             sep = "/";
         }
         filename += ".ipp";
-        _compiler.import(_unit, filename, _ctx.level());
+        _compiler.import(_unit, filename, _level);
     }
 }
 
@@ -286,7 +286,7 @@ Ast::NamespaceList* Ast::NodeFactory::aImportNamespaceList(const Ast::Token& nam
 
 Ast::EnterNamespaceStatement* Ast::NodeFactory::aNamespaceStatement(const Ast::Token& pos, Ast::NamespaceList& list) {
     Ast::EnterNamespaceStatement& statement = addUnitNode(new Ast::EnterNamespaceStatement(pos, z::ptr(list)));
-    if(_ctx.level() == 0) {
+    if(_level == 0) {
         _unit.addGlobalStatement(statement);
     }
     return z::ptr(statement);
@@ -298,7 +298,7 @@ Ast::EnterNamespaceStatement* Ast::NodeFactory::aNamespaceStatement() {
 }
 
 inline Ast::Namespace& Ast::NodeFactory::getUnitNamespace(const Ast::Token& name) {
-    if(_ctx.level() == 0) {
+    if(_level == 0) {
         Ast::Namespace& ns = addUnitNode(new Ast::Namespace(_ctx.currentTypeSpec(), name));
         _ctx.currentTypeSpec().addChild(ns);
         return ns;
@@ -317,7 +317,7 @@ inline Ast::Namespace& Ast::NodeFactory::getUnitNamespace(const Ast::Token& name
 Ast::NamespaceList* Ast::NodeFactory::aUnitNamespaceList(Ast::NamespaceList& list, const Ast::Token& name) {
     Ast::Namespace& ns = getUnitNamespace(name);
     _ctx.enterTypeSpec(ns);
-    if(_ctx.level() == 0) {
+    if(_level == 0) {
         _unit.addNamespacePart(name);
     }
     _ctx.addNamespace(ns);
@@ -331,7 +331,7 @@ Ast::NamespaceList* Ast::NodeFactory::aUnitNamespaceList(const Ast::Token& name)
 }
 
 Ast::Statement* Ast::NodeFactory::aGlobalStatement(Ast::Statement& statement) {
-    if(_ctx.level() == 0) {
+    if(_level == 0) {
         _unit.addGlobalStatement(statement);
     }
     if(_ctx.hasStatementVisitor()) {
@@ -709,7 +709,7 @@ const Ast::TemplateDecl* Ast::NodeFactory::aTemplateTypeSpec(const Ast::TypeSpec
 }
 
 const Ast::TemplateDecl* Ast::NodeFactory::aTemplateTypeSpec(const Ast::Token& name) {
-    return _ctx.setCurrentRootTypeRef<Ast::TemplateDecl>(name);
+    return _ctx.setCurrentRootTypeRef<Ast::TemplateDecl>(_level, name);
 }
 
 const Ast::TemplateDecl* Ast::NodeFactory::aTemplateTypeSpec(const Ast::TemplateDecl& templateDecl) {
@@ -721,7 +721,7 @@ const Ast::StructDefn* Ast::NodeFactory::aStructTypeSpec(const Ast::TypeSpec& pa
 }
 
 const Ast::StructDefn* Ast::NodeFactory::aStructTypeSpec(const Ast::Token& name) {
-    return _ctx.setCurrentRootTypeRef<Ast::StructDefn>(name);
+    return _ctx.setCurrentRootTypeRef<Ast::StructDefn>(_level, name);
 }
 
 const Ast::StructDefn* Ast::NodeFactory::aStructTypeSpec(const Ast::StructDefn& structDefn) {
@@ -733,7 +733,7 @@ const Ast::Routine* Ast::NodeFactory::aRoutineTypeSpec(const Ast::TypeSpec& pare
 }
 
 const Ast::Routine* Ast::NodeFactory::aRoutineTypeSpec(const Ast::Token& name) {
-    return _ctx.setCurrentRootTypeRef<Ast::Routine>(name);
+    return _ctx.setCurrentRootTypeRef<Ast::Routine>(_level, name);
 }
 
 const Ast::Routine* Ast::NodeFactory::aRoutineTypeSpec(const Ast::Routine& routine) {
@@ -745,7 +745,7 @@ const Ast::Function* Ast::NodeFactory::aFunctionTypeSpec(const Ast::TypeSpec& pa
 }
 
 const Ast::Function* Ast::NodeFactory::aFunctionTypeSpec(const Ast::Token& name) {
-    return _ctx.setCurrentRootTypeRef<Ast::Function>(name);
+    return _ctx.setCurrentRootTypeRef<Ast::Function>(_level, name);
 }
 
 const Ast::Function* Ast::NodeFactory::aFunctionTypeSpec(const Ast::Function& function) {
@@ -757,7 +757,7 @@ const Ast::EventDecl* Ast::NodeFactory::aEventTypeSpec(const Ast::TypeSpec& pare
 }
 
 const Ast::EventDecl* Ast::NodeFactory::aEventTypeSpec(const Ast::Token& name) {
-    return _ctx.setCurrentRootTypeRef<Ast::EventDecl>(name);
+    return _ctx.setCurrentRootTypeRef<Ast::EventDecl>(_level, name);
 }
 
 const Ast::EventDecl* Ast::NodeFactory::aEventTypeSpec(const Ast::EventDecl& event) {
@@ -769,7 +769,7 @@ const Ast::TypeSpec* Ast::NodeFactory::aOtherTypeSpec(const Ast::TypeSpec& paren
 }
 
 const Ast::TypeSpec* Ast::NodeFactory::aOtherTypeSpec(const Ast::Token& name) {
-    return _ctx.setCurrentRootTypeRef<Ast::TypeSpec>(name);
+    return _ctx.setCurrentRootTypeRef<Ast::TypeSpec>(_level, name);
 }
 
 const Ast::TypeSpec* Ast::NodeFactory::aTypeSpec(const Ast::TypeSpec& TypeSpec) {

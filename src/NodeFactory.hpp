@@ -9,12 +9,13 @@ namespace Ast {
         template<typename T>
         inline T& addUnitNode(T* node) {return _unit.nodeList().add(node);}
     public:
-        NodeFactory(Context& ctx, Compiler& compiler, Ast::Unit& unit);
+        NodeFactory(Context& ctx, Compiler& compiler, Ast::Unit& unit, const int& level);
         ~NodeFactory();
 
     public:
         inline const std::string& filename() const {return _ctx.filename();}
         inline const Context& ctx() const {return _ctx;}
+        inline const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const {return _ctx.hasRootTypeSpec(_level, name);}
     private:
         inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len);
         inline const Ast::Expr& getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
@@ -46,6 +47,7 @@ namespace Ast {
         Context& _ctx;
         Compiler& _compiler;
         Ast::Unit& _unit;
+        const int _level;
         Ast::Token _lastToken;
 
     public:

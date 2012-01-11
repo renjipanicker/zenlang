@@ -12,17 +12,15 @@ namespace Ast {
         typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
 
     public:
-        Context(Ast::Unit& unit, const std::string& filename, const int& level);
+        Context(Ast::Unit& unit, const std::string& filename);
         ~Context();
 
     public:
         inline const std::string& filename() const {return _filename;}
-        inline const int& level() const {return _level;}
 
     private:
         Ast::Unit& _unit;
         const std::string _filename;
-        const int _level;
 
     // everything related to default values
     public:
@@ -91,10 +89,10 @@ namespace Ast {
 
     // everything related to current typespec
     public:
-        template <typename T> inline const T* setCurrentRootTypeRef(const Ast::Token& name) {
-            const T& td = getRootTypeSpec<T>(name);
+        template <typename T> inline const T* setCurrentRootTypeRef(const int& level, const Ast::Token& name) {
+            const T& td = getRootTypeSpec<T>(level, name);
             _currentTypeRef = z::ptr(td);
-            _currentImportedTypeRef = hasImportRootTypeSpec(name);
+            _currentImportedTypeRef = hasImportRootTypeSpec(level, name);
             return z::ptr(td);
         }
 
@@ -142,14 +140,14 @@ namespace Ast {
 
     // everything related to typespec-stack
     public:
-        Ast::Root& getRootNamespace() const;
-        const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const;
+        Ast::Root& getRootNamespace(const int& level) const;
+        const Ast::TypeSpec* hasRootTypeSpec(const int& level, const Ast::Token& name) const;
         inline TypeSpecStack& typeSpecStack() {return _typeSpecStack;}
         inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
 
     public:
-        template <typename T> const T& getRootTypeSpec(const Ast::Token &name) const {
-            const Ast::TypeSpec* typeSpec = hasRootTypeSpec(name);
+        template <typename T> const T& getRootTypeSpec(const int& level, const Ast::Token &name) const {
+            const Ast::TypeSpec* typeSpec = hasRootTypeSpec(level, name);
             if(!typeSpec) {
                 throw z::Exception("%s Unknown root type '%s'\n", err(_filename, name).c_str(), name.text());
             }
@@ -168,7 +166,7 @@ namespace Ast {
         Ast::StructDefn& getCurrentStructDefn(const Ast::Token& pos);
 
     private:
-        const Ast::TypeSpec* hasImportRootTypeSpec(const Ast::Token& name) const;
+        const Ast::TypeSpec* hasImportRootTypeSpec(const int& level, const Ast::Token& name) const;
     private:
         TypeSpecStack _typeSpecStack;
 

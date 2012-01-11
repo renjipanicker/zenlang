@@ -117,7 +117,7 @@ inline void Lexer::Impl::sendId(Ast::NodeFactory& factory) {
         }
     }
 
-    if(trySendId(factory, factory.ctx().hasRootTypeSpec(td)))
+    if(trySendId(factory, factory.hasRootTypeSpec(td)))
         return;
 
     for(int i = 0; reservedWords[i][0] != 0; ++i) {

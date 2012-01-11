@@ -47,7 +47,7 @@ bool Compiler::parseFile(Ast::Context& ctx, Ast::Unit& unit, Lexer& lexer, const
         throw z::Exception("Error opening file '%s'\n", filename.c_str());
     }
 
-    Ast::NodeFactory factory(ctx, z::ref(this), unit);
+    Ast::NodeFactory factory(ctx, z::ref(this), unit, level);
     while(!is.eof()) {
         char buf[1025];
         memset(buf, 0, 1024);
@@ -61,7 +61,7 @@ bool Compiler::parseFile(Ast::Context& ctx, Ast::Unit& unit, Lexer& lexer, const
 inline bool Compiler::parseFile(Ast::Unit& unit, const std::string& filename, const int& level, const std::string& msg) {
     Parser parser;
     Lexer lexer(parser);
-    Ast::Context ctx(unit, filename, level);
+    Ast::Context ctx(unit, filename);
     return parseFile(ctx, unit, lexer, filename, level, msg);
 }
 
@@ -115,6 +115,6 @@ void Compiler::compile() {
 }
 
 void Compiler::parseString(Ast::Context& ctx, Lexer& lexer, Ast::Unit& unit, const std::string& data, const int& level, const bool& isEof) {
-    Ast::NodeFactory factory(ctx, z::ref(this), unit);
+    Ast::NodeFactory factory(ctx, z::ref(this), unit, level);
     lexer.push(factory, data.c_str(), data.size(), isEof);
 }
