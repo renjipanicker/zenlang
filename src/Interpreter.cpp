@@ -70,7 +70,7 @@ namespace {
         assert(value != 0);
         const Ast::ConstantLongExpr* le = dynamic_cast<const Ast::ConstantLongExpr*>(value);
         if(le) {
-            return new Ast::ConstantLongExpr(z::ref(le).qTypeSpec(), z::ref(le).token(), z::ref(le).value());
+            return new Ast::ConstantLongExpr(z::ref(le).pos(), z::ref(le).qTypeSpec().clone(z::ref(le).pos()), z::ref(le).value());
         }
         throw z::Exception("Cloning unknown type %s\n", getQualifiedTypeSpecName(z::ref(value).qTypeSpec(), GenMode::Import).c_str());
     }
@@ -83,7 +83,7 @@ namespace {
         inline const Ast::Expr* run(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong() && rhs.isLong()) {
                 long nv = runLong((long)lhs, (long)rhs);
-                return new Ast::ConstantLongExpr(qTypeSpec, op, nv);
+                return new Ast::ConstantLongExpr(op, qTypeSpec.clone(op), nv);
             }
             throw z::Exception("Type mismatch\n");
         }
@@ -151,7 +151,7 @@ namespace {
         inline const Ast::Expr* run(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong() && rhs.isLong()) {
                 long nv = runLong((long)lhs, (long)rhs);
-                return new Ast::ConstantLongExpr(qTypeSpec, op, nv);
+                return new Ast::ConstantLongExpr(op, qTypeSpec.clone(op), nv);
             }
             throw z::Exception("Type mismatch\n");
         }
@@ -235,7 +235,7 @@ namespace {
         inline const Ast::Expr* run(ValuePtr& lhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong()) {
                 long nv = runLong((long)lhs);
-                return new Ast::ConstantLongExpr(qTypeSpec, op, nv);
+                return new Ast::ConstantLongExpr(op, qTypeSpec.clone(op), nv);
             }
             throw z::Exception("Type mismatch\n");
         }
@@ -611,7 +611,7 @@ namespace {
         }
 
         virtual void visit(const Ast::ConstantBooleanExpr& node) {
-            push(new Ast::ConstantLongExpr(node.qTypeSpec(), node.token(), node.value()));
+            push(new Ast::ConstantLongExpr(node.pos(), node.qTypeSpec().clone(node.pos()), node.value()));
         }
 
         virtual void visit(const Ast::ConstantStringExpr& node) {
@@ -623,15 +623,15 @@ namespace {
         }
 
         virtual void visit(const Ast::ConstantLongExpr& node) {
-            push(new Ast::ConstantLongExpr(node.qTypeSpec(), node.token(), node.value()));
+            push(new Ast::ConstantLongExpr(node.pos(), node.qTypeSpec().clone(node.pos()), node.value()));
         }
 
         virtual void visit(const Ast::ConstantIntExpr& node) {
-            push(new Ast::ConstantLongExpr(node.qTypeSpec(), node.token(), node.value()));
+            push(new Ast::ConstantLongExpr(node.pos(), node.qTypeSpec().clone(node.pos()), node.value()));
         }
 
         virtual void visit(const Ast::ConstantShortExpr& node) {
-            push(new Ast::ConstantLongExpr(node.qTypeSpec(), node.token(), node.value()));
+            push(new Ast::ConstantLongExpr(node.pos(), node.qTypeSpec().clone(node.pos()), node.value()));
         }
 
         virtual void sep() {

@@ -72,6 +72,7 @@ namespace Ast {
         const std::string _text;
     };
 
+    //////////////////////////////////////////////////////////////////
     class Node {
     protected:
         inline Node(const Token& pos) : _pos(pos) {}
@@ -80,6 +81,20 @@ namespace Ast {
         inline const Token& pos() const {return _pos;}
     private:
         const Token _pos;
+    };
+
+    //////////////////////////////////////////////////////////////////
+    template <typename T>
+    struct Ptr {
+        inline Ptr() : _value(0) {printf("Ptr %lu\n", (unsigned long)_value);}
+        inline Ptr(T* value) : _value(value) {assert(_value); printf("Ptr %lu\n", (unsigned long)_value);}
+        inline ~Ptr() {printf("~Ptr %lu\n", (unsigned long)_value); /*delete _value;*/}
+        inline const T& get() const {return z::ref(_value);}
+        inline T& getM() const {return z::ref(_value);}
+        inline void set(T* val) {assert(_value == 0); assert(val); _value = val;}
+    private:
+        inline Ptr(const Ptr& /*src*/) : _value(0) {}
+        T* _value;
     };
 
     //////////////////////////////////////////////////////////////////
@@ -138,6 +153,9 @@ namespace Ast {
         inline const bool& isConst() const {return _isConst;}
         inline const TypeSpec& typeSpec() const {return _typeSpec;}
         inline const bool& isRef() const {return _isRef;}
+        inline QualifiedTypeSpec* clone(const Token& pos) const {
+            return new QualifiedTypeSpec(pos, _isConst, _typeSpec, _isRef);
+        }
     private:
         const bool _isConst;
         const TypeSpec& _typeSpec;
@@ -561,13 +579,13 @@ namespace Ast {
     public:
         struct Visitor;
     protected:
-        inline Expr(const Token& pos, const QualifiedTypeSpec& qTypeSpec) : Node(pos), _qTypeSpec(qTypeSpec) {}
+        inline Expr(const Token& pos, const QualifiedTypeSpec* qTypeSpec) : Node(pos), _qTypeSpec(qTypeSpec) {}
     public:
-        inline const QualifiedTypeSpec& qTypeSpec() const {return _qTypeSpec;}
+        inline const QualifiedTypeSpec& qTypeSpec() const {return _qTypeSpec.get();}
     public:
         virtual void visit(Visitor& visitor) const = 0;
     private:
-        const QualifiedTypeSpec& _qTypeSpec;
+        const Ptr<const QualifiedTypeSpec> _qTypeSpec;
     };
 
     class ExprList : public Node {
@@ -575,6 +593,15 @@ namespace Ast {
         typedef std::vector<const Expr*> List;
     public:
         inline ExprList(const Token& pos) : Node(pos) {}
+        inline ~ExprList() {
+            /// delete expr nodes
+            for(List::iterator it = _list.begin(); it != _list.end(); ++it) {
+                const Expr* expr = *it;
+                unused(expr);
+                // delete expr; \todo
+            }
+        }
+
         inline ExprList& addExpr(const Expr& expr) {_list.push_back(z::ptr(expr)); return z::ref(this);}
         inline const List& list() const {return _list;}
         inline const Expr& at(const size_t& idx) const {assert(idx < _list.size()); return z::ref(_list.at(idx));}
@@ -584,24 +611,24 @@ namespace Ast {
 
     class TernaryOpExpr : public Expr {
     public:
-        inline TernaryOpExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op1, const Token& op2, const Expr& lhs, const Expr& rhs1, const Expr& rhs2)
+        inline TernaryOpExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op1, const Token& op2, const Expr* lhs, const Expr* rhs1, const Expr* rhs2)
             : Expr(op1, qTypeSpec), _op1(op1), _op2(op2), _lhs(lhs), _rhs1(rhs1), _rhs2(rhs2) {}
         inline const Token& op1() const {return _op1;}
         inline const Token& op2() const {return _op2;}
-        inline const Expr& lhs() const {return _lhs;}
-        inline const Expr& rhs1() const {return _rhs1;}
-        inline const Expr& rhs2() const {return _rhs2;}
+        inline const Expr& lhs() const {return _lhs.get();}
+        inline const Expr& rhs1() const {return _rhs1.get();}
+        inline const Expr& rhs2() const {return _rhs2.get();}
     private:
         const Token _op1;
         const Token _op2;
-        const Expr& _lhs;
-        const Expr& _rhs1;
-        const Expr& _rhs2;
+        const Ptr<const Expr> _lhs;
+        const Ptr<const Expr> _rhs1;
+        const Ptr<const Expr> _rhs2;
     };
 
     class ConditionalExpr : public TernaryOpExpr {
     public:
-        inline ConditionalExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op1, const Token& op2, const Expr& lhs, const Expr& rhs1, const Expr& rhs2)
+        inline ConditionalExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op1, const Token& op2, const Expr* lhs, const Expr* rhs1, const Expr* rhs2)
             : TernaryOpExpr(qTypeSpec, op1, op2, lhs, rhs1, rhs2) {}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -609,308 +636,308 @@ namespace Ast {
 
     class BinaryExpr : public Expr {
     public:
-        inline BinaryExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : Expr(op, qTypeSpec), _op(op), _lhs(lhs), _rhs(rhs) {}
+        inline BinaryExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : Expr(op, qTypeSpec), _op(op), _lhs(lhs), _rhs(rhs) {}
         inline const Token& op() const {return _op;}
-        inline const Expr& lhs() const {return _lhs;}
-        inline const Expr& rhs() const {return _rhs;}
+        inline const Expr& lhs() const {return _lhs.get();}
+        inline const Expr& rhs() const {return _rhs.get();}
     private:
         const Token _op;
-        const Expr& _lhs;
-        const Expr& _rhs;
+        const Ptr<const Expr> _lhs;
+        const Ptr<const Expr> _rhs;
     };
 
     class BooleanAndExpr : public BinaryExpr {
     public:
-        inline BooleanAndExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BooleanAndExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BooleanOrExpr : public BinaryExpr {
     public:
-        inline BooleanOrExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BooleanOrExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BooleanEqualExpr : public BinaryExpr {
     public:
-        inline BooleanEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BooleanEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BooleanNotEqualExpr : public BinaryExpr {
     public:
-        inline BooleanNotEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BooleanNotEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BooleanLessThanExpr : public BinaryExpr {
     public:
-        inline BooleanLessThanExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BooleanLessThanExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BooleanGreaterThanExpr : public BinaryExpr {
     public:
-        inline BooleanGreaterThanExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BooleanGreaterThanExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BooleanLessThanOrEqualExpr : public BinaryExpr {
     public:
-        inline BooleanLessThanOrEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BooleanLessThanOrEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BooleanGreaterThanOrEqualExpr : public BinaryExpr {
     public:
-        inline BooleanGreaterThanOrEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BooleanGreaterThanOrEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BooleanHasExpr : public BinaryExpr {
     public:
-        inline BooleanHasExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BooleanHasExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryAssignEqualExpr : public BinaryExpr {
     public:
-        inline BinaryAssignEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryAssignEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryPlusEqualExpr : public BinaryExpr {
     public:
-        inline BinaryPlusEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryPlusEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryMinusEqualExpr : public BinaryExpr {
     public:
-        inline BinaryMinusEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryMinusEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryTimesEqualExpr : public BinaryExpr {
     public:
-        inline BinaryTimesEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryTimesEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryDivideEqualExpr : public BinaryExpr {
     public:
-        inline BinaryDivideEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryDivideEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryModEqualExpr : public BinaryExpr {
     public:
-        inline BinaryModEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryModEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryBitwiseAndEqualExpr : public BinaryExpr {
     public:
-        inline BinaryBitwiseAndEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryBitwiseAndEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryBitwiseOrEqualExpr : public BinaryExpr {
     public:
-        inline BinaryBitwiseOrEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryBitwiseOrEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryBitwiseXorEqualExpr : public BinaryExpr {
     public:
-        inline BinaryBitwiseXorEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryBitwiseXorEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryShiftLeftEqualExpr : public BinaryExpr {
     public:
-        inline BinaryShiftLeftEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryShiftLeftEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryShiftRightEqualExpr : public BinaryExpr {
     public:
-        inline BinaryShiftRightEqualExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryShiftRightEqualExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryPlusExpr : public BinaryExpr {
     public:
-        inline BinaryPlusExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryPlusExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryMinusExpr : public BinaryExpr {
     public:
-        inline BinaryMinusExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryMinusExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryTimesExpr : public BinaryExpr {
     public:
-        inline BinaryTimesExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryTimesExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryDivideExpr : public BinaryExpr {
     public:
-        inline BinaryDivideExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryDivideExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryModExpr : public BinaryExpr {
     public:
-        inline BinaryModExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryModExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryBitwiseAndExpr : public BinaryExpr {
     public:
-        inline BinaryBitwiseAndExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryBitwiseAndExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryBitwiseOrExpr : public BinaryExpr {
     public:
-        inline BinaryBitwiseOrExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryBitwiseOrExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryBitwiseXorExpr : public BinaryExpr {
     public:
-        inline BinaryBitwiseXorExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryBitwiseXorExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryShiftLeftExpr : public BinaryExpr {
     public:
-        inline BinaryShiftLeftExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryShiftLeftExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class BinaryShiftRightExpr : public BinaryExpr {
     public:
-        inline BinaryShiftRightExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs, const Expr& rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
+        inline BinaryShiftRightExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs, const Expr* rhs) : BinaryExpr(qTypeSpec, op, lhs, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class PostfixExpr : public Expr {
     public:
-        inline PostfixExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs) : Expr(op, qTypeSpec), _op(op), _lhs(lhs) {}
+        inline PostfixExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs) : Expr(op, qTypeSpec), _op(op), _lhs(lhs) {}
         inline const Token& op() const {return _op;}
-        inline const Expr& lhs() const {return _lhs;}
+        inline const Expr& lhs() const {return _lhs.get();}
     private:
         const Token _op;
-        const Expr& _lhs;
+        const Ptr<const Expr> _lhs;
     };
 
     class PostfixIncExpr : public PostfixExpr {
     public:
-        inline PostfixIncExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs) : PostfixExpr(qTypeSpec, op, lhs) {}
+        inline PostfixIncExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs) : PostfixExpr(qTypeSpec, op, lhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class PostfixDecExpr : public PostfixExpr {
     public:
-        inline PostfixDecExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& lhs) : PostfixExpr(qTypeSpec, op, lhs) {}
+        inline PostfixDecExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* lhs) : PostfixExpr(qTypeSpec, op, lhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class PrefixExpr : public Expr {
     public:
-        inline PrefixExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : Expr(op, qTypeSpec), _op(op), _rhs(rhs) {}
+        inline PrefixExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* rhs) : Expr(op, qTypeSpec), _op(op), _rhs(rhs) {}
         inline const Token& op() const {return _op;}
-        inline const Expr& rhs() const {return _rhs;}
+        inline const Expr& rhs() const {return _rhs.get();}
     private:
         const Token _op;
-        const Expr& _rhs;
+        const Ptr<const Expr> _rhs;
     };
 
     class PrefixNotExpr : public PrefixExpr {
     public:
-        inline PrefixNotExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
+        inline PrefixNotExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class PrefixPlusExpr : public PrefixExpr {
     public:
-        inline PrefixPlusExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
+        inline PrefixPlusExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class PrefixMinusExpr : public PrefixExpr {
     public:
-        inline PrefixMinusExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
+        inline PrefixMinusExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class PrefixIncExpr : public PrefixExpr {
     public:
-        inline PrefixIncExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
+        inline PrefixIncExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class PrefixDecExpr : public PrefixExpr {
     public:
-        inline PrefixDecExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
+        inline PrefixDecExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class PrefixBitwiseNotExpr : public PrefixExpr {
     public:
-        inline PrefixBitwiseNotExpr(const QualifiedTypeSpec& qTypeSpec, const Token& op, const Expr& rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
+        inline PrefixBitwiseNotExpr(const QualifiedTypeSpec* qTypeSpec, const Token& op, const Expr* rhs) : PrefixExpr(qTypeSpec, op, rhs) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class ListItem : public Node {
     public:
-        inline ListItem(const Token& pos, const Expr& valueExpr) : Node(pos), _valueExpr(valueExpr) {}
-        inline const Expr& valueExpr() const {return _valueExpr;}
+        inline ListItem(const Token& pos, const Expr* valueExpr) : Node(pos), _valueExpr(valueExpr) {}
+        inline const Expr& valueExpr() const {return _valueExpr.get();}
     private:
-        const Expr& _valueExpr;
+        const Ptr<const Expr> _valueExpr;
     };
 
     class ListList : public Node {
@@ -930,22 +957,22 @@ namespace Ast {
 
     class ListExpr : public Expr {
     public:
-        inline ListExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const ListList& list) : Expr(pos, qTypeSpec), _list(list) {}
-        inline const ListList& list() const {return _list;}
+        inline ListExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const ListList* list) : Expr(pos, qTypeSpec), _list(list) {}
+        inline const ListList& list() const {return _list.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const ListList& _list;
+        const Ptr<const ListList> _list;
     };
 
     class DictItem : public Node {
     public:
-        inline DictItem(const Token& pos, const Expr& keyExpr, const Expr& valueExpr) : Node(pos), _keyExpr(keyExpr), _valueExpr(valueExpr) {}
-        inline const Expr& keyExpr() const {return _keyExpr;}
-        inline const Expr& valueExpr() const {return _valueExpr;}
+        inline DictItem(const Token& pos, const Expr* keyExpr, const Expr* valueExpr) : Node(pos), _keyExpr(keyExpr), _valueExpr(valueExpr) {}
+        inline const Expr& keyExpr() const {return _keyExpr.get();}
+        inline const Expr& valueExpr() const {return _valueExpr.get();}
     private:
-        const Expr& _keyExpr;
-        const Expr& _valueExpr;
+        const Ptr<const Expr> _keyExpr;
+        const Ptr<const Expr> _valueExpr;
     };
 
     class DictList : public Node {
@@ -968,82 +995,82 @@ namespace Ast {
 
     class DictExpr : public Expr {
     public:
-        inline DictExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const DictList& dict) : Expr(pos, qTypeSpec), _list(dict) {}
-        inline const DictList& list() const {return _list;}
+        inline DictExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const DictList* dict) : Expr(pos, qTypeSpec), _list(dict) {}
+        inline const DictList& list() const {return _list.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const DictList& _list;
+        const Ptr<const DictList> _list;
     };
 
     class FormatExpr : public Expr {
     public:
-        inline FormatExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr) : Expr(pos, qTypeSpec), _stringExpr(stringExpr), _dictExpr(dictExpr) {}
-        inline const Expr& stringExpr() const {return _stringExpr;}
-        inline const DictExpr& dictExpr() const {return _dictExpr;}
+        inline FormatExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Ast::Expr* stringExpr, const Ast::DictExpr* dictExpr) : Expr(pos, qTypeSpec), _stringExpr(stringExpr), _dictExpr(dictExpr) {}
+        inline const Expr& stringExpr() const {return _stringExpr.get();}
+        inline const DictExpr& dictExpr() const {return _dictExpr.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Ast::Expr& _stringExpr;
-        const Ast::DictExpr& _dictExpr;
+        const Ptr<const Ast::Expr> _stringExpr;
+        const Ptr<const Ast::DictExpr> _dictExpr;
     };
 
     class OrderedExpr : public Expr {
     public:
-        inline OrderedExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Expr& expr) : Expr(pos, qTypeSpec), _expr(expr) {}
-        inline const Expr& expr() const {return _expr;}
+        inline OrderedExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Expr* expr) : Expr(pos, qTypeSpec), _expr(expr) {}
+        inline const Expr& expr() const {return _expr.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Expr& _expr;
+        const Ptr<const Expr> _expr;
     };
 
     class IndexExpr : public Expr {
     public:
-        inline IndexExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr, const Ast::Expr& index) : Expr(pos, qTypeSpec), _expr(expr), _index(index) {}
-        inline const Expr& expr() const {return _expr;}
-        inline const Expr& index() const {return _index;}
+        inline IndexExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Ast::Expr* expr, const Ast::Expr* index) : Expr(pos, qTypeSpec), _expr(expr), _index(index) {}
+        inline const Expr& expr() const {return _expr.get();}
+        inline const Expr& index() const {return _index.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Expr& _expr;
-        const Expr& _index;
+        const Ptr<const Expr> _expr;
+        const Ptr<const Expr> _index;
     };
 
     class SpliceExpr : public Expr {
     public:
-        inline SpliceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr, const Ast::Expr& from, const Ast::Expr& to) : Expr(pos, qTypeSpec), _expr(expr), _from(from), _to(to) {}
-        inline const Expr& expr() const {return _expr;}
-        inline const Expr& from() const {return _from;}
-        inline const Expr& to() const {return _to;}
+        inline SpliceExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Ast::Expr* expr, const Ast::Expr* from, const Ast::Expr* to) : Expr(pos, qTypeSpec), _expr(expr), _from(from), _to(to) {}
+        inline const Expr& expr() const {return _expr.get();}
+        inline const Expr& from() const {return _from.get();}
+        inline const Expr& to() const {return _to.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Expr& _expr;
-        const Expr& _from;
-        const Expr& _to;
+        const Ptr<const Expr> _expr;
+        const Ptr<const Expr> _from;
+        const Ptr<const Expr> _to;
     };
 
     class SetIndexExpr : public Expr {
     public:
-        inline SetIndexExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const IndexExpr& lhs, const Expr& rhs) : Expr(pos, qTypeSpec), _lhs(lhs), _rhs(rhs) {}
-        inline const IndexExpr& lhs() const {return _lhs;}
-        inline const Expr& rhs() const {return _rhs;}
+        inline SetIndexExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const IndexExpr* lhs, const Expr* rhs) : Expr(pos, qTypeSpec), _lhs(lhs), _rhs(rhs) {}
+        inline const IndexExpr& lhs() const {return _lhs.get();}
+        inline const Expr& rhs() const {return _rhs.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const IndexExpr& _lhs;
-        const Expr& _rhs;
+        const Ptr<const IndexExpr> _lhs;
+        const Ptr<const Expr> _rhs;
     };
 
     class TypeofExpr : public Expr {
     protected:
-        inline TypeofExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec) : Expr(pos, qTypeSpec) {}
+        inline TypeofExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec) : Expr(pos, qTypeSpec) {}
     };
 
     class TypeofTypeExpr : public TypeofExpr {
     public:
-        inline TypeofTypeExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::QualifiedTypeSpec& typeSpec) : TypeofExpr(pos, qTypeSpec), _typeSpec(typeSpec) {}
+        inline TypeofTypeExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Ast::QualifiedTypeSpec& typeSpec) : TypeofExpr(pos, qTypeSpec), _typeSpec(typeSpec) {}
         inline const QualifiedTypeSpec& typeSpec() const {return _typeSpec;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1053,74 +1080,74 @@ namespace Ast {
 
     class TypeofExprExpr : public TypeofExpr {
     public:
-        inline TypeofExprExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) : TypeofExpr(pos, qTypeSpec), _expr(expr) {}
-        inline const Expr& expr() const {return _expr;}
+        inline TypeofExprExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Ast::Expr* expr) : TypeofExpr(pos, qTypeSpec), _expr(expr) {}
+        inline const Expr& expr() const {return _expr.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Ast::Expr& _expr;
+        const Ptr<const Ast::Expr> _expr;
     };
 
     class TypecastExpr : public Expr {
     protected:
-        inline TypecastExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) : Expr(pos, qTypeSpec), _expr(expr) {}
+        inline TypecastExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Ast::Expr* expr) : Expr(pos, qTypeSpec), _expr(expr) {}
     public:
-        inline const Expr& expr() const {return _expr;}
+        inline const Expr& expr() const {return _expr.get();}
     private:
-        const Ast::Expr& _expr;
+        const Ptr<const Ast::Expr> _expr;
     };
 
     class StaticTypecastExpr : public TypecastExpr {
     public:
-        inline StaticTypecastExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) : TypecastExpr(pos, qTypeSpec, expr) {}
+        inline StaticTypecastExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Ast::Expr* expr) : TypecastExpr(pos, qTypeSpec, expr) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class DynamicTypecastExpr : public TypecastExpr {
     public:
-        inline DynamicTypecastExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) : TypecastExpr(pos, qTypeSpec, expr) {}
+        inline DynamicTypecastExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Ast::Expr* expr) : TypecastExpr(pos, qTypeSpec, expr) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class TemplateDefnInstanceExpr : public Expr {
     protected:
-        inline TemplateDefnInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList& exprList) : Expr(pos, qTypeSpec), _templateDefn(templateDefn), _exprList(exprList) {}
+        inline TemplateDefnInstanceExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList* exprList) : Expr(pos, qTypeSpec), _templateDefn(templateDefn), _exprList(exprList) {}
     public:
         inline const TemplateDefn& templateDefn() const {return _templateDefn;}
-        inline const ExprList& exprList() const {return _exprList;}
+        inline const ExprList& exprList() const {return _exprList.get();}
     private:
         const Ast::TemplateDefn& _templateDefn;
-        const ExprList& _exprList;
+        const Ptr<const ExprList> _exprList;
     };
 
     class PointerInstanceExpr : public TemplateDefnInstanceExpr {
     public:
-        inline PointerInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList& exprList) : TemplateDefnInstanceExpr(pos, qTypeSpec, templateDefn, exprList) {}
+        inline PointerInstanceExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList* exprList) : TemplateDefnInstanceExpr(pos, qTypeSpec, templateDefn, exprList) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class ValueInstanceExpr : public TemplateDefnInstanceExpr {
     public:
-        inline ValueInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList& exprList) : TemplateDefnInstanceExpr(pos, qTypeSpec, templateDefn, exprList) {}
+        inline ValueInstanceExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList* exprList) : TemplateDefnInstanceExpr(pos, qTypeSpec, templateDefn, exprList) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class CallExpr : public Expr {
     protected:
-        inline CallExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const ExprList& exprList) : Expr(pos, qTypeSpec), _exprList(exprList) {}
+        inline CallExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const ExprList* exprList) : Expr(pos, qTypeSpec), _exprList(exprList) {}
     public:
-        inline const ExprList& exprList() const {return _exprList;}
+        inline const ExprList& exprList() const {return _exprList.get();}
     private:
-        const ExprList& _exprList;
+        const Ptr<const ExprList> _exprList;
     };
 
     class RoutineCallExpr : public CallExpr {
     public:
-        inline RoutineCallExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Routine& routine, const ExprList& exprList) : CallExpr(pos, qTypeSpec, exprList), _routine(routine) {}
+        inline RoutineCallExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Routine& routine, const ExprList* exprList) : CallExpr(pos, qTypeSpec, exprList), _routine(routine) {}
         inline const Routine& routine() const {return _routine;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1130,28 +1157,28 @@ namespace Ast {
 
     class FunctorCallExpr : public CallExpr {
     public:
-        inline FunctorCallExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Expr& expr, const ExprList& exprList) : CallExpr(pos, qTypeSpec, exprList), _expr(expr) {}
-        inline const Expr& expr() const {return _expr;}
+        inline FunctorCallExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Expr* expr, const ExprList* exprList) : CallExpr(pos, qTypeSpec, exprList), _expr(expr) {}
+        inline const Expr& expr() const {return _expr.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Expr& _expr;
+        const Ptr<const Expr> _expr;
     };
 
     class RunExpr : public Expr {
     public:
-        inline RunExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const FunctorCallExpr& callExpr) : Expr(pos, qTypeSpec), _callExpr(callExpr) {}
+        inline RunExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const FunctorCallExpr* callExpr) : Expr(pos, qTypeSpec), _callExpr(callExpr) {}
     public:
-        inline const FunctorCallExpr& callExpr() const {return _callExpr;}
+        inline const FunctorCallExpr& callExpr() const {return _callExpr.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const FunctorCallExpr& _callExpr;
+        const Ptr<const FunctorCallExpr> _callExpr;
     };
 
     class VariableRefExpr : public Expr {
     public:
-        inline VariableRefExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const VariableDefn& vref, const RefType::T& refType) : Expr(pos, qTypeSpec), _vref(vref), _refType(refType) {}
+        inline VariableRefExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const VariableDefn& vref, const RefType::T& refType) : Expr(pos, qTypeSpec), _vref(vref), _refType(refType) {}
         inline const VariableDefn& vref() const {return _vref;}
         inline const RefType::T& refType() const {return _refType;}
     private:
@@ -1163,16 +1190,16 @@ namespace Ast {
 
     class MemberExpr : public Expr {
     protected:
-        inline MemberExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Expr& expr) : Expr(pos, qTypeSpec), _expr(expr) {}
+        inline MemberExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Expr* expr) : Expr(pos, qTypeSpec), _expr(expr) {}
     public:
-        inline const Expr& expr() const {return _expr;}
+        inline const Expr& expr() const {return _expr.get();}
     private:
-        const Expr& _expr;
+        const Ptr<const Expr> _expr;
     };
 
     class MemberVariableExpr : public MemberExpr {
     public:
-        inline MemberVariableExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Expr& expr, const VariableDefn& vref) : MemberExpr(pos, qTypeSpec, expr), _vref(vref) {}
+        inline MemberVariableExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Expr* expr, const VariableDefn& vref) : MemberExpr(pos, qTypeSpec, expr), _vref(vref) {}
         inline const VariableDefn& vref() const {return _vref;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1182,7 +1209,7 @@ namespace Ast {
 
     class MemberPropertyExpr : public MemberExpr {
     public:
-        inline MemberPropertyExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Expr& expr, const PropertyDecl& vref) : MemberExpr(pos, qTypeSpec, expr), _vref(vref) {}
+        inline MemberPropertyExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Expr* expr, const PropertyDecl& vref) : MemberExpr(pos, qTypeSpec, expr), _vref(vref) {}
         inline const PropertyDecl& pref() const {return _vref;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1192,7 +1219,7 @@ namespace Ast {
 
     class TypeSpecMemberExpr : public Expr {
     protected:
-        inline TypeSpecMemberExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const TypeSpec& typeSpec, const VariableDefn& vref) : Expr(pos, qTypeSpec), _typeSpec(typeSpec), _vref(vref) {}
+        inline TypeSpecMemberExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const TypeSpec& typeSpec, const VariableDefn& vref) : Expr(pos, qTypeSpec), _typeSpec(typeSpec), _vref(vref) {}
     public:
         inline const TypeSpec& typeSpec() const {return _typeSpec;}
         inline const VariableDefn& vref() const {return _vref;}
@@ -1203,35 +1230,35 @@ namespace Ast {
 
     class EnumMemberExpr : public TypeSpecMemberExpr {
     public:
-        inline EnumMemberExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const TypeSpec& typeSpec, const VariableDefn& vref) : TypeSpecMemberExpr(pos, qTypeSpec, typeSpec, vref) {}
+        inline EnumMemberExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const TypeSpec& typeSpec, const VariableDefn& vref) : TypeSpecMemberExpr(pos, qTypeSpec, typeSpec, vref) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class StructMemberExpr : public TypeSpecMemberExpr {
     public:
-        inline StructMemberExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const TypeSpec& typeSpec, const VariableDefn& vref) : TypeSpecMemberExpr(pos, qTypeSpec, typeSpec, vref) {}
+        inline StructMemberExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const TypeSpec& typeSpec, const VariableDefn& vref) : TypeSpecMemberExpr(pos, qTypeSpec, typeSpec, vref) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class TypeSpecInstanceExpr : public Expr {
     protected:
-        inline TypeSpecInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const ExprList& exprList) : Expr(pos, qTypeSpec), _exprList(exprList) {}
+        inline TypeSpecInstanceExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const ExprList* exprList) : Expr(pos, qTypeSpec), _exprList(exprList) {}
     public:
-        inline const ExprList& exprList() const {return _exprList;}
+        inline const ExprList& exprList() const {return _exprList.get();}
     private:
-        const ExprList& _exprList;
+        const Ptr<const ExprList> _exprList;
     };
 
     class StructInitPart : public Node {
     public:
-        inline StructInitPart(const Token& pos, const VariableDefn& vdef, const Expr& expr) : Node(pos), _vdef(vdef), _expr(expr) {}
+        inline StructInitPart(const Token& pos, const VariableDefn& vdef, const Expr* expr) : Node(pos), _vdef(vdef), _expr(expr) {}
         inline const VariableDefn& vdef() const {return _vdef;}
-        inline const Expr& expr() const {return _expr;}
+        inline const Expr& expr() const {return _expr.get();}
     private:
         const VariableDefn& _vdef;
-        const Expr& _expr;
+        const Ptr<const Expr> _expr;
     };
 
     class StructInitPartList : public Node {
@@ -1247,24 +1274,24 @@ namespace Ast {
 
     class StructInstanceExpr : public Expr {
     public:
-        inline StructInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const StructDefn& structDefn, const StructInitPartList& list) : Expr(pos, qTypeSpec), _structDefn(structDefn), _list(list) {}
+        inline StructInstanceExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const StructDefn& structDefn, const StructInitPartList* list) : Expr(pos, qTypeSpec), _structDefn(structDefn), _list(list) {}
         inline const StructDefn& structDefn() const {return _structDefn;}
-        inline const StructInitPartList& list() const {return _list;}
+        inline const StructInitPartList& list() const {return _list.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const StructDefn& _structDefn;
-        const StructInitPartList& _list;
+        const Ptr<const StructInitPartList> _list;
     };
 
     class FunctionTypeInstanceExpr : public TypeSpecInstanceExpr {
     public:
-        inline FunctionTypeInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const ExprList& exprList) : TypeSpecInstanceExpr(pos, qTypeSpec, exprList) {}
+        inline FunctionTypeInstanceExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const ExprList* exprList) : TypeSpecInstanceExpr(pos, qTypeSpec, exprList) {}
     };
 
     class FunctionInstanceExpr : public FunctionTypeInstanceExpr {
     public:
-        inline FunctionInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Function& function, const ExprList& exprList) : FunctionTypeInstanceExpr(pos, qTypeSpec, exprList), _function(function) {}
+        inline FunctionInstanceExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const Function& function, const ExprList* exprList) : FunctionTypeInstanceExpr(pos, qTypeSpec, exprList), _function(function) {}
         inline const Function& function() const {return _function;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1274,7 +1301,7 @@ namespace Ast {
 
     class AnonymousFunctionExpr : public FunctionTypeInstanceExpr {
     public:
-        inline AnonymousFunctionExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, Ast::ChildFunctionDefn& function, const ExprList& exprList)
+        inline AnonymousFunctionExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, Ast::ChildFunctionDefn& function, const ExprList* exprList)
             : FunctionTypeInstanceExpr(pos, qTypeSpec, exprList), _function(function) {}
         inline const ChildFunctionDefn& function() const {return _function;}
     private:
@@ -1285,15 +1312,12 @@ namespace Ast {
 
     class ConstantExpr : public Expr {
     public:
-        inline ConstantExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token) : Expr(token, qTypeSpec), _token(token) {}
-        inline const Token& token() const {return _token;}
-    private:
-        const Token _token;
+        inline ConstantExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec) : Expr(pos, qTypeSpec) {}
     };
 
     class ConstantFloatExpr : public ConstantExpr {
     public:
-        inline ConstantFloatExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const float& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline ConstantFloatExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const float& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
         inline const float& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1303,7 +1327,7 @@ namespace Ast {
 
     class ConstantDoubleExpr : public ConstantExpr {
     public:
-        inline ConstantDoubleExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const double& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline ConstantDoubleExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const double& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
         inline const double& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1313,7 +1337,7 @@ namespace Ast {
 
     class ConstantBooleanExpr : public ConstantExpr {
     public:
-        inline ConstantBooleanExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const bool& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline ConstantBooleanExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const bool& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
         inline const bool& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1323,7 +1347,7 @@ namespace Ast {
 
     class ConstantStringExpr : public ConstantExpr {
     public:
-        inline ConstantStringExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const std::string& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline ConstantStringExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const std::string& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
         inline const std::string& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1333,7 +1357,7 @@ namespace Ast {
 
     class ConstantCharExpr : public ConstantExpr {
     public:
-        inline ConstantCharExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const std::string& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline ConstantCharExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const std::string& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
         inline const std::string& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1343,7 +1367,7 @@ namespace Ast {
 
     class ConstantLongExpr : public ConstantExpr {
     public:
-        inline ConstantLongExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const long& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline ConstantLongExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const long& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
         inline const long& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1353,7 +1377,7 @@ namespace Ast {
 
     class ConstantIntExpr : public ConstantExpr {
     public:
-        inline ConstantIntExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const int& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline ConstantIntExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const int& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
         inline const int& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1363,7 +1387,7 @@ namespace Ast {
 
     class ConstantShortExpr : public ConstantExpr {
     public:
-        inline ConstantShortExpr(const QualifiedTypeSpec& qTypeSpec, const Token& token, const short& value) : ConstantExpr(qTypeSpec, token), _value(value) {}
+        inline ConstantShortExpr(const Token& pos, const QualifiedTypeSpec* qTypeSpec, const short& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
         inline const short& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1479,31 +1503,31 @@ namespace Ast {
     public:
         typedef std::list<Token> Part;
     public:
-        inline ImportStatement(const Token& pos, const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list)
+        inline ImportStatement(const Token& pos, const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList* list)
             : Statement(pos), _accessType(accessType), _headerType(headerType), _defType(defType), _list(list) {}
     public:
         inline const AccessType::T& accessType() const {return _accessType;}
         inline const HeaderType::T& headerType() const {return _headerType;}
         inline const DefinitionType::T& defType() const {return _defType;}
     public:
-        inline const NamespaceList::List& list() const {return _list.list();}
+        inline const NamespaceList::List& list() const {return _list.get().list();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const AccessType::T _accessType;
         const HeaderType::T _headerType;
         const DefinitionType::T _defType;
-        const NamespaceList& _list;
+        const Ptr<const NamespaceList> _list;
     };
 
     class EnterNamespaceStatement : public Statement {
     public:
-        inline EnterNamespaceStatement(const Token& pos, NamespaceList& list) : Statement(pos), _list(list) {}
-        inline const NamespaceList::List& list() const {return _list.list();}
+        inline EnterNamespaceStatement(const Token& pos, NamespaceList* list) : Statement(pos), _list(list) {}
+        inline const NamespaceList::List& list() const {return _list.get().list();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        NamespaceList& _list;
+        const Ptr<NamespaceList> _list;
     };
 
     class LeaveNamespaceStatement : public Statement {
@@ -1528,18 +1552,18 @@ namespace Ast {
 
     class StructMemberStatement : public Statement {
     protected:
-        inline StructMemberStatement(const Token& pos, const StructDefn& structDefn, const VariableDefn& defn) : Statement(pos), _structDefn(structDefn), _defn(defn) {}
+        inline StructMemberStatement(const Token& pos, const StructDefn& structDefn, const VariableDefn* defn) : Statement(pos), _structDefn(structDefn), _defn(defn) {}
     public:
         inline const StructDefn& structDefn() const {return _structDefn;}
-        inline const VariableDefn& defn() const {return _defn;}
+        inline const VariableDefn& defn() const {return _defn.get();}
     private:
         const StructDefn& _structDefn;
-        const VariableDefn& _defn;
+        const Ptr<const VariableDefn> _defn;
     };
 
     class StructMemberVariableStatement : public StructMemberStatement {
     public:
-        inline StructMemberVariableStatement(const Token& pos, const StructDefn& structDefn, const VariableDefn& defn) :StructMemberStatement(pos, structDefn, defn) {}
+        inline StructMemberVariableStatement(const Token& pos, const StructDefn& structDefn, const VariableDefn* defn) :StructMemberStatement(pos, structDefn, defn) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
@@ -1563,208 +1587,204 @@ namespace Ast {
 
     class AutoStatement : public Statement {
     public:
-        inline AutoStatement(const Token& pos, const VariableDefn& defn) : Statement(pos), _defn(defn) {}
-        inline const VariableDefn& defn() const {return _defn;}
+        inline AutoStatement(const Token& pos, const VariableDefn* defn) : Statement(pos), _defn(defn) {}
+        inline const VariableDefn& defn() const {return _defn.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const VariableDefn& _defn;
+        const Ptr<const VariableDefn> _defn;
     };
 
     class ExprStatement : public Statement {
     public:
-        inline ExprStatement(const Token& pos, const Expr& expr) : Statement(pos), _expr(expr) {}
-        inline const Expr& expr() const {return _expr;}
+        inline ExprStatement(const Token& pos, const Expr* expr) : Statement(pos), _expr(expr) {}
+        inline const Expr& expr() const {return _expr.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Expr& _expr;
+        const Ptr<const Expr> _expr;
     };
 
     class PrintStatement : public Statement {
     public:
-        inline PrintStatement(const Token& pos, const Expr& expr) : Statement(pos), _expr(expr) {}
-        inline const Expr& expr() const {return _expr;}
+        inline PrintStatement(const Token& pos, const Expr* expr) : Statement(pos), _expr(expr) {}
+        inline const Expr& expr() const {return _expr.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Expr& _expr;
+        const Ptr<const Expr> _expr;
     };
 
-    class IfStatement : public Statement {
+    class ConditionalStatement : public Statement {
+    protected:
+        inline ConditionalStatement(const Token& pos, const Expr* expr, const CompoundStatement* tblock) : Statement(pos), _expr(expr), _tblock(tblock) {}
     public:
-        inline IfStatement(const Token& pos, const Expr& expr, const CompoundStatement& tblock) : Statement(pos), _expr(expr), _tblock(tblock) {}
-        inline const Expr& expr() const {return _expr;}
-        inline const CompoundStatement& tblock() const {return _tblock;}
+        inline const Expr& expr() const {return _expr.get();}
+        inline const CompoundStatement& tblock() const {return _tblock.get();}
     private:
-        virtual void visit(Visitor& visitor) const;
-    private:
-        const Expr& _expr;
-        const CompoundStatement& _tblock;
+        const Ptr<const Expr> _expr;
+        const Ptr<const CompoundStatement> _tblock;
     };
 
-    class IfElseStatement : public Statement {
+    class IfStatement : public ConditionalStatement {
     public:
-        inline IfElseStatement(const Token& pos, const Expr& expr, const CompoundStatement& tblock, const CompoundStatement& fblock) : Statement(pos), _expr(expr), _tblock(tblock), _fblock(fblock) {}
-        inline const Expr& expr() const {return _expr;}
-        inline const CompoundStatement& tblock() const {return _tblock;}
-        inline const CompoundStatement& fblock() const {return _fblock;}
+        inline IfStatement(const Token& pos, const Expr* expr, const CompoundStatement* tblock) : ConditionalStatement(pos, expr, tblock) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class IfElseStatement : public ConditionalStatement {
+    public:
+        inline IfElseStatement(const Token& pos, const Expr* expr, const CompoundStatement* tblock, const CompoundStatement* fblock) : ConditionalStatement(pos, expr, tblock), _fblock(fblock) {}
+        inline const CompoundStatement& fblock() const {return _fblock.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Expr& _expr;
-        const CompoundStatement& _tblock;
-        const CompoundStatement& _fblock;
+        const Ptr<const CompoundStatement> _fblock;
     };
 
     class LoopStatement : public Statement {
     protected:
-        inline LoopStatement(const Token& pos, const Expr& expr, const CompoundStatement& block) : Statement(pos), _expr(expr), _block(block) {}
+        inline LoopStatement(const Token& pos, const Expr* expr, const CompoundStatement* block) : Statement(pos), _expr(expr), _block(block) {}
     public:
-        inline const Expr& expr() const {return _expr;}
-        inline const CompoundStatement& block() const {return _block;}
+        inline const Expr& expr() const {return _expr.get();}
+        inline const CompoundStatement& block() const {return _block.get();}
     private:
-        const Expr& _expr;
-        const CompoundStatement& _block;
+        const Ptr<const Expr> _expr;
+        const Ptr<const CompoundStatement> _block;
     };
 
     class WhileStatement : public LoopStatement {
     public:
-        inline WhileStatement(const Token& pos, const Expr& expr, const CompoundStatement& block) : LoopStatement(pos, expr, block) {}
+        inline WhileStatement(const Token& pos, const Expr* expr, const CompoundStatement* block) : LoopStatement(pos, expr, block) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class DoWhileStatement : public LoopStatement {
     public:
-        inline DoWhileStatement(const Token& pos, const Expr& expr, const CompoundStatement& block) : LoopStatement(pos, expr, block) {}
+        inline DoWhileStatement(const Token& pos, const Expr* expr, const CompoundStatement* block) : LoopStatement(pos, expr, block) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class ForStatement : public LoopStatement {
     protected:
-        inline ForStatement(const Token& pos, const Expr& expr, const Expr& incr, const CompoundStatement& block) : LoopStatement(pos, expr, block), _incr(incr) {}
+        inline ForStatement(const Token& pos, const Expr* expr, const Expr* incr, const CompoundStatement* block) : LoopStatement(pos, expr, block), _incr(incr) {}
     public:
-        inline const Expr& incr() const {return _incr;}
+        inline const Expr& incr() const {return _incr.get();}
     private:
-        const Expr& _incr;
+        const Ptr<const Expr> _incr;
     };
 
     class ForExprStatement : public ForStatement {
     public:
-        inline ForExprStatement(const Token& pos, const Expr& init, const Expr& expr, const Expr& incr, const CompoundStatement& block) : ForStatement(pos, expr, incr, block), _init(init) {}
-        inline const Expr& init() const {return _init;}
+        inline ForExprStatement(const Token& pos, const Expr* init, const Expr* expr, const Expr* incr, const CompoundStatement* block) : ForStatement(pos, expr, incr, block), _init(init) {}
+        inline const Expr& init() const {return _init.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Expr& _init;
+        const Ptr<const Expr> _init;
     };
 
     class ForInitStatement : public ForStatement {
     public:
-        inline ForInitStatement(const Token& pos, const VariableDefn& init, const Expr& expr, const Expr& incr, const CompoundStatement& block) : ForStatement(pos, expr, incr, block), _init(init) {}
-        inline const VariableDefn& init() const {return _init;}
+        inline ForInitStatement(const Token& pos, const VariableDefn* init, const Expr* expr, const Expr* incr, const CompoundStatement* block) : ForStatement(pos, expr, incr, block), _init(init) {}
+        inline const VariableDefn& init() const {return _init.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const VariableDefn& _init;
+        const Ptr<const VariableDefn> _init;
     };
 
     class ForeachStatement : public Statement {
     protected:
-        inline ForeachStatement(const Token& pos, const Expr& expr) : Statement(pos), _expr(expr), _block(0) {}
+        inline ForeachStatement(const Token& pos, const Ast::VariableDefn* valDef, const Expr* expr) : Statement(pos), _valDef(valDef), _expr(expr) {}
     public:
-        inline const Expr& expr() const {return _expr;}
-        inline const CompoundStatement& block() const {return z::ref(_block);}
-        inline void setBlock(const CompoundStatement& val) {_block = z::ptr(val);}
+        inline const VariableDefn& valDef() const {return _valDef.get();}
+        inline const Expr& expr() const {return _expr.get();}
+        inline const CompoundStatement& block() const {return _block.get();}
+        inline void setBlock(const CompoundStatement* val) {_block.set(val);}
     private:
-        const Expr& _expr;
-        const CompoundStatement* _block;
+        const Ptr<const VariableDefn> _valDef;
+        const Ptr<const Expr> _expr;
+        Ptr<const CompoundStatement> _block;
     };
 
     class ForeachStringStatement : public ForeachStatement {
     public:
-        inline ForeachStringStatement(const Token& pos, const Ast::VariableDefn& valDef, const Expr& expr) : ForeachStatement(pos, expr), _valDef(valDef) {}
-        inline const VariableDefn& valDef() const {return _valDef;}
+        inline ForeachStringStatement(const Token& pos, const Ast::VariableDefn* valDef, const Expr* expr) : ForeachStatement(pos, valDef, expr) {}
     private:
         virtual void visit(Visitor& visitor) const;
-    private:
-        const VariableDefn& _valDef;
     };
 
     class ForeachListStatement : public ForeachStatement {
     public:
-        inline ForeachListStatement(const Token& pos, const Ast::VariableDefn& valDef, const Expr& expr) : ForeachStatement(pos, expr), _valDef(valDef) {}
-        inline const VariableDefn& valDef() const {return _valDef;}
+        inline ForeachListStatement(const Token& pos, const Ast::VariableDefn* valDef, const Expr* expr) : ForeachStatement(pos, valDef, expr) {}
     private:
         virtual void visit(Visitor& visitor) const;
-    private:
-        const VariableDefn& _valDef;
     };
 
     class ForeachDictStatement : public ForeachStatement {
     public:
-        inline ForeachDictStatement(const Token& pos, const Ast::VariableDefn& keyDef, const Ast::VariableDefn& valDef, const Expr& expr) : ForeachStatement(pos, expr), _keyDef(keyDef), _valDef(valDef) {}
-        inline const VariableDefn& keyDef() const {return _keyDef;}
-        inline const VariableDefn& valDef() const {return _valDef;}
+        inline ForeachDictStatement(const Token& pos, const Ast::VariableDefn* keyDef, const Ast::VariableDefn* valDef, const Expr* expr) : ForeachStatement(pos, valDef, expr), _keyDef(keyDef) {}
+        inline const VariableDefn& keyDef() const {return _keyDef.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const VariableDefn& _keyDef;
-        const VariableDefn& _valDef;
+        const Ptr<const VariableDefn> _keyDef;
     };
 
 
     class CaseStatement : public Statement {
     protected:
-        inline CaseStatement(const Token& pos, const CompoundStatement& block) : Statement(pos), _block(block) {}
+        inline CaseStatement(const Token& pos, const CompoundStatement* block) : Statement(pos), _block(block) {}
     public:
-        inline const CompoundStatement& block() const {return _block;}
+        inline const CompoundStatement& block() const {return _block.get();}
     private:
-        const CompoundStatement& _block;
+        const Ptr<const CompoundStatement> _block;
     };
 
     class CaseExprStatement : public CaseStatement {
     public:
-        inline CaseExprStatement(const Token& pos, const Expr& expr, const CompoundStatement& block) : CaseStatement(pos, block), _expr(expr) {}
+        inline CaseExprStatement(const Token& pos, const Expr* expr, const CompoundStatement* block) : CaseStatement(pos, block), _expr(expr) {}
     public:
-        inline const Expr& expr() const {return _expr;}
+        inline const Expr& expr() const {return _expr.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Expr& _expr;
+        const Ptr<const Expr> _expr;
     };
 
     class CaseDefaultStatement : public CaseStatement {
     public:
-        inline CaseDefaultStatement(const Token& pos, const CompoundStatement& block) : CaseStatement(pos, block) {}
+        inline CaseDefaultStatement(const Token& pos, const CompoundStatement* block) : CaseStatement(pos, block) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class SwitchStatement : public Statement {
     protected:
-        inline SwitchStatement(const Token& pos, const CompoundStatement& block) : Statement(pos), _block(block) {}
+        inline SwitchStatement(const Token& pos, const CompoundStatement* block) : Statement(pos), _block(block) {}
     public:
-        inline const CompoundStatement& block() const {return _block;}
+        inline const CompoundStatement& block() const {return _block.get();}
     private:
-        const CompoundStatement& _block;
+        const Ptr<const CompoundStatement> _block;
     };
 
     class SwitchValueStatement : public SwitchStatement {
     public:
-        inline SwitchValueStatement(const Token& pos, const Expr& expr, const CompoundStatement& block) : SwitchStatement(pos, block), _expr(expr) {}
-        inline const Expr& expr() const {return _expr;}
+        inline SwitchValueStatement(const Token& pos, const Expr* expr, const CompoundStatement* block) : SwitchStatement(pos, block), _expr(expr) {}
+        inline const Expr& expr() const {return _expr.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Expr& _expr;
+        const Ptr<const Expr> _expr;
     };
 
     class SwitchExprStatement : public SwitchStatement {
     public:
-        inline SwitchExprStatement(const Token& pos, const CompoundStatement& block) : SwitchStatement(pos, block) {}
+        inline SwitchExprStatement(const Token& pos, const CompoundStatement* block) : SwitchStatement(pos, block) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
@@ -1785,38 +1805,39 @@ namespace Ast {
 
     class AddEventHandlerStatement : public Statement {
     public:
-        inline AddEventHandlerStatement(const Token& pos, const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionTypeInstanceExpr& functor) : Statement(pos), _event(event), _source(source), _functor(functor) {}
+        inline AddEventHandlerStatement(const Token& pos, const Ast::EventDecl& event, const Ast::Expr* source, Ast::FunctionTypeInstanceExpr* functor) : Statement(pos), _event(event), _source(source), _functor(functor) {}
     public:
         inline const Ast::EventDecl& event() const {return _event;}
-        inline const Ast::Expr& source() const {return _source;}
-        inline Ast::FunctionTypeInstanceExpr& functor() const {return _functor;}
+        inline const Ast::Expr& source() const {return _source.get();}
+        inline const Ast::FunctionTypeInstanceExpr& functor() const {return _functor.get();}
+        inline Ast::FunctionTypeInstanceExpr& functor() {return _functor.getM();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const Ast::EventDecl& _event;
-        const Ast::Expr& _source;
-        Ast::FunctionTypeInstanceExpr& _functor;
+        const Ptr<const Ast::Expr> _source;
+        const Ptr<Ast::FunctionTypeInstanceExpr> _functor;
     };
 
     class ReturnStatement : public Statement {
     protected:
-        inline ReturnStatement(const Token& pos, const ExprList& exprList) : Statement(pos), _exprList(exprList) {}
+        inline ReturnStatement(const Token& pos, const ExprList* exprList) : Statement(pos), _exprList(exprList) {}
     public:
-        inline const ExprList& exprList() const {return _exprList;}
+        inline const ExprList& exprList() const {return _exprList.get();}
     private:
-        const ExprList& _exprList;
+        Ptr<const ExprList> _exprList;
     };
 
     class RoutineReturnStatement : public ReturnStatement {
     public:
-        inline RoutineReturnStatement(const Token& pos, const ExprList& exprList) : ReturnStatement(pos, exprList) {}
+        inline RoutineReturnStatement(const Token& pos, const ExprList* exprList) : ReturnStatement(pos, exprList) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class FunctionReturnStatement : public ReturnStatement {
     public:
-        inline FunctionReturnStatement(const Token& pos, const ExprList& exprList) : ReturnStatement(pos, exprList) {}
+        inline FunctionReturnStatement(const Token& pos, const ExprList* exprList) : ReturnStatement(pos, exprList) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
@@ -1875,18 +1896,18 @@ namespace Ast {
     public:
         struct Visitor;
     protected:
-        inline Body(const Token& pos, const CompoundStatement& block) : Node(pos), _block(block) {}
+        inline Body(const Token& pos, const CompoundStatement* block) : Node(pos), _block(block) {}
     public:
-        inline const CompoundStatement& block() const {return _block;}
+        inline const CompoundStatement& block() const {return _block.get();}
     public:
         virtual void visit(Visitor& visitor) const = 0;
     private:
-        const CompoundStatement& _block;
+        Ptr<const CompoundStatement> _block;
     };
 
     class RoutineBody : public Body {
     public:
-        inline RoutineBody(const Token& pos, const Routine& routine, const CompoundStatement& block) : Body(pos, block), _routine(routine) {}
+        inline RoutineBody(const Token& pos, const Routine& routine, const CompoundStatement* block) : Body(pos, block), _routine(routine) {}
         inline const Routine& routine() const {return _routine;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1896,7 +1917,7 @@ namespace Ast {
 
     class FunctionBody : public Body {
     public:
-        inline FunctionBody(const Token& pos, const Function& function, const CompoundStatement& block) : Body(pos, block), _function(function) {}
+        inline FunctionBody(const Token& pos, const Function& function, const CompoundStatement* block) : Body(pos, block), _function(function) {}
         inline const Function& function() const {return _function;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1935,6 +1956,241 @@ namespace Ast {
         std::list<const Node*> _nodeList;
     };
 
+    //////////////////////////////////////////////////////////////////
+    class Unit;
+    class Context {
+    public:
+        typedef std::list<Ast::Namespace*> NamespaceStack;
+        typedef std::list<Ast::Scope*> ScopeStack;
+        typedef std::list<Ast::TypeSpec*> TypeSpecStack;
+        typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
+
+    public:
+        Context(Ast::Unit& unit, const std::string& filename, const int& level);
+        ~Context();
+
+    public:
+        inline const std::string& filename() const {return _filename;}
+        inline const int& level() const {return _level;}
+
+    private:
+        Ast::Unit& _unit;
+        const std::string _filename;
+        const int _level;
+
+    // everything related to default values
+    public:
+        /// \brief Return the default value list
+        /// \return The default value  list
+        inline const DefaultValueList& defaultValueList() const {return _defaultValueList;}
+
+        /// \brief Add a default value to the unit
+        /// \param typeSpec the typeSpec to add
+        /// \param expr the expr to add
+        inline void addDefaultValue(const TypeSpec& typeSpec, const Expr& expr) {_defaultValueList[z::ptr(typeSpec)] = z::ptr(expr);}
+
+    private:
+        /// \brief The list of default values for types in this unit
+        DefaultValueList _defaultValueList;
+
+    // everything related to statement-callback
+    public:
+        inline void setStatementVisitor(Ast::Statement::Visitor& val) { _statementVisitor = z::ptr(val);}
+        inline bool hasStatementVisitor() {return (0 != _statementVisitor);}
+        inline Ast::Statement::Visitor& statementVisitor() {return z::ref(_statementVisitor);}
+    private:
+        Ast::Statement::Visitor* _statementVisitor;
+
+    // everything related to type coercion
+    public:
+        struct CoercionResult {
+            enum T {
+                None,
+                Lhs,
+                Rhs
+            };
+        };
+    public:
+        const Ast::QualifiedTypeSpec* canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const;
+        inline const Ast::QualifiedTypeSpec* canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) const;
+        const Ast::QualifiedTypeSpec& coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
+
+    // everything related to scope stack
+    public:
+        Ast::Scope& enterScope(Ast::Scope& scope);
+        Ast::Scope& leaveScope();
+        Ast::Scope& leaveScope(Ast::Scope& scope);
+        Ast::Scope& currentScope();
+        const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name) const;
+        const Ast::VariableDefn* getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const;
+    private:
+        ScopeStack _scopeStack;
+
+    // everything related to namespace stack
+    public:
+        inline NamespaceStack& namespaceStack() {return _namespaceStack;}
+        inline void addNamespace(Ast::Namespace& ns) {_namespaceStack.push_back(z::ptr(ns));}
+        void leaveNamespace();
+    private:
+        NamespaceStack _namespaceStack;
+
+    // everything related to struct-init stack
+    public:
+        inline void pushStructInit(const Ast::StructDefn& structDefn) {_structInitStack.push_back(z::ptr(structDefn));}
+        inline void popStructInit() {_structInitStack.pop_back();}
+        inline const Ast::StructDefn* structInit() {if(_structInitStack.size() == 0) return 0; return _structInitStack.back();}
+    private:
+        typedef std::list<const Ast::StructDefn*> StructInitStack;
+        StructInitStack _structInitStack;
+
+    // everything related to current typespec
+    public:
+        template <typename T> inline const T* setCurrentRootTypeRef(const Ast::Token& name) {
+            const T& td = getRootTypeSpec<T>(name);
+            _currentTypeRef = z::ptr(td);
+            _currentImportedTypeRef = hasImportRootTypeSpec(name);
+            return z::ptr(td);
+        }
+
+        template <typename T> inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const std::string& extype) {
+            if(z::ptr(parent) != _currentTypeRef) {
+                throw z::Exception("%s Internal error: %s parent mismatch '%s'\n", err(_filename, name).c_str(), extype.c_str(), name.text());
+            }
+            const T* td = z::ref(_currentTypeRef).hasChild<const T>(name.string());
+            if(td) {
+                _currentTypeRef = td;
+                if(_currentImportedTypeRef) {
+                    const T* itd = z::ref(_currentImportedTypeRef).hasChild<const T>(name.string());
+                    if(itd) {
+                        _currentImportedTypeRef = itd;
+                    } else {
+                        _currentImportedTypeRef = 0;
+                    }
+                }
+                return td;
+            }
+
+            if(_currentImportedTypeRef) {
+                const T* itd = z::ref(_currentImportedTypeRef).hasChild<const T>(name.string());
+                if(itd) {
+                    _currentImportedTypeRef = 0;
+                    _currentTypeRef = itd;
+                    return itd;
+                } else {
+                    _currentImportedTypeRef = 0;
+                }
+            }
+
+            throw z::Exception("%s %s type expected '%s'\n", err(_filename, name).c_str(), extype.c_str(), name.text());
+        }
+
+        template <typename T> inline const T* resetCurrentTypeRef(const T& typeSpec) {
+            _currentTypeRef = 0;
+            return z::ptr(typeSpec);
+        }
+
+        const Ast::TypeSpec* currentTypeRefHasChild(const Ast::Token& name) const;
+    private:
+        const Ast::TypeSpec* _currentTypeRef;
+        const Ast::TypeSpec* _currentImportedTypeRef;
+
+    // everything related to typespec-stack
+    public:
+        Ast::Root& getRootNamespace() const;
+        const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const;
+        inline TypeSpecStack& typeSpecStack() {return _typeSpecStack;}
+        inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
+
+    public:
+        const Ast::TypeSpec* hasImportRootTypeSpec(const Ast::Token& name) const;
+        template <typename T> const T& getRootTypeSpec(const Ast::Token &name) const {
+            const Ast::TypeSpec* typeSpec = hasRootTypeSpec(name);
+            if(!typeSpec) {
+                throw z::Exception("%s Unknown root type '%s'\n", err(_filename, name).c_str(), name.text());
+            }
+            const T* tTypeSpec = dynamic_cast<const T*>(typeSpec);
+            if(!tTypeSpec) {
+                throw z::Exception("%s Type mismatch '%s'\n", err(_filename, name).c_str(), name.text());
+            }
+            return z::ref(tTypeSpec);
+        }
+        inline const Ast::TypeSpec* findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
+
+    public:
+        Ast::TypeSpec& currentTypeSpec() const;
+        Ast::TypeSpec& enterTypeSpec(Ast::TypeSpec& typeSpec);
+        Ast::TypeSpec& leaveTypeSpec(Ast::TypeSpec& typeSpec);
+        Ast::StructDefn& getCurrentStructDefn(const Ast::Token& pos);
+
+    private:
+        TypeSpecStack _typeSpecStack;
+
+    // everything related to expected typespec
+    public:
+        struct ExpectedTypeSpec {
+            enum Type {
+                etAuto,
+                etVarArg,
+                etCallArg,
+                etListVal,
+                etDictKey,
+                etDictVal,
+                etAssignment,
+                etEventHandler,
+                etStructInit
+            };
+
+            typedef std::vector<const Ast::QualifiedTypeSpec*> List;
+
+            inline ExpectedTypeSpec(const Type& type, const Ast::QualifiedTypeSpec* typeSpec) : _type(type), _typeSpec(typeSpec) {}
+            inline ExpectedTypeSpec(const Type& type) : _type(type), _typeSpec(0) {}
+            inline const Type& type() const {return _type;}
+            inline bool hasTypeSpec() const {return (_typeSpec != 0);}
+            inline const Ast::QualifiedTypeSpec& typeSpec() const {return z::ref(_typeSpec);}
+        private:
+            Type _type;
+            const Ast::QualifiedTypeSpec* _typeSpec;
+        };
+        typedef std::vector<ExpectedTypeSpec> ExpectedTypeSpecStack;
+    public:
+        const Ast::StructDefn* isStructExpected() const;
+        const Ast::Function* isFunctionExpected() const;
+        const Ast::TemplateDefn* isPointerExpected() const;
+        const Ast::TemplateDefn* isPointerToExprExpected(const Ast::Expr& expr) const;
+        const Ast::StructDefn* isPointerToStructExpected() const;
+        const Ast::StructDefn* isListOfStructExpected() const;
+        const Ast::StructDefn* isListOfPointerToStructExpected() const;
+
+    public:
+        void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type, const Ast::QualifiedTypeSpec& qTypeSpec);
+        void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type);
+        void popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
+        bool popExpectedTypeSpecOrAuto(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
+        const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny() const;
+        const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec) const;
+
+    private:
+        inline std::string getExpectedTypeName(const ExpectedTypeSpec::Type& exType);
+        inline ExpectedTypeSpec::Type getExpectedType(const Ast::Token& pos) const;
+        inline const ExpectedTypeSpec& getExpectedTypeList(const Ast::Token& pos) const;
+        inline const Ast::QualifiedTypeSpec& getExpectedTypeSpecEx(const Ast::Token& pos) const;
+
+    public:
+        const Ast::TemplateDefn* isEnteringList() const;
+    private:
+        inline const Ast::TypeSpec* isListOfPointerExpected() const;
+        inline const Ast::TemplateDefn* isEnteringTemplate() const;
+
+    public:
+        void pushCallArgList(const Ast::Scope& in);
+        void popCallArgList(const Ast::Token& pos, const Ast::Scope& in);
+        void popCallArg(const Ast::Token& pos);
+
+    private:
+        ExpectedTypeSpecStack _expectedTypeSpecStack;
+    };
+
+    //////////////////////////////////////////////////////////////////
     /*! \brief AST Node for a compilation unit
       The Unit AST node is the owner for all AST nodes in the unit.
       This node maintains two namespace hierarchies
@@ -1945,7 +2201,6 @@ namespace Ast {
     public:
         typedef std::list<const Body*> BodyList;
         typedef std::list<const Ast::CoerceList*> CoerceListList;
-        typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
         typedef std::list<Token> NsPartList;
         typedef std::map<std::string, int> HeaderFileList;
         typedef std::list<const Statement*> StatementList;
@@ -1986,16 +2241,6 @@ namespace Ast {
         /// \brief Add a coercion list to the unit
         /// \param list the coercion list to add
         inline void addCoercionList(const CoerceList& list) {_coerceListList.push_back(z::ptr(list));}
-
-    public:
-        /// \brief Return the default value list
-        /// \return The default value  list
-        inline const DefaultValueList& defaultValueList() const {return _defaultValueList;}
-
-        /// \brief Add a default value to the unit
-        /// \param typeSpec the typeSpec to add
-        /// \param expr the expr to add
-        inline void addDefaultValue(const TypeSpec& typeSpec, const Expr& expr) {_defaultValueList[z::ptr(typeSpec)] = z::ptr(expr);}
 
     public:
         /// \brief Return the statement list
@@ -2055,9 +2300,6 @@ namespace Ast {
 
         /// \brief The coercion list for all types in this unit
         CoerceListList _coerceListList;
-
-        /// \brief The list of idefault values for types in this unit
-        DefaultValueList _defaultValueList;
 
         /// \brief The list of header files imported into this unit
         HeaderFileList _headerFileList;

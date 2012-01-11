@@ -491,40 +491,36 @@ namespace {
             visitFunctionTypeInstance(node.function());
         }
 
-        inline void visitConstant(const Ast::ConstantExpr& node) {
-            fprintf(_fp, "%s", node.token().text());
-        }
-
         virtual void visit(const Ast::ConstantFloatExpr& node) {
-            visitConstant(node);
+            fprintf(_fp, "%f", node.value());
         }
 
         virtual void visit(const Ast::ConstantDoubleExpr& node) {
-            visitConstant(node);
+            fprintf(_fp, "%f", node.value());
         }
 
         virtual void visit(const Ast::ConstantBooleanExpr& node) {
-            visitConstant(node);
+            fprintf(_fp, "%s", node.value()?"true":"false");
         }
 
         virtual void visit(const Ast::ConstantStringExpr& node) {
-            fprintf(_fp, "\"%s\"", node.token().text());
+            fprintf(_fp, "\"%s\"", node.value().c_str());
         }
 
         virtual void visit(const Ast::ConstantCharExpr& node) {
-            fprintf(_fp, "\'%s\'", node.token().text());
+            fprintf(_fp, "\'%s\'", node.value().c_str());
         }
 
         virtual void visit(const Ast::ConstantLongExpr& node) {
-            visitConstant(node);
+            fprintf(_fp, "%ld", node.value());
         }
 
         virtual void visit(const Ast::ConstantIntExpr& node) {
-            visitConstant(node);
+            fprintf(_fp, "%d", node.value());
         }
 
         virtual void visit(const Ast::ConstantShortExpr& node) {
-            visitConstant(node);
+            fprintf(_fp, "%d", node.value());
         }
 
         virtual void sep() {
@@ -580,7 +576,7 @@ namespace {
                     const Ast::VariableDefn& def = z::ref(*it);
                     fprintf(_fp, "%s%s %s", Indent::get(), sep.c_str(), def.name().text());
                     const Ast::ConstantIntExpr* cexpr = dynamic_cast<const Ast::ConstantIntExpr*>(z::ptr(def.initExpr()));
-                    if((cexpr == 0) || (z::ref(cexpr).token().string() != "#")) {
+                    if((cexpr == 0) || (z::ref(cexpr).pos().string() != "#")) { /// \todo hack
                         fprintf(_fp, " = ");
                         ExprGenerator(_fp, GenMode::Normal).visitNode(def.initExpr());
                     }

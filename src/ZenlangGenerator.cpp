@@ -503,7 +503,7 @@ namespace {
                     const Ast::VariableDefn& def = z::ref(*it);
                     fprintf(_fp, "    %s", def.name().text());
                     const Ast::ConstantIntExpr* cexpr = dynamic_cast<const Ast::ConstantIntExpr*>(z::ptr(def.initExpr()));
-                    if((cexpr == 0) || (z::ref(cexpr).token().string() != "#")) {
+                    if((cexpr == 0) || (z::ref(cexpr).pos().string() != "#")) { /// \todo workaround, until enum-init implemented
                         fprintf(_fp, " = ");
                         std::string estr = ZenlangGenerator::convertExprToString(def.initExpr());
                         fprintf(_fp, "%s", estr.c_str());
