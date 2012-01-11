@@ -6,15 +6,11 @@
 
 Ast::Context::Context(Ast::Unit& unit, const std::string& filename, const int& level)
     : _unit(unit), _filename(filename), _level(level), _statementVisitor(0), _currentTypeRef(0), _currentImportedTypeRef(0) {
-    Ast::Root& rootTypeSpec = getRootNamespace();
-    enterTypeSpec(rootTypeSpec);
 }
 
 Ast::Context::~Context() {
     assert(_expectedTypeSpecStack.size() == 0);
-    assert(_typeSpecStack.size() == 1);
-    Ast::Root& rootTypeSpec = getRootNamespace();
-    leaveTypeSpec(rootTypeSpec);
+    assert(_typeSpecStack.size() == 0);
 }
 
 const Ast::QualifiedTypeSpec* Ast::Context::canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const {

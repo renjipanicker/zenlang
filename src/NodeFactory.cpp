@@ -237,9 +237,13 @@ inline Ast::ValueInstanceExpr& Ast::NodeFactory::getValueInstanceExpr(const Ast:
 ////////////////////////////////////////////////////////////
 Ast::NodeFactory::NodeFactory(Context& ctx, Compiler& compiler, Ast::Unit& unit)
     : _ctx(ctx), _compiler(compiler), _unit(unit), _lastToken(0, 0, "") {
+    Ast::Root& rootTypeSpec = _ctx.getRootNamespace();
+    _ctx.enterTypeSpec(rootTypeSpec);
 }
 
 Ast::NodeFactory::~NodeFactory() {
+    Ast::Root& rootTypeSpec = _ctx.getRootNamespace();
+    _ctx.leaveTypeSpec(rootTypeSpec);
 }
 
 ////////////////////////////////////////////////////////////

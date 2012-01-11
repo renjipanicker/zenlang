@@ -148,7 +148,6 @@ namespace Ast {
         inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
 
     public:
-        const Ast::TypeSpec* hasImportRootTypeSpec(const Ast::Token& name) const;
         template <typename T> const T& getRootTypeSpec(const Ast::Token &name) const {
             const Ast::TypeSpec* typeSpec = hasRootTypeSpec(name);
             if(!typeSpec) {
@@ -168,6 +167,8 @@ namespace Ast {
         Ast::TypeSpec& leaveTypeSpec(Ast::TypeSpec& typeSpec);
         Ast::StructDefn& getCurrentStructDefn(const Ast::Token& pos);
 
+    private:
+        const Ast::TypeSpec* hasImportRootTypeSpec(const Ast::Token& name) const;
     private:
         TypeSpecStack _typeSpecStack;
 
