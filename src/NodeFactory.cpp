@@ -27,7 +27,7 @@ inline const Ast::QualifiedTypeSpec& Ast::NodeFactory::getQualifiedTypeSpec(cons
 inline const Ast::Expr& Ast::NodeFactory::getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
     const Ast::TypeSpec* ts = resolveTypedef(typeSpec);
 
-    printf("getDef: %s %lu, ctx(%lu)\n", getTypeSpecName(z::ref(ts), GenMode::Import).c_str(), (unsigned long)ts, z::pad(_ctx));
+//    trace("getDef: %s %lu, ctx(%lu)\n", getTypeSpecName(z::ref(ts), GenMode::Import).c_str(), (unsigned long)ts, z::pad(_ctx));
     const Ast::Context::DefaultValueList& list = _ctx.defaultValueList();
     Ast::Context::DefaultValueList::const_iterator it = list.find(ts);
     if(it != list.end()) {
@@ -269,7 +269,7 @@ void Ast::NodeFactory::aImportStatement(const Ast::Token& pos, const Ast::Access
             sep = "/";
         }
         filename += ".ipp";
-        _compiler.import(_unit, filename, _level);
+        _compiler.import(_ctx, _unit, filename, _level);
     }
 }
 
@@ -362,7 +362,7 @@ Ast::CoerceList* Ast::NodeFactory::aCoerceList(const Ast::TypeSpec& typeSpec) {
 }
 
 void Ast::NodeFactory::aGlobalDefaultStatement(const Ast::TypeSpec& typeSpec, const Ast::Expr& expr) {
-    printf("addDef: %s %lu ctx(%lu)\n", getTypeSpecName(typeSpec, GenMode::Import).c_str(), z::pad(typeSpec), z::pad(_ctx));
+//    trace("addDef: %s %lu ctx(%lu)\n", getTypeSpecName(typeSpec, GenMode::Import).c_str(), z::pad(typeSpec), z::pad(_ctx));
     _ctx.addDefaultValue(typeSpec, expr);
 }
 

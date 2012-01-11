@@ -7,9 +7,9 @@
 
 namespace {
     struct ValuePtr {
-        inline ValuePtr() : _value(0) {printf("ValuePtr %lu\n", (unsigned long)_value);}
-        inline ValuePtr(const Ast::Expr* value) : _value(value) {printf("ValuePtr %lu\n", (unsigned long)_value);}
-        inline ~ValuePtr() {printf("~ValuePtr %lu\n", (unsigned long)_value); delete _value;}
+        inline ValuePtr() : _value(0) {trace("ValuePtr %lu\n", (unsigned long)_value);}
+        inline ValuePtr(const Ast::Expr* value) : _value(value) {trace("ValuePtr %lu\n", (unsigned long)_value);}
+        inline ~ValuePtr() {trace("~ValuePtr %lu\n", (unsigned long)_value); delete _value;}
 
         inline void reset(const Ast::Expr* value) {
             assert(_value == 0);
@@ -246,7 +246,7 @@ namespace {
     public:
         inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
             : _config(config), _ctx(_unit, "<cmd>"), _unit(""), _c(project, config), _global(pos, Ast::ScopeType::Local) {
-            _c.initContext(_unit);
+            _c.initContext(_ctx, _unit);
             _ctx.enterScope(_global);
         }
 
@@ -265,7 +265,7 @@ namespace {
         inline void processFile(const std::string& filename);
 
         inline void addValue(const Ast::VariableDefn& key, const Ast::Expr* val) {
-            printf("InterpreterContext::addValue %lu\n", (unsigned long)val);
+            trace("InterpreterContext::addValue %lu\n", (unsigned long)val);
             _valueMap[z::ptr(key)] =  val;
         }
 
@@ -273,7 +273,7 @@ namespace {
             ValueMap::iterator it = _valueMap.find(z::ptr(key));
             if(it == _valueMap.end())
                 return 0;
-            printf("InterpreterContext::getValue %lu\n", (unsigned long)it->second);
+            trace("InterpreterContext::getValue %lu\n", (unsigned long)it->second);
             return it->second;
         }
 
@@ -295,7 +295,7 @@ namespace {
         Stack _stack;
     private:
         inline void push(const Ast::Expr* value) {
-            printf("ExprGenerator::push %lu\n", (unsigned long)value);
+            trace("ExprGenerator::push %lu\n", (unsigned long)value);
             _stack.push_back(value);
         }
 
@@ -303,7 +303,7 @@ namespace {
             assert(_stack.size() > 0);
             const Ast::Expr* val = _stack.back();
             _stack.pop_back();
-            printf("ExprGenerator::pop %lu\n", (unsigned long)val);
+            trace("ExprGenerator::pop %lu\n", (unsigned long)val);
             ptr.reset(val);
         }
 
@@ -700,7 +700,7 @@ namespace {
             g.visitNode(node.expr());
             ValuePtr p;
             g.value(p);
-            printf("%s\n", p.str().c_str());
+            trace("%s\n", p.str().c_str());
         }
 
         virtual void visit(const Ast::IfStatement& node) {
@@ -794,13 +794,13 @@ namespace {
         std::cout << cmd << std::endl;
         Parser parser;
         Lexer lexer(parser);
-        _c.parseString(_ctx, lexer, _unit, cmd, 0, true);
+        _c.compileString(_ctx, lexer, _unit, cmd, 0, true);
     }
 
     inline void InterpreterContext::processFile(const std::string& filename) {
         Parser parser;
         Lexer lexer(parser);
-        _c.parseFile(_ctx, _unit, lexer, filename, 0, "Loading");
+        _c.compileFile(_ctx, _unit, lexer, filename, 0, "Loading");
     }
 }
 
@@ -813,7 +813,7 @@ private:
 };
 
 inline void Interpreter::Impl::run() {
-    printf("Entering interpretor mode\n");
+    trace("Entering interpretor mode\n");
 
     Ast::Token pos(0, 0, "");
     InterpreterContext ctx(_project, _config, pos);

@@ -61,7 +61,7 @@ namespace Ast {
     class Token {
     public:
         inline Token(const int row, const int col, const std::string& text) : _row(row), _col(col), _text(text) {}
-        inline Token(const ::TokenData& token) : _row(token.row()), _col(token.col()), _text(token.text()) {}
+        inline Token(const TokenData& token) : _row(token.row()), _col(token.col()), _text(token.text()) {}
         inline const int& row() const {return _row;}
         inline const int& col() const {return _col;}
         inline const char* text() const {return _text.c_str();}
@@ -86,9 +86,9 @@ namespace Ast {
     //////////////////////////////////////////////////////////////////
     template <typename T>
     struct Ptr {
-        inline Ptr() : _value(0) {printf("Ptr %lu\n", (unsigned long)_value);}
-        inline Ptr(T* value) : _value(value) {assert(_value); printf("Ptr %lu\n", (unsigned long)_value);}
-        inline ~Ptr() {printf("~Ptr %lu\n", (unsigned long)_value); /*delete _value;*/}
+        inline Ptr() : _value(0) {/*trace("Ptr %lu\n", (unsigned long)_value);*/}
+        inline Ptr(T* value) : _value(value) {assert(_value); /*trace("Ptr %lu\n", (unsigned long)_value);*/}
+        inline ~Ptr() {/*trace("~Ptr %lu\n", (unsigned long)_value);*/ /*delete _value;*/}
         inline const T& get() const {return z::ref(_value);}
         inline T& getM() const {return z::ref(_value);}
         inline void set(T* val) {assert(_value == 0); assert(val); _value = val;}

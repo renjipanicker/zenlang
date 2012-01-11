@@ -201,14 +201,14 @@ inline Lexer::Impl::~Impl() {
 
 inline void Lexer::Impl::dump(const std::string& x) const {
 //    trace("%s: buffer %lu, bufferEnd %lu, start %lu, marker %lu, cursor %lu, limit %lu, limit-cursor %ld, text '%s'\n",
-//           x.c_str(), (unsigned long)_buffer, (unsigned long)_bufferEnd, (unsigned long)_start, (unsigned long)_marker, (unsigned long)_cursor, (unsigned long)_limit, _limit - _cursor, _buffer);
+//          x.c_str(), (unsigned long)_buffer, (unsigned long)_bufferEnd, (unsigned long)_start, (unsigned long)_marker, (unsigned long)_cursor, (unsigned long)_limit, _limit - _cursor, "" /*_buffer*/);
 }
 
 // the lex() function
 #include "lexerGen.hpp"
 
 void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inputSize, const bool& isEof) {
-    trace("push(0): isEof %d, inputSize %lu, input '%s'\n", isEof, inputSize, input);
+//    trace("push(0): isEof %d, inputSize %lu, input '%s'\n", isEof, inputSize, input);
 
     /*
      * We need a small overhang after EOF on the stream which is
@@ -271,8 +271,9 @@ void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inpu
     assert((_limit + required) <= _bufferEnd);
     memcpy(_limit, input, inputSize);
     _limit += inputSize;
+    dump("push(2.1)");
     assert(_limit <= _bufferEnd);
-    memset(_limit, 0, _bufferEnd - _limit + 1);
+    memset(_limit, 0, _bufferEnd - _limit + 0);
     _limit += maxFill;
     assert(_limit <= _bufferEnd);
 

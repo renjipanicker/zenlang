@@ -8,10 +8,6 @@
 
 #define NEXT() { _start = _cursor; goto yy0; }
 
-//re2c:yyfill:check = 0;
-//re2c:define:YYFILL@len         = #;
-//re2c:define:YYFILL           = "if(isEof(#)) return;";
-
 void Lexer::Impl::lex(Ast::NodeFactory& factory) {
 /*!re2c
 re2c:define:YYCTYPE          = "inputChar_t";
@@ -19,7 +15,7 @@ re2c:define:YYCURSOR         = _cursor;
 re2c:define:YYLIMIT          = _limit;
 re2c:define:YYMARKER         = _marker;
 re2c:define:YYFILL           = "return;";
-re2c:define:YYFILL:naked     = 1; /* Emit just the FILL command as specified above. No braces, arguments, etc */
+re2c:define:YYFILL:naked     = 1;
 
 re2c:define:YYGETSTATE       = "_state";
 re2c:define:YYGETSTATE:naked = 1;
