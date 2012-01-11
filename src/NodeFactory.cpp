@@ -27,7 +27,7 @@ inline const Ast::QualifiedTypeSpec& Ast::NodeFactory::getQualifiedTypeSpec(cons
 inline const Ast::Expr& Ast::NodeFactory::getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
     const Ast::TypeSpec* ts = resolveTypedef(typeSpec);
 
-    printf("getDef: %s %lu, ctx(%lu)\n", getTypeSpecName(z::ref(ts), GenMode::Import).c_str(), ts, z::pad(_ctx));
+    printf("getDef: %s %lu, ctx(%lu)\n", getTypeSpecName(z::ref(ts), GenMode::Import).c_str(), (unsigned long)ts, z::pad(_ctx));
     const Ast::Context::DefaultValueList& list = _ctx.defaultValueList();
     Ast::Context::DefaultValueList::const_iterator it = list.find(ts);
     if(it != list.end()) {
