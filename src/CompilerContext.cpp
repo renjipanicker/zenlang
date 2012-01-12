@@ -5,7 +5,7 @@
 #include "compiler.hpp"
 
 Ast::Context::Context(Ast::Unit& unit, const std::string& filename)
-    : _unit(unit), _filename(filename), _statementVisitor(0), _currentTypeRef(0), _currentImportedTypeRef(0) {
+    : _unit(unit), _filename(filename), _statementVisitor(0), _rootNS("*root*"), _importNS("*import*"), _currentTypeRef(0), _currentImportedTypeRef(0) {
 }
 
 Ast::Context::~Context() {
@@ -23,7 +23,7 @@ const Ast::QualifiedTypeSpec* Ast::Context::canCoerceX(const Ast::QualifiedTypeS
         return z::ptr(lhs);
     }
 
-    for(Ast::Unit::CoerceListList::const_iterator it = _unit.coercionList().begin(); it != _unit.coercionList().end(); ++it) {
+    for(Ast::Context::CoerceListList::const_iterator it = coercionList().begin(); it != coercionList().end(); ++it) {
         const Ast::CoerceList& coerceList = z::ref(*it);
         int lidx = -1;
         int ridx = -1;
@@ -242,13 +242,13 @@ void Ast::Context::leaveNamespace() {
     }
 }
 
-Ast::Root& Ast::Context::getRootNamespace(const int& level) const {
-    return (level == 0)?_unit.rootNS():_unit.importNS();
+Ast::Root& Ast::Context::getRootNamespace(const int& level) {
+    return (level == 0)?_rootNS:_importNS;
 }
 
 inline const Ast::TypeSpec* Ast::Context::hasImportRootTypeSpec(const int& level, const Ast::Token& name) const {
     if(level == 0) {
-        const Ast::TypeSpec* typeSpec = _unit.importNS().hasChild<const Ast::TypeSpec>(name.string());
+        const Ast::TypeSpec* typeSpec = _importNS.hasChild<const Ast::TypeSpec>(name.string());
         if(typeSpec)
             return typeSpec;
     }

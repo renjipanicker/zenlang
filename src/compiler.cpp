@@ -68,12 +68,12 @@ void Compiler::import(Ast::Context& ctx, Ast::Unit& unit, const std::string &fil
     std::string ifilename = findImport(filename);
 
     // check if file is already imported
-    if(unit.headerFileList().find(filename) != unit.headerFileList().end()) {
+    if(ctx.headerFileList().find(filename) != ctx.headerFileList().end()) {
         return;
     }
 
     // if not, add it to list of files imported into this unit
-    unit.addheaderFile(filename);
+    ctx.addheaderFile(filename);
     parseFile(ctx, unit, ifilename, level+1, "Importing");
 }
 

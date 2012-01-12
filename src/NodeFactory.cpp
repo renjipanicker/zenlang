@@ -304,7 +304,7 @@ inline Ast::Namespace& Ast::NodeFactory::getUnitNamespace(const Ast::Token& name
         return ns;
     }
 
-    Ast::Namespace* cns = _unit.importNS().hasChild<Ast::Namespace>(name.string());
+    Ast::Namespace* cns = _ctx.importNS().hasChild<Ast::Namespace>(name.string());
     if(cns) {
         return z::ref(cns);
     }
@@ -318,7 +318,7 @@ Ast::NamespaceList* Ast::NodeFactory::aUnitNamespaceList(Ast::NamespaceList& lis
     Ast::Namespace& ns = getUnitNamespace(name);
     _ctx.enterTypeSpec(ns);
     if(_level == 0) {
-        _unit.addNamespacePart(name);
+        _ctx.addNamespacePart(name);
     }
     _ctx.addNamespace(ns);
     list.addNamespace(ns);
@@ -347,7 +347,7 @@ Ast::Statement* Ast::NodeFactory::aGlobalTypeSpecStatement(const Ast::AccessType
 }
 
 void Ast::NodeFactory::aGlobalCoerceStatement(Ast::CoerceList& list) {
-    _unit.addCoercionList(list);
+    _ctx.addCoercionList(list);
 }
 
 Ast::CoerceList* Ast::NodeFactory::aCoerceList(Ast::CoerceList& list, const Ast::TypeSpec& typeSpec) {
@@ -518,7 +518,7 @@ Ast::RoutineDefn* Ast::NodeFactory::aRoutineDefn(Ast::RoutineDefn& routineDefn, 
     routineDefn.setBlock(block);
     _ctx.leaveScope(routineDefn.inScope());
     _ctx.leaveTypeSpec(routineDefn);
-    _unit.addBody(addUnitNode(new Ast::RoutineBody(block.pos(), routineDefn, z::ptr(block))));
+    _ctx.addBody(addUnitNode(new Ast::RoutineBody(block.pos(), routineDefn, z::ptr(block))));
     return z::ptr(routineDefn);
 }
 
@@ -541,7 +541,7 @@ Ast::RootFunctionDefn* Ast::NodeFactory::aRootFunctionDefn(Ast::RootFunctionDefn
     _ctx.leaveScope(functionDefn.sig().inScope());
     _ctx.leaveScope(functionDefn.xrefScope());
     _ctx.leaveTypeSpec(functionDefn);
-    _unit.addBody(addUnitNode(new Ast::FunctionBody(block.pos(), functionDefn, z::ptr(block))));
+    _ctx.addBody(addUnitNode(new Ast::FunctionBody(block.pos(), functionDefn, z::ptr(block))));
     return z::ptr(functionDefn);
 }
 
@@ -566,7 +566,7 @@ Ast::ChildFunctionDefn* Ast::NodeFactory::aChildFunctionDefn(Ast::ChildFunctionD
     _ctx.leaveScope(functionDefn.sig().inScope());
     _ctx.leaveScope(functionDefn.xrefScope());
     _ctx.leaveTypeSpec(functionDefn);
-    _unit.addBody(addUnitNode(new Ast::FunctionBody(block.pos(), functionDefn, z::ptr(block))));
+    _ctx.addBody(addUnitNode(new Ast::FunctionBody(block.pos(), functionDefn, z::ptr(block))));
     return z::ptr(functionDefn);
 }
 
@@ -1730,7 +1730,7 @@ Ast::AnonymousFunctionExpr* Ast::NodeFactory::aAnonymousFunctionExpr(Ast::ChildF
 
 Ast::ChildFunctionDefn* Ast::NodeFactory::aEnterAnonymousFunction(const Ast::Function& function) {
     char namestr[128];
-    sprintf(namestr, "_anonymous_%lu", _unit.nodeList().size());
+    sprintf(namestr, "_anonymous_%lu", _ctx.nodeList().size());
     Ast::Token name(getToken().row(), getToken().col(), namestr);
 
     Ast::TypeSpec* ts = 0;

@@ -7,7 +7,7 @@ namespace Ast {
     class NodeFactory {
     private:
         template<typename T>
-        inline T& addUnitNode(T* node) {return _unit.nodeList().add(node);}
+        inline T& addUnitNode(T* node) {return _ctx.nodeList().add(node);}
     public:
         NodeFactory(Context& ctx, Compiler& compiler, Ast::Unit& unit, const int& level);
         ~NodeFactory();

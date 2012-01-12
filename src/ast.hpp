@@ -88,7 +88,7 @@ namespace Ast {
     struct Ptr {
         inline Ptr() : _value(0) {/*trace("Ptr %lu\n", (unsigned long)_value);*/}
         inline Ptr(T* value) : _value(value) {assert(_value); /*trace("Ptr %lu\n", (unsigned long)_value);*/}
-        inline ~Ptr() {/*trace("~Ptr %lu\n", (unsigned long)_value);*/ /*delete _value;*/}
+        inline ~Ptr() {/*trace("~Ptr %lu\n", (unsigned long)_value);*/ delete _value;}
         inline const T& get() const {return z::ref(_value);}
         inline T& getM() const {return z::ref(_value);}
         inline void set(T* val) {assert(_value == 0); assert(val); _value = val;}
@@ -1965,48 +1965,20 @@ namespace Ast {
     */
     class Unit {
     public:
-        typedef std::list<const Body*> BodyList;
-        typedef std::list<const Ast::CoerceList*> CoerceListList;
-        typedef std::list<Token> NsPartList;
-        typedef std::map<std::string, int> HeaderFileList;
-        typedef std::list<const Statement*> StatementList;
-
-    public:
-        inline Unit(const std::string& filename) : _filename(filename), _importNS("*import*"), _rootNS("*root*") {}
+        inline Unit(const std::string& filename) : _filename(filename) {}
     private:
-        inline Unit(const Unit& src) : _filename(src._filename), _importNS("*import*"), _rootNS("*root*") {}
+        inline Unit(const Unit& src) : _filename(src._filename) {}
 
     public:
         /// \brief Return the filename
         /// \return The filename
         inline const std::string& filename() const {return _filename;}
 
-    public:
-        /// \brief Return the header file list
-        /// \return The header file list
-        inline const HeaderFileList& headerFileList() const {return _headerFileList;}
-
-        /// \brief Add a header file to the unit
-        /// \param list the header file to add
-        inline void addheaderFile(const std::string& filename) {_headerFileList[filename]++;}
+        /// \brief Unit Filename
+        const std::string _filename;
 
     public:
-        /// \brief Return the function implementation list
-        /// \return The function implementation list
-        inline const BodyList& bodyList() const {return _bodyList;}
-
-        /// \brief Add a function implementation to the unit
-        /// \param functionDefnBase the function implementation to add
-        inline void addBody(const Body& body) {_bodyList.push_back(z::ptr(body));}
-
-    public:
-        /// \brief Return the coercion list
-        /// \return The coercion list
-        inline const CoerceListList& coercionList() const {return _coerceListList;}
-
-        /// \brief Add a coercion list to the unit
-        /// \param list the coercion list to add
-        inline void addCoercionList(const CoerceList& list) {_coerceListList.push_back(z::ptr(list));}
+        typedef std::list<const Statement*> StatementList;
 
     public:
         /// \brief Return the statement list
@@ -2017,61 +1989,9 @@ namespace Ast {
         /// \param statement A pointer to the node to add
         inline void addGlobalStatement(const Statement& statement) {_globalStatementList.push_back(z::ptr(statement));}
 
-    public:
-        /// \brief Return the root namespace
-        /// \return The root namespace
-        inline Root& rootNS() {return _rootNS;}
-        inline const Root& rootNS() const {return _rootNS;}
-
-        /// \brief Return the import namespace
-        /// \return The import namespace
-        inline Root& importNS() {return _importNS;}
-
-    public:
-        /// \brief Add a namespace part to the unit
-        /// \param part NS part to add
-        inline void addNamespacePart(const Token& part) {_nsPartList.push_back(part);}
-
-        /// \brief Return the namespace part list
-        /// \return The namespace part list
-        inline const NsPartList& nsPartList() const {return _nsPartList;}
-
-    public:
-        /// \brief Return the node list
-        /// \return The node list
-        inline NodeList& nodeList() {return _nodeList;}
-
-    private:
-        /// \brief Unit Filename
-        const std::string _filename;
-
-        /// \brief Unit Unit namespace
-        NsPartList _nsPartList;
-
-    private:
-        /// \brief This NS contains all imported typespec's.
-        /// It is not used for source file generation, only for reference.
-        Ast::Root _importNS;
-
-        /// \brief This NS contains all types defined in the current compilation unit.
-        Ast::Root _rootNS;
-
-    private:
-        /// \brief The list of all function implementations in this unit
-        BodyList _bodyList;
-
     private:
         /// \brief The list of all import statements in this unit
         StatementList _globalStatementList;
-
-        /// \brief The coercion list for all types in this unit
-        CoerceListList _coerceListList;
-
-        /// \brief The list of header files imported into this unit
-        HeaderFileList _headerFileList;
-
-        /// \brief The list of nodes in this unit
-        NodeList _nodeList;
     };
 
     class Config {

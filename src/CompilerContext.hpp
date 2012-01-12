@@ -10,6 +10,10 @@ namespace Ast {
         typedef std::list<Ast::Scope*> ScopeStack;
         typedef std::list<Ast::TypeSpec*> TypeSpecStack;
         typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
+        typedef std::list<const Body*> BodyList;
+        typedef std::list<const Ast::CoerceList*> CoerceListList;
+        typedef std::list<Token> NsPartList;
+        typedef std::map<std::string, int> HeaderFileList;
 
     public:
         Context(Ast::Unit& unit, const std::string& filename);
@@ -22,8 +26,67 @@ namespace Ast {
         Ast::Unit& _unit;
         const std::string _filename;
 
-    // everything related to default values
-    public:
+    public: // everything related to statement-callback
+        inline void setStatementVisitor(Ast::Statement::Visitor& val) { _statementVisitor = z::ptr(val);}
+        inline bool hasStatementVisitor() {return (0 != _statementVisitor);}
+        inline Ast::Statement::Visitor& statementVisitor() {return z::ref(_statementVisitor);}
+    private:
+        Ast::Statement::Visitor* _statementVisitor;
+
+    public: // everything related to imported header files
+        /// \brief Return the header file list
+        /// \return The header file list
+        inline const HeaderFileList& headerFileList() const {return _headerFileList;}
+
+        /// \brief Add a header file to the unit
+        /// \param list the header file to add
+        inline void addheaderFile(const std::string& filename) {_headerFileList[filename]++;}
+
+    private:
+        /// \brief The list of header files imported into this unit
+        HeaderFileList _headerFileList;
+
+    public: // everything related to namespace stack
+        inline NamespaceStack& namespaceStack() {return _namespaceStack;}
+        inline void addNamespace(Ast::Namespace& ns) {_namespaceStack.push_back(z::ptr(ns));}
+        void leaveNamespace();
+    private:
+        NamespaceStack _namespaceStack;
+
+    public: // everything related to namesace of current unit
+        /// \brief Add a namespace part to the unit
+        /// \param part NS part to add
+        inline void addNamespacePart(const Token& part) {_nsPartList.push_back(part);}
+
+        /// \brief Return the namespace part list
+        /// \return The namespace part list
+        inline const NsPartList& nsPartList() const {return _nsPartList;}
+
+    private:
+        /// \brief Unit Unit namespace
+        NsPartList _nsPartList;
+
+    public: // everything related to root namespace
+        /// \brief Return the root namespace
+        /// \return The root namespace
+        inline Root& rootNS() {return _rootNS;}
+        inline const Root& rootNS() const {return _rootNS;}
+
+    private:
+        /// \brief This NS contains all types defined in the current compilation unit.
+        Ast::Root _rootNS;
+
+    public: // everything related to import namespace
+        /// \brief Return the import namespace
+        /// \return The import namespace
+        inline Root& importNS() {return _importNS;}
+
+    private:
+        /// \brief This NS contains all imported typespec's.
+        /// It is not used for source file generation, only for reference.
+        Ast::Root _importNS;
+
+    public: // everything related to default values
         /// \brief Return the default value list
         /// \return The default value  list
         inline const DefaultValueList& defaultValueList() const {return _defaultValueList;}
@@ -37,16 +100,7 @@ namespace Ast {
         /// \brief The list of default values for types in this unit
         DefaultValueList _defaultValueList;
 
-    // everything related to statement-callback
-    public:
-        inline void setStatementVisitor(Ast::Statement::Visitor& val) { _statementVisitor = z::ptr(val);}
-        inline bool hasStatementVisitor() {return (0 != _statementVisitor);}
-        inline Ast::Statement::Visitor& statementVisitor() {return z::ref(_statementVisitor);}
-    private:
-        Ast::Statement::Visitor* _statementVisitor;
-
-    // everything related to type coercion
-    public:
+    public: // everything related to type coercion
         struct CoercionResult {
             enum T {
                 None,
@@ -59,8 +113,20 @@ namespace Ast {
         inline const Ast::QualifiedTypeSpec* canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) const;
         const Ast::QualifiedTypeSpec& coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
 
-    // everything related to scope stack
     public:
+        /// \brief Return the coercion list
+        /// \return The coercion list
+        inline const CoerceListList& coercionList() const {return _coerceListList;}
+
+        /// \brief Add a coercion list to the unit
+        /// \param list the coercion list to add
+        inline void addCoercionList(const CoerceList& list) {_coerceListList.push_back(z::ptr(list));}
+
+    private:
+        /// \brief The coercion list for all types in this unit
+        CoerceListList _coerceListList;
+
+    public: // everything related to scope stack
         Ast::Scope& enterScope(Ast::Scope& scope);
         Ast::Scope& leaveScope();
         Ast::Scope& leaveScope(Ast::Scope& scope);
@@ -70,16 +136,7 @@ namespace Ast {
     private:
         ScopeStack _scopeStack;
 
-    // everything related to namespace stack
-    public:
-        inline NamespaceStack& namespaceStack() {return _namespaceStack;}
-        inline void addNamespace(Ast::Namespace& ns) {_namespaceStack.push_back(z::ptr(ns));}
-        void leaveNamespace();
-    private:
-        NamespaceStack _namespaceStack;
-
-    // everything related to struct-init stack
-    public:
+    public: // everything related to struct-init stack
         inline void pushStructInit(const Ast::StructDefn& structDefn) {_structInitStack.push_back(z::ptr(structDefn));}
         inline void popStructInit() {_structInitStack.pop_back();}
         inline const Ast::StructDefn* structInit() {if(_structInitStack.size() == 0) return 0; return _structInitStack.back();}
@@ -87,8 +144,7 @@ namespace Ast {
         typedef std::list<const Ast::StructDefn*> StructInitStack;
         StructInitStack _structInitStack;
 
-    // everything related to current typespec
-    public:
+    public: // everything related to current typespec
         template <typename T> inline const T* setCurrentRootTypeRef(const int& level, const Ast::Token& name) {
             const T& td = getRootTypeSpec<T>(level, name);
             _currentTypeRef = z::ptr(td);
@@ -138,9 +194,8 @@ namespace Ast {
         const Ast::TypeSpec* _currentTypeRef;
         const Ast::TypeSpec* _currentImportedTypeRef;
 
-    // everything related to typespec-stack
-    public:
-        Ast::Root& getRootNamespace(const int& level) const;
+    public: // everything related to typespec-stack
+        Ast::Root& getRootNamespace(const int& level);
         const Ast::TypeSpec* hasRootTypeSpec(const int& level, const Ast::Token& name) const;
         inline TypeSpecStack& typeSpecStack() {return _typeSpecStack;}
         inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
@@ -170,8 +225,7 @@ namespace Ast {
     private:
         TypeSpecStack _typeSpecStack;
 
-    // everything related to expected typespec
-    public:
+    public: // everything related to expected typespec
         struct ExpectedTypeSpec {
             enum Type {
                 etAuto,
@@ -233,5 +287,27 @@ namespace Ast {
 
     private:
         ExpectedTypeSpecStack _expectedTypeSpecStack;
+
+    public: // everything related to function body lists
+        /// \brief Return the function implementation list
+        /// \return The function implementation list
+        inline const BodyList& bodyList() const {return _bodyList;}
+
+        /// \brief Add a function implementation to the unit
+        /// \param functionDefnBase the function implementation to add
+        inline void addBody(const Body& body) {_bodyList.push_back(z::ptr(body));}
+
+    private:
+        /// \brief The list of all function implementations in this unit
+        BodyList _bodyList;
+
+    public: // owning-list of all nodes
+        /// \brief Return the node list
+        /// \return The node list
+        inline NodeList& nodeList() {return _nodeList;}
+
+    private:
+        /// \brief The list of nodes in this unit
+        NodeList _nodeList;
     };
 }
