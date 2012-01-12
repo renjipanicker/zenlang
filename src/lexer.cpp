@@ -110,7 +110,7 @@ inline void Lexer::Impl::sendId(Ast::NodeFactory& factory) {
     Ast::Token td = token(0);
 
     if(_lastToken == ZENTOK_SCOPE) {
-        const Ast::TypeSpec* child = factory.ctx().currentTypeRefHasChild(td);
+        const Ast::TypeSpec* child = factory.unit().currentTypeRefHasChild(td);
         if(child) {
             if(trySendId(factory, child))
                 return;
@@ -138,13 +138,13 @@ inline void Lexer::Impl::sendLessThan(Ast::NodeFactory& factory) {
 }
 
 inline void Lexer::Impl::sendOpenCurly(Ast::NodeFactory& factory) {
-    if(factory.ctx().isStructExpected() || factory.ctx().isPointerToStructExpected() || factory.ctx().isListOfStructExpected() || factory.ctx().isListOfPointerToStructExpected()) {
+    if(factory.unit().isStructExpected() || factory.unit().isPointerToStructExpected() || factory.unit().isListOfStructExpected() || factory.unit().isListOfPointerToStructExpected()) {
         if((_lastToken != ZENTOK_STRUCT_TYPE) && (_lastToken != ZENTOK_STRUCT)) {
             send(factory, ZENTOK_STRUCT);
         }
     }
 
-    if(factory.ctx().isFunctionExpected()) {
+    if(factory.unit().isFunctionExpected()) {
         if((_lastToken != ZENTOK_FUNCTION_TYPE) && (_lastToken != ZENTOK_FUNCTION)) {
             send(factory, ZENTOK_FUNCTION);
         }
@@ -156,7 +156,7 @@ inline void Lexer::Impl::sendReturn(Ast::NodeFactory& factory) {
     const Ast::RoutineDefn* rd = 0;
     const Ast::RootFunctionDefn* rfd = 0;
     const Ast::ChildFunctionDefn* cfd = 0;
-    for(Ast::Context::TypeSpecStack::const_reverse_iterator it = factory.ctx().typeSpecStack().rbegin(); it != factory.ctx().typeSpecStack().rend(); ++it) {
+    for(Ast::Unit::TypeSpecStack::const_reverse_iterator it = factory.unit().typeSpecStack().rbegin(); it != factory.unit().typeSpecStack().rend(); ++it) {
         const Ast::TypeSpec* ts = *it;
         if((rd = dynamic_cast<const Ast::RoutineDefn*>(ts)) != 0) {
             return send(factory, ZENTOK_RRETURN);

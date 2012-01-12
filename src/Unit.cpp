@@ -4,16 +4,16 @@
 #include "typename.hpp"
 #include "compiler.hpp"
 
-Ast::Context::Context(const std::string& filename)
+Ast::Unit::Unit(const std::string& filename)
     : _filename(filename), _statementVisitor(0), _rootNS("*root*"), _importNS("*import*"), _currentTypeRef(0), _currentImportedTypeRef(0) {
 }
 
-Ast::Context::~Context() {
+Ast::Unit::~Unit() {
     assert(_expectedTypeSpecStack.size() == 0);
     assert(_typeSpecStack.size() == 0);
 }
 
-const Ast::QualifiedTypeSpec* Ast::Context::canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const {
+const Ast::QualifiedTypeSpec* Ast::Unit::canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const {
     const Ast::TypeSpec& lts = resolveTypedefR(lhs.typeSpec());
     const Ast::TypeSpec& rts = resolveTypedefR(rhs.typeSpec());
 
@@ -23,7 +23,7 @@ const Ast::QualifiedTypeSpec* Ast::Context::canCoerceX(const Ast::QualifiedTypeS
         return z::ptr(lhs);
     }
 
-    for(Ast::Context::CoerceListList::const_iterator it = coercionList().begin(); it != coercionList().end(); ++it) {
+    for(Ast::Unit::CoerceListList::const_iterator it = coercionList().begin(); it != coercionList().end(); ++it) {
         const Ast::CoerceList& coerceList = z::ref(*it);
         int lidx = -1;
         int ridx = -1;
@@ -104,11 +104,11 @@ const Ast::QualifiedTypeSpec* Ast::Context::canCoerceX(const Ast::QualifiedTypeS
     return 0;
 }
 
-inline const Ast::QualifiedTypeSpec* Ast::Context::canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) const {
+inline const Ast::QualifiedTypeSpec* Ast::Unit::canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) const {
     CoercionResult::T mode = CoercionResult::None;
     return canCoerceX(lhs, rhs, mode);
 }
-const Ast::QualifiedTypeSpec& Ast::Context::coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) {
+const Ast::QualifiedTypeSpec& Ast::Unit::coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) {
     const Ast::QualifiedTypeSpec* val = canCoerce(lhs, rhs);
     if(!val) {
         throw z::Exception("%s Cannot coerce '%s' and '%s'\n",
@@ -119,31 +119,31 @@ const Ast::QualifiedTypeSpec& Ast::Context::coerce(const Ast::Token& pos, const 
     return z::ref(val);
 }
 
-Ast::Scope& Ast::Context::enterScope(Ast::Scope& scope) {
+Ast::Scope& Ast::Unit::enterScope(Ast::Scope& scope) {
     _scopeStack.push_back(z::ptr(scope));
     return scope;
 }
 
-Ast::Scope& Ast::Context::leaveScope() {
+Ast::Scope& Ast::Unit::leaveScope() {
     Ast::Scope* s = _scopeStack.back();
     assert(_scopeStack.size() > 0);
     _scopeStack.pop_back();
     return z::ref(s);
 }
 
-Ast::Scope& Ast::Context::leaveScope(Ast::Scope& scope) {
+Ast::Scope& Ast::Unit::leaveScope(Ast::Scope& scope) {
     Ast::Scope& s = leaveScope();
     assert(z::ptr(s) == z::ptr(scope));
     return s;
 }
 
-Ast::Scope& Ast::Context::currentScope() {
+Ast::Scope& Ast::Unit::currentScope() {
     assert(_scopeStack.size() > 0);
     Ast::Scope* scope = _scopeStack.back();
     return z::ref(scope);
 }
 
-const Ast::VariableDefn* Ast::Context::hasMember(const Ast::Scope& scope, const Ast::Token& name) const {
+const Ast::VariableDefn* Ast::Unit::hasMember(const Ast::Scope& scope, const Ast::Token& name) const {
     for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
         const Ast::VariableDefn& vref = z::ref(*it);
         if(vref.name().string() == name.string())
@@ -152,12 +152,12 @@ const Ast::VariableDefn* Ast::Context::hasMember(const Ast::Scope& scope, const 
     return 0;
 }
 
-const Ast::VariableDefn* Ast::Context::getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const {
+const Ast::VariableDefn* Ast::Unit::getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const {
     refType = Ast::RefType::Local;
     typedef std::list<Ast::Scope*> ScopeList;
     ScopeList scopeList;
 
-    for(Context::ScopeStack::const_reverse_iterator it = _scopeStack.rbegin(); it != _scopeStack.rend(); ++it) {
+    for(Unit::ScopeStack::const_reverse_iterator it = _scopeStack.rbegin(); it != _scopeStack.rend(); ++it) {
         Ast::Scope& scope = z::ref(*it);
 
         if(scope.type() == Ast::ScopeType::XRef) {
@@ -234,7 +234,7 @@ const Ast::VariableDefn* Ast::Context::getVariableDef(const std::string& filenam
     return 0;
 }
 
-void Ast::Context::leaveNamespace() {
+void Ast::Unit::leaveNamespace() {
     while(_namespaceStack.size() > 0) {
         Ast::Namespace* ns = _namespaceStack.back();
         leaveTypeSpec(z::ref(ns));
@@ -242,11 +242,11 @@ void Ast::Context::leaveNamespace() {
     }
 }
 
-Ast::Root& Ast::Context::getRootNamespace(const int& level) {
+Ast::Root& Ast::Unit::getRootNamespace(const int& level) {
     return (level == 0)?_rootNS:_importNS;
 }
 
-inline const Ast::TypeSpec* Ast::Context::hasImportRootTypeSpec(const int& level, const Ast::Token& name) const {
+inline const Ast::TypeSpec* Ast::Unit::hasImportRootTypeSpec(const int& level, const Ast::Token& name) const {
     if(level == 0) {
         const Ast::TypeSpec* typeSpec = _importNS.hasChild<const Ast::TypeSpec>(name.string());
         if(typeSpec)
@@ -256,7 +256,7 @@ inline const Ast::TypeSpec* Ast::Context::hasImportRootTypeSpec(const int& level
     return 0;
 }
 
-const Ast::TypeSpec* Ast::Context::currentTypeRefHasChild(const Ast::Token& name) const {
+const Ast::TypeSpec* Ast::Unit::currentTypeRefHasChild(const Ast::Token& name) const {
     if(_currentTypeRef == 0)
         return 0;
     const Ast::TypeSpec* td = z::ref(_currentTypeRef).hasChild<const Ast::TypeSpec>(name.string());
@@ -272,7 +272,7 @@ const Ast::TypeSpec* Ast::Context::currentTypeRefHasChild(const Ast::Token& name
     return 0;
 }
 
-inline const Ast::TypeSpec* Ast::Context::findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
+inline const Ast::TypeSpec* Ast::Unit::findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const {
     const Ast::TypeSpec* child = parent.hasChild<const Ast::TypeSpec>(name.string());
     if(child)
         return child;
@@ -282,24 +282,24 @@ inline const Ast::TypeSpec* Ast::Context::findTypeSpec(const Ast::TypeSpec& pare
     return findTypeSpec(z::ref(parentx).parent(), name);
 }
 
-Ast::TypeSpec& Ast::Context::currentTypeSpec() const {
+Ast::TypeSpec& Ast::Unit::currentTypeSpec() const {
     assert(_typeSpecStack.size() > 0);
     return z::ref(_typeSpecStack.back());
 }
 
-Ast::TypeSpec& Ast::Context::enterTypeSpec(Ast::TypeSpec& typeSpec) {
+Ast::TypeSpec& Ast::Unit::enterTypeSpec(Ast::TypeSpec& typeSpec) {
     _typeSpecStack.push_back(z::ptr(typeSpec));
     return z::ref(_typeSpecStack.back());
 }
 
-Ast::TypeSpec& Ast::Context::leaveTypeSpec(Ast::TypeSpec& typeSpec) {
+Ast::TypeSpec& Ast::Unit::leaveTypeSpec(Ast::TypeSpec& typeSpec) {
     Ast::TypeSpec* ct = _typeSpecStack.back();
     assert(ct == z::ptr(typeSpec));
     _typeSpecStack.pop_back();
     return z::ref(ct);
 }
 
-const Ast::TypeSpec* Ast::Context::hasRootTypeSpec(const int& level, const Ast::Token& name) const {
+const Ast::TypeSpec* Ast::Unit::hasRootTypeSpec(const int& level, const Ast::Token& name) const {
     const Ast::TypeSpec* typeSpec = findTypeSpec(currentTypeSpec(), name);
     if(typeSpec)
         return typeSpec;
@@ -307,7 +307,7 @@ const Ast::TypeSpec* Ast::Context::hasRootTypeSpec(const int& level, const Ast::
     return hasImportRootTypeSpec(level, name);
 }
 
-Ast::StructDefn& Ast::Context::getCurrentStructDefn(const Ast::Token& pos) {
+Ast::StructDefn& Ast::Unit::getCurrentStructDefn(const Ast::Token& pos) {
     Ast::TypeSpec& ts = currentTypeSpec();
     Ast::StructDefn* sd = dynamic_cast<Ast::StructDefn*>(z::ptr(ts));
     if(sd == 0) {
@@ -316,7 +316,7 @@ Ast::StructDefn& Ast::Context::getCurrentStructDefn(const Ast::Token& pos) {
     return z::ref(sd);
 }
 
-inline std::string Ast::Context::getExpectedTypeName(const Ast::Context::ExpectedTypeSpec::Type& exType) {
+inline std::string Ast::Unit::getExpectedTypeName(const Ast::Unit::ExpectedTypeSpec::Type& exType) {
     switch(exType) {
         case ExpectedTypeSpec::etAuto:
             return "etAuto";
@@ -340,7 +340,7 @@ inline std::string Ast::Context::getExpectedTypeName(const Ast::Context::Expecte
     throw z::Exception("Internal error: Unknown Expected Type '%d'\n", exType);
 }
 
-inline Ast::Context::ExpectedTypeSpec::Type Ast::Context::getExpectedType(const Ast::Token& pos) const {
+inline Ast::Unit::ExpectedTypeSpec::Type Ast::Unit::getExpectedType(const Ast::Token& pos) const {
     if(_expectedTypeSpecStack.size() == 0) {
         throw z::Exception("%s Empty expected type stack\n", err(_filename, pos).c_str());
     }
@@ -348,15 +348,15 @@ inline Ast::Context::ExpectedTypeSpec::Type Ast::Context::getExpectedType(const 
     return _expectedTypeSpecStack.back().type();
 }
 
-void Ast::Context::pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type, const Ast::QualifiedTypeSpec& qTypeSpec) {
+void Ast::Unit::pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type, const Ast::QualifiedTypeSpec& qTypeSpec) {
     _expectedTypeSpecStack.push_back(ExpectedTypeSpec(type, z::ptr(qTypeSpec)));
 }
 
-void Ast::Context::pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type) {
+void Ast::Unit::pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type) {
     _expectedTypeSpecStack.push_back(ExpectedTypeSpec(type));
 }
 
-void Ast::Context::popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type) {
+void Ast::Unit::popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type) {
     if(type != getExpectedType(pos)) {
         throw z::Exception("%s Internal error: Invalid expected type popped. Popping %s, got %s\n",
                         err(_filename, pos).c_str(),
@@ -367,7 +367,7 @@ void Ast::Context::popExpectedTypeSpec(const Ast::Token& pos, const ExpectedType
     _expectedTypeSpecStack.pop_back();
 }
 
-bool Ast::Context::popExpectedTypeSpecOrAuto(const Ast::Token& pos, const ExpectedTypeSpec::Type& type) {
+bool Ast::Unit::popExpectedTypeSpecOrAuto(const Ast::Token& pos, const ExpectedTypeSpec::Type& type) {
     if(getExpectedType(pos) == ExpectedTypeSpec::etAuto) {
         popExpectedTypeSpec(pos, ExpectedTypeSpec::etAuto);
         return false;
@@ -376,7 +376,7 @@ bool Ast::Context::popExpectedTypeSpecOrAuto(const Ast::Token& pos, const Expect
     return true;
 }
 
-inline const Ast::Context::ExpectedTypeSpec& Ast::Context::getExpectedTypeList(const Ast::Token& pos) const {
+inline const Ast::Unit::ExpectedTypeSpec& Ast::Unit::getExpectedTypeList(const Ast::Token& pos) const {
     if(_expectedTypeSpecStack.size() == 0) {
         throw z::Exception("%s Empty expected type stack\n", err(_filename, pos).c_str());
     }
@@ -385,7 +385,7 @@ inline const Ast::Context::ExpectedTypeSpec& Ast::Context::getExpectedTypeList(c
     return exl;
 }
 
-const Ast::QualifiedTypeSpec* Ast::Context::getExpectedTypeSpecIfAny() const {
+const Ast::QualifiedTypeSpec* Ast::Unit::getExpectedTypeSpecIfAny() const {
     if(_expectedTypeSpecStack.size() == 0) {
         return 0;
     }
@@ -399,7 +399,7 @@ const Ast::QualifiedTypeSpec* Ast::Context::getExpectedTypeSpecIfAny() const {
     return z::ptr(ts);
 }
 
-const Ast::QualifiedTypeSpec& Ast::Context::getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec) const {
+const Ast::QualifiedTypeSpec& Ast::Unit::getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec) const {
     const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny();
     if(ts == 0) {
         return z::ref(qTypeSpec);
@@ -407,7 +407,7 @@ const Ast::QualifiedTypeSpec& Ast::Context::getExpectedTypeSpec(const Ast::Quali
     return z::ref(ts);
 }
 
-inline const Ast::QualifiedTypeSpec& Ast::Context::getExpectedTypeSpecEx(const Ast::Token& pos) const {
+inline const Ast::QualifiedTypeSpec& Ast::Unit::getExpectedTypeSpecEx(const Ast::Token& pos) const {
     const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny();
     if(ts == 0) {
         throw z::Exception("%s Empty expected type stack\n", err(_filename, pos).c_str());
@@ -415,7 +415,7 @@ inline const Ast::QualifiedTypeSpec& Ast::Context::getExpectedTypeSpecEx(const A
     return z::ref(ts);
 }
 
-inline const Ast::TemplateDefn* Ast::Context::isEnteringTemplate() const {
+inline const Ast::TemplateDefn* Ast::Unit::isEnteringTemplate() const {
     const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny();
     if(qts == 0) {
         return 0;
@@ -425,7 +425,7 @@ inline const Ast::TemplateDefn* Ast::Context::isEnteringTemplate() const {
     return td;
 }
 
-const Ast::TemplateDefn* Ast::Context::isEnteringList() const {
+const Ast::TemplateDefn* Ast::Unit::isEnteringList() const {
     const Ast::TemplateDefn* td = isEnteringTemplate();
     if(td) {
         if(z::ref(td).name().string() == "list") {
@@ -438,7 +438,7 @@ const Ast::TemplateDefn* Ast::Context::isEnteringList() const {
     return 0;
 }
 
-const Ast::StructDefn* Ast::Context::isStructExpected() const {
+const Ast::StructDefn* Ast::Unit::isStructExpected() const {
     const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny();
     if(qts == 0) {
         return 0;
@@ -453,7 +453,7 @@ const Ast::StructDefn* Ast::Context::isStructExpected() const {
     return sd;
 }
 
-const Ast::Function* Ast::Context::isFunctionExpected() const {
+const Ast::Function* Ast::Unit::isFunctionExpected() const {
     const Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny();
     if(qts == 0) {
         return 0;
@@ -468,7 +468,7 @@ const Ast::Function* Ast::Context::isFunctionExpected() const {
     return ed;
 }
 
-const Ast::TemplateDefn* Ast::Context::isPointerExpected() const {
+const Ast::TemplateDefn* Ast::Unit::isPointerExpected() const {
     const Ast::TemplateDefn* td = isEnteringTemplate();
     if(td) {
         if(z::ref(td).name().string() == "pointer") {
@@ -478,21 +478,21 @@ const Ast::TemplateDefn* Ast::Context::isPointerExpected() const {
     return 0;
 }
 
-const Ast::TemplateDefn* Ast::Context::isPointerToExprExpected(const Ast::Expr& expr) const {
+const Ast::TemplateDefn* Ast::Unit::isPointerToExprExpected(const Ast::Expr& expr) const {
     const Ast::TemplateDefn* ts = isPointerExpected();
     if(ts) {
         const Ast::QualifiedTypeSpec& innerQts = z::ref(ts).at(0);
 
-        Context::CoercionResult::T mode = Context::CoercionResult::None;
+        Unit::CoercionResult::T mode = Unit::CoercionResult::None;
         const Ast::QualifiedTypeSpec* qts = canCoerceX(innerQts, expr.qTypeSpec(), mode);
-        if(qts && (mode == Context::CoercionResult::Lhs)) {
+        if(qts && (mode == Unit::CoercionResult::Lhs)) {
             return ts;
         }
     }
     return 0;
 }
 
-const Ast::StructDefn* Ast::Context::isPointerToStructExpected() const {
+const Ast::StructDefn* Ast::Unit::isPointerToStructExpected() const {
     const Ast::TemplateDefn* td = isPointerExpected();
     if(td) {
         const Ast::QualifiedTypeSpec& valType = z::ref(td).at(0);
@@ -502,7 +502,7 @@ const Ast::StructDefn* Ast::Context::isPointerToStructExpected() const {
     return 0;
 }
 
-const Ast::StructDefn* Ast::Context::isListOfStructExpected() const {
+const Ast::StructDefn* Ast::Unit::isListOfStructExpected() const {
     const Ast::TemplateDefn* td = isEnteringList();
     const Ast::StructDefn* sd = 0;
     if(td) {
@@ -519,7 +519,7 @@ const Ast::StructDefn* Ast::Context::isListOfStructExpected() const {
     return sd;
 }
 
-inline const Ast::TypeSpec* Ast::Context::isListOfPointerExpected() const {
+inline const Ast::TypeSpec* Ast::Unit::isListOfPointerExpected() const {
     const Ast::TemplateDefn* td = isEnteringList();
     if(td) {
         if(z::ref(td).name().string() == "list") {
@@ -547,7 +547,7 @@ inline const Ast::TypeSpec* Ast::Context::isListOfPointerExpected() const {
     return 0;
 }
 
-const Ast::StructDefn* Ast::Context::isListOfPointerToStructExpected() const {
+const Ast::StructDefn* Ast::Unit::isListOfPointerToStructExpected() const {
     const Ast::TypeSpec* ts = isListOfPointerExpected();
     if(!ts)
         return 0;
@@ -556,7 +556,7 @@ const Ast::StructDefn* Ast::Context::isListOfPointerToStructExpected() const {
     return sd;
 }
 
-void Ast::Context::pushCallArgList(const Ast::Scope& in) {
+void Ast::Unit::pushCallArgList(const Ast::Scope& in) {
     if(in.type() == Ast::ScopeType::VarArg) {
         pushExpectedTypeSpec(ExpectedTypeSpec::etVarArg);
     } else {
@@ -567,13 +567,13 @@ void Ast::Context::pushCallArgList(const Ast::Scope& in) {
     }
 }
 
-void Ast::Context::popCallArgList(const Ast::Token& pos, const Ast::Scope& in) {
+void Ast::Unit::popCallArgList(const Ast::Token& pos, const Ast::Scope& in) {
     if(in.type() == Ast::ScopeType::VarArg) {
         popExpectedTypeSpec(pos, ExpectedTypeSpec::etVarArg);
     }
 }
 
-void Ast::Context::popCallArg(const Ast::Token& pos) {
+void Ast::Unit::popCallArg(const Ast::Token& pos) {
     if(getExpectedType(pos) != ExpectedTypeSpec::etVarArg) {
         popExpectedTypeSpec(pos, ExpectedTypeSpec::etCallArg);
     }

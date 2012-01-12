@@ -31,7 +31,7 @@ inline std::string Compiler::findImport(const std::string& filename) {
     throw z::Exception("Cannot open include file '%s'\n", filename.c_str());
 }
 
-bool Compiler::compileFile(Ast::Context& ctx, Ast::Module& module, Lexer& lexer, const std::string& filename, const int& level, const std::string& msg) {
+bool Compiler::compileFile(Ast::Unit& ctx, Ast::Module& module, Lexer& lexer, const std::string& filename, const int& level, const std::string& msg) {
     if(_project.verbosity() >= Ast::Project::Verbosity::Normal) {
         std::string indent = "   ";
         for(int i = 0; i < level; ++i) {
@@ -58,13 +58,13 @@ bool Compiler::compileFile(Ast::Context& ctx, Ast::Module& module, Lexer& lexer,
     return true;
 }
 
-inline bool Compiler::parseFile(Ast::Context& ctx, Ast::Module& module, const std::string& filename, const int& level, const std::string& msg) {
+inline bool Compiler::parseFile(Ast::Unit& ctx, Ast::Module& module, const std::string& filename, const int& level, const std::string& msg) {
     Parser parser;
     Lexer lexer(parser);
     return compileFile(ctx, module, lexer, filename, level, msg);
 }
 
-void Compiler::import(Ast::Context& ctx, Ast::Module& module, const std::string &filename, const int& level) {
+void Compiler::import(Ast::Unit& ctx, Ast::Module& module, const std::string &filename, const int& level) {
     std::string ifilename = findImport(filename);
 
     // check if file is already imported
@@ -77,7 +77,7 @@ void Compiler::import(Ast::Context& ctx, Ast::Module& module, const std::string 
     parseFile(ctx, module, ifilename, level+1, "Importing");
 }
 
-void Compiler::initContext(Ast::Context& ctx, Ast::Module& module) {
+void Compiler::initContext(Ast::Unit& ctx, Ast::Module& module) {
     import(ctx, module, "core/core.ipp", 0);
 }
 
@@ -87,7 +87,7 @@ void Compiler::compile() {
 
         std::string ext = getExtention(filename);
         if(_project.zppExt().find(ext) != std::string::npos) {
-            Ast::Context ctx(filename);
+            Ast::Unit ctx(filename);
             Ast::Module module(filename);
             initContext(ctx, module);
 
@@ -107,7 +107,7 @@ void Compiler::compile() {
     }
 }
 
-void Compiler::compileString(Ast::Context& ctx, Lexer& lexer, Ast::Module& module, const std::string& data, const int& level, const bool& isEof) {
+void Compiler::compileString(Ast::Unit& ctx, Lexer& lexer, Ast::Module& module, const std::string& data, const int& level, const bool& isEof) {
     Ast::NodeFactory factory(ctx, z::ref(this), module, level);
     lexer.push(factory, data.c_str(), data.size(), isEof);
 }

@@ -279,7 +279,7 @@ namespace {
 
     private:
         const Ast::Config& _config;
-        Ast::Context _ctx;
+        Ast::Unit _ctx;
         Ast::Module _module;
         Compiler _c;
         Ast::Scope _global;

@@ -4,7 +4,7 @@
 #include "error.hpp"
 
 namespace Ast {
-    class Context {
+    class Unit {
     public:
         typedef std::list<Ast::Namespace*> NamespaceStack;
         typedef std::list<Ast::Scope*> ScopeStack;
@@ -16,8 +16,8 @@ namespace Ast {
         typedef std::map<std::string, int> HeaderFileList;
 
     public:
-        Context(const std::string& filename);
-        ~Context();
+        Unit(const std::string& filename);
+        ~Unit();
 
     public:
         inline const std::string& filename() const {return _filename;}

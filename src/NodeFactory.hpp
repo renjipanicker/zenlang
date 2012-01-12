@@ -1,18 +1,18 @@
 #pragma once
 
 #include "ast.hpp"
-#include "CompilerContext.hpp"
+#include "Unit.hpp"
 class Compiler;
 namespace Ast {
     class NodeFactory {
     public:
-        NodeFactory(Context& ctx, Compiler& compiler, Ast::Module& module, const int& level);
+        NodeFactory(Unit& unit, Compiler& compiler, Ast::Module& module, const int& level);
         ~NodeFactory();
 
     public:
-        inline const std::string& filename() const {return _ctx.filename();}
-        inline const Context& ctx() const {return _ctx;}
-        inline const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const {return _ctx.hasRootTypeSpec(_level, name);}
+        inline const std::string& filename() const {return _unit.filename();}
+        inline const Unit& unit() const {return _unit;}
+        inline const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const {return _unit.hasRootTypeSpec(_level, name);}
     private:
         inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len);
         inline const Ast::Expr& getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
@@ -28,7 +28,7 @@ namespace Ast {
         inline Ast::FunctionDecl& addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
         inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr);
         inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
-        inline const Ast::Expr& switchDictKeyValue(const Ast::Token& pos, const Context::ExpectedTypeSpec::Type& popType, const Context::ExpectedTypeSpec::Type& pushType, const size_t& idx, const Ast::Expr& initExpr);
+        inline const Ast::Expr& switchDictKeyValue(const Ast::Token& pos, const Unit::ExpectedTypeSpec::Type& popType, const Unit::ExpectedTypeSpec::Type& pushType, const size_t& idx, const Ast::Expr& initExpr);
         inline const Ast::QualifiedTypeSpec& getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function);
         inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
         inline Ast::TemplateDefn& createTemplateDefn(const Ast::Token& pos, const std::string& name);
@@ -41,7 +41,7 @@ namespace Ast {
         template <typename T> inline T& createPrefixExpr(const Ast::Token& op, const Ast::Expr& lhs);
 
     private:
-        Context& _ctx;
+        Unit& _unit;
         Compiler& _compiler;
         Ast::Module& _module;
         const int _level;

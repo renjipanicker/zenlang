@@ -1,7 +1,7 @@
 #pragma once
 
 #include "generator.hpp"
-#include "CompilerContext.hpp"
+#include "Unit.hpp"
 
 class StlcppGenerator : public Generator {
 public:
