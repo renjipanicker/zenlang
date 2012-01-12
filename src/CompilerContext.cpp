@@ -4,8 +4,8 @@
 #include "typename.hpp"
 #include "compiler.hpp"
 
-Ast::Context::Context(Ast::Unit& unit, const std::string& filename)
-    : _unit(unit), _filename(filename), _statementVisitor(0), _rootNS("*root*"), _importNS("*import*"), _currentTypeRef(0), _currentImportedTypeRef(0) {
+Ast::Context::Context(const std::string& filename)
+    : _filename(filename), _statementVisitor(0), _rootNS("*root*"), _importNS("*import*"), _currentTypeRef(0), _currentImportedTypeRef(0) {
 }
 
 Ast::Context::~Context() {

@@ -70,7 +70,7 @@ namespace {
         assert(value != 0);
         const Ast::ConstantLongExpr* le = dynamic_cast<const Ast::ConstantLongExpr*>(value);
         if(le) {
-            return new Ast::ConstantLongExpr(z::ref(le).pos(), z::ref(le).qTypeSpec().clone(z::ref(le).pos()), z::ref(le).value());
+            return new Ast::ConstantLongExpr(z::ref(le).pos(), z::ref(le).qTypeSpec(), z::ref(le).value());
         }
         throw z::Exception("Cloning unknown type %s\n", getQualifiedTypeSpecName(z::ref(value).qTypeSpec(), GenMode::Import).c_str());
     }
@@ -83,7 +83,7 @@ namespace {
         inline const Ast::Expr* run(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong() && rhs.isLong()) {
                 long nv = runLong((long)lhs, (long)rhs);
-                return new Ast::ConstantLongExpr(op, qTypeSpec.clone(op), nv);
+                return new Ast::ConstantLongExpr(op, qTypeSpec, nv);
             }
             throw z::Exception("Type mismatch\n");
         }
@@ -151,7 +151,7 @@ namespace {
         inline const Ast::Expr* run(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong() && rhs.isLong()) {
                 long nv = runLong((long)lhs, (long)rhs);
-                return new Ast::ConstantLongExpr(op, qTypeSpec.clone(op), nv);
+                return new Ast::ConstantLongExpr(op, qTypeSpec, nv);
             }
             throw z::Exception("Type mismatch\n");
         }
@@ -235,7 +235,7 @@ namespace {
         inline const Ast::Expr* run(ValuePtr& lhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong()) {
                 long nv = runLong((long)lhs);
-                return new Ast::ConstantLongExpr(op, qTypeSpec.clone(op), nv);
+                return new Ast::ConstantLongExpr(op, qTypeSpec, nv);
             }
             throw z::Exception("Type mismatch\n");
         }
@@ -245,8 +245,8 @@ namespace {
     class InterpreterContext {
     public:
         inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
-            : _config(config), _ctx(_unit, "<cmd>"), _unit(""), _c(project, config), _global(pos, Ast::ScopeType::Local) {
-            _c.initContext(_ctx, _unit);
+            : _config(config), _ctx("<cmd>"), _module(""), _c(project, config), _global(pos, Ast::ScopeType::Local) {
+            _c.initContext(_ctx, _module);
             _ctx.enterScope(_global);
         }
 
@@ -280,7 +280,7 @@ namespace {
     private:
         const Ast::Config& _config;
         Ast::Context _ctx;
-        Ast::Unit _unit;
+        Ast::Module _module;
         Compiler _c;
         Ast::Scope _global;
 
@@ -611,7 +611,7 @@ namespace {
         }
 
         virtual void visit(const Ast::ConstantBooleanExpr& node) {
-            push(new Ast::ConstantLongExpr(node.pos(), node.qTypeSpec().clone(node.pos()), node.value()));
+            push(new Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
         }
 
         virtual void visit(const Ast::ConstantStringExpr& node) {
@@ -623,15 +623,15 @@ namespace {
         }
 
         virtual void visit(const Ast::ConstantLongExpr& node) {
-            push(new Ast::ConstantLongExpr(node.pos(), node.qTypeSpec().clone(node.pos()), node.value()));
+            push(new Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
         }
 
         virtual void visit(const Ast::ConstantIntExpr& node) {
-            push(new Ast::ConstantLongExpr(node.pos(), node.qTypeSpec().clone(node.pos()), node.value()));
+            push(new Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
         }
 
         virtual void visit(const Ast::ConstantShortExpr& node) {
-            push(new Ast::ConstantLongExpr(node.pos(), node.qTypeSpec().clone(node.pos()), node.value()));
+            push(new Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
         }
 
         virtual void sep() {
@@ -794,13 +794,14 @@ namespace {
         std::cout << cmd << std::endl;
         Parser parser;
         Lexer lexer(parser);
-        _c.compileString(_ctx, lexer, _unit, cmd, 0, true);
+        _c.compileString(_ctx, lexer, _module, cmd, 0, true);
+        _module.clearGlobalStatementList();
     }
 
     inline void InterpreterContext::processFile(const std::string& filename) {
         Parser parser;
         Lexer lexer(parser);
-        _c.compileFile(_ctx, _unit, lexer, filename, 0, "Loading");
+        _c.compileFile(_ctx, _module, lexer, filename, 0, "Loading");
     }
 }
 

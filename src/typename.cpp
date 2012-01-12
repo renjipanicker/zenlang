@@ -69,8 +69,8 @@ static NameType::T getRootName(const Ast::TypeSpec& typeSpec, const std::string&
 
     if(templateDefn) {
         if(typeSpec.name().string() == "ptr") {
-            const Ast::QualifiedTypeSpec* qTypeSpec = z::ref(templateDefn).list().front();
-            name += getTypeSpecName(z::ref(qTypeSpec).typeSpec(), mode);
+            const Ast::QualifiedTypeSpec& qTypeSpec = z::ref(templateDefn).list().front();
+            name += getTypeSpecName(qTypeSpec.typeSpec(), mode);
             name += "*";
             return NameType::Ptr;
         }

@@ -16,14 +16,13 @@ namespace Ast {
         typedef std::map<std::string, int> HeaderFileList;
 
     public:
-        Context(Ast::Unit& unit, const std::string& filename);
+        Context(const std::string& filename);
         ~Context();
 
     public:
         inline const std::string& filename() const {return _filename;}
 
     private:
-        Ast::Unit& _unit;
         const std::string _filename;
 
     public: // everything related to statement-callback
@@ -306,8 +305,51 @@ namespace Ast {
         /// \return The node list
         inline NodeList& nodeList() {return _nodeList;}
 
+        template<typename T>
+        inline T& addNode(T* node) {return _nodeList.add(node);}
+
     private:
         /// \brief The list of nodes in this unit
         NodeList _nodeList;
     };
+
+    //////////////////////////////////////////////////////////////////
+    /*! \brief A compilation module
+      The Unit AST node is the owner for all AST nodes in the unit.
+      This node maintains two namespace hierarchies
+      - the root namespace is the namespace for all types defined in this unit
+      - the import namespace is the namespace for all types imported into the unit from other modules.
+    */
+    class Module {
+    public:
+        inline Module(const std::string& filename) : _filename(filename), _globalStatementList(Token(0, 0, "")) {}
+    private:
+        inline Module(const Module& src) : _filename(src._filename), _globalStatementList(Token(0, 0, "")) {}
+
+    public:
+        /// \brief Return the filename
+        /// \return The filename
+        inline const std::string& filename() const {return _filename;}
+
+        /// \brief Unit Filename
+        const std::string _filename;
+
+    public:
+        /// \brief Return the statement list
+        /// \return The statement list
+        inline const CompoundStatement& globalStatementList() const {return _globalStatementList;}
+
+        /// \brief Add a statement to the module
+        /// \param statement the statement to add
+        inline void addGlobalStatement(const Statement& statement) {_globalStatementList.addStatement(statement);}
+
+        /// \brief Clear statement list
+        inline void clearGlobalStatementList() {
+        }
+
+    private:
+        /// \brief The list of all import statements in this module
+        CompoundStatement _globalStatementList;
+    };
+
 }

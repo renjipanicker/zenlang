@@ -608,7 +608,7 @@ namespace {
                     }
                     fprintf(_fp, ")");
                 } else {
-                    const Ast::VariableDefn& vdef = z::ref(node.sig().out().front());
+                    const Ast::VariableDefn& vdef = node.sig().out().front();
                     fprintf(_fp, "%s ", getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Import).c_str());
                 }
 
@@ -830,29 +830,29 @@ namespace {
 }
 
 struct ZenlangGenerator::Impl {
-    inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _project(project), _config(config), _unit(unit), _fpImp(0) {}
+    inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Module& module) : _project(project), _config(config), _module(module), _fpImp(0) {}
     inline void run();
 private:
     const Ast::Project& _project;
     const Ast::Config& _config;
-    const Ast::Unit& _unit;
+    const Ast::Module& _module;
 private:
     FILE* _fpImp;
 };
 
 inline void ZenlangGenerator::Impl::run() {
     Indent::init();
-    std::string basename = getBaseName(_unit.filename());
+    std::string basename = getBaseName(_module.filename());
     OutputFile ofImp(_fpImp, basename + ".ipp");unused(ofImp);
 
-    for(Ast::Unit::StatementList::const_iterator sit = _unit.globalStatementList().begin(); sit != _unit.globalStatementList().end(); ++sit) {
+    for(Ast::CompoundStatement::List::const_iterator sit = _module.globalStatementList().list().begin(); sit != _module.globalStatementList().list().end(); ++sit) {
         const Ast::Statement& s = z::ref(*sit);
         runStatementGenerator(_config, _fpImp, s);
     }
 }
 
 //////////////////////////////////////////////
-ZenlangGenerator::ZenlangGenerator(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _impl(0) {_impl = new Impl(project, config, unit);}
+ZenlangGenerator::ZenlangGenerator(const Ast::Project& project, const Ast::Config& config, const Ast::Module& module) : _impl(0) {_impl = new Impl(project, config, module);}
 ZenlangGenerator::~ZenlangGenerator() {delete _impl;}
 void ZenlangGenerator::run() {return z::ref(_impl).run();}
 

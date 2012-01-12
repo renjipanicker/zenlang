@@ -5,11 +5,8 @@
 class Compiler;
 namespace Ast {
     class NodeFactory {
-    private:
-        template<typename T>
-        inline T& addUnitNode(T* node) {return _ctx.nodeList().add(node);}
     public:
-        NodeFactory(Context& ctx, Compiler& compiler, Ast::Unit& unit, const int& level);
+        NodeFactory(Context& ctx, Compiler& compiler, Ast::Module& module, const int& level);
         ~NodeFactory();
 
     public:
@@ -46,7 +43,7 @@ namespace Ast {
     private:
         Context& _ctx;
         Compiler& _compiler;
-        Ast::Unit& _unit;
+        Ast::Module& _module;
         const int _level;
         Ast::Token _lastToken;
 

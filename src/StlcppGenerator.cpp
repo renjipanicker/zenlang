@@ -646,7 +646,7 @@ namespace {
             if(out.isTuple())
                 return false;
 
-            const Ast::VariableDefn& vdef = z::ref(out.list().front());
+            const Ast::VariableDefn& vdef = out.list().front();
             if(vdef.qTypeSpec().typeSpec().name().string() == "void")
                 return true;
 
@@ -676,9 +676,9 @@ namespace {
                 const Ast::VariableDefn& vdef = z::ref(*it);
                 fprintf(_fp, "%sconst %s %s;\n", Indent::get(), getTypeSpecName(vdef.qTypeSpec().typeSpec(), GenMode::Normal).c_str(), vdef.name().text());
             }
-            const Ast::Scope* posParam = scope.posParam();
-            if(posParam) {
-                for(Ast::Scope::List::const_iterator it = z::ref(posParam).list().begin(); it != z::ref(posParam).list().end(); ++it) {
+            if(scope.hasPosParam()) {
+                const Ast::Scope& posParam = scope.posParam();
+                for(Ast::Scope::List::const_iterator it = posParam.list().begin(); it != posParam.list().end(); ++it) {
                     INDENT;
                     const Ast::VariableDefn& vdef = z::ref(*it);
                     fprintf(_fp, "%sconst %s %s;\n", Indent::get(), getTypeSpecName(vdef.qTypeSpec().typeSpec(), GenMode::Normal).c_str(), vdef.name().text());
@@ -716,8 +716,9 @@ namespace {
                 sep = ", ";
             }
 
-            const Ast::Scope* posParam = scope.posParam();
-            if(posParam) {
+            if(scope.hasPosParam()) {
+                const Ast::Scope& posParam = scope.posParam();
+                unused(posParam);
                 /// \todo implement positional-param
             }
 
@@ -757,7 +758,7 @@ namespace {
                 out1 = "const _Out&";
                 out2 = out1;
             } else {
-                const Ast::VariableDefn& vdef = z::ref(node.sig().out().front());
+                const Ast::VariableDefn& vdef = node.sig().out().front();
                 out1 = getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Normal);
                 out2 = out1;
             }
@@ -993,7 +994,7 @@ namespace {
             if(node.sig().outScope().isTuple()) {
                 out = "const " + tname + "::_Out&";
             } else {
-                const Ast::VariableDefn& vdef = z::ref(node.sig().out().front());
+                const Ast::VariableDefn& vdef = node.sig().out().front();
                 out = getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Normal);
             }
 
@@ -1416,12 +1417,12 @@ namespace {
 }
 
 struct StlcppGenerator::Impl {
-    inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _project(project), _config(config), _unit(unit), _fpHdr(0), _fpSrc(0) {}
+    inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Module& module) : _project(project), _config(config), _module(module), _fpHdr(0), _fpSrc(0) {}
     inline void run();
 private:
     const Ast::Project& _project;
     const Ast::Config& _config;
-    const Ast::Unit& _unit;
+    const Ast::Module& _module;
 private:
     FILE* _fpHdr;
     FILE* _fpSrc;
@@ -1429,7 +1430,7 @@ private:
 
 inline void StlcppGenerator::Impl::run() {
     Indent::init();
-    std::string basename = getBaseName(_unit.filename());
+    std::string basename = getBaseName(_module.filename());
     OutputFile ofHdr(_fpHdr, basename + ".hpp");unused(ofHdr);
     OutputFile ofSrc(_fpSrc, basename + ".cpp");unused(ofSrc);
     FileSet fs(_fpHdr, _fpSrc);
@@ -1440,18 +1441,18 @@ inline void StlcppGenerator::Impl::run() {
         fprintf(_fpSrc, "#include \"%s\"\n", filename.c_str());
     }
 
-    for(Ast::Unit::StatementList::const_iterator sit = _unit.globalStatementList().begin(); sit != _unit.globalStatementList().end(); ++sit) {
+    for(Ast::CompoundStatement::List::const_iterator sit = _module.globalStatementList().list().begin(); sit != _module.globalStatementList().list().end(); ++sit) {
         const Ast::Statement& s = z::ref(*sit);
         GeneratorContext(GeneratorContext::TargetMode::TypeDecl, GeneratorContext::IndentMode::WithBrace).run(_config, fs, basename, s);
     }
 
-    for(Ast::Unit::StatementList::const_iterator sit = _unit.globalStatementList().begin(); sit != _unit.globalStatementList().end(); ++sit) {
+    for(Ast::CompoundStatement::List::const_iterator sit = _module.globalStatementList().list().begin(); sit != _module.globalStatementList().list().end(); ++sit) {
         const Ast::Statement& s = z::ref(*sit);
         GeneratorContext(GeneratorContext::TargetMode::TypeDefn, GeneratorContext::IndentMode::WithBrace).run(_config, fs, basename, s);
     }
 }
 
 //////////////////////////////////////////////
-StlcppGenerator::StlcppGenerator(const Ast::Project& project, const Ast::Config& config, const Ast::Unit& unit) : _impl(0) {_impl = new Impl(project, config, unit);}
+StlcppGenerator::StlcppGenerator(const Ast::Project& project, const Ast::Config& config, const Ast::Module& module) : _impl(0) {_impl = new Impl(project, config, module);}
 StlcppGenerator::~StlcppGenerator() {delete _impl;}
 void StlcppGenerator::run() {return z::ref(_impl).run();}
