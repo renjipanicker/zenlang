@@ -74,23 +74,46 @@ namespace Ast {
 
     //////////////////////////////////////////////////////////////////
     class Node {
-    protected:
-        inline Node(const Token& pos) : _pos(pos), _refCount(0) {}
-        virtual ~Node(){}
     public:
         inline const Token& pos() const {return _pos;}
-        inline void inc() const {++_refCount;}
-        inline void dec() const {--_refCount;}
-        inline const int& refCount() const {return _refCount;}
+        inline void dump(const std::string& txt) const {
+            trace("%lu %s: refCount %lu, %s\n", (unsigned long)this, txt.c_str(), _refCount, z::type_name<Node>(*this).text());
+        }
+
+        inline void inc() const {
+            ++_refCount;
+            dump("inc");
+        }
+
+        inline void dec() const {
+            --_refCount;
+            dump("dec");
+        }
+
+        inline const size_t& refCount() const {return _refCount;}
+
+    protected:
+        inline Node(const Token& pos) : _pos(pos), _refCount(0) {
+            dump("ctor");
+        }
+
+        virtual ~Node() {
+            dump("dtor");
+//            assert(_refCount == 0);
+        }
+
     private:
         const Token _pos;
-        mutable int _refCount;
+        mutable size_t _refCount;
     };
 
     //////////////////////////////////////////////////////////////////
     template <typename T>
     struct Ptr {
-        inline T& get() const {return z::ref(_value);}
+        inline T& get() const {
+            return z::ref(_value);
+        }
+
         inline void set(T& val) {
             if(_value) {
                 z::ref(_value).dec();
@@ -100,9 +123,21 @@ namespace Ast {
             z::ref(_value).inc();
         }
 
-        inline Ptr() : _value(0) {/*trace("Ptr %lu\n", (unsigned long)_value);*/}
-        inline Ptr(T& value) : _value(z::ptr(value)) {z::ref(_value).inc(); /*trace("Ptr %lu\n", (unsigned long)_value);*/}
-        inline ~Ptr() {z::ref(_value).dec(); /*trace("~Ptr %lu\n", (unsigned long)_value);*/ _value = 0;}
+        inline Ptr() : _value(0) {
+//            trace("Ptr %lu\n", (unsigned long)_value);
+        }
+
+        inline Ptr(T& value) : _value(z::ptr(value)) {
+            z::ref(_value).inc();
+//            trace("Ptr %lu\n", (unsigned long)_value);
+        }
+
+        inline ~Ptr() {
+            if(_value)
+                z::ref(_value).dec();
+//            trace("~Ptr %lu\n", (unsigned long)_value);
+            _value = 0;
+        }
     private:
         inline Ptr(const Ptr& /*src*/) : _value(0) {}
         T* _value;
@@ -115,7 +150,11 @@ namespace Ast {
         typedef typename List::const_iterator const_iterator;
         typedef typename List::const_reverse_iterator const_reverse_iterator;
         inline size_t size() const {return _list.size();}
-        inline void add(T& val) {_list.push_back(z::ptr(val));}
+
+        inline void add(T& val) {
+            val.inc();
+            _list.push_back(z::ptr(val));
+        }
 
         inline const_iterator begin() const {return _list.begin();}
         inline const_iterator end() const {return _list.end();}
@@ -125,6 +164,7 @@ namespace Ast {
         inline T& at(const size_t& idx) const {assert(idx < _list.size()); return z::ref(_list.at(idx));}
 
         inline ~Lst() {
+            trace("Lst::dtor\n");
             for(typename List::iterator it = _list.begin(); it != _list.end(); ++it) {
                 T& val = z::ref(*it);
                 val.dec();
@@ -133,6 +173,28 @@ namespace Ast {
 
     private:
         List _list;
+    };
+
+    //////////////////////////////////////////////////////////////////
+    //////////////////////////////////////////////////////////////////
+    class NodeList {
+    public:
+        inline NodeList() {}
+        inline ~NodeList() {}
+    public:
+        /// \brief Add an AST node to the unit
+        /// \param node A pointer to the node to add
+        /// \return A reference to the newly added node
+        template<typename T>
+        inline T& add(T* node) {_nodeList.push_back(node); return z::ref(node);}
+
+        /// \brief Return count of nodes in unit
+        /// \return Count of nodes in unit
+        inline size_t size() const {return _nodeList.size();}
+
+    private:
+        /// \brief The owner list of all nodes in this unit
+        std::list<const Node*> _nodeList;
     };
 
     //////////////////////////////////////////////////////////////////
@@ -1959,28 +2021,6 @@ namespace Ast {
 
         virtual void visit(const RoutineBody& node) = 0;
         virtual void visit(const FunctionBody& node) = 0;
-    };
-
-    //////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////
-    class NodeList {
-    public:
-        inline NodeList() {}
-        inline ~NodeList() {}
-    public:
-        /// \brief Add an AST node to the unit
-        /// \param node A pointer to the node to add
-        /// \return A reference to the newly added node
-        template<typename T>
-        inline T& add(T* node) {_nodeList.push_back(node); return z::ref(node);}
-
-        /// \brief Return count of nodes in unit
-        /// \return Count of nodes in unit
-        inline size_t size() const {return _nodeList.size();}
-
-    private:
-        /// \brief The owner list of all nodes in this unit
-        std::list<const Node*> _nodeList;
     };
 
     //////////////////////////////////////////////////////////////////

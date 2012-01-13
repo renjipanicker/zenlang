@@ -1430,7 +1430,7 @@ private:
 
 inline void StlcppGenerator::Impl::run() {
     Indent::init();
-    std::string basename = getBaseName(_module.filename());
+    std::string basename = getBaseName(_module.unit().filename());
     OutputFile ofHdr(_fpHdr, basename + ".hpp");unused(ofHdr);
     OutputFile ofSrc(_fpSrc, basename + ".cpp");unused(ofSrc);
     FileSet fs(_fpHdr, _fpSrc);

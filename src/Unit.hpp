@@ -4,6 +4,12 @@
 #include "error.hpp"
 
 namespace Ast {
+    /*! \brief A compilation unit
+      The Unit AST node is the owner for all AST nodes in the unit.
+      This node maintains two namespace hierarchies
+      - the root namespace is the namespace for all types defined in this unit
+      - the import namespace is the namespace for all types imported into the unit from other modules.
+    */
     class Unit {
     public:
         typedef std::list<Ast::Namespace*> NamespaceStack;
@@ -24,13 +30,6 @@ namespace Ast {
 
     private:
         const std::string _filename;
-
-    public: // everything related to statement-callback
-        inline void setStatementVisitor(Ast::Statement::Visitor& val) { _statementVisitor = z::ptr(val);}
-        inline bool hasStatementVisitor() {return (0 != _statementVisitor);}
-        inline Ast::Statement::Visitor& statementVisitor() {return z::ref(_statementVisitor);}
-    private:
-        Ast::Statement::Visitor* _statementVisitor;
 
     public: // everything related to imported header files
         /// \brief Return the header file list
@@ -250,6 +249,7 @@ namespace Ast {
             const Ast::QualifiedTypeSpec* _typeSpec;
         };
         typedef std::vector<ExpectedTypeSpec> ExpectedTypeSpecStack;
+
     public:
         const Ast::StructDefn* isStructExpected() const;
         const Ast::Function* isFunctionExpected() const;
@@ -314,25 +314,23 @@ namespace Ast {
     };
 
     //////////////////////////////////////////////////////////////////
-    /*! \brief A compilation module
-      The Unit AST node is the owner for all AST nodes in the unit.
-      This node maintains two namespace hierarchies
-      - the root namespace is the namespace for all types defined in this unit
-      - the import namespace is the namespace for all types imported into the unit from other modules.
+    /*! \brief A module
+      The Module stores all the global statements in the unit.
     */
     class Module {
     public:
-        inline Module(const std::string& filename) : _filename(filename), _globalStatementList(Token(0, 0, "")) {}
+        inline Module(Unit& unit) : _unit(unit), _globalStatementList(Token(0, 0, "")) {}
     private:
-        inline Module(const Module& src) : _filename(src._filename), _globalStatementList(Token(0, 0, "")) {}
+        inline Module(const Module& src) : _unit(src._unit), _globalStatementList(Token(0, 0, "")) {}
 
     public:
-        /// \brief Return the filename
-        /// \return The filename
-        inline const std::string& filename() const {return _filename;}
+        /// \brief Return the unit
+        /// \return The unit
+        inline Ast::Unit& unit() const {return _unit;}
 
-        /// \brief Unit Filename
-        const std::string _filename;
+    private:
+        /// \brief Unit
+        Ast::Unit& _unit;
 
     public:
         /// \brief Return the statement list

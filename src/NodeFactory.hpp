@@ -6,13 +6,14 @@ class Compiler;
 namespace Ast {
     class NodeFactory {
     public:
-        NodeFactory(Unit& unit, Compiler& compiler, Ast::Module& module, const int& level);
+        NodeFactory(Ast::Module& module, Compiler& compiler, const int& level);
         ~NodeFactory();
 
     public:
-        inline const std::string& filename() const {return _unit.filename();}
-        inline const Unit& unit() const {return _unit;}
-        inline const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const {return _unit.hasRootTypeSpec(_level, name);}
+        inline const Unit& unit() const {return _module.unit();}
+        inline Unit& unit() {return _module.unit();}
+        inline const std::string& filename() const {return unit().filename();}
+        inline const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const {return unit().hasRootTypeSpec(_level, name);}
     private:
         inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len);
         inline const Ast::Expr& getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
@@ -41,9 +42,8 @@ namespace Ast {
         template <typename T> inline T& createPrefixExpr(const Ast::Token& op, const Ast::Expr& lhs);
 
     private:
-        Unit& _unit;
-        Compiler& _compiler;
         Ast::Module& _module;
+        Compiler& _compiler;
         const int _level;
         Ast::Token _lastToken;
 

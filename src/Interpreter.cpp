@@ -245,18 +245,18 @@ namespace {
     class InterpreterContext {
     public:
         inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
-            : _config(config), _ctx("<cmd>"), _module(""), _c(project, config), _global(pos, Ast::ScopeType::Local) {
-            _c.initContext(_ctx, _module);
-            _ctx.enterScope(_global);
+            : _config(config), _unit("<cmd>"), _c(project, config), _global(pos, Ast::ScopeType::Local) {
+//            _c.initContext(_ctx, _module);
+            _unit.enterScope(_global);
         }
 
         inline ~InterpreterContext() {
-            _ctx.leaveScope(_global);
+            _unit.leaveScope(_global);
         }
 
-        inline void setVisitor(Ast::Statement::Visitor& visitor) {
-            _ctx.setStatementVisitor(visitor);
-        }
+//        inline void setVisitor(Ast::Statement::Visitor& visitor) {
+//            _unit.setStatementVisitor(visitor);
+//        }
 
         inline void reset() {
         }
@@ -278,9 +278,11 @@ namespace {
         }
 
     private:
+        inline void process(const Ast::Module& module);
+
+    private:
         const Ast::Config& _config;
-        Ast::Unit _ctx;
-        Ast::Module _module;
+        Ast::Unit _unit;
         Compiler _c;
         Ast::Scope _global;
 
@@ -790,18 +792,29 @@ namespace {
         inline StatementGenerator(const Ast::Config& config, InterpreterContext& ctx) : _config(config), _ctx(ctx) {}
     };
 
+    inline void InterpreterContext::process(const Ast::Module& module) {
+        StatementGenerator gen(_config, z::ref(this));
+        for(Ast::CompoundStatement::List::const_iterator sit = module.globalStatementList().list().begin(); sit != module.globalStatementList().list().end(); ++sit) {
+            const Ast::Statement& s = z::ref(*sit);
+            gen.visitNode(s);
+        }
+    }
+
     inline void InterpreterContext::processCmd(const std::string& cmd) {
         std::cout << cmd << std::endl;
         Parser parser;
         Lexer lexer(parser);
-        _c.compileString(_ctx, lexer, _module, cmd, 0, true);
-        _module.clearGlobalStatementList();
+        Ast::Module module(_unit);
+        _c.compileString(module, lexer, cmd, 0, true);
+        process(module);
     }
 
     inline void InterpreterContext::processFile(const std::string& filename) {
         Parser parser;
         Lexer lexer(parser);
-        _c.compileFile(_ctx, _module, lexer, filename, 0, "Loading");
+        Ast::Module module(_unit);
+        _c.compileFile(module, lexer, filename, 0, "Loading");
+        process(module);
     }
 }
 
@@ -818,8 +831,8 @@ inline void Interpreter::Impl::run() {
 
     Ast::Token pos(0, 0, "");
     InterpreterContext ctx(_project, _config, pos);
-    StatementGenerator gen(_config, ctx);
-    ctx.setVisitor(gen);
+    ctx.processCmd("typedef int native;");
+    return;
 
     if(_config.sourceFileList().size() > 0) {
         for(Ast::Config::PathList::const_iterator it = _config.sourceFileList().begin(); it != _config.sourceFileList().end(); ++it) {

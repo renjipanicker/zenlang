@@ -5,7 +5,7 @@
 #include "compiler.hpp"
 
 Ast::Unit::Unit(const std::string& filename)
-    : _filename(filename), _statementVisitor(0), _rootNS("*root*"), _importNS("*import*"), _currentTypeRef(0), _currentImportedTypeRef(0) {
+    : _filename(filename), _rootNS("*root*"), _importNS("*import*"), _currentTypeRef(0), _currentImportedTypeRef(0) {
 }
 
 Ast::Unit::~Unit() {
