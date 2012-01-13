@@ -13,7 +13,7 @@ namespace Ast {
     class Unit {
     public:
         typedef std::list<Ast::Namespace*> NamespaceStack;
-        typedef std::list<Ast::Scope*> ScopeStack;
+        typedef Lst<Ast::Scope> ScopeStack;
         typedef std::list<Ast::TypeSpec*> TypeSpecStack;
         typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
         typedef std::list<const Body*> BodyList;
@@ -67,22 +67,23 @@ namespace Ast {
     public: // everything related to root namespace
         /// \brief Return the root namespace
         /// \return The root namespace
-        inline Root& rootNS() {return _rootNS;}
-        inline const Root& rootNS() const {return _rootNS;}
+        inline Root& rootNS() {return _rootNS.get();}
+        inline const Root& rootNS() const {return _rootNS.get();}
 
     private:
         /// \brief This NS contains all types defined in the current compilation unit.
-        Ast::Root _rootNS;
+        Ptr<Ast::Root> _rootNS;
 
     public: // everything related to import namespace
         /// \brief Return the import namespace
         /// \return The import namespace
-        inline Root& importNS() {return _importNS;}
+        inline Root& importNS() {return _importNS.get();}
+        inline const Root& importNS() const {return _importNS.get();}
 
     private:
         /// \brief This NS contains all imported typespec's.
         /// It is not used for source file generation, only for reference.
-        Ast::Root _importNS;
+        Ptr<Ast::Root> _importNS;
 
     public: // everything related to default values
         /// \brief Return the default value list
@@ -125,9 +126,10 @@ namespace Ast {
         CoerceListList _coerceListList;
 
     public: // everything related to scope stack
+        Ast::Scope& enterScope(const Ast::Token& pos);
         Ast::Scope& enterScope(Ast::Scope& scope);
-        Ast::Scope& leaveScope();
-        Ast::Scope& leaveScope(Ast::Scope& scope);
+        void        leaveScope();
+        void        leaveScope(Ast::Scope& scope);
         Ast::Scope& currentScope();
         const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name) const;
         const Ast::VariableDefn* getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const;
@@ -301,11 +303,11 @@ namespace Ast {
         BodyList _bodyList;
 
     public: // owning-list of all nodes
-        template<typename T> inline T& addNode(T* node) {_nodeList.push_back(node); return z::ref(node);}
+        template<typename T> inline T& addNode(T* node) {/*_nodeList.push_back(node); */return z::ref(node);}
 
-    private:
-        /// \brief The owner list of all nodes in this unit
-        std::list<const Node*> _nodeList;
+//    private:
+//        /// \brief The owner list of all nodes in this unit
+//        std::list<const Node*> _nodeList;
 
     public: // A unique numeric id for anonymous functions
         /// \brief Return unique id
@@ -323,9 +325,12 @@ namespace Ast {
     */
     class Module {
     public:
-        inline Module(Unit& unit) : _unit(unit), _globalStatementList(Token(0, 0, "")) {}
+        inline Module(Unit& unit) : _unit(unit) {
+            Ast::CompoundStatement& gs = _unit.addNode(new Ast::CompoundStatement(Token(0, 0, "")));
+            _globalStatementList.set(gs);
+        }
     private:
-        inline Module(const Module& src) : _unit(src._unit), _globalStatementList(Token(0, 0, "")) {}
+        inline Module(const Module& src) : _unit(src._unit) {}
 
     public:
         /// \brief Return the unit
@@ -339,11 +344,11 @@ namespace Ast {
     public:
         /// \brief Return the statement list
         /// \return The statement list
-        inline const CompoundStatement& globalStatementList() const {return _globalStatementList;}
+        inline const CompoundStatement& globalStatementList() const {return _globalStatementList.get();}
 
         /// \brief Add a statement to the module
         /// \param statement the statement to add
-        inline void addGlobalStatement(const Statement& statement) {_globalStatementList.addStatement(statement);}
+        inline void addGlobalStatement(const Statement& statement) {_globalStatementList.get().addStatement(statement);}
 
         /// \brief Clear statement list
         inline void clearGlobalStatementList() {
@@ -351,7 +356,7 @@ namespace Ast {
 
     private:
         /// \brief The list of all import statements in this module
-        CompoundStatement _globalStatementList;
+        Ptr<CompoundStatement> _globalStatementList;
     };
 
 }

@@ -5,7 +5,13 @@
 #include "compiler.hpp"
 
 Ast::Unit::Unit(const std::string& filename)
-    : _filename(filename), _rootNS("*root*"), _importNS("*import*"), _currentTypeRef(0), _currentImportedTypeRef(0), _uniqueIdx(0) {
+    : _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0), _uniqueIdx(0) {
+
+    Ast::Root& rootNS = addNode(new Ast::Root("*root*"));
+    _rootNS.set(rootNS);
+
+    Ast::Root& importNS = addNode(new Ast::Root("*import*"));
+    _importNS.set(importNS);
 }
 
 Ast::Unit::~Unit() {
@@ -29,7 +35,7 @@ const Ast::QualifiedTypeSpec* Ast::Unit::canCoerceX(const Ast::QualifiedTypeSpec
         int ridx = -1;
         int cidx = 0;
         for(Ast::CoerceList::List::const_iterator cit = coerceList.list().begin(); cit != coerceList.list().end(); ++cit, ++cidx) {
-            const Ast::TypeSpec& typeSpec = z::ref(*cit);
+            const Ast::TypeSpec& typeSpec = cit->get();
             if(z::ptr(typeSpec) == z::ptr(lts)) {
                 lidx = cidx;
             }
@@ -120,32 +126,32 @@ const Ast::QualifiedTypeSpec& Ast::Unit::coerce(const Ast::Token& pos, const Ast
 }
 
 Ast::Scope& Ast::Unit::enterScope(Ast::Scope& scope) {
-    _scopeStack.push_back(z::ptr(scope));
+    _scopeStack.push(scope);
     return scope;
 }
 
-Ast::Scope& Ast::Unit::leaveScope() {
-    Ast::Scope* s = _scopeStack.back();
-    assert(_scopeStack.size() > 0);
-    _scopeStack.pop_back();
-    return z::ref(s);
+Ast::Scope& Ast::Unit::enterScope(const Ast::Token& pos) {
+    Ast::Scope& scope = addNode(new Ast::Scope(pos, Ast::ScopeType::Local));
+    return enterScope(scope);
 }
 
-Ast::Scope& Ast::Unit::leaveScope(Ast::Scope& scope) {
-    Ast::Scope& s = leaveScope();
+void Ast::Unit::leaveScope() {
+    _scopeStack.pop();
+}
+
+void Ast::Unit::leaveScope(Ast::Scope& scope) {
+    Ast::Scope& s = _scopeStack.top();
     assert(z::ptr(s) == z::ptr(scope));
-    return s;
+    return leaveScope();
 }
 
 Ast::Scope& Ast::Unit::currentScope() {
-    assert(_scopeStack.size() > 0);
-    Ast::Scope* scope = _scopeStack.back();
-    return z::ref(scope);
+    return _scopeStack.top();
 }
 
 const Ast::VariableDefn* Ast::Unit::hasMember(const Ast::Scope& scope, const Ast::Token& name) const {
     for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
-        const Ast::VariableDefn& vref = z::ref(*it);
+        const Ast::VariableDefn& vref = it->get();
         if(vref.name().string() == name.string())
             return z::ptr(vref);
     }
@@ -158,7 +164,7 @@ const Ast::VariableDefn* Ast::Unit::getVariableDef(const std::string& filename, 
     ScopeList scopeList;
 
     for(Unit::ScopeStack::const_reverse_iterator it = _scopeStack.rbegin(); it != _scopeStack.rend(); ++it) {
-        Ast::Scope& scope = z::ref(*it);
+        Ast::Scope& scope = it->get();
 
         if(scope.type() == Ast::ScopeType::XRef) {
             scopeList.push_back(z::ptr(scope));
@@ -171,8 +177,6 @@ const Ast::VariableDefn* Ast::Unit::getVariableDef(const std::string& filename, 
                 break;
             case Ast::RefType::Param:
                 switch(scope.type()) {
-                    case Ast::ScopeType::Global:
-                        throw z::Exception("%s Internal error: Invalid vref %s: Param-Global\n", err(filename, name).c_str(), name.text());
                     case Ast::ScopeType::Member:
                         throw z::Exception("%s Internal error: Invalid vref %s: Param-Member\n", err(filename, name).c_str(), name.text());
                     case Ast::ScopeType::XRef:
@@ -188,8 +192,6 @@ const Ast::VariableDefn* Ast::Unit::getVariableDef(const std::string& filename, 
                 break;
             case Ast::RefType::Local:
                 switch(scope.type()) {
-                    case Ast::ScopeType::Global:
-                        throw z::Exception("%s Internal error: Invalid vref %s: Local-Global\n", err(filename, name).c_str(), name.text());
                     case Ast::ScopeType::Member:
                         throw z::Exception("%s Internal error: Invalid vref %s: Local-Member\n", err(filename, name).c_str(), name.text());
                     case Ast::ScopeType::XRef:
@@ -214,8 +216,8 @@ const Ast::VariableDefn* Ast::Unit::getVariableDef(const std::string& filename, 
                     // check if vref already exists in this scope
                     bool found = false;
                     for(Ast::Scope::List::const_iterator xit = scope.list().begin(); xit != scope.list().end(); ++xit) {
-                        const Ast::VariableDefn* xref = *xit;
-                        if(vref == xref) {
+                        const Ast::VariableDefn& xref = xit->get();
+                        if(vref == z::ptr(xref)) {
                             found = true;
                             break;
                         }
@@ -243,12 +245,12 @@ void Ast::Unit::leaveNamespace() {
 }
 
 Ast::Root& Ast::Unit::getRootNamespace(const int& level) {
-    return (level == 0)?_rootNS:_importNS;
+    return (level == 0)?rootNS():importNS();
 }
 
 inline const Ast::TypeSpec* Ast::Unit::hasImportRootTypeSpec(const int& level, const Ast::Token& name) const {
     if(level == 0) {
-        const Ast::TypeSpec* typeSpec = _importNS.hasChild<const Ast::TypeSpec>(name.string());
+        const Ast::TypeSpec* typeSpec = importNS().hasChild<const Ast::TypeSpec>(name.string());
         if(typeSpec)
             return typeSpec;
     }
@@ -561,7 +563,7 @@ void Ast::Unit::pushCallArgList(const Ast::Scope& in) {
         pushExpectedTypeSpec(ExpectedTypeSpec::etVarArg);
     } else {
         for(Ast::Scope::List::const_reverse_iterator it = in.list().rbegin(); it != in.list().rend(); ++it) {
-            const Ast::VariableDefn& def = z::ref(*it);
+            const Ast::VariableDefn& def = it->get();
             pushExpectedTypeSpec(ExpectedTypeSpec::etCallArg, def.qTypeSpec());
         }
     }

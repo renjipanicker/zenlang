@@ -71,7 +71,7 @@ inline const Ast::Expr& Ast::NodeFactory::getDefaultValue(const Ast::TypeSpec& t
         if(rit == z::ref(ed).list().end()) {
             throw z::Exception("%s empty enum type '%s'\n", err(unit().filename(), typeSpec.name()).c_str(), z::ref(ed).name().text());
         }
-        const Ast::VariableDefn& vref = z::ref(*rit);
+        const Ast::VariableDefn& vref = rit->get();
         const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, typeSpec, false);
         Ast::EnumMemberExpr& typeSpecMemberExpr = unit().addNode(new Ast::EnumMemberExpr(name, qTypeSpec, typeSpec, vref));
         return typeSpecMemberExpr;
@@ -257,7 +257,7 @@ void Ast::NodeFactory::aImportStatement(const Ast::Token& pos, const Ast::Access
         std::string filename;
         std::string sep = "";
         for(Ast::NamespaceList::List::const_iterator it = statement.list().begin(); it != statement.list().end(); ++it) {
-            const Ast::Token& name = z::ref(*it).name();
+            const Ast::Token& name = it->get().name();
             filename += sep;
             filename += name.text();
             sep = "/";
@@ -770,7 +770,7 @@ const Ast::TypeSpec* Ast::NodeFactory::aTypeSpec(const Ast::TypeSpec& TypeSpec) 
 const Ast::TemplateDefn* Ast::NodeFactory::aTemplateDefnTypeSpec(const Ast::TemplateDecl& typeSpec, const Ast::TemplateTypePartList& list) {
     Ast::TemplateDefn& templateDefn = unit().addNode(new Ast::TemplateDefn(unit().currentTypeSpec(), typeSpec.name(), Ast::DefinitionType::Final, typeSpec));
     for(Ast::TemplateTypePartList::List::const_iterator it = list.list().begin(); it != list.list().end(); ++it) {
-        const Ast::QualifiedTypeSpec& part = z::ref(*it);
+        const Ast::QualifiedTypeSpec& part = it->get();
         templateDefn.addType(part);
     }
     return z::ptr(templateDefn);
@@ -787,7 +787,9 @@ Ast::TemplateTypePartList* Ast::NodeFactory::aTemplateTypePartList(const Ast::Qu
 }
 
 Ast::UserDefinedTypeSpecStatement* Ast::NodeFactory::aUserDefinedTypeSpecStatement(const Ast::UserDefinedTypeSpec& typeSpec) {
+    trace("enter-udf\n");
     Ast::UserDefinedTypeSpecStatement& userDefinedTypeSpecStatement = unit().addNode(new Ast::UserDefinedTypeSpecStatement(typeSpec.pos(), typeSpec));
+    trace("leave-udf\n");
     return z::ptr(userDefinedTypeSpecStatement);
 }
 
@@ -1567,7 +1569,7 @@ Ast::MemberExpr* Ast::NodeFactory::aMemberVariableExpr(const Ast::Expr& expr, co
             }
 
             for(Ast::StructDefn::PropertyList::const_iterator it = sbi.get().propertyList().begin(); it != sbi.get().propertyList().end(); ++it) {
-                const Ast::PropertyDecl& pref = z::ref(*it);
+                const Ast::PropertyDecl& pref = it->get();
                 if(pref.name().string() == name.string()) {
                     const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, expr.qTypeSpec().isConst(), pref.qTypeSpec().typeSpec(), true);
                     Ast::MemberPropertyExpr& vdefExpr = unit().addNode(new Ast::MemberPropertyExpr(name, qTypeSpec, expr, pref));
@@ -1668,7 +1670,7 @@ const Ast::VariableDefn* Ast::NodeFactory::aEnterStructInitPart(const Ast::Token
 
     for(StructBaseIterator sbi(structDefn); sbi.hasNext(); sbi.next()) {
         for(Ast::Scope::List::const_iterator it = sbi.get().list().begin(); it != sbi.get().list().end(); ++it) {
-            const Ast::VariableDefn& vdef = z::ref(*it);
+            const Ast::VariableDefn& vdef = it->get();
             if(vdef.name().string() == name.string()) {
                 unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etStructInit, vdef.qTypeSpec());
                 return z::ptr(vdef);

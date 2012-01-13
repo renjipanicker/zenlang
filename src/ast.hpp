@@ -37,7 +37,6 @@ namespace Ast {
     struct ScopeType {
         /// \brief The type for any scope
         enum T {
-            Global,      /// global scope (unused for now)
             Member,      /// Member of enum or struct
             XRef,        /// XRef scope
             Param,       /// Param scope
@@ -77,31 +76,44 @@ namespace Ast {
     public:
         inline const Token& pos() const {return _pos;}
         inline void dump(const std::string& txt) const {
-            trace("%lu %s: refCount %lu, %s\n", (unsigned long)this, txt.c_str(), _refCount, z::type_name<Node>(*this).text());
+            trace("%s: %lu refCount %lu, ", txt.c_str(), (unsigned long)this, _refCount);
+            fflush(stdout);
+            std::string x = z::undecorate(typeid(*this).name());
+            trace("<%s>\n", x.c_str());
+            fflush(stdout);
         }
 
         inline void inc() const {
             ++_refCount;
-            dump("inc");
+            dump("Node::inc");
+            if((std::string(z::type_name<Node>(*this).text()) == "Ast::TypedefDecl") && (_refCount == 2)) {
+                trace("+++++++++\n");
+            }
         }
 
-        inline void dec() const {
+        inline size_t dec() const {
+            if((std::string(z::type_name<Node>(*this).text()) == "Ast::TypedefDecl") && (_refCount == 2)) {
+                trace("----------\n");
+            }
             --_refCount;
-            dump("dec");
+            dump("Node::dec");
+            return _refCount;
         }
 
         inline const size_t& refCount() const {return _refCount;}
 
     protected:
         inline Node(const Token& pos) : _pos(pos), _refCount(0) {
-            dump("ctor");
+            dump("Node::ctor");
         }
 
         virtual ~Node() {
-            dump("dtor");
-//            assert(_refCount == 0);
+            dump("Node::dtor");
+            assert(_refCount == 0);
         }
 
+    private:
+        inline Node(const Node& src) : _pos(src._pos), _refCount(0) {}
     private:
         const Token _pos;
         mutable size_t _refCount;
@@ -110,67 +122,72 @@ namespace Ast {
     //////////////////////////////////////////////////////////////////
     template <typename T>
     struct Ptr {
+        inline void dec() {
+            if(_value) {
+                z::ref(_value).dump("Ptr::dec");
+                size_t rc = z::ref(_value).dec();
+                if(rc == 0) {
+                    z::ref(_value).dump("**** deleting");
+                    delete _value;
+                }
+                _value = 0;
+            }
+        }
+
+        inline void inc(T& val) {
+            _value = z::ptr(val);
+            z::ref(_value).inc();
+            z::ref(_value).dump("Ptr::inc");
+        }
+
         inline T& get() const {
             return z::ref(_value);
         }
 
         inline void set(T& val) {
-            if(_value) {
-                z::ref(_value).dec();
-                _value = 0;
+            if(z::ptr(val) != _value) {
+                dec();
+                inc(val);
             }
-            _value = z::ptr(val);
-            z::ref(_value).inc();
         }
 
         inline Ptr() : _value(0) {
-//            trace("Ptr %lu\n", (unsigned long)_value);
         }
 
-        inline Ptr(T& value) : _value(z::ptr(value)) {
-            z::ref(_value).inc();
-//            trace("Ptr %lu\n", (unsigned long)_value);
+        inline Ptr(T& value) : _value(0) {
+            inc(value);
         }
 
         inline ~Ptr() {
-            if(_value)
-                z::ref(_value).dec();
-//            trace("~Ptr %lu\n", (unsigned long)_value);
-            _value = 0;
+            dec();
+        }
+        inline Ptr(const Ptr& src) : _value(0) {
+            inc(z::ref(src._value));
         }
     private:
-        inline Ptr(const Ptr& /*src*/) : _value(0) {}
         T* _value;
     };
 
     //////////////////////////////////////////////////////////////////
     template <typename T>
     struct Lst {
-        typedef std::vector<T*> List;
+        typedef std::vector< Ptr<T> > List;
         typedef typename List::const_iterator const_iterator;
         typedef typename List::const_reverse_iterator const_reverse_iterator;
-        inline size_t size() const {return _list.size();}
-
-        inline void add(T& val) {
-            val.inc();
-            _list.push_back(z::ptr(val));
-        }
 
         inline const_iterator begin() const {return _list.begin();}
         inline const_iterator end() const {return _list.end();}
         inline const_reverse_iterator rbegin() const {return _list.rbegin();}
         inline const_reverse_iterator rend() const {return _list.rend();}
-        inline T& front() const {return z::ref(_list.front());}
-        inline T& at(const size_t& idx) const {assert(idx < _list.size()); return z::ref(_list.at(idx));}
+        inline T& front() const {return _list.front().get();}
+        inline T& at(const size_t& idx) const {assert(idx < _list.size()); return _list.at(idx).get();}
+        inline size_t size() const {return _list.size();}
 
-        inline ~Lst() {
-            trace("Lst::dtor\n");
-            for(typename List::iterator it = _list.begin(); it != _list.end(); ++it) {
-                T& val = z::ref(*it);
-                val.dec();
-            }
-        }
+        inline void add(T& val) {_list.push_back(Ptr<T>(val));}
 
+        inline T& top() const {assert(_list.size() > 0); return _list.back().get();}
+        inline void push(T& val) {_list.push_back(Ptr<T>(val));}
+        inline void pop() {_list.pop_back();}
     private:
         List _list;
     };
@@ -279,9 +296,10 @@ namespace Ast {
     public:
         inline ChildTypeSpec(const TypeSpec& parent, const Token& name) : TypeSpec(name), _parent(parent) {}
     public:
-        inline const TypeSpec& parent() const {return _parent.get();}
+        inline const TypeSpec& parent() const {return _parent;}
     private:
-        const Ptr<const TypeSpec> _parent;
+        // parent already holds a ref to child, so using Ptr here will create a cyclic ref.
+        const TypeSpec& _parent;
     };
 
     class UserDefinedTypeSpec : public ChildTypeSpec {
@@ -601,7 +619,7 @@ namespace Ast {
 
         inline void visitChildren(const TypeSpec& typeSpec) {
             for(TypeSpec::ChildTypeSpecList::const_iterator it = typeSpec.childTypeSpecList().begin(); it != typeSpec.childTypeSpecList().end(); ++it) {
-                const TypeSpec& childTypeSpec = z::ref(*it);
+                const TypeSpec& childTypeSpec = it->get();
                 visitNode(childTypeSpec);
             }
         }
@@ -630,8 +648,8 @@ namespace Ast {
     //////////////////////////////////////////////////////////////////
     class NamespaceList : public Node {
     public:
-        inline NamespaceList(const Ast::Token& pos) : Node(pos) {}
         typedef Lst<Ast::Namespace> List;
+        inline NamespaceList(const Ast::Token& pos) : Node(pos) {}
         inline void addNamespace(Ast::Namespace& ns) {_list.add(ns);}
         inline const List& list() const {return _list;}
     private:
@@ -641,8 +659,8 @@ namespace Ast {
     //////////////////////////////////////////////////////////////////
     class CoerceList : public Node {
     public:
-        inline CoerceList(const Ast::Token& pos) : Node(pos) {}
         typedef Lst<const Ast::TypeSpec> List;
+        inline CoerceList(const Ast::Token& pos) : Node(pos) {}
         inline void addTypeSpec(const Ast::TypeSpec& typeSpec) {_list.add(typeSpec);}
         inline const List& list() const {return _list;}
     private:
@@ -1469,7 +1487,7 @@ namespace Ast {
 
         inline void visitList(const ExprList& exprList) {
             for(ExprList::List::const_iterator it = exprList.list().begin(); it != exprList.list().end(); ++it) {
-                const Expr& expr = z::ref(*it);
+                const Expr& expr = it->get();
                 sep();
                 visitNode(expr);
             }
@@ -2073,6 +2091,13 @@ namespace Ast {
 
     public:
         inline Project() : _name("main"), _oproject("cmake"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;"), _verbosity(Verbosity::Normal) {}
+        inline ~Project() {
+            for(ConfigList::iterator it = _configList.begin(); it != _configList.end(); ++it) {
+                Config* cfg = it->second;
+                delete cfg;
+            }
+        }
+
     public:
         inline Project& name(const std::string& val) { _name = val; return z::ref(this);}
         inline const std::string& name() const {return _name;}

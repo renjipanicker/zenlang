@@ -233,7 +233,7 @@ namespace {
             } else {
                 std::string sep;
                 for(Ast::ListList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-                    const Ast::ListItem& item = z::ref(*it);
+                    const Ast::ListItem& item = it->get();
                     _os << sep;
                     visitNode(item.valueExpr());
                     sep = ", ";
@@ -249,7 +249,7 @@ namespace {
             } else {
                 std::string sep;
                 for(Ast::DictList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-                    const Ast::DictItem& item = z::ref(*it);
+                    const Ast::DictItem& item = it->get();
                     _os << sep;
                     visitNode(item.valueExpr());
                     _os << ":";
@@ -266,7 +266,7 @@ namespace {
                 std::string sep;
                 _os << " @ {";
                 for(Ast::DictList::List::const_iterator it = node.dictExpr().list().list().begin(); it != node.dictExpr().list().list().end(); ++it) {
-                    const Ast::DictItem& item = z::ref(*it);
+                    const Ast::DictItem& item = it->get();
                     _os << sep;
                     visitNode(item.keyExpr());
                     _os << ":";
@@ -381,7 +381,7 @@ namespace {
         virtual void visit(const Ast::StructInstanceExpr& node) {
             _os << getTypeSpecName(node.structDefn(), GenMode::Import) << "(";
             for(Ast::StructInitPartList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-                const Ast::StructInitPart& part = z::ref(*it);
+                const Ast::StructInitPart& part = it->get();
                 _os << part.vdef().name().string() << ":";
                 visitNode(part.expr());
                 _os << ";";
@@ -394,7 +394,7 @@ namespace {
             _os << fname << "(";
             std::string sep;
             for(Ast::Scope::List::const_iterator it = function.xref().begin(); it != function.xref().end(); ++it) {
-                const Ast::VariableDefn& vref = z::ref(*it);
+                const Ast::VariableDefn& vref = it->get();
                 _os << sep << vref.name().string();
                 sep = ", ";
             }
@@ -500,7 +500,7 @@ namespace {
             if(canWrite(node.accessType())) {
                 fprintf(_fp, "%senum %s%s {\n", getAccessType(node.accessType()).c_str(), node.name().text(), getDefinitionType(node.defType()).c_str());
                 for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
-                    const Ast::VariableDefn& def = z::ref(*it);
+                    const Ast::VariableDefn& def = it->get();
                     fprintf(_fp, "    %s", def.name().text());
                     const Ast::ConstantIntExpr* cexpr = dynamic_cast<const Ast::ConstantIntExpr*>(z::ptr(def.initExpr()));
                     if((cexpr == 0) || (z::ref(cexpr).pos().string() != "#")) { /// \todo workaround, until enum-init implemented
@@ -569,7 +569,7 @@ namespace {
                 fprintf(_fp, "(");
                 std::string sep;
                 for(Ast::Scope::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
-                    const Ast::VariableDefn& vdef = z::ref(*it);
+                    const Ast::VariableDefn& vdef = it->get();
                     fprintf(_fp, "%s%s %s", sep.c_str(), getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Import).c_str(), vdef.name().text());
                     sep = ", ";
                 }
@@ -602,7 +602,7 @@ namespace {
                     fprintf(_fp, "(");
                     std::string sep;
                     for(Ast::Scope::List::const_iterator it = node.sig().out().begin(); it != node.sig().out().end(); ++it) {
-                        const Ast::VariableDefn& vdef = z::ref(*it);
+                        const Ast::VariableDefn& vdef = it->get();
                         fprintf(_fp, "%s%s %s", sep.c_str(), getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Import).c_str(), vdef.name().text());
                         sep = ", ";
                     }
@@ -619,7 +619,7 @@ namespace {
                 }
                 std::string sep = "";
                 for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
-                    const Ast::VariableDefn& vdef = z::ref(*it);
+                    const Ast::VariableDefn& vdef = it->get();
                     fprintf(_fp, "%s%s %s", sep.c_str(), getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Import).c_str(), vdef.name().text());
                     sep = ", ";
                 }
@@ -676,7 +676,7 @@ namespace {
 
             std::string sep = "";
             for(Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
-                const Ast::Token& name = z::ref(*it).name();
+                const Ast::Token& name = it->get().name();
                 fprintf(_fp, "%s%s", sep.c_str(), name.text());
                 sep = "::";
             }
@@ -692,7 +692,7 @@ namespace {
             std::string fqn;
             std::string sep;
             for(Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
-                const Ast::Namespace& ns = z::ref(*it);
+                const Ast::Namespace& ns = it->get();
                 fqn += sep;
                 fqn += ns.name().string();
             }
@@ -810,8 +810,8 @@ namespace {
 
         virtual void visit(const Ast::CompoundStatement& node) {
             INDENT;
-            for(Ast::CompoundStatement::List::const_iterator sit = node.list().begin(); sit != node.list().end(); ++sit) {
-                const Ast::Statement& s = z::ref(*sit);
+            for(Ast::CompoundStatement::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                const Ast::Statement& s = it->get();
                 z::ref(this).visitNode(s);
             }
         }
@@ -845,8 +845,8 @@ inline void ZenlangGenerator::Impl::run() {
     std::string basename = getBaseName(_module.unit().filename());
     OutputFile ofImp(_fpImp, basename + ".ipp");unused(ofImp);
 
-    for(Ast::CompoundStatement::List::const_iterator sit = _module.globalStatementList().list().begin(); sit != _module.globalStatementList().list().end(); ++sit) {
-        const Ast::Statement& s = z::ref(*sit);
+    for(Ast::CompoundStatement::List::const_iterator it = _module.globalStatementList().list().begin(); it != _module.globalStatementList().list().end(); ++it) {
+        const Ast::Statement& s = it->get();
         runStatementGenerator(_config, _fpImp, s);
     }
 }

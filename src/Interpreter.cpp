@@ -245,13 +245,13 @@ namespace {
     class InterpreterContext {
     public:
         inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
-            : _config(config), _unit("<cmd>"), _c(project, config), _global(pos, Ast::ScopeType::Local) {
+            : _config(config), _unit("<cmd>"), _c(project, config) {
 //            _c.initContext(_ctx, _module);
-            _unit.enterScope(_global);
+            _unit.enterScope(pos);
         }
 
         inline ~InterpreterContext() {
-            _unit.leaveScope(_global);
+            _unit.leaveScope();
         }
 
 //        inline void setVisitor(Ast::Statement::Visitor& visitor) {
@@ -284,7 +284,6 @@ namespace {
         const Ast::Config& _config;
         Ast::Unit _unit;
         Compiler _c;
-        Ast::Scope _global;
 
     private:
         typedef std::map<const Ast::VariableDefn*, const Ast::Expr*> ValueMap;
@@ -778,8 +777,8 @@ namespace {
         }
 
         virtual void visit(const Ast::CompoundStatement& node) {
-            for(Ast::CompoundStatement::List::const_iterator sit = node.list().begin(); sit != node.list().end(); ++sit) {
-                const Ast::Statement& s = z::ref(*sit);
+            for(Ast::CompoundStatement::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                const Ast::Statement& s = it->get();
                 z::ref(this).visitNode(s);
             }
         }
@@ -794,8 +793,8 @@ namespace {
 
     inline void InterpreterContext::process(const Ast::Module& module) {
         StatementGenerator gen(_config, z::ref(this));
-        for(Ast::CompoundStatement::List::const_iterator sit = module.globalStatementList().list().begin(); sit != module.globalStatementList().list().end(); ++sit) {
-            const Ast::Statement& s = z::ref(*sit);
+        for(Ast::CompoundStatement::List::const_iterator it = module.globalStatementList().list().begin(); it != module.globalStatementList().list().end(); ++it) {
+            const Ast::Statement& s = it->get();
             gen.visitNode(s);
         }
     }
@@ -805,8 +804,10 @@ namespace {
         Parser parser;
         Lexer lexer(parser);
         Ast::Module module(_unit);
+        trace(">>>>>>>>>>>>>>>\n");
         _c.compileString(module, lexer, cmd, 0, true);
         process(module);
+        trace("<<<<<<<<<<<<<<<\n");
     }
 
     inline void InterpreterContext::processFile(const std::string& filename) {
@@ -832,6 +833,7 @@ inline void Interpreter::Impl::run() {
     Ast::Token pos(0, 0, "");
     InterpreterContext ctx(_project, _config, pos);
     ctx.processCmd("typedef int native;");
+    ctx.processCmd("auto i = 0;");
     return;
 
     if(_config.sourceFileList().size() > 0) {
