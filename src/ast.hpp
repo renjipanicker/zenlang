@@ -177,28 +177,6 @@ namespace Ast {
 
     //////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////
-    class NodeList {
-    public:
-        inline NodeList() {}
-        inline ~NodeList() {}
-    public:
-        /// \brief Add an AST node to the unit
-        /// \param node A pointer to the node to add
-        /// \return A reference to the newly added node
-        template<typename T>
-        inline T& add(T* node) {_nodeList.push_back(node); return z::ref(node);}
-
-        /// \brief Return count of nodes in unit
-        /// \return Count of nodes in unit
-        inline size_t size() const {return _nodeList.size();}
-
-    private:
-        /// \brief The owner list of all nodes in this unit
-        std::list<const Node*> _nodeList;
-    };
-
-    //////////////////////////////////////////////////////////////////
-    //////////////////////////////////////////////////////////////////
     class ChildTypeSpec;
     class TypeSpec : public Node {
     public:

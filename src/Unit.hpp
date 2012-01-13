@@ -301,16 +301,20 @@ namespace Ast {
         BodyList _bodyList;
 
     public: // owning-list of all nodes
-        /// \brief Return the node list
-        /// \return The node list
-        inline NodeList& nodeList() {return _nodeList;}
-
-        template<typename T>
-        inline T& addNode(T* node) {return _nodeList.add(node);}
+        template<typename T> inline T& addNode(T* node) {_nodeList.push_back(node); return z::ref(node);}
 
     private:
-        /// \brief The list of nodes in this unit
-        NodeList _nodeList;
+        /// \brief The owner list of all nodes in this unit
+        std::list<const Node*> _nodeList;
+
+    public: // A unique numeric id for anonymous functions
+        /// \brief Return unique id
+        /// \return unique id
+        inline size_t uniqueIdx() {return ++_uniqueIdx;}
+
+    private:
+        /// \brief unique id value
+        size_t _uniqueIdx;
     };
 
     //////////////////////////////////////////////////////////////////

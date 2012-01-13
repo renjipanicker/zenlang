@@ -1721,7 +1721,7 @@ Ast::AnonymousFunctionExpr* Ast::NodeFactory::aAnonymousFunctionExpr(Ast::ChildF
 
 Ast::ChildFunctionDefn* Ast::NodeFactory::aEnterAnonymousFunction(const Ast::Function& function) {
     char namestr[128];
-    sprintf(namestr, "_anonymous_%lu", unit().nodeList().size());
+    sprintf(namestr, "_anonymous_%lu", unit().uniqueIdx());
     Ast::Token name(getToken().row(), getToken().col(), namestr);
 
     Ast::TypeSpec* ts = 0;
