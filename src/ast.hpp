@@ -57,77 +57,14 @@ namespace Ast {
     };
 
     //////////////////////////////////////////////////////////////////
-    class Token {
-    public:
-        inline Token(const int row, const int col, const std::string& text) : _row(row), _col(col), _text(text) {}
-        inline Token(const TokenData& token) : _row(token.row()), _col(token.col()), _text(token.text()) {}
-        inline const int& row() const {return _row;}
-        inline const int& col() const {return _col;}
-        inline const char* text() const {return _text.c_str();}
-        inline const std::string& string() const {return _text;}
-    private:
-        const int _row;
-        const int _col;
-        const std::string _text;
-    };
-
-    //////////////////////////////////////////////////////////////////
-    class Node {
-    public:
-        inline const Token& pos() const {return _pos;}
-        inline void dump(const std::string& txt) const {
-            trace("%s: %lu refCount %lu, ", txt.c_str(), (unsigned long)this, _refCount);
-            fflush(stdout);
-            std::string x = z::undecorate(typeid(*this).name());
-            trace("<%s>\n", x.c_str());
-            fflush(stdout);
-        }
-
-        inline void inc() const {
-            ++_refCount;
-            dump("Node::inc");
-            if((std::string(z::type_name<Node>(*this).text()) == "Ast::TypedefDecl") && (_refCount == 2)) {
-                trace("+++++++++\n");
-            }
-        }
-
-        inline size_t dec() const {
-            if((std::string(z::type_name<Node>(*this).text()) == "Ast::TypedefDecl") && (_refCount == 2)) {
-                trace("----------\n");
-            }
-            --_refCount;
-            dump("Node::dec");
-            return _refCount;
-        }
-
-        inline const size_t& refCount() const {return _refCount;}
-
-    protected:
-        inline Node(const Token& pos) : _pos(pos), _refCount(0) {
-            dump("Node::ctor");
-        }
-
-        virtual ~Node() {
-            dump("Node::dtor");
-            assert(_refCount == 0);
-        }
-
-    private:
-        inline Node(const Node& src) : _pos(src._pos), _refCount(0) {}
-    private:
-        const Token _pos;
-        mutable size_t _refCount;
-    };
-
-    //////////////////////////////////////////////////////////////////
     template <typename T>
     struct Ptr {
         inline void dec() {
             if(_value) {
-                z::ref(_value).dump("Ptr::dec");
                 size_t rc = z::ref(_value).dec();
+//                z::ref(_value).dump("P::dec", "-");
                 if(rc == 0) {
-                    z::ref(_value).dump("**** deleting");
+                    z::ref(_value).dump("P::del", " ");
                     delete _value;
                 }
                 _value = 0;
@@ -137,7 +74,7 @@ namespace Ast {
         inline void inc(T& val) {
             _value = z::ptr(val);
             z::ref(_value).inc();
-            z::ref(_value).dump("Ptr::inc");
+//            z::ref(_value).dump("P::inc", "+");
         }
 
         inline T& get() const {
@@ -151,6 +88,7 @@ namespace Ast {
             }
         }
 
+        inline bool empty() const {return (_value == 0);}
         inline Ptr() : _value(0) {
         }
 
@@ -162,34 +100,112 @@ namespace Ast {
             dec();
         }
         inline Ptr(const Ptr& src) : _value(0) {
-            inc(z::ref(src._value));
+            if(src._value)
+                inc(z::ref(src._value));
         }
     private:
         T* _value;
     };
 
     //////////////////////////////////////////////////////////////////
-    template <typename T>
+    template <typename T, typename ListT, typename ItemT>
     struct Lst {
-        typedef std::vector< Ptr<T> > List;
+        typedef ListT List;
         typedef typename List::const_iterator const_iterator;
         typedef typename List::const_reverse_iterator const_reverse_iterator;
+        typedef typename List::reverse_iterator reverse_iterator;
 
         inline const_iterator begin() const {return _list.begin();}
         inline const_iterator end() const {return _list.end();}
         inline const_reverse_iterator rbegin() const {return _list.rbegin();}
         inline const_reverse_iterator rend() const {return _list.rend();}
+        inline reverse_iterator rbegin() {return _list.rbegin();}
+        inline reverse_iterator rend() {return _list.rend();}
         inline T& front() const {return _list.front().get();}
         inline T& at(const size_t& idx) const {assert(idx < _list.size()); return _list.at(idx).get();}
         inline size_t size() const {return _list.size();}
-
-        inline void add(T& val) {_list.push_back(Ptr<T>(val));}
-
         inline T& top() const {assert(_list.size() > 0); return _list.back().get();}
-        inline void push(T& val) {_list.push_back(Ptr<T>(val));}
-        inline void pop() {_list.pop_back();}
-    private:
+
+        inline ItemT& add(T& val) {
+            _list.push_back(ItemT(val));
+            return _list.back();
+        }
+        inline void push(T& val) {
+            _list.push_back(ItemT(val));
+        }
+        inline void pop() {
+            _list.pop_back();
+        }
+    protected:
         List _list;
+    };
+
+    //////////////////////////////////////////////////////////////////
+    template <typename T>
+    struct SLst : public Lst<T, std::vector< Ptr<T> >, Ptr<T> > {
+    };
+
+    //////////////////////////////////////////////////////////////////
+    template <typename T>
+    struct WLst : public Lst<T, std::vector< T* >, T* > {
+    };
+
+    //////////////////////////////////////////////////////////////////
+    class Token {
+    public:
+        inline Token(const int row, const int col, const std::string& text) : _row(row), _col(col), _text(text) {}
+        inline Token(TokenData& td) : _row(td.row()), _col(td.col()), _text(td.text()) {TokenData::deleteT(td);}
+        inline const int& row() const {return _row;}
+        inline const int& col() const {return _col;}
+        inline const char* text() const {return _text.c_str();}
+        inline const std::string& string() const {return _text;}
+        static inline Token create(TokenData& token) {return Token(token.row(), token.col(), token.text());}
+    private:
+        const int _row;
+        const int _col;
+        const std::string _text;
+    };
+
+    //////////////////////////////////////////////////////////////////
+    class Node {
+    public:
+        inline const Token& pos() const {return _pos;}
+        inline void dump(const std::string& src, const std::string& act) const {
+//            trace("%lu %s refCount%s %lu, ", (unsigned long)this, src.c_str(), act.c_str(), _refCount);
+//            fflush(stdout);
+//            std::string x = z::undecorate(typeid(*this).name());
+//            trace("<%s>\n", x.c_str());
+//            fflush(stdout);
+        }
+
+        inline void inc() const {
+            ++_refCount;
+            dump("N::inc", "+");
+        }
+
+        inline size_t dec() const {
+            --_refCount;
+            dump("N::dec", "-");
+            return _refCount;
+        }
+
+        inline const size_t& refCount() const {return _refCount;}
+
+    protected:
+        inline Node(const Token& pos) : _pos(pos), _refCount(0) {
+            dump("N::ctr", "*");
+        }
+
+        virtual ~Node() {
+            dump("N::dtr", "~");
+            assert(_refCount == 0);
+        }
+
+    private:
+        inline Node(const Node& src) : _pos(src._pos), _refCount(0) {}
+    private:
+        const Token _pos;
+        mutable size_t _refCount;
     };
 
     //////////////////////////////////////////////////////////////////
@@ -199,8 +215,8 @@ namespace Ast {
     public:
         struct Visitor;
     private:
-        typedef Lst<ChildTypeSpec> ChildTypeSpecList;
-        typedef std::map<std::string, TypeSpec*> ChildTypeSpecMap;
+        typedef SLst<ChildTypeSpec> ChildTypeSpecList;
+        typedef std::map<std::string, ChildTypeSpec* > ChildTypeSpecMap;
     public:
         inline TypeSpec(const Token& name) : Node(name), _accessType(AccessType::Private), _name(name) {}
     public:
@@ -219,8 +235,8 @@ namespace Ast {
             //assert(it == _childTypeSpecMap.end());
             assert(z::ptr(typeSpec.parent()) == this);
 
-            _childTypeSpecList.add(typeSpec);
-            _childTypeSpecMap[typeSpec.name().text()] = z::ptr(typeSpec);
+            Ptr<ChildTypeSpec>& sptr = _childTypeSpecList.add(typeSpec);
+            _childTypeSpecMap[typeSpec.name().text()] = z::ptr(sptr.get());
         }
 
         template <typename T>
@@ -244,13 +260,14 @@ namespace Ast {
 
     class QualifiedTypeSpec : public Node {
     public:
-        inline QualifiedTypeSpec(const Token& pos, const bool& isConst, const TypeSpec& typeSpec, const bool& isRef) : Node(pos), _isConst(isConst), _typeSpec(typeSpec), _isRef(isRef) {}
+        inline QualifiedTypeSpec(const Token& pos, const bool& isConst, const TypeSpec& typeSpec, const bool& isRef)
+            : Node(pos), _isConst(isConst), _typeSpec(typeSpec), _isRef(isRef) {}
         inline const bool& isConst() const {return _isConst;}
-        inline const TypeSpec& typeSpec() const {return _typeSpec.get();}
+        inline const TypeSpec& typeSpec() const {return _typeSpec;}
         inline const bool& isRef() const {return _isRef;}
     private:
         const bool _isConst;
-        const Ptr<const TypeSpec> _typeSpec;
+        const TypeSpec& _typeSpec;
         const bool _isRef;
     };
 
@@ -269,7 +286,7 @@ namespace Ast {
 
     class Scope : public Node {
     public:
-        typedef Lst<const VariableDefn> List;
+        typedef SLst<const VariableDefn> List;
     public:
         inline Scope(const Token& pos, const ScopeType::T& type) : Node(pos), _type(type), _isTuple(true) {}
         inline Scope& addVariableDef(const VariableDefn& variableDef) {_list.add(variableDef); return z::ref(this);}
@@ -352,7 +369,7 @@ namespace Ast {
 
     class TemplateTypePartList : public Node {
     public:
-        typedef Lst<const QualifiedTypeSpec> List;
+        typedef SLst<const QualifiedTypeSpec> List;
     public:
         inline TemplateTypePartList(const Token& pos) : Node(pos) {}
     public:
@@ -364,18 +381,16 @@ namespace Ast {
 
     class TemplateDefn : public UserDefinedTypeSpec {
     public:
-        typedef Lst<const QualifiedTypeSpec> List;
+        inline TemplateDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const TemplateDecl& templateDecl, const TemplateTypePartList& list)
+            : UserDefinedTypeSpec(parent, name, defType), _templateDecl(templateDecl), _list(list) {}
     public:
-        inline TemplateDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const TemplateDecl& templateDecl) : UserDefinedTypeSpec(parent, name, defType), _templateDecl(templateDecl) {}
-    public:
-        inline void addType(const QualifiedTypeSpec& qTypeSpec) {_list.add(qTypeSpec);}
-        inline const List& list() const {return _list;}
-        inline const QualifiedTypeSpec& at(const size_t& idx) const {return _list.at(idx);}
+        inline const TemplateTypePartList::List& list() const {return _list.get().list();}
+        inline const QualifiedTypeSpec& at(const size_t& idx) const {return list().at(idx);}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Ptr<const TemplateDecl> _templateDecl;
-        List _list;
+        const TemplateDecl& _templateDecl;
+        const Ptr<const TemplateTypePartList> _list;
     };
 
     class EnumDefn : public UserDefinedTypeSpec {
@@ -431,7 +446,7 @@ namespace Ast {
 
     class StructDefn : public UserDefinedTypeSpec {
     public:
-        typedef Lst<const PropertyDecl> PropertyList;
+        typedef SLst<const PropertyDecl> PropertyList;
     protected:
         inline StructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, Ast::Scope& list, Ast::CompoundStatement& block) : UserDefinedTypeSpec(parent, name, defType), _list(list), _block(block) {}
     public:
@@ -575,7 +590,7 @@ namespace Ast {
 
     class EventDecl : public UserDefinedTypeSpec {
     public:
-        inline EventDecl(const TypeSpec& parent, const Ast::Token& name, const Ast::VariableDefn& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _in(in) {}
+        inline EventDecl(const TypeSpec& parent, const Ast::Token& name, const Ast::FunctionSig& sig, const Ast::VariableDefn& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _sig(sig), _in(in) {}
     public:
         inline const Ast::VariableDefn& in()  const {return _in.get();}
     public:
@@ -593,6 +608,7 @@ namespace Ast {
     private:
         virtual void visit(Visitor& visitor) const;
     private:
+        const Ptr<const Ast::FunctionSig> _sig;
         const Ptr<const Ast::VariableDefn> _in;
         Ptr<Ast::FunctionDecl> _funDecl;
         Ptr<Ast::FunctionDecl> _addDecl;
@@ -648,7 +664,7 @@ namespace Ast {
     //////////////////////////////////////////////////////////////////
     class NamespaceList : public Node {
     public:
-        typedef Lst<Ast::Namespace> List;
+        typedef SLst<Ast::Namespace> List;
         inline NamespaceList(const Ast::Token& pos) : Node(pos) {}
         inline void addNamespace(Ast::Namespace& ns) {_list.add(ns);}
         inline const List& list() const {return _list;}
@@ -659,7 +675,7 @@ namespace Ast {
     //////////////////////////////////////////////////////////////////
     class CoerceList : public Node {
     public:
-        typedef Lst<const Ast::TypeSpec> List;
+        typedef SLst<const Ast::TypeSpec> List;
         inline CoerceList(const Ast::Token& pos) : Node(pos) {}
         inline void addTypeSpec(const Ast::TypeSpec& typeSpec) {_list.add(typeSpec);}
         inline const List& list() const {return _list;}
@@ -684,7 +700,7 @@ namespace Ast {
 
     class ExprList : public Node {
     public:
-        typedef Lst<const Expr> List;
+        typedef SLst<const Expr> List;
     public:
         inline ExprList(const Token& pos) : Node(pos) {}
         inline ExprList& addExpr(const Expr& expr) {_list.add(expr); return z::ref(this);}
@@ -1027,15 +1043,17 @@ namespace Ast {
 
     class ListList : public Node {
     public:
-        typedef Lst<const ListItem> List;
+        typedef SLst<const ListItem> List;
     public:
         inline ListList(const Token& pos) : Node(pos) {}
     public:
+        inline ListList& dValueType(const QualifiedTypeSpec& val) { _dValueType.set(val); return z::ref(this);}
         inline ListList& valueType(const QualifiedTypeSpec& val) { _valueType.set(val); return z::ref(this);}
         inline const QualifiedTypeSpec& valueType() const {return _valueType.get();}
         inline ListList& addItem(const ListItem& item) { _list.add(item); return z::ref(this);}
         inline const List& list() const {return _list;}
     private:
+        Ptr<const QualifiedTypeSpec> _dValueType;
         Ptr<const QualifiedTypeSpec> _valueType;
         List _list;
     };
@@ -1062,10 +1080,12 @@ namespace Ast {
 
     class DictList : public Node {
     public:
-        typedef Lst<const DictItem> List;
+        typedef SLst<const DictItem> List;
     public:
         inline DictList(const Token& pos) : Node(pos) {}
     public:
+        inline DictList& dKeyType(const QualifiedTypeSpec& val) { _dKeyType.set(val); return z::ref(this);}
+        inline DictList& dValueType(const QualifiedTypeSpec& val) { _dValueType.set(val); return z::ref(this);}
         inline DictList& keyType(const QualifiedTypeSpec& val) { _keyType.set(val); return z::ref(this);}
         inline const QualifiedTypeSpec& keyType() const {return _keyType.get();}
         inline DictList& valueType(const QualifiedTypeSpec& val) { _valueType.set(val); return z::ref(this);}
@@ -1073,6 +1093,8 @@ namespace Ast {
         inline DictList& addItem(const DictItem& item) { _list.add(item); return z::ref(this);}
         inline const List& list() const {return _list;}
     private:
+        Ptr<const QualifiedTypeSpec> _dKeyType;
+        Ptr<const QualifiedTypeSpec> _dValueType;
         Ptr<const QualifiedTypeSpec> _keyType;
         Ptr<const QualifiedTypeSpec> _valueType;
         List _list;
@@ -1156,11 +1178,11 @@ namespace Ast {
     class TypeofTypeExpr : public TypeofExpr {
     public:
         inline TypeofTypeExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::QualifiedTypeSpec& typeSpec) : TypeofExpr(pos, qTypeSpec), _typeSpec(typeSpec) {}
-        inline const QualifiedTypeSpec& typeSpec() const {return _typeSpec;}
+        inline const QualifiedTypeSpec& typeSpec() const {return _typeSpec.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const Ast::QualifiedTypeSpec& _typeSpec;
+        const Ptr<const Ast::QualifiedTypeSpec> _typeSpec;
     };
 
     class TypeofExprExpr : public TypeofExpr {
@@ -1175,48 +1197,54 @@ namespace Ast {
 
     class TypecastExpr : public Expr {
     protected:
-        inline TypecastExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) : Expr(pos, qTypeSpec), _expr(expr) {}
+        inline TypecastExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const QualifiedTypeSpec& qSrcTypeSpec, const Ast::Expr& expr)
+            : Expr(pos, qTypeSpec), _qSrcTypeSpec(qSrcTypeSpec), _expr(expr) {}
     public:
         inline const Expr& expr() const {return _expr.get();}
     private:
+        const Ptr<const QualifiedTypeSpec> _qSrcTypeSpec;
         const Ptr<const Ast::Expr> _expr;
     };
 
     class StaticTypecastExpr : public TypecastExpr {
     public:
-        inline StaticTypecastExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) : TypecastExpr(pos, qTypeSpec, expr) {}
+        inline StaticTypecastExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const QualifiedTypeSpec& qSrcTypeSpec, const Ast::Expr& expr) : TypecastExpr(pos, qTypeSpec, qSrcTypeSpec, expr) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class DynamicTypecastExpr : public TypecastExpr {
     public:
-        inline DynamicTypecastExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr) : TypecastExpr(pos, qTypeSpec, expr) {}
+        inline DynamicTypecastExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const QualifiedTypeSpec& qSrcTypeSpec, const Ast::Expr& expr) : TypecastExpr(pos, qTypeSpec, qSrcTypeSpec, expr) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class TemplateDefnInstanceExpr : public Expr {
     protected:
-        inline TemplateDefnInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList& exprList) : Expr(pos, qTypeSpec), _templateDefn(templateDefn), _exprList(exprList) {}
+        inline TemplateDefnInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& srcTemplateDefn, const Ast::TemplateDefn& templateDefn, const ExprList& exprList)
+            : Expr(pos, qTypeSpec), _srcTemplateDefn(srcTemplateDefn), _templateDefn(templateDefn), _exprList(exprList) {}
     public:
         inline const TemplateDefn& templateDefn() const {return _templateDefn.get();}
         inline const ExprList& exprList() const {return _exprList.get();}
     private:
+        const Ptr<const Ast::TemplateDefn> _srcTemplateDefn;
         const Ptr<const Ast::TemplateDefn> _templateDefn;
         const Ptr<const ExprList> _exprList;
     };
 
     class PointerInstanceExpr : public TemplateDefnInstanceExpr {
     public:
-        inline PointerInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList& exprList) : TemplateDefnInstanceExpr(pos, qTypeSpec, templateDefn, exprList) {}
+        inline PointerInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& srcTemplateDefn, const Ast::TemplateDefn& templateDefn, const ExprList& exprList)
+            : TemplateDefnInstanceExpr(pos, qTypeSpec, srcTemplateDefn, templateDefn, exprList) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class ValueInstanceExpr : public TemplateDefnInstanceExpr {
     public:
-        inline ValueInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const ExprList& exprList) : TemplateDefnInstanceExpr(pos, qTypeSpec, templateDefn, exprList) {}
+        inline ValueInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& srcTemplateDefn, const Ast::TemplateDefn& templateDefn, const ExprList& exprList)
+            : TemplateDefnInstanceExpr(pos, qTypeSpec, srcTemplateDefn, templateDefn, exprList) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
@@ -1348,7 +1376,7 @@ namespace Ast {
 
     class StructInitPartList : public Node {
     public:
-        typedef Lst<const StructInitPart> List;
+        typedef SLst<const StructInitPart> List;
     public:
         inline StructInitPartList(const Token& pos) : Node(pos) {}
         inline const List& list() const {return _list;}
@@ -1637,30 +1665,30 @@ namespace Ast {
 
     class StructMemberStatement : public Statement {
     protected:
-        inline StructMemberStatement(const Token& pos, const StructDefn& structDefn, const VariableDefn& defn) : Statement(pos), _structDefn(structDefn), _defn(defn) {}
+        inline StructMemberStatement(const Token& pos, const StructDefn& structDefn) : Statement(pos), _structDefn(structDefn) {}
     public:
-        inline const StructDefn& structDefn() const {return _structDefn.get();}
-        inline const VariableDefn& defn() const {return _defn.get();}
+        inline const StructDefn& structDefn() const {return _structDefn;}
     private:
-        const Ptr<const StructDefn> _structDefn;
-        const Ptr<const VariableDefn> _defn;
+        // StructDefn._block holds a ref to this, so no need
+        // to hold a ref back to it.
+        const StructDefn& _structDefn;
     };
 
     class StructMemberVariableStatement : public StructMemberStatement {
     public:
-        inline StructMemberVariableStatement(const Token& pos, const StructDefn& structDefn, const VariableDefn& defn) :StructMemberStatement(pos, structDefn, defn) {}
+        inline StructMemberVariableStatement(const Token& pos, const StructDefn& structDefn, const VariableDefn& defn) :StructMemberStatement(pos, structDefn), _defn(defn) {}
+        inline const VariableDefn& defn() const {return _defn.get();}
     private:
         virtual void visit(Visitor& visitor) const;
+    private:
+        const Ptr<const VariableDefn> _defn;
     };
 
-    class StructInitStatement : public Statement {
+    class StructInitStatement : public StructMemberStatement {
     public:
-        inline StructInitStatement(const Token& pos, const StructDefn& structDefn) : Statement(pos), _structDefn(structDefn) {}
-        inline const StructDefn& structDefn() const {return _structDefn.get();}
+        inline StructInitStatement(const Token& pos, const StructDefn& structDefn) : StructMemberStatement(pos, structDefn) {}
     private:
         virtual void visit(Visitor& visitor) const;
-    private:
-        const Ptr<const StructDefn> _structDefn;
     };
 
     class EmptyStatement : public Statement {
@@ -1929,7 +1957,7 @@ namespace Ast {
 
     class CompoundStatement : public Statement {
     public:
-        typedef Lst<const Statement> List;
+        typedef SLst<const Statement> List;
     public:
         inline CompoundStatement(const Token& pos) : Statement(pos) {}
         inline CompoundStatement& addStatement(const Statement& statement) {_list.add(statement); return z::ref(this);}

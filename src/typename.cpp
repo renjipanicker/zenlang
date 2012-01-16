@@ -40,7 +40,7 @@ static NameType::T getRootName(const Ast::TypeSpec& typeSpec, const std::string&
             name += z::ref(templateDefn).name().string();
             name += "<";
             std::string sep;
-            for(Ast::TemplateDefn::List::const_iterator it = z::ref(templateDefn).list().begin(); it != z::ref(templateDefn).list().end(); ++it) {
+            for(Ast::TemplateTypePartList::List::const_iterator it = z::ref(templateDefn).list().begin(); it != z::ref(templateDefn).list().end(); ++it) {
                 const Ast::QualifiedTypeSpec& qTypeSpec = it->get();
                 name += sep;
                 name += getQualifiedTypeSpecName(qTypeSpec, mode);
@@ -90,7 +90,7 @@ static NameType::T getRootName(const Ast::TypeSpec& typeSpec, const std::string&
         }
         name += "<";
         std::string sep;
-        for(Ast::TemplateDefn::List::const_iterator it = z::ref(templateDefn).list().begin(); it != z::ref(templateDefn).list().end(); ++it) {
+        for(Ast::TemplateTypePartList::List::const_iterator it = z::ref(templateDefn).list().begin(); it != z::ref(templateDefn).list().end(); ++it) {
             const Ast::QualifiedTypeSpec& qTypeSpec = it->get();
             name += sep;
             if(typeSpec.name().string() == "pointer") {

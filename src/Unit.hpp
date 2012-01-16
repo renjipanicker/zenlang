@@ -12,24 +12,21 @@ namespace Ast {
     */
     class Unit {
     public:
-        typedef std::list<Ast::Namespace*> NamespaceStack;
-        typedef Lst<Ast::Scope> ScopeStack;
-        typedef std::list<Ast::TypeSpec*> TypeSpecStack;
-        typedef std::map<const Ast::TypeSpec*, const Ast::Expr*> DefaultValueList;
-        typedef std::list<const Body*> BodyList;
-        typedef std::list<const Ast::CoerceList*> CoerceListList;
+        typedef SLst<Ast::Namespace> NamespaceStack;
+        typedef SLst<Ast::Scope> ScopeStack;
+        typedef SLst<Ast::TypeSpec> TypeSpecStack;
+        typedef std::map<const Ast::TypeSpec*, Ptr<const Ast::Expr> > DefaultValueList;
+        typedef SLst<const Body> BodyList;
+        typedef SLst<const Ast::CoerceList> CoerceListList;
         typedef std::list<Token> NsPartList;
         typedef std::map<std::string, int> HeaderFileList;
 
     public:
-        Unit(const std::string& filename);
+        Unit();
         ~Unit();
 
-    public:
-        inline const std::string& filename() const {return _filename;}
-
     private:
-        const std::string _filename;
+        std::string _filename; /// \todo remove this
 
     public: // everything related to imported header files
         /// \brief Return the header file list
@@ -46,7 +43,7 @@ namespace Ast {
 
     public: // everything related to namespace stack
         inline NamespaceStack& namespaceStack() {return _namespaceStack;}
-        inline void addNamespace(Ast::Namespace& ns) {_namespaceStack.push_back(z::ptr(ns));}
+        inline void addNamespace(Ast::Namespace& ns) {_namespaceStack.push(ns);}
         void leaveNamespace();
     private:
         NamespaceStack _namespaceStack;
@@ -85,6 +82,16 @@ namespace Ast {
         /// It is not used for source file generation, only for reference.
         Ptr<Ast::Root> _importNS;
 
+    public: // everything related to anonymous namespace
+        /// \brief add to the anonymous namespace
+        inline void addAnonymous(Ast::ChildTypeSpec& ts) {_anonymousNS.get().addChild(ts);}
+        inline const Root& anonymousNS() const {return _anonymousNS.get();}
+
+    private:
+        /// \brief This NS contains all imported typespec's.
+        /// It is not used for source file generation, only for reference.
+        Ptr<Ast::Root> _anonymousNS;
+
     public: // everything related to default values
         /// \brief Return the default value list
         /// \return The default value  list
@@ -93,7 +100,7 @@ namespace Ast {
         /// \brief Add a default value to the unit
         /// \param typeSpec the typeSpec to add
         /// \param expr the expr to add
-        inline void addDefaultValue(const TypeSpec& typeSpec, const Expr& expr) {_defaultValueList[z::ptr(typeSpec)] = z::ptr(expr);}
+        inline void addDefaultValue(const TypeSpec& typeSpec, const Expr& expr) {_defaultValueList[z::ptr(typeSpec)].set(expr);}
 
     private:
         /// \brief The list of default values for types in this unit
@@ -119,7 +126,7 @@ namespace Ast {
 
         /// \brief Add a coercion list to the unit
         /// \param list the coercion list to add
-        inline void addCoercionList(const CoerceList& list) {_coerceListList.push_back(z::ptr(list));}
+        inline void addCoercionList(const CoerceList& list) {_coerceListList.add(list);}
 
     private:
         /// \brief The coercion list for all types in this unit
@@ -212,6 +219,8 @@ namespace Ast {
             }
             return z::ref(tTypeSpec);
         }
+
+    private:
         inline const Ast::TypeSpec* findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
 
     public:
@@ -241,16 +250,16 @@ namespace Ast {
 
             typedef std::vector<const Ast::QualifiedTypeSpec*> List;
 
-            inline ExpectedTypeSpec(const Type& type, const Ast::QualifiedTypeSpec* typeSpec) : _type(type), _typeSpec(typeSpec) {}
-            inline ExpectedTypeSpec(const Type& type) : _type(type), _typeSpec(0) {}
+            inline ExpectedTypeSpec(const Type& type, const Ast::QualifiedTypeSpec& typeSpec) : _type(type), _typeSpec(typeSpec) {}
+            inline ExpectedTypeSpec(const Type& type) : _type(type) {}
             inline const Type& type() const {return _type;}
-            inline bool hasTypeSpec() const {return (_typeSpec != 0);}
-            inline const Ast::QualifiedTypeSpec& typeSpec() const {return z::ref(_typeSpec);}
+            inline bool hasTypeSpec() const {return (!_typeSpec.empty());}
+            inline const Ast::QualifiedTypeSpec& typeSpec() const {return _typeSpec.get();}
         private:
             Type _type;
-            const Ast::QualifiedTypeSpec* _typeSpec;
+            const Ast::Ptr<const Ast::QualifiedTypeSpec> _typeSpec;
         };
-        typedef std::vector<ExpectedTypeSpec> ExpectedTypeSpecStack;
+        typedef std::list<ExpectedTypeSpec> ExpectedTypeSpecStack;
 
     public:
         const Ast::StructDefn* isStructExpected() const;
@@ -267,7 +276,7 @@ namespace Ast {
         void popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
         bool popExpectedTypeSpecOrAuto(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
         const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny() const;
-        const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec) const;
+        const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec) const;
 
     private:
         inline std::string getExpectedTypeName(const ExpectedTypeSpec::Type& exType);
@@ -296,7 +305,7 @@ namespace Ast {
 
         /// \brief Add a function implementation to the unit
         /// \param functionDefnBase the function implementation to add
-        inline void addBody(const Body& body) {_bodyList.push_back(z::ptr(body));}
+        inline void addBody(const Body& body) {_bodyList.add(body);}
 
     private:
         /// \brief The list of all function implementations in this unit
@@ -325,12 +334,12 @@ namespace Ast {
     */
     class Module {
     public:
-        inline Module(Unit& unit) : _unit(unit) {
+        inline Module(Unit& unit, const std::string& filename, const size_t& level) : _unit(unit), _filename(filename), _level(level) {
             Ast::CompoundStatement& gs = _unit.addNode(new Ast::CompoundStatement(Token(0, 0, "")));
             _globalStatementList.set(gs);
         }
     private:
-        inline Module(const Module& src) : _unit(src._unit) {}
+        inline Module(const Module& src) : _unit(src._unit), _filename(src._filename), _level(src._level) {}
 
     public:
         /// \brief Return the unit
@@ -340,6 +349,18 @@ namespace Ast {
     private:
         /// \brief Unit
         Ast::Unit& _unit;
+
+    public:
+        inline const std::string& filename() const {return _filename;}
+
+    private:
+        const std::string _filename;
+
+    public:
+        inline const size_t& level() const {return _level;}
+
+    private:
+        const size_t _level;
 
     public:
         /// \brief Return the statement list
@@ -358,5 +379,4 @@ namespace Ast {
         /// \brief The list of all import statements in this module
         Ptr<CompoundStatement> _globalStatementList;
     };
-
 }

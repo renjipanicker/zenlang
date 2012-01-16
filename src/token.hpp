@@ -28,7 +28,21 @@ public:
     inline const char* text() const {return (_lvalue?_lvalue:_text);}
 
 public:
-    static TokenData createT(const int& id, const int& row, const int& col, const char* start, const char* end) {
+    static std::string getText(const char* start, const char* end) {
+        std::string txt;
+
+        assert(start > 0);
+        assert(end > 0);
+        assert(start <= end);
+
+        for(const char* t = start; t < end; ++t) {
+            txt += *t;
+        }
+//        printf("getText: text: %s\n", txt.c_str());
+        return txt;
+    }
+
+    static TokenData createT(const int& id, const int& row, const int& col, const std::string& txt) {
 //        printf("createT(%d, %d): start: %lu, end %lu, end-start: %ld\n", row, col, (unsigned long)start, (unsigned long)end, end-start);
         TokenData td;
         td.init();
@@ -36,32 +50,30 @@ public:
         td._row = row;
         td._col = col;
 
-        assert(start > 0);
-        assert(end > 0);
-        assert(start <= end);
-
-        size_t len = end - start + 1;
         char* buf = 0;
-        if(len < Size) {
-            buf = td._text;
-        } else {
-            td._lvalue = new char[len + 1];
+        if(txt.size() >= Size) {
+            td._lvalue = new char[txt.size() + 1];
             buf = td._lvalue;
+        } else {
+            td._lvalue = 0;
+            buf = td._text;
         }
 
         char* s = buf;
-        for(const char* t = start; t < end; ++t, ++s) {
-            *s = *t;
+        for(std::string::const_iterator it = txt.begin(); it != txt.end(); ++it) {
+            *s = *it;
+            ++s;
         }
         *s = 0;
-//        printf("Token(%d, %d): id: %d: text: %s\n", row, col, id, buf);
+//        printf("createT(%d, %d): id: %d: %lu, text: %s\n", td.row(), td.col(), td.id(), (unsigned long)td._lvalue, td.text());
         return td;
     }
 
-    static inline void deleteT(TokenData& self) {
-        if(self._lvalue != 0) {
-            delete[] self._lvalue;
-            self._lvalue = 0;
+    static inline void deleteT(TokenData& td) {
+//        printf("deleteT(%d, %d): id: %d: %lu, text: %s\n", td.row(), td.col(), td.id(), (unsigned long)td._lvalue, td.text());
+        if(td._lvalue != 0) {
+            delete[] td._lvalue;
+            td._lvalue = 0;
         }
     }
 };

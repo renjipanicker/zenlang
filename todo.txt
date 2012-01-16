@@ -73,7 +73,6 @@ messagebox
 auto-detect if main is present
 auto-detect if header should be public or private
 in-params are const by default, locals are not
-lexical scanner for string input
 project builder
 project reader
 switch-typeof
@@ -101,6 +100,9 @@ fix indentation in generated cpp file
 *** Selectively decide which header files to make private.
 
 =========================
+../debug/zen -v ../../zenlang/tests/testBasic.zpp && cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
+
+valgrind --leak-check=full --track-origins=yes \
 ../debug/zen --verbose --gui \
 ../../zenlang/lib/gui/Widget.zpp ../../zenlang/lib/gui/WidgetImpl.cpp \
 ../../zenlang/lib/gui/Window.zpp ../../zenlang/lib/gui/WindowImpl.cpp \
@@ -111,7 +113,8 @@ fix indentation in generated cpp file
 ../../zenlang/lib/gui/Menu.zpp ../../zenlang/lib/gui/MenuImpl.cpp \
 ../../zenlang/lib/gui/MenuItem.zpp ../../zenlang/lib/gui/MenuItemImpl.cpp \
 ../../zenlang/lib/gui/WindowCreator.zpp \
-../../zenlang/tests/guiTest.zpp && cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
+../../zenlang/tests/guiTest.zpp \
+&& cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
 
 ==DONE==
 Remove block from unit
@@ -197,3 +200,4 @@ sizeof() function for types. (obsolete, no use case)
 "stlcpp" as output mode
 "cmake" as output project
 put everything in namespaces
+lexical scanner for string input

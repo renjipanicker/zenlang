@@ -31,10 +31,7 @@
 //    throw z::exception(z::string::creator("%{err} Stack overflow error").arg(z::any("err"), z::any(z::ref(pctx).err())).value());
 }
 
-%token_destructor {
-    unused(pctx);
-    TokenData::deleteT($$);
-}
+%token_destructor {unused(pctx);TokenData::deleteT($$);}
 
 %name ZenParser
 
@@ -348,6 +345,7 @@ rPreRoutineDefn(L) ::= rEnterRoutineDefn(routineDefn) rCompoundStatement(block).
 //-------------------------------------------------
 %type rEnterRoutineDefn {Ast::RoutineDefn*}
 rEnterRoutineDefn(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) rInParamsList(in) rDefinitionType(D). {L = z::ref(pctx).aEnterRoutineDefn(z::ref(out), name, z::ref(in), D);}
+
 rRoutineId(L) ::= ID(R). {L = R;}
 rRoutineId(L) ::= ROUTINE_TYPE(R). {L = R;}
 

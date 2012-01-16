@@ -842,7 +842,7 @@ private:
 
 inline void ZenlangGenerator::Impl::run() {
     Indent::init();
-    std::string basename = getBaseName(_module.unit().filename());
+    std::string basename = getBaseName(_module.filename());
     OutputFile ofImp(_fpImp, basename + ".ipp");unused(ofImp);
 
     for(Ast::CompoundStatement::List::const_iterator it = _module.globalStatementList().list().begin(); it != _module.globalStatementList().list().end(); ++it) {

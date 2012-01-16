@@ -15,6 +15,9 @@
 -->
   <highlighting>
     <list name="keywords">
+      <item> include </item>
+      <item> import </item>
+
       <item> routine </item>
       <item> function </item>
       <item> event </item>

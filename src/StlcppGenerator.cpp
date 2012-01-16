@@ -1068,6 +1068,17 @@ namespace {
             return (accessType == Ast::AccessType::Private)?_fs._fpSrc:_fs._fpHdr;
         }
 
+        inline FILE* fpDecl(const Ast::TypeSpec& node) const {
+            if(node.accessType() == Ast::AccessType::Parent) {
+                const Ast::ChildTypeSpec* child = dynamic_cast<const Ast::ChildTypeSpec*>(z::ptr(node));
+                if(!child) {
+                    throw z::Exception("Internal error: Invalid access type in typespec\n");
+                }
+                return fpDecl(z::ref(child).parent());
+            }
+            return (node.accessType() == Ast::AccessType::Private)?_fs._fpSrc:_fs._fpHdr;
+        }
+
         inline FILE* fpDefn() const {
             return _fs._fpSrc;
         }
@@ -1121,7 +1132,7 @@ namespace {
 
         virtual void visit(const Ast::UserDefinedTypeSpecStatement& node) {
             if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
-                TypeDeclarationGenerator(_config, _fs, fpDecl(node.typeSpec().accessType())).visitNode(node.typeSpec());
+                TypeDeclarationGenerator(_config, _fs, fpDecl(node.typeSpec())).visitNode(node.typeSpec());
             }
 
             if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDefn) {
@@ -1146,8 +1157,8 @@ namespace {
                 if(isPtr(node.defn().qTypeSpec().typeSpec())) {
                     pname = tname;
                 }
-                fprintf(fpDecl(node.structDefn().accessType()), "%s%s %s; /**/ ", Indent::get(), tname.c_str(), node.defn().name().text());
-                fprintf(fpDecl(node.structDefn().accessType()), "template <typename T> inline T& _%s(%s val) {%s = val; return z::ref(static_cast<T*>(this));}\n",
+                fprintf(fpDecl(node.structDefn()), "%s%s %s; /**/ ", Indent::get(), tname.c_str(), node.defn().name().text());
+                fprintf(fpDecl(node.structDefn()), "template <typename T> inline T& _%s(%s val) {%s = val; return z::ref(static_cast<T*>(this));}\n",
                         node.defn().name().text(), pname.c_str(), node.defn().name().text());
             }
         }
@@ -1155,16 +1166,16 @@ namespace {
         virtual void visit(const Ast::StructInitStatement& node) {
             if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
                 // default-ctor
-                fprintf(fpDecl(node.structDefn().accessType()), "%sexplicit inline %s()", Indent::get(), node.structDefn().name().text());
+                fprintf(fpDecl(node.structDefn()), "%sexplicit inline %s()", Indent::get(), node.structDefn().name().text());
                 std::string sep = " : ";
                 for(Ast::Scope::List::const_iterator it = node.structDefn().list().begin(); it != node.structDefn().list().end(); ++it) {
                     const Ast::VariableDefn& vdef = it->get();
-                    fprintf(fpDecl(node.structDefn().accessType()), "%s%s(", sep.c_str(), vdef.name().text());
-                    ExprGenerator(fpDecl(node.structDefn().accessType()), GenMode::Normal).visitNode(vdef.initExpr());
-                    fprintf(fpDecl(node.structDefn().accessType()), ")");
+                    fprintf(fpDecl(node.structDefn()), "%s%s(", sep.c_str(), vdef.name().text());
+                    ExprGenerator(fpDecl(node.structDefn()), GenMode::Normal).visitNode(vdef.initExpr());
+                    fprintf(fpDecl(node.structDefn()), ")");
                     sep = ", ";
                 }
-                fprintf(fpDecl(node.structDefn().accessType()), " {}\n");
+                fprintf(fpDecl(node.structDefn()), " {}\n");
             }
         }
 
@@ -1430,7 +1441,7 @@ private:
 
 inline void StlcppGenerator::Impl::run() {
     Indent::init();
-    std::string basename = getBaseName(_module.unit().filename());
+    std::string basename = getBaseName(_module.filename());
     OutputFile ofHdr(_fpHdr, basename + ".hpp");unused(ofHdr);
     OutputFile ofSrc(_fpSrc, basename + ".cpp");unused(ofSrc);
     FileSet fs(_fpHdr, _fpSrc);

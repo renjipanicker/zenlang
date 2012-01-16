@@ -31,10 +31,10 @@ inline std::string Compiler::findImport(const std::string& filename) {
     throw z::Exception("Cannot open include file '%s'\n", filename.c_str());
 }
 
-bool Compiler::compileFile(Ast::Module& module, Lexer& lexer, const std::string& filename, const int& level, const std::string& msg) {
+bool Compiler::compileFile(Ast::Module& module, const std::string& filename, const std::string& msg) {
     if(_project.verbosity() >= Ast::Project::Verbosity::Normal) {
         std::string indent = "   ";
-        for(int i = 0; i < level; ++i) {
+        for(size_t i = 0; i < module.level(); ++i) {
             indent += "  ";
         }
         indent += msg;
@@ -47,7 +47,9 @@ bool Compiler::compileFile(Ast::Module& module, Lexer& lexer, const std::string&
         throw z::Exception("Error opening file '%s'\n", filename.c_str());
     }
 
-    Ast::NodeFactory factory(module, z::ref(this), level);
+    Parser parser;
+    Lexer lexer(parser);
+    Ast::NodeFactory factory(module, z::ref(this));
     while(!is.eof()) {
         char buf[1025];
         memset(buf, 0, 1024);
@@ -58,27 +60,26 @@ bool Compiler::compileFile(Ast::Module& module, Lexer& lexer, const std::string&
     return true;
 }
 
-inline bool Compiler::parseFile(Ast::Module& module, const std::string& filename, const int& level, const std::string& msg) {
-    Parser parser;
-    Lexer lexer(parser);
-    return compileFile(module, lexer, filename, level, msg);
+inline bool Compiler::parseFile(Ast::Module& module, const std::string& msg) {
+    return compileFile(module, module.filename(), msg);
 }
 
-void Compiler::import(Ast::Module& module, const std::string &filename, const int& level) {
-    std::string ifilename = findImport(filename);
+void Compiler::import(Ast::Module& module) {
+    std::string ifilename = findImport(module.filename());
 
     // check if file is already imported
-    if(module.unit().headerFileList().find(filename) != module.unit().headerFileList().end()) {
+    if(module.unit().headerFileList().find(ifilename) != module.unit().headerFileList().end()) {
         return;
     }
 
     // if not, add it to list of files imported into this unit
-    module.unit().addheaderFile(filename);
-    parseFile(module, ifilename, level+1, "Importing");
+    module.unit().addheaderFile(ifilename);
+    compileFile(module, ifilename, "Importing");
 }
 
-void Compiler::initContext(Ast::Module& module) {
-    import(module, "core/core.ipp", 0);
+void Compiler::initContext(Ast::Unit& unit) {
+    Ast::Module module(unit, "core/core.ipp", 1);
+    import(module);
 }
 
 void Compiler::compile() {
@@ -87,11 +88,11 @@ void Compiler::compile() {
 
         std::string ext = getExtention(filename);
         if(_project.zppExt().find(ext) != std::string::npos) {
-            Ast::Unit unit(filename);
-            Ast::Module module(unit);
-            initContext(module);
+            Ast::Unit unit;
+            initContext(unit);
 
-            if(!parseFile(module, filename, 0, "Compiling"))
+            Ast::Module module(unit, filename, 0);
+            if(!compileFile(module, filename, "Compiling"))
                 throw z::Exception("Cannot open source file '%s'\n", filename.c_str());
 
             ZenlangGenerator zgenerator(_project, _config, module);
@@ -107,7 +108,7 @@ void Compiler::compile() {
     }
 }
 
-void Compiler::compileString(Ast::Module& module, Lexer& lexer, const std::string& data, const int& level, const bool& isEof) {
-    Ast::NodeFactory factory(module, z::ref(this), level);
+void Compiler::compileString(Ast::Module& module, Lexer& lexer, const std::string& data, const bool& isEof) {
+    Ast::NodeFactory factory(module, z::ref(this));
     lexer.push(factory, data.c_str(), data.size(), isEof);
 }

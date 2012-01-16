@@ -104,6 +104,9 @@ public function int testAdvancedExpr(const int& x, const MyStruct& myStruct, con
         return (4);
     }
 
+    auto a1 = typeof(MyStruct);
+    unused(a1);
+
     auto a = typeof(myStruct);
 //    if(a != typeof(MyStruct))  {
 //        return (5);
@@ -520,3 +523,18 @@ function testAutoInitStruct : test {
     unused(mas0, mas1);
     return (true);
 }
+
+// test case for compiler memory-leak when inner type holds a ref to an outer type
+struct MyOuterStruct {
+    typedef MyChildList MyOuterStruct;
+};
+
+// test case for compiler memory-leak when non-auto list member is assigned a typed-list value
+struct MyListStruct {
+    list<int > childList = [int];
+};
+
+// test case for compiler memory-leak when non-auto dict member is assigned a typed-dict value
+struct MyDictStruct {
+    dict<string, int > childList = [string:int];
+};

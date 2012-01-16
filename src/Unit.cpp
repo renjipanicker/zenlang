@@ -4,14 +4,15 @@
 #include "typename.hpp"
 #include "compiler.hpp"
 
-Ast::Unit::Unit(const std::string& filename)
-    : _filename(filename), _currentTypeRef(0), _currentImportedTypeRef(0), _uniqueIdx(0) {
-
+Ast::Unit::Unit() : _filename("<filename>"), _currentTypeRef(0), _currentImportedTypeRef(0), _uniqueIdx(0) {
     Ast::Root& rootNS = addNode(new Ast::Root("*root*"));
     _rootNS.set(rootNS);
 
     Ast::Root& importNS = addNode(new Ast::Root("*import*"));
     _importNS.set(importNS);
+
+    Ast::Root& anonymousNS = addNode(new Ast::Root("*anonymous*"));
+    _anonymousNS.set(anonymousNS);
 }
 
 Ast::Unit::~Unit() {
@@ -30,7 +31,7 @@ const Ast::QualifiedTypeSpec* Ast::Unit::canCoerceX(const Ast::QualifiedTypeSpec
     }
 
     for(Ast::Unit::CoerceListList::const_iterator it = coercionList().begin(); it != coercionList().end(); ++it) {
-        const Ast::CoerceList& coerceList = z::ref(*it);
+        const Ast::CoerceList& coerceList = it->get();
         int lidx = -1;
         int ridx = -1;
         int cidx = 0;
@@ -238,9 +239,9 @@ const Ast::VariableDefn* Ast::Unit::getVariableDef(const std::string& filename, 
 
 void Ast::Unit::leaveNamespace() {
     while(_namespaceStack.size() > 0) {
-        Ast::Namespace* ns = _namespaceStack.back();
-        leaveTypeSpec(z::ref(ns));
-        _namespaceStack.pop_back();
+        Ast::Namespace& ns = _namespaceStack.top();
+        leaveTypeSpec(ns);
+        _namespaceStack.pop();
     }
 }
 
@@ -285,20 +286,19 @@ inline const Ast::TypeSpec* Ast::Unit::findTypeSpec(const Ast::TypeSpec& parent,
 }
 
 Ast::TypeSpec& Ast::Unit::currentTypeSpec() const {
-    assert(_typeSpecStack.size() > 0);
-    return z::ref(_typeSpecStack.back());
+    return _typeSpecStack.top();
 }
 
 Ast::TypeSpec& Ast::Unit::enterTypeSpec(Ast::TypeSpec& typeSpec) {
-    _typeSpecStack.push_back(z::ptr(typeSpec));
-    return z::ref(_typeSpecStack.back());
+    _typeSpecStack.push(typeSpec);
+    return _typeSpecStack.top();
 }
 
 Ast::TypeSpec& Ast::Unit::leaveTypeSpec(Ast::TypeSpec& typeSpec) {
-    Ast::TypeSpec* ct = _typeSpecStack.back();
-    assert(ct == z::ptr(typeSpec));
-    _typeSpecStack.pop_back();
-    return z::ref(ct);
+    Ast::TypeSpec& ct = _typeSpecStack.top();
+    assert(z::ptr(ct) == z::ptr(typeSpec));
+    _typeSpecStack.pop();
+    return ct;
 }
 
 const Ast::TypeSpec* Ast::Unit::hasRootTypeSpec(const int& level, const Ast::Token& name) const {
@@ -351,7 +351,7 @@ inline Ast::Unit::ExpectedTypeSpec::Type Ast::Unit::getExpectedType(const Ast::T
 }
 
 void Ast::Unit::pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type, const Ast::QualifiedTypeSpec& qTypeSpec) {
-    _expectedTypeSpecStack.push_back(ExpectedTypeSpec(type, z::ptr(qTypeSpec)));
+    _expectedTypeSpecStack.push_back(ExpectedTypeSpec(type, qTypeSpec));
 }
 
 void Ast::Unit::pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type) {
@@ -401,9 +401,12 @@ const Ast::QualifiedTypeSpec* Ast::Unit::getExpectedTypeSpecIfAny() const {
     return z::ptr(ts);
 }
 
-const Ast::QualifiedTypeSpec& Ast::Unit::getExpectedTypeSpec(const Ast::QualifiedTypeSpec* qTypeSpec) const {
+const Ast::QualifiedTypeSpec& Ast::Unit::getExpectedTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec) const {
     const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny();
     if(ts == 0) {
+        if(qTypeSpec == 0) {
+            throw z::Exception("%s Empty expected type stack\n", err(_filename, pos).c_str());
+        }
         return z::ref(qTypeSpec);
     }
     return z::ref(ts);

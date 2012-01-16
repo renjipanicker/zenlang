@@ -4,6 +4,7 @@ include Button;
 include TextEdit;
 include Menu;
 include MenuItem;
+include Systray;
 include WindowCreator;
 
 function MyMain : main {

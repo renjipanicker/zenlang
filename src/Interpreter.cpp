@@ -5,7 +5,55 @@
 #include "typename.hpp"
 #include "compiler.hpp"
 
+//#define DBGMODE 1
+
 namespace {
+    class InterpreterContext {
+    public:
+        inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
+            : _config(config), _c(project, config) {
+#if !defined(DBGMODE)
+            _c.initContext(_unit);
+#endif
+            _unit.enterScope(pos);
+        }
+
+        inline ~InterpreterContext() {
+            _unit.leaveScope();
+        }
+
+        inline void reset() {
+        }
+
+        inline void processCmd(const std::string& cmd);
+        inline void processFile(const std::string& filename);
+
+        inline void addValue(const Ast::VariableDefn& key, const Ast::Expr* val) {
+            trace("InterpreterContext::addValue %lu\n", (unsigned long)val);
+            _valueMap[z::ptr(key)] =  val;
+        }
+
+        inline const Ast::Expr* getValue(const Ast::VariableDefn& key) {
+            ValueMap::iterator it = _valueMap.find(z::ptr(key));
+            if(it == _valueMap.end())
+                return 0;
+            trace("InterpreterContext::getValue %lu\n", (unsigned long)it->second);
+            return it->second;
+        }
+
+    private:
+        inline void process(const Ast::Module& module);
+
+    private:
+        const Ast::Config& _config;
+        Ast::Unit _unit;
+        Compiler _c;
+
+    private:
+        typedef std::map<const Ast::VariableDefn*, const Ast::Expr*> ValueMap;
+        ValueMap _valueMap;
+    };
+
     struct ValuePtr {
         inline ValuePtr() : _value(0) {trace("ValuePtr %lu\n", (unsigned long)_value);}
         inline ValuePtr(const Ast::Expr* value) : _value(value) {trace("ValuePtr %lu\n", (unsigned long)_value);}
@@ -240,54 +288,6 @@ namespace {
             throw z::Exception("Type mismatch\n");
         }
         virtual long runLong(const long& lhs) const = 0;
-    };
-
-    class InterpreterContext {
-    public:
-        inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
-            : _config(config), _unit("<cmd>"), _c(project, config) {
-//            _c.initContext(_ctx, _module);
-            _unit.enterScope(pos);
-        }
-
-        inline ~InterpreterContext() {
-            _unit.leaveScope();
-        }
-
-//        inline void setVisitor(Ast::Statement::Visitor& visitor) {
-//            _unit.setStatementVisitor(visitor);
-//        }
-
-        inline void reset() {
-        }
-
-        inline void processCmd(const std::string& cmd);
-        inline void processFile(const std::string& filename);
-
-        inline void addValue(const Ast::VariableDefn& key, const Ast::Expr* val) {
-            trace("InterpreterContext::addValue %lu\n", (unsigned long)val);
-            _valueMap[z::ptr(key)] =  val;
-        }
-
-        inline const Ast::Expr* getValue(const Ast::VariableDefn& key) {
-            ValueMap::iterator it = _valueMap.find(z::ptr(key));
-            if(it == _valueMap.end())
-                return 0;
-            trace("InterpreterContext::getValue %lu\n", (unsigned long)it->second);
-            return it->second;
-        }
-
-    private:
-        inline void process(const Ast::Module& module);
-
-    private:
-        const Ast::Config& _config;
-        Ast::Unit _unit;
-        Compiler _c;
-
-    private:
-        typedef std::map<const Ast::VariableDefn*, const Ast::Expr*> ValueMap;
-        ValueMap _valueMap;
     };
 
     class ExprGenerator : public Ast::Expr::Visitor {
@@ -803,18 +803,18 @@ namespace {
         std::cout << cmd << std::endl;
         Parser parser;
         Lexer lexer(parser);
-        Ast::Module module(_unit);
+        Ast::Module module(_unit, "<cmd>", 0);
         trace(">>>>>>>>>>>>>>>\n");
-        _c.compileString(module, lexer, cmd, 0, true);
-        process(module);
+        _c.compileString(module, lexer, cmd, true);
         trace("<<<<<<<<<<<<<<<\n");
+#if !defined(DBGMODE)
+        process(module);
+#endif
     }
 
     inline void InterpreterContext::processFile(const std::string& filename) {
-        Parser parser;
-        Lexer lexer(parser);
-        Ast::Module module(_unit);
-        _c.compileFile(module, lexer, filename, 0, "Loading");
+        Ast::Module module(_unit, filename, 0);
+        _c.compileFile(module, filename, "Loading");
         process(module);
     }
 }
@@ -832,9 +832,16 @@ inline void Interpreter::Impl::run() {
 
     Ast::Token pos(0, 0, "");
     InterpreterContext ctx(_project, _config, pos);
-    ctx.processCmd("typedef int native;");
-    ctx.processCmd("auto i = 0;");
+
+#if defined(DBGMODE)
+    const char* str =
+            "typedef type native;\n"
+            "typedef int native;\n"
+            "typeof(int);"
+        ;
+    ctx.processCmd(str);
     return;
+#endif
 
     if(_config.sourceFileList().size() > 0) {
         for(Ast::Config::PathList::const_iterator it = _config.sourceFileList().begin(); it != _config.sourceFileList().end(); ++it) {

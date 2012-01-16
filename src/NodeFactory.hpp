@@ -6,14 +6,14 @@ class Compiler;
 namespace Ast {
     class NodeFactory {
     public:
-        NodeFactory(Ast::Module& module, Compiler& compiler, const int& level);
+        NodeFactory(Ast::Module& module, Compiler& compiler);
         ~NodeFactory();
 
     public:
         inline const Unit& unit() const {return _module.unit();}
         inline Unit& unit() {return _module.unit();}
-        inline const std::string& filename() const {return unit().filename();}
-        inline const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const {return unit().hasRootTypeSpec(_level, name);}
+        inline const std::string& filename() const {return _module.filename();}
+        inline const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const {return unit().hasRootTypeSpec(_module.level(), name);}
     private:
         inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len);
         inline const Ast::Expr& getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
@@ -22,17 +22,17 @@ namespace Ast {
         inline const Ast::Token& getToken() const {return _lastToken;}
         inline Ast::Namespace& getUnitNamespace(const Ast::Token& name);
         inline Ast::ExprList& addExprList(const Ast::Token& pos);
-        inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
+        inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const TypeSpec& typeSpec, const bool& isRef);
         inline const Ast::QualifiedTypeSpec& getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name);
         inline Ast::Scope& addScope(const Ast::Token& pos, const Ast::ScopeType::T& type);
         inline Ast::VariableDefn& addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
         inline Ast::FunctionDecl& addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
-        inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& templateDefn, const Ast::Expr& expr);
+        inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& srcTemplateDefn, const Ast::TemplateDefn& templateDefn, const Ast::ExprList& exprList);
         inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
         inline const Ast::Expr& switchDictKeyValue(const Ast::Token& pos, const Unit::ExpectedTypeSpec::Type& popType, const Unit::ExpectedTypeSpec::Type& pushType, const size_t& idx, const Ast::Expr& initExpr);
         inline const Ast::QualifiedTypeSpec& getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function);
         inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
-        inline Ast::TemplateDefn& createTemplateDefn(const Ast::Token& pos, const std::string& name);
+        inline Ast::TemplateDefn& createTemplateDefn(const Ast::Token& pos, const std::string& name, const Ast::TemplateTypePartList& list);
 
     private:
         template <typename T> inline Ast::Expr& createBooleanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
@@ -44,7 +44,6 @@ namespace Ast {
     private:
         Ast::Module& _module;
         Compiler& _compiler;
-        const int _level;
         Ast::Token _lastToken;
 
     public:
@@ -261,7 +260,6 @@ namespace Ast {
         Ast::TypeofExprExpr*      aTypeofExprExpr(const Ast::Token& pos, const Ast::Expr& expr);
         Ast::TypecastExpr*        aTypecastExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr);
         Ast::PointerInstanceExpr* aPointerInstanceExpr(const Ast::Token& pos, const Ast::Expr& expr);
-        Ast::ValueInstanceExpr*   aValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr);
         Ast::ValueInstanceExpr*   aValueInstanceExpr(const Ast::Token& pos, const Ast::Expr& expr);
         Ast::TemplateDefnInstanceExpr* aTemplateDefnInstanceExpr(const Ast::Token& pos, const Ast::TemplateDefn& templateDefn, const Ast::ExprList& exprList);
         Ast::VariableRefExpr*     aVariableRefExpr(const Ast::Token& name);

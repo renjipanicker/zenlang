@@ -15,7 +15,8 @@ public:
     void reset();
 
 private:
-    TokenData token(const int& id);
+    std::string getText(const bool& rw);
+    TokenData token(const int& id, const bool& rw);
     void newLine();
     void dump(const std::string& x) const;
 
@@ -59,17 +60,24 @@ void Lexer::Impl::newLine() {
     _sol = _cursor;
 }
 
-TokenData Lexer::Impl::token(const int& id) {
+std::string Lexer::Impl::getText(const bool& rw) {
     if(_text > 0) {
         char* t = _text;
-        _text = 0;
-        return TokenData::createT(id, _row, _cursor-_sol, t, _cursor-1);
+        if(rw) {
+            _text = 0;
+        }
+        return TokenData::getText(t, _cursor-1);
     }
-    return TokenData::createT(id, _row, _cursor-_sol, _start, _cursor);
+    return TokenData::getText(_start, _cursor);
+}
+
+TokenData Lexer::Impl::token(const int& id, const bool& rw) {
+    std::string txt = getText(rw);
+    return TokenData::createT(id, _row, _cursor-_sol, txt);
 }
 
 void Lexer::Impl::send(Ast::NodeFactory& factory, const int& id) {
-    TokenData td = token(id);
+    TokenData td = token(id, true);
     _parser.feed(factory, td);
     _lastToken = td.id();
 }
@@ -107,22 +115,23 @@ inline bool Lexer::Impl::trySendId(Ast::NodeFactory& factory, const Ast::TypeSpe
 }
 
 inline void Lexer::Impl::sendId(Ast::NodeFactory& factory) {
-    Ast::Token td = token(0);
+    std::string txt = getText(false);
+    Ast::Token tok(0, 0, txt);
 
     if(_lastToken == ZENTOK_SCOPE) {
-        const Ast::TypeSpec* child = factory.unit().currentTypeRefHasChild(td);
+        const Ast::TypeSpec* child = factory.unit().currentTypeRefHasChild(tok);
         if(child) {
             if(trySendId(factory, child))
                 return;
         }
     }
 
-    if(trySendId(factory, factory.hasRootTypeSpec(td)))
+    if(trySendId(factory, factory.hasRootTypeSpec(tok)))
         return;
 
     for(int i = 0; reservedWords[i][0] != 0; ++i) {
         const char* res = reservedWords[i];
-        if(td.string() == res) {
+        if(tok.string() == res) {
             return send(factory, ZENTOK_RESERVED);
         }
     }
@@ -157,14 +166,14 @@ inline void Lexer::Impl::sendReturn(Ast::NodeFactory& factory) {
     const Ast::RootFunctionDefn* rfd = 0;
     const Ast::ChildFunctionDefn* cfd = 0;
     for(Ast::Unit::TypeSpecStack::const_reverse_iterator it = factory.unit().typeSpecStack().rbegin(); it != factory.unit().typeSpecStack().rend(); ++it) {
-        const Ast::TypeSpec* ts = *it;
-        if((rd = dynamic_cast<const Ast::RoutineDefn*>(ts)) != 0) {
+        const Ast::TypeSpec& ts = it->get();
+        if((rd = dynamic_cast<const Ast::RoutineDefn*>(z::ptr(ts))) != 0) {
             return send(factory, ZENTOK_RRETURN);
         }
-        if((rfd = dynamic_cast<const Ast::RootFunctionDefn*>(ts)) != 0) {
+        if((rfd = dynamic_cast<const Ast::RootFunctionDefn*>(z::ptr(ts))) != 0) {
             return send(factory, ZENTOK_FRETURN);
         }
-        if((cfd = dynamic_cast<const Ast::ChildFunctionDefn*>(ts)) != 0) {
+        if((cfd = dynamic_cast<const Ast::ChildFunctionDefn*>(z::ptr(ts))) != 0) {
             return send(factory, ZENTOK_FRETURN);
         }
     }
