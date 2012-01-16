@@ -95,10 +95,10 @@ namespace {
             return (it != _valueMap.end());
         }
 
-        inline const ValuePtr& getValue(const Ast::VariableDefn& key) {
+        inline const ValuePtr& getValue(const Ast::Token& pos, const Ast::VariableDefn& key) {
             ValueMap::iterator it = _valueMap.find(z::ptr(key));
             if(it == _valueMap.end()) {
-                throw z::Exception("Variable not found %s\n", key.name().text());
+                throw err(pos, "Variable not found %s\n", key.name().text());
             }
             const ValuePtr& val = it->second;
 //            trace("InterpreterContext::getValue %lu %s\n", z::pad(val.get()), val.str().c_str());
@@ -124,7 +124,7 @@ namespace {
                 long nv = runLong((long)lhs, (long)rhs);
                 return ValuePtr(new Ast::ConstantLongExpr(op, qTypeSpec, nv));
             }
-            throw z::Exception("Type mismatch\n");
+            throw err(op, "Type mismatch\n");
         }
         virtual long runLong(const long& lhs, const long& rhs) const = 0;
     };
@@ -192,7 +192,7 @@ namespace {
                 long nv = runLong((long)lhs, (long)rhs);
                 return ValuePtr(new Ast::ConstantLongExpr(op, qTypeSpec, nv));
             }
-            throw z::Exception("Type mismatch\n");
+            throw err(op, "Type mismatch\n");
         }
 
         inline ValuePtr assign(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
@@ -276,7 +276,7 @@ namespace {
                 long nv = runLong((long)lhs);
                 return ValuePtr(new Ast::ConstantLongExpr(op, qTypeSpec, nv));
             }
-            throw z::Exception("Type mismatch\n");
+            throw err(op, "Type mismatch\n");
         }
         virtual long runLong(const long& lhs) const = 0;
     };
@@ -329,7 +329,7 @@ namespace {
                 const Ast::Expr* pref = z::ptr(node.lhs());
                 const Ast::VariableRefExpr* vRefExpr = dynamic_cast<const Ast::VariableRefExpr*>(pref);
                 if(!vRefExpr) {
-                    throw z::Exception("LHS of assignment is not a variable reference\n");
+                    throw err(node.op(), "LHS of assignment is not a variable reference\n");
                 }
                 _ctx.addValue(z::ref(vRefExpr).vref(), rhs);
             } else {
@@ -559,7 +559,7 @@ namespace {
 
         virtual void visit(const Ast::VariableRefExpr& node) {
 //            trace("var-ref %s (%lu)\n", node.vref().name().text(), z::pad(node.vref()));
-            ValuePtr val = _ctx.getValue(node.vref());
+            ValuePtr val = _ctx.getValue(node.pos(), node.vref());
             push(val);
         }
 
@@ -804,7 +804,7 @@ private:
 inline void Interpreter::Impl::run() {
     printf("Entering interpretor mode\n");
 
-    Ast::Token pos(0, 0, "");
+    Ast::Token pos("", 0, 0, "");
     InterpreterContext ctx(_project, _config, pos);
 
 #if defined(DBGMODE)

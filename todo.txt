@@ -1,8 +1,7 @@
 interpreter
 error-handling
-Add filename to Token
-Framework for GUI unit test
-use stl i/o everywhere.
+framework for testing gui unit
+use stl i/o everywhere
 
 bug - validate type when de-referencing pointer<>
 bug - list/dict inside struct does not copy in cctor
@@ -10,8 +9,6 @@ bug - typecast operator should check if can coerce
 bug - gtk-textedit resizes parent window
 bug - multiple #includes in guiTest.cpp
 
-anchor
-menubar
 process
 application
 unicode-char
@@ -36,6 +33,8 @@ http
 database
 sql
 
+anchor
+menubar
 lineedit
 checkbox
 combobox
@@ -204,3 +203,5 @@ lexical scanner for string input
 change lexer to use std::string (obsolete, no use case)
 enum-member-statement(obsolete)
 rename GenName::Import and Normal to zenlang and stlcpp
+Add filename to Token
+Generate compiler error using token everywhere

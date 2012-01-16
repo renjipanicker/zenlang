@@ -164,14 +164,15 @@ namespace Ast {
     //////////////////////////////////////////////////////////////////
     class Token {
     public:
-        inline Token(const int row, const int col, const std::string& text) : _row(row), _col(col), _text(text) {}
-        inline Token(TokenData& td) : _row(td.row()), _col(td.col()), _text(td.text()) {TokenData::deleteT(td);}
+        inline Token(const std::string& filename, const int row, const int col, const std::string& text) : _filename(filename), _row(row), _col(col), _text(text) {}
+        inline Token(TokenData& td) : _filename(td.filename()), _row(td.row()), _col(td.col()), _text(td.text()) {TokenData::deleteT(td);}
+        inline const std::string& filename() const {return _filename;}
         inline const int& row() const {return _row;}
         inline const int& col() const {return _col;}
         inline const char* text() const {return _text.c_str();}
         inline const std::string& string() const {return _text;}
-        static inline Token create(TokenData& token) {return Token(token.row(), token.col(), token.text());}
     private:
+        const std::string _filename;
         const int _row;
         const int _col;
         const std::string _text;
@@ -634,7 +635,7 @@ namespace Ast {
 
     class Root : public RootTypeSpec {
     public:
-        inline Root(const std::string& name) : RootTypeSpec(Token(0, 0, name)) {}
+        inline Root(const std::string& name) : RootTypeSpec(Token("", 0, 0, name)) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };

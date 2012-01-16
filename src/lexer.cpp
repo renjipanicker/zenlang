@@ -16,7 +16,7 @@ public:
 
 private:
     std::string getText(const bool& rw);
-    TokenData token(const int& id, const bool& rw);
+    TokenData token(Ast::NodeFactory& factory, const int& id, const bool& rw);
     void newLine();
     void dump(const std::string& x) const;
 
@@ -71,13 +71,13 @@ std::string Lexer::Impl::getText(const bool& rw) {
     return TokenData::getText(_start, _cursor);
 }
 
-TokenData Lexer::Impl::token(const int& id, const bool& rw) {
+TokenData Lexer::Impl::token(Ast::NodeFactory& factory, const int& id, const bool& rw) {
     std::string txt = getText(rw);
-    return TokenData::createT(id, _row, _cursor-_sol, txt);
+    return TokenData::createT(factory.filename().c_str(), id, _row, _cursor-_sol, txt);
 }
 
 void Lexer::Impl::send(Ast::NodeFactory& factory, const int& id) {
-    TokenData td = token(id, true);
+    TokenData td = token(factory, id, true);
     _parser.feed(factory, td);
     _lastToken = td.id();
 }
@@ -116,7 +116,7 @@ inline bool Lexer::Impl::trySendId(Ast::NodeFactory& factory, const Ast::TypeSpe
 
 inline void Lexer::Impl::sendId(Ast::NodeFactory& factory) {
     std::string txt = getText(false);
-    Ast::Token tok(0, 0, txt);
+    Ast::Token tok(factory.filename().c_str(), 0, 0, txt);
 
     if(_lastToken == ZENTOK_SCOPE) {
         const Ast::TypeSpec* child = factory.unit().currentTypeRefHasChild(tok);
@@ -177,7 +177,8 @@ inline void Lexer::Impl::sendReturn(Ast::NodeFactory& factory) {
             return send(factory, ZENTOK_FRETURN);
         }
     }
-    throw z::Exception("Invalid return in lexer\n");
+    TokenData pos = token(factory, 0, false);
+    throw err(pos, "Invalid return in lexer\n");
 }
 
 inline void Lexer::Impl::reset() {

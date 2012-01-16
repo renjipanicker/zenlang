@@ -4,7 +4,7 @@
 #include "typename.hpp"
 
 namespace {
-    inline std::string getDefinitionType(const Ast::DefinitionType::T& defType) {
+    inline std::string getDefinitionType(const Ast::Token& pos, const Ast::DefinitionType::T& defType) {
         switch(defType) {
             case Ast::DefinitionType::Final:
                 return "";
@@ -13,10 +13,10 @@ namespace {
             case Ast::DefinitionType::Abstract:
                 return " abstract";
         }
-        throw z::Exception("Internal error: Unknown Definition Type '%d'\n", defType);
+        throw err(pos, "Internal error: Unknown Definition Type '%d'\n", defType);
     }
 
-    inline std::string getAccessType(const Ast::AccessType::T& accessType) {
+    inline std::string getAccessType(const Ast::Token& pos, const Ast::AccessType::T& accessType) {
         switch(accessType) {
             case Ast::AccessType::Private:
                 return "";
@@ -466,28 +466,28 @@ namespace {
 
         void visit(const Ast::TypedefDecl& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%stypedef %s%s;\n", getAccessType(node.accessType()).c_str(), node.name().text(), getDefinitionType(node.defType()).c_str());
+                fprintf(_fp, "%stypedef %s%s;\n", getAccessType(node.pos(), node.accessType()).c_str(), node.name().text(), getDefinitionType(node.pos(), node.defType()).c_str());
             }
             visitChildrenIndent(node);
         }
 
         void visit(const Ast::TypedefDefn& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%stypedef %s%s %s;\n", getAccessType(node.accessType()).c_str(), node.name().text(), getDefinitionType(node.defType()).c_str(), ZenlangNameGenerator().qtn(node.qTypeSpec()).c_str());
+                fprintf(_fp, "%stypedef %s%s %s;\n", getAccessType(node.pos(), node.accessType()).c_str(), node.name().text(), getDefinitionType(node.pos(), node.defType()).c_str(), ZenlangNameGenerator().qtn(node.qTypeSpec()).c_str());
             }
             visitChildrenIndent(node);
         }
 
         void visit(const Ast::TemplateDecl& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%stemplate <", getAccessType(node.accessType()).c_str());
+                fprintf(_fp, "%stemplate <", getAccessType(node.pos(), node.accessType()).c_str());
                 std::string sep;
                 for(Ast::TemplatePartList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                     const Ast::Token& token = *it;
                     fprintf(_fp, "%s%s\n", sep.c_str(), token.text());
                     sep = ", ";
                 }
-                fprintf(_fp, "> %s%s;\n", node.name().text(), getDefinitionType(node.defType()).c_str());
+                fprintf(_fp, "> %s%s;\n", node.name().text(), getDefinitionType(node.pos(), node.defType()).c_str());
             }
             visitChildrenIndent(node);
         }
@@ -498,7 +498,7 @@ namespace {
 
         void visit(const Ast::EnumDefn& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%senum %s%s {\n", getAccessType(node.accessType()).c_str(), node.name().text(), getDefinitionType(node.defType()).c_str());
+                fprintf(_fp, "%senum %s%s {\n", getAccessType(node.pos(), node.accessType()).c_str(), node.name().text(), getDefinitionType(node.pos(), node.defType()).c_str());
                 for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                     const Ast::VariableDefn& def = it->get();
                     fprintf(_fp, "    %s", def.name().text());
@@ -518,11 +518,11 @@ namespace {
 
         inline void visitStructDefn(const Ast::StructDefn& node, const Ast::StructDefn* base) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%sstruct %s", getAccessType(node.accessType()).c_str(), node.name().text());
+                fprintf(_fp, "%sstruct %s", getAccessType(node.pos(), node.accessType()).c_str(), node.name().text());
                 if(base) {
                     fprintf(_fp, " : %s", ZenlangNameGenerator().tn(z::ref(base)).c_str());
                 }
-                fprintf(_fp, "%s {\n", getDefinitionType(node.defType()).c_str());
+                fprintf(_fp, "%s {\n", getDefinitionType(node.pos(), node.defType()).c_str());
                 runStatementGenerator(_config, _fp, node.block());
                 fprintf(_fp, "};\n");
             }
@@ -530,7 +530,7 @@ namespace {
 
         void visit(const Ast::StructDecl& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%sstruct %s%s;\n", getAccessType(node.accessType()).c_str(), node.name().text(), getDefinitionType(node.defType()).c_str());
+                fprintf(_fp, "%sstruct %s%s;\n", getAccessType(node.pos(), node.accessType()).c_str(), node.name().text(), getDefinitionType(node.pos(), node.defType()).c_str());
             }
         }
 
@@ -545,26 +545,26 @@ namespace {
         void visit(const Ast::PropertyDeclRW& node) {
             if(canWrite(node.accessType())) {
                 fprintf(_fp, "%sproperty %s %s %s get set;\n",
-                        getAccessType(node.accessType()).c_str(),
+                        getAccessType(node.pos(), node.accessType()).c_str(),
                         ZenlangNameGenerator().qtn(node.qTypeSpec()).c_str(),
                         node.name().text(),
-                        getDefinitionType(node.defType()).c_str());
+                        getDefinitionType(node.pos(), node.defType()).c_str());
             }
         }
 
         void visit(const Ast::PropertyDeclRO& node) {
             if(canWrite(node.accessType())) {
                 fprintf(_fp, "%sproperty %s %s %s get;\n",
-                        getAccessType(node.accessType()).c_str(),
+                        getAccessType(node.pos(), node.accessType()).c_str(),
                         ZenlangNameGenerator().qtn(node.qTypeSpec()).c_str(),
                         node.name().text(),
-                        getDefinitionType(node.defType()).c_str());
+                        getDefinitionType(node.pos(), node.defType()).c_str());
             }
         }
 
         inline void visitRoutineImp(const Ast::Routine& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%sroutine %s ", getAccessType(node.accessType()).c_str(), ZenlangNameGenerator().qtn(node.outType()).c_str());
+                fprintf(_fp, "%sroutine %s ", getAccessType(node.pos(), node.accessType()).c_str(), ZenlangNameGenerator().qtn(node.outType()).c_str());
                 fprintf(_fp, "%s", node.name().text());
                 fprintf(_fp, "(");
                 std::string sep;
@@ -573,7 +573,7 @@ namespace {
                     fprintf(_fp, "%s%s %s", sep.c_str(), ZenlangNameGenerator().qtn(vdef.qTypeSpec()).c_str(), vdef.name().text());
                     sep = ", ";
                 }
-                fprintf(_fp, ")%s;\n", getDefinitionType(node.defType()).c_str());
+                fprintf(_fp, ")%s;\n", getDefinitionType(node.pos(), node.defType()).c_str());
             }
         }
 
@@ -594,7 +594,7 @@ namespace {
         inline void visitFunctionImp(const Ast::Function& node, const std::string& name, const bool& isEvent) {
             if((name.size() > 0) || (canWrite(node.accessType()))) {
                 if(!isEvent) {
-                    fprintf(_fp, "%s", getAccessType(node.accessType()).c_str());
+                    fprintf(_fp, "%s", getAccessType(node.pos(), node.accessType()).c_str());
                 }
 
                 fprintf(_fp, "function ");
@@ -623,7 +623,7 @@ namespace {
                     fprintf(_fp, "%s%s %s", sep.c_str(), ZenlangNameGenerator().qtn(vdef.qTypeSpec()).c_str(), vdef.name().text());
                     sep = ", ";
                 }
-                fprintf(_fp, ")%s;\n", getDefinitionType(node.defType()).c_str());
+                fprintf(_fp, ")%s;\n", getDefinitionType(node.pos(), node.defType()).c_str());
             }
         }
 
@@ -643,7 +643,7 @@ namespace {
 
         void visit(const Ast::EventDecl& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%sevent(%s %s)%s => ", getAccessType(node.accessType()).c_str(), ZenlangNameGenerator().qtn(node.in().qTypeSpec()).c_str(), node.in().name().text(), getDefinitionType(node.defType()).c_str());
+                fprintf(_fp, "%sevent(%s %s)%s => ", getAccessType(node.pos(), node.accessType()).c_str(), ZenlangNameGenerator().qtn(node.in().qTypeSpec()).c_str(), node.in().name().text(), getDefinitionType(node.pos(), node.defType()).c_str());
                 visitFunctionImp(node.handler(), node.name().string(), true);
             }
             visitChildrenIndent(node);

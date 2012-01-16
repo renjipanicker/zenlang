@@ -25,9 +25,6 @@ namespace Ast {
         Unit();
         ~Unit();
 
-    private:
-        std::string _filename; /// \todo remove this
-
     public: // everything related to imported header files
         /// \brief Return the header file list
         /// \return The header file list
@@ -161,7 +158,7 @@ namespace Ast {
 
         template <typename T> inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const std::string& extype) {
             if(z::ptr(parent) != _currentTypeRef) {
-                throw z::Exception("%s Internal error: %s parent mismatch '%s'\n", err(_filename, name).c_str(), extype.c_str(), name.text());
+                throw err(name, "Internal error: %s parent mismatch '%s'\n", extype.c_str(), name.text());
             }
             const T* td = z::ref(_currentTypeRef).hasChild<const T>(name.string());
             if(td) {
@@ -188,7 +185,7 @@ namespace Ast {
                 }
             }
 
-            throw z::Exception("%s %s type expected '%s'\n", err(_filename, name).c_str(), extype.c_str(), name.text());
+            throw err(name, "%s type expected '%s'\n", extype.c_str(), name.text());
         }
 
         template <typename T> inline const T* resetCurrentTypeRef(const T& typeSpec) {
@@ -211,11 +208,11 @@ namespace Ast {
         template <typename T> const T& getRootTypeSpec(const int& level, const Ast::Token &name) const {
             const Ast::TypeSpec* typeSpec = hasRootTypeSpec(level, name);
             if(!typeSpec) {
-                throw z::Exception("%s Unknown root type '%s'\n", err(_filename, name).c_str(), name.text());
+                throw err(name, "Unknown root type '%s'\n", name.text());
             }
             const T* tTypeSpec = dynamic_cast<const T*>(typeSpec);
             if(!tTypeSpec) {
-                throw z::Exception("%s Type mismatch '%s'\n", err(_filename, name).c_str(), name.text());
+                throw err(name, "Type mismatch '%s'\n", name.text());
             }
             return z::ref(tTypeSpec);
         }
@@ -279,7 +276,7 @@ namespace Ast {
         const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec) const;
 
     private:
-        inline std::string getExpectedTypeName(const ExpectedTypeSpec::Type& exType);
+        inline std::string getExpectedTypeName(const Ast::Token& pos, const ExpectedTypeSpec::Type& exType);
         inline ExpectedTypeSpec::Type getExpectedType(const Ast::Token& pos) const;
         inline const ExpectedTypeSpec& getExpectedTypeList(const Ast::Token& pos) const;
         inline const Ast::QualifiedTypeSpec& getExpectedTypeSpecEx(const Ast::Token& pos) const;
@@ -335,7 +332,7 @@ namespace Ast {
     class Module {
     public:
         inline Module(Unit& unit, const std::string& filename, const size_t& level) : _unit(unit), _filename(filename), _level(level) {
-            Ast::CompoundStatement& gs = _unit.addNode(new Ast::CompoundStatement(Token(0, 0, "")));
+            Ast::CompoundStatement& gs = _unit.addNode(new Ast::CompoundStatement(Token(_filename, 0, 0, "")));
             _globalStatementList.reset(gs);
         }
     private:

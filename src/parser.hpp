@@ -12,6 +12,5 @@ public:
     void done(Ast::NodeFactory& factory);
     void reset();
 private:
-    Ast::NodeFactory* _factory;
     void* _parser;
 };

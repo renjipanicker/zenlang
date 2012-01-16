@@ -2,14 +2,19 @@
 
 #include "ast.hpp"
 
-inline std::string err(const std::string& filename, const Ast::Token& token) {
+inline z::Exception err(const Ast::Token& token, const char* fmt, ...) {
+    va_list vlist;
+    va_start(vlist, fmt);
+    std::string txt = z::ssprintfv(fmt, vlist);
+    va_end(vlist);
+
     std::stringstream msg;
 #ifdef _WIN32
     // MSVC style error message
-    msg << filename << "(" << token.row() << ", " << token.col() << "):";
+    msg << token.filename() << "(" << token.row() << ", " << token.col() << "):" << txt;
 #else
     // GCC style error message, or default.
-    msg << filename << ":" << token.row() << ":" << token.col() << ": error:";
+    msg << token.filename() << ":" << token.row() << ":" << token.col() << ": error:" << txt;
 #endif
-    return msg.str();
+    return z::Exception(msg.str());
 }

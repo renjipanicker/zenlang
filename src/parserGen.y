@@ -16,7 +16,7 @@
 %token_prefix ZENTOK_
 
 %syntax_error {
-    throw z::Exception("%s Syntax error at token: %d (%s)\n", err(z::ref(pctx).filename(), TOKEN).c_str(), TOKEN.id(), TOKEN.text());
+    throw err(TOKEN, "Syntax error at token: %d (%s)\n", TOKEN.id(), TOKEN.text());
 }
 
 %parse_accept {
