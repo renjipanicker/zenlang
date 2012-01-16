@@ -8,6 +8,63 @@
 //#define DBGMODE 1
 
 namespace {
+    struct ValuePtr {
+        inline ValuePtr() {}
+        inline ValuePtr(const Ast::Expr* value) : _value(z::ref(value)) {}
+        inline ~ValuePtr() {}
+
+        inline void reset(const ValuePtr& val) {
+            _value.reset(val.get());
+        }
+
+        template <typename T> inline bool check() const {
+            return _value.check<T>();
+        }
+
+        template <typename T> inline const T& value() const {
+            return _value.getT<T>();
+        }
+
+        inline const Ast::Expr& get() const {
+            return _value.get();
+        }
+
+        template <typename T> inline operator T() const;
+
+        inline bool isLong() const;
+        inline bool isTrue() const;
+
+        virtual std::string str() const {
+            std::string estr = ZenlangGenerator::convertExprToString(_value.get());
+            return estr;
+        }
+
+        inline ValuePtr(const ValuePtr& src) : _value(src._value) {}
+    private:
+        Ast::Ptr<const Ast::Expr> _value;
+    };
+
+    template <> inline ValuePtr::operator long() const {
+        assert(isLong());
+        const Ast::ConstantLongExpr& val = value<Ast::ConstantLongExpr>();
+        return val.value();
+    }
+
+    inline bool ValuePtr::isLong() const {
+        if(check<Ast::ConstantLongExpr>())
+            return true;
+        return false;
+    }
+
+    inline bool ValuePtr::isTrue() const {
+        const ValuePtr& This = z::ref(this);
+        if(check<Ast::ConstantLongExpr>()) {
+            if((long)This)
+                return true;
+        }
+        return false;
+    }
+
     class InterpreterContext {
     public:
         inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
@@ -28,17 +85,24 @@ namespace {
         inline void processCmd(const std::string& cmd);
         inline void processFile(const std::string& filename);
 
-        inline void addValue(const Ast::VariableDefn& key, const Ast::Expr* val) {
-            trace("InterpreterContext::addValue %lu\n", (unsigned long)val);
-            _valueMap[z::ptr(key)] =  val;
+        inline void addValue(const Ast::VariableDefn& key, const ValuePtr& val) {
+//            trace("InterpreterContext::addValue %lu, %s\n", z::pad(val.get()), val.str().c_str());
+            _valueMap[z::ptr(key)].reset(val);
         }
 
-        inline const Ast::Expr* getValue(const Ast::VariableDefn& key) {
+        inline bool hasValue(const Ast::VariableDefn& key) {
             ValueMap::iterator it = _valueMap.find(z::ptr(key));
-            if(it == _valueMap.end())
-                return 0;
-            trace("InterpreterContext::getValue %lu\n", (unsigned long)it->second);
-            return it->second;
+            return (it != _valueMap.end());
+        }
+
+        inline const ValuePtr& getValue(const Ast::VariableDefn& key) {
+            ValueMap::iterator it = _valueMap.find(z::ptr(key));
+            if(it == _valueMap.end()) {
+                throw z::Exception("Variable not found %s\n", key.name().text());
+            }
+            const ValuePtr& val = it->second;
+//            trace("InterpreterContext::getValue %lu %s\n", z::pad(val.get()), val.str().c_str());
+            return val;
         }
 
     private:
@@ -50,88 +114,15 @@ namespace {
         Compiler _c;
 
     private:
-        typedef std::map<const Ast::VariableDefn*, const Ast::Expr*> ValueMap;
+        typedef std::map<const Ast::VariableDefn*, ValuePtr > ValueMap;
         ValueMap _valueMap;
     };
 
-    struct ValuePtr {
-        inline ValuePtr() : _value(0) {trace("ValuePtr %lu\n", (unsigned long)_value);}
-        inline ValuePtr(const Ast::Expr* value) : _value(value) {trace("ValuePtr %lu\n", (unsigned long)_value);}
-        inline ~ValuePtr() {trace("~ValuePtr %lu\n", (unsigned long)_value); delete _value;}
-
-        inline void reset(const Ast::Expr* value) {
-            assert(_value == 0);
-            _value = value;
-        }
-
-        template <typename T> inline bool check() const {
-            return (dynamic_cast<const T*>(_value) != 0);
-        }
-
-        template <typename T>
-        inline const T& value() const {
-            assert(_value != 0);
-            return z::ref(dynamic_cast<const T*>(_value));
-        }
-
-        template <typename T> inline operator T() const {
-            return value<T>();
-        }
-
-        inline bool isLong() const {
-            if(check<Ast::ConstantLongExpr>())
-                return true;
-            return false;
-        }
-
-        inline bool isTrue() const;
-
-        virtual std::string str() const {
-            assert(_value != 0);
-            std::string estr = ZenlangGenerator::convertExprToString(z::ref(_value));
-            return estr;
-        }
-
-        static inline const Ast::Expr* clone(const Ast::Expr* value);
-        inline const Ast::Expr* clone() const;
-    private:
-        inline ValuePtr(const ValuePtr& src) : _value(0) {}
-        const Ast::Expr* _value;
-    };
-
-    template <> inline ValuePtr::operator long() const {
-        assert(isLong());
-        const Ast::ConstantLongExpr& val = value<Ast::ConstantLongExpr>();
-        return val.value();
-    }
-
-    inline bool ValuePtr::isTrue() const {
-        const ValuePtr& This = z::ref(this);
-        if(check<Ast::ConstantLongExpr>()) {
-            if((long)This)
-                return true;
-        }
-        return false;
-    }
-
-    inline const Ast::Expr* ValuePtr::clone(const Ast::Expr* value) {
-        assert(value != 0);
-        const Ast::ConstantLongExpr* le = dynamic_cast<const Ast::ConstantLongExpr*>(value);
-        if(le) {
-            return new Ast::ConstantLongExpr(z::ref(le).pos(), z::ref(le).qTypeSpec(), z::ref(le).value());
-        }
-        throw z::Exception("Cloning unknown type %s\n", getQualifiedTypeSpecName(z::ref(value).qTypeSpec(), GenMode::Import).c_str());
-    }
-
-    inline const Ast::Expr* ValuePtr::clone() const {
-        return clone(_value);
-    }
-
     struct BooleanOperator {
-        inline const Ast::Expr* run(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+        inline ValuePtr run(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong() && rhs.isLong()) {
                 long nv = runLong((long)lhs, (long)rhs);
-                return new Ast::ConstantLongExpr(op, qTypeSpec, nv);
+                return ValuePtr(new Ast::ConstantLongExpr(op, qTypeSpec, nv));
             }
             throw z::Exception("Type mismatch\n");
         }
@@ -196,16 +187,16 @@ namespace {
     };
 
     struct BinaryOperator {
-        inline const Ast::Expr* run(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+        inline ValuePtr run(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong() && rhs.isLong()) {
                 long nv = runLong((long)lhs, (long)rhs);
-                return new Ast::ConstantLongExpr(op, qTypeSpec, nv);
+                return ValuePtr(new Ast::ConstantLongExpr(op, qTypeSpec, nv));
             }
             throw z::Exception("Type mismatch\n");
         }
 
-        inline const Ast::Expr* assign(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
-            const Ast::Expr* rv = run(lhs, rhs, op, qTypeSpec);
+        inline ValuePtr assign(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+            ValuePtr rv = run(lhs, rhs, op, qTypeSpec);
             return rv;
         }
 
@@ -280,10 +271,10 @@ namespace {
     };
 
     struct UnaryOperator {
-        inline const Ast::Expr* run(ValuePtr& lhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
+        inline ValuePtr run(ValuePtr& lhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong()) {
                 long nv = runLong((long)lhs);
-                return new Ast::ConstantLongExpr(op, qTypeSpec, nv);
+                return ValuePtr(new Ast::ConstantLongExpr(op, qTypeSpec, nv));
             }
             throw z::Exception("Type mismatch\n");
         }
@@ -292,27 +283,30 @@ namespace {
 
     class ExprGenerator : public Ast::Expr::Visitor {
     private:
-        typedef std::list<const Ast::Expr*> Stack;
+        typedef std::list<ValuePtr> Stack;
         Stack _stack;
     private:
-        inline void push(const Ast::Expr* value) {
-            trace("ExprGenerator::push %lu\n", (unsigned long)value);
-            _stack.push_back(value);
+        inline void push(const ValuePtr& val) {
+//            trace("ExprGenerator::push %lu, %s\n", z::pad(val.get()), val.str().c_str());
+            _stack.push_back(val);
         }
 
-        inline void pop(ValuePtr& ptr) {
-            assert(_stack.size() > 0);
-            const Ast::Expr* val = _stack.back();
+        inline ValuePtr pop() {
+            ValuePtr val = _stack.back();
             _stack.pop_back();
-            trace("ExprGenerator::pop %lu\n", (unsigned long)val);
-            ptr.reset(val);
+//            trace("ExprGenerator::pop %lu, %s\n", z::pad(val.get()), val.str().c_str());
+            return val;
+        }
+
+    public:
+        inline ValuePtr evaluate(const Ast::Expr& expr) {
+            visitNode(expr);
+            return pop();
         }
 
     private:
         virtual void visit(const Ast::ConditionalExpr& node) {
-            visitNode(node.lhs());
-            ValuePtr lhs;
-            pop(lhs);
+            ValuePtr lhs = evaluate(node.lhs());
 
             if(lhs.isTrue()) {
                 visitNode(node.rhs1());
@@ -322,28 +316,22 @@ namespace {
         }
 
         inline void visitBoolean(const Ast::BinaryExpr& node, const BooleanOperator& op) {
-            visitNode(node.lhs());
-            ValuePtr lhs;
-            pop(lhs);
-
-            visitNode(node.rhs());
-            ValuePtr rhs;
-            pop(rhs);
-
+            ValuePtr lhs = evaluate(node.lhs());
+            ValuePtr rhs = evaluate(node.rhs());
             push(op.run(lhs, rhs, node.op(), node.qTypeSpec()));
         }
 
         inline void visitBinary(const Ast::BinaryExpr& node, const BinaryOperator& op, const bool& assign = false) {
-            visitNode(node.lhs());
-            ValuePtr lhs;
-            pop(lhs);
-
-            visitNode(node.rhs());
-            ValuePtr rhs;
-            pop(rhs);
-
+            ValuePtr lhs = evaluate(node.lhs());
+            ValuePtr rhs = evaluate(node.rhs());
             if(assign) {
                 push(op.assign(lhs, rhs, node.op(), node.qTypeSpec()));
+                const Ast::Expr* pref = z::ptr(node.lhs());
+                const Ast::VariableRefExpr* vRefExpr = dynamic_cast<const Ast::VariableRefExpr*>(pref);
+                if(!vRefExpr) {
+                    throw z::Exception("LHS of assignment is not a variable reference\n");
+                }
+                _ctx.addValue(z::ref(vRefExpr).vref(), rhs);
             } else {
                 push(op.run(lhs, rhs, node.op(), node.qTypeSpec()));
             }
@@ -570,9 +558,9 @@ namespace {
         }
 
         virtual void visit(const Ast::VariableRefExpr& node) {
-            trace("var-ref %s (%lu)\n", node.vref().name().text(), z::pad(node.vref()));
-            const Ast::Expr* val = _ctx.getValue(node.vref());
-            push(ValuePtr::clone(val));
+//            trace("var-ref %s (%lu)\n", node.vref().name().text(), z::pad(node.vref()));
+            ValuePtr val = _ctx.getValue(node.vref());
+            push(val);
         }
 
         virtual void visit(const Ast::MemberVariableExpr& node) {
@@ -646,8 +634,6 @@ namespace {
         inline ~ExprGenerator() {
             assert(_stack.size() == 0);
         }
-
-        inline void value(ValuePtr& ptr) {return pop(ptr);}
     };
 
     class StatementGenerator : public Ast::Statement::Visitor {
@@ -680,28 +666,20 @@ namespace {
         }
 
         virtual void visit(const Ast::AutoStatement& node) {
-            trace("auto statement %s (%lu)\n", node.defn().name().text(), z::pad(node.defn()));
-            ExprGenerator g(_ctx);
-            g.visitNode(node.defn().initExpr());
-            ValuePtr p;
-            g.value(p);
-            _ctx.addValue(node.defn(), p.clone());
+//            trace("auto statement %s (%lu)\n", node.defn().name().text(), z::pad(node.defn()));
+            ValuePtr p = ExprGenerator(_ctx).evaluate(node.defn().initExpr());
+            _ctx.addValue(node.defn(), p);
         }
 
         virtual void visit(const Ast::ExprStatement& node) {
-            trace("expr statement\n");
+//            trace("expr statement\n");
             ExprGenerator g(_ctx);
-            g.visitNode(node.expr());
-            ValuePtr p;
-            g.value(p);
+            /*ValuePtr p = */ExprGenerator(_ctx).evaluate(node.expr());
         }
 
         virtual void visit(const Ast::PrintStatement& node) {
-            ExprGenerator g(_ctx);
-            g.visitNode(node.expr());
-            ValuePtr p;
-            g.value(p);
-            trace("%s\n", p.str().c_str());
+            ValuePtr p = ExprGenerator(_ctx).evaluate(node.expr());
+            printf("%s\n", p.str().c_str());
         }
 
         virtual void visit(const Ast::IfStatement& node) {
@@ -804,12 +782,8 @@ namespace {
         Parser parser;
         Lexer lexer(parser);
         Ast::Module module(_unit, "<cmd>", 0);
-        trace(">>>>>>>>>>>>>>>\n");
         _c.compileString(module, lexer, cmd, true);
-        trace("<<<<<<<<<<<<<<<\n");
-#if !defined(DBGMODE)
         process(module);
-#endif
     }
 
     inline void InterpreterContext::processFile(const std::string& filename) {
@@ -828,18 +802,22 @@ private:
 };
 
 inline void Interpreter::Impl::run() {
-    trace("Entering interpretor mode\n");
+    printf("Entering interpretor mode\n");
 
     Ast::Token pos(0, 0, "");
     InterpreterContext ctx(_project, _config, pos);
 
 #if defined(DBGMODE)
-    const char* str =
-            "typedef type native;\n"
-            "typedef int native;\n"
-            "typeof(int);"
-        ;
-    ctx.processCmd(str);
+//    const char* str =
+//            "typedef int native;\n"
+//            "auto i = 0;"
+//        ;
+//    ctx.processCmd(str);
+
+    ctx.processCmd("typedef int native;");
+    ctx.processCmd("auto i = 0;");
+    ctx.processCmd("i = 23;");
+    ctx.processCmd("print i;");
     return;
 #endif
 

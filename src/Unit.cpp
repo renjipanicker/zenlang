@@ -6,13 +6,13 @@
 
 Ast::Unit::Unit() : _filename("<filename>"), _currentTypeRef(0), _currentImportedTypeRef(0), _uniqueIdx(0) {
     Ast::Root& rootNS = addNode(new Ast::Root("*root*"));
-    _rootNS.set(rootNS);
+    _rootNS.reset(rootNS);
 
     Ast::Root& importNS = addNode(new Ast::Root("*import*"));
-    _importNS.set(importNS);
+    _importNS.reset(importNS);
 
     Ast::Root& anonymousNS = addNode(new Ast::Root("*anonymous*"));
-    _anonymousNS.set(anonymousNS);
+    _anonymousNS.reset(anonymousNS);
 }
 
 Ast::Unit::~Unit() {

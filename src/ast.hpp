@@ -64,7 +64,7 @@ namespace Ast {
                 size_t rc = z::ref(_value).dec();
 //                z::ref(_value).dump("P::dec", "-");
                 if(rc == 0) {
-                    z::ref(_value).dump("P::del", " ");
+//                    z::ref(_value).dump("P::del", " ");
                     delete _value;
                 }
                 _value = 0;
@@ -81,7 +81,18 @@ namespace Ast {
             return z::ref(_value);
         }
 
-        inline void set(T& val) {
+        template <typename X> inline bool check() const {
+            std::string x = z::undecorate(typeid(*_value).name());
+            std::string y = z::undecorate(typeid(X).name());
+//            trace("<%s> %s\n", x.c_str(), y.c_str());
+            return (dynamic_cast<const X*>(_value) != 0);
+        }
+
+        template <typename X> inline const X& getT() const {
+            return z::ref(dynamic_cast<const X*>(_value));
+        }
+
+        inline void reset(T& val) {
             if(z::ptr(val) != _value) {
                 dec();
                 inc(val);
@@ -171,21 +182,21 @@ namespace Ast {
     public:
         inline const Token& pos() const {return _pos;}
         inline void dump(const std::string& src, const std::string& act) const {
-//            trace("%lu %s refCount%s %lu, ", (unsigned long)this, src.c_str(), act.c_str(), _refCount);
-//            fflush(stdout);
-//            std::string x = z::undecorate(typeid(*this).name());
-//            trace("<%s>\n", x.c_str());
-//            fflush(stdout);
+            trace("%lu %s refCount%s %lu, ", (unsigned long)this, src.c_str(), act.c_str(), _refCount);
+            fflush(stdout);
+            std::string x = z::undecorate(typeid(*this).name());
+            trace("<%s>\n", x.c_str());
+            fflush(stdout);
         }
 
         inline void inc() const {
             ++_refCount;
-            dump("N::inc", "+");
+//            dump("N::inc", "+");
         }
 
         inline size_t dec() const {
             --_refCount;
-            dump("N::dec", "-");
+//            dump("N::dec", "-");
             return _refCount;
         }
 
@@ -193,11 +204,11 @@ namespace Ast {
 
     protected:
         inline Node(const Token& pos) : _pos(pos), _refCount(0) {
-            dump("N::ctr", "*");
+//            dump("N::ctr", "*");
         }
 
         virtual ~Node() {
-            dump("N::dtr", "~");
+//            dump("N::dtr", "~");
             assert(_refCount == 0);
         }
 
@@ -292,7 +303,7 @@ namespace Ast {
         inline Scope& addVariableDef(const VariableDefn& variableDef) {_list.add(variableDef); return z::ref(this);}
         inline const ScopeType::T& type() const {return _type;}
         inline const List& list() const {return _list;}
-        inline void posParam(const Scope& val) {_posParam.set(val);}
+        inline void posParam(const Scope& val) {_posParam.reset(val);}
         inline bool hasPosParam() const {return false;}
         inline const Scope& posParam() const {assert(false); return _posParam.get();}
         inline void isTuple(const bool& val) {_isTuple = val;}
@@ -412,7 +423,7 @@ namespace Ast {
         inline const Ast::QualifiedTypeSpec& qTypeSpec() const {return _propertyType.get();}
     public:
         inline const Ast::CompoundStatement& getBlock() const {return _getBlock.get();}
-        inline void setGetBlock(const Ast::CompoundStatement& val) {_getBlock.set(val);}
+        inline void setGetBlock(const Ast::CompoundStatement& val) {_getBlock.reset(val);}
     private:
         const Ptr<const QualifiedTypeSpec> _propertyType;
         Ptr<const Ast::CompoundStatement> _getBlock;
@@ -423,7 +434,7 @@ namespace Ast {
         inline PropertyDeclRW(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::QualifiedTypeSpec& propertyType) : PropertyDecl(parent, name, defType, propertyType) {}
     public:
         inline const Ast::CompoundStatement& setBlock() const {return _setBlock.get();}
-        inline void setSetBlock(const Ast::CompoundStatement& val) {_setBlock.set(val);}
+        inline void setSetBlock(const Ast::CompoundStatement& val) {_setBlock.reset(val);}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
@@ -506,7 +517,7 @@ namespace Ast {
             : Routine(parent, outType, name, in, defType) {}
     public:
         inline const Ast::CompoundStatement& block() const {return _block.get();}
-        inline void setBlock(const Ast::CompoundStatement& block) {_block.set(block);}
+        inline void setBlock(const Ast::CompoundStatement& block) {_block.reset(block);}
     private:
         virtual void visit(Visitor& visitor) const;
         Ptr<const Ast::CompoundStatement> _block;
@@ -553,7 +564,7 @@ namespace Ast {
             : Function(parent, name, defType, sig, xref) {}
     public:
         inline const Ast::CompoundStatement& block() const {return _block.get();}
-        inline void setBlock(const Ast::CompoundStatement& block) {_block.set(block);}
+        inline void setBlock(const Ast::CompoundStatement& block) {_block.reset(block);}
     private:
         Ptr<const Ast::CompoundStatement> _block;
     };
@@ -596,13 +607,13 @@ namespace Ast {
     public:
         inline void setHandler(Ast::FunctionDecl& funDecl) {
             addChild(funDecl);
-            _funDecl.set(funDecl);
+            _funDecl.reset(funDecl);
         }
         inline const Ast::FunctionDecl& handler() const {return _funDecl.get();}
     public:
         inline void setAddFunction(Ast::FunctionDecl& funDecl) {
             addChild(funDecl);
-            _addDecl.set(funDecl);
+            _addDecl.reset(funDecl);
         }
         inline const Ast::FunctionDecl& addFunction() const {return _addDecl.get();}
     private:
@@ -1047,8 +1058,8 @@ namespace Ast {
     public:
         inline ListList(const Token& pos) : Node(pos) {}
     public:
-        inline ListList& dValueType(const QualifiedTypeSpec& val) { _dValueType.set(val); return z::ref(this);}
-        inline ListList& valueType(const QualifiedTypeSpec& val) { _valueType.set(val); return z::ref(this);}
+        inline ListList& dValueType(const QualifiedTypeSpec& val) { _dValueType.reset(val); return z::ref(this);}
+        inline ListList& valueType(const QualifiedTypeSpec& val) { _valueType.reset(val); return z::ref(this);}
         inline const QualifiedTypeSpec& valueType() const {return _valueType.get();}
         inline ListList& addItem(const ListItem& item) { _list.add(item); return z::ref(this);}
         inline const List& list() const {return _list;}
@@ -1084,11 +1095,11 @@ namespace Ast {
     public:
         inline DictList(const Token& pos) : Node(pos) {}
     public:
-        inline DictList& dKeyType(const QualifiedTypeSpec& val) { _dKeyType.set(val); return z::ref(this);}
-        inline DictList& dValueType(const QualifiedTypeSpec& val) { _dValueType.set(val); return z::ref(this);}
-        inline DictList& keyType(const QualifiedTypeSpec& val) { _keyType.set(val); return z::ref(this);}
+        inline DictList& dKeyType(const QualifiedTypeSpec& val) { _dKeyType.reset(val); return z::ref(this);}
+        inline DictList& dValueType(const QualifiedTypeSpec& val) { _dValueType.reset(val); return z::ref(this);}
+        inline DictList& keyType(const QualifiedTypeSpec& val) { _keyType.reset(val); return z::ref(this);}
         inline const QualifiedTypeSpec& keyType() const {return _keyType.get();}
-        inline DictList& valueType(const QualifiedTypeSpec& val) { _valueType.set(val); return z::ref(this);}
+        inline DictList& valueType(const QualifiedTypeSpec& val) { _valueType.reset(val); return z::ref(this);}
         inline const QualifiedTypeSpec& valueType() const {return _valueType.get();}
         inline DictList& addItem(const DictItem& item) { _list.add(item); return z::ref(this);}
         inline const List& list() const {return _list;}
@@ -1817,7 +1828,7 @@ namespace Ast {
         inline const VariableDefn& valDef() const {return _valDef.get();}
         inline const Expr& expr() const {return _expr.get();}
         inline const CompoundStatement& block() const {return _block.get();}
-        inline void setBlock(const CompoundStatement& val) {_block.set(val);}
+        inline void setBlock(const CompoundStatement& val) {_block.reset(val);}
     private:
         const Ptr<const VariableDefn> _valDef;
         const Ptr<const Expr> _expr;

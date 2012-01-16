@@ -100,7 +100,7 @@ namespace Ast {
         /// \brief Add a default value to the unit
         /// \param typeSpec the typeSpec to add
         /// \param expr the expr to add
-        inline void addDefaultValue(const TypeSpec& typeSpec, const Expr& expr) {_defaultValueList[z::ptr(typeSpec)].set(expr);}
+        inline void addDefaultValue(const TypeSpec& typeSpec, const Expr& expr) {_defaultValueList[z::ptr(typeSpec)].reset(expr);}
 
     private:
         /// \brief The list of default values for types in this unit
@@ -336,7 +336,7 @@ namespace Ast {
     public:
         inline Module(Unit& unit, const std::string& filename, const size_t& level) : _unit(unit), _filename(filename), _level(level) {
             Ast::CompoundStatement& gs = _unit.addNode(new Ast::CompoundStatement(Token(0, 0, "")));
-            _globalStatementList.set(gs);
+            _globalStatementList.reset(gs);
         }
     private:
         inline Module(const Module& src) : _unit(src._unit), _filename(src._filename), _level(src._level) {}
