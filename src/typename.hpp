@@ -1,15 +1,29 @@
 #pragma once
+#include "ast.hpp"
 
 struct GenMode {
     enum T {
-        Normal,
-        Import,
-        TypeSpecMemberRef
+        Stlcpp,
+        Zenlang
     };
 };
 
-std::string getTypeSpecName(const Ast::TypeSpec& typeSpec, const GenMode::T& mode, const std::string& sep = "::");
-std::string getQualifiedTypeSpecName(const Ast::QualifiedTypeSpec& qtypeSpec, const GenMode::T& mode, const std::string& sep = "::");
+struct TypespecNameGenerator {
+    std::string tn(const Ast::TypeSpec& typeSpec);
+    std::string qtn(const Ast::QualifiedTypeSpec& qtypeSpec);
+private:
+    bool getName(const Ast::TypeSpec& typeSpec, std::string& name);
+    virtual void getTypeName(const Ast::TypeSpec& typeSpec, std::string& name) = 0;
+protected:
+    inline TypespecNameGenerator(const std::string& sep) : _sep(sep) {}
+    const std::string _sep;
+};
+
+struct ZenlangNameGenerator : public TypespecNameGenerator {
+    virtual void getTypeName(const Ast::TypeSpec& typeSpec, std::string& name);
+public:
+    inline ZenlangNameGenerator(const std::string& sep = "::") : TypespecNameGenerator(sep) {}
+};
 
 inline const Ast::TypeSpec* resolveTypedef(const Ast::TypeSpec& typeSpec) {
     const Ast::TypeSpec* subType = z::ptr(typeSpec);

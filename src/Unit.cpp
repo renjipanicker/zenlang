@@ -120,8 +120,8 @@ const Ast::QualifiedTypeSpec& Ast::Unit::coerce(const Ast::Token& pos, const Ast
     if(!val) {
         throw z::Exception("%s Cannot coerce '%s' and '%s'\n",
                         err(_filename, pos).c_str(),
-                        getQualifiedTypeSpecName(lhs, GenMode::Import).c_str(),
-                        getQualifiedTypeSpecName(rhs, GenMode::Import).c_str());
+                        ZenlangNameGenerator().qtn(lhs).c_str(),
+                        ZenlangNameGenerator().qtn(rhs).c_str());
     }
     return z::ref(val);
 }

@@ -1,7 +1,8 @@
 interpreter
 error-handling
-rename GenName::Import and Normal to zenlang and stlcpp
-change lexer to use std::string
+Add filename to Token
+Framework for GUI unit test
+use stl i/o everywhere.
 
 bug - validate type when de-referencing pointer<>
 bug - list/dict inside struct does not copy in cctor
@@ -56,7 +57,6 @@ web-view
 tab-widget
 
 ==BACKLOG==
-enum-member-statement(?)
 positional-paramlist
 ftp
 xml
@@ -201,3 +201,6 @@ sizeof() function for types. (obsolete, no use case)
 "cmake" as output project
 put everything in namespaces
 lexical scanner for string input
+change lexer to use std::string (obsolete, no use case)
+enum-member-statement(obsolete)
+rename GenName::Import and Normal to zenlang and stlcpp

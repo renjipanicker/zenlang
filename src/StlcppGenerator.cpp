@@ -3,6 +3,75 @@
 #include "StlcppGenerator.hpp"
 #include "typename.hpp"
 
+struct StlcppNameGenerator : public TypespecNameGenerator {
+    virtual void getTypeName(const Ast::TypeSpec& typeSpec, std::string& name);
+public:
+    inline StlcppNameGenerator(const std::string& sep = "::") : TypespecNameGenerator(sep) {}
+};
+
+void StlcppNameGenerator::getTypeName(const Ast::TypeSpec& typeSpec, std::string& name) {
+    const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(z::ptr(typeSpec));
+    if(templateDefn) {
+        if(z::ref(templateDefn).name().string() == "ptr") {
+            const Ast::QualifiedTypeSpec& qTypeSpec = z::ref(templateDefn).list().front();
+            name += tn(qTypeSpec.typeSpec());
+            name += "*";
+            return;
+        }
+
+        if(z::ref(templateDefn).name().string() == "pointer") {
+            name += "z::pointer";
+        } else if(z::ref(templateDefn).name().string() == "list") {
+            name += "z::list";
+        } else if(z::ref(templateDefn).name().string() == "dict") {
+            name += "z::dict";
+        } else if(z::ref(templateDefn).name().string() == "future") {
+            name += "z::FutureT";
+        } else if(z::ref(templateDefn).name().string() == "functor") {
+            name += "z::FunctorT";
+        } else {
+            name += z::ref(templateDefn).name().string();
+        }
+
+        name += "<";
+        std::string sep;
+        for(Ast::TemplateTypePartList::List::const_iterator it = z::ref(templateDefn).list().begin(); it != z::ref(templateDefn).list().end(); ++it) {
+            const Ast::QualifiedTypeSpec& qTypeSpec = it->get();
+            name += sep;
+            if(z::ref(templateDefn).name().string() == "pointer") {
+                name += tn(qTypeSpec.typeSpec());
+            } else {
+                name += qtn(qTypeSpec);
+            }
+            sep = ", ";
+        }
+        name += "> ";
+        return;
+    }
+
+    if(typeSpec.name().string() == "string") {
+        name += "std::string";
+        return;
+    }
+
+    if(typeSpec.name().string() == "type") {
+        name += "z::type";
+        return;
+    }
+
+    if(typeSpec.name().string() == "ArgList") {
+        name += "z::ArgList";
+        return;
+    }
+    name += typeSpec.name().string();
+
+    const Ast::EnumDefn* enumDefn = dynamic_cast<const Ast::EnumDefn*>(z::ptr(typeSpec));
+    if(enumDefn != 0) {
+        name += _sep;
+        name += "T";
+    }
+}
+
 namespace {
     struct FileSet {
         inline FileSet(FILE* fpHdr, FILE* fpSrc) : _fpHdr(fpHdr), _fpSrc(fpSrc) {}
@@ -34,7 +103,7 @@ namespace {
 
     struct ExprGenerator : public Ast::Expr::Visitor {
     public:
-        inline ExprGenerator(FILE* fp, const GenMode::T& genMode, const std::string& sep2 = "", const std::string& sep1 = "") : _fp(fp), _genMode(genMode), _sep2(sep2), _sep1(sep1), _sep0(sep1) {}
+        inline ExprGenerator(FILE* fp, const std::string& sep2 = "", const std::string& sep1 = "") : _fp(fp), _sep2(sep2), _sep1(sep1), _sep0(sep1) {}
     private:
         inline void visitTernary(const Ast::TernaryOpExpr& node) {
             fprintf(_fp, "(");
@@ -228,61 +297,27 @@ namespace {
         }
 
         virtual void visit(const Ast::ListExpr& node) {
-            if(_genMode == GenMode::Import) {
-                fprintf(_fp, "[");
-                if(node.list().list().size() == 0) {
-                    fprintf(_fp, "%s", getQualifiedTypeSpecName(node.list().valueType(), _genMode).c_str());
-                } else {
-                    std::string sep;
-                    for(Ast::ListList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-                        const Ast::ListItem& item = it->get();
-                        fprintf(_fp, "%s", sep.c_str());
-                        visitNode(item.valueExpr());
-                        sep = ", ";
-                    }
-                }
-                fprintf(_fp, "]");
-            } else {
-                fprintf(_fp, "z::list<%s>::creator()", getQualifiedTypeSpecName(node.list().valueType(), _genMode).c_str());
-                for(Ast::ListList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-                    const Ast::ListItem& item = it->get();
-                    fprintf(_fp, ".add(");
-                    visitNode(item.valueExpr());
-                    fprintf(_fp, ")");
-                }
-                fprintf(_fp, ".get()");
+            fprintf(_fp, "z::list<%s>::creator()", StlcppNameGenerator().qtn(node.list().valueType()).c_str());
+            for(Ast::ListList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
+                const Ast::ListItem& item = it->get();
+                fprintf(_fp, ".add(");
+                visitNode(item.valueExpr());
+                fprintf(_fp, ")");
             }
+            fprintf(_fp, ".get()");
         }
 
         virtual void visit(const Ast::DictExpr& node) {
-            if(_genMode == GenMode::Import) {
-                fprintf(_fp, "[");
-                if(node.list().list().size() == 0) {
-                    fprintf(_fp, "%s:%s", getQualifiedTypeSpecName(node.list().keyType(), _genMode).c_str(), getQualifiedTypeSpecName(node.list().valueType(), _genMode).c_str());
-                } else {
-                    std::string sep;
-                    for(Ast::DictList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-                        const Ast::DictItem& item = it->get();
-                        fprintf(_fp, "%s", sep.c_str());
-                        visitNode(item.valueExpr());
-                        fprintf(_fp, ":");
-                        visitNode(item.valueExpr());
-                        sep = ", ";
-                    }
-                }
-                fprintf(_fp, "]");
-            } else {
-                fprintf(_fp, "z::dict<%s, %s>::creator()", getQualifiedTypeSpecName(node.list().keyType(), _genMode).c_str(), getQualifiedTypeSpecName(node.list().valueType(), _genMode).c_str());
-                for(Ast::DictList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-                    const Ast::DictItem& item = it->get();
-                    fprintf(_fp, ".add(");
-                    visitNode(item.keyExpr());
-                    fprintf(_fp, ", ");
-                    visitNode(item.valueExpr());
-                    fprintf(_fp, ")");
-                }
-                fprintf(_fp, ".get()");
+            fprintf(_fp, "z::dict<%s, %s>::creator()", StlcppNameGenerator().qtn(node.list().keyType()).c_str(), StlcppNameGenerator().qtn(node.list().valueType()).c_str());
+            for(Ast::DictList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
+                const Ast::DictItem& item = it->get();
+                fprintf(_fp, ".add(");
+                visitNode(item.keyExpr());
+                fprintf(_fp, ", ");
+                visitNode(item.valueExpr());
+                fprintf(_fp, ")");
             }
+            fprintf(_fp, ".get()");
         }
 
         virtual void visit(const Ast::FormatExpr& node) {
@@ -301,7 +336,7 @@ namespace {
         }
 
         virtual void visit(const Ast::RoutineCallExpr& node) {
-            const std::string name = getTypeSpecName(node.routine(), _genMode);
+            const std::string name = StlcppNameGenerator().tn(node.routine());
             if((name == "assert") || (name == "unused") || (name == "verify")) {
                 std::string sep;
                 for(Ast::ExprList::List::const_iterator it = node.exprList().list().begin(); it != node.exprList().list().end(); ++it) {
@@ -310,7 +345,7 @@ namespace {
                     if(name == "verify")
                         fprintf(_fp, "if(!");
                     fprintf(_fp, "%s(", name.c_str());
-                    ExprGenerator(_fp, _genMode).visitNode(expr);
+                    ExprGenerator(_fp).visitNode(expr);
                     fprintf(_fp, ")");
                     if(name == "verify")
                         fprintf(_fp, ")return out(_Out(false))");
@@ -320,23 +355,23 @@ namespace {
             }
 
             fprintf(_fp, "%s(", name.c_str());
-            ExprGenerator(_fp, _genMode, ", ").visitList(node.exprList());
+            ExprGenerator(_fp, ", ").visitList(node.exprList());
             fprintf(_fp, ")");
         }
 
         virtual void visit(const Ast::FunctorCallExpr& node) {
-            ExprGenerator(_fp, _genMode).visitNode(node.expr());
+            ExprGenerator(_fp).visitNode(node.expr());
             fprintf(_fp, ".run(");
-            ExprGenerator(_fp, _genMode, ", ").visitList(node.exprList());
+            ExprGenerator(_fp, ", ").visitList(node.exprList());
             fprintf(_fp, ")");
         }
 
         virtual void visit(const Ast::RunExpr& node) {
             fprintf(_fp, "z::CallContext::get().add(");
-            ExprGenerator(_fp, _genMode).visitNode(node.callExpr().expr());
+            ExprGenerator(_fp).visitNode(node.callExpr().expr());
             fprintf(_fp, ", ");
-            fprintf(_fp, "%s::_In(", getTypeSpecName(node.callExpr().expr().qTypeSpec().typeSpec(), _genMode).c_str());
-            ExprGenerator(_fp, _genMode, ", ").visitList(node.callExpr().exprList());
+            fprintf(_fp, "%s::_In(", StlcppNameGenerator().tn(node.callExpr().expr().qTypeSpec().typeSpec()).c_str());
+            ExprGenerator(_fp, ", ").visitList(node.callExpr().exprList());
             fprintf(_fp, "))");
         }
 
@@ -371,7 +406,7 @@ namespace {
         }
 
         virtual void visit(const Ast::TypeofTypeExpr& node) {
-            fprintf(_fp, "z::type(\"%s\")", getQualifiedTypeSpecName(node.typeSpec(), _genMode).c_str());
+            fprintf(_fp, "z::type(\"%s\")", StlcppNameGenerator().qtn(node.typeSpec()).c_str());
         }
 
         virtual void visit(const Ast::TypeofExprExpr& node) {
@@ -381,44 +416,36 @@ namespace {
                 visitNode(node.expr());
                 fprintf(_fp, ".tname()");
             } else {
-                fprintf(_fp, "z::type(\"%s\")", getQualifiedTypeSpecName(node.expr().qTypeSpec(), _genMode).c_str());
+                fprintf(_fp, "z::type(\"%s\")", StlcppNameGenerator().qtn(node.expr().qTypeSpec()).c_str());
             }
         }
 
         virtual void visit(const Ast::StaticTypecastExpr& node) {
-            if(_genMode == GenMode::Import) {
-                fprintf(_fp, "<%s>(", getQualifiedTypeSpecName(node.qTypeSpec(), _genMode).c_str());
-            } else {
-                fprintf(_fp, "static_cast<%s>(", getQualifiedTypeSpecName(node.qTypeSpec(), _genMode).c_str());
-            }
-            ExprGenerator(_fp, _genMode).visitNode(node.expr());
+            fprintf(_fp, "static_cast<%s>(", StlcppNameGenerator().qtn(node.qTypeSpec()).c_str());
+            ExprGenerator(_fp).visitNode(node.expr());
             fprintf(_fp, ")");
         }
 
         virtual void visit(const Ast::DynamicTypecastExpr& node) {
-            ExprGenerator(_fp, _genMode).visitNode(node.expr());
-            fprintf(_fp, ".getT<%s>()", getTypeSpecName(node.qTypeSpec().typeSpec(), _genMode).c_str());
+            ExprGenerator(_fp).visitNode(node.expr());
+            fprintf(_fp, ".getT<%s>()", StlcppNameGenerator().tn(node.qTypeSpec().typeSpec()).c_str());
         }
 
         virtual void visit(const Ast::PointerInstanceExpr& node) {
             const Ast::Expr& expr = node.exprList().at(0);
-            const std::string dname = getTypeSpecName(expr.qTypeSpec().typeSpec(), _genMode);
+            const std::string dname = StlcppNameGenerator().tn(expr.qTypeSpec().typeSpec());
 
-            if(_genMode == GenMode::Import) {
-                fprintf(_fp, "&(%s())", dname.c_str());
-            } else {
-                const std::string bname = getTypeSpecName(node.templateDefn().at(0).typeSpec(), _genMode);
-                fprintf(_fp, "z::PointerCreator<%s, %s>::get(", bname.c_str(), dname.c_str());
-                fprintf(_fp, "z::type(\"%s\"), ", dname.c_str());
-                ExprGenerator(_fp, _genMode).visitNode(expr);
-                fprintf(_fp, ")");
-            }
+            const std::string bname = StlcppNameGenerator().tn(node.templateDefn().at(0).typeSpec());
+            fprintf(_fp, "z::PointerCreator<%s, %s>::get(", bname.c_str(), dname.c_str());
+            fprintf(_fp, "z::type(\"%s\"), ", dname.c_str());
+            ExprGenerator(_fp).visitNode(expr);
+            fprintf(_fp, ")");
         }
 
         virtual void visit(const Ast::ValueInstanceExpr& node) {
             const Ast::Expr& expr = node.exprList().at(0);
-            ExprGenerator(_fp, _genMode).visitNode(expr);
-            fprintf(_fp, ".getT<%s>()", getTypeSpecName(node.qTypeSpec().typeSpec(), _genMode).c_str());
+            ExprGenerator(_fp).visitNode(expr);
+            fprintf(_fp, ".getT<%s>()", StlcppNameGenerator().tn(node.qTypeSpec().typeSpec()).c_str());
         }
 
         virtual void visit(const Ast::VariableRefExpr& node) {
@@ -448,31 +475,27 @@ namespace {
         }
 
         virtual void visit(const Ast::EnumMemberExpr& node) {
-            fprintf(_fp, "%s", getTypeSpecName(node.typeSpec(), GenMode::TypeSpecMemberRef).c_str());
-            if(_genMode == GenMode::Import) {
-                fprintf(_fp, ".%s", node.vref().name().text());
-            } else {
-                fprintf(_fp, "::%s", node.vref().name().text());
-            }
+            fprintf(_fp, "%s", ZenlangNameGenerator().tn(node.typeSpec()).c_str());
+            fprintf(_fp, "::%s", node.vref().name().text());
         }
 
         virtual void visit(const Ast::StructMemberExpr& node) {
-            fprintf(_fp, "%s", getTypeSpecName(node.typeSpec(), GenMode::TypeSpecMemberRef).c_str());
+            fprintf(_fp, "%s", ZenlangNameGenerator().tn(node.typeSpec()).c_str());
             fprintf(_fp, "::%s", node.vref().name().text());
         }
 
         virtual void visit(const Ast::StructInstanceExpr& node) {
-            fprintf(_fp, "%s()", getTypeSpecName(node.structDefn(), _genMode).c_str());
+            fprintf(_fp, "%s()", StlcppNameGenerator().tn(node.structDefn()).c_str());
             for(Ast::StructInitPartList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
                 const Ast::StructInitPart& part = it->get();
-                fprintf(_fp, "._%s<%s>(", part.vdef().name().text(), getTypeSpecName(node.structDefn(), _genMode).c_str());
+                fprintf(_fp, "._%s<%s>(", part.vdef().name().text(), StlcppNameGenerator().tn(node.structDefn()).c_str());
                 visitNode(part.expr());
                 fprintf(_fp, ")");
             }
         }
 
         inline void visitFunctionTypeInstance(const Ast::Function& function) {
-            std::string fname = getTypeSpecName(function, _genMode);
+            std::string fname = StlcppNameGenerator().tn(function);
             fprintf(_fp, "%s(", fname.c_str());
             std::string sep;
             for(Ast::Scope::List::const_iterator it = function.xref().begin(); it != function.xref().end(); ++it) {
@@ -530,7 +553,6 @@ namespace {
 
     private:
         FILE* _fp;
-        const GenMode::T& _genMode;
         const std::string _sep2;
         const std::string _sep1;
         std::string _sep0;
@@ -552,7 +574,7 @@ namespace {
 
         void visit(const Ast::TypedefDefn& node) {
             if(node.defType() != Ast::DefinitionType::Native) {
-                fprintf(_fp, "%stypedef %s %s;\n", Indent::get(), getQualifiedTypeSpecName(node.qTypeSpec(), GenMode::Normal).c_str(), node.name().text());
+                fprintf(_fp, "%stypedef %s %s;\n", Indent::get(), StlcppNameGenerator().qtn(node.qTypeSpec()).c_str(), node.name().text());
             }
         }
 
@@ -578,7 +600,7 @@ namespace {
                     const Ast::ConstantIntExpr* cexpr = dynamic_cast<const Ast::ConstantIntExpr*>(z::ptr(def.initExpr()));
                     if((cexpr == 0) || (z::ref(cexpr).pos().string() != "#")) { /// \todo hack
                         fprintf(_fp, " = ");
-                        ExprGenerator(_fp, GenMode::Normal).visitNode(def.initExpr());
+                        ExprGenerator(_fp).visitNode(def.initExpr());
                     }
                     fprintf(_fp, "\n");
                     sep = ",";
@@ -598,7 +620,7 @@ namespace {
 
             fprintf(_fp, "%sstruct %s", Indent::get(), node.name().text());
             if(base) {
-                fprintf(_fp, " : public %s", getTypeSpecName(z::ref(base), GenMode::Normal).c_str());
+                fprintf(_fp, " : public %s", StlcppNameGenerator().tn(z::ref(base)).c_str());
             }
 
             fprintf(_fp, " {\n");
@@ -630,12 +652,12 @@ namespace {
             std::string cnst;
             if(node.qTypeSpec().isConst())
                 cnst = "const ";
-            fprintf(_fp, "%s%s%s& _%s() const;\n", Indent::get(), cnst.c_str(), getQualifiedTypeSpecName(node.qTypeSpec(), GenMode::Normal).c_str(), node.name().text());
+            fprintf(_fp, "%s%s%s& _%s() const;\n", Indent::get(), cnst.c_str(), StlcppNameGenerator().qtn(node.qTypeSpec()).c_str(), node.name().text());
         }
 
         void visit(const Ast::PropertyDeclRW& node) {
             visitProperty(node);
-            fprintf(_fp, "%svoid _%s(const %s& val);\n", Indent::get(), node.name().text(), getTypeSpecName(node.qTypeSpec().typeSpec(), GenMode::Normal).c_str());
+            fprintf(_fp, "%svoid _%s(const %s& val);\n", Indent::get(), node.name().text(), StlcppNameGenerator().tn(node.qTypeSpec().typeSpec()).c_str());
         }
 
         void visit(const Ast::PropertyDeclRO& node) {
@@ -654,17 +676,17 @@ namespace {
         }
 
         static inline void visitRoutine(FILE* fp, const Ast::Routine& node, const bool& inNS) {
-            fprintf(fp, "%s%s ", Indent::get(), getQualifiedTypeSpecName(node.outType(), GenMode::Normal).c_str());
+            fprintf(fp, "%s%s ", Indent::get(), StlcppNameGenerator().qtn(node.outType()).c_str());
             if(inNS) {
                 fprintf(fp, "%s", node.name().text());
             } else {
-                fprintf(fp, "%s", getTypeSpecName(node, GenMode::Normal).c_str());
+                fprintf(fp, "%s", StlcppNameGenerator().tn(node).c_str());
             }
             fprintf(fp, "(");
             std::string sep;
             for(Ast::Scope::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
                 const Ast::VariableDefn& vdef = it->get();
-                fprintf(fp, "%s%s %s", sep.c_str(), getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Normal).c_str(), vdef.name().text());
+                fprintf(fp, "%s%s %s", sep.c_str(), StlcppNameGenerator().qtn(vdef.qTypeSpec()).c_str(), vdef.name().text());
                 sep = ", ";
             }
             fprintf(fp, ")");
@@ -674,14 +696,14 @@ namespace {
             for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
                 INDENT;
                 const Ast::VariableDefn& vdef = it->get();
-                fprintf(_fp, "%sconst %s %s;\n", Indent::get(), getTypeSpecName(vdef.qTypeSpec().typeSpec(), GenMode::Normal).c_str(), vdef.name().text());
+                fprintf(_fp, "%sconst %s %s;\n", Indent::get(), StlcppNameGenerator().tn(vdef.qTypeSpec().typeSpec()).c_str(), vdef.name().text());
             }
             if(scope.hasPosParam()) {
                 const Ast::Scope& posParam = scope.posParam();
                 for(Ast::Scope::List::const_iterator it = posParam.list().begin(); it != posParam.list().end(); ++it) {
                     INDENT;
                     const Ast::VariableDefn& vdef = it->get();
-                    fprintf(_fp, "%sconst %s %s;\n", Indent::get(), getTypeSpecName(vdef.qTypeSpec().typeSpec(), GenMode::Normal).c_str(), vdef.name().text());
+                    fprintf(_fp, "%sconst %s %s;\n", Indent::get(), StlcppNameGenerator().tn(vdef.qTypeSpec().typeSpec()).c_str(), vdef.name().text());
                 }
             }
         }
@@ -690,7 +712,7 @@ namespace {
             std::string sep = "";
             for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
                 const Ast::VariableDefn& vdef = it->get();
-                fprintf(fp, "%sconst %s& %s%s", sep.c_str(), getTypeSpecName(vdef.qTypeSpec().typeSpec(), GenMode::Normal).c_str(), prefix.c_str(), vdef.name().text());
+                fprintf(fp, "%sconst %s& %s%s", sep.c_str(), StlcppNameGenerator().tn(vdef.qTypeSpec().typeSpec()).c_str(), prefix.c_str(), vdef.name().text());
                 sep = ", ";
             }
         }
@@ -759,7 +781,7 @@ namespace {
                 out2 = out1;
             } else {
                 const Ast::VariableDefn& vdef = node.sig().out().front();
-                out1 = getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Normal);
+                out1 = StlcppNameGenerator().qtn(vdef.qTypeSpec());
                 out2 = out1;
             }
 
@@ -825,7 +847,7 @@ namespace {
                 for(Ast::Scope::List::const_iterator it = node.out().begin(); it != node.out().end(); ++it) {
                     INDENT;
                     const Ast::VariableDefn& vdef = it->get();
-                    fprintf(_fp, "%s%s %s;\n", Indent::get(), getTypeSpecName(vdef.qTypeSpec().typeSpec(), GenMode::Normal).c_str(), vdef.name().text());
+                    fprintf(_fp, "%s%s %s;\n", Indent::get(), StlcppNameGenerator().tn(vdef.qTypeSpec().typeSpec()).c_str(), vdef.name().text());
                 }
 
                 // generate out setter
@@ -833,7 +855,7 @@ namespace {
                 std::string sep = "";
                 for(Ast::Scope::List::const_iterator it = node.out().begin(); it != node.out().end(); ++it) {
                     const Ast::VariableDefn& vdef = it->get();
-                    fprintf(_fp, "%sconst %s& p%s", sep.c_str(), getTypeSpecName(vdef.qTypeSpec().typeSpec(), GenMode::Normal).c_str(), vdef.name().text());
+                    fprintf(_fp, "%sconst %s& p%s", sep.c_str(), StlcppNameGenerator().tn(vdef.qTypeSpec().typeSpec()).c_str(), vdef.name().text());
                     sep = ", ";
                 }
                 fprintf(_fp, ")");
@@ -863,7 +885,7 @@ namespace {
         }
 
         void visit(const Ast::ChildFunctionDefn& node) {
-            bool isTest = (getTypeSpecName(node.base(), GenMode::Normal) == "test");
+            bool isTest = (StlcppNameGenerator().tn(node.base()) == "test");
             if((isTest) && (!_config.test())) {
                 return;
             }
@@ -871,17 +893,17 @@ namespace {
             if(isTest) {
                 fprintf(_fp, "%sclass %s : public z::test_< %s > {\n", Indent::get(), node.name().text(), node.name().text());
                 fprintf(_fp, "%spublic:\n", Indent::get());
-                fprintf(_fp, "%s    inline const char* const name() const {return \"%s\";}\n", Indent::get(), getTypeSpecName(node, GenMode::Normal).c_str());
-            } else if(getTypeSpecName(node.base(), GenMode::Normal) == "main") {
+                fprintf(_fp, "%s    inline const char* const name() const {return \"%s\";}\n", Indent::get(), StlcppNameGenerator().tn(node).c_str());
+            } else if(StlcppNameGenerator().tn(node.base()) == "main") {
                 fprintf(_fp, "%sclass %s : public z::main_< %s > {\n", Indent::get(), node.name().text(), node.name().text());
             } else {
-                fprintf(_fp, "%sclass %s : public %s {\n", Indent::get(), node.name().text(), getTypeSpecName(node.base(), GenMode::Normal).c_str());
+                fprintf(_fp, "%sclass %s : public %s {\n", Indent::get(), node.name().text(), StlcppNameGenerator().tn(node.base()).c_str());
             }
             visitFunctionSig(node, false, false, isTest);
 
-            if(getTypeSpecName(node.base(), GenMode::Normal) == "test") {
+            if(StlcppNameGenerator().tn(node.base()) == "test") {
                 fprintf(_fp, "%s    static z::TestInstanceT<%s> s_test;\n", Indent::get(), node.name().text());
-            } else if(getTypeSpecName(node.base(), GenMode::Normal) == "main") {
+            } else if(StlcppNameGenerator().tn(node.base()) == "main") {
                 fprintf(_fp, "%s    static z::MainInstanceT<%s> s_main;\n", Indent::get(), node.name().text());
             }
 
@@ -899,8 +921,8 @@ namespace {
             fprintf(_fp, "%s    z::FunctorList<Handler> _list;\n", Indent::get());
             fprintf(_fp, "%s    static %s instance;\n", Indent::get(), node.name().text());
             fprintf(_fp, "%s    static inline Handler& add(Handler* h) {return instance._list.add(h);}\n", Indent::get());
-            fprintf(_fp, "%s    static void addHandler(%s %s, Handler* h);\n", Indent::get(), getQualifiedTypeSpecName(node.in().qTypeSpec(), GenMode::Normal).c_str(), node.in().name().text());
-            fprintf(_fp, "%s    template<typename T>static inline void addHandlerT(%s %s, T h) {return addHandler(%s, new T(h));}\n", Indent::get(), getQualifiedTypeSpecName(node.in().qTypeSpec(), GenMode::Normal).c_str(), node.in().name().text(), node.in().name().text());
+            fprintf(_fp, "%s    static void addHandler(%s %s, Handler* h);\n", Indent::get(), StlcppNameGenerator().qtn(node.in().qTypeSpec()).c_str(), node.in().name().text());
+            fprintf(_fp, "%s    template<typename T>static inline void addHandlerT(%s %s, T h) {return addHandler(%s, new T(h));}\n", Indent::get(), StlcppNameGenerator().qtn(node.in().qTypeSpec()).c_str(), node.in().name().text(), node.in().name().text());
             fprintf(_fp, "%s};\n", Indent::get());
             fprintf(_fp, "\n");
             return;
@@ -989,13 +1011,13 @@ namespace {
         }
 
         inline void visitFunction(const Ast::FunctionDefn& node, const bool& isTest) {
-            const std::string tname = getTypeSpecName(node, GenMode::Normal);
+            const std::string tname = StlcppNameGenerator().tn(node);
             std::string out;
             if(node.sig().outScope().isTuple()) {
                 out = "const " + tname + "::_Out&";
             } else {
                 const Ast::VariableDefn& vdef = node.sig().out().front();
-                out = getQualifiedTypeSpecName(vdef.qTypeSpec(), GenMode::Normal);
+                out = StlcppNameGenerator().qtn(vdef.qTypeSpec());
             }
 
             if(isTest) {
@@ -1015,29 +1037,29 @@ namespace {
         }
 
         void visit(const Ast::ChildFunctionDefn& node) {
-            bool isTest = (getTypeSpecName(node.base(), GenMode::Normal) == "test");
+            bool isTest = (StlcppNameGenerator().tn(node.base()) == "test");
             if((isTest) && (!_config.test())) {
                 return;
             }
 
             visitChildrenIndent(node);
             visitFunction(node, isTest);
-            std::string fname = getTypeSpecName(node, GenMode::Normal);
+            std::string fname = StlcppNameGenerator().tn(node);
 
             if(isTest) {
                 fprintf(_fp, "z::TestInstanceT<%s> %s::s_test = z::TestInstanceT<%s>();\n\n", fname.c_str(), fname.c_str(), fname.c_str());
-            } else if(getTypeSpecName(node.base(), GenMode::Normal) == "main") {
+            } else if(StlcppNameGenerator().tn(node.base()) == "main") {
                 fprintf(_fp, "z::MainInstanceT<%s> %s::s_main = z::MainInstanceT<%s>();\n\n", fname.c_str(), fname.c_str(), fname.c_str());
             }
         }
 
         void visit(const Ast::EventDecl& node) {
             visitChildrenIndent(node);
-            fprintf(_fp, "%s %s::instance;\n", getTypeSpecName(node, GenMode::Normal).c_str(), getTypeSpecName(node, GenMode::Normal).c_str());
+            fprintf(_fp, "%s %s::instance;\n", StlcppNameGenerator().tn(node).c_str(), StlcppNameGenerator().tn(node).c_str());
             if(node.defType() == Ast::DefinitionType::Final) {
-                fprintf(_fp, "void %s::addHandler(%s %s, Handler* h) {\n", getTypeSpecName(node, GenMode::Normal).c_str(), getQualifiedTypeSpecName(node.in().qTypeSpec(), GenMode::Normal).c_str(), node.in().name().text());
+                fprintf(_fp, "void %s::addHandler(%s %s, Handler* h) {\n", StlcppNameGenerator().tn(node).c_str(), StlcppNameGenerator().qtn(node.in().qTypeSpec()).c_str(), node.in().name().text());
                 fprintf(_fp, "}\n");
-                fprintf(_fp, "const %s::Add::_Out& %s::Add::run(", getTypeSpecName(node, GenMode::Normal).c_str(), getTypeSpecName(node, GenMode::Normal).c_str());
+                fprintf(_fp, "const %s::Add::_Out& %s::Add::run(", StlcppNameGenerator().tn(node).c_str(), StlcppNameGenerator().tn(node).c_str());
                 TypeDeclarationGenerator::writeScopeParamList(_fp, node.addFunction().sig().inScope(), "");
                 fprintf(_fp, ") {\n");
                 fprintf(_fp, "    assert(false); //addHandler(in.%s, in.handler);\n", node.in().name().text());
@@ -1152,7 +1174,7 @@ namespace {
 
         virtual void visit(const Ast::StructMemberVariableStatement& node) {
             if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
-                std::string tname = getQualifiedTypeSpecName(node.defn().qTypeSpec(), GenMode::Normal);
+                std::string tname = StlcppNameGenerator().qtn(node.defn().qTypeSpec());
                 std::string pname = "const " + tname + "&";
                 if(isPtr(node.defn().qTypeSpec().typeSpec())) {
                     pname = tname;
@@ -1171,7 +1193,7 @@ namespace {
                 for(Ast::Scope::List::const_iterator it = node.structDefn().list().begin(); it != node.structDefn().list().end(); ++it) {
                     const Ast::VariableDefn& vdef = it->get();
                     fprintf(fpDecl(node.structDefn()), "%s%s(", sep.c_str(), vdef.name().text());
-                    ExprGenerator(fpDecl(node.structDefn()), GenMode::Normal).visitNode(vdef.initExpr());
+                    ExprGenerator(fpDecl(node.structDefn())).visitNode(vdef.initExpr());
                     fprintf(fpDecl(node.structDefn()), ")");
                     sep = ", ";
                 }
@@ -1185,33 +1207,33 @@ namespace {
         }
 
         virtual void visit(const Ast::AutoStatement& node) {
-            fprintf(fpDefn(), "%s%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.defn().qTypeSpec(), GenMode::Normal).c_str(), node.defn().name().text());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.defn().initExpr());
+            fprintf(fpDefn(), "%s%s %s = ", Indent::get(), StlcppNameGenerator().qtn(node.defn().qTypeSpec()).c_str(), node.defn().name().text());
+            ExprGenerator(fpDefn()).visitNode(node.defn().initExpr());
             fprintf(fpDefn(), ";\n");
         }
 
         virtual void visit(const Ast::ExprStatement& node) {
             fprintf(fpDefn(), "%s", Indent::get());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), ";\n");
         }
 
         virtual void visit(const Ast::PrintStatement& node) {
             fprintf(fpDefn(), "%sz::Log::get() << ", Indent::get());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), " << z::Log::Out();\n");
         }
 
         virtual void visit(const Ast::IfStatement& node) {
             fprintf(fpDefn(), "%sif(", Indent::get());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), ") ");
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.tblock());
         }
 
         virtual void visit(const Ast::IfElseStatement& node) {
             fprintf(fpDefn(), "%sif(", Indent::get());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), ")");
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.tblock());
             fprintf(fpDefn(), "%selse", Indent::get());
@@ -1220,7 +1242,7 @@ namespace {
 
         virtual void visit(const Ast::WhileStatement& node) {
             fprintf(fpDefn(), "%swhile(", Indent::get());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), ")");
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
         }
@@ -1229,34 +1251,34 @@ namespace {
             fprintf(fpDefn(), "%sdo", Indent::get());
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
             fprintf(fpDefn(), "%swhile(", Indent::get());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), ");\n");
         }
 
         virtual void visit(const Ast::ForExprStatement& node) {
             fprintf(fpDefn(), "%sfor(", Indent::get());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.init());
+            ExprGenerator(fpDefn()).visitNode(node.init());
             fprintf(fpDefn(), "; ");
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), "; ");
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.incr());
+            ExprGenerator(fpDefn()).visitNode(node.incr());
             fprintf(fpDefn(), ")");
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
         }
 
         virtual void visit(const Ast::ForInitStatement& node) {
-            fprintf(fpDefn(), "%sfor(%s %s = ", Indent::get(), getQualifiedTypeSpecName(node.init().qTypeSpec(), GenMode::Normal).c_str(), node.init().name().text());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.init().initExpr());
+            fprintf(fpDefn(), "%sfor(%s %s = ", Indent::get(), StlcppNameGenerator().qtn(node.init().qTypeSpec()).c_str(), node.init().name().text());
+            ExprGenerator(fpDefn()).visitNode(node.init().initExpr());
             fprintf(fpDefn(), "; ");
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), "; ");
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.incr());
+            ExprGenerator(fpDefn()).visitNode(node.incr());
             fprintf(fpDefn(), ")");
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
         }
 
         virtual void visit(const Ast::ForeachStringStatement& node) {
-            const std::string etype = getQualifiedTypeSpecName(node.expr().qTypeSpec(), GenMode::Normal);
+            const std::string etype = StlcppNameGenerator().qtn(node.expr().qTypeSpec());
 
             std::string constit = "";
             if(node.expr().qTypeSpec().isConst()) {
@@ -1265,10 +1287,10 @@ namespace {
 
             fprintf(fpDefn(), "%s{\n", Indent::get());
             fprintf(fpDefn(), "%s  %s _str = ", Indent::get(), etype.c_str());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), ";\n");
-            fprintf(fpDefn(), "%s  for(%s::%siterator _it = _str.begin(); _it != _str.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GenMode::Normal).c_str(), constit.c_str());
-            fprintf(fpDefn(), "%s  %s %s = *_it;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qTypeSpec(), GenMode::Normal).c_str(), node.valDef().name().text());
+            fprintf(fpDefn(), "%s  for(%s::%siterator _it = _str.begin(); _it != _str.end(); ++_it) {\n", Indent::get(), StlcppNameGenerator().tn(node.expr().qTypeSpec().typeSpec()).c_str(), constit.c_str());
+            fprintf(fpDefn(), "%s  %s %s = *_it;\n", Indent::get(), StlcppNameGenerator().qtn(node.valDef().qTypeSpec()).c_str(), node.valDef().name().text());
 
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::IndentedBrace).run(_config, _fs, "", node.block());
 
@@ -1277,7 +1299,7 @@ namespace {
         }
 
         virtual void visit(const Ast::ForeachListStatement& node) {
-            const std::string etype = getQualifiedTypeSpecName(node.expr().qTypeSpec(), GenMode::Normal);
+            const std::string etype = StlcppNameGenerator().qtn(node.expr().qTypeSpec());
 
             std::string constit = "";
             if(node.expr().qTypeSpec().isConst()) {
@@ -1286,10 +1308,10 @@ namespace {
 
             fprintf(fpDefn(), "%s{\n", Indent::get());
             fprintf(fpDefn(), "%s  %s _list = ", Indent::get(), etype.c_str());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), ";\n");
-            fprintf(fpDefn(), "%s  for(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GenMode::Normal).c_str(), constit.c_str());
-            fprintf(fpDefn(), "%s  %s %s = _it->second;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qTypeSpec(), GenMode::Normal).c_str(), node.valDef().name().text());
+            fprintf(fpDefn(), "%s  for(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), StlcppNameGenerator().tn(node.expr().qTypeSpec().typeSpec()).c_str(), constit.c_str());
+            fprintf(fpDefn(), "%s  %s %s = _it->second;\n", Indent::get(), StlcppNameGenerator().qtn(node.valDef().qTypeSpec()).c_str(), node.valDef().name().text());
 
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::IndentedBrace).run(_config, _fs, "", node.block());
 
@@ -1303,12 +1325,12 @@ namespace {
             if(node.expr().qTypeSpec().isConst()) {
                 constit = "const_";
             }
-            fprintf(fpDefn(), "%s  %s _list = ", Indent::get(), getQualifiedTypeSpecName(node.expr().qTypeSpec(), GenMode::Normal).c_str());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            fprintf(fpDefn(), "%s  %s _list = ", Indent::get(), StlcppNameGenerator().qtn(node.expr().qTypeSpec()).c_str());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), ";\n");
-            fprintf(fpDefn(), "%s  for(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), getTypeSpecName(node.expr().qTypeSpec().typeSpec(), GenMode::Normal).c_str(), constit.c_str());
-            fprintf(fpDefn(), "%s  %s %s = _it->first;\n", Indent::get(), getQualifiedTypeSpecName(node.keyDef().qTypeSpec(), GenMode::Normal).c_str(), node.keyDef().name().text());
-            fprintf(fpDefn(), "%s  %s %s = _it->second;\n", Indent::get(), getQualifiedTypeSpecName(node.valDef().qTypeSpec(), GenMode::Normal).c_str(), node.valDef().name().text());
+            fprintf(fpDefn(), "%s  for(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), StlcppNameGenerator().tn(node.expr().qTypeSpec().typeSpec()).c_str(), constit.c_str());
+            fprintf(fpDefn(), "%s  %s %s = _it->first;\n", Indent::get(), StlcppNameGenerator().qtn(node.keyDef().qTypeSpec()).c_str(), node.keyDef().name().text());
+            fprintf(fpDefn(), "%s  %s %s = _it->second;\n", Indent::get(), StlcppNameGenerator().qtn(node.valDef().qTypeSpec()).c_str(), node.valDef().name().text());
 
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::IndentedBrace).run(_config, _fs, "", node.block());
 
@@ -1318,7 +1340,7 @@ namespace {
 
         virtual void visit(const Ast::CaseExprStatement& node) {
             fprintf(fpDefn(), "%scase (", Indent::get());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), ") :");
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
         }
@@ -1330,7 +1352,7 @@ namespace {
 
         virtual void visit(const Ast::SwitchValueStatement& node) {
             fprintf(fpDefn(), "%sswitch(", Indent::get());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.expr());
+            ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), ")");
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, "", node.block());
         }
@@ -1343,7 +1365,7 @@ namespace {
                 const Ast::CaseDefaultStatement* cd = dynamic_cast<const Ast::CaseDefaultStatement*>(z::ptr(s));
                 if(ce) {
                     fprintf(fpDefn(), "%s%s(", Indent::get(), ifstr.c_str());
-                    ExprGenerator(fpDefn(), GenMode::Normal).visitNode(z::ref(ce).expr());
+                    ExprGenerator(fpDefn()).visitNode(z::ref(ce).expr());
                     fprintf(fpDefn(), ")\n");
                     visitNode(z::ref(ce).block());
                     ifstr = "else if";
@@ -1366,11 +1388,11 @@ namespace {
         }
 
         virtual void visit(const Ast::AddEventHandlerStatement& node) {
-            std::string ename = getTypeSpecName(node.event(), GenMode::Normal);
+            std::string ename = StlcppNameGenerator().tn(node.event());
             fprintf(fpDefn(), "%s%s::addHandlerT(", Indent::get(), ename.c_str());
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.source());
+            ExprGenerator(fpDefn()).visitNode(node.source());
             fprintf(fpDefn(), ", ");
-            ExprGenerator(fpDefn(), GenMode::Normal).visitNode(node.functor());
+            ExprGenerator(fpDefn()).visitNode(node.functor());
             fprintf(fpDefn(), ");\n");
         }
 
@@ -1378,7 +1400,7 @@ namespace {
             fprintf(fpDefn(), "%sreturn", Indent::get());
             if(node.exprList().list().size() > 0) {
                 fprintf(fpDefn(), " (");
-                ExprGenerator(fpDefn(), GenMode::Normal, ", ").visitList(node.exprList());
+                ExprGenerator(fpDefn(), ", ").visitList(node.exprList());
                 fprintf(fpDefn(), ")");
             }
             fprintf(fpDefn(), ";\n");
@@ -1386,7 +1408,7 @@ namespace {
 
         virtual void visit(const Ast::FunctionReturnStatement& node) {
             fprintf(fpDefn(), "%sreturn out(_Out(", Indent::get());
-            ExprGenerator(fpDefn(), GenMode::Normal, ", ").visitList(node.exprList());
+            ExprGenerator(fpDefn(), ", ").visitList(node.exprList());
             fprintf(fpDefn(), "));\n");
         }
 

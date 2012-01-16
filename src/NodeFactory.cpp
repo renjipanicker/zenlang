@@ -21,7 +21,7 @@ inline const Ast::QualifiedTypeSpec& Ast::NodeFactory::getQualifiedTypeSpec(cons
 inline const Ast::Expr& Ast::NodeFactory::getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name) {
     const Ast::TypeSpec* ts = resolveTypedef(typeSpec);
 
-//    trace("getDef: %s %lu, unit(%lu)\n", getTypeSpecName(z::ref(ts), GenMode::Import).c_str(), (unsigned long)ts, z::pad(_unit));
+//    trace("getDef: %s %lu, unit(%lu)\n", ZenlangNameGenerator().tn(z::ref(ts), GenMode::Import).c_str(), (unsigned long)ts, z::pad(_unit));
     const Ast::Unit::DefaultValueList& list = unit().defaultValueList();
     Ast::Unit::DefaultValueList::const_iterator it = list.find(ts);
     if(it != list.end()) {
@@ -30,7 +30,7 @@ inline const Ast::Expr& Ast::NodeFactory::getDefaultValue(const Ast::TypeSpec& t
 
     const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ts);
     if(td != 0) {
-        const std::string tdName = z::ref(td).name().string() ; // getTypeSpecName(z::ref(td), GenMode::Import); \todo this is incorrect, it will match any type called, say, list.
+        const std::string tdName = z::ref(td).name().string() ; // ZenlangNameGenerator().tn(z::ref(td), GenMode::Import); \todo this is incorrect, it will match any type called, say, list.
         if(tdName == "pointer") {
             const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false);
             Ast::ExprList& exprList = addExprList(name);
@@ -128,8 +128,8 @@ inline const Ast::Expr& Ast::NodeFactory::convertExprToExpectedTypeSpec(const As
         if(mode != Unit::CoercionResult::Lhs) {
             throw z::Exception("%s Cannot convert expression from '%s' to '%s' (%d)\n",
                             err(_module.filename(), pos).c_str(),
-                            getQualifiedTypeSpecName(initExpr.qTypeSpec(), GenMode::Import).c_str(),
-                            getQualifiedTypeSpecName(z::ref(qts), GenMode::Import).c_str(),
+                            ZenlangNameGenerator().qtn(initExpr.qTypeSpec()).c_str(),
+                            ZenlangNameGenerator().qtn(z::ref(qts)).c_str(),
                             mode
                             );
         }
@@ -197,6 +197,7 @@ inline Ast::VariableDefn& Ast::NodeFactory::addVariableDefn(const Ast::Qualified
 inline const Ast::TemplateDefn& Ast::NodeFactory::getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len) {
     const Ast::TypeSpec& typeSpec = expr.qTypeSpec().typeSpec();
     if(typeSpec.name().string() != cname) {
+        printf("%s %s\n", typeSpec.name().text(), cname.c_str());
         throw z::Exception("%s Expression is not of %s type: %s (1)\n", err(_module.filename(), name).c_str(), cname.c_str(), typeSpec.name().text());
     }
     const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(z::ptr(typeSpec));
@@ -351,7 +352,7 @@ Ast::CoerceList* Ast::NodeFactory::aCoerceList(const Ast::TypeSpec& typeSpec) {
 }
 
 void Ast::NodeFactory::aGlobalDefaultStatement(const Ast::TypeSpec& typeSpec, const Ast::Expr& expr) {
-//    trace("addDef: %s %lu unit(%lu)\n", getTypeSpecName(typeSpec, GenMode::Import).c_str(), z::pad(typeSpec), z::pad(_unit));
+//    trace("addDef: %s %lu unit(%lu)\n", ZenlangNameGenerator().tn(typeSpec, GenMode::Import).c_str(), z::pad(typeSpec), z::pad(_unit));
     unit().addDefaultValue(typeSpec, expr);
 }
 
@@ -853,7 +854,7 @@ Ast::ForeachStatement* Ast::NodeFactory::aForeachStatement(Ast::ForeachStatement
 }
 
 Ast::ForeachStatement* Ast::NodeFactory::aEnterForeachInit(const Ast::Token& valName, const Ast::Expr& expr) {
-    if(getTypeSpecName(expr.qTypeSpec().typeSpec(), GenMode::Import) == "string") {
+    if(ZenlangNameGenerator().tn(expr.qTypeSpec().typeSpec()) == "string") {
         const Ast::QualifiedTypeSpec& valTypeSpec = getQualifiedTypeSpec(valName, "char");
         const Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
         Ast::Scope& scope = addScope(valName, Ast::ScopeType::Local);
@@ -1415,7 +1416,7 @@ Ast::RunExpr* Ast::NodeFactory::aRunExpr(const Ast::Token& pos, const Ast::Funct
         Ast::RunExpr& runExpr = unit().addNode(new Ast::RunExpr(pos, qTypeSpec, callExpr));
         return z::ptr(runExpr);
     }
-    throw z::Exception("%s Unknown functor in run expression '%s'\n", err(_module.filename(), pos).c_str(), getQualifiedTypeSpecName(callExpr.expr().qTypeSpec(), GenMode::Import).c_str());
+    throw z::Exception("%s Unknown functor in run expression '%s'\n", err(_module.filename(), pos).c_str(), ZenlangNameGenerator().qtn(callExpr.expr().qTypeSpec()).c_str());
 }
 
 Ast::OrderedExpr* Ast::NodeFactory::aOrderedExpr(const Ast::Token& pos, const Ast::Expr& innerExpr) {
@@ -1450,7 +1451,7 @@ Ast::IndexExpr* Ast::NodeFactory::aIndexExpr(const Ast::Token& pos, const Ast::E
         }
     }
 
-    throw z::Exception("%s '%s' is not an indexable type\n", err(_module.filename(), pos).c_str(), getQualifiedTypeSpecName(expr.qTypeSpec(), GenMode::Import).c_str());
+    throw z::Exception("%s '%s' is not an indexable type\n", err(_module.filename(), pos).c_str(), ZenlangNameGenerator().qtn(expr.qTypeSpec()).c_str());
 }
 
 Ast::SpliceExpr* Ast::NodeFactory::aSpliceExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::Expr& from, const Ast::Expr& to) {
@@ -1462,7 +1463,7 @@ Ast::SpliceExpr* Ast::NodeFactory::aSpliceExpr(const Ast::Token& pos, const Ast:
         return z::ptr(spliceExpr);
     }
 
-    throw z::Exception("%s '%s' is not a spliceable type\n", err(_module.filename(), pos).c_str(), getQualifiedTypeSpecName(expr.qTypeSpec(), GenMode::Import).c_str());
+    throw z::Exception("%s '%s' is not a spliceable type\n", err(_module.filename(), pos).c_str(), ZenlangNameGenerator().qtn(expr.qTypeSpec()).c_str());
 }
 
 Ast::TypeofTypeExpr* Ast::NodeFactory::aTypeofTypeExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec) {
@@ -1585,7 +1586,7 @@ Ast::MemberExpr* Ast::NodeFactory::aMemberVariableExpr(const Ast::Expr& expr, co
             }
         }
 
-        throw z::Exception("%s '%s' is not a member of struct '%s'\n", err(_module.filename(), name).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
+        throw z::Exception("%s '%s' is not a member of struct '%s'\n", err(_module.filename(), name).c_str(), name.text(), ZenlangNameGenerator().tn(typeSpec).c_str());
     }
 
     const Ast::FunctionRetn* functionRetn = dynamic_cast<const Ast::FunctionRetn*>(z::ptr(typeSpec));
@@ -1595,7 +1596,7 @@ Ast::MemberExpr* Ast::NodeFactory::aMemberVariableExpr(const Ast::Expr& expr, co
             Ast::MemberVariableExpr& vdefExpr = unit().addNode(new Ast::MemberVariableExpr(name, z::ref(vref).qTypeSpec(), expr, z::ref(vref)));
             return z::ptr(vdefExpr);
         }
-        throw z::Exception("%s '%s' is not a member of function: '%s'\n", err(_module.filename(), name).c_str(), name.text(), getTypeSpecName(typeSpec, GenMode::Import).c_str());
+        throw z::Exception("%s '%s' is not a member of function: '%s'\n", err(_module.filename(), name).c_str(), name.text(), ZenlangNameGenerator().tn(typeSpec).c_str());
     }
 
     throw z::Exception("%s Not an aggregate expression type '%s' (looking for member %s)\n", err(_module.filename(), name).c_str(), typeSpec.name().text(), name.text());
@@ -1685,7 +1686,7 @@ const Ast::VariableDefn* Ast::NodeFactory::aEnterStructInitPart(const Ast::Token
         }
     }
 
-    throw z::Exception("%s: struct-member '%s' not found in '%s'\n", err(_module.filename(), name).c_str(), name.text(), getTypeSpecName(z::ref(structDefn), GenMode::Import).c_str());
+    throw z::Exception("%s: struct-member '%s' not found in '%s'\n", err(_module.filename(), name).c_str(), name.text(), ZenlangNameGenerator().tn(z::ref(structDefn)).c_str());
 }
 
 void Ast::NodeFactory::aLeaveStructInitPart(const Ast::Token& pos) {
@@ -1743,7 +1744,7 @@ Ast::ChildFunctionDefn* Ast::NodeFactory::aEnterAnonymousFunction(const Ast::Fun
     }
 
     if(ts == 0) {
-        throw z::Exception("%s: Internal error: Unable to find parent for anonymous function %s\n", err(_module.filename(), name).c_str(), getTypeSpecName(function, GenMode::Import).c_str());
+        throw z::Exception("%s: Internal error: Unable to find parent for anonymous function %s\n", err(_module.filename(), name).c_str(), ZenlangNameGenerator().tn(function).c_str());
     }
 
     Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(z::ref(ts), function, name, Ast::DefinitionType::Final);
