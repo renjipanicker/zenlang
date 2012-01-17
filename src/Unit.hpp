@@ -130,6 +130,14 @@ namespace Ast {
         CoerceListList _coerceListList;
 
     public: // everything related to scope stack
+        struct ScopeCallback {
+            virtual void enteringScope(Ast::Scope& scope) = 0;
+            virtual void leavingScope(Ast::Scope& scope) = 0;
+        protected:
+            inline ScopeCallback() {}
+        };
+
+    public:
         Ast::Scope& enterScope(const Ast::Token& pos);
         Ast::Scope& enterScope(Ast::Scope& scope);
         void        leaveScope();
@@ -137,8 +145,10 @@ namespace Ast {
         Ast::Scope& currentScope();
         const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name) const;
         const Ast::VariableDefn* getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const;
+        inline void setScopeCallback(ScopeCallback* val) {_scopeCallback = val;}
     private:
         ScopeStack _scopeStack;
+        ScopeCallback* _scopeCallback;
 
     public: // everything related to struct-init stack
         inline void pushStructInit(const Ast::StructDefn& structDefn) {_structInitStack.push_back(z::ptr(structDefn));}

@@ -65,10 +65,38 @@ namespace {
         return false;
     }
 
-    class InterpreterContext {
+    class InterpreterContext : public Ast::Unit::ScopeCallback {
+    private:
+        typedef std::map<const Ast::VariableDefn*, ValuePtr > ValueMap;
+        ValueMap _valueMap;
+
+    private:
+        virtual void enteringScope(Ast::Scope& scope) {
+//            trace("InterpreterContext::enteringScope %lu\n", z::pad(scope));
+            for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
+                const Ast::VariableDefn& vdef = it->get();
+//                trace("Adding variable %s to scope\n", vdef.name().text());
+                /*ValuePtr& vptr = */_valueMap[z::ptr(vdef)];
+            }
+        }
+
+        virtual void leavingScope(Ast::Scope& scope) {
+//            trace("InterpreterContext::leavingScope %lu\n", z::pad(scope));
+            for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
+                const Ast::VariableDefn& vdef = it->get();
+                ValueMap::iterator vit = _valueMap.find(z::ptr(vdef));
+//                trace("Deleting variable %s from scope\n", vdef.name().text());
+                if(vit == _valueMap.end()) {
+                    throw err(scope.pos(), "Internal error: Variable %s not found in scope\n", vdef.name().text());
+                }
+                _valueMap.erase(vit);
+            }
+        }
+
     public:
         inline InterpreterContext(const Ast::Project& project, const Ast::Config& config, Ast::Token& pos)
             : _config(config), _c(project, config) {
+            _unit.setScopeCallback(this);
 #if !defined(DBGMODE)
             _c.initContext(_unit);
 #endif
@@ -112,10 +140,6 @@ namespace {
         const Ast::Config& _config;
         Ast::Unit _unit;
         Compiler _c;
-
-    private:
-        typedef std::map<const Ast::VariableDefn*, ValuePtr > ValueMap;
-        ValueMap _valueMap;
     };
 
     struct BooleanOperator {
@@ -654,7 +678,7 @@ namespace {
         }
 
         virtual void visit(const Ast::StructMemberVariableStatement& node) {
-            ExprGenerator(_ctx).visitNode(node.defn().initExpr());
+            ExprGenerator(_ctx).evaluate(node.defn().initExpr());
         }
 
         virtual void visit(const Ast::StructInitStatement& node) {

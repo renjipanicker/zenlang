@@ -4,7 +4,7 @@
 #include "typename.hpp"
 #include "compiler.hpp"
 
-Ast::Unit::Unit() : _currentTypeRef(0), _currentImportedTypeRef(0), _uniqueIdx(0) {
+Ast::Unit::Unit() : _scopeCallback(0), _currentTypeRef(0), _currentImportedTypeRef(0), _uniqueIdx(0) {
     Ast::Root& rootNS = addNode(new Ast::Root("*root*"));
     _rootNS.reset(rootNS);
 
@@ -125,6 +125,9 @@ const Ast::QualifiedTypeSpec& Ast::Unit::coerce(const Ast::Token& pos, const Ast
 
 Ast::Scope& Ast::Unit::enterScope(Ast::Scope& scope) {
     _scopeStack.push(scope);
+    if(_scopeCallback) {
+        z::ref(_scopeCallback).enteringScope(scope);
+    }
     return scope;
 }
 
@@ -133,14 +136,18 @@ Ast::Scope& Ast::Unit::enterScope(const Ast::Token& pos) {
     return enterScope(scope);
 }
 
-void Ast::Unit::leaveScope() {
-    _scopeStack.pop();
-}
-
 void Ast::Unit::leaveScope(Ast::Scope& scope) {
     Ast::Scope& s = _scopeStack.top();
     assert(z::ptr(s) == z::ptr(scope));
-    return leaveScope();
+    if(_scopeCallback) {
+        z::ref(_scopeCallback).leavingScope(scope);
+    }
+    _scopeStack.pop();
+}
+
+void Ast::Unit::leaveScope() {
+    Ast::Scope& s = _scopeStack.top();
+    return leaveScope(s);
 }
 
 Ast::Scope& Ast::Unit::currentScope() {
