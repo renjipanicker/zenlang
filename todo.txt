@@ -2,6 +2,7 @@ interpreter
 error-handling
 framework for testing gui unit
 use stl i/o everywhere
+split lexer into lexer and scanner (generic scanner)
 
 bug - validate type when de-referencing pointer<>
 bug - list/dict inside struct does not copy in cctor
