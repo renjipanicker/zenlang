@@ -224,7 +224,6 @@ namespace z {
         /// default-ctor is required when this struct is used as the value in a dict.
         /// \todo Find out way to avoid it.
         inline pointer() : z::Pointer<V>(), _tname("") {}
-
         inline pointer(const type& tname, typename z::Pointer<V>::value* val) : z::Pointer<V>(val), _tname(tname) {}
         inline pointer(const pointer& src) : z::Pointer<V>(src), _tname(src._tname) {}
         inline pointer& operator=(const pointer& val) {
@@ -269,73 +268,43 @@ namespace z {
         inline const_iterator begin() const {return _list.begin();}
         inline const_iterator end() const {return _list.end();}
 
-        inline const V& at(const K& idx) const {
-            const_iterator it = _list.find(idx);
-            if(it == _list.end()) {
-                throw Exception(String::Formatter("%{idx} not found\n").add("idx", idx).get());
-            }
-            return it->second;
-        }
-
-        inline V& at(const K& idx) {
-            iterator it = _list.find(idx);
-            if(it == _list.end()) {
-                throw Exception(String::Formatter("%{idx} not found\n").add("idx", idx).get());
-            }
-            return it->second;
-        }
-
-        inline const_iterator find(const K& idx) const {
-            return _list.find(idx);
-        }
-
-        inline iterator find(K& idx) {
-            return _list.find(idx);
-        }
-
-        inline bool has(const K& idx) {
-            iterator it = _list.find(idx);
-            return (it != _list.end());
-        }
-
         inline size_t length() const {
             return _list.size();
         }
 
-        inline void set(const K& k, V v) {
-            _list.insert(std::pair<K, V>(k, v));
-        }
-
-        inline V& operator[](const K& idx) {return at(idx);}
-
-        inline void clone(const container& src) {
-            for(typename List::const_iterator it = src._list.begin(); it != src._list.end(); ++it) {
-                const K& k = it->first;
-                const V& v = it->second;
-                set(k, v);
-            }
-        }
+        inline V& operator[](const K& k) {return at(k);}
 
     protected:
         List _list;
     };
 
     template <typename V>
-    struct list : public z::container<size_t, V, std::map<size_t, V> > {
-        typedef z::container<size_t, V, std::map<size_t, V> > BaseT;
+    struct list : public z::container<size_t, V, std::vector<V> > {
+        typedef z::container<size_t, V, std::vector<V> > BaseT;
+
+        inline void set(const size_t& k, V v) {
+            if(k >= BaseT::_list.size()) {
+                BaseT::_list.resize(k+4);
+            }
+            BaseT::_list.at(k) = v;
+        }
 
         inline void add(const V& v) {
-            size_t k = BaseT::_list.size();
-            BaseT::set(k, v);
+            BaseT::_list.push_back(v);
+        }
+
+        inline V at(const size_t& k) {
+            if(k >= BaseT::_list.size()) {
+                throw Exception(String::Formatter("%{k} out of list bounds\n").add("k", k).get());
+            }
+            return BaseT::_list.at(k);
         }
 
         inline list<V> splice(const size_t& from, const size_t& to) const {
             list<V> nl;
             for(size_t i = from; i < to; ++i) {
-                typename list<V>::const_iterator it = BaseT::find(i);
-                if(it != BaseT::end()) {
-                    nl.add(it->second);
-                }
+                const V& v = BaseT::_list.at(i);
+                nl.add(v);
             }
             return nl;
         }
@@ -374,6 +343,41 @@ namespace z {
     struct dict : public z::container<K, V, std::map<K, V> > {
         typedef z::container<K, V, std::map<K, V> > BaseT;
 
+        inline void set(const K& k, V v) {
+            if(BaseT::_list.find(k) == BaseT::_list.end())
+                BaseT::_list.insert(std::pair<K, V>(k, v));
+            else
+                BaseT::_list[k] = v;
+        }
+
+        inline V& at(const K& k) {
+            typename BaseT::iterator it = BaseT::_list.find(k);
+            if(it == BaseT::_list.end()) {
+                throw Exception(String::Formatter("%{k} not found\n").add("k", k).get());
+            }
+            return it->second;
+        }
+
+        inline typename BaseT::const_iterator find(const K& k) const {
+            return BaseT::_list.find(k);
+        }
+
+        inline typename BaseT::iterator find(K& k) {
+            return BaseT::_list.find(k);
+        }
+
+        inline bool has(const K& k) {
+            typename BaseT::iterator it = BaseT::_list.find(k);
+            return (it != BaseT::_list.end());
+        }
+
+        inline void clone(const dict& src) {
+            for(typename BaseT::const_iterator it = src._list.begin(); it != src._list.end(); ++it) {
+                const K& k = it->first;
+                const V& v = it->second;
+                set(k, v);
+            }
+        }
         struct creator {
             inline creator& add(const K& k, const V& v) {
                 _list.set(k, v);

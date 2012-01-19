@@ -1428,7 +1428,7 @@ Ast::IndexExpr* Ast::NodeFactory::aIndexExpr(const Ast::Token& pos, const Ast::E
     const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(listTypeSpec);
     if(td) {
         if(z::ref(td).name().string() == "list") {
-            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(td).at(0).isConst(), z::ref(td).at(0).typeSpec(), true);
+            const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(td).at(0).isConst(), z::ref(td).at(0).typeSpec(), false);
             Ast::IndexExpr& indexExpr = unit().addNode(new Ast::IndexExpr(pos, qTypeSpec, expr, index));
             return z::ptr(indexExpr);
         }

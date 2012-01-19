@@ -1311,7 +1311,7 @@ namespace {
             ExprGenerator(fpDefn()).visitNode(node.expr());
             fprintf(fpDefn(), ";\n");
             fprintf(fpDefn(), "%s  for(%s::%siterator _it = _list.begin(); _it != _list.end(); ++_it) {\n", Indent::get(), StlcppNameGenerator().tn(node.expr().qTypeSpec().typeSpec()).c_str(), constit.c_str());
-            fprintf(fpDefn(), "%s  %s %s = _it->second;\n", Indent::get(), StlcppNameGenerator().qtn(node.valDef().qTypeSpec()).c_str(), node.valDef().name().text());
+            fprintf(fpDefn(), "%s  %s %s = *_it;\n", Indent::get(), StlcppNameGenerator().qtn(node.valDef().qTypeSpec()).c_str(), node.valDef().name().text());
 
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::IndentedBrace).run(_config, _fs, "", node.block());
 
