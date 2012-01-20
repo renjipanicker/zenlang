@@ -284,47 +284,6 @@ namespace z {
     };
 
     template <typename V>
-    struct list : public z::listbase<V, std::vector<V> > {
-        typedef z::listbase<V, std::vector<V> > BaseT;
-
-        inline void set(const size_t& k, V v) {
-            if(k >= BaseT::_list.size()) {
-                BaseT::_list.resize(k+4);
-            }
-            BaseT::_list.at(k) = v;
-        }
-
-        inline void add(const V& v) {
-            BaseT::_list.push_back(v);
-        }
-
-        inline V at(const size_t& k) {
-            if(k >= BaseT::_list.size()) {
-                throw Exception(String::Formatter("%{k} out of list bounds\n").add("k", k).get());
-            }
-            return BaseT::_list.at(k);
-        }
-
-        inline list<V> splice(const size_t& from, const size_t& to) const {
-            list<V> nl;
-            for(size_t i = from; i < to; ++i) {
-                const V& v = BaseT::_list.at(i);
-                nl.add(v);
-            }
-            return nl;
-        }
-
-        struct creator {
-            inline creator& add(const V& v) {
-                _list.add(v);
-                return ref(this);
-            }
-            inline list get() {return _list;}
-            list _list;
-        };
-    };
-
-    template <typename V>
     struct stack : public z::listbase<V, std::list<V> > {
         typedef z::listbase<V, std::list<V> > BaseT;
 
@@ -365,24 +324,100 @@ namespace z {
     };
 
     template <typename V>
-    inline const V& at(const list<V>& l, const size_t& idx) {
-        return l.at(idx);
-    }
+    struct list : public z::listbase<V, std::vector<V> > {
+        typedef z::listbase<V, std::vector<V> > BaseT;
+
+        inline V at(const size_t& k) const {
+            if(k >= BaseT::_list.size()) {
+                throw Exception(String::Formatter("%{k} out of list bounds\n").add("k", k).get());
+            }
+            return BaseT::_list.at(k);
+        }
+
+        inline bool has(const V& v) const {
+            for(typename BaseT::const_iterator it = BaseT::_list.begin(); it != BaseT::_list.end(); ++it) {
+                const V& iv = *it;
+                if(v == iv)
+                    return true;
+            }
+            return false;
+        }
+
+        inline void set(const size_t& k, V v) {
+            if(k >= BaseT::_list.size()) {
+                BaseT::_list.resize(k+4);
+            }
+            BaseT::_list.at(k) = v;
+        }
+
+        inline V add(const V& v) {
+            BaseT::_list.push_back(v);
+            return BaseT::back();
+        }
+
+        inline void append(const list<V>& src) {
+            for(typename BaseT::const_iterator it = src._list.begin(); it != src._list.end(); ++it) {
+                const V& iv = *it;
+                add(iv);
+            }
+        }
+
+        inline list<V> splice(const size_t& from, const size_t& to) const {
+            list<V> nl;
+            for(size_t i = from; i < to; ++i) {
+                const V& v = BaseT::_list.at(i);
+                nl.add(v);
+            }
+            return nl;
+        }
+
+        struct creator {
+            inline creator& add(const V& v) {
+                _list.add(v);
+                return ref(this);
+            }
+            inline list get() {return _list;}
+            list _list;
+        };
+    };
 
     template <typename V>
-    inline V& at(list<V>& l, const size_t& idx) {
-        return l.at(idx);
-    }
+    struct olist : public z::list<V*> {
+        typedef z::list<V*> BaseT;
+        inline olist() {}
+        inline ~olist() {
+            for(typename BaseT::iterator it = BaseT::_list.begin(); it != BaseT::_list.end(); ++it) {
+                V* v = *it;
+                delete v;
+            }
+        }
+
+        inline V& add(V* v) {
+            V* r = BaseT::add(v);
+            return z::ref(r);
+        }
+
+    private:
+        inline olist(const olist& /*src*/) {}
+    };
 
     template <typename V>
-    inline list<V> splice(const list<V>& l, const size_t& from, const size_t& to) {
-        return l.splice(from, to);
-    }
+    struct rlist : public z::list<V*> {
+        typedef z::list<V*> BaseT;
+        inline V& add(V& v) {
+            V* r = BaseT::add(z::ptr(v));
+            return z::ref(r);
+        }
 
-    template <typename V>
-    inline size_t length(const list<V>& l) {
-        return l.length();
-    }
+        inline V& at(const size_t& k) const {
+            V* v = BaseT::at(k);
+            return z::ref(v);
+        }
+
+        inline bool has(const V& v) const {
+            return BaseT::has(z::ptr(v));
+        }
+    };
 
     template <typename K, typename V>
     struct dict : public z::container<V, std::map<K, V> > {
@@ -445,6 +480,41 @@ namespace z {
     };
 
     template <typename K, typename V>
+    struct odict : public z::dict<K, V*> {
+        typedef z::dict<K, V*> BaseT;
+        inline ~odict() {
+            for(typename BaseT::iterator it = BaseT::_list.begin(); it != BaseT::_list.end(); ++it) {
+                V* v = it->second;
+                delete v;
+            }
+        }
+    };
+
+    /////////////////////////////
+    // list helpers
+    template <typename V>
+    inline const V& at(const list<V>& l, const size_t& idx) {
+        return l.at(idx);
+    }
+
+    template <typename V>
+    inline V& at(list<V>& l, const size_t& idx) {
+        return l.at(idx);
+    }
+
+    template <typename V>
+    inline list<V> splice(const list<V>& l, const size_t& from, const size_t& to) {
+        return l.splice(from, to);
+    }
+
+    template <typename V>
+    inline size_t length(const list<V>& l) {
+        return l.length();
+    }
+
+    /////////////////////////////
+    // dict helpers
+    template <typename K, typename V>
     inline V& at(dict<K, V>& l, const K& idx) {
         return l.at(idx);
     }
@@ -459,6 +529,7 @@ namespace z {
         return l.length();
     }
 
+    ///////////////////////////////////////////////////////////////
     struct Future {
         virtual void run() = 0;
     };
