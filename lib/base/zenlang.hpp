@@ -256,7 +256,7 @@ namespace z {
         }
     };
 
-    template <typename K, typename V, typename ListT>
+    template <typename V, typename ListT>
     struct container {
         typedef ListT List;
 
@@ -268,19 +268,24 @@ namespace z {
         inline const_iterator begin() const {return _list.begin();}
         inline const_iterator end() const {return _list.end();}
 
-        inline size_t length() const {
-            return _list.size();
-        }
+        inline size_t size() const {return _list.size();}
+        inline bool empty() const {return (_list.size() == 0);}
 
-        inline V& operator[](const K& k) {return at(k);}
-
+        inline void clear() {_list.clear();}
+        inline void erase(iterator& it) {_list.erase(it);}
     protected:
         List _list;
     };
 
+    template <typename V, typename ListT>
+    struct listbase : public z::container<V, ListT > {
+        typedef z::container<V, ListT > BaseT;
+        inline V& back() {return BaseT::_list.back();}
+    };
+
     template <typename V>
-    struct list : public z::container<size_t, V, std::vector<V> > {
-        typedef z::container<size_t, V, std::vector<V> > BaseT;
+    struct list : public z::listbase<V, std::vector<V> > {
+        typedef z::listbase<V, std::vector<V> > BaseT;
 
         inline void set(const size_t& k, V v) {
             if(k >= BaseT::_list.size()) {
@@ -320,6 +325,46 @@ namespace z {
     };
 
     template <typename V>
+    struct stack : public z::listbase<V, std::list<V> > {
+        typedef z::listbase<V, std::list<V> > BaseT;
+
+        inline V& top() {
+            V& v = BaseT::_list.back();
+            return v;
+        }
+
+        inline void push(const V& v) {
+            BaseT::_list.push_back(v);
+        }
+
+        inline V pop() {
+            V v = BaseT::_list.back();
+            BaseT::_list.pop_back();
+            return v;
+        }
+    };
+
+    template <typename V>
+    struct queue : public z::listbase<V, std::list<V> > {
+        typedef z::listbase<V, std::list<V> > BaseT;
+
+        inline V& front() {
+            V& v = BaseT::_list.front();
+            return v;
+        }
+
+        inline void enqueue(const V& v) {
+            BaseT::_list.push_back(v);
+        }
+
+        inline V dequeue() {
+            V v = BaseT::_list.front();
+            BaseT::_list.pop_front();
+            return v;
+        }
+    };
+
+    template <typename V>
     inline const V& at(const list<V>& l, const size_t& idx) {
         return l.at(idx);
     }
@@ -340,14 +385,15 @@ namespace z {
     }
 
     template <typename K, typename V>
-    struct dict : public z::container<K, V, std::map<K, V> > {
-        typedef z::container<K, V, std::map<K, V> > BaseT;
+    struct dict : public z::container<V, std::map<K, V> > {
+        typedef z::container<V, std::map<K, V> > BaseT;
 
-        inline void set(const K& k, V v) {
+        inline V& set(const K& k, V v) {
             if(BaseT::_list.find(k) == BaseT::_list.end())
                 BaseT::_list.insert(std::pair<K, V>(k, v));
             else
                 BaseT::_list[k] = v;
+            return BaseT::_list[k];
         }
 
         inline V& at(const K& k) {
@@ -362,7 +408,7 @@ namespace z {
             return BaseT::_list.find(k);
         }
 
-        inline typename BaseT::iterator find(K& k) {
+        inline typename BaseT::iterator find(const K& k) {
             return BaseT::_list.find(k);
         }
 
@@ -378,6 +424,15 @@ namespace z {
                 set(k, v);
             }
         }
+
+        inline V& operator[](const K& k) {
+            typename BaseT::iterator it = BaseT::_list.find(k);
+            if(it == BaseT::_list.end()) {
+                return set(k, V());
+            }
+            return it->second;
+        }
+
         struct creator {
             inline creator& add(const K& k, const V& v) {
                 _list.set(k, v);
