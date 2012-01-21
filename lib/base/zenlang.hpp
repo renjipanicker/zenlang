@@ -146,8 +146,6 @@ namespace z {
     class Exception {
     public:
         explicit inline Exception(const std::string& src, const fmt& msg) : _msg(msg) {elog(src, _msg);}
-        explicit inline Exception(const fmt& msg) : _msg(msg) {elog("", _msg);}
-        explicit inline Exception(const std::string& msg) : _msg(msg) {elog("", _msg);}
 
     private:
         const fmt _msg;
@@ -362,7 +360,7 @@ namespace z {
 
         inline V at(const size_t& k) const {
             if(k >= BaseT::_list.size()) {
-                throw Exception(fmt("%{k} out of list bounds\n").add("k", k));
+                throw Exception("z::list", fmt("%{k} out of list bounds\n").add("k", k));
             }
             return BaseT::_list.at(k);
         }
