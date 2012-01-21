@@ -59,7 +59,7 @@ inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
     fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s/base/zenlang.cpp)\n", config.zlibPath().c_str());
 
     std::string zexePath = config.zexePath();
-    String::replace(zexePath, "\\", "/");
+    z::fmt::replace(zexePath, "\\", "/");
     for(Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
         const std::string& filename = *it;
         std::string basename = getBaseName(filename);

@@ -321,7 +321,7 @@ namespace {
         }
 
         virtual void visit(const Ast::FormatExpr& node) {
-            fprintf(_fp, "String::Formatter(");
+            fprintf(_fp, "z::fmt(");
             visitNode(node.stringExpr());
             fprintf(_fp, ")");
             for(Ast::DictList::List::const_iterator it = node.dictExpr().list().list().begin(); it != node.dictExpr().list().list().end(); ++it) {

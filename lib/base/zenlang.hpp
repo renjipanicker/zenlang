@@ -2,6 +2,22 @@
 
 #define unused(x) ((void)x)
 
+#if defined(DEBUG)
+    #if defined(GUI) && defined(WIN32)
+        inline void trace(const char* txt, ...) {
+            va_list vlist;
+            va_start(vlist, txt);
+            std::string buf = ssprintfv(txt, vlist);
+            OutputDebugStringA(buf.c_str());
+        }
+    #else
+        #define trace printf
+    #endif
+#else
+    #define trace(f)
+#endif
+
+
 namespace z {
     template <typename T>
     inline T& ref(T* t) {
@@ -19,18 +35,6 @@ namespace z {
     inline unsigned long pad(T& t) {
         assert(&t);
         return (unsigned long)(&t);
-    }
-
-    template <typename T>
-    inline std::string ppad(const T* t) {
-        std::stringstream ss;
-        ss << std::setw(16) << (unsigned long)(t);
-        return ss.str();
-    }
-
-    template <typename T>
-    inline std::string rpad(const T& t) {
-        return ppad(ptr(t));
     }
 
     inline std::string undecorate(const char* name) {
@@ -80,59 +84,29 @@ namespace z {
         va_start(vlist, txt);
         return ssprintfv(txt, vlist);
     }
-}
 
-
-#if defined(DEBUG)
-    #if defined(GUI) && defined(WIN32)
-        inline void trace(const char* txt, ...) {
-            va_list vlist;
-            va_start(vlist, txt);
-            std::string buf = ssprintfv(txt, vlist);
-            OutputDebugStringA(buf.c_str());
-        }
-    #else
-        #define trace printf
-    #endif
-#else
-    #define trace(f)
-#endif
-
-namespace String {
-    inline void replace(std::string& text, const std::string& search, const std::string& replace) {
-        for(std::string::size_type next = text.find(search); next != std::string::npos;next = text.find(search, next)) {
-            text.replace(next, search.length(), replace);
-            next += replace.length();
-        }
-    }
-    struct Formatter {
-        inline Formatter(const std::string& text) : _text(text) {}
-        template <typename T>
-        inline Formatter& add(const std::string& key, T value) {
-            std::stringstream ss;
-            ss << value;
-            std::string replace = ss.str();
-            std::string search = "%{" + key + "}";
-            String::replace(_text, search, replace);
-            return z::ref(this);
-        }
-        inline std::string get() {return _text;}
+    struct string {
     private:
-        std::string _text;
+        std::string _val;
     };
 
-}
-
-namespace z {
     struct fmt {
         explicit inline fmt(const std::string& text) : _text(text) {}
+
+        static inline void replace(std::string& text, const std::string& search, const std::string& replace) {
+            for(std::string::size_type next = text.find(search); next != std::string::npos;next = text.find(search, next)) {
+                text.replace(next, search.length(), replace);
+                next += replace.length();
+            }
+        }
+
         template <typename T>
         inline fmt& add(const std::string& key, T value) {
             std::stringstream ss;
             ss << value;
-            std::string replace = ss.str();
+            std::string repl = ss.str();
             std::string search = "%{" + key + "}";
-            String::replace(_text, search, replace);
+            replace(_text, search, repl);
             return z::ref(this);
         }
         inline const std::string& get() const {return _text;}
@@ -140,8 +114,8 @@ namespace z {
         std::string _text;
     };
 
-    inline void mlog(const std::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get();}
-    inline void elog(const std::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get();}
+    inline void mlog(const std::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get() << std::endl;}
+    inline void elog(const std::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get() << std::endl;}
 
     class Exception {
     public:
