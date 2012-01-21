@@ -28,7 +28,7 @@ inline std::string Compiler::findImport(const std::string& filename) {
         if(checkFile(cfile))
             return cfile;
     }
-    throw z::Exception("Cannot open include file '%s'\n", filename.c_str());
+    throw z::Exception("Compiler", z::fmt("Cannot open include file %{s}").add("s", filename));
 }
 
 bool Compiler::compileFile(Ast::Module& module, const std::string& filename, const std::string& msg) {
@@ -44,7 +44,7 @@ bool Compiler::compileFile(Ast::Module& module, const std::string& filename, con
     std::ifstream is;
     is.open(filename.c_str(), std::ifstream::in);
     if(is.is_open() == false) {
-        throw z::Exception("Error opening file '%s'\n", filename.c_str());
+        throw z::Exception("Compiler", z::fmt("Error opening file %{s}").add("s", filename));
     }
 
     Parser parser;
@@ -93,7 +93,7 @@ void Compiler::compile() {
 
             Ast::Module module(unit, filename, 0);
             if(!compileFile(module, filename, "Compiling"))
-                throw z::Exception("Cannot open source file '%s'\n", filename.c_str());
+                throw z::Exception("Compiler", z::fmt("Cannot open source file %{s}").add("s", filename));
 
             ZenlangGenerator zgenerator(_project, _config, module);
             zgenerator.run();
@@ -102,7 +102,7 @@ void Compiler::compile() {
                 StlcppGenerator generator(_project, _config, module);
                 generator.run();
             } else {
-                throw z::Exception("Unknown code generator '%s'\n", _config.olanguage().c_str());
+                throw z::Exception("Compiler", z::fmt("Unknown code generator %{s}").add("s", _config.olanguage()));
             }
         }
     }

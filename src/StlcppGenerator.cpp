@@ -568,7 +568,7 @@ namespace {
             if(node.defType() == Ast::DefinitionType::Native) {
                 fprintf(_fp, "%s// typedef %s native;\n", Indent::get(), node.name().text());
             } else {
-                throw err(node.pos(), "Internal error '%s'\n", node.name().text());
+                throw err("Stlcpp", node.pos(), "Internal error '%s'\n", node.name().text());
             }
         }
 
@@ -580,12 +580,12 @@ namespace {
 
         void visit(const Ast::TemplateDecl& node) {
             if(node.defType() != Ast::DefinitionType::Native) {
-                throw err(node.pos(), "Internal error: template declaration cannot be generated '%s'\n", node.name().text());
+                throw err("Stlcpp", node.pos(), "Internal error: template declaration cannot be generated '%s'\n", node.name().text());
             }
         }
 
         void visit(const Ast::TemplateDefn& node) {
-            throw err(node.pos(), "Internal error: template definition cannot be generated '%s'\n", node.name().text());
+            throw err("Stlcpp", node.pos(), "Internal error: template definition cannot be generated '%s'\n", node.name().text());
         }
 
         void visit(const Ast::EnumDefn& node) {
@@ -1094,7 +1094,7 @@ namespace {
             if(node.accessType() == Ast::AccessType::Parent) {
                 const Ast::ChildTypeSpec* child = dynamic_cast<const Ast::ChildTypeSpec*>(z::ptr(node));
                 if(!child) {
-                    throw err(node.pos(), "Internal error: Invalid access type in typespec\n");
+                    throw err("Stlcpp", node.pos(), "Internal error: Invalid access type in typespec\n");
                 }
                 return fpDecl(z::ref(child).parent());
             }
@@ -1374,7 +1374,7 @@ namespace {
                     visitNode(z::ref(cd).block());
                     break;
                 } else {
-                    throw err(node.pos(), "Internal error: not a case statement inside switch\n");
+                    throw err("Stlcpp", node.pos(), "Internal error: not a case statement inside switch\n");
                 }
             }
         }

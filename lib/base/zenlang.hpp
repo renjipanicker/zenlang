@@ -124,21 +124,33 @@ namespace String {
 }
 
 namespace z {
+    struct fmt {
+        explicit inline fmt(const std::string& text) : _text(text) {}
+        template <typename T>
+        inline fmt& add(const std::string& key, T value) {
+            std::stringstream ss;
+            ss << value;
+            std::string replace = ss.str();
+            std::string search = "%{" + key + "}";
+            String::replace(_text, search, replace);
+            return z::ref(this);
+        }
+        inline const std::string& get() const {return _text;}
+    private:
+        std::string _text;
+    };
+
+    inline void mlog(const std::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get();}
+    inline void elog(const std::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get();}
+
     class Exception {
     public:
-        inline Exception(const char* txt, ...) {
-            va_list vlist;
-            va_start(vlist, txt);
-            _msg = ssprintfv(txt, vlist);
-            printf("%s\n", _msg.c_str());
-        }
-
-        inline Exception(const std::string& msg) : _msg(msg) {
-            printf("%s\n", _msg.c_str());
-        }
+        explicit inline Exception(const std::string& src, const fmt& msg) : _msg(msg) {elog(src, _msg);}
+        explicit inline Exception(const fmt& msg) : _msg(msg) {elog("", _msg);}
+        explicit inline Exception(const std::string& msg) : _msg(msg) {elog("", _msg);}
 
     private:
-        std::string _msg;
+        const fmt _msg;
     };
 
     template <typename V>
@@ -288,17 +300,26 @@ namespace z {
         typedef z::listbase<V, std::list<V> > BaseT;
 
         inline V& top() {
-            V& v = BaseT::_list.back();
+            assert(BaseT::_list.size() > 0);
+            V& v = BaseT::_list.front();
             return v;
         }
 
-        inline void push(const V& v) {
-            BaseT::_list.push_back(v);
+        inline const V& top() const {
+            assert(BaseT::_list.size() > 0);
+            const V& v = BaseT::_list.front();
+            return v;
+        }
+
+        inline V& push(const V& v) {
+            BaseT::_list.push_front(v);
+            return top();
         }
 
         inline V pop() {
-            V v = BaseT::_list.back();
-            BaseT::_list.pop_back();
+            assert(BaseT::_list.size() > 0);
+            V v = BaseT::_list.front();
+            BaseT::_list.pop_front();
             return v;
         }
     };
@@ -308,7 +329,14 @@ namespace z {
         typedef z::listbase<V, std::list<V> > BaseT;
 
         inline V& front() {
+            assert(BaseT::_list.size() > 0);
             V& v = BaseT::_list.front();
+            return v;
+        }
+
+        inline const V& front() const {
+            assert(BaseT::_list.size() > 0);
+            const V& v = BaseT::_list.front();
             return v;
         }
 
@@ -317,9 +345,14 @@ namespace z {
         }
 
         inline V dequeue() {
+            assert(BaseT::_list.size() > 0);
             V v = BaseT::_list.front();
             BaseT::_list.pop_front();
             return v;
+        }
+
+        inline typename BaseT::iterator erase(typename BaseT::iterator it) {
+            return BaseT::_list.erase(it);
         }
     };
 
@@ -329,7 +362,7 @@ namespace z {
 
         inline V at(const size_t& k) const {
             if(k >= BaseT::_list.size()) {
-                throw Exception(String::Formatter("%{k} out of list bounds\n").add("k", k).get());
+                throw Exception(fmt("%{k} out of list bounds\n").add("k", k));
             }
             return BaseT::_list.at(k);
         }
@@ -360,6 +393,11 @@ namespace z {
                 const V& iv = *it;
                 add(iv);
             }
+        }
+
+        template <typename CmpFnT>
+        inline void sort(CmpFnT fn) {
+            std::sort(BaseT::_list.begin(), BaseT::_list.end(), fn);
         }
 
         inline list<V> splice(const size_t& from, const size_t& to) const {
@@ -434,7 +472,15 @@ namespace z {
         inline V& at(const K& k) {
             typename BaseT::iterator it = BaseT::_list.find(k);
             if(it == BaseT::_list.end()) {
-                throw Exception(String::Formatter("%{k} not found\n").add("k", k).get());
+                throw Exception("dict", z::fmt("%{k} not found\n").add("k", k));
+            }
+            return it->second;
+        }
+
+        inline const V& at(const K& k) const {
+            typename BaseT::const_iterator it = BaseT::_list.find(k);
+            if(it == BaseT::_list.end()) {
+                throw Exception("dict", z::fmt("%{k} not found\n").add("k", k));
             }
             return it->second;
         }
@@ -447,8 +493,8 @@ namespace z {
             return BaseT::_list.find(k);
         }
 
-        inline bool has(const K& k) {
-            typename BaseT::iterator it = BaseT::_list.find(k);
+        inline bool has(const K& k) const {
+            typename BaseT::const_iterator it = BaseT::_list.find(k);
             return (it != BaseT::_list.end());
         }
 
@@ -487,6 +533,45 @@ namespace z {
                 V* v = it->second;
                 delete v;
             }
+
+        }
+
+        inline V& set(const K& k, V* v) {
+            V* r = BaseT::set(k, v);
+            return z::ref(r);
+        }
+
+        inline const V& at(const K& k) const {
+            const V* v = BaseT::at(k);
+            return z::ref(v);
+        }
+
+        inline V& at(const K& k) {
+            V* v = BaseT::at(k);
+            return z::ref(v);
+        }
+
+        inline odict() {}
+    private:
+        inline odict(const odict& /*src*/) {}
+    };
+
+    template <typename K, typename V>
+    struct rdict : public z::dict<K, V*> {
+        typedef z::dict<K, V*> BaseT;
+        inline V& set(const K& k, V& v) {
+            V* r = BaseT::set(k, z::ptr(v));
+            return z::ref(r);
+        }
+
+        inline V& at(const K& k) {
+            V* v = BaseT::at(k);
+            return z::ref(v);
+        }
+
+        inline const V& at(const K& k) const {
+            const V* v = BaseT::at(k);
+            return z::ref(v);
         }
     };
 
@@ -509,7 +594,7 @@ namespace z {
 
     template <typename V>
     inline size_t length(const list<V>& l) {
-        return l.length();
+        return l.size();
     }
 
     /////////////////////////////
@@ -526,7 +611,7 @@ namespace z {
 
     template <typename K, typename V>
     inline size_t length(const dict<K, V>& l) {
-        return l.length();
+        return l.size();
     }
 
     ///////////////////////////////////////////////////////////////

@@ -78,7 +78,7 @@ inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
             fprintf(_fpPro, ")\n");
             fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s.cpp)\n", basename.c_str());
         } else {
-            throw z::Exception("Unknown file type for: %s", filename.c_str());
+            throw z::Exception("CmakeGenerator", z::fmt("Unknown file type for: %{s}").add("s", filename));
         }
     }
     fprintf(_fpPro, "\n");
@@ -105,7 +105,7 @@ inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
             fprintf(_fpPro, "ADD_LIBRARY(%s STATIC ${project_SOURCES})\n", _project.name().c_str());
             break;
         case Ast::Config::Mode::Compile:
-            throw z::Exception("Compile mode not allowed during project generaion");
+            throw z::Exception("CmakeGenerator", z::fmt("Compile mode not allowed during project generaion"));
     }
 
     if(config.gui()) {

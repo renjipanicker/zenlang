@@ -2,7 +2,7 @@
 
 #include "ast.hpp"
 
-inline z::Exception err(const Ast::Token& token, const char* fmt, ...) {
+inline z::Exception err(const std::string& src, const Ast::Token& token, const char* fmt, ...) {
     va_list vlist;
     va_start(vlist, fmt);
     std::string txt = z::ssprintfv(fmt, vlist);
@@ -16,5 +16,5 @@ inline z::Exception err(const Ast::Token& token, const char* fmt, ...) {
     // GCC style error message, or default.
     msg << token.filename() << ":" << token.row() << ":" << token.col() << ": error:" << txt;
 #endif
-    return z::Exception(msg.str());
+    return z::Exception(src, z::fmt("%{s}").add("s", msg.str()));
 }

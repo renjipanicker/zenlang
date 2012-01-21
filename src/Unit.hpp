@@ -168,7 +168,7 @@ namespace Ast {
 
         template <typename T> inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const std::string& extype) {
             if(z::ptr(parent) != _currentTypeRef) {
-                throw err(name, "Internal error: %s parent mismatch '%s'\n", extype.c_str(), name.text());
+                throw err("Unit", name, "Internal error: %s parent mismatch '%s'\n", extype.c_str(), name.text());
             }
             const T* td = z::ref(_currentTypeRef).hasChild<const T>(name.string());
             if(td) {
@@ -195,7 +195,7 @@ namespace Ast {
                 }
             }
 
-            throw err(name, "%s type expected '%s'\n", extype.c_str(), name.text());
+            throw err("Unit", name, "%s type expected '%s'\n", extype.c_str(), name.text());
         }
 
         template <typename T> inline const T* resetCurrentTypeRef(const T& typeSpec) {
@@ -218,11 +218,11 @@ namespace Ast {
         template <typename T> const T& getRootTypeSpec(const int& level, const Ast::Token &name) const {
             const Ast::TypeSpec* typeSpec = hasRootTypeSpec(level, name);
             if(!typeSpec) {
-                throw err(name, "Unknown root type '%s'\n", name.text());
+                throw err("Unit", name, "Unknown root type '%s'\n", name.text());
             }
             const T* tTypeSpec = dynamic_cast<const T*>(typeSpec);
             if(!tTypeSpec) {
-                throw err(name, "Type mismatch '%s'\n", name.text());
+                throw err("Unit", name, "Type mismatch '%s'\n", name.text());
             }
             return z::ref(tTypeSpec);
         }

@@ -63,6 +63,7 @@
     #include <string>
     #include <vector>
     #include <list>
+    #include <algorithm>
     #include <map>
     #include <iostream>
     #include <fstream>

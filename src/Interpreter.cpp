@@ -87,7 +87,7 @@ namespace {
                 ValueMap::iterator vit = _valueMap.find(z::ptr(vdef));
 //                trace("Deleting variable %s from scope\n", vdef.name().text());
                 if(vit == _valueMap.end()) {
-                    throw err(scope.pos(), "Internal error: Variable %s not found in scope\n", vdef.name().text());
+                    throw err("Interpreter", scope.pos(), "Internal error: Variable %s not found in scope\n", vdef.name().text());
                 }
                 _valueMap.erase(vit);
             }
@@ -126,7 +126,7 @@ namespace {
         inline const ValuePtr& getValue(const Ast::Token& pos, const Ast::VariableDefn& key) {
             ValueMap::iterator it = _valueMap.find(z::ptr(key));
             if(it == _valueMap.end()) {
-                throw err(pos, "Variable not found %s\n", key.name().text());
+                throw err("Interpreter", pos, "Variable not found %s\n", key.name().text());
             }
             const ValuePtr& val = it->second;
 //            trace("InterpreterContext::getValue %lu %s\n", z::pad(val.get()), val.str().c_str());
@@ -148,7 +148,7 @@ namespace {
                 long nv = runLong((long)lhs, (long)rhs);
                 return ValuePtr(new Ast::ConstantLongExpr(op, qTypeSpec, nv));
             }
-            throw err(op, "Type mismatch\n");
+            throw err("Interpreter", op, "Type mismatch\n");
         }
         virtual long runLong(const long& lhs, const long& rhs) const = 0;
     };
@@ -216,7 +216,7 @@ namespace {
                 long nv = runLong((long)lhs, (long)rhs);
                 return ValuePtr(new Ast::ConstantLongExpr(op, qTypeSpec, nv));
             }
-            throw err(op, "Type mismatch\n");
+            throw err("Interpreter", op, "Type mismatch\n");
         }
 
         inline ValuePtr assign(ValuePtr& lhs, ValuePtr& rhs, const Ast::Token& op, const Ast::QualifiedTypeSpec& qTypeSpec) const {
@@ -300,7 +300,7 @@ namespace {
                 long nv = runLong((long)lhs);
                 return ValuePtr(new Ast::ConstantLongExpr(op, qTypeSpec, nv));
             }
-            throw err(op, "Type mismatch\n");
+            throw err("Interpreter", op, "Type mismatch\n");
         }
         virtual long runLong(const long& lhs) const = 0;
     };
@@ -353,7 +353,7 @@ namespace {
                 const Ast::Expr* pref = z::ptr(node.lhs());
                 const Ast::VariableRefExpr* vRefExpr = dynamic_cast<const Ast::VariableRefExpr*>(pref);
                 if(!vRefExpr) {
-                    throw err(node.op(), "LHS of assignment is not a variable reference\n");
+                    throw err("Interpreter", node.op(), "LHS of assignment is not a variable reference\n");
                 }
                 _ctx.addValue(z::ref(vRefExpr).vref(), rhs);
             } else {
