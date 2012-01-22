@@ -27,7 +27,7 @@ struct WinProc : public Window::Native::WndProc {
 static WinProc s_winProc;
 #endif
 
-void Systray::SetTooltip::run(const Systray::Handle& handle, const std::string& text) {
+void Systray::SetTooltip::run(const Systray::Handle& handle, const z::string& text) {
 #if defined(WIN32)
     NOTIFYICONDATA& ni = Systray::impl(handle)._ni;
     lstrcpyn(ni.szTip, text.c_str(), text.length());
@@ -40,7 +40,7 @@ void Systray::SetTooltip::run(const Systray::Handle& handle, const std::string& 
 #endif
 }
 
-void Systray::SetIconfile::run(const Systray::Handle& handle, const std::string& filename) {
+void Systray::SetIconfile::run(const Systray::Handle& handle, const z::string& filename) {
 #if defined(WIN32)
     NOTIFYICONDATA& ni = Systray::impl(handle)._ni;
     ni.hIcon = (HICON)LoadImageA(NULL, filename.c_str(), IMAGE_ICON,

@@ -30,7 +30,7 @@ Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdi
     return win;
 }
 
-void TextEdit::AppendText::run(const Window::Handle& window, const std::string& text) {
+void TextEdit::AppendText::run(const Window::Handle& window, const z::string& text) {
 #if defined(WIN32)
     int len = Edit_GetTextLength(Window::impl(window)._hWindow);
     Edit_SetSel(Window::impl(window)._hWindow, len, len);

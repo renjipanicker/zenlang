@@ -15,7 +15,7 @@ int Window::Native::getNextResID() {
     return lastRes++;
 }
 
-static std::string getNextClassID() {
+static z::string getNextClassID() {
     static int lastclassId = 1;
     char name[128];
     snprintf(name, 128, "classX%d", lastclassId++);
@@ -98,8 +98,8 @@ static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     return ::DefWindowProc(hWnd, message, wParam, lParam);
 }
 
-std::string registerClass(HBRUSH bg) {
-    std::string className = getNextClassID();
+z::string registerClass(HBRUSH bg) {
+    z::string className = getNextClassID();
     WNDCLASSEX wcx;
 
     // Fill in the window class structure with parameters
@@ -140,7 +140,7 @@ std::string registerClass(HBRUSH bg) {
 #endif
 
 #if defined(WIN32)
-Window::HandleImpl& Window::Native::createWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, HWND parent) {
+Window::HandleImpl& Window::Native::createWindow(const Window::Definition& def, const z::string& className, const int& style, const int& xstyle, HWND parent) {
     Position pos = Position()
             ._x<Position>(CW_USEDEFAULT)
             ._y<Position>(CW_USEDEFAULT)
@@ -169,17 +169,17 @@ Window::HandleImpl& Window::Native::createWindow(const Window::Definition& def, 
 
 Window::HandleImpl& Window::Native::createMainFrame(const Window::Definition& def, const int& style, const int& xstyle) {
     HBRUSH brush = (def.style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
-    std::string className = registerClass(brush);
+    z::string className = registerClass(brush);
     return createWindow(def, className, style, xstyle, (HWND)NULL);
 }
 
 Window::HandleImpl& Window::Native::createChildFrame(const Window::Definition& def, const int &style, const int &xstyle, const Window::Handle &parent) {
     HBRUSH brush = (def.style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
-    std::string className = registerClass(brush);
+    z::string className = registerClass(brush);
     return createWindow(def, className, style, xstyle, Window::impl(parent)._hWindow);
 }
 
-Window::HandleImpl& Window::Native::createChildWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, const Window::Handle& parent) {
+Window::HandleImpl& Window::Native::createChildWindow(const Window::Definition& def, const z::string& className, const int& style, const int& xstyle, const Window::Handle& parent) {
     return createWindow(def, className, style, xstyle, Window::impl(parent)._hWindow);
 }
 #endif
@@ -258,7 +258,7 @@ void Window::Delete::run(const Window::Handle& window) {
    //window.wdata = 0;
 }
 
-void Window::SetTitle::run(const Window::Handle& window, const std::string& title) {
+void Window::SetTitle::run(const Window::Handle& window, const z::string& title) {
 #if defined(WIN32)
     ::SetWindowText(Window::impl(window)._hWindow, title.c_str());
 #endif

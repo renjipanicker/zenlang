@@ -34,10 +34,10 @@ int getNextWmID();
 int getNextResID();
 ULONGLONG GetDllVersion(LPCTSTR lpszDllName);
 
-Window::HandleImpl& createWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, HWND parent);
+Window::HandleImpl& createWindow(const Window::Definition& def, const z::string& className, const int& style, const int& xstyle, HWND parent);
 Window::HandleImpl& createMainFrame(const Window::Definition& def, const int& style, const int& xstyle);
 Window::HandleImpl& createChildFrame(const Window::Definition& def, const int &style, const int &xstyle, const Window::Handle &parent);
-Window::HandleImpl& createChildWindow(const Window::Definition& def, const std::string& className, const int& style, const int& xstyle, const Window::Handle& parent);
+Window::HandleImpl& createChildWindow(const Window::Definition& def, const z::string& className, const int& style, const int& xstyle, const Window::Handle& parent);
 #endif
 
 #if defined(GTK)
