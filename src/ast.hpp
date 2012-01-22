@@ -61,7 +61,7 @@ namespace Ast {
     struct Ptr {
         inline void dec() {
             if(_value) {
-                size_t rc = z::ref(_value).dec();
+                typename T::RefCnt_t rc = z::ref(_value).dec();
 //                z::ref(_value).dump("P::dec", "-");
                 if(rc == 0) {
 //                    z::ref(_value).dump("P::del", " ");
@@ -119,6 +119,7 @@ namespace Ast {
     template <typename T, typename ListT, typename ItemT>
     struct Lst {
         typedef ListT List;
+        typedef typename List::size_type size_type;
         typedef typename List::const_iterator const_iterator;
         typedef typename List::const_reverse_iterator const_reverse_iterator;
         typedef typename List::reverse_iterator reverse_iterator;
@@ -130,8 +131,8 @@ namespace Ast {
         inline reverse_iterator rbegin() {return _list.rbegin();}
         inline reverse_iterator rend() {return _list.rend();}
         inline T& front() const {return _list.front().get();}
-        inline T& at(const size_t& idx) const {assert(idx < _list.size()); return _list.at(idx).get();}
-        inline size_t size() const {return _list.size();}
+        inline T& at(const size_type& idx) const {assert(idx < _list.size()); return _list.at(idx).get();}
+        inline size_type size() const {return _list.size();}
         inline T& top() const {assert(_list.size() > 0); return _list.back().get();}
 
         inline ItemT& add(T& val) {
@@ -178,6 +179,8 @@ namespace Ast {
     //////////////////////////////////////////////////////////////////
     class Node {
     public:
+        typedef size_t RefCnt_t;
+    public:
         inline const Token& pos() const {return _pos;}
         inline void dump(const z::string& src, const z::string& act) const {
             trace("%lu %s refCount%s %lu, ", (unsigned long)this, src.c_str(), act.c_str(), _refCount);
@@ -192,13 +195,13 @@ namespace Ast {
 //            dump("N::inc", "+");
         }
 
-        inline size_t dec() const {
+        inline RefCnt_t dec() const {
             --_refCount;
 //            dump("N::dec", "-");
             return _refCount;
         }
 
-        inline const size_t& refCount() const {return _refCount;}
+        inline const RefCnt_t& refCount() const {return _refCount;}
 
     protected:
         inline Node(const Token& pos) : _pos(pos), _refCount(0) {
@@ -214,7 +217,7 @@ namespace Ast {
         inline Node(const Node& src) : _pos(src._pos), _refCount(0) {}
     private:
         const Token _pos;
-        mutable size_t _refCount;
+        mutable RefCnt_t _refCount;
     };
 
     //////////////////////////////////////////////////////////////////
@@ -233,7 +236,7 @@ namespace Ast {
         inline const Token& name() const {return _name;}
         inline const AccessType::T& accessType() const {return _accessType;}
         inline const ChildTypeSpecList& childTypeSpecList() const {return _childTypeSpecList;}
-        inline size_t childCount() const {return _childTypeSpecList.size();}
+        inline ChildTypeSpecList::size_type childCount() const {return _childTypeSpecList.size();}
     public:
         template <typename T>
         inline void addChild(T& typeSpec) {\
@@ -390,11 +393,13 @@ namespace Ast {
 
     class TemplateDefn : public UserDefinedTypeSpec {
     public:
+        typedef TemplateTypePartList::List::size_type size_type;
+    public:
         inline TemplateDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const TemplateDecl& templateDecl, const TemplateTypePartList& list)
             : UserDefinedTypeSpec(parent, name, defType), _templateDecl(templateDecl), _list(list) {}
     public:
         inline const TemplateTypePartList::List& list() const {return _list.get().list();}
-        inline const QualifiedTypeSpec& at(const size_t& idx) const {return list().at(idx);}
+        inline const QualifiedTypeSpec& at(const size_type& idx) const {return list().at(idx);}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
@@ -714,7 +719,7 @@ namespace Ast {
         inline ExprList(const Token& pos) : Node(pos) {}
         inline ExprList& addExpr(const Expr& expr) {_list.add(expr); return z::ref(this);}
         inline const List& list() const {return _list;}
-        inline const Expr& at(const size_t& idx) const {return _list.at(idx);}
+        inline const Expr& at(const List::size_type& idx) const {return _list.at(idx);}
     private:
         List _list;
     };

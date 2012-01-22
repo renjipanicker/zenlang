@@ -854,7 +854,7 @@ inline void Interpreter::Impl::run() {
         bool quit = false;
         while (quit == false) {
             std::cout << ">";
-            z::string cmd;
+            std::string cmd;
             std::getline(std::cin, cmd);
             if(cmd == ".q")
                 break;

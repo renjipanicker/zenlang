@@ -40,7 +40,7 @@ struct OutputFile {
 
 inline z::string getBaseName(const z::string& filename) {
     z::string basename = filename;
-    size_t idx = -1;
+    z::string::size_type idx = -1;
 
     // strip last extension, if any
     idx = basename.rfind('.');
@@ -56,7 +56,7 @@ inline z::string getBaseName(const z::string& filename) {
 }
 
 inline z::string getExtention(const z::string& filename) {
-    size_t idx = -1;
+    z::string::size_type idx = -1;
 
     // find last extension, if any
     idx = filename.rfind('.');

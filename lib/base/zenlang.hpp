@@ -37,13 +37,63 @@ namespace z {
         return (unsigned long)(&t);
     }
 
-    typedef std::string string;
-//    struct string {
-//    private:
-//        std::string _val;
-//    };
+    typedef char char_t;
 
+    struct string {
+        explicit inline string() {}
+        inline string(const char* s) : _val(s) {}
+        inline string(const std::string& s) : _val(s) {}
 
+        typedef typename std::string::iterator iterator;
+        inline iterator begin() {return _val.begin();}
+        inline iterator end() {return _val.end();}
+
+        typedef typename std::string::const_iterator const_iterator;
+        inline const_iterator begin() const {return _val.begin();}
+        inline const_iterator end() const {return _val.end();}
+
+        typedef typename std::string::size_type size_type;
+        static const size_type npos  = std::string::npos;
+
+        inline size_type size() const {return _val.size();}
+        inline size_type length() const {return _val.length();}
+
+        inline bool operator==(const z::string& rhs) const {return (_val == rhs._val);}
+        inline bool operator!=(const z::string& rhs) const {return (_val != rhs._val);}
+        inline bool operator< (const z::string& rhs) const {return (_val <  rhs._val);}
+
+        inline char_t at(const size_type& idx) const {return _val.at(idx);}
+        inline z::string substr(const size_type& from, const size_type& len) const {return _val.substr(from, len);}
+        inline z::string substr(const size_type& from) const {return _val.substr(from);}
+
+        inline size_type find(const z::string& s) const {return _val.find(s._val);}
+        inline size_type find(const z::string& s, const size_type& from) const {return _val.find(s._val, from);}
+        inline size_type rfind(const char& s) const {return _val.rfind(s);}
+        inline size_type rfind(const z::string& s) const {return _val.rfind(s._val);}
+
+        inline z::string replace(const size_type& from, const size_type& len, const z::string& s) {return _val.replace(from, len, s._val);}
+
+        inline z::string& operator+=(const char& rhs) {_val += rhs; return *this;}
+        inline z::string& operator+=(const z::string& rhs) {_val += rhs._val; return *this;}
+
+        inline const std::string& val() const {return _val;}
+        inline const char* c_str() const {return _val.c_str();}
+
+    private:
+        std::string _val;
+    };
+}
+
+inline z::string operator+(const char* lhs, const z::string& rhs) {return (lhs + rhs.val());}
+inline z::string operator+(const z::string& lhs, const char* rhs) {return (lhs.val() + rhs);}
+inline z::string operator+(const z::string& lhs, const z::string& rhs) {return (lhs.val() + rhs.val());}
+
+inline std::ostream& operator<<(std::ostream& os, const z::string& val) {
+    os << val.val();
+    return os;
+}
+
+namespace z {
     template <typename T>
     inline z::string type_name() {
         const char* name = typeid(T).name();
@@ -221,6 +271,7 @@ namespace z {
     template <typename V, typename ListT>
     struct container {
         typedef ListT List;
+        typedef typename List::size_type size_type;
 
         typedef typename List::iterator iterator;
         inline iterator begin() {return _list.begin();}
@@ -230,7 +281,7 @@ namespace z {
         inline const_iterator begin() const {return _list.begin();}
         inline const_iterator end() const {return _list.end();}
 
-        inline size_t size() const {return _list.size();}
+        inline size_type size() const {return _list.size();}
         inline bool empty() const {return (_list.size() == 0);}
 
         inline void clear() {_list.clear();}
@@ -310,7 +361,7 @@ namespace z {
     struct list : public z::listbase<V, std::vector<V> > {
         typedef z::listbase<V, std::vector<V> > BaseT;
 
-        inline V at(const size_t& k) const {
+        inline V at(const typename BaseT::size_type& k) const {
             if(k >= BaseT::_list.size()) {
                 throw Exception("z::list", fmt("%{k} out of list bounds\n").add("k", k));
             }
@@ -326,7 +377,7 @@ namespace z {
             return false;
         }
 
-        inline void set(const size_t& k, V v) {
+        inline void set(const typename BaseT::size_type& k, V v) {
             if(k >= BaseT::_list.size()) {
                 BaseT::_list.resize(k+4);
             }
@@ -350,9 +401,9 @@ namespace z {
             std::sort(BaseT::_list.begin(), BaseT::_list.end(), fn);
         }
 
-        inline list<V> splice(const size_t& from, const size_t& to) const {
+        inline list<V> splice(const typename BaseT::size_type& from, const typename BaseT::size_type& to) const {
             list<V> nl;
-            for(size_t i = from; i < to; ++i) {
+            for(typename BaseT::size_type i = from; i < to; ++i) {
                 const V& v = BaseT::_list.at(i);
                 nl.add(v);
             }
@@ -397,7 +448,7 @@ namespace z {
             return z::ref(r);
         }
 
-        inline V& at(const size_t& k) const {
+        inline V& at(const typename BaseT::size_type& k) const {
             V* v = BaseT::at(k);
             return z::ref(v);
         }
@@ -528,22 +579,22 @@ namespace z {
     /////////////////////////////
     // list helpers
     template <typename V>
-    inline const V& at(const list<V>& l, const size_t& idx) {
+    inline const V& at(const list<V>& l, const typename list<V>::size_type& idx) {
         return l.at(idx);
     }
 
     template <typename V>
-    inline V& at(list<V>& l, const size_t& idx) {
+    inline V& at(list<V>& l, const typename list<V>::size_type& idx) {
         return l.at(idx);
     }
 
     template <typename V>
-    inline list<V> splice(const list<V>& l, const size_t& from, const size_t& to) {
+    inline list<V> splice(const list<V>& l, const typename list<V>::size_type& from, const typename list<V>::size_type& to) {
         return l.splice(from, to);
     }
 
     template <typename V>
-    inline size_t length(const list<V>& l) {
+    inline typename list<V>::size_type length(const list<V>& l) {
         return l.size();
     }
 
@@ -560,7 +611,7 @@ namespace z {
     }
 
     template <typename K, typename V>
-    inline size_t length(const dict<K, V>& l) {
+    inline typename dict<K,V>::size_type length(const dict<K, V>& l) {
         return l.size();
     }
 
@@ -594,6 +645,8 @@ namespace z {
         typedef std::list<Future*> InvocationList;
         InvocationList _invocationList;
     public:
+        typedef InvocationList::size_type size_type;
+    public:
         struct Ptr {
             inline Ptr() : _ptr(0) {}
             inline ~Ptr() {delete _ptr; _ptr = 0;}
@@ -605,7 +658,7 @@ namespace z {
             Future* _ptr;
         };
 
-        inline size_t size() const {return _invocationList.size();}
+        inline size_type size() const {return _invocationList.size();}
 
         template <typename FunctionT>
         FutureT<FunctionT>& push(FunctionT function, const typename FunctionT::_In& in) {
@@ -634,7 +687,7 @@ namespace z {
             return _list.push(function, in);
         }
 
-        inline size_t size() const {return _list.size();}
+        inline FunctionList::size_type size() const {return _list.size();}
     private:
         FunctionList _list;
     };

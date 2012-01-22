@@ -34,7 +34,7 @@ inline z::string Compiler::findImport(const z::string& filename) {
 bool Compiler::compileFile(Ast::Module& module, const z::string& filename, const z::string& msg) {
     if(_project.verbosity() >= Ast::Project::Verbosity::Normal) {
         z::string indent = "   ";
-        for(size_t i = 0; i < module.level(); ++i) {
+        for(Ast::Module::Level_t i = 0; i < module.level(); ++i) {
             indent += "  ";
         }
         indent += msg;

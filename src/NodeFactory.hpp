@@ -15,7 +15,7 @@ namespace Ast {
         inline const z::string& filename() const {return _module.filename();}
         inline const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const {return unit().hasRootTypeSpec(_module.level(), name);}
     private:
-        inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const z::string& cname, const size_t& len);
+        inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const z::string& cname, const Ast::TemplateDefn::size_type& len);
         inline const Ast::Expr& getDefaultValue(const Ast::TypeSpec& typeSpec, const Ast::Token& name);
         inline const Ast::Expr& convertExprToExpectedTypeSpec(const Ast::Token& pos, const Ast::Expr& initExpr);
     private:
@@ -29,7 +29,7 @@ namespace Ast {
         inline Ast::FunctionDecl& addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
         inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& srcTemplateDefn, const Ast::TemplateDefn& templateDefn, const Ast::ExprList& exprList);
         inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
-        inline const Ast::Expr& switchDictKeyValue(const Ast::Token& pos, const Unit::ExpectedTypeSpec::Type& popType, const Unit::ExpectedTypeSpec::Type& pushType, const size_t& idx, const Ast::Expr& initExpr);
+        inline const Ast::Expr& switchDictKeyValue(const Ast::Token& pos, const Unit::ExpectedTypeSpec::Type& popType, const Unit::ExpectedTypeSpec::Type& pushType, const Ast::TemplateDefn::size_type& idx, const Ast::Expr& initExpr);
         inline const Ast::QualifiedTypeSpec& getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function);
         inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
         inline Ast::TemplateDefn& createTemplateDefn(const Ast::Token& pos, const z::string& name, const Ast::TemplateTypePartList& list);

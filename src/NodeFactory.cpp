@@ -194,7 +194,7 @@ inline Ast::VariableDefn& Ast::NodeFactory::addVariableDefn(const Ast::Qualified
     return variableDef;
 }
 
-inline const Ast::TemplateDefn& Ast::NodeFactory::getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const z::string& cname, const size_t& len) {
+inline const Ast::TemplateDefn& Ast::NodeFactory::getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const z::string& cname, const Ast::TemplateDefn::size_type& len) {
     const Ast::TypeSpec& typeSpec = expr.qTypeSpec().typeSpec();
     if(typeSpec.name().string() != cname) {
         throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (1)").add("c", cname).add("t", typeSpec.name() ) );
@@ -1284,7 +1284,7 @@ Ast::DictList* Ast::NodeFactory::aDictList(const Ast::Token& pos, const Ast::Qua
 }
 
 /// The sequence of calls in this function is important.
-inline const Ast::Expr& Ast::NodeFactory::switchDictKeyValue(const Ast::Token& pos, const Ast::Unit::ExpectedTypeSpec::Type& popType, const Ast::Unit::ExpectedTypeSpec::Type& pushType, const size_t& idx, const Ast::Expr& initExpr) {
+inline const Ast::Expr& Ast::NodeFactory::switchDictKeyValue(const Ast::Token& pos, const Ast::Unit::ExpectedTypeSpec::Type& popType, const Ast::Unit::ExpectedTypeSpec::Type& pushType, const Ast::TemplateDefn::size_type& idx, const Ast::Expr& initExpr) {
     const Ast::Expr& expr = convertExprToExpectedTypeSpec(pos, initExpr);
     bool isExpected = unit().popExpectedTypeSpecOrAuto(pos, popType);
     const Ast::TemplateDefn* td0 = unit().isEnteringList();

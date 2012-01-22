@@ -20,6 +20,7 @@ namespace Ast {
         typedef SLst<const Ast::CoerceList> CoerceListList;
         typedef std::list<Token> NsPartList;
         typedef std::map<z::string, int> HeaderFileList;
+        typedef size_t UniqueId_t;
 
     public:
         Unit();
@@ -331,11 +332,11 @@ namespace Ast {
     public: // A unique numeric id for anonymous functions
         /// \brief Return unique id
         /// \return unique id
-        inline size_t uniqueIdx() {return ++_uniqueIdx;}
+        inline UniqueId_t uniqueIdx() {return ++_uniqueIdx;}
 
     private:
         /// \brief unique id value
-        size_t _uniqueIdx;
+        UniqueId_t _uniqueIdx;
     };
 
     //////////////////////////////////////////////////////////////////
@@ -344,7 +345,9 @@ namespace Ast {
     */
     class Module {
     public:
-        inline Module(Unit& unit, const z::string& filename, const size_t& level) : _unit(unit), _filename(filename), _level(level) {
+        typedef size_t Level_t;
+    public:
+        inline Module(Unit& unit, const z::string& filename, const Level_t& level) : _unit(unit), _filename(filename), _level(level) {
             Ast::CompoundStatement& gs = _unit.addNode(new Ast::CompoundStatement(Token(_filename, 0, 0, "")));
             _globalStatementList.reset(gs);
         }
@@ -367,10 +370,10 @@ namespace Ast {
         const z::string _filename;
 
     public:
-        inline const size_t& level() const {return _level;}
+        inline const Level_t& level() const {return _level;}
 
     private:
-        const size_t _level;
+        const Level_t _level;
 
     public:
         /// \brief Return the statement list
