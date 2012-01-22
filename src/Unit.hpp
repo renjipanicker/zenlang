@@ -168,7 +168,10 @@ namespace Ast {
 
         template <typename T> inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const std::string& extype) {
             if(z::ptr(parent) != _currentTypeRef) {
-                throw err("Unit", name, "Internal error: %s parent mismatch '%s'\n", extype.c_str(), name.text());
+                throw z::Exception("Unit", zfmt(name, "Internal error: %{s} parent mismatch '%{t}'")
+                                   .add("s", extype)
+                                   .add("t", name)
+                                   );
             }
             const T* td = z::ref(_currentTypeRef).hasChild<const T>(name.string());
             if(td) {
@@ -195,7 +198,7 @@ namespace Ast {
                 }
             }
 
-            throw err("Unit", name, "%s type expected '%s'\n", extype.c_str(), name.text());
+            throw z::Exception("Unit", zfmt(name, "%{s} type expected '%{t}'").add("s", extype).add("t", name));
         }
 
         template <typename T> inline const T* resetCurrentTypeRef(const T& typeSpec) {
@@ -215,14 +218,14 @@ namespace Ast {
         inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
 
     public:
-        template <typename T> const T& getRootTypeSpec(const int& level, const Ast::Token &name) const {
+        template <typename T> const T& getRootTypeSpec(const int& level, const Ast::Token& name) const {
             const Ast::TypeSpec* typeSpec = hasRootTypeSpec(level, name);
             if(!typeSpec) {
-                throw err("Unit", name, "Unknown root type '%s'\n", name.text());
+                throw z::Exception("Unit", zfmt(name, "Unknown root type '%{s}'").add("s", name ));
             }
             const T* tTypeSpec = dynamic_cast<const T*>(typeSpec);
             if(!tTypeSpec) {
-                throw err("Unit", name, "Type mismatch '%s'\n", name.text());
+                throw z::Exception("Unit", zfmt(name, "Type mismatch '%{s}'").add("s", name ));
             }
             return z::ref(tTypeSpec);
         }

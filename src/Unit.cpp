@@ -118,7 +118,10 @@ inline const Ast::QualifiedTypeSpec* Ast::Unit::canCoerce(const Ast::QualifiedTy
 const Ast::QualifiedTypeSpec& Ast::Unit::coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) {
     const Ast::QualifiedTypeSpec* val = canCoerce(lhs, rhs);
     if(!val) {
-        throw err("Unit", pos, "Cannot coerce '%s' and '%s'\n", ZenlangNameGenerator().qtn(lhs).c_str(), ZenlangNameGenerator().qtn(rhs).c_str());
+        throw z::Exception("Unit", zfmt(pos, "Cannot coerce '%{c}'' and '%{t}'")
+                           .add("c", ZenlangNameGenerator().qtn(lhs))
+                           .add("t", ZenlangNameGenerator().qtn(rhs))
+                           );
     }
     return z::ref(val);
 }
@@ -183,13 +186,13 @@ const Ast::VariableDefn* Ast::Unit::getVariableDef(const std::string& filename, 
             case Ast::RefType::Param:
                 switch(scope.type()) {
                     case Ast::ScopeType::Member:
-                        throw err("Unit", name, "Internal error: Invalid vref %s: Param-Member\n", name.text());
+                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Param-Member").add("s", name) );
                     case Ast::ScopeType::XRef:
                         refType = Ast::RefType::XRef;
                         break;
                     case Ast::ScopeType::Param:
                     case Ast::ScopeType::VarArg:
-                        throw err("Unit", name, "Internal error: Invalid vref %s: Param-Param\n", name.text());
+                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Param-Param").add("s", name) );
                     case Ast::ScopeType::Local:
                         refType = Ast::RefType::XRef;
                         break;
@@ -198,9 +201,9 @@ const Ast::VariableDefn* Ast::Unit::getVariableDef(const std::string& filename, 
             case Ast::RefType::Local:
                 switch(scope.type()) {
                     case Ast::ScopeType::Member:
-                        throw err("Unit", name, "Internal error: Invalid vref %s: Local-Member\n", name.text());
+                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Local-Member").add("s", name) );
                     case Ast::ScopeType::XRef:
-                        throw err("Unit", name, "Internal error: Invalid vref %s: Local-XRef\n", name.text());
+                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Local-XRef").add("s", name) );
                     case Ast::ScopeType::Param:
                     case Ast::ScopeType::VarArg:
                         refType = Ast::RefType::Param;
@@ -317,7 +320,7 @@ Ast::StructDefn& Ast::Unit::getCurrentStructDefn(const Ast::Token& pos) {
     Ast::TypeSpec& ts = currentTypeSpec();
     Ast::StructDefn* sd = dynamic_cast<Ast::StructDefn*>(z::ptr(ts));
     if(sd == 0) {
-        throw err("Unit", pos, "Internal error: not a struct type'%s'\n", ts.name().text());
+        throw z::Exception("Unit", zfmt(pos, "Internal error: not a struct type %{s}").add("s", ts.name()) );
     }
     return z::ref(sd);
 }
@@ -343,12 +346,12 @@ inline std::string Ast::Unit::getExpectedTypeName(const Ast::Token& pos, const A
         case ExpectedTypeSpec::etStructInit:
             return "etStructInit";
     }
-    throw err("Unit", pos, "Internal error: Unknown Expected Type '%d'\n", exType);
+    throw z::Exception("Unit", zfmt(pos, "Internal error: Unknown Expected Type %{s}").add("s", exType ));
 }
 
 inline Ast::Unit::ExpectedTypeSpec::Type Ast::Unit::getExpectedType(const Ast::Token& pos) const {
     if(_expectedTypeSpecStack.size() == 0) {
-        throw err("Unit", pos, "Empty expected type stack(1)\n");
+        throw z::Exception("Unit", zfmt(pos, "Empty expected type stack(1)"));
     }
 
     return _expectedTypeSpecStack.back().type();
@@ -364,9 +367,10 @@ void Ast::Unit::pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type) {
 
 void Ast::Unit::popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type) {
     if(type != getExpectedType(pos)) {
-        throw err("Unit", pos, "Internal error: Invalid expected type popped. Popping %s, got %s\n",
-                        getExpectedTypeName(pos, type).c_str(),
-                        getExpectedTypeName(pos, _expectedTypeSpecStack.back().type()).c_str());
+        throw z::Exception("Unit", zfmt(pos, "Internal error: Invalid expected type popped. Popping %{s} got %{t}")
+                           .add("s", getExpectedTypeName(pos, type))
+                           .add("t", getExpectedTypeName(pos, _expectedTypeSpecStack.back().type()))
+                           );
     }
 
     _expectedTypeSpecStack.pop_back();
@@ -383,7 +387,7 @@ bool Ast::Unit::popExpectedTypeSpecOrAuto(const Ast::Token& pos, const ExpectedT
 
 inline const Ast::Unit::ExpectedTypeSpec& Ast::Unit::getExpectedTypeList(const Ast::Token& pos) const {
     if(_expectedTypeSpecStack.size() == 0) {
-        throw err("Unit", pos, "Empty expected type stack(2)\n");
+        throw z::Exception("Unit", zfmt(pos, "Empty expected type stack(2)"));
     }
 
     const ExpectedTypeSpec& exl = _expectedTypeSpecStack.back();
@@ -408,7 +412,7 @@ const Ast::QualifiedTypeSpec& Ast::Unit::getExpectedTypeSpec(const Ast::Token& p
     const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny();
     if(ts == 0) {
         if(qTypeSpec == 0) {
-            throw err("Unit", pos, "Empty expected type stack(3)\n");
+            throw z::Exception("Unit", zfmt(pos, "Empty expected type stack(3)"));
         }
         return z::ref(qTypeSpec);
     }
@@ -418,7 +422,7 @@ const Ast::QualifiedTypeSpec& Ast::Unit::getExpectedTypeSpec(const Ast::Token& p
 inline const Ast::QualifiedTypeSpec& Ast::Unit::getExpectedTypeSpecEx(const Ast::Token& pos) const {
     const Ast::QualifiedTypeSpec* ts = getExpectedTypeSpecIfAny();
     if(ts == 0) {
-        throw err("Unit", pos, "Empty expected type stack(4)\n");
+        throw z::Exception("Unit", zfmt(pos, "Empty expected type stack(4)"));
     }
     return z::ref(ts);
 }

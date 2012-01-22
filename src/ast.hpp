@@ -82,9 +82,6 @@ namespace Ast {
         }
 
         template <typename X> inline bool check() const {
-            std::string x = z::undecorate(typeid(*_value).name());
-            std::string y = z::undecorate(typeid(X).name());
-//            trace("<%s> %s\n", x.c_str(), y.c_str());
             return (dynamic_cast<const X*>(_value) != 0);
         }
 
@@ -185,7 +182,7 @@ namespace Ast {
         inline void dump(const std::string& src, const std::string& act) const {
             trace("%lu %s refCount%s %lu, ", (unsigned long)this, src.c_str(), act.c_str(), _refCount);
             fflush(stdout);
-            std::string x = z::undecorate(typeid(*this).name());
+            std::string x = z::type_name(*this);
             trace("<%s>\n", x.c_str());
             fflush(stdout);
         }
@@ -2181,4 +2178,9 @@ namespace Ast {
         std::string _zppExt;
         Verbosity::T _verbosity;
     };
+}
+
+inline std::ostream& operator << (std::ostream& os, const Ast::Token& val) {
+    os << val.string();
+    return os;
 }

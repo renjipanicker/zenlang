@@ -1,6 +1,6 @@
 #pragma once
 
-#define unused(x) ((void)x)
+#define unused(x) ((void)(&x))
 
 #if defined(DEBUG)
     #if defined(GUI) && defined(WIN32)
@@ -37,10 +37,19 @@ namespace z {
         return (unsigned long)(&t);
     }
 
-    inline std::string undecorate(const char* name) {
-        std::string uname = name;
+    typedef std::string string;
+//    struct string {
+//    private:
+//        std::string _val;
+//    };
+
+
+    template <typename T>
+    inline z::string type_name() {
+        const char* name = typeid(T).name();
+        z::string uname = name;
     #if defined(_WIN32)
-        // msvc-cl returns unmangled name by default
+        // msvc-cl returns unmangled name by default, so do nothing
     #else
         int status = -4;
         char* dname = abi::__cxa_demangle(name, NULL, NULL, &status);
@@ -54,47 +63,16 @@ namespace z {
     }
 
     template <typename T>
-    struct type_name {
-        inline type_name() {
-            _name = undecorate(typeid(T).name());
-        }
-        template <typename D>
-        inline type_name(D& t) {
-            _name = undecorate(typeid(t).name());
-        }
-        inline const char* text() const {return _name.c_str();}
-    private:
-        std::string _name;
-    };
-
-    inline std::string ssprintfv(const char* txt, va_list vlist) {
-        const int len = 1024;
-        char buf[len];
-    #if defined(_WIN32)
-        vsnprintf_s(buf, len, _TRUNCATE, txt, vlist);
-    #else
-        vsnprintf(buf, len, txt, vlist);
-    #endif
-        va_end(vlist);
-        return buf;
+    inline z::string type_name(const T& t) {
+        unused(t);
+        return type_name<T>();
     }
-
-    inline std::string ssprintf(const char* txt, ...) {
-        va_list vlist;
-        va_start(vlist, txt);
-        return ssprintfv(txt, vlist);
-    }
-
-    struct string {
-    private:
-        std::string _val;
-    };
 
     struct fmt {
-        explicit inline fmt(const std::string& text) : _text(text) {}
+        explicit inline fmt(const z::string& text) : _text(text) {}
 
-        static inline void replace(std::string& text, const std::string& search, const std::string& replace) {
-            for(std::string::size_type next = text.find(search); next != std::string::npos;next = text.find(search, next)) {
+        static inline void replace(z::string& text, const z::string& search, const z::string& replace) {
+            for(z::string::size_type next = text.find(search); next != z::string::npos;next = text.find(search, next)) {
                 text.replace(next, search.length(), replace);
                 next += replace.length();
             }
@@ -104,18 +82,18 @@ namespace z {
         inline fmt& add(const std::string& key, T value) {
             std::stringstream ss;
             ss << value;
-            std::string repl = ss.str();
-            std::string search = "%{" + key + "}";
+            z::string repl = ss.str();
+            z::string search = "%{" + key + "}";
             replace(_text, search, repl);
             return z::ref(this);
         }
-        inline const std::string& get() const {return _text;}
+        inline const z::string& get() const {return _text;}
     private:
-        std::string _text;
+        z::string _text;
     };
 
-    inline void mlog(const std::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get() << std::endl;}
-    inline void elog(const std::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get() << std::endl;}
+    inline void mlog(const z::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get() << std::endl;}
+    inline void elog(const z::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get() << std::endl;}
 
     class Exception {
     public:
@@ -141,7 +119,7 @@ namespace z {
             inline valueT(const DerT& v) : _v(v) {const V& x = v;unused(x);}
             virtual V& get() {return _v;}
             virtual value* clone() const {return new valueT<DerT>(_v);}
-            virtual std::string tname() const {return type_name<DerT>().text();}
+            virtual std::string tname() const {return type_name<DerT>();}
         private:
             DerT _v;
         };
