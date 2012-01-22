@@ -17,7 +17,6 @@
     #define trace(f)
 #endif
 
-
 namespace z {
     template <typename T>
     inline T& ref(T* t) {
@@ -36,8 +35,6 @@ namespace z {
         assert(&t);
         return (unsigned long)(&t);
     }
-
-    typedef char char_t;
 
     struct string {
         explicit inline string() {}
@@ -61,23 +58,38 @@ namespace z {
         inline bool operator==(const z::string& rhs) const {return (_val == rhs._val);}
         inline bool operator!=(const z::string& rhs) const {return (_val != rhs._val);}
         inline bool operator< (const z::string& rhs) const {return (_val <  rhs._val);}
+        inline bool operator> (const z::string& rhs) const {return (_val >  rhs._val);}
 
         inline char_t at(const size_type& idx) const {return _val.at(idx);}
         inline z::string substr(const size_type& from, const size_type& len) const {return _val.substr(from, len);}
         inline z::string substr(const size_type& from) const {return _val.substr(from);}
 
+        inline size_type find(const char& s) const {return _val.find(s);}
         inline size_type find(const z::string& s) const {return _val.find(s._val);}
         inline size_type find(const z::string& s, const size_type& from) const {return _val.find(s._val, from);}
         inline size_type rfind(const char& s) const {return _val.rfind(s);}
         inline size_type rfind(const z::string& s) const {return _val.rfind(s._val);}
+        inline z::string replace(const size_type& from, const size_type& len, const z::string& to) {return _val.replace(from, len, to._val);}
 
-        inline z::string replace(const size_type& from, const size_type& len, const z::string& s) {return _val.replace(from, len, s._val);}
+        inline void replace(const z::string& search, const z::string& replace) {
+            for(z::string::size_type next = _val.find(search._val); next != z::string::npos;next = _val.find(search._val, next)) {
+                _val.replace(next, search.length(), replace._val);
+                next += replace.length();
+            }
+        }
 
-        inline z::string& operator+=(const char& rhs) {_val += rhs; return *this;}
-        inline z::string& operator+=(const z::string& rhs) {_val += rhs._val; return *this;}
+        inline void append(const char_t& rhs) {_val += rhs;}
+        inline void append(const z::string& rhs) {_val.append(rhs._val);}
+        inline void clear() {_val.clear();}
+
+        inline z::string& operator= (const char_t& rhs) {_val = rhs; return *this;}
+        inline z::string& operator+=(const z::string& rhs) {append(rhs); return *this;}
+        inline z::string& operator+=(const char_t& rhs) {append(rhs); return *this;}
+        inline char_t operator[](const size_type& idx) const {return _val[idx];}
 
         inline const std::string& val() const {return _val;}
         inline const char* c_str() const {return _val.c_str();}
+        inline const char* toUtf8() const {return _val.c_str();}
 
     private:
         std::string _val;
@@ -86,6 +98,7 @@ namespace z {
 
 inline z::string operator+(const char* lhs, const z::string& rhs) {return (lhs + rhs.val());}
 inline z::string operator+(const z::string& lhs, const char* rhs) {return (lhs.val() + rhs);}
+inline z::string operator+(const z::string& lhs, const char_t rhs) {return (lhs.val() + rhs);}
 inline z::string operator+(const z::string& lhs, const z::string& rhs) {return (lhs.val() + rhs.val());}
 
 inline std::ostream& operator<<(std::ostream& os, const z::string& val) {
@@ -121,20 +134,13 @@ namespace z {
     struct fmt {
         explicit inline fmt(const z::string& text) : _text(text) {}
 
-        static inline void replace(z::string& text, const z::string& search, const z::string& replace) {
-            for(z::string::size_type next = text.find(search); next != z::string::npos;next = text.find(search, next)) {
-                text.replace(next, search.length(), replace);
-                next += replace.length();
-            }
-        }
-
         template <typename T>
         inline fmt& add(const z::string& key, T value) {
             std::stringstream ss;
             ss << value;
             z::string repl = ss.str();
             z::string search = "%{" + key + "}";
-            replace(_text, search, repl);
+            _text.replace(search, repl);
             return z::ref(this);
         }
         inline const z::string& get() const {return _text;}
