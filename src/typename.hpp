@@ -9,20 +9,20 @@ struct GenMode {
 };
 
 struct TypespecNameGenerator {
-    std::string tn(const Ast::TypeSpec& typeSpec);
-    std::string qtn(const Ast::QualifiedTypeSpec& qtypeSpec);
+    z::string tn(const Ast::TypeSpec& typeSpec);
+    z::string qtn(const Ast::QualifiedTypeSpec& qtypeSpec);
 private:
-    bool getName(const Ast::TypeSpec& typeSpec, std::string& name);
-    virtual void getTypeName(const Ast::TypeSpec& typeSpec, std::string& name) = 0;
+    bool getName(const Ast::TypeSpec& typeSpec, z::string& name);
+    virtual void getTypeName(const Ast::TypeSpec& typeSpec, z::string& name) = 0;
 protected:
-    inline TypespecNameGenerator(const std::string& sep) : _sep(sep) {}
-    const std::string _sep;
+    inline TypespecNameGenerator(const z::string& sep) : _sep(sep) {}
+    const z::string _sep;
 };
 
 struct ZenlangNameGenerator : public TypespecNameGenerator {
-    virtual void getTypeName(const Ast::TypeSpec& typeSpec, std::string& name);
+    virtual void getTypeName(const Ast::TypeSpec& typeSpec, z::string& name);
 public:
-    inline ZenlangNameGenerator(const std::string& sep = "::") : TypespecNameGenerator(sep) {}
+    inline ZenlangNameGenerator(const z::string& sep = "::") : TypespecNameGenerator(sep) {}
 };
 
 inline const Ast::TypeSpec* resolveTypedef(const Ast::TypeSpec& typeSpec) {

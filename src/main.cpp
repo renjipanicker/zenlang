@@ -57,7 +57,7 @@ int main(int argc, char* argv[]) {
     bool interpreterMode = false;
     int i = 1;
     while(i < argc) {
-        std::string t = argv[i++];
+        z::string t = argv[i++];
         if((t == "-h") || (t == "--help")) {
             return showHelp(config);
         } else if(t == "-c") {

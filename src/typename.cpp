@@ -10,8 +10,8 @@ struct NameType {
     };
 };
 
-std::string TypespecNameGenerator::tn(const Ast::TypeSpec& typeSpec) {
-    std::string name;
+z::string TypespecNameGenerator::tn(const Ast::TypeSpec& typeSpec) {
+    z::string name;
     getName(typeSpec, name);
 //    if(mode == GenMode::Stlcpp) {
 //        StlcppTypespecNameGenerator gen(sep);
@@ -23,8 +23,8 @@ std::string TypespecNameGenerator::tn(const Ast::TypeSpec& typeSpec) {
     return name;
 }
 
-std::string TypespecNameGenerator::qtn(const Ast::QualifiedTypeSpec& qtypeSpec) {
-    std::string name;
+z::string TypespecNameGenerator::qtn(const Ast::QualifiedTypeSpec& qtypeSpec) {
+    z::string name;
     if(qtypeSpec.isConst())
         name += "const ";
     name += tn(qtypeSpec.typeSpec());
@@ -33,7 +33,7 @@ std::string TypespecNameGenerator::qtn(const Ast::QualifiedTypeSpec& qtypeSpec) 
     return name;
 }
 
-bool TypespecNameGenerator::getName(const Ast::TypeSpec& typeSpec, std::string& name) {
+bool TypespecNameGenerator::getName(const Ast::TypeSpec& typeSpec, z::string& name) {
     const Ast::ChildTypeSpec* ctypeSpec = dynamic_cast<const Ast::ChildTypeSpec*>(z::ptr(typeSpec));
     if(!ctypeSpec)
         return false;
@@ -46,12 +46,12 @@ bool TypespecNameGenerator::getName(const Ast::TypeSpec& typeSpec, std::string& 
     return true;
 }
 
-void ZenlangNameGenerator::getTypeName(const Ast::TypeSpec& typeSpec, std::string& name) {
+void ZenlangNameGenerator::getTypeName(const Ast::TypeSpec& typeSpec, z::string& name) {
     const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(z::ptr(typeSpec));
     if(templateDefn) {
         name += z::ref(templateDefn).name().string();
         name += "<";
-        std::string sep;
+        z::string sep;
         for(Ast::TemplateTypePartList::List::const_iterator it = z::ref(templateDefn).list().begin(); it != z::ref(templateDefn).list().end(); ++it) {
             const Ast::QualifiedTypeSpec& qTypeSpec = it->get();
             name += sep;

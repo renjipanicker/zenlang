@@ -20,6 +20,12 @@ IF( CMAKE_BUILD_TYPE STREQUAL "Debug")
     ADD_DEFINITIONS( "-DDEBUG" )
 ENDIF()
 
+# strictly speaking, these are not required in the compiler project
+# but including them to ease find-replace and source-navigation
+SET(zen_SOURCES ${zen_SOURCES} lib/base/pch.hpp)
+SET(zen_SOURCES ${zen_SOURCES} lib/base/zenlang.hpp)
+SET(zen_SOURCES ${zen_SOURCES} lib/base/zenlang.cpp)
+
 SET(zen_SOURCES ${zen_SOURCES} src/ast.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/ast.cpp)
 SET(zen_SOURCES ${zen_SOURCES} src/error.hpp)

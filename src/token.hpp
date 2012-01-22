@@ -30,8 +30,8 @@ public:
     inline const char* text() const {return (_lvalue?_lvalue:_text);}
 
 public:
-    static std::string getText(const char* start, const char* end) {
-        std::string txt;
+    static z::string getText(const char* start, const char* end) {
+        z::string txt;
 
         assert(start > 0);
         assert(end > 0);
@@ -44,7 +44,7 @@ public:
         return txt;
     }
 
-    static TokenData createT(const char* filename, const int& id, const int& row, const int& col, const std::string& txt) {
+    static TokenData createT(const char* filename, const int& id, const int& row, const int& col, const z::string& txt) {
 //        printf("createT(%d, %d): start: %lu, end %lu, end-start: %ld\n", row, col, (unsigned long)start, (unsigned long)end, end-start);
         TokenData td;
         td.init();
@@ -63,7 +63,7 @@ public:
         }
 
         char* s = buf;
-        for(std::string::const_iterator it = txt.begin(); it != txt.end(); ++it) {
+        for(z::string::const_iterator it = txt.begin(); it != txt.end(); ++it) {
             *s = *it;
             ++s;
         }

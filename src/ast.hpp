@@ -161,28 +161,28 @@ namespace Ast {
     //////////////////////////////////////////////////////////////////
     class Token {
     public:
-        inline Token(const std::string& filename, const int row, const int col, const std::string& text) : _filename(filename), _row(row), _col(col), _text(text) {}
+        inline Token(const z::string& filename, const int row, const int col, const z::string& text) : _filename(filename), _row(row), _col(col), _text(text) {}
         inline Token(TokenData& td) : _filename(td.filename()), _row(td.row()), _col(td.col()), _text(td.text()) {TokenData::deleteT(td);}
-        inline const std::string& filename() const {return _filename;}
+        inline const z::string& filename() const {return _filename;}
         inline const int& row() const {return _row;}
         inline const int& col() const {return _col;}
         inline const char* text() const {return _text.c_str();}
-        inline const std::string& string() const {return _text;}
+        inline const z::string& string() const {return _text;}
     private:
-        const std::string _filename;
+        const z::string _filename;
         const int _row;
         const int _col;
-        const std::string _text;
+        const z::string _text;
     };
 
     //////////////////////////////////////////////////////////////////
     class Node {
     public:
         inline const Token& pos() const {return _pos;}
-        inline void dump(const std::string& src, const std::string& act) const {
+        inline void dump(const z::string& src, const z::string& act) const {
             trace("%lu %s refCount%s %lu, ", (unsigned long)this, src.c_str(), act.c_str(), _refCount);
             fflush(stdout);
-            std::string x = z::type_name(*this);
+            z::string x = z::type_name(*this);
             trace("<%s>\n", x.c_str());
             fflush(stdout);
         }
@@ -225,7 +225,7 @@ namespace Ast {
         struct Visitor;
     private:
         typedef SLst<ChildTypeSpec> ChildTypeSpecList;
-        typedef std::map<std::string, ChildTypeSpec* > ChildTypeSpecMap;
+        typedef std::map<z::string, ChildTypeSpec* > ChildTypeSpecMap;
     public:
         inline TypeSpec(const Token& name) : Node(name), _accessType(AccessType::Private), _name(name) {}
     public:
@@ -249,7 +249,7 @@ namespace Ast {
         }
 
         template <typename T>
-        inline T* hasChild(const std::string& name) const {
+        inline T* hasChild(const z::string& name) const {
             ChildTypeSpecMap::const_iterator it = _childTypeSpecMap.find(name);
             if(it == _childTypeSpecMap.end()) {
                 return 0;
@@ -632,7 +632,7 @@ namespace Ast {
 
     class Root : public RootTypeSpec {
     public:
-        inline Root(const std::string& name) : RootTypeSpec(Token("", 0, 0, name)) {}
+        inline Root(const z::string& name) : RootTypeSpec(Token("", 0, 0, name)) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
@@ -1469,22 +1469,22 @@ namespace Ast {
 
     class ConstantStringExpr : public ConstantExpr {
     public:
-        inline ConstantStringExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const std::string& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
-        inline const std::string& value() const {return _value;}
+        inline ConstantStringExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const z::string& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline const z::string& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const std::string _value;
+        const z::string _value;
     };
 
     class ConstantCharExpr : public ConstantExpr {
     public:
-        inline ConstantCharExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const std::string& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
-        inline const std::string& value() const {return _value;}
+        inline ConstantCharExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const z::string& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline const z::string& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const std::string _value;
+        const z::string _value;
     };
 
     class ConstantLongExpr : public ConstantExpr {
@@ -2068,11 +2068,11 @@ namespace Ast {
                 Static
             };
         };
-        typedef std::list<std::string> PathList;
+        typedef std::list<z::string> PathList;
     public:
-        inline Config(const std::string& name) : _name(name), _mode(Mode::Executable), _gui(false), _debug(true), _test(true), _olanguage("stlcpp"), _zlibPath("../../zenlang/lib") {}
+        inline Config(const z::string& name) : _name(name), _mode(Mode::Executable), _gui(false), _debug(true), _test(true), _olanguage("stlcpp"), _zlibPath("../../zenlang/lib") {}
     public:
-        inline const std::string& name() const {return _name;}
+        inline const z::string& name() const {return _name;}
     public:
         inline Config& mode(const Mode::T& val) { _mode = val; return z::ref(this);}
         inline const Mode::T& mode() const {return _mode;}
@@ -2084,32 +2084,32 @@ namespace Ast {
         inline Config& test(const bool& val) { _test = val; return z::ref(this);}
         inline const bool& test() const {return _test;}
     public:
-        inline Config& olanguage(const std::string& val) { _olanguage = val; return z::ref(this);}
-        inline const std::string& olanguage() const {return _olanguage;}
+        inline Config& olanguage(const z::string& val) { _olanguage = val; return z::ref(this);}
+        inline const z::string& olanguage() const {return _olanguage;}
     public:
-        inline Config& zexePath(const std::string& val) { _zexePath = val; return z::ref(this);}
-        inline const std::string& zexePath() const {return _zexePath;}
+        inline Config& zexePath(const z::string& val) { _zexePath = val; return z::ref(this);}
+        inline const z::string& zexePath() const {return _zexePath;}
     public:
-        inline Config& zlibPath(const std::string& val) { _zlibPath = val; return z::ref(this);}
-        inline const std::string& zlibPath() const {return _zlibPath;}
+        inline Config& zlibPath(const z::string& val) { _zlibPath = val; return z::ref(this);}
+        inline const z::string& zlibPath() const {return _zlibPath;}
     public:
-        inline Config& addIncludePath(const std::string& dir) { _includePathList.push_back(dir); return z::ref(this);}
+        inline Config& addIncludePath(const z::string& dir) { _includePathList.push_back(dir); return z::ref(this);}
         inline const PathList& includePathList() const {return _includePathList;}
     public:
-        inline Config& addIncludeFile(const std::string& file) { _includeFileList.push_back(file); return z::ref(this);}
+        inline Config& addIncludeFile(const z::string& file) { _includeFileList.push_back(file); return z::ref(this);}
         inline const PathList& includeFileList() const {return _includeFileList;}
     public:
-        inline Config& addSourceFile(const std::string& file) { _sourceFileList.push_back(file); return z::ref(this);}
+        inline Config& addSourceFile(const z::string& file) { _sourceFileList.push_back(file); return z::ref(this);}
         inline const PathList& sourceFileList() const {return _sourceFileList;}
     private:
-        const std::string _name;
+        const z::string _name;
         Mode::T _mode;
         bool _gui;
         bool _debug;
         bool _test;
-        std::string _olanguage;
-        std::string _zexePath;
-        std::string _zlibPath;
+        z::string _olanguage;
+        z::string _zexePath;
+        z::string _zlibPath;
         PathList _includePathList;
         PathList _includeFileList;
         PathList _sourceFileList;
@@ -2117,7 +2117,7 @@ namespace Ast {
 
     class Project {
     public:
-        typedef std::map<std::string, Config*> ConfigList;
+        typedef std::map<z::string, Config*> ConfigList;
         struct Verbosity {
             enum T {
                 Silent,
@@ -2136,16 +2136,16 @@ namespace Ast {
         }
 
     public:
-        inline Project& name(const std::string& val) { _name = val; return z::ref(this);}
-        inline const std::string& name() const {return _name;}
+        inline Project& name(const z::string& val) { _name = val; return z::ref(this);}
+        inline const z::string& name() const {return _name;}
     public:
-        inline Project& oproject(const std::string& val) { _oproject = val; return z::ref(this);}
-        inline const std::string& oproject() const {return _oproject;}
+        inline Project& oproject(const z::string& val) { _oproject = val; return z::ref(this);}
+        inline const z::string& oproject() const {return _oproject;}
     public:
         inline Project& verbosity(const Verbosity::T& val) { _verbosity = val; return z::ref(this);}
         inline const Verbosity::T& verbosity() const {return _verbosity;}
     public:
-        inline Config& config(const std::string& name) {
+        inline Config& config(const z::string& name) {
             ConfigList::iterator it = _configList.find(name);
             if(it == _configList.end()) {
                 throw z::Exception("Config", z::fmt("Config does not exist"));
@@ -2153,7 +2153,7 @@ namespace Ast {
             return z::ref(it->second);
         }
 
-        inline Config& addConfig(const std::string& name) {
+        inline Config& addConfig(const z::string& name) {
             ConfigList::iterator it = _configList.find(name);
             if(it != _configList.end()) {
                 throw z::Exception("Config", z::fmt("Config already exists"));
@@ -2165,17 +2165,17 @@ namespace Ast {
     public:
         inline const ConfigList& configList() const {return _configList;}
     public:
-        inline const std::string& hppExt() const {return _hppExt;}
-        inline const std::string& cppExt() const {return _cppExt;}
-        inline const std::string& zppExt() const {return _zppExt;}
+        inline const z::string& hppExt() const {return _hppExt;}
+        inline const z::string& cppExt() const {return _cppExt;}
+        inline const z::string& zppExt() const {return _zppExt;}
     private:
-        std::string _name;
-        std::string _oproject;
+        z::string _name;
+        z::string _oproject;
         ConfigList _configList;
     private:
-        std::string _hppExt;
-        std::string _cppExt;
-        std::string _zppExt;
+        z::string _hppExt;
+        z::string _cppExt;
+        z::string _zppExt;
         Verbosity::T _verbosity;
     };
 }

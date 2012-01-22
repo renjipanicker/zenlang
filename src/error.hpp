@@ -2,7 +2,7 @@
 
 #include "ast.hpp"
 
-inline z::fmt zfmt(const Ast::Token& token, const std::string& fmt) {
+inline z::fmt zfmt(const Ast::Token& token, const z::string& fmt) {
     std::stringstream msg;
 #ifdef _WIN32
     // MSVC style error message

@@ -2,10 +2,6 @@
 #define PCH_HPP
 
 // All #defines are validated here
-#if !defined(Z_EXE) && !defined(Z_DLL) && !defined(Z_LIB)
-#define Z_EXE 1
-#endif
-
 #if defined(GUI)
     #if !defined(WIN32)
         #define GTK 1

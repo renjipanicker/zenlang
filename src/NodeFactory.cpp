@@ -11,7 +11,7 @@ inline Ast::QualifiedTypeSpec& Ast::NodeFactory::addQualifiedTypeSpec(const Ast:
     return qualifiedTypeSpec;
 }
 
-inline const Ast::QualifiedTypeSpec& Ast::NodeFactory::getQualifiedTypeSpec(const Ast::Token& pos, const std::string& name) {
+inline const Ast::QualifiedTypeSpec& Ast::NodeFactory::getQualifiedTypeSpec(const Ast::Token& pos, const z::string& name) {
     Ast::Token token(filename(), pos.row(), pos.col(), name);
     const Ast::TypeSpec& typeSpec = unit().getRootTypeSpec<Ast::TypeSpec>(_module.level(), token);
     const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, typeSpec, false);
@@ -30,7 +30,7 @@ inline const Ast::Expr& Ast::NodeFactory::getDefaultValue(const Ast::TypeSpec& t
 
     const Ast::TemplateDefn* td = dynamic_cast<const Ast::TemplateDefn*>(ts);
     if(td != 0) {
-        const std::string tdName = z::ref(td).name().string() ; // ZenlangNameGenerator().tn(z::ref(td), GenMode::Import); \todo this is incorrect, it will match any type called, say, list.
+        const z::string tdName = z::ref(td).name().string() ; // ZenlangNameGenerator().tn(z::ref(td), GenMode::Import); \todo this is incorrect, it will match any type called, say, list.
         if(tdName == "pointer") {
             const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false);
             Ast::ExprList& exprList = addExprList(name);
@@ -152,7 +152,7 @@ inline Ast::ExprList& Ast::NodeFactory::addExprList(const Ast::Token& pos) {
     return exprList;
 }
 
-inline Ast::TemplateDefn& Ast::NodeFactory::createTemplateDefn(const Ast::Token& pos, const std::string& name, const Ast::TemplateTypePartList& list) {
+inline Ast::TemplateDefn& Ast::NodeFactory::createTemplateDefn(const Ast::Token& pos, const z::string& name, const Ast::TemplateTypePartList& list) {
     Ast::Token token(pos.filename(), pos.row(), pos.col(), name);
     const Ast::TemplateDecl& templateDecl = unit().getRootTypeSpec<Ast::TemplateDecl>(_module.level(), token);
     Ast::TemplateDefn& templateDefn = unit().addNode(new Ast::TemplateDefn(unit().anonymousNS(), token, Ast::DefinitionType::Final, templateDecl, list));
@@ -194,7 +194,7 @@ inline Ast::VariableDefn& Ast::NodeFactory::addVariableDefn(const Ast::Qualified
     return variableDef;
 }
 
-inline const Ast::TemplateDefn& Ast::NodeFactory::getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const std::string& cname, const size_t& len) {
+inline const Ast::TemplateDefn& Ast::NodeFactory::getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const z::string& cname, const size_t& len) {
     const Ast::TypeSpec& typeSpec = expr.qTypeSpec().typeSpec();
     if(typeSpec.name().string() != cname) {
         throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (1)").add("c", cname).add("t", typeSpec.name() ) );
@@ -251,8 +251,8 @@ void Ast::NodeFactory::aImportStatement(const Ast::Token& pos, const Ast::Access
     _module.addGlobalStatement(statement);
 
     if(statement.defType() != Ast::DefinitionType::Native) {
-        std::string filename;
-        std::string sep = "";
+        z::string filename;
+        z::string sep = "";
         for(Ast::NamespaceList::List::const_iterator it = statement.list().begin(); it != statement.list().end(); ++it) {
             const Ast::Token& name = it->get().name();
             filename += sep;
@@ -1521,7 +1521,7 @@ Ast::ValueInstanceExpr* Ast::NodeFactory::aValueInstanceExpr(const Ast::Token& p
 }
 
 Ast::TemplateDefnInstanceExpr* Ast::NodeFactory::aTemplateDefnInstanceExpr(const Ast::Token& pos, const Ast::TemplateDefn& templateDefn, const Ast::ExprList& exprList) {
-    std::string name = templateDefn.name().string();
+    z::string name = templateDefn.name().string();
     if(name == "pointer") {
 
         Ast::TemplateTypePartList& list = unit().addNode(new Ast::TemplateTypePartList(pos));

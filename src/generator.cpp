@@ -5,7 +5,7 @@
 char Indent::ind[Size] = {32};
 int Indent::_indent = -1;
 
-OutputFile::OutputFile(FILE*& fp, const std::string& filename) : _fp(fp) {
+OutputFile::OutputFile(FILE*& fp, const z::string& filename) : _fp(fp) {
     _fp = fopen(filename.c_str(), "w");
     if(_fp == 0) {
         throw z::Exception("OutputFile", z::fmt("Unable to open output file %{s}").add("s", filename));

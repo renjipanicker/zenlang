@@ -34,8 +34,8 @@ namespace {
         inline bool isLong() const;
         inline bool isTrue() const;
 
-        virtual std::string str() const {
-            std::string estr = ZenlangGenerator::convertExprToString(_value.get());
+        virtual z::string str() const {
+            z::string estr = ZenlangGenerator::convertExprToString(_value.get());
             return estr;
         }
 
@@ -110,8 +110,8 @@ namespace {
         inline void reset() {
         }
 
-        inline void processCmd(const std::string& cmd);
-        inline void processFile(const std::string& filename);
+        inline void processCmd(const z::string& cmd);
+        inline void processFile(const z::string& filename);
 
         inline void addValue(const Ast::VariableDefn& key, const ValuePtr& val) {
 //            trace("InterpreterContext::addValue %lu, %s\n", z::pad(val.get()), val.str().c_str());
@@ -801,7 +801,7 @@ namespace {
         }
     }
 
-    inline void InterpreterContext::processCmd(const std::string& cmd) {
+    inline void InterpreterContext::processCmd(const z::string& cmd) {
         std::cout << cmd << std::endl;
         Parser parser;
         Lexer lexer(parser);
@@ -810,7 +810,7 @@ namespace {
         process(module);
     }
 
-    inline void InterpreterContext::processFile(const std::string& filename) {
+    inline void InterpreterContext::processFile(const z::string& filename) {
         Ast::Module module(_unit, filename, 0);
         _c.compileFile(module, filename, "Loading");
         process(module);
@@ -847,14 +847,14 @@ inline void Interpreter::Impl::run() {
 
     if(_config.sourceFileList().size() > 0) {
         for(Ast::Config::PathList::const_iterator it = _config.sourceFileList().begin(); it != _config.sourceFileList().end(); ++it) {
-            const std::string& filename = *it;
+            const z::string& filename = *it;
             ctx.processFile(filename);
         }
     } else {
         bool quit = false;
         while (quit == false) {
             std::cout << ">";
-            std::string cmd;
+            z::string cmd;
             std::getline(std::cin, cmd);
             if(cmd == ".q")
                 break;

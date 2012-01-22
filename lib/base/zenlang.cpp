@@ -10,16 +10,16 @@ z::TestResult::~TestResult() {
     printf("PASSED %d/%d\n", s_passedTests, s_totalTests);
 }
 
-void z::TestResult::begin(const std::string& name) {
+void z::TestResult::begin(const z::string& name) {
     Log::get() << name << Log::Out();
     ++s_totalTests;
 }
 
-void z::TestResult::end(const std::string& name, const bool& passed) {
+void z::TestResult::end(const z::string& name, const bool& passed) {
     if(passed)
         ++s_passedTests;
 
-    const std::string r = passed?" - PASS":" - FAIL ******************";
+    const z::string r = passed?" - PASS":" - FAIL ******************";
     Log::get() << r << "\n" << Log::Out();
 }
 
@@ -172,14 +172,14 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     initMain(__argc, __argv);
     return a.exec();
 }
-#else
+#else // GUI
 int main(int argc, char* argv[]) {
     z::Application a(argc, argv);
     initMain(argc, argv);
     return a.exec();
 }
-#endif
-#endif
+#endif // GUI
+#endif // Z_EXE
 
 static z::Log s_log;
 z::Log& z::Log::get() {

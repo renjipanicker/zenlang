@@ -79,7 +79,7 @@ namespace z {
         }
 
         template <typename T>
-        inline fmt& add(const std::string& key, T value) {
+        inline fmt& add(const z::string& key, T value) {
             std::stringstream ss;
             ss << value;
             z::string repl = ss.str();
@@ -97,7 +97,7 @@ namespace z {
 
     class Exception {
     public:
-        explicit inline Exception(const std::string& src, const fmt& msg) : _msg(msg) {elog(src, _msg);}
+        explicit inline Exception(const z::string& src, const fmt& msg) : _msg(msg) {elog(src, _msg);}
 
     private:
         const fmt _msg;
@@ -111,7 +111,7 @@ namespace z {
         public:
             virtual V& get() = 0;
             virtual value* clone() const = 0;
-            virtual std::string tname() const = 0;
+            virtual z::string tname() const = 0;
         };
 
         template <typename DerT>
@@ -119,7 +119,7 @@ namespace z {
             inline valueT(const DerT& v) : _v(v) {const V& x = v;unused(x);}
             virtual V& get() {return _v;}
             virtual value* clone() const {return new valueT<DerT>(_v);}
-            virtual std::string tname() const {return type_name<DerT>();}
+            virtual z::string tname() const {return type_name<DerT>();}
         private:
             DerT _v;
         };
@@ -173,12 +173,12 @@ namespace z {
     };
 
     struct type {
-        explicit inline type(const std::string& name) : _name(name) {}
-        inline const std::string& name() const {return _name;}
+        explicit inline type(const z::string& name) : _name(name) {}
+        inline const z::string& name() const {return _name;}
         inline bool operator==(const type& rhs) const {return (_name == rhs._name);}
         inline bool operator!=(const type& rhs) const {return (_name != rhs._name);}
     private:
-        std::string _name;
+        z::string _name;
     };
 
     template <typename V>
@@ -709,8 +709,8 @@ namespace z {
     #if defined(UNIT_TEST)
     struct TestResult {
         ~TestResult();
-        static void begin(const std::string& name);
-        static void end(const std::string& name, const bool& passed);
+        static void begin(const z::string& name);
+        static void end(const z::string& name, const bool& passed);
     };
 
     template <typename T>
@@ -757,7 +757,7 @@ namespace z {
     };
     #endif
 
-    typedef std::list<std::string> ArgList;
+    typedef std::list<z::string> ArgList;
 
     template <typename T>
     struct main_ {

@@ -33,13 +33,13 @@ private:
 #define INDENT Indent _ind_
 
 struct OutputFile {
-    OutputFile(FILE*& fp, const std::string& filename);
+    OutputFile(FILE*& fp, const z::string& filename);
     ~OutputFile();
     FILE*& _fp;
 };
 
-inline std::string getBaseName(const std::string& filename) {
-    std::string basename = filename;
+inline z::string getBaseName(const z::string& filename) {
+    z::string basename = filename;
     size_t idx = -1;
 
     // strip last extension, if any
@@ -55,7 +55,7 @@ inline std::string getBaseName(const std::string& filename) {
     return basename;
 }
 
-inline std::string getExtention(const std::string& filename) {
+inline z::string getExtention(const z::string& filename) {
     size_t idx = -1;
 
     // find last extension, if any

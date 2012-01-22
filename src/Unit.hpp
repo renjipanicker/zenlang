@@ -19,7 +19,7 @@ namespace Ast {
         typedef SLst<const Body> BodyList;
         typedef SLst<const Ast::CoerceList> CoerceListList;
         typedef std::list<Token> NsPartList;
-        typedef std::map<std::string, int> HeaderFileList;
+        typedef std::map<z::string, int> HeaderFileList;
 
     public:
         Unit();
@@ -32,7 +32,7 @@ namespace Ast {
 
         /// \brief Add a header file to the unit
         /// \param list the header file to add
-        inline void addheaderFile(const std::string& filename) {_headerFileList[filename]++;}
+        inline void addheaderFile(const z::string& filename) {_headerFileList[filename]++;}
 
     private:
         /// \brief The list of header files imported into this unit
@@ -144,7 +144,7 @@ namespace Ast {
         void        leaveScope(Ast::Scope& scope);
         Ast::Scope& currentScope();
         const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name) const;
-        const Ast::VariableDefn* getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const;
+        const Ast::VariableDefn* getVariableDef(const z::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const;
         inline void setScopeCallback(ScopeCallback* val) {_scopeCallback = val;}
     private:
         ScopeStack _scopeStack;
@@ -166,7 +166,7 @@ namespace Ast {
             return z::ptr(td);
         }
 
-        template <typename T> inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const std::string& extype) {
+        template <typename T> inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const z::string& extype) {
             if(z::ptr(parent) != _currentTypeRef) {
                 throw z::Exception("Unit", zfmt(name, "Internal error: %{s} parent mismatch '%{t}'")
                                    .add("s", extype)
@@ -289,7 +289,7 @@ namespace Ast {
         const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec) const;
 
     private:
-        inline std::string getExpectedTypeName(const Ast::Token& pos, const ExpectedTypeSpec::Type& exType);
+        inline z::string getExpectedTypeName(const Ast::Token& pos, const ExpectedTypeSpec::Type& exType);
         inline ExpectedTypeSpec::Type getExpectedType(const Ast::Token& pos) const;
         inline const ExpectedTypeSpec& getExpectedTypeList(const Ast::Token& pos) const;
         inline const Ast::QualifiedTypeSpec& getExpectedTypeSpecEx(const Ast::Token& pos) const;
@@ -344,7 +344,7 @@ namespace Ast {
     */
     class Module {
     public:
-        inline Module(Unit& unit, const std::string& filename, const size_t& level) : _unit(unit), _filename(filename), _level(level) {
+        inline Module(Unit& unit, const z::string& filename, const size_t& level) : _unit(unit), _filename(filename), _level(level) {
             Ast::CompoundStatement& gs = _unit.addNode(new Ast::CompoundStatement(Token(_filename, 0, 0, "")));
             _globalStatementList.reset(gs);
         }
@@ -361,10 +361,10 @@ namespace Ast {
         Ast::Unit& _unit;
 
     public:
-        inline const std::string& filename() const {return _filename;}
+        inline const z::string& filename() const {return _filename;}
 
     private:
-        const std::string _filename;
+        const z::string _filename;
 
     public:
         inline const size_t& level() const {return _level;}

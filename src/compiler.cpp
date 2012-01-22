@@ -4,12 +4,12 @@
 #include "ZenlangGenerator.hpp"
 #include "StlcppGenerator.hpp"
 
-inline bool checkFile(const std::string& filename) {
+inline bool checkFile(const z::string& filename) {
     return std::ifstream( filename.c_str() ).is_open();
 }
 
-inline std::string Compiler::findImport(const std::string& filename) {
-    std::string cfile;
+inline z::string Compiler::findImport(const z::string& filename) {
+    z::string cfile;
 
     // first check current dir
     cfile = "./" + filename;
@@ -23,7 +23,7 @@ inline std::string Compiler::findImport(const std::string& filename) {
 
     // then all other include paths
     for(Ast::Config::PathList::const_iterator it = _config.includePathList().begin(); it != _config.includePathList().end(); ++it) {
-        const std::string& dir = *it;
+        const z::string& dir = *it;
         cfile = dir + "/" + filename;
         if(checkFile(cfile))
             return cfile;
@@ -31,9 +31,9 @@ inline std::string Compiler::findImport(const std::string& filename) {
     throw z::Exception("Compiler", z::fmt("Cannot open include file %{s}").add("s", filename));
 }
 
-bool Compiler::compileFile(Ast::Module& module, const std::string& filename, const std::string& msg) {
+bool Compiler::compileFile(Ast::Module& module, const z::string& filename, const z::string& msg) {
     if(_project.verbosity() >= Ast::Project::Verbosity::Normal) {
-        std::string indent = "   ";
+        z::string indent = "   ";
         for(size_t i = 0; i < module.level(); ++i) {
             indent += "  ";
         }
@@ -60,12 +60,12 @@ bool Compiler::compileFile(Ast::Module& module, const std::string& filename, con
     return true;
 }
 
-inline bool Compiler::parseFile(Ast::Module& module, const std::string& msg) {
+inline bool Compiler::parseFile(Ast::Module& module, const z::string& msg) {
     return compileFile(module, module.filename(), msg);
 }
 
 void Compiler::import(Ast::Module& module) {
-    std::string ifilename = findImport(module.filename());
+    z::string ifilename = findImport(module.filename());
 
     // check if file is already imported
     if(module.unit().headerFileList().find(ifilename) != module.unit().headerFileList().end()) {
@@ -84,10 +84,10 @@ void Compiler::initContext(Ast::Unit& unit) {
 
 void Compiler::compile() {
     for(Ast::Config::PathList::const_iterator it = _config.sourceFileList().begin(); it != _config.sourceFileList().end(); ++it) {
-        const std::string& filename = *it;
+        const z::string& filename = *it;
 
-        std::string ext = getExtention(filename);
-        if(_project.zppExt().find(ext) != std::string::npos) {
+        z::string ext = getExtention(filename);
+        if(_project.zppExt().find(ext) != z::string::npos) {
             Ast::Unit unit;
             initContext(unit);
 
@@ -108,7 +108,7 @@ void Compiler::compile() {
     }
 }
 
-void Compiler::compileString(Ast::Module& module, Lexer& lexer, const std::string& data, const bool& isEof) {
+void Compiler::compileString(Ast::Module& module, Lexer& lexer, const z::string& data, const bool& isEof) {
     Ast::NodeFactory factory(module, z::ref(this));
     lexer.push(factory, data.c_str(), data.size(), isEof);
 }

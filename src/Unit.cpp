@@ -166,7 +166,7 @@ const Ast::VariableDefn* Ast::Unit::hasMember(const Ast::Scope& scope, const Ast
     return 0;
 }
 
-const Ast::VariableDefn* Ast::Unit::getVariableDef(const std::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const {
+const Ast::VariableDefn* Ast::Unit::getVariableDef(const z::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const {
     refType = Ast::RefType::Local;
     typedef std::list<Ast::Scope*> ScopeList;
     ScopeList scopeList;
@@ -325,7 +325,7 @@ Ast::StructDefn& Ast::Unit::getCurrentStructDefn(const Ast::Token& pos) {
     return z::ref(sd);
 }
 
-inline std::string Ast::Unit::getExpectedTypeName(const Ast::Token& pos, const Ast::Unit::ExpectedTypeSpec::Type& exType) {
+inline z::string Ast::Unit::getExpectedTypeName(const Ast::Token& pos, const Ast::Unit::ExpectedTypeSpec::Type& exType) {
     switch(exType) {
         case ExpectedTypeSpec::etAuto:
             return "etAuto";

@@ -15,10 +15,10 @@ public:
     void reset();
 
 private:
-    std::string getText(const bool& rw);
+    z::string getText(const bool& rw);
     TokenData token(Ast::NodeFactory& factory, const int& id, const bool& rw);
     void newLine();
-    void dump(const std::string& x) const;
+    void dump(const z::string& x) const;
 
 private:
     void send(Ast::NodeFactory& factory, const int& id);
@@ -60,7 +60,7 @@ void Lexer::Impl::newLine() {
     _sol = _cursor;
 }
 
-std::string Lexer::Impl::getText(const bool& rw) {
+z::string Lexer::Impl::getText(const bool& rw) {
     if(_text > 0) {
         char* t = _text;
         if(rw) {
@@ -72,7 +72,7 @@ std::string Lexer::Impl::getText(const bool& rw) {
 }
 
 TokenData Lexer::Impl::token(Ast::NodeFactory& factory, const int& id, const bool& rw) {
-    std::string txt = getText(rw);
+    z::string txt = getText(rw);
     return TokenData::createT(factory.filename().c_str(), id, _row, _cursor-_sol, txt);
 }
 
@@ -115,7 +115,7 @@ inline bool Lexer::Impl::trySendId(Ast::NodeFactory& factory, const Ast::TypeSpe
 }
 
 inline void Lexer::Impl::sendId(Ast::NodeFactory& factory) {
-    std::string txt = getText(false);
+    z::string txt = getText(false);
     Ast::Token tok(factory.filename().c_str(), 0, 0, txt);
 
     if(_lastToken == ZENTOK_SCOPE) {
@@ -209,7 +209,7 @@ inline Lexer::Impl::~Impl() {
     _buffer = 0;
 }
 
-inline void Lexer::Impl::dump(const std::string& x) const {
+inline void Lexer::Impl::dump(const z::string& x) const {
 //    trace("%s: buffer %lu, bufferEnd %lu, start %lu, marker %lu, cursor %lu, limit %lu, limit-cursor %ld, text '%s'\n",
 //          x.c_str(), (unsigned long)_buffer, (unsigned long)_bufferEnd, (unsigned long)_start, (unsigned long)_marker, (unsigned long)_cursor, (unsigned long)_limit, _limit - _cursor, "" /*_buffer*/);
 }
