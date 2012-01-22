@@ -37,6 +37,12 @@ namespace z {
     }
 
     struct string {
+        static inline char_t lower(const char_t& ch) {
+            if((ch >= 'A') && (ch <= 'Z'))
+                return 'a' + (ch - 'A');
+            return ch;
+        }
+
         explicit inline string() {}
         inline string(const char* s) : _val(s) {}
         inline string(const std::string& s) : _val(s) {}
@@ -87,9 +93,26 @@ namespace z {
         inline z::string& operator+=(const char_t& rhs) {append(rhs); return *this;}
         inline char_t operator[](const size_type& idx) const {return _val[idx];}
 
+        inline z::string lower() const {
+            z::string r;
+            for(std::string::const_iterator it = _val.begin(); it != _val.end(); ++it) {
+                const char_t& ch = *it;
+                r += lower(ch);
+            }
+            return r;
+        }
+
         inline const std::string& val() const {return _val;}
         inline const char* c_str() const {return _val.c_str();}
         inline const char* toUtf8() const {return _val.c_str();}
+
+        template <typename T> inline z::string& arg(const z::string& key, T value);
+        template <typename T> inline T to() const {
+            std::stringstream ss(_val);
+            T val;
+            ss >> val;
+            return val;
+        }
 
     private:
         std::string _val;
@@ -104,6 +127,16 @@ inline z::string operator+(const z::string& lhs, const z::string& rhs) {return (
 inline std::ostream& operator<<(std::ostream& os, const z::string& val) {
     os << val.val();
     return os;
+}
+
+template <typename T>
+inline z::string& z::string::arg(const z::string& key, T value) {
+    std::stringstream skey;
+    skey << "%{" << key << "}";
+    std::stringstream sval;
+    sval << value;
+    replace(skey.str(), sval.str());
+    return z::ref(this);
 }
 
 namespace z {
@@ -136,11 +169,7 @@ namespace z {
 
         template <typename T>
         inline fmt& add(const z::string& key, T value) {
-            std::stringstream ss;
-            ss << value;
-            z::string repl = ss.str();
-            z::string search = "%{" + key + "}";
-            _text.replace(search, repl);
+            _text.arg(key, value);
             return z::ref(this);
         }
         inline const z::string& get() const {return _text;}
