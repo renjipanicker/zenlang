@@ -89,6 +89,8 @@ namespace z {
         inline void clear() {_val.clear();}
 
         inline z::string& operator= (const char_t& rhs) {_val = rhs; return *this;}
+        inline z::string& operator= (const char_t* rhs) {_val = rhs; return *this;}
+        inline z::string& operator= (const z::string& rhs) {_val = rhs._val; return *this;}
         inline z::string& operator+=(const z::string& rhs) {append(rhs); return *this;}
         inline z::string& operator+=(const char_t& rhs) {append(rhs); return *this;}
         inline char_t operator[](const size_type& idx) const {return _val[idx];}
