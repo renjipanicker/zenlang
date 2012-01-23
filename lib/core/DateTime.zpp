@@ -1,4 +1,7 @@
 namespace DateTime;
 
+public routine string toString(const datetime& dt) native;
+public routine datetime fromString(const string& str) native;
 public routine datetime Now() native;
+public routine datetime AddDays(const datetime& dt, const int& days) native;
 public routine int Year(const datetime& dt) native;
