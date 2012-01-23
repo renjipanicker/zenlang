@@ -1,0 +1,5 @@
+namespace Dir;
+
+public routine string CurrentDir() native;
+public routine string cleanPath(const string& path) native;
+public routine bool removePath(const string& path) native;
