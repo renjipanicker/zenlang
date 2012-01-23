@@ -103,7 +103,9 @@ fix indentation in generated cpp file
 ../debug/zen -v ../../zenlang/tests/testBasic.zpp && cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
 
 ../debug/zen --name core --verbose --lib \
-../../zenlang/lib/core/Url.zpp ../../zenlang/lib/core/UrlImpl.cpp
+../../zenlang/lib/core/DateTime.zpp ../../zenlang/lib/core/DateTimeImpl.cpp \
+../../zenlang/lib/core/Url.zpp ../../zenlang/lib/core/UrlImpl.cpp \
+&& cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
 
 valgrind --leak-check=full --track-origins=yes \
 ../debug/zen --verbose --gui \

@@ -119,6 +119,15 @@ namespace z {
     private:
         std::string _val;
     };
+
+    struct datetime {
+        inline datetime() : _val(0) {}
+        inline datetime(const int64_t& val) : _val(val) {}
+        inline datetime& operator=(const int64_t& val) {_val = val; return z::ref(this);}
+        inline const int64_t& val() const {return _val;}
+    private:
+        int64_t _val;
+    };
 }
 
 inline z::string operator+(const char* lhs, const z::string& rhs) {return (lhs + rhs.val());}

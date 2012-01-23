@@ -75,16 +75,17 @@ typedef char char_t;
     #include <string>
     #include <vector>
     #include <list>
-    #include <algorithm>
     #include <map>
+    #include <algorithm>
     #include <iostream>
     #include <fstream>
     #include <sstream>
     #include <iomanip>
     #include <typeinfo>
-    #if defined(WIN32)
+    #ifdef _MSC_VER
     #else
-        #include <cxxabi.h>
+    #include <cxxabi.h>
+    #include <ctime>
     #endif
 #endif // __cplusplus
 

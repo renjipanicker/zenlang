@@ -35,16 +35,14 @@ coerce bool => ubyte => byte => ushort => short => uint => int => ulong => long 
 
 typedef char native;
 typedef string native;
-typedef date native;
-typedef time native;
 typedef datetime native;
 
 coerce char => string;
-coerce date => datetime;
-coerce time => datetime;
+coerce int => datetime;
 
 default char = '';
 default string = "";
+default datetime = 0;
 
 typedef type native;
 

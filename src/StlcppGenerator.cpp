@@ -54,6 +54,11 @@ void StlcppNameGenerator::getTypeName(const Ast::TypeSpec& typeSpec, z::string& 
         return;
     }
 
+    if(typeSpec.name().string() == "datetime") {
+        name += "z::datetime";
+        return;
+    }
+
     if(typeSpec.name().string() == "type") {
         name += "z::type";
         return;
