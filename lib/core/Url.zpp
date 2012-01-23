@@ -1,0 +1,12 @@
+namespace Url;
+
+public struct url {
+    string fullUrl;
+    string protocol;
+    string host;
+    string path;
+    string querystring;
+};
+
+public routine void Parse(url& u, const string& urlstr) native;
+public routine url Create(const string& urlstr) native;
