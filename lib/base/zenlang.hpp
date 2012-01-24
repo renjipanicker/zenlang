@@ -673,6 +673,9 @@ namespace z {
         return l.size();
     }
 
+    /////////////////////////////
+    typedef z::list<z::string> stringlist;
+
     ///////////////////////////////////////////////////////////////
     struct Future {
         virtual void run() = 0;

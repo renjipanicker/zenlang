@@ -147,7 +147,11 @@ namespace z
     {
         assert(_cmdMap.find(cmd) == _cmdMap.end());
         _hasCommands = true;
-        Command& cmdd = z::ref(_cmdMap[cmd]);
+        if(_cmdMap[cmd] == 0) {
+            Command* nval = new Command();
+            _cmdMap.set(cmd, nval);
+        }
+        Command& cmdd = _cmdMap.at(cmd);
         cmdd._desc = desc;
         cmdd._value = value;
     }
@@ -166,9 +170,7 @@ namespace z
     inline void Parser::add(const z::string& cmd, const z::string& sname, const z::string& lname, const z::string& desc, T& val)
     {
         assert(_hasCommands);
-        assert(_cmdMap.find(cmd) != _cmdMap.end());
-
-        Command& cmdd = _cmdMap[cmd];
+        Command& cmdd = _cmdMap.at(cmd);
         addMap(cmdd, sname, lname, desc, val);
     }
 
@@ -176,7 +178,7 @@ namespace z
     inline void Parser::add(const z::string& sname, const z::string& lname, const z::string& desc, T& val)
     {
         assert(!_hasCommands);
-        Command& cmd = _cmdMap[""];
+        Command& cmd = _cmdMap.at("");
         addMap(cmd, sname, lname, desc, val);
     }
 
