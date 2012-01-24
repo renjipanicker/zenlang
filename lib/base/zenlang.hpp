@@ -211,6 +211,27 @@ namespace z {
         const fmt _msg;
     };
 
+    template <typename T>
+    struct autoptr {
+        inline autoptr() : _val(0) {}
+        inline autoptr(T* val) : _val(val) {}
+        inline ~autoptr() {
+            delete _val;
+            _val = 0;
+        }
+        inline bool empty() const {return (_val == 0);}
+        inline T* ptr() {return _val;}
+        inline T* operator->() {assert(!empty()); return ptr();}
+        inline T& operator*() {assert(!empty()); return z::ref(_val);}
+        inline T* take() {assert(!empty()); T* v = _val; _val = 0; return v;}
+        inline void reset(T* val) {delete _val; _val = val;}
+        inline void reset() {reset(0);}
+    private:
+        inline autoptr(const autoptr& /*src*/) : _val(0) {}
+    private:
+        T* _val;
+    };
+
     template <typename V>
     struct Pointer {
         struct value {
