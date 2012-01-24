@@ -37,6 +37,9 @@ namespace z {
     }
 
     struct string {
+        typedef typename std::string::size_type size_type;
+        static const size_type npos  = std::string::npos;
+
         static inline char_t lower(const char_t& ch) {
             if((ch >= 'A') && (ch <= 'Z'))
                 return 'a' + (ch - 'A');
@@ -46,6 +49,7 @@ namespace z {
         explicit inline string() {}
         inline string(const char* s) : _val(s) {}
         inline string(const std::string& s) : _val(s) {}
+        inline string(const size_type& count, const char_t& ch) : _val(count, ch) {}
 
         typedef typename std::string::iterator iterator;
         inline iterator begin() {return _val.begin();}
@@ -54,9 +58,6 @@ namespace z {
         typedef typename std::string::const_iterator const_iterator;
         inline const_iterator begin() const {return _val.begin();}
         inline const_iterator end() const {return _val.end();}
-
-        typedef typename std::string::size_type size_type;
-        static const size_type npos  = std::string::npos;
 
         inline size_type size() const {return _val.size();}
         inline size_type length() const {return _val.length();}
@@ -921,3 +922,5 @@ namespace z {
     };
 #endif
 }
+
+#include "args.hpp"
