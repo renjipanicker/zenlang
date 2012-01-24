@@ -105,6 +105,7 @@ fix indentation in generated cpp file
 ../debug/zen --name core --verbose --lib \
 ../../zenlang/lib/core/String.zpp ../../zenlang/lib/core/StringImpl.cpp \
 ../../zenlang/lib/core/DateTime.zpp ../../zenlang/lib/core/DateTimeImpl.cpp \
+../../zenlang/lib/core/File.zpp ../../zenlang/lib/core/FileImpl.cpp \
 ../../zenlang/lib/core/Dir.zpp ../../zenlang/lib/core/DirImpl.cpp \
 ../../zenlang/lib/core/Url.zpp ../../zenlang/lib/core/UrlImpl.cpp \
 && cmake -DCMAKE_BUILD_TYPE=Debug . && make
