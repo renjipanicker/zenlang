@@ -12,6 +12,7 @@ bug - multiple #includes in guiTest.cpp
 
 process
 application
+regex support
 unicode-char
 date
 time
@@ -60,7 +61,6 @@ tab-widget
 positional-paramlist
 ftp
 xml
-regex
 ssl
 string-template
 any-type
@@ -103,6 +103,7 @@ fix indentation in generated cpp file
 ../debug/zen -v ../../zenlang/tests/testBasic.zpp && cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
 
 ../debug/zen --name core --verbose --lib \
+../../zenlang/lib/core/String.zpp ../../zenlang/lib/core/StringImpl.cpp \
 ../../zenlang/lib/core/DateTime.zpp ../../zenlang/lib/core/DateTimeImpl.cpp \
 ../../zenlang/lib/core/Dir.zpp ../../zenlang/lib/core/DirImpl.cpp \
 ../../zenlang/lib/core/Url.zpp ../../zenlang/lib/core/UrlImpl.cpp \

@@ -70,10 +70,10 @@ namespace z {
         inline z::string substr(const size_type& from, const size_type& len) const {return _val.substr(from, len);}
         inline z::string substr(const size_type& from) const {return _val.substr(from);}
 
-        inline size_type find(const char& s) const {return _val.find(s);}
+        inline size_type find(const char_t& s) const {return _val.find(s);}
         inline size_type find(const z::string& s) const {return _val.find(s._val);}
         inline size_type find(const z::string& s, const size_type& from) const {return _val.find(s._val, from);}
-        inline size_type rfind(const char& s) const {return _val.rfind(s);}
+        inline size_type rfind(const char_t& s) const {return _val.rfind(s);}
         inline size_type rfind(const z::string& s) const {return _val.rfind(s._val);}
         inline z::string replace(const size_type& from, const size_type& len, const z::string& to) {return _val.replace(from, len, to._val);}
 
@@ -105,7 +105,7 @@ namespace z {
         }
 
         inline const std::string& val() const {return _val;}
-        inline const char* c_str() const {return _val.c_str();}
+        inline const char_t* c_str() const {return _val.c_str();}
         inline const char* toUtf8() const {return _val.c_str();}
 
         template <typename T> inline z::string& arg(const z::string& key, T value);
@@ -128,10 +128,21 @@ namespace z {
     private:
         int64_t _val;
     };
+
+    struct regex {
+        void compile(const z::string& re);
+        void match(const z::string& str);
+        inline regex() {}
+        inline regex(const z::string& re) {compile(re);}
+
+    private:
+        regex_t _val;
+    };
+
 }
 
-inline z::string operator+(const char* lhs, const z::string& rhs) {return (lhs + rhs.val());}
-inline z::string operator+(const z::string& lhs, const char* rhs) {return (lhs.val() + rhs);}
+inline z::string operator+(const char_t* lhs, const z::string& rhs) {return (lhs + rhs.val());}
+inline z::string operator+(const z::string& lhs, const char_t* rhs) {return (lhs.val() + rhs);}
 inline z::string operator+(const z::string& lhs, const char_t rhs) {return (lhs.val() + rhs);}
 inline z::string operator+(const z::string& lhs, const z::string& rhs) {return (lhs.val() + rhs.val());}
 

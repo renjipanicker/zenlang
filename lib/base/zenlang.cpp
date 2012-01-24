@@ -1,6 +1,22 @@
 #include "pch.hpp"
 #include "zenlang.hpp"
 
+void z::regex::compile(const z::string& re) {
+    int res = regcomp(&_val, re.c_str(), 0);
+    if(res != 0) {
+        // throw
+        std::cout << "error regcomp:" << res << std::endl;
+        return;
+    }
+}
+
+void z::regex::match(const z::string& str) {
+    int res = regexec(&_val, str.c_str(), 0, 0, 0);
+    char buf[128];
+    regerror(res, &_val, buf, 128);
+    std::cout << "rv:" << res << ", " << buf << std::endl;
+}
+
 #if defined(UNIT_TEST)
 static int s_totalTests = 0;
 static int s_passedTests = 0;

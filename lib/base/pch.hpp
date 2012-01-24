@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <memory.h>
+#include <regex.h>
 #include <assert.h>
 
 #if defined(WIN32)
