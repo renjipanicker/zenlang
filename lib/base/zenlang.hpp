@@ -232,6 +232,32 @@ namespace z {
         T* _val;
     };
 
+    struct mutex {
+        mutex();
+        ~mutex();
+        int enter();
+        int leave();
+    private:
+        inline mutex(const mutex& /*src*/) {}
+    private:
+        mutex_t _val;
+    };
+
+    struct mlock {
+        inline mlock(mutex& m) : _mutex(m) {
+            _mutex.enter();
+        }
+
+        inline ~mlock() {
+            _mutex.leave();
+        }
+
+    private:
+        inline mlock(const mlock& src) : _mutex(src._mutex) {}
+    private:
+        mutex& _mutex;
+    };
+
     template <typename V>
     struct Pointer {
         struct value {

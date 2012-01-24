@@ -1,6 +1,38 @@
 #include "pch.hpp"
 #include "zenlang.hpp"
 
+z::mutex::mutex() {
+#if defined(WIN32)
+    _val = CreateMutex(0, FALSE, 0);
+#else
+    pthread_mutex_init (&_val, NULL);
+#endif
+}
+
+z::mutex::~mutex() {
+#if defined(WIN32)
+    ReleaseMutex(_val);
+#else
+    pthread_mutex_destroy(&_val);
+#endif
+}
+
+int z::mutex::enter() {
+#if defined(WIN32)
+    return (WaitForSingleObject(_val, INFINITE)==WAIT_FAILED?1:0);
+#else
+    return pthread_mutex_lock(&_val);
+#endif
+}
+
+int z::mutex::leave() {
+#if defined(WIN32)
+    return (ReleaseMutex(_val)==0);
+#else
+    return pthread_mutex_unlock(&_val);
+#endif
+}
+
 void z::regex::compile(const z::string& re) {
     int res = regcomp(&_val, re.c_str(), 0);
     if(res != 0) {

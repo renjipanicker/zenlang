@@ -49,6 +49,15 @@
 #include <assert.h>
 
 #if defined(WIN32)
+    #include <windows.h>
+    #include <process.h>
+    typedef HANDLE mutex_t;
+#else
+    #include <pthread.h>
+    typedef pthread_mutex_t mutex_t;
+#endif
+
+#if defined(WIN32)
     #define snprintf _snprintf_s
     #define sprintf sprintf_s
     #pragma warning (disable:4355) // this used in base ctor initialization.
