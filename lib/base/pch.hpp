@@ -45,6 +45,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <memory.h>
+#include <sys/stat.h>
 #include <regex.h>
 #include <assert.h>
 

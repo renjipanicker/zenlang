@@ -17,7 +17,7 @@ private:
 };
 
 inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
-    OutputFile ofPro(_fpPro, "CMakeLists.txt");unused(ofPro);
+    OutputFile ofPro(_fpPro, config.srcdir(), "CMakeLists.txt");unused(ofPro);
     fprintf(_fpPro, "CMAKE_MINIMUM_REQUIRED(VERSION 2.6)\n");
     fprintf(_fpPro, "PROJECT(%s)\n", _project.name().c_str());
     fprintf(_fpPro, "\n");
@@ -48,8 +48,10 @@ inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
         fprintf(_fpPro, "ENDIF(WIN32)\n");
     }
 
-    fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \".\")\n");
-    fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", config.zlibPath().c_str());
+    fprintf(_fpPro, "include_directories(\"${CMAKE_CURRENT_SOURCE_DIR}\")\n");
+    fprintf(_fpPro, "include_directories(\"%s\")\n", config.zlibPath().c_str());
+    fprintf(_fpPro, "include_directories(\"%s\")\n", config.apidir().c_str());
+    fprintf(_fpPro, "include_directories(\"%s\")\n", config.srcdir().c_str());
     for(Ast::Config::PathList::const_iterator it = config.includePathList().begin(); it != config.includePathList().end(); ++it) {
         const z::string& dir = *it;
         fprintf(_fpPro, "include_directories(${CMAKE_CURRENT_SOURCE_DIR} \"%s\")\n", dir.c_str());

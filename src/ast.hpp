@@ -2075,7 +2075,7 @@ namespace Ast {
         };
         typedef std::list<z::string> PathList;
     public:
-        inline Config(const z::string& name) : _name(name), _mode(Mode::Executable), _gui(false), _debug(true), _test(true), _olanguage("stlcpp"), _zlibPath("../../zenlang/lib") {}
+        inline Config(const z::string& name) : _name(name), _mode(Mode::Executable), _gui(false), _debug(true), _test(true), _olanguage("stlcpp"), _apidir("."), _srcdir("."), _zlibPath("../../zenlang/lib") {}
     public:
         inline const z::string& name() const {return _name;}
     public:
@@ -2091,6 +2091,11 @@ namespace Ast {
     public:
         inline Config& olanguage(const z::string& val) { _olanguage = val; return z::ref(this);}
         inline const z::string& olanguage() const {return _olanguage;}
+    public:
+        inline Config& apidir(const z::string& val) { _apidir = val; return z::ref(this);}
+        inline const z::string& apidir() const {return _apidir;}
+        inline Config& srcdir(const z::string& val) { _srcdir = val; return z::ref(this);}
+        inline const z::string& srcdir() const {return _srcdir;}
     public:
         inline Config& zexePath(const z::string& val) { _zexePath = val; return z::ref(this);}
         inline const z::string& zexePath() const {return _zexePath;}
@@ -2113,6 +2118,8 @@ namespace Ast {
         bool _debug;
         bool _test;
         z::string _olanguage;
+        z::string _apidir;
+        z::string _srcdir;
         z::string _zexePath;
         z::string _zlibPath;
         PathList _includePathList;

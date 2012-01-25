@@ -1,3 +1,5 @@
+#-DCMAKE_BUILD_TYPE=Debug
+
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(zen)
 
@@ -5,10 +7,10 @@ IF(CMAKE_CONFIGURATION_TYPES)
     SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;FooBar" CACHE STRING "" FORCE)
 ENDIF(CMAKE_CONFIGURATION_TYPES)
 
-set(parser_odir "${CMAKE_CURRENT_SOURCE_DIR}/src")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${parser_odir})
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} "lib/")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} "src/")
+SET(parser_odir "${CMAKE_CURRENT_SOURCE_DIR}/src")
+INCLUDE_DIRECTORIES(${parser_odir})
+INCLUDE_DIRECTORIES("lib/")
+INCLUDE_DIRECTORIES("src/")
 
 # add debug definitions
  IF(CMAKE_COMPILER_IS_GNUCXX)
@@ -82,14 +84,54 @@ ADD_CUSTOM_COMMAND(
 )
 SET(zen_SOURCES ${zen_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.hpp")
 
-#add_custom_target(cc_parser.y COMMAND "${lemon_cc}" -q "${CMAKE_CURRENT_SOURCE_DIR}/src/parserGen.y")
-#SET(zen_DEPENDS ${zen_DEPENDS} cc_parser.y)
-
-#add_custom_target(cc_lexer.re COMMAND "${re2c_cc}" -c -i -u -o "${parser_odir}/lexerGen.c" "${CMAKE_CURRENT_SOURCE_DIR}/src/lexerGen.re")
-#SET(zen_DEPENDS ${zen_DEPENDS} cc_lexer.re)
-
 ADD_EXECUTABLE(zen ${zen_SOURCES})
-#ADD_DEPENDENCIES(zen ${zen_DEPENDS})
 
+#####################################################################
+# build zenlang library
+#####################################################################
+SET(ZEN_OUTPUT_PATH ${PROJECT_BINARY_DIR}/../out)
+SET(EXECUTABLE_OUTPUT_PATH ${ZEN_OUTPUT_PATH}/bin)
+SET(LIBRARY_OUTPUT_PATH ${ZEN_OUTPUT_PATH}/lib)
+INCLUDE_DIRECTORIES("${ZEN_OUTPUT_PATH}/include/")
 
-#-DCMAKE_BUILD_TYPE=Debug
+#########################
+# build all base/ files (actually just copy them to output dir)
+SET(libbase_ZPP_SOURCES ${libbase_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/base/pch.hpp")
+SET(libbase_ZPP_SOURCES ${libbase_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/base/zenlang.hpp")
+SET(libbase_ZPP_SOURCES ${libbase_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/base/zenlang.cpp")
+SET(libbase_ZPP_SOURCES ${libbase_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/base/args.hpp")
+
+FOREACH(_FILE ${libbase_ZPP_SOURCES})
+    GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME)
+    CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/lib/base/${_BASE}" "${ZEN_OUTPUT_PATH}/include/base/${_BASE}" [COPYONLY])
+ENDFOREACH()
+
+#########################
+# build all core/ files
+SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/String.zpp")
+SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/DateTime.zpp")
+SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/File.zpp")
+SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/Dir.zpp")
+SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/Url.zpp")
+
+GET_TARGET_PROPERTY(ZEN_EXE zen LOCATION)
+
+IF( CMAKE_BUILD_TYPE STREQUAL "Debug")
+    SET( ZEN_DBG_FLAG "--debug" )
+ENDIF()
+
+# Although this is a src file from the base/ dir, we add it to libcore because there is no libbase binary created.
+SET(libcore_SOURCES ${libcore_SOURCES} "lib/base/zenlang.cpp")
+
+FOREACH(_FILE ${libcore_ZPP_SOURCES})
+    GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME_WE)
+    ADD_CUSTOM_COMMAND(
+        COMMAND ${ZEN_EXE} ${ZEN_DBG_FLAG} -c --api "${ZEN_OUTPUT_PATH}/include/core" --src "./core" ${_FILE}
+        OUTPUT "core/${_BASE}.cpp"
+        DEPENDS ${ZEN_EXE} ${_FILE}
+    )
+    SET(libcore_SOURCES ${libcore_SOURCES} "core/${_BASE}.cpp")
+    SET(libcore_SOURCES ${libcore_SOURCES} "lib/core/${_BASE}Impl.cpp")
+ENDFOREACH()
+
+ADD_LIBRARY(core STATIC ${libcore_SOURCES})

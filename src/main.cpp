@@ -21,6 +21,8 @@ static int showHelp(const Ast::Config& config) {
     printf("  -d  --debug     Debug build\n");
     printf("  -ol --language  Output language\n");
     printf("  -op --project   Output project\n");
+    printf("  -ad --api       API directory\n");
+    printf("  -sd --src       Source directory\n");
     printf("  -v  --verbose   Display verbose output\n");
     printf("  -t  --test      Don't generate unit tests (Note this is a negative switch)\n");
     printf("  -z  --zenPath   Zen Library path\n");
@@ -83,6 +85,12 @@ int main(int argc, char* argv[]) {
         } else if((t == "-op") || (t == "--oproject")) {
             t = argv[i++];
             project.oproject(t);
+        } else if((t == "-ad") || (t == "--api")) {
+            t = argv[i++];
+            config.apidir(t);
+        } else if((t == "-sd") || (t == "--src")) {
+            t = argv[i++];
+            config.srcdir(t);
         } else if((t == "-v") || (t == "--verbose")) {
             project.verbosity(Ast::Project::Verbosity::Detailed);
         } else if((t == "-t") || (t == "--test")) {
