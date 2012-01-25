@@ -98,7 +98,6 @@ INCLUDE_DIRECTORIES("${ZEN_OUTPUT_PATH}/include/")
 # build all base/ files (actually just copy them to output dir)
 SET(libbase_ZPP_SOURCES ${libbase_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/base/pch.hpp")
 SET(libbase_ZPP_SOURCES ${libbase_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/base/zenlang.hpp")
-SET(libbase_ZPP_SOURCES ${libbase_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/base/zenlang.cpp")
 SET(libbase_ZPP_SOURCES ${libbase_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/base/args.hpp")
 
 FOREACH(_FILE ${libbase_ZPP_SOURCES})
@@ -120,8 +119,11 @@ IF( CMAKE_BUILD_TYPE STREQUAL "Debug")
     SET( ZEN_DBG_FLAG "--debug" )
 ENDIF()
 
-# Although this is a src file from the base/ dir, we add it to libcore because there is no libbase binary created.
+# Although these are files from the base/ and utils/ dir, we add it to libcore because there is no libbase binary created.
 SET(libcore_SOURCES ${libcore_SOURCES} "lib/base/zenlang.cpp")
+SET(libcore_SOURCES ${libcore_SOURCES} "lib/utils/sqlite3/sqlite3.c")
+SET(libcore_SOURCES ${libcore_SOURCES} "lib/utils/sqlite3/sqlite3.h")
+SET(libcore_SOURCES ${libcore_SOURCES} "lib/utils/sqlite3/sqlite3ext.h")
 
 FOREACH(_FILE ${libcore_ZPP_SOURCES})
     GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME_WE)
@@ -135,3 +137,14 @@ FOREACH(_FILE ${libcore_ZPP_SOURCES})
 ENDFOREACH()
 
 ADD_LIBRARY(core STATIC ${libcore_SOURCES})
+
+#########################
+# build all utils/ files (actually just copy them to output dir)
+SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/utils/sqlite3/sqlite3ext.h")
+SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/utils/sqlite3/sqlite3.h")
+
+# NOTE: copying from utils/ to util/ (no 's' is dst path)
+FOREACH(_FILE ${libutil_ZPP_SOURCES})
+    GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME)
+    CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/lib/utils/sqlite3/${_BASE}" "${ZEN_OUTPUT_PATH}/include/util/sqlite3/${_BASE}" [COPYONLY])
+ENDFOREACH()
