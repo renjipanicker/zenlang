@@ -14,7 +14,7 @@
         #define trace printf
     #endif
 #else
-    #define trace(f)
+inline void trace(const char* txt, ...) {unused(txt);} // empty inline function gets optimized away
 #endif
 
 namespace z {
