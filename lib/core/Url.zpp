@@ -8,5 +8,7 @@ public struct url {
     string querystring;
 };
 
+public routine bool Exists(const url& u) native;
+public routine bool FileExists(const string& urlstr) native;
 public routine void Parse(url& u, const string& urlstr) native;
 public routine url Create(const string& urlstr) native;
