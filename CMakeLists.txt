@@ -106,18 +106,20 @@ FOREACH(_FILE ${libbase_ZPP_SOURCES})
 ENDFOREACH()
 
 #########################
-# build all core/ files
-SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/String.zpp")
-SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/DateTime.zpp")
-SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/File.zpp")
-SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/Dir.zpp")
-SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/Url.zpp")
-
+# build all libraries
 GET_TARGET_PROPERTY(ZEN_EXE zen LOCATION)
 
 IF( CMAKE_BUILD_TYPE STREQUAL "Debug")
     SET( ZEN_DBG_FLAG "--debug" )
 ENDIF()
+
+#########################
+# build libcore
+SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/String.zpp")
+SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/DateTime.zpp")
+SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/File.zpp")
+SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/Dir.zpp")
+SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/Url.zpp")
 
 # Although these are files from the base/ and utils/ dir, we add it to libcore because there is no libbase binary created.
 SET(libcore_SOURCES ${libcore_SOURCES} "lib/base/zenlang.cpp")
@@ -137,6 +139,31 @@ FOREACH(_FILE ${libcore_ZPP_SOURCES})
 ENDFOREACH()
 
 ADD_LIBRARY(core STATIC ${libcore_SOURCES})
+
+#########################
+# build libgui
+SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/Widget.zpp")
+SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/Window.zpp")
+SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/Mainframe.zpp")
+SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/Button.zpp")
+SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/TextEdit.zpp")
+SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/Systray.zpp")
+SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/Menu.zpp")
+SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/MenuItem.zpp")
+SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/WindowCreator.zpp")
+
+FOREACH(_FILE ${libgui_ZPP_SOURCES})
+    GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME_WE)
+    ADD_CUSTOM_COMMAND(
+        COMMAND ${ZEN_EXE} ${ZEN_DBG_FLAG} -c --api "${ZEN_OUTPUT_PATH}/include/gui" --src "./gui" ${_FILE}
+        OUTPUT "gui/${_BASE}.cpp"
+        DEPENDS ${ZEN_EXE} ${_FILE}
+    )
+    SET(libgui_SOURCES ${libgui_SOURCES} "gui/${_BASE}.cpp")
+    SET(libgui_SOURCES ${libgui_SOURCES} "lib/gui/${_BASE}Impl.cpp")
+ENDFOREACH()
+
+ADD_LIBRARY(gui STATIC ${libgui_SOURCES})
 
 #########################
 # build all utils/ files (actually just copy them to output dir)

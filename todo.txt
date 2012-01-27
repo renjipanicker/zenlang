@@ -124,6 +124,10 @@ valgrind --leak-check=full --track-origins=yes \
 ../../zenlang/tests/guiTest.zpp \
 && cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
 
+../out/bin/zen --verbose --gui \
+../../zenlang/tests/guiTest.zpp \
+&& cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
+
 ==DONE==
 Remove block from unit
 project generator - cmake
