@@ -1,12 +1,7 @@
-ADD_DEFINITIONS( "-DGUI" )
-IF(WIN32)
-ELSE(WIN32)
-    SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/")
-    FIND_PACKAGE(GTK3)
-    IF(GTK3_FOUND)
-        INCLUDE_DIRECTORIES(${GTK3_INCLUDE_DIRS})
-    ENDIF(GTK3_FOUND)
-ENDIF(WIN32)
+PROJECT(gui)
+
+SET(ZEN_GUI 1)
+INCLUDE(../../tools/SetupZL.cmake)
 
 SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/Widget.zpp")
 SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/Window.zpp")
@@ -20,10 +15,10 @@ SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/Window
 
 SET(libgui_Window_DEP "gui/Widget.cpp")
 SET(libgui_Mainframe_DEP "gui/Window.cpp")
-SET(libgui_WindowCreator_DEP "gui/Mainframe.cpp" "gui/Button.cpp" "gui/TextEdit.cpp" "gui/Systray.cpp" "gui/Menu.cpp" "gui/MenuItem.cpp")
-SET(libgui_MenuItem_DEP "gui/Menu.cpp")
 SET(libgui_Systray_DEP "gui/Window.cpp")
 SET(libgui_Menu_DEP "gui/Window.cpp")
+SET(libgui_MenuItem_DEP "gui/Menu.cpp")
+SET(libgui_WindowCreator_DEP "gui/Mainframe.cpp" "gui/Button.cpp" "gui/TextEdit.cpp" "gui/Systray.cpp" "gui/MenuItem.cpp")
 
 FOREACH(_FILE ${libgui_ZPP_SOURCES})
     GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME_WE)
@@ -37,3 +32,5 @@ FOREACH(_FILE ${libgui_ZPP_SOURCES})
 ENDFOREACH()
 
 ADD_LIBRARY(gui STATIC ${libgui_SOURCES})
+
+TARGET_LINK_LIBRARIES(gui ${ZEN_GUI_LIBRARIES})

@@ -1,7 +1,7 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "WindowImpl.hpp"
 #include "gui/TextEdit.hpp"
+#include "WindowImpl.hpp"
 
 Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdit::Definition& def) {
 #if defined(WIN32)

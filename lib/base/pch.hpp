@@ -1,43 +1,20 @@
 #ifndef PCH_HPP
 #define PCH_HPP
 
-// All #defines are validated here
+// if compiling in GUI mode and WIN32 is not defined, assume Linux GTK.
+/// \todo change this when adding support for other platforms.
 #if defined(GUI)
-    #if !defined(WIN32)
-        #define GTK 1
-    #endif
+#if !defined(WIN32)
+    #define GTK 1
+#endif
 #endif
 
-#if defined(GUI)
-    #if defined(WIN32)
-    #elif defined(GTK)
-    #else
-        #error "Unknown platform. Please define WIN32 or GTK"
-    #endif
-#endif
-
-// all header files are included here.
+// This is for system objects like HANDLE etc that is used
 #if defined(WIN32)
     #undef UNICODE
     #undef _UNICODE
     #define WIN32_LEAN_AND_MEAN
-    #include <Windows.h>
-#endif
-
-#if defined(GUI)
-    #if defined(WIN32)
-        #undef UNICODE
-        #undef _UNICODE
-        #define WIN32_LEAN_AND_MEAN
-        #include <Windowsx.h>
-        #include <Commctrl.h>
-        #include <Shlwapi.h>
-        #include <shellapi.h>
-        #include <tchar.h>
-    #endif
-    #if defined(GTK)
-        #include <gtk/gtk.h>
-    #endif
+    #include <windows.h>
 #endif
 
 #include <stdio.h>
@@ -50,10 +27,10 @@
 #include <assert.h>
 
 #if defined(WIN32)
-    #include <windows.h>
     #include <process.h>
     typedef HANDLE mutex_t;
 #else
+    #include <libgen.h>
     #include <pthread.h>
     typedef pthread_mutex_t mutex_t;
 #endif
@@ -63,10 +40,9 @@
     #define sprintf sprintf_s
     #pragma warning (disable:4355) // this used in base ctor initialization.
 #else
-    #include <libgen.h>
 #endif
 
-#ifdef _MSC_VER
+#if defined(WIN32)
 typedef char      int8_t;
 typedef short     int16_t;
 typedef int       int32_t;
@@ -93,11 +69,30 @@ typedef char char_t;
     #include <sstream>
     #include <iomanip>
     #include <typeinfo>
-    #ifdef _MSC_VER
+    #if defined(WIN32)
     #else
     #include <cxxabi.h>
     #include <ctime>
     #endif
 #endif // __cplusplus
+
+// all header files are included here.
+#if defined(GUI)
+    #if defined(WIN32)
+        #undef UNICODE
+        #undef _UNICODE
+        #define WIN32_LEAN_AND_MEAN
+        #include <Windows.h>
+        #include <Windowsx.h>
+        #include <Commctrl.h>
+        #include <Shlwapi.h>
+        #include <shellapi.h>
+        #include <tchar.h>
+    #elif defined(GTK)
+        #include <gtk/gtk.h>
+    #else
+        #error "Unknown platform. Please define WIN32 or GTK"
+    #endif
+#endif
 
 #endif

@@ -1,8 +1,8 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "gui/Window.hpp"
-#include "WindowImpl.hpp"
 #include "gui/Button.hpp"
+#include "WindowImpl.hpp"
 
 #if defined(WIN32)
 int Window::Native::getNextWmID() {

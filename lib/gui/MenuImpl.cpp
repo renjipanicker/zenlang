@@ -1,8 +1,8 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
+#include "gui/Menu.hpp"
 #include "WindowImpl.hpp"
 #include "MenuImpl.hpp"
-#include "gui/Menu.hpp"
 
 Menu::Handle Menu::Create::run(const Window::Handle& window, const Menu::Definition& def) {
     unused(def);

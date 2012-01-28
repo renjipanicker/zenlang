@@ -1,11 +1,11 @@
-include Window public;
-include Mainframe;
-include Button;
-include TextEdit;
-include Menu;
-include MenuItem;
-include Systray;
-include WindowCreator;
+include gui::Window public;
+include gui::Mainframe;
+include gui::Button;
+include gui::TextEdit;
+include gui::Menu;
+include gui::MenuItem;
+include gui::Systray;
+include gui::WindowCreator;
 
 function MyMain : main {
     auto defn = MainFrame::Definition {
@@ -73,7 +73,7 @@ function MyMain : main {
     };
 
     Button::OnClick(checkBtn) => {
-        print "on click\n";
+//        print "on click\n";
         TextEdit::AppendText(outputBox, "hello!\n");
     };
 

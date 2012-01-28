@@ -1,26 +1,12 @@
-#-DCMAKE_BUILD_TYPE=Debug
-
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 PROJECT(zen)
-
-IF(CMAKE_CONFIGURATION_TYPES)
-    SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;FooBar" CACHE STRING "" FORCE)
-ENDIF(CMAKE_CONFIGURATION_TYPES)
+SET(ZEN_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
+INCLUDE(tools/SetupZL.cmake)
 
 SET(parser_odir "${CMAKE_CURRENT_SOURCE_DIR}/src")
 INCLUDE_DIRECTORIES(${parser_odir})
 INCLUDE_DIRECTORIES("lib/")
 INCLUDE_DIRECTORIES("src/")
-
-# add debug definitions
- IF(CMAKE_COMPILER_IS_GNUCXX)
-     ADD_DEFINITIONS( "-Wall" )
- ENDIF(CMAKE_COMPILER_IS_GNUCXX)
-
-# add debug definitions
-IF( CMAKE_BUILD_TYPE STREQUAL "Debug")
-    ADD_DEFINITIONS( "-DDEBUG" )
-ENDIF()
 
 # strictly speaking, these are not required in the compiler project
 # but including them to ease find-replace and source-navigation
@@ -56,14 +42,6 @@ SET(zen_SOURCES ${zen_SOURCES} src/CmakeGenerator.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/CmakeGenerator.cpp)
 SET(zen_SOURCES ${zen_SOURCES} src/main.cpp)
 
-IF(WIN32)
-    SET(lemon_cc "${CMAKE_CURRENT_SOURCE_DIR}/tools/lemon.exe")
-    SET(re2c_cc "${CMAKE_CURRENT_SOURCE_DIR}/tools/re2c.exe")
-ELSE(WIN32)
-    SET(lemon_cc "${CMAKE_CURRENT_SOURCE_DIR}/tools/lemon")
-    SET(re2c_cc "${CMAKE_CURRENT_SOURCE_DIR}/tools/re2c")
-ENDIF(WIN32)
-
 ADD_CUSTOM_COMMAND(
     # -l no line numbers
     # -q don't print report
@@ -98,11 +76,12 @@ INCLUDE_DIRECTORIES("${ZEN_OUTPUT_PATH}/include/")
 # build all base/ files (actually just copy them to output dir)
 SET(libbase_ZPP_SOURCES ${libbase_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/base/pch.hpp")
 SET(libbase_ZPP_SOURCES ${libbase_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/base/zenlang.hpp")
+SET(libbase_ZPP_SOURCES ${libbase_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/base/zenlang.cpp")
 SET(libbase_ZPP_SOURCES ${libbase_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/base/args.hpp")
 
 FOREACH(_FILE ${libbase_ZPP_SOURCES})
     GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME)
-    CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/lib/base/${_BASE}" "${ZEN_OUTPUT_PATH}/include/base/${_BASE}" [COPYONLY])
+    CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/lib/base/${_BASE}" "${ZEN_OUTPUT_PATH}/include/base/${_BASE}" COPYONLY @ONLY)
 ENDFOREACH()
 
 #########################
@@ -115,7 +94,7 @@ ENDIF()
 
 #########################
 # build libcore
-CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/lib/core/core.ipp" "${ZEN_OUTPUT_PATH}/include/core/core.ipp" [COPYONLY])
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/lib/core/core.ipp" "${ZEN_OUTPUT_PATH}/include/core/core.ipp" COPYONLY @ONLY)
 
 SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/String.zpp")
 SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/DateTime.zpp")
@@ -124,7 +103,6 @@ SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/
 SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/Url.zpp")
 
 # Although these are files from the base/ and utils/ dir, we add it to libcore because there is no libbase binary created.
-SET(libcore_SOURCES ${libcore_SOURCES} "lib/base/zenlang.cpp")
 SET(libcore_SOURCES ${libcore_SOURCES} "lib/utils/sqlite3/sqlite3.c")
 SET(libcore_SOURCES ${libcore_SOURCES} "lib/utils/sqlite3/sqlite3.h")
 SET(libcore_SOURCES ${libcore_SOURCES} "lib/utils/sqlite3/sqlite3ext.h")
@@ -150,7 +128,28 @@ SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/
 # NOTE: copying from utils/ to util/ (no 's' is dst path)
 FOREACH(_FILE ${libutil_ZPP_SOURCES})
     GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME)
-    CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/lib/utils/sqlite3/${_BASE}" "${ZEN_OUTPUT_PATH}/include/util/sqlite3/${_BASE}" [COPYONLY])
+    CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/lib/utils/sqlite3/${_BASE}" "${ZEN_OUTPUT_PATH}/include/util/sqlite3/${_BASE}" COPYONLY @ONLY)
 ENDFOREACH()
 
+#########################
+# build all tools/ files (actually just copy them to output dir)
+SET(libtool_ZPP_SOURCES ${libtool_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/tools/FindGTK3.cmake")
+SET(libtool_ZPP_SOURCES ${libtool_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/tools/SetupZL.cmake")
+SET(libtool_ZPP_SOURCES ${libtool_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/tools/lemon")
+SET(libtool_ZPP_SOURCES ${libtool_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/tools/lemon.exe")
+SET(libtool_ZPP_SOURCES ${libtool_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/tools/lempar.c")
+SET(libtool_ZPP_SOURCES ${libtool_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/tools/re2c")
+SET(libtool_ZPP_SOURCES ${libtool_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/tools/re2c.exe")
+SET(libtool_ZPP_SOURCES ${libtool_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/tools/zpp.xml")
+
+FOREACH(_FILE ${libtool_ZPP_SOURCES})
+    GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME)
+    CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/tools/${_BASE}" "${ZEN_OUTPUT_PATH}/tools/${_BASE}" COPYONLY @ONLY)
+ENDFOREACH()
+
+#########################
+# build libgui. Its in a separate project because it requires the GUI includes and libraries.
 ADD_SUBDIRECTORY(lib/gui)
+
+
+#-DCMAKE_BUILD_TYPE=Debug

@@ -2065,7 +2065,7 @@ namespace Ast {
     //////////////////////////////////////////////////////////////////
     class Config {
     public:
-        struct Mode {
+        struct BuildMode {
             enum T {
                 Compile,
                 Executable,
@@ -2075,12 +2075,13 @@ namespace Ast {
         };
         typedef std::list<z::string> PathList;
     public:
-        inline Config(const z::string& name) : _name(name), _mode(Mode::Executable), _gui(false), _debug(true), _test(true), _olanguage("stlcpp"), _apidir("."), _srcdir("."), _zlibPath("") {}
+        inline Config(const z::string& name)
+            : _name(name), _buildMode(BuildMode::Executable), _gui(false), _debug(true), _test(true), _olanguage("stlcpp"), _apidir("."), _srcdir("."), _zlibPath("") {}
     public:
         inline const z::string& name() const {return _name;}
     public:
-        inline Config& mode(const Mode::T& val) { _mode = val; return z::ref(this);}
-        inline const Mode::T& mode() const {return _mode;}
+        inline Config& buildMode(const BuildMode::T& val) { _buildMode = val; return z::ref(this);}
+        inline const BuildMode::T& buildMode() const {return _buildMode;}
     public:
         inline Config& gui(const bool& val) { _gui = val; return z::ref(this);}
         inline const bool& gui() const {return _gui;}
@@ -2111,9 +2112,12 @@ namespace Ast {
     public:
         inline Config& addSourceFile(const z::string& file) { _sourceFileList.push_back(file); return z::ref(this);}
         inline const PathList& sourceFileList() const {return _sourceFileList;}
+    public:
+        inline Config& addLinkFile(const z::string& file) { _linkFileList.push_back(file); return z::ref(this);}
+        inline const PathList& linkFileList() const {return _linkFileList;}
     private:
         const z::string _name;
-        Mode::T _mode;
+        BuildMode::T _buildMode;
         bool _gui;
         bool _debug;
         bool _test;
@@ -2125,6 +2129,7 @@ namespace Ast {
         PathList _includePathList;
         PathList _includeFileList;
         PathList _sourceFileList;
+        PathList _linkFileList;
     };
 
     class Project {

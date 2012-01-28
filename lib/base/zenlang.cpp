@@ -97,11 +97,10 @@ void z::CallContext::run() {
 }
 
 #if defined(Z_EXE)
+#if defined(GUI)
 static void pump() {
     g_context.run();
 }
-
-#if defined(GUI)
 #if defined(WIN32)
 static int lastWM = WM_APP;
 static int lastRes = 1000;
@@ -121,15 +120,15 @@ static void CALLBACK IdleProc(HWND hwnd, UINT uMsg, UINT idEvent, DWORD time) {
     unused(time);
     pump();
 }
-#endif
+#endif // WIN32
 #if defined(GTK)
 static gboolean onIdle(gpointer data) {
     unused(data);
     pump();
     return TRUE;
 }
-#endif
-#endif
+#endif // GTK
+#endif // GUI
 
 z::Application::Application(int argc, char* argv[]) {
 #if defined(GUI)

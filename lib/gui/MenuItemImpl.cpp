@@ -1,8 +1,8 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
+#include "gui/MenuItem.hpp"
 #include "WindowImpl.hpp"
 #include "MenuItemImpl.hpp"
-#include "gui/MenuItem.hpp"
 #include "MenuImpl.hpp"
 
 #if defined(WIN32)

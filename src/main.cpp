@@ -17,7 +17,7 @@ static int showHelp(const Ast::Config& config) {
     printf("  -pd --dll       Shared library project\n");
     printf("  -pl --lib       Static library project\n");
     printf("  -n  --name      Project name\n");
-    printf("  -g  --gui       GUI application\n");
+//    printf("  -g  --gui       GUI application\n"); /// \todo To be kept undocumented.
     printf("  -d  --debug     Debug build\n");
     printf("  -ol --language  Output language\n");
     printf("  -op --project   Output project\n");
@@ -51,6 +51,7 @@ int main(int argc, char* argv[]) {
     config.zexePath(path);
     config.addIncludeFile("base/pch.hpp");
     config.addIncludeFile("base/zenlang.hpp");
+    config.addLinkFile("core");
 
     if (argc < 2) {
         return showHelp(config);
@@ -63,18 +64,18 @@ int main(int argc, char* argv[]) {
         if((t == "-h") || (t == "--help")) {
             return showHelp(config);
         } else if(t == "-c") {
-            config.mode(Ast::Config::Mode::Compile);
+            config.buildMode(Ast::Config::BuildMode::Compile);
         } else if(t == "-i") {
             interpreterMode = true;
         } else if((t == "-n") || (t == "--name")) {
             t = argv[i++];
             project.name(t);
         } else if((t == "-px") || (t == "--exe")) {
-            config.mode(Ast::Config::Mode::Executable);
+            config.buildMode(Ast::Config::BuildMode::Executable);
         } else if((t == "-pd") || (t == "--dll")) {
-            config.mode(Ast::Config::Mode::Shared);
+            config.buildMode(Ast::Config::BuildMode::Shared);
         } else if((t == "-pl") || (t == "--lib")) {
-            config.mode(Ast::Config::Mode::Static);
+            config.buildMode(Ast::Config::BuildMode::Static);
         } else if((t == "-g") || (t == "--gui")) {
             config.gui(true);
         } else if((t == "-d") || (t == "--debug")) {
@@ -91,6 +92,16 @@ int main(int argc, char* argv[]) {
         } else if((t == "-sd") || (t == "--src")) {
             t = argv[i++];
             config.srcdir(t);
+        } else if((t == "-l") || (t == "--link")) {
+            t = argv[i++];
+            config.addLinkFile(t);
+            if(t == "gui") {
+                config.gui(true);
+            }
+//      } else if((t == "-lt") || (t == "--linkStatic")) {
+//          t = argv[i++];
+//      } else if((t == "-lh") || (t == "--linkShared")) {
+//          t = argv[i++];
         } else if((t == "-v") || (t == "--verbose")) {
             project.verbosity(Ast::Project::Verbosity::Detailed);
         } else if((t == "-t") || (t == "--test")) {
@@ -107,10 +118,15 @@ int main(int argc, char* argv[]) {
         z::string p = config.zexePath();
         // strip path, if any
         z::string::size_type idx = p.rfind('/');
-        if(idx >= 0) {
-            p = p.substr(0, idx) + "/../";
+        if(idx != z::string::npos) {
+            p = p.substr(0, idx);
+            z::string::size_type idx = p.rfind('/');
+            if(idx != z::string::npos) {
+                p = p.substr(0, idx);
+            } else {
+                p = "./";
+            }
         } else {
-            assert(false);
             p = "./";
         }
 
