@@ -1,5 +1,5 @@
 #pragma once
-#include "Systray.hpp"
+#include "gui/Systray.hpp"
 #include "WidgetImpl.hpp"
 
 namespace Systray {

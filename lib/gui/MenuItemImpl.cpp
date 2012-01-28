@@ -2,7 +2,7 @@
 #include "base/zenlang.hpp"
 #include "WindowImpl.hpp"
 #include "MenuItemImpl.hpp"
-#include "MenuItem.hpp"
+#include "gui/MenuItem.hpp"
 #include "MenuImpl.hpp"
 
 #if defined(WIN32)

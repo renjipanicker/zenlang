@@ -1,5 +1,5 @@
 #pragma once
-#include "Widget.hpp"
+#include "gui/Widget.hpp"
 
 namespace Widget {
 template <typename T>

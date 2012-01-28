@@ -17,7 +17,7 @@ inline z::string Compiler::findImport(const z::string& filename) {
         return cfile;
 
     // next check zen lib dir
-    cfile = _config.zlibPath() + "/" + filename;
+    cfile = _config.zlibPath() + "/include/" + filename;
     if(checkFile(cfile))
         return cfile;
 

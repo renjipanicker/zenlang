@@ -1,7 +1,7 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "WindowImpl.hpp"
-#include "Button.hpp"
+#include "gui/Button.hpp"
 
 #if defined(WIN32)
 static HandlerList<HWND, Button::OnClick::Handler> onButtonClickHandlerList;

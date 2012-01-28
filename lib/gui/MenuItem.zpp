@@ -1,6 +1,6 @@
-include Widget public;
-include Window public;
-include Menu public;
+include gui::Widget public;
+include gui::Window public;
+include gui::Menu public;
 namespace MenuItem;
 
 public struct Handle : Widget::Handle {

@@ -1,5 +1,5 @@
 #pragma once
-#include "Window.hpp"
+#include "gui/Window.hpp"
 #include "WidgetImpl.hpp"
 
 namespace Window {

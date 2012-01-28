@@ -115,6 +115,8 @@ ENDIF()
 
 #########################
 # build libcore
+CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/lib/core/core.ipp" "${ZEN_OUTPUT_PATH}/include/core/core.ipp" [COPYONLY])
+
 SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/String.zpp")
 SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/DateTime.zpp")
 SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/core/File.zpp")
@@ -141,31 +143,6 @@ ENDFOREACH()
 ADD_LIBRARY(core STATIC ${libcore_SOURCES})
 
 #########################
-# build libgui
-SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/Widget.zpp")
-SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/Window.zpp")
-SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/Mainframe.zpp")
-SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/Button.zpp")
-SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/TextEdit.zpp")
-SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/Systray.zpp")
-SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/Menu.zpp")
-SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/MenuItem.zpp")
-SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/gui/WindowCreator.zpp")
-
-FOREACH(_FILE ${libgui_ZPP_SOURCES})
-    GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME_WE)
-    ADD_CUSTOM_COMMAND(
-        COMMAND ${ZEN_EXE} ${ZEN_DBG_FLAG} -c --api "${ZEN_OUTPUT_PATH}/include/gui" --src "./gui" ${_FILE}
-        OUTPUT "gui/${_BASE}.cpp"
-        DEPENDS ${ZEN_EXE} ${_FILE}
-    )
-    SET(libgui_SOURCES ${libgui_SOURCES} "gui/${_BASE}.cpp")
-    SET(libgui_SOURCES ${libgui_SOURCES} "lib/gui/${_BASE}Impl.cpp")
-ENDFOREACH()
-
-ADD_LIBRARY(gui STATIC ${libgui_SOURCES})
-
-#########################
 # build all utils/ files (actually just copy them to output dir)
 SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/utils/sqlite3/sqlite3ext.h")
 SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/utils/sqlite3/sqlite3.h")
@@ -175,3 +152,5 @@ FOREACH(_FILE ${libutil_ZPP_SOURCES})
     GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME)
     CONFIGURE_FILE("${CMAKE_CURRENT_SOURCE_DIR}/lib/utils/sqlite3/${_BASE}" "${ZEN_OUTPUT_PATH}/include/util/sqlite3/${_BASE}" [COPYONLY])
 ENDFOREACH()
+
+ADD_SUBDIRECTORY(lib/gui)

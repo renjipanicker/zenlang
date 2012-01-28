@@ -2,7 +2,7 @@
 #include "base/zenlang.hpp"
 #include "WindowImpl.hpp"
 #include "SystrayImpl.hpp"
-#include "Systray.hpp"
+#include "gui/Systray.hpp"
 
 #if defined(WIN32)
 static HandlerList<int, Systray::OnActivation::Handler> onSystrayActivationHandlerList;

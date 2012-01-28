@@ -103,6 +103,20 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if(config.zlibPath().size() == 0) {
+        z::string p = config.zexePath();
+        // strip path, if any
+        z::string::size_type idx = p.rfind('/');
+        if(idx >= 0) {
+            p = p.substr(0, idx) + "/../";
+        } else {
+            assert(false);
+            p = "./";
+        }
+
+        config.zlibPath(p);
+    }
+
     if(interpreterMode) {
         Interpreter intp(project, config);
         intp.run();

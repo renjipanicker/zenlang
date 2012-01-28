@@ -1,5 +1,5 @@
 #pragma once
-#include "Menu.hpp"
+#include "gui/Menu.hpp"
 #include "WidgetImpl.hpp"
 
 namespace Menu {

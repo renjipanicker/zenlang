@@ -1,7 +1,7 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "WindowImpl.hpp"
-#include "Mainframe.hpp"
+#include "gui/Mainframe.hpp"
 
 const MainFrame::Create::_Out& MainFrame::Create::run(const MainFrame::Definition& def) {
 #if defined(WIN32)

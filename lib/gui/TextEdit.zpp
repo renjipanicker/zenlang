@@ -1,4 +1,4 @@
-include Window public;
+include gui::Window public;
 namespace TextEdit;
 
 public struct Definition : Window::Definition {

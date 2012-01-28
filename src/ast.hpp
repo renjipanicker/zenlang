@@ -2075,7 +2075,7 @@ namespace Ast {
         };
         typedef std::list<z::string> PathList;
     public:
-        inline Config(const z::string& name) : _name(name), _mode(Mode::Executable), _gui(false), _debug(true), _test(true), _olanguage("stlcpp"), _apidir("."), _srcdir("."), _zlibPath("../../zenlang/lib") {}
+        inline Config(const z::string& name) : _name(name), _mode(Mode::Executable), _gui(false), _debug(true), _test(true), _olanguage("stlcpp"), _apidir("."), _srcdir("."), _zlibPath("") {}
     public:
         inline const z::string& name() const {return _name;}
     public:

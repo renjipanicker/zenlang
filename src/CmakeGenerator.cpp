@@ -40,7 +40,7 @@ inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
 
         fprintf(_fpPro, "IF(WIN32)\n");
         fprintf(_fpPro, "ELSE(WIN32)\n");
-        fprintf(_fpPro, "    SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} \"%s/../tools/\")\n", config.zlibPath().c_str());
+        fprintf(_fpPro, "    SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} \"%s/tools/\")\n", config.zlibPath().c_str());
         fprintf(_fpPro, "    FIND_PACKAGE(GTK3)\n");
         fprintf(_fpPro, "    IF(GTK3_FOUND)\n");
         fprintf(_fpPro, "        INCLUDE_DIRECTORIES(${GTK3_INCLUDE_DIRS})\n");
@@ -49,7 +49,7 @@ inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
     }
 
     fprintf(_fpPro, "include_directories(\"${CMAKE_CURRENT_SOURCE_DIR}\")\n");
-    fprintf(_fpPro, "include_directories(\"%s\")\n", config.zlibPath().c_str());
+    fprintf(_fpPro, "include_directories(\"%s/include\")\n", config.zlibPath().c_str());
     fprintf(_fpPro, "include_directories(\"%s\")\n", config.apidir().c_str());
     fprintf(_fpPro, "include_directories(\"%s\")\n", config.srcdir().c_str());
     for(Ast::Config::PathList::const_iterator it = config.includePathList().begin(); it != config.includePathList().end(); ++it) {
@@ -58,7 +58,7 @@ inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
     }
     fprintf(_fpPro, "\n");
 
-    fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s/base/zenlang.cpp)\n", config.zlibPath().c_str());
+//    fprintf(_fpPro, "SET(project_SOURCES ${project_SOURCES} %s/base/zenlang.cpp)\n", config.zlibPath().c_str());
 
     z::string zexePath = config.zexePath();
     zexePath.replace("\\", "/");

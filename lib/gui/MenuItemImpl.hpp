@@ -1,5 +1,5 @@
 #pragma once
-#include "MenuItem.hpp"
+#include "gui/MenuItem.hpp"
 
 namespace MenuItem {
     struct HandleImpl : public Widget::Handle::Impl {

@@ -2,7 +2,7 @@
 #include "base/zenlang.hpp"
 #include "WindowImpl.hpp"
 #include "MenuImpl.hpp"
-#include "Menu.hpp"
+#include "gui/Menu.hpp"
 
 Menu::Handle Menu::Create::run(const Window::Handle& window, const Menu::Definition& def) {
     unused(def);
