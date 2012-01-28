@@ -158,12 +158,12 @@ exp_seq = [Ee] [+-]? dec_seq;
 <Normal>   dec_digit* "." dec_seq (exp_seq)? [dD]  := send(factory, ZENTOK_DOUBLE_CONST); NEXT();
 <Normal>                  dec_seq  exp_seq   [dD]  := send(factory, ZENTOK_DOUBLE_CONST); NEXT();
 
-<Normal>   '\''   => Char   := _text = _cursor; NEXT();
+<Normal>   '\''   => Char   := _text = _cursor; assert(_text); NEXT(); // lexer code has a bug that will get triggered when _text == 0. \todo fix bug and remove this assert()
 <Char>     '\''   => Normal := send(factory, ZENTOK_CHAR_CONST); NEXT();
 <Char>     '\\' .           := NEXT();
 <Char>     [^]              := NEXT();
 
-<Normal>   '"'    => String := _text = _cursor; NEXT();
+<Normal>   '"'    => String := _text = _cursor; assert(_text); NEXT(); // as above.
 <String>   '"'    => Normal := send(factory, ZENTOK_STRING_CONST); NEXT();
 <String>   '\\' .           := NEXT();
 <String>   [^]              := NEXT();

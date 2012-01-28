@@ -302,10 +302,11 @@ void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inpu
 //    trace("consumed %lu, maxFill %lu, *cursor %d, *cursor %c\n", consumed, maxFill, *_cursor, *_cursor);
     if(consumed > 0) {
         memmove(_buffer, _start, _limit - _start);
+        _start -= consumed;
+        _text -= (_text > 0)?consumed:0;
         _marker -= consumed;
         _cursor -= consumed;
         _limit -= consumed;
-        _start -= consumed;
     }
     dump("push(5)");
 }

@@ -73,7 +73,7 @@ function MyMain : main {
     };
 
     Button::OnClick(checkBtn) => {
-//        print "on click\n";
+        print "on click\n";
         TextEdit::AppendText(outputBox, "hello!\n");
     };
 
