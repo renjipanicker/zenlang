@@ -221,8 +221,9 @@ namespace z {
         }
         inline bool empty() const {return (_val == 0);}
         inline T* ptr() {return _val;}
+        inline T& get() {assert(!empty()); return z::ref(_val);}
         inline T* operator->() {assert(!empty()); return ptr();}
-        inline T& operator*() {assert(!empty()); return z::ref(_val);}
+        inline T& operator*() {return get();}
         inline T* take() {assert(!empty()); T* v = _val; _val = 0; return v;}
         inline void reset(T* val) {delete _val; _val = val;}
         inline void reset() {reset(0);}
