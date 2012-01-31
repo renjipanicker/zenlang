@@ -103,6 +103,7 @@
       <item> uint32_t </item>
       <item> uint64_t </item>
 
+      <item> size </item>
       <item> char </item>
       <item> string </item>
       <item> pointer </item>
