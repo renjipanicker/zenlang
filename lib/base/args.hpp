@@ -10,7 +10,7 @@ namespace z
             : _sname(sname), _lname(lname), _desc(desc){}
 
         public:
-            virtual void handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite) = 0;
+            virtual void handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite, const bool& inc) = 0;
             inline  void show(std::ostream& str, const int& w = 32) const;
 
         private:
@@ -27,7 +27,7 @@ namespace z
             : OptionBase(sname, lname, desc), _val(val){}
 
         public:
-            virtual void handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite);
+            virtual void handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite, const bool& inc);
 
         private:
             T& _val;
@@ -41,39 +41,43 @@ namespace z
         }
 
         template<>
-        inline void Option<bool>::handle(z::list<z::string>::const_iterator& /*it*/, z::list<z::string>::const_iterator& /*ite*/)
+        inline void Option<bool>::handle(z::list<z::string>::const_iterator& /*it*/, z::list<z::string>::const_iterator& /*ite*/, const bool& /*inc*/)
         {
             _val = true;
         }
 
         template<>
-        inline void Option<int>::handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite)
+        inline void Option<int>::handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite, const bool& inc)
         {
-            ++it;
+            if(inc)
+                ++it;
             if(it != ite)
                 _val = (*it).to<int>();
         }
 
         template<>
-        inline void Option<z::string>::handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite)
+        inline void Option<z::string>::handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite, const bool& inc)
         {
-            ++it;
+            if(inc)
+                ++it;
             if(it != ite)
                 _val = *it;
         }
 
         template<>
-        inline void Option< z::list<z::string> >::handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite)
+        inline void Option< z::list<z::string> >::handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite, const bool& inc)
         {
-            ++it;
+            if(inc)
+                ++it;
             if(it != ite)
                 _val.add(*it);
         }
 
         template<>
-        inline void Option< std::vector<z::string> >::handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite)
+        inline void Option< std::vector<z::string> >::handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite, const bool& inc)
         {
-            ++it;
+            if(inc)
+                ++it;
             if(it != ite)
                 _val.push_back(*it);
         }
@@ -99,16 +103,17 @@ namespace z
         Parser() : _hasCommands(false){}
 
     public:
+        inline Parser::Command& getCommandMap(const z::string& cmd);
         inline void addCommand(const z::string& cmd, int value, const z::string& desc);
 
         template <typename T>
         inline void addMap(Command& cmd, const z::string& sname, const z::string& lname, const z::string& desc, T& val);
 
         template <typename T>
-        inline void add(const z::string& sname, const z::string& lname, const z::string& desc, T& val);
+        inline void add(const z::string& cmd, const z::string& sname, const z::string& lname, const z::string& desc, T& val);
 
         template <typename T>
-        inline void add(const z::string& cmd, const z::string& sname, const z::string& lname, const z::string& desc, T& val);
+        inline void add(const z::string& sname, const z::string& lname, const z::string& desc, T& val);
 
         inline const int& getCommand() const;
         inline const z::string& getError() const;
@@ -143,15 +148,19 @@ namespace z
         return _error;
     }
 
-    inline void Parser::addCommand(const z::string& cmd, int value, const z::string& desc)
-    {
-        assert(_cmdMap.find(cmd) == _cmdMap.end());
-        _hasCommands = true;
+    inline Parser::Command& Parser::getCommandMap(const z::string& cmd) {
         if(_cmdMap[cmd] == 0) {
             Command* nval = new Command();
             _cmdMap.set(cmd, nval);
         }
-        Command& cmdd = _cmdMap.at(cmd);
+        return _cmdMap.at(cmd);
+    }
+
+    inline void Parser::addCommand(const z::string& cmd, int value, const z::string& desc)
+    {
+        assert(_cmdMap.find(cmd) == _cmdMap.end());
+        _hasCommands = true;
+        Command& cmdd = getCommandMap(cmd);
         cmdd._desc = desc;
         cmdd._value = value;
     }
@@ -178,7 +187,7 @@ namespace z
     inline void Parser::add(const z::string& sname, const z::string& lname, const z::string& desc, T& val)
     {
         assert(!_hasCommands);
-        Command& cmd = _cmdMap.at("");
+        Command& cmd = getCommandMap("");
         addMap(cmd, sname, lname, desc, val);
     }
 
@@ -239,9 +248,9 @@ namespace z
             z::string command = *it;
             assert(_cmdMap.has(command));
             ++it;
-            return z::ref(_cmdMap[command]);
+            return _cmdMap.at(command);
         }
-        return z::ref(_cmdMap[""]);
+        return _cmdMap.at("");
     }
 
     inline int Parser::parse(const z::list<z::string>& args)
@@ -251,7 +260,7 @@ namespace z
 
         _appName = *it;
         ++it;
-        while(it == ite)
+        if(it == ite)
             return 0;
 
         if (!hasCommandMap(it))
@@ -266,16 +275,22 @@ namespace z
         while(it != ite)
         {
             const z::string& str = *it;
-            Map_t::const_iterator fit = cmd._map.find(str);
-            if(fit != cmd._map.end())
-            {
-                Internal::OptionBase* opt = fit->second;
-                opt->handle(it, ite);
-            }else
-            {
+            Map_t::const_iterator fit;
+            bool inc = true;
+            if(str.at(0) == '-') {
+                fit = cmd._map.find(str);
+            } else {
+                fit = cmd._map.find("");
+                inc = false;
+            }
+
+            if(fit == cmd._map.end()) {
                 _error = "Invalid option: " + str;
                 return 1;
             }
+
+            Internal::OptionBase* opt = fit->second;
+            opt->handle(it, ite, inc);
 
             if(it != ite)
                 ++it;

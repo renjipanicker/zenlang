@@ -38,25 +38,25 @@ function MyMain : main {
                                 visible : true;
                               },
 
-                              Button::Definition {
-                                name    : @checkBox;
-                                title   : "Check";
-                                position: {x:10;y:10;w:60;h:22;};
-                                left    : {target:@parent;margin:10;};
-                              },
-
                               TextEdit::Definition {
                                 name     : @outputBox;
                                 title    :"Output";
-                                position :{x:10;y:50;w:300;h:100;};
+                                position :{x:10;y:10;w:300;h:100;};
                                 multiline:true;
-                              }
+                              },
+
+                              TextEdit::Definition {
+                                name    : @inputBox;
+                                title   : "Input";
+                                position: {x:10;y:120;w:60;h:22;};
+                                left    : {target:@parent;margin:10;};
+                              },
                             ];
                 };
 
     auto mainFrame = WindowCreator::Create(defn);
 
-    Window::Handle checkBtn  = mainFrame.child@@checkBox;
+    Window::Handle inputBtn  = mainFrame.child@@inputBox;
     Window::Handle outputBox = mainFrame.child@@outputBox;
 
     Systray::Handle sysTray     = mainFrame.child@@systray;
@@ -64,16 +64,15 @@ function MyMain : main {
     MenuItem::Handle showMenu   = systrayMenu.child@@showItem;
 
     Window::OnResize(mainFrame) => {
-        print "on resize\n";
         auto pp = Window::getWindowPosition(mainFrame);
+//        print "pp%{@ppx}" @ { @ppx:0 };
         auto cp = Window::getChildPosition(outputBox);
         cp.w = pp.w - cp.x - 20;
         cp.h = pp.h - cp.y - 50;
         run Window::Move(outputBox, cp);
     };
 
-    Button::OnClick(checkBtn) => {
-        print "on click\n";
+    TextEdit::OnEnter(inputBtn) => {
         TextEdit::AppendText(outputBox, "hello!\n");
     };
 

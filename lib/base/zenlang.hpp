@@ -399,6 +399,7 @@ namespace z {
     struct listbase : public z::container<V, ListT > {
         typedef z::container<V, ListT > BaseT;
         inline V& back() {return BaseT::_list.back();}
+        inline typename BaseT::iterator last() {return --BaseT::_list.end();}
     };
 
     template <typename V>
@@ -539,6 +540,17 @@ namespace z {
         inline V& add(V* v) {
             V* r = BaseT::add(v);
             return z::ref(r);
+        }
+
+        inline void remove(V* v) {
+            for(typename BaseT::iterator it = BaseT::_list.begin(); it != BaseT::_list.end(); ++it) {
+                V* vv = *it;
+                if(vv == v) {
+                    delete vv;
+                    BaseT::_list.erase(it);
+                    return;
+                }
+            }
         }
 
     private:

@@ -109,7 +109,7 @@ inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
     }
 
     if(config.gui()) {
-        fprintf(_fpPro, "TARGET_LINK_LIBRARIES(%s ${ZEN_GUI_LIBRARIES})\n", _project.name().c_str());
+        fprintf(_fpPro, "TARGET_LINK_LIBRARIES(%s ${ZENLANG_LIBRARIES})\n", _project.name().c_str());
         fprintf(_fpPro, "\n");
     }
 }

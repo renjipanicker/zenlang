@@ -106,6 +106,7 @@ SET(libcore_ZPP_SOURCES ${libcore_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/lib/
 SET(libcore_SOURCES ${libcore_SOURCES} "lib/utils/sqlite3/sqlite3.c")
 SET(libcore_SOURCES ${libcore_SOURCES} "lib/utils/sqlite3/sqlite3.h")
 SET(libcore_SOURCES ${libcore_SOURCES} "lib/utils/sqlite3/sqlite3ext.h")
+SET(libcore_SOURCES ${libcore_SOURCES} "lib/utils/sqlite3/vfs_compress.c")
 
 FOREACH(_FILE ${libcore_ZPP_SOURCES})
     GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME_WE)
@@ -150,6 +151,5 @@ ENDFOREACH()
 #########################
 # build libgui. Its in a separate project because it requires the GUI includes and libraries.
 ADD_SUBDIRECTORY(lib/gui)
-
 
 #-DCMAKE_BUILD_TYPE=Debug

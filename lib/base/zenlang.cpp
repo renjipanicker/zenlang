@@ -97,10 +97,10 @@ void z::CallContext::run() {
 }
 
 #if defined(Z_EXE)
-#if defined(GUI)
 static void pump() {
     g_context.run();
 }
+#if defined(GUI)
 #if defined(WIN32)
 static int lastWM = WM_APP;
 static int lastRes = 1000;
