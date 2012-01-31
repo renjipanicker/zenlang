@@ -701,14 +701,14 @@ namespace {
             for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
                 INDENT;
                 const Ast::VariableDefn& vdef = it->get();
-                fprintf(_fp, "%sconst %s %s;\n", Indent::get(), StlcppNameGenerator().tn(vdef.qTypeSpec().typeSpec()).c_str(), vdef.name().text());
+                fprintf(_fp, "%s%s %s;\n", Indent::get(), StlcppNameGenerator().qtn(vdef.qTypeSpec()).c_str(), vdef.name().text());
             }
             if(scope.hasPosParam()) {
                 const Ast::Scope& posParam = scope.posParam();
                 for(Ast::Scope::List::const_iterator it = posParam.list().begin(); it != posParam.list().end(); ++it) {
                     INDENT;
                     const Ast::VariableDefn& vdef = it->get();
-                    fprintf(_fp, "%sconst %s %s;\n", Indent::get(), StlcppNameGenerator().tn(vdef.qTypeSpec().typeSpec()).c_str(), vdef.name().text());
+                    fprintf(_fp, "%s %s %s;\n", Indent::get(), StlcppNameGenerator().qtn(vdef.qTypeSpec()).c_str(), vdef.name().text());
                 }
             }
         }
@@ -717,7 +717,7 @@ namespace {
             z::string sep = "";
             for(Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
                 const Ast::VariableDefn& vdef = it->get();
-                fprintf(fp, "%sconst %s& %s%s", sep.c_str(), StlcppNameGenerator().tn(vdef.qTypeSpec().typeSpec()).c_str(), prefix.c_str(), vdef.name().text());
+                fprintf(fp, "%s %s %s%s", sep.c_str(), StlcppNameGenerator().qtn(vdef.qTypeSpec()).c_str(), prefix.c_str(), vdef.name().text());
                 sep = ", ";
             }
         }
@@ -752,6 +752,10 @@ namespace {
             fprintf(_fp, " {}\n");
         }
 
+        inline const Ast::Scope& xref(const Ast::Function& node, const bool& isDecl) {
+            return isDecl?node.sig().xrefScope():node.xrefScope();
+        }
+
         inline void visitFunctionSig(const Ast::Function& node, const bool& isRoot, const bool& isDecl, const bool& isTest) {
             // child-typespecs
             if(node.childCount() > 0) {
@@ -760,10 +764,10 @@ namespace {
             }
 
             // xref-list
-            if(node.xref().size() > 0) {
+            if(xref(node, isDecl).list().size() > 0) {
                 fprintf(_fp, "%spublic:\n", Indent::get());
-                writeScopeMemberList(node.xrefScope());
-                writeCtor(node.name().text(), node.xrefScope());
+                writeScopeMemberList(xref(node, isDecl));
+                writeCtor(node.name().text(), xref(node, isDecl));
             }
 
             // in-param-list

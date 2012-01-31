@@ -287,6 +287,7 @@ namespace Ast {
     class VariableDefn : public Node {
     public:
         inline VariableDefn(const QualifiedTypeSpec& qualifiedTypeSpec, const Token& name, const Ast::Expr& initExpr) : Node(name), _qualifiedTypeSpec(qualifiedTypeSpec), _name(name), _initExpr(initExpr) {}
+        inline VariableDefn* clone() const {return new VariableDefn(_qualifiedTypeSpec.get(), _name, _initExpr.get());}
         inline const QualifiedTypeSpec& qTypeSpec() const {return _qualifiedTypeSpec.get();}
         inline const Token& name() const {return _name;}
         inline const Expr& initExpr() const {return _initExpr.get();}
@@ -528,17 +529,20 @@ namespace Ast {
 
     class FunctionSig : public Node {
     public:
-        inline FunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in) : Node(name), _out(out), _name(name), _in(in) {}
+        inline FunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& xref, Ast::Scope& in) : Node(name), _out(out), _name(name), _xref(xref), _in(in) {}
     public:
         inline const Ast::Scope::List& out() const {return _out.get().list();}
         inline const Token& name() const {return _name;}
+        inline const Ast::Scope::List& xref() const {return _xref.get().list();}
         inline const Ast::Scope::List& in() const {return _in.get().list();}
     public:
         inline const Ast::Scope& outScope()  const {return _out.get();}
+        inline const Ast::Scope& xrefScope() const {return _xref.get();}
         inline Ast::Scope& inScope()  const {return _in.get();}
     private:
         const Ptr<const Ast::Scope> _out;
         const Token _name;
+        Ptr<Ast::Scope> _xref;
         Ptr<Ast::Scope> _in;
     };
 

@@ -380,8 +380,21 @@ rEventDecl(L) ::= EVENT(B) LBRACKET rVariableDefn(in) RBRACKET rDefinitionType(E
 //-------------------------------------------------
 // function signature.
 %type rFunctionSig {Ast::FunctionSig*}
-rFunctionSig(T) ::= FUNCTION rParamsList(out)        ID(name) rInParamsList(in). {T = z::ref(pctx).aFunctionSig(z::ref(out), name, z::ref(in));}
-rFunctionSig(T) ::= FUNCTION rQualifiedTypeSpec(out) ID(name) rInParamsList(in). {T = z::ref(pctx).aFunctionSig(z::ref(out), name, z::ref(in));}
+rFunctionSig(T) ::= FUNCTION rParamsList(out)        ID(name) rClosureList(xref) rInParamsList(in). {T = z::ref(pctx).aFunctionSig(z::ref(out), name, z::ref(xref), z::ref(in));}
+rFunctionSig(T) ::= FUNCTION rQualifiedTypeSpec(out) ID(name) rClosureList(xref) rInParamsList(in). {T = z::ref(pctx).aFunctionSig(z::ref(out), name, z::ref(xref), z::ref(in));}
+
+//-------------------------------------------------
+// in parameter list
+%type rClosureList {Ast::Scope*}
+rClosureList(L) ::= LSQUARE rClosure(R) RSQUARE. {L = z::ref(pctx).aClosureList(z::ref(R));}
+rClosureList(L) ::= .                            {L = z::ref(pctx).aClosureList();}
+
+//-------------------------------------------------
+// variable lists
+%type rClosure {Ast::Scope*}
+rClosure(L) ::= rClosure(list) COMMA rVariableDefn(variableDef). {L = z::ref(pctx).aParam(z::ref(list), z::ref(variableDef));}
+rClosure(L) ::=                      rVariableDefn(variableDef). {L = z::ref(pctx).aParam(z::ref(variableDef));}
+rClosure(L) ::= .                                                {L = z::ref(pctx).aClosureList();}
 
 //-------------------------------------------------
 // in parameter list

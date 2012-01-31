@@ -147,6 +147,16 @@ inline Ast::Scope& Ast::NodeFactory::addScope(const Ast::Token& pos, const Ast::
     return scope;
 }
 
+inline Ast::Scope& Ast::NodeFactory::addScopeWithSig(const Ast::Token& pos, const Ast::ScopeType::T& type, const Ast::FunctionSig& sig) {
+    Ast::Scope& scope = addScope(pos, type);
+    for(Ast::Scope::List::const_iterator it = sig.xref().begin(); it != sig.xref().end(); ++it) {
+        const Ast::VariableDefn& vdef = it->get();
+        Ast::VariableDefn& cvdef = unit().addNode(vdef.clone());
+        scope.addVariableDef(cvdef);
+    }
+    return scope;
+}
+
 inline Ast::ExprList& Ast::NodeFactory::addExprList(const Ast::Token& pos) {
     Ast::ExprList& exprList = unit().addNode(new Ast::ExprList(pos));
     return exprList;
@@ -536,7 +546,7 @@ Ast::RootFunctionDefn* Ast::NodeFactory::aRootFunctionDefn(Ast::RootFunctionDefn
 
 Ast::RootFunctionDefn* Ast::NodeFactory::aEnterRootFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
     const Ast::Token& name = functionSig.name();
-    Ast::Scope& xref = addScope(name, Ast::ScopeType::XRef);
+    Ast::Scope& xref = addScopeWithSig(name, Ast::ScopeType::XRef, functionSig);
     Ast::RootFunctionDefn& functionDefn = unit().addNode(new Ast::RootFunctionDefn(unit().currentTypeSpec(), name, defType, functionSig, xref));
     unit().currentTypeSpec().addChild(functionDefn);
     unit().enterScope(functionDefn.xrefScope());
@@ -563,7 +573,7 @@ inline Ast::ChildFunctionDefn& Ast::NodeFactory::createChildFunctionDefn(Ast::Ty
     if(base.defType() == Ast::DefinitionType::Final) {
         throw z::Exception("NodeFactory", zfmt(name, "Base struct is not abstract '%{s}'").add("s", base.name() ));
     }
-    Ast::Scope& xref = addScope(name, Ast::ScopeType::XRef);
+    Ast::Scope& xref = addScopeWithSig(name, Ast::ScopeType::XRef, base.sig());
     Ast::ChildFunctionDefn& functionDefn = unit().addNode(new Ast::ChildFunctionDefn(parent, name, defType, base.sig(), xref, base));
     parent.addChild(functionDefn);
     unit().enterScope(functionDefn.xrefScope());
@@ -589,7 +599,8 @@ Ast::EventDecl* Ast::NodeFactory::aEventDecl(const Ast::Token& pos, const Ast::V
     unit().currentTypeSpec().addChild(eventDef);
 
     Ast::Token handlerName(pos.filename(), pos.row(), pos.col(), "Handler");
-    Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, functionSig.inScope());
+    Ast::Scope& emptyXRef = addScope(pos, Ast::ScopeType::XRef);
+    Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, emptyXRef, functionSig.inScope());
     Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, z::ref(handlerSig), handlerDefType);
     eventDef.setHandler(funDecl);
 
@@ -605,7 +616,7 @@ Ast::EventDecl* Ast::NodeFactory::aEventDecl(const Ast::Token& pos, const Ast::V
     Ast::Scope& outAdd = addScope(pos, Ast::ScopeType::Param);
     Ast::Scope& inAdd  = addScope(pos, Ast::ScopeType::Param);
     Ast::Token nameAdd(pos.filename(), pos.row(), pos.col(), "Add");
-    Ast::FunctionSig* addSig = aFunctionSig(outAdd, nameAdd, inAdd);
+    Ast::FunctionSig* addSig = aFunctionSig(outAdd, nameAdd, emptyXRef, inAdd);
     Ast::FunctionDecl& addDecl = addFunctionDecl(eventDef, z::ref(addSig), eventDefType);
     eventDef.setAddFunction(addDecl);
 
@@ -615,12 +626,12 @@ Ast::EventDecl* Ast::NodeFactory::aEventDecl(const Ast::Token& pos, const Ast::V
     return z::ptr(eventDef);
 }
 
-Ast::FunctionSig* Ast::NodeFactory::aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in) {
-    Ast::FunctionSig& functionSig = unit().addNode(new Ast::FunctionSig(out, name, in));
+Ast::FunctionSig* Ast::NodeFactory::aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& xref, Ast::Scope& in) {
+    Ast::FunctionSig& functionSig = unit().addNode(new Ast::FunctionSig(out, name, xref, in));
     return z::ptr(functionSig);
 }
 
-Ast::FunctionSig* Ast::NodeFactory::aFunctionSig(const Ast::QualifiedTypeSpec& typeSpec, const Ast::Token& name, Ast::Scope& in) {
+Ast::FunctionSig* Ast::NodeFactory::aFunctionSig(const Ast::QualifiedTypeSpec& typeSpec, const Ast::Token& name, Ast::Scope& xref, Ast::Scope& in) {
     Ast::Scope& out = addScope(name, Ast::ScopeType::Param);
     out.isTuple(false);
 
@@ -628,7 +639,16 @@ Ast::FunctionSig* Ast::NodeFactory::aFunctionSig(const Ast::QualifiedTypeSpec& t
     Ast::VariableDefn& vdef = addVariableDefn(typeSpec, oname);
     out.addVariableDef(vdef);
 
-    return aFunctionSig(out, name, in);
+    return aFunctionSig(out, name, xref, in);
+}
+
+Ast::Scope* Ast::NodeFactory::aClosureList(Ast::Scope& scope) {
+    return z::ptr(scope);
+}
+
+Ast::Scope* Ast::NodeFactory::aClosureList() {
+    Ast::Scope& scope = addScope(getToken(), Ast::ScopeType::XRef);
+    return aClosureList(scope);
 }
 
 Ast::Scope* Ast::NodeFactory::aInParamsList(Ast::Scope& scope) {
