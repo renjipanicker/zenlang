@@ -36,6 +36,8 @@ namespace z {
         return (unsigned long)(&t);
     }
 
+    typedef std::size_t size;
+
     struct string {
         typedef typename std::string::size_type size_type;
         static const size_type npos  = std::string::npos;
@@ -801,7 +803,7 @@ namespace z {
     public:
         static CallContext& get();
     public:
-        void run();
+        bool run(const z::size& cnt);
     public:
         template <typename FunctionT>
         inline FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {

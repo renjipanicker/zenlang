@@ -365,9 +365,25 @@ void Ast::NodeFactory::aGlobalDefaultStatement(const Ast::TypeSpec& typeSpec, co
     unit().addDefaultValue(typeSpec, expr);
 }
 
+inline void Ast::NodeFactory::setDefaultDummyValue(const Ast::Token& name, Ast::TypeSpec& typeSpec) {
+    Ast::CoerceList& list = unit().addNode(new Ast::CoerceList(name));
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(name, "void");
+    list.addTypeSpec(qTypeSpec.typeSpec());
+    list.addTypeSpec(typeSpec);
+    unit().addCoercionList(list);
+
+    Ast::ConstantIntExpr& expr = unit().addNode(new Ast::ConstantIntExpr(name, qTypeSpec, 0));
+    unit().addDefaultValue(typeSpec, expr);
+}
+
 Ast::TypedefDecl* Ast::NodeFactory::aTypedefDecl(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
     Ast::TypedefDecl& typedefDefn = unit().addNode(new Ast::TypedefDecl(unit().currentTypeSpec(), name, defType));
     unit().currentTypeSpec().addChild(typedefDefn);
+    // if this is a native-typedef-decl, add dummy coercion and default-value = (void)0
+    // unless this is the native-typedef-decl for void itself
+    if((defType == Ast::DefinitionType::Native) && (name.string() != "void")) {
+        setDefaultDummyValue(name, typedefDefn);
+    }
     return z::ptr(typedefDefn);
 }
 
@@ -430,6 +446,11 @@ Ast::VariableDefn* Ast::NodeFactory::aEnumMemberDefn(const Ast::Token& name, con
 Ast::StructDecl* Ast::NodeFactory::aStructDecl(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
     Ast::StructDecl& structDecl = unit().addNode(new Ast::StructDecl(unit().currentTypeSpec(), name, defType));
     unit().currentTypeSpec().addChild(structDecl);
+
+    // if this is a native struct decl, add int=>struct-decl coercion and default-value = 0
+    if(defType == Ast::DefinitionType::Native) {
+        setDefaultDummyValue(name, structDecl);
+    }
     return z::ptr(structDecl);
 }
 

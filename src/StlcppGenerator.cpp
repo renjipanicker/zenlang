@@ -49,6 +49,11 @@ void StlcppNameGenerator::getTypeName(const Ast::TypeSpec& typeSpec, z::string& 
         return;
     }
 
+    if(typeSpec.name().string() == "size") {
+        name += "z::size";
+        return;
+    }
+
     if(typeSpec.name().string() == "string") {
         name += "z::string";
         return;
@@ -499,7 +504,7 @@ namespace {
             }
         }
 
-        inline void visitFunctionTypeInstance(const Ast::Function& function) {
+        inline void visitFunctionTypeInstance(const Ast::Function& function, const Ast::ExprList& exprList) {
             z::string fname = StlcppNameGenerator().tn(function);
             fprintf(_fp, "%s(", fname.c_str());
             z::string sep;
@@ -512,11 +517,11 @@ namespace {
         }
 
         virtual void visit(const Ast::FunctionInstanceExpr& node) {
-            visitFunctionTypeInstance(node.function());
+            visitFunctionTypeInstance(node.function(), node.exprList());
         }
 
         virtual void visit(const Ast::AnonymousFunctionExpr& node) {
-            visitFunctionTypeInstance(node.function());
+            visitFunctionTypeInstance(node.function(), node.exprList());
         }
 
         virtual void visit(const Ast::ConstantFloatExpr& node) {

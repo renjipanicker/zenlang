@@ -34,6 +34,7 @@ namespace Ast {
         inline const Ast::QualifiedTypeSpec& getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function);
         inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
         inline Ast::TemplateDefn& createTemplateDefn(const Ast::Token& pos, const z::string& name, const Ast::TemplateTypePartList& list);
+        inline void setDefaultDummyValue(const Ast::Token& name, Ast::TypeSpec& typeSpec);
 
     private:
         template <typename T> inline Ast::Expr& createBooleanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);

@@ -33,6 +33,10 @@ default double = 0;
 
 coerce bool => ubyte => byte => ushort => short => uint => int => ulong => long => float => double;
 
+typedef size native;
+default size = 0;
+coerce int => size;
+
 typedef char native;
 typedef string native;
 typedef datetime native;
