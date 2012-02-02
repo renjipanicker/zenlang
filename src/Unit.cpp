@@ -16,6 +16,11 @@ Ast::Unit::Unit() : _scopeCallback(0), _currentTypeRef(0), _currentImportedTypeR
 }
 
 Ast::Unit::~Unit() {
+    for(ExpectedTypeSpecStack::const_iterator it = _expectedTypeSpecStack.begin(); it != _expectedTypeSpecStack.end(); ++it) {
+        const ExpectedTypeSpec& et = *it;
+        std::cout << ZenlangNameGenerator().qtn(et.typeSpec()) << std::endl;
+    }
+
     assert(_expectedTypeSpecStack.size() == 0);
     assert(_typeSpecStack.size() == 0);
 }

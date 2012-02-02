@@ -803,7 +803,7 @@ namespace z {
     public:
         static CallContext& get();
     public:
-        bool run(const z::size& cnt);
+        z::size run(const z::size& cnt);
     public:
         template <typename FunctionT>
         inline FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {

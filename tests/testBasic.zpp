@@ -66,6 +66,8 @@ public function testBasicExpr : test {
     verify(f.ri == 67890, f.rs == "testfn");
 
     auto o = testFunction[f];
+    run o(1);
+
     return (true);
 }
 

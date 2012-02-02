@@ -88,22 +88,22 @@ z::CallContext& z::CallContext::get() {
     return g_context;
 }
 
-bool z::CallContext::run(const z::size& cnt) {
+z::size z::CallContext::run(const z::size& cnt) {
     for(z::size i = 0; i < cnt; ++i) {
         if(_list.size() == 0) {
-            return false;
+            break;
         }
         FunctionList::Ptr ptr;
         if(_list.pop(ptr))
             ptr->run();
     }
-    return true;
+    return _list.size();
 }
 
 #if defined(Z_EXE)
 static const z::size MaxPumpCount = 10;
 static void pump() {
-    while(g_context.run(MaxPumpCount)) {}
+    while(g_context.run(MaxPumpCount) > 0) {}
 }
 #if defined(GUI)
 #if defined(WIN32)

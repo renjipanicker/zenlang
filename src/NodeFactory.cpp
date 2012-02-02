@@ -635,6 +635,12 @@ Ast::EventDecl* Ast::NodeFactory::aEventDecl(const Ast::Token& pos, const Ast::V
     Ast::VariableDefn& vdef = addVariableDefn(qFunctorTypeSpec, hVarName);
 
     Ast::Scope& outAdd = addScope(pos, Ast::ScopeType::Param);
+    Ast::Token oname(name.filename(), name.row(), name.col(), "_out");
+    const Ast::QualifiedTypeSpec& voidTypeSpec = getQualifiedTypeSpec(pos, "void");
+    Ast::VariableDefn& voidVdef = addVariableDefn(voidTypeSpec, oname);
+    outAdd.addVariableDef(voidVdef);
+    outAdd.isTuple(false);
+
     Ast::Scope& inAdd  = addScope(pos, Ast::ScopeType::Param);
     Ast::Token nameAdd(pos.filename(), pos.row(), pos.col(), "Add");
     Ast::FunctionSig* addSig = aFunctionSig(outAdd, nameAdd, emptyXRef, inAdd);

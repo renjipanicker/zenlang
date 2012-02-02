@@ -789,7 +789,8 @@ namespace {
             z::string out2;
             if(isVoid(node.sig().outScope())) {
                 out1 = "void";
-                out2 = "const _Out &";
+//                out2 = "const _Out &";
+                out2 = out1;
             } else if(node.sig().outScope().isTuple()) {
                 out1 = "const _Out&";
                 out2 = out1;
@@ -803,29 +804,35 @@ namespace {
                 // param-instance
                 fprintf(_fp, "%s    z::Pointer<_Out> _out;\n", Indent::get());
                 fprintf(_fp, "%s    inline %s out(const _Out& val) {_out = z::PointerCreator<_Out, _Out>::get(val);", Indent::get(), out2.c_str());
-                fprintf(_fp, "return _out.get()");
-                if((!isVoid(node.sig().outScope())) && (!node.sig().outScope().isTuple())) {
-                    fprintf(_fp, "._out");
+                if(!isVoid(node.sig().outScope())) {
+                    fprintf(_fp, "return _out.get()");
+                    if(!node.sig().outScope().isTuple()) {
+                        fprintf(_fp, "._out");
+                    }
+                    fprintf(_fp, ";");
                 }
-                fprintf(_fp, ";}\n");
+                fprintf(_fp, "}\n");
             }
 
             // run-function-type
             fprintf(_fp, "%spublic:\n", Indent::get());
             if(isTest) {
                 fprintf(_fp, "%s    %s test();\n", Indent::get(), out2.c_str());
-            } else if((isDecl) && ((node.defType() == Ast::DefinitionType::Final) || (node.defType() == Ast::DefinitionType::Abstract))) {
-                fprintf(_fp, "%s    virtual %s _run(const _In& _in) = 0;\n", Indent::get(), out2.c_str());
             } else {
-                fprintf(_fp, "%s    %s run(", Indent::get(), out1.c_str());
-                writeScopeParamList(_fp, node.sig().inScope(), "p");
-                fprintf(_fp, ");\n");
-                fprintf(_fp, "%s    %s _run(const _In& _in) {\n", Indent::get(), out2.c_str());
+                if((isDecl) && ((node.defType() == Ast::DefinitionType::Final) || (node.defType() == Ast::DefinitionType::Abstract))) {
+                    fprintf(_fp, "%s    virtual %s run(", Indent::get(), out1.c_str());
+                    writeScopeParamList(_fp, node.sig().inScope(), "p");
+                    fprintf(_fp, ") = 0;\n");
+                } else {
+                    fprintf(_fp, "%s    %s run(", Indent::get(), out1.c_str());
+                    writeScopeParamList(_fp, node.sig().inScope(), "p");
+                    fprintf(_fp, ");\n");
+                }
+                fprintf(_fp, "%s    inline %s _run(const _In& _in) {\n", Indent::get(), out2.c_str());
                 if(isVoid(node.sig().outScope())) {
-                    fprintf(_fp, "%s        run(", Indent::get());
+                    fprintf(_fp, "%s        return run(", Indent::get());
                     writeScopeInCallList(node.sig().inScope());
                     fprintf(_fp, ");\n");
-                    fprintf(_fp, "%s        return out(_Out());\n", Indent::get());
                 } else {
                     fprintf(_fp, "%s        return run(", Indent::get());
                     writeScopeInCallList(node.sig().inScope());
