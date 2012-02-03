@@ -233,23 +233,29 @@ namespace z
 
     inline bool Parser::hasCommandMap(z::list<z::string>::const_iterator& it)
     {
-        if(_hasCommands)
-        {
-            if (!_cmdMap.has(*it))
-                return false;
+        if(_hasCommands) {
+            z::string cmd = *it;
+            if (_cmdMap.has(cmd))
+                return true;
+            if (_cmdMap.has("")) {
+                return true;
+            }
+            return false;
         }
         return true;
     }
 
     inline const Parser::Command& Parser::getCommandMap(z::list<z::string>::const_iterator& it)
     {
-        if(_hasCommands)
-        {
-            z::string command = *it;
-            assert(_cmdMap.has(command));
-            ++it;
-            return _cmdMap.at(command);
+        if(_hasCommands) {
+            z::string cmd = *it;
+            if(_cmdMap.has(cmd)) {
+                ++it;
+                return _cmdMap.at(cmd);
+            }
+            // else fall-thru...
         }
+        assert(_cmdMap.has(""));
         return _cmdMap.at("");
     }
 

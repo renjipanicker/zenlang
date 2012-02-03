@@ -250,7 +250,7 @@ Ast::NodeFactory::~NodeFactory() {
 ////////////////////////////////////////////////////////////
 void Ast::NodeFactory::aUnitStatementList(const Ast::EnterNamespaceStatement& nss) {
     Ast::LeaveNamespaceStatement& lns = unit().addNode(new Ast::LeaveNamespaceStatement(getToken(), nss));
-//    if(_module.level() == 0) {
+//@    if(_module.level() == 0) {
         _module.addGlobalStatement(lns);
 //    }
     unit().leaveNamespace();
@@ -288,7 +288,7 @@ Ast::NamespaceList* Ast::NodeFactory::aImportNamespaceList(const Ast::Token& nam
 
 Ast::EnterNamespaceStatement* Ast::NodeFactory::aNamespaceStatement(const Ast::Token& pos, Ast::NamespaceList& list) {
     Ast::EnterNamespaceStatement& statement = unit().addNode(new Ast::EnterNamespaceStatement(pos, list));
-//    if(_module.level() == 0) {
+//@    if(_module.level() == 0) {
         _module.addGlobalStatement(statement);
 //    }
     return z::ptr(statement);
@@ -333,7 +333,7 @@ Ast::NamespaceList* Ast::NodeFactory::aUnitNamespaceList(const Ast::Token& name)
 }
 
 Ast::Statement* Ast::NodeFactory::aGlobalStatement(Ast::Statement& statement) {
-//    if(_module.level() == 0) {
+//@    if(_module.level() == 0) {
         _module.addGlobalStatement(statement);
 //    }
     return z::ptr(statement);
@@ -1582,7 +1582,7 @@ Ast::TemplateDefnInstanceExpr* Ast::NodeFactory::aTemplateDefnInstanceExpr(const
     }
 
     if(name == "value") {
-//        Ast::ValueInstanceExpr& valueInstanceExpr = getValueInstanceExpr(pos, templateDefn, templateDefn, exprList.at(0));
+//@        Ast::ValueInstanceExpr& valueInstanceExpr = getValueInstanceExpr(pos, templateDefn, templateDefn, exprList.at(0));
 //        return z::ptr(valueInstanceExpr);
         const Ast::QualifiedTypeSpec& qTypeSpec = templateDefn.at(0);
         const Ast::Expr& expr = exprList.at(0);
@@ -1593,7 +1593,7 @@ Ast::TemplateDefnInstanceExpr* Ast::NodeFactory::aTemplateDefnInstanceExpr(const
 
         Ast::ValueInstanceExpr& valueInstanceExpr = getValueInstanceExpr(pos, qTypeSpec, templateDefn, templateDefn, exprList);
         return z::ptr(valueInstanceExpr);
-//        return addValueInstanceExpr(pos, templateDefn, templateDefn.at(0), exprList.at(0));
+//@        return addValueInstanceExpr(pos, templateDefn, templateDefn.at(0), exprList.at(0));
     }
 
     throw z::Exception("NodeFactory", zfmt(pos, "Invalid template instantiation '%{s}'").add("s", templateDefn.name() ));

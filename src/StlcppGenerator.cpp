@@ -789,7 +789,7 @@ namespace {
             z::string out2;
             if(isVoid(node.sig().outScope())) {
                 out1 = "void";
-//                out2 = "const _Out &";
+//@                out2 = "const _Out &";
                 out2 = out1;
             } else if(node.sig().outScope().isTuple()) {
                 out1 = "const _Out&";
