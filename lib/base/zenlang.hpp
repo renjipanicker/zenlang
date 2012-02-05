@@ -111,7 +111,7 @@ namespace z {
         inline const char_t* c_str() const {return _val.c_str();}
         inline const char* toUtf8() const {return _val.c_str();}
 
-        template <typename T> inline z::string& arg(const z::string& key, T value);
+        template <typename T> inline z::string& arg(const z::string& key, const T& value);
         template <typename T> inline T to() const {
             std::stringstream ss(_val);
             T val;
@@ -155,7 +155,7 @@ inline std::ostream& operator<<(std::ostream& os, const z::string& val) {
 }
 
 template <typename T>
-inline z::string& z::string::arg(const z::string& key, T value) {
+inline z::string& z::string::arg(const z::string& key, const T& value) {
     std::stringstream skey;
     skey << "%{" << key << "}";
     std::stringstream sval;

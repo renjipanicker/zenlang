@@ -124,7 +124,7 @@ valgrind --leak-check=full --track-origins=yes \
 ../../zenlang/tests/guiTest.zpp \
 && cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
 
-../out/bin/zen --verbose --gui \
+../out/bin/zen --verbose -l gui \
 ../../zenlang/tests/guiTest.zpp \
 && cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
 

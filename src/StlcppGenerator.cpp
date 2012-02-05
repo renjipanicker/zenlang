@@ -868,7 +868,7 @@ namespace {
                 for(Ast::Scope::List::const_iterator it = node.out().begin(); it != node.out().end(); ++it) {
                     INDENT;
                     const Ast::VariableDefn& vdef = it->get();
-                    fprintf(_fp, "%s%s %s;\n", Indent::get(), StlcppNameGenerator().tn(vdef.qTypeSpec().typeSpec()).c_str(), vdef.name().text());
+                    fprintf(_fp, "%s%s %s;\n", Indent::get(), StlcppNameGenerator().qtn(vdef.qTypeSpec()).c_str(), vdef.name().text());
                 }
 
                 // generate out setter
@@ -876,7 +876,7 @@ namespace {
                 z::string sep = "";
                 for(Ast::Scope::List::const_iterator it = node.out().begin(); it != node.out().end(); ++it) {
                     const Ast::VariableDefn& vdef = it->get();
-                    fprintf(_fp, "%sconst %s& p%s", sep.c_str(), StlcppNameGenerator().tn(vdef.qTypeSpec().typeSpec()).c_str(), vdef.name().text());
+                    fprintf(_fp, "%s%s p%s", sep.c_str(), StlcppNameGenerator().qtn(vdef.qTypeSpec()).c_str(), vdef.name().text());
                     sep = ", ";
                 }
                 fprintf(_fp, ")");

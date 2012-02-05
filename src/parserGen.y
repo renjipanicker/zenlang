@@ -16,7 +16,7 @@
 %token_prefix ZENTOK_
 
 %syntax_error {
-    throw z::Exception("Parser", zfmt(TOKEN, "Syntax error at token: %{d} (%{s})").add("d",TOKEN.id()).add("s", TOKEN));
+    throw z::Exception("Parser", zfmt(TOKEN, "Syntax error at token: %{d} (%{s})").add("d",TOKEN.id()).add("s", TOKEN.text()));
 }
 
 %parse_accept {
