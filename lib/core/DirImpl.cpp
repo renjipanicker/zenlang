@@ -2,7 +2,9 @@
 #include "base/zenlang.hpp"
 #include "core/Dir.hpp"
 
+#ifndef PATH_MAX
 #define PATH_MAX (255)
+#endif
 
 z::string Dir::CurrentDir() {
     char buff[PATH_MAX];

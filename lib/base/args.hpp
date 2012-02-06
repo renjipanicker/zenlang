@@ -100,7 +100,7 @@ namespace z
         typedef z::odict<z::string, Command > CmdMap_t;
 
     public:
-        Parser() : _hasCommands(false){}
+        Parser() : _hasCommands(false), _command(0) {}
 
     public:
         inline Parser::Command& getCommandMap(const z::string& cmd);
@@ -266,8 +266,16 @@ namespace z
 
         _appName = *it;
         ++it;
-        if(it == ite)
+        if(it == ite) {
+            if(_cmdMap.has("")) {
+                const Command& cmd = _cmdMap.at("");
+                _command = cmd._value;
+            } else {
+                _command = 0;
+            }
+
             return 0;
+        }
 
         if (!hasCommandMap(it))
         {
