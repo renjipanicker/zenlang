@@ -116,11 +116,17 @@ int main(int argc, char* argv[]) {
 
     if(config.zlibPath().size() == 0) {
         z::string p = config.zexePath();
+        std::cout << "p0: " << p << std::endl;
         // strip path, if any
-        z::string::size_type idx = p.rfind('/');
+#ifdef WIN32
+        char sep = '\\';
+#else
+        char sep = '/';
+#endif
+        z::string::size_type idx = p.rfind(sep);
         if(idx != z::string::npos) {
             p = p.substr(0, idx);
-            z::string::size_type idx = p.rfind('/');
+            z::string::size_type idx = p.rfind(sep);
             if(idx != z::string::npos) {
                 p = p.substr(0, idx);
             } else {
@@ -130,6 +136,7 @@ int main(int argc, char* argv[]) {
             p = "./";
         }
 
+        std::cout << "p1: " << p << std::endl;
         config.zlibPath(p);
     }
 

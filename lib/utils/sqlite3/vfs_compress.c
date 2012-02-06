@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#ifndef WIN32
 #include "zlib.h"
 //#include <winbase.h>
 //#include <WinIoCtl.h>
@@ -1221,3 +1222,5 @@ SQLITE_API int sqlite3_compress(
 
   return sqlite3_vfs_register(pNew, 1);
 }
+
+#endif // !WIN32

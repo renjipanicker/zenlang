@@ -23,16 +23,27 @@
 #include <stdarg.h>
 #include <memory.h>
 #include <sys/stat.h>
-#include <regex.h>
 #include <assert.h>
 
 #if defined(WIN32)
+    #include <direct.h>
     #include <process.h>
     typedef HANDLE mutex_t;
+    typedef char      int8_t;
+    typedef short     int16_t;
+    typedef int       int32_t;
+    typedef long long int64_t;
+
+    typedef unsigned char      uint8_t;
+    typedef unsigned short     uint16_t;
+    typedef unsigned int       uint32_t;
+    typedef unsigned long long uint64_t;
 #else
     #include <libgen.h>
     #include <pthread.h>
     typedef pthread_mutex_t mutex_t;
+    #include <stdint.h>
+    #include <regex.h>
 #endif
 
 #if defined(WIN32)
@@ -40,20 +51,6 @@
     #define sprintf sprintf_s
     #pragma warning (disable:4355) // this used in base ctor initialization.
 #else
-#endif
-
-#if defined(WIN32)
-typedef char      int8_t;
-typedef short     int16_t;
-typedef int       int32_t;
-typedef long long int64_t;
-
-typedef unsigned char      uint8_t;
-typedef unsigned short     uint16_t;
-typedef unsigned int       uint32_t;
-typedef unsigned long long uint64_t;
-#else
-#include <stdint.h>
 #endif
 
 typedef char char_t;
@@ -72,8 +69,8 @@ typedef char char_t;
     #if defined(WIN32)
     #else
     #include <cxxabi.h>
-    #include <ctime>
     #endif
+    #include <ctime>
 #endif // __cplusplus
 
 // all header files are included here.

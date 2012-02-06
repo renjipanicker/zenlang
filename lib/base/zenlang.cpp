@@ -34,19 +34,23 @@ int z::mutex::leave() {
 }
 
 void z::regex::compile(const z::string& re) {
+#if !defined(WIN32)
     int res = regcomp(&_val, re.c_str(), 0);
     if(res != 0) {
         // throw
         std::cout << "error regcomp:" << res << std::endl;
         return;
     }
+#endif
 }
 
 void z::regex::match(const z::string& str) {
+#if !defined(WIN32)
     int res = regexec(&_val, str.c_str(), 0, 0, 0);
     char buf[128];
     regerror(res, &_val, buf, 128);
     std::cout << "rv:" << res << ", " << buf << std::endl;
+#endif
 }
 
 #if defined(UNIT_TEST)

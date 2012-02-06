@@ -39,9 +39,12 @@ namespace z {
     typedef std::size_t size;
 
     struct string {
-        typedef typename std::string::size_type size_type;
+        typedef std::string::size_type size_type;
+#if defined(WIN32)
+        static const size_type npos  = -1;
+#else
         static const size_type npos  = std::string::npos;
-
+#endif
         static inline char_t lower(const char_t& ch) {
             if((ch >= 'A') && (ch <= 'Z'))
                 return 'a' + (ch - 'A');
@@ -53,11 +56,11 @@ namespace z {
         inline string(const std::string& s) : _val(s) {}
         inline string(const size_type& count, const char_t& ch) : _val(count, ch) {}
 
-        typedef typename std::string::iterator iterator;
+        typedef std::string::iterator iterator;
         inline iterator begin() {return _val.begin();}
         inline iterator end() {return _val.end();}
 
-        typedef typename std::string::const_iterator const_iterator;
+        typedef std::string::const_iterator const_iterator;
         inline const_iterator begin() const {return _val.begin();}
         inline const_iterator end() const {return _val.end();}
 
@@ -139,7 +142,9 @@ namespace z {
         inline regex(const z::string& re) {compile(re);}
 
     private:
+#if !defined(WIN32)
         regex_t _val;
+#endif
     };
 
 }
