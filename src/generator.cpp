@@ -25,20 +25,25 @@ inline void mkpath(const z::string& path, const z::string& dir) {
 }
 
 OutputFile::OutputFile(FILE*& fp, const z::string& dir, const z::string& filename) : _fp(fp) {
+#ifdef WIN32
+        z::string sep = "\\";
+#else
     z::string sep = "/";
+#endif
     z::string base = "";
     z::string::size_type prev = 0;
     for(z::string::size_type next = dir.find(sep); next != z::string::npos;next = dir.find(sep, next+1)) {
         z::string sdir = dir.substr(prev, next - prev);
         mkpath(base, sdir);
         base += sdir;
-        base += "/";
+        base += sep;
         prev = next + 1;
     }
     z::string sdir = dir.substr(prev);
     mkpath(base, sdir);
 
-    z::string fpath = dir + "/" + filename;
+    z::string fpath = dir + sep + filename;
+    std::cout << "opening: " << fpath << std::endl;
     _fp = fopen(fpath.c_str(), "w");
     if(_fp == 0) {
         throw z::Exception("OutputFile", z::fmt("Unable to open output file %{s}").add("s", fpath));

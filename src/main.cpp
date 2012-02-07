@@ -116,7 +116,6 @@ int main(int argc, char* argv[]) {
 
     if(config.zlibPath().size() == 0) {
         z::string p = config.zexePath();
-        std::cout << "p0: " << p << std::endl;
         // strip path, if any
 #ifdef WIN32
         char sep = '\\';
@@ -130,14 +129,26 @@ int main(int argc, char* argv[]) {
             if(idx != z::string::npos) {
                 p = p.substr(0, idx);
             } else {
-                p = "./";
+                p = ".";
+                p += sep;
             }
         } else {
-            p = "./";
+            p = ".";
+            p += sep;
         }
 
-        std::cout << "p1: " << p << std::endl;
         config.zlibPath(p);
+    }
+
+    if(project.verbosity() == Ast::Project::Verbosity::Detailed) {
+        char buff[1024];
+        getcwd( buff, 1024 );
+        z::string cwd(buff);
+        std::cout << "cwd: " << cwd << std::endl;
+        std::cout << "exe: " << config.zexePath() << std::endl;
+        std::cout << "lib: " << config.zlibPath() << std::endl;
+        std::cout << "api: " << config.apidir() << std::endl;
+        std::cout << "src: " << config.srcdir() << std::endl;
     }
 
     if(interpreterMode) {
