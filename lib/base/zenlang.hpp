@@ -4,12 +4,7 @@
 
 #if defined(DEBUG)
     #if defined(GUI) && defined(WIN32)
-        inline void trace(const char* txt, ...) {
-            va_list vlist;
-            va_start(vlist, txt);
-            std::string buf = ssprintfv(txt, vlist);
-            OutputDebugStringA(buf.c_str());
-        }
+        void trace(const char* txt, ...);
     #else
         #define trace printf
     #endif
@@ -147,6 +142,31 @@ namespace z {
 #endif
     };
 
+    struct file {
+        enum MkPathT {
+            makePath,
+            noMakePath
+        };
+
+        static const z::string sep;
+        static bool exists(const z::string& path);
+        static int mkdir(const z::string& path);
+        static z::string cwd();
+
+        void open(const z::string& filename, const z::string& mode, const MkPathT& mkpath = noMakePath);
+        void open(const z::string& dir, const z::string& filename, const z::string& mode, const MkPathT& mkpath = noMakePath);
+        void close();
+
+        inline file() : _val(0) {}
+        inline file(const z::string& filename, const z::string& mode, const MkPathT& mkpath = noMakePath) : _val(0) {open(filename, mode, mkpath);}
+        inline file(const z::string& dir, const z::string& filename, const z::string& mode, const MkPathT& mkpath = noMakePath) : _val(0) {open(dir, filename, mode, mkpath);}
+        inline ~file() {close();}
+        inline const z::string& name() const {return _name;}
+        inline FILE* val() const {return _val;}
+    private:
+        z::string _name;
+        FILE* _val;
+    };
 }
 
 inline z::string operator+(const char_t* lhs, const z::string& rhs) {return (lhs + rhs.val());}
@@ -980,17 +1000,17 @@ namespace z {
     };
 #endif
 
-#if defined(Z_EXE)
     struct Application {
         Application(int argc, char* argv[]);
         ~Application();
     #if defined(WIN32)
         static HINSTANCE instance();
     #endif
+#if defined(Z_EXE)
         int exec();
         int exit(const int& code);
-    };
 #endif
+    };
 }
 
 #include "args.hpp"

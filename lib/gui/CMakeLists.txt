@@ -15,6 +15,8 @@ SET(libgui_ZPP_SOURCES ${libgui_ZPP_SOURCES} "${CMAKE_CURRENT_SOURCE_DIR}/Window
 
 SET(libgui_Window_DEP "gui/Widget.cpp")
 SET(libgui_Mainframe_DEP "gui/Window.cpp")
+SET(libgui_Button_DEP "gui/Window.cpp")
+SET(libgui_TextEdit_DEP "gui/Window.cpp")
 SET(libgui_Systray_DEP "gui/Window.cpp")
 SET(libgui_Menu_DEP "gui/Window.cpp")
 SET(libgui_MenuItem_DEP "gui/Menu.cpp")

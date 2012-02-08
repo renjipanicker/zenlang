@@ -6,7 +6,7 @@
 #include "MenuImpl.hpp"
 
 #if defined(WIN32)
-static HandlerList<int, MenuItem::OnSelect::Handler> onMenuItemSelectHandlerList;
+static z::HandlerList<int, MenuItem::OnSelect::Handler> onMenuItemSelectHandlerList;
 struct WinProc : public Window::Native::WndProc {
     virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch (message) {
@@ -27,7 +27,7 @@ MenuItem::Handle MenuItem::Create::run(const Menu::Handle& pmenu, const MenuItem
     MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
     int wm = Window::Native::getNextWmID();
     ::InsertMenu(Menu::impl(pmenu)._menu, -1, MF_BYPOSITION, wm, def.label.c_str());
-    ref(impl)._id = wm;
+    z::ref(impl)._id = wm;
 #endif
 #if defined(GTK)
     MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();

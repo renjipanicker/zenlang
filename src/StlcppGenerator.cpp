@@ -1468,30 +1468,32 @@ namespace {
 }
 
 struct StlcppGenerator::Impl {
-    inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Module& module) : _project(project), _config(config), _module(module), _fpHdr(0), _fpSrc(0) {}
+    inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Module& module) : _project(project), _config(config), _module(module) {}
     inline void run();
 private:
     const Ast::Project& _project;
     const Ast::Config& _config;
     const Ast::Module& _module;
-private:
-    FILE* _fpHdr;
-    FILE* _fpSrc;
+//@private:
+//    FILE* _fpHdr;
+//    FILE* _fpSrc;
 };
 
 inline void StlcppGenerator::Impl::run() {
     Indent::init();
     z::string basename = getBaseName(_module.filename());
-    OutputFile ofHdr(_fpHdr, _config.apidir(), basename + ".hpp");unused(ofHdr);
-    OutputFile ofSrc(_fpSrc, _config.srcdir(), basename + ".cpp");unused(ofSrc);
-    FileSet fs(_fpHdr, _fpSrc);
+//@    OutputFile ofHdr(_fpHdr, _config.apidir(), basename + ".hpp");unused(ofHdr);
+//    OutputFile ofSrc(_fpSrc, _config.srcdir(), basename + ".cpp");unused(ofSrc);
+    z::file ofHdr(_config.apidir(), basename + ".hpp", "w", z::file::makePath);
+    z::file ofSrc(_config.srcdir(), basename + ".cpp", "w", z::file::makePath);
+    FileSet fs(ofHdr.val(), ofSrc.val());
 
-    fprintf(_fpHdr, "#pragma once\n\n");
+    fprintf(ofHdr.val(), "#pragma once\n\n");
     for(Ast::Config::PathList::const_iterator it = _config.includeFileList().begin(); it != _config.includeFileList().end(); ++it) {
         const z::string& filename = *it;
-        fprintf(_fpSrc, "#include \"%s\"\n", filename.c_str());
+        fprintf(ofSrc.val(), "#include \"%s\"\n", filename.c_str());
     }
-    fprintf(_fpSrc, "#include \"%s\"\n", ofHdr.name().c_str());
+    fprintf(ofSrc.val(), "#include \"%s\"\n", ofHdr.name().c_str());
 
     for(Ast::CompoundStatement::List::const_iterator it = _module.globalStatementList().list().begin(); it != _module.globalStatementList().list().end(); ++it) {
         const Ast::Statement& s = it->get();
@@ -1502,6 +1504,17 @@ inline void StlcppGenerator::Impl::run() {
         const Ast::Statement& s = it->get();
         GeneratorContext(GeneratorContext::TargetMode::TypeDefn, GeneratorContext::IndentMode::WithBrace).run(_config, fs, s);
     }
+    z::string fn = ofHdr.name();
+    fn.replace("\\", "_");
+    fn.replace(":", "_");
+    fn.replace(".", "_");
+    fn.replace("/", "_");
+    fn.replace("-", "_");
+    fprintf(ofSrc.val(), "\n");
+    fprintf(ofSrc.val(), "// Suppress LNK4221\n");
+    fprintf(ofSrc.val(), "#ifdef WIN32\n");
+    fprintf(ofSrc.val(), "int _%s_dummy = 0;\n", fn.c_str());
+    fprintf(ofSrc.val(), "#endif\n");
 }
 
 //////////////////////////////////////////////

@@ -830,24 +830,25 @@ namespace {
 }
 
 struct ZenlangGenerator::Impl {
-    inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Module& module) : _project(project), _config(config), _module(module), _fpImp(0) {}
+    inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Module& module) : _project(project), _config(config), _module(module) {}
     inline void run();
 private:
     const Ast::Project& _project;
     const Ast::Config& _config;
     const Ast::Module& _module;
-private:
-    FILE* _fpImp;
+//@private:
+//    FILE* _fpImp;
 };
 
 inline void ZenlangGenerator::Impl::run() {
     Indent::init();
     z::string basename = getBaseName(_module.filename());
-    OutputFile ofImp(_fpImp, _config.apidir(), basename + ".ipp");unused(ofImp);
+    z::file ofImp(_config.apidir(), basename + ".ipp", "w", z::file::makePath);
+//@    OutputFile ofImp(_fpImp, _config.apidir(), basename + ".ipp");unused(ofImp);
 
     for(Ast::CompoundStatement::List::const_iterator it = _module.globalStatementList().list().begin(); it != _module.globalStatementList().list().end(); ++it) {
         const Ast::Statement& s = it->get();
-        runStatementGenerator(_config, _fpImp, s);
+        runStatementGenerator(_config, ofImp.val(), s);
     }
 }
 

@@ -7,10 +7,7 @@
 #endif
 
 z::string Dir::CurrentDir() {
-    char buff[PATH_MAX];
-    getcwd( buff, PATH_MAX );
-    z::string cwd(buff);
-    return cwd;
+    return z::file::cwd();
 }
 
 z::string Dir::cleanPath(const z::string& path) {

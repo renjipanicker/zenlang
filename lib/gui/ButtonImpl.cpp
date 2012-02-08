@@ -4,7 +4,7 @@
 #include "WindowImpl.hpp"
 
 #if defined(WIN32)
-static HandlerList<HWND, Button::OnClick::Handler> onButtonClickHandlerList;
+static z::HandlerList<HWND, Button::OnClick::Handler> onButtonClickHandlerList;
 struct WinProc : public Window::Native::WndProc {
     virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch (message) {

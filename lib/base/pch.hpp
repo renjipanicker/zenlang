@@ -49,6 +49,7 @@
 #if defined(WIN32)
     #define snprintf _snprintf_s
     #define sprintf sprintf_s
+    #define sscanf sscanf_s
     #pragma warning (disable:4355) // this used in base ctor initialization.
 #else
 #endif

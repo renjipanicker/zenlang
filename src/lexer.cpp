@@ -11,7 +11,7 @@ class Lexer::Impl {
 public:
     inline Impl(Parser& parser);
     inline ~Impl();
-    void push(Ast::NodeFactory& factory, const char* _buffer, size_t len, const bool& isEof);
+    void push(Ast::NodeFactory& factory, const char* _buffer, std::streamsize len, const bool& isEof);
     void reset();
 
 private:
@@ -217,7 +217,7 @@ inline void Lexer::Impl::dump(const z::string& x) const {
 // the lex() function
 #include "lexerGen.hpp"
 
-void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inputSize, const bool& isEof) {
+void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, std::streamsize inputSize, const bool& isEof) {
 //    trace("push(0): isEof %d, inputSize %lu, input '%s'\n", isEof, inputSize, input);
 
     /*
@@ -233,7 +233,7 @@ void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inpu
      * Now set maxFill to the largest RHS value among all the lines matched.
      * Currently it is 10.
      */
-    const size_t maxFill = isEof?10:0;
+    const std::streamsize maxFill = isEof?10:0;
 
     /*
      * When we get here, we have a partially
@@ -247,23 +247,23 @@ void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inpu
      * We need to stretch the buffer (if required) and concatenate the new chunk of input to it
      *
      */
-    size_t required  = inputSize + maxFill;
-    size_t used      = _limit - _buffer;
-    size_t needed    = used + required;
-    size_t allocated = _bufferEnd - _buffer;
+    std::streamsize required  = inputSize + maxFill;
+    std::streamsize used      = _limit - _buffer;
+    std::streamsize needed    = used + required;
+    std::streamsize allocated = _bufferEnd - _buffer;
 
     dump("push(1)");
 //    trace("maxFill %lu, required %lu, used %lu, needed %lu, allocated %lu\n", maxFill, required, used, needed, allocated);
 
     if(allocated < needed) {
-        size_t solOffset    = _sol    - _buffer;
-        size_t startOffset  = _start  - _buffer;
-        size_t textOffset   = _text?(_text - _buffer):0;
-        size_t markerOffset = _marker - _buffer;
-        size_t cursorOffset = _cursor - _buffer;
-        size_t limitOffset  = _limit  - _buffer;
+        std::streamsize solOffset    = _sol    - _buffer;
+        std::streamsize startOffset  = _start  - _buffer;
+        std::streamsize textOffset   = _text?(_text - _buffer):0;
+        std::streamsize markerOffset = _marker - _buffer;
+        std::streamsize cursorOffset = _cursor - _buffer;
+        std::streamsize limitOffset  = _limit  - _buffer;
 
-        _buffer = (inputChar_t*)realloc(_buffer, needed);
+        _buffer = (inputChar_t*)realloc(_buffer, (size_t)needed);
         _bufferEnd = _buffer + needed;
 
         _sol    = _buffer + solOffset;
@@ -279,7 +279,7 @@ void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inpu
     assert(_buffer <= _limit);
     assert(_limit <= _bufferEnd);
     assert((_limit + required) <= _bufferEnd);
-    memcpy(_limit, input, inputSize);
+    memcpy(_limit, input, (size_t)inputSize);
     _limit += inputSize;
     dump("push(2.1)");
     assert(_limit <= _bufferEnd);
@@ -298,7 +298,7 @@ void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inpu
     dump("push(4)");
 
     //  Once we get here, we can get rid of everything before start and after limit.
-    size_t consumed = _start - _buffer;
+    std::streamsize consumed = _start - _buffer;
 //    trace("consumed %lu, maxFill %lu, *cursor %d, *cursor %c\n", consumed, maxFill, *_cursor, *_cursor);
     if(consumed > 0) {
         memmove(_buffer, _start, _limit - _start);
@@ -313,7 +313,7 @@ void Lexer::Impl::push(Ast::NodeFactory& factory, const char* input, size_t inpu
 
 Lexer::Lexer(Parser& parser) : _impl(0) {_impl = new Impl(parser);}
 Lexer::~Lexer() {delete _impl;}
-void Lexer::push(Ast::NodeFactory& factory, const char* buffer, const size_t& len, const bool& isEof) {return z::ref(_impl).push(factory, buffer, len, isEof);}
+void Lexer::push(Ast::NodeFactory& factory, const char* buffer, const std::streamsize& len, const bool& isEof) {return z::ref(_impl).push(factory, buffer, len, isEof);}
 void Lexer::reset() {return z::ref(_impl).reset();}
 
 //-------------------------------------------------

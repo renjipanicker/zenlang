@@ -22,8 +22,8 @@ static z::string getNextClassID() {
     return name;
 }
 
-static HandlerList<HWND, Window::OnResize::Handler> onResizeHandlerList;
-static HandlerList<HWND, Window::OnClose::Handler> onCloseHandlerList;
+static z::HandlerList<HWND, Window::OnResize::Handler> onResizeHandlerList;
+static z::HandlerList<HWND, Window::OnClose::Handler> onCloseHandlerList;
 
 ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
     ULONGLONG ullVersion = 0;
@@ -48,7 +48,7 @@ ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
 }
 
 // Message handler for the app
-static InitList<Window::Native::WndProc> s_WndProcList;
+static z::InitList<Window::Native::WndProc> s_WndProcList;
 Window::Native::WndProc::WndProc() : _next(0) {
     s_WndProcList.push(this);
 }
@@ -80,7 +80,7 @@ static WndProc s_winProc;
 static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
     if(message == WM_NCCREATE) {
         LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
-        void* p = ref(pcs).lpCreateParams;
+        void* p = z::ref(pcs).lpCreateParams;
         Window::HandleImpl* impl = reinterpret_cast<Window::HandleImpl*>(p);
         ::SetWindowLongPtr(hWnd, GWL_USERDATA, reinterpret_cast<long>(impl));
     }
@@ -89,7 +89,7 @@ static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
     Window::Native::WndProc* wp = s_WndProcList.next();
 
     while(wp != 0) {
-        LRESULT lr = ref(wp).handle(hWnd, message, wParam, lParam);
+        LRESULT lr = z::ref(wp).handle(hWnd, message, wParam, lParam);
         if(lr != 0)
             return lr;
         wp = s_WndProcList.next();
@@ -110,17 +110,17 @@ z::string registerClass(HBRUSH bg) {
     wcx.lpfnWndProc = WinProc;     // points to window procedure
     wcx.cbClsExtra = 0;                // no extra class memory
     wcx.cbWndExtra = sizeof(Window::Handle*);        // store window data
-    wcx.hInstance = Application::instance();           // handle to Handle
+    wcx.hInstance = z::Application::instance();           // handle to Handle
     wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION);              // predefined app. icon
     wcx.hCursor = LoadCursor(NULL, IDC_ARROW);                    // predefined arrow
     wcx.hbrBackground = bg;
     wcx.lpszMenuName =  _T("MainMenu");    // name of menu resource
     wcx.lpszClassName = className.c_str();  // name of window class
-    wcx.hIconSm = (HICON)LoadImage(Application::instance(), MAKEINTRESOURCE(5), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
+    wcx.hIconSm = (HICON)LoadImage(z::Application::instance(), MAKEINTRESOURCE(5), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 
     // Register the window class.
     if(!::RegisterClassEx(&wcx)) {
-        throw Exception("Unable to register class");
+        throw z::Exception("Window", z::fmt("Unable to register class %{s}").add("s", className));
     }
 
     return className;
@@ -157,14 +157,14 @@ Window::HandleImpl& Window::Native::createWindow(const Window::Definition& def, 
         pos.h = def.position.h;
 
     Window::HandleImpl* impl = new Window::HandleImpl();
-    ref(impl)._hWindow = ::CreateWindowEx(xstyle,
+    z::ref(impl)._hWindow = ::CreateWindowEx(xstyle,
                                      className.c_str(),
                                      def.title.c_str(),
                                      style,
                                      pos.x, pos.y, pos.w, pos.h,
                                      parent, (HMENU)NULL,
-                                     Application::instance(), (LPVOID)impl);
-    return ref(impl);
+                                     z::Application::instance(), (LPVOID)impl);
+    return z::ref(impl);
 }
 
 Window::HandleImpl& Window::Native::createMainFrame(const Window::Definition& def, const int& style, const int& xstyle) {

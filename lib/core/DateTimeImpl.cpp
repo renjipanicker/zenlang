@@ -26,5 +26,12 @@ z::datetime DateTime::AddDays(const z::datetime& dt, const int& days) {
 
 int DateTime::Year(const z::datetime& dt) {
     time_t t = dt.val();
-    return z::ref(std::gmtime(&t)).tm_year;
+#if defined(WIN32)
+    std::tm tm;
+    ::gmtime_s(&tm, &t);
+    return tm.tm_year;
+#else
+    std::tm* tm = ::gmtime(&t);
+    return z::ref(tm).tm_year;
+#endif
 }

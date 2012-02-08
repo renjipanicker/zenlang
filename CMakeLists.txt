@@ -150,6 +150,6 @@ ENDFOREACH()
 
 #########################
 # build libgui. Its in a separate project because it requires the GUI includes and libraries.
-#ADD_SUBDIRECTORY(lib/gui)
+ADD_SUBDIRECTORY(lib/gui)
 
 #-DCMAKE_BUILD_TYPE=Debug

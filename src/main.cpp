@@ -139,13 +139,12 @@ int main(int argc, char* argv[]) {
             p += sep;
         }
 
+        p.replace("\\", "/");
         config.zlibPath(p);
     }
 
     if(project.verbosity() == Ast::Project::Verbosity::Detailed) {
-        char buff[1024];
-        getcwd( buff, 1024 );
-        z::string cwd(buff);
+        z::string cwd = z::file::cwd();
         std::cout << "cwd: " << cwd << std::endl;
         std::cout << "exe: " << config.zexePath() << std::endl;
         std::cout << "lib: " << config.zlibPath() << std::endl;

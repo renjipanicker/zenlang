@@ -4,14 +4,14 @@
 #include "WindowImpl.hpp"
 
 #if defined(WIN32)
-static HandlerList<HWND, Button::OnClick::Handler> onTextEditEnterHandlerList;
+static z::HandlerList<HWND, TextEdit::OnEnter::Handler> onTextEditEnterHandlerList;
 struct WinProc : public Window::Native::WndProc {
     virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch (message) {
             case WM_COMMAND:
                 if(LOWORD(wParam) == BN_CLICKED) {
                     TextEdit::OnEnter::Handler::_In in;
-                    if(onTextEditEnterList.runHandler((HWND)lParam, in))
+                    if(onTextEditEnterHandlerList.runHandler((HWND)lParam, in))
                         return 1;
                 }
                 break;

@@ -32,15 +32,16 @@ private:
 };
 #define INDENT Indent _ind_
 
-struct OutputFile {
-    OutputFile(FILE*& fp, const z::string& dir, const z::string& filename);
-    ~OutputFile();
-    FILE*& _fp;
-    inline const z::string& name() const {return _name;}
-private:
-    z::string _name;
-};
+//@struct OutputFile {
+//    OutputFile(FILE*& fp, const z::string& dir, const z::string& filename);
+//    ~OutputFile();
+//    FILE*& _fp;
+//    inline const z::string& name() const {return _name;}
+//private:
+//    z::string _name;
+//};
 
+//@
 inline z::string getBaseName(const z::string& filename) {
     z::string basename = filename;
     z::string::size_type idx = -1;

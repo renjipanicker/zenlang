@@ -5,8 +5,8 @@
 #include "SystrayImpl.hpp"
 
 #if defined(WIN32)
-static HandlerList<int, Systray::OnActivation::Handler> onSystrayActivationHandlerList;
-static HandlerList<int, Systray::OnContextMenu::Handler> onSystrayContextMenuHandlerList;
+static z::HandlerList<int, Systray::OnActivation::Handler> onSystrayActivationHandlerList;
+static z::HandlerList<int, Systray::OnContextMenu::Handler> onSystrayContextMenuHandlerList;
 struct WinProc : public Window::Native::WndProc {
     virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         if(lParam == WM_LBUTTONDOWN) {
@@ -33,7 +33,7 @@ void Systray::SetTooltip::run(const Systray::Handle& handle, const z::string& te
     lstrcpyn(ni.szTip, text.c_str(), text.length());
     ni.uFlags |= NIF_TIP;
     //SysTray::Native::setIconFile(This._sysTray._impl->_ni, This._text);
-    ::Shell_NotifyIcon(NIM_MODIFY, ptr(ni));
+    ::Shell_NotifyIcon(NIM_MODIFY, z::ptr(ni));
 #endif
 #if defined(GTK)
     gtk_status_icon_set_tooltip_text(Systray::impl(handle)._icon, text.c_str());
@@ -47,11 +47,11 @@ void Systray::SetIconfile::run(const Systray::Handle& handle, const z::string& f
                                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
                                  LR_LOADFROMFILE);
     if(0 == ni.hIcon) {
-        throw Exception("Unable to load icon");
+        throw z::Exception("Systray", z::fmt("Unable to load icon %{s}").add("s", filename));
     }
 
     ni.uFlags |= NIF_ICON;
-    ::Shell_NotifyIcon(NIM_MODIFY, ptr(ni));
+    ::Shell_NotifyIcon(NIM_MODIFY, z::ptr(ni));
 #endif
 #if defined(GTK)
     gtk_status_icon_set_from_icon_name(Systray::impl(handle)._icon, GTK_STOCK_MEDIA_STOP);
@@ -60,7 +60,7 @@ void Systray::SetIconfile::run(const Systray::Handle& handle, const z::string& f
 
 void Systray::Show::run(const Systray::Handle& handle) {
 #if defined(WIN32)
-    ::Shell_NotifyIcon(NIM_ADD, ptr(Systray::impl(handle)._ni));
+    ::Shell_NotifyIcon(NIM_ADD, z::ptr(Systray::impl(handle)._ni));
 #endif
 #if defined(GTK)
     gtk_status_icon_set_visible(Systray::impl(handle)._icon, TRUE);
@@ -69,7 +69,7 @@ void Systray::Show::run(const Systray::Handle& handle) {
 
 void Systray::Hide::run(const Systray::Handle& handle) {
 #if defined(WIN32)
-    ::Shell_NotifyIcon(NIM_DELETE, ptr(Systray::impl(handle)._ni));
+    ::Shell_NotifyIcon(NIM_DELETE, z::ptr(Systray::impl(handle)._ni));
 #endif
 #if defined(GTK)
     gtk_status_icon_set_visible(Systray::impl(handle)._icon, FALSE);
@@ -81,14 +81,14 @@ Systray::Handle Systray::Create::run(const Window::Handle& parent, const Systray
     Systray::Handle handle;
     handle._wdata<Systray::Handle>(impl);
 #if defined(WIN32)
-    ref(impl)._wm = Window::Native::getNextWmID();
+    z::ref(impl)._wm = Window::Native::getNextWmID();
     int res = Window::Native::getNextResID();
 
     // Fill the NOTIFYICONDATA structure and call Shell_NotifyIcon
     // zero the structure - note:   Some Windows funtions require this but
     //                              I can't be bothered which ones do and
     //                              which ones don't.
-    ZeroMemory(&(ref(impl)._ni), sizeof(NOTIFYICONDATA));
+    ZeroMemory(&(z::ref(impl)._ni), sizeof(NOTIFYICONDATA));
 
     // get Shell32 version number and set the size of the structure
     //      note:   the MSDN documentation about this is a little
@@ -101,21 +101,21 @@ Systray::Handle Systray::Create::run(const Window::Handle& parent, const Systray
 //    else
 //        ref(impl)._ni.cbSize = NOTIFYICONDATA_V2_SIZE;
 
-    ref(impl)._ni.cbSize = sizeof(NOTIFYICONDATA);
+    z::ref(impl)._ni.cbSize = sizeof(NOTIFYICONDATA);
 
     // the ID number can be anything you choose
-    ref(impl)._ni.uID = res;
+    z::ref(impl)._ni.uID = res;
 
     // state which structure members are valid
     //impl->_ni.uFlags = NIF_ICON | NIF_MESSAGE | NIF_TIP;
-    ref(impl)._ni.uFlags = NIF_MESSAGE;
+    z::ref(impl)._ni.uFlags = NIF_MESSAGE;
 
     // the window to send messages to and the message to send
     //      note:   the message value should be in the
     //              range of WM_APP through 0xBFFF
-    ref(impl)._ni.hWnd = Window::impl(parent)._hWindow;
-    ref(impl)._ni.uCallbackMessage = ref(impl)._wm;
-    ::Shell_NotifyIcon(NIM_ADD, ptr(ref(impl)._ni));
+    z::ref(impl)._ni.hWnd = Window::impl(parent)._hWindow;
+    z::ref(impl)._ni.uCallbackMessage = z::ref(impl)._wm;
+    ::Shell_NotifyIcon(NIM_ADD, z::ptr(z::ref(impl)._ni));
 #endif
 #if defined(GTK)
     z::ref(impl)._icon = gtk_status_icon_new_from_stock(GTK_STOCK_GO_UP);

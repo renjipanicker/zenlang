@@ -5,7 +5,6 @@
 #include "StlcppGenerator.hpp"
 
 inline bool checkFile(const z::string& filename) {
-    std::cout << filename << std::endl;
     return std::ifstream( filename.c_str() ).is_open();
 }
 
@@ -55,7 +54,7 @@ bool Compiler::compileFile(Ast::Module& module, const z::string& filename, const
         char buf[1025];
         memset(buf, 0, 1024);
         is.read(buf, 1024);
-        size_t got = is.gcount();
+        std::streamsize got = is.gcount();
         lexer.push(factory, buf, got, is.eof());
     }
     return true;
