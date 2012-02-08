@@ -111,7 +111,7 @@ SET(libcore_SOURCES ${libcore_SOURCES} "lib/utils/sqlite3/vfs_compress.c")
 FOREACH(_FILE ${libcore_ZPP_SOURCES})
     GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME_WE)
     ADD_CUSTOM_COMMAND(
-        COMMAND ${ZEN_EXE} ${ZEN_DBG_FLAG} -c --api "${ZEN_OUTPUT_PATH}/include/core" --src "./core" ${_FILE}
+        COMMAND ${ZEN_EXE} ${ZEN_DBG_FLAG} -c --verbose --api "${ZEN_OUTPUT_PATH}/include/core" --src "./core" ${_FILE}
         OUTPUT "core/${_BASE}.cpp"
         DEPENDS ${ZEN_EXE} ${_FILE}
     )

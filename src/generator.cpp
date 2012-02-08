@@ -14,7 +14,18 @@ inline void mkpath(const z::string& path, const z::string& dir) {
     if(dir.size() == 0)
         return;
 
-    z::string p = path + "/" + dir;
+#ifdef WIN32
+        z::string sep = "\\";
+#else
+    z::string sep = "/";
+#endif
+
+    z::string p;
+    if(path.size() > 0) {
+        p += path;
+        p += sep;
+    }
+    p += dir;
     if(!exists(p)) {
 #if defined(WIN32)
         _mkdir(p.c_str());
@@ -43,7 +54,6 @@ OutputFile::OutputFile(FILE*& fp, const z::string& dir, const z::string& filenam
     mkpath(base, sdir);
 
     z::string fpath = dir + sep + filename;
-    std::cout << "opening: " << fpath << std::endl;
     _fp = fopen(fpath.c_str(), "w");
     if(_fp == 0) {
         throw z::Exception("OutputFile", z::fmt("Unable to open output file %{s}").add("s", fpath));

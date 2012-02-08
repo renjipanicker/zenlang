@@ -60,6 +60,7 @@ typedef char char_t;
     #include <vector>
     #include <list>
     #include <map>
+    #include <iterator>
     #include <algorithm>
     #include <iostream>
     #include <fstream>

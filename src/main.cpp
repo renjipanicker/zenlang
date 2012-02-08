@@ -36,9 +36,11 @@ int main(int argc, char* argv[]) {
     static const int len = 1024;
     char path[len] = "";
 #ifdef WIN32
-    GetModuleFileName(NULL, path, len);
-    if(GetLastError() != ERROR_SUCCESS) {
-        printf("Internal error retreiving process path\n");
+    DWORD rv = GetModuleFileName(NULL, path, len);
+    if(rv == 0) {
+        DWORD ec = GetLastError();
+        assert(ec != ERROR_SUCCESS);
+        printf("Internal error retreiving process path %d\n", ec);
         return -1;
     }
 #else
