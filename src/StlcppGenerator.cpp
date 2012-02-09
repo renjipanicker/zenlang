@@ -54,6 +54,11 @@ void StlcppNameGenerator::getTypeName(const Ast::TypeSpec& typeSpec, z::string& 
         return;
     }
 
+    if(typeSpec.name().string() == "char") {
+        name += "z::char_t";
+        return;
+    }
+
     if(typeSpec.name().string() == "string") {
         name += "z::string";
         return;
