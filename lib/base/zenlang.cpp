@@ -158,25 +158,6 @@ z::string16 z::c32to16(const z::string32& in) {
 }
 
 ////////////////////////////////////////////////////////////////////////////
-z::char_t z::tchar::toLower(const z::char_t& ch) {
-    if((ch >= 'A') && (ch <= 'Z'))
-        return 'a' + (ch - 'A');
-    return ch;
-}
-
-bool z::tchar::isSpace(const z::char_t& ch) {
-    if((ch >= 9) && (ch <=13))
-        return true;
-
-    if(ch == ' ')
-        return true;
-    if(ch == '\t')
-        return true;
-
-    return false;
-}
-
-////////////////////////////////////////////////////////////////////////////
 z::mutex::mutex() {
 #if defined(WIN32)
     _val = CreateMutex(0, FALSE, 0);

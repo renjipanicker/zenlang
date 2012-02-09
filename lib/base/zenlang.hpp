@@ -127,18 +127,8 @@ namespace z {
         template <typename T>
         inline T to() const;
 
-        inline stringT lower() const {
-            stringT r;
-            for(typename sstringT::const_iterator it = _val.begin(); it != _val.end(); ++it) {
-                const charT& ch = *it;
-                r += lower(ch);
-            }
-            return r;
-        }
-
         inline const sstringT& val() const {return _val;}
         inline const charT* c_str() const {return _val.c_str();}
-        inline const char* toUtf8() const {return _val.c_str();}
 
         explicit inline bstring() {}
         inline bstring(const charT* s) : _val(s) {}
@@ -227,6 +217,28 @@ namespace z {
 #endif
     }
 
+    // conversion from string to string32
+    inline z::string32 csto32(const z::string& in) {
+#if defined(CHAR_WIDTH_08)
+        return c08to32(in);
+#elif defined(CHAR_WIDTH_16)
+        return c16to32(in);
+#elif defined(CHAR_WIDTH_32)
+        return in;
+#endif
+    }
+
+    // conversion from string32 to string
+    inline z::string c32tos(const z::string32& in) {
+#if defined(CHAR_WIDTH_08)
+        return c32to08(in);
+#elif defined(CHAR_WIDTH_16)
+        return c32to16(in);
+#elif defined(CHAR_WIDTH_32)
+        return in;
+#endif
+    }
+
     typedef std::basic_ostream<char_t> ostream;
 }
 
@@ -272,7 +284,6 @@ inline stringT& z::bstring<charT, stringT>::arg(const stringT& key, const T& val
     // then use e2s to convert it to current string width
     stringT sk = e2s(skey.str());
     stringT sv = e2s(sval.str());
-    std::cout << sk << ":" << sv << ", val:" << value << std::endl;
 
     // and replace
     replace(sk, sv);
@@ -293,12 +304,6 @@ inline T z::bstring<charT, stringT>::to() const {
 }
 
 namespace z {
-    ////////////////////////////////////////////////////////////////////////////
-    struct tchar {
-        static char_t toLower(const char_t& ch);
-        static bool isSpace(const char_t& ch);
-    };
-
     ////////////////////////////////////////////////////////////////////////////
     struct datetime {
         inline datetime() : _val(0) {}

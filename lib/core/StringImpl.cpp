@@ -48,8 +48,33 @@ z::list<z::string> String::split(const z::string& str, const z::string& sep) {
     return sl;
 }
 
-uint16_t sqlite3_unicode_fold(uint16_t c);
+#include "utils/sqlite3/sqlite3_unicode.h"
 
 z::char_t String::fold(const z::char_t& ch) {
     return sqlite3_unicode_fold(ch);
 }
+
+z::char_t String::CharToLower(const z::char_t& ch) {
+    return sqlite3_unicode_lower(ch);
+}
+
+z::string String::StringToLower(const z::string& str) {
+    z::string rv;
+    for(z::string::const_iterator it = str.begin();it != str.end(); ++it) {
+        rv += CharToLower(*it);
+    }
+    return rv;
+}
+
+bool String::isSpaceChar(const z::char_t& ch) {
+    if((ch >= 9) && (ch <=13))
+        return true;
+
+    if(ch == ' ')
+        return true;
+    if(ch == '\t')
+        return true;
+
+    return false;
+}
+

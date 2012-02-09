@@ -2,3 +2,6 @@ namespace String;
 
 public routine list<string> split(const string& str, const string& sep) native;
 public routine char fold(const char& ch) native;
+public routine char CharToLower(const char& ch) native;
+public routine string StringToLower(const string& str) native;
+public routine bool isSpaceChar(const char& ch) native;

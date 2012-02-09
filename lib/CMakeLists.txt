@@ -36,6 +36,7 @@ SET(libcore_SOURCES ${libcore_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3.c"
 SET(libcore_SOURCES ${libcore_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3.h")
 SET(libcore_SOURCES ${libcore_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3ext.h")
 SET(libcore_SOURCES ${libcore_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/vfs_compress.c")
+SET(libcore_SOURCES ${libcore_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3_unicode.h")
 SET(libcore_SOURCES ${libcore_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3_unicode.c")
 
 FOREACH(_FILE ${libcore_ZPP_SOURCES})
