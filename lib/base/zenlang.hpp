@@ -14,9 +14,9 @@ inline void trace(const char* txt, ...) {unused(txt);} // empty inline function 
 
 #if !defined(CHAR_WIDTH_08) && !defined(CHAR_WIDTH_16) && !defined(CHAR_WIDTH_32)
 // choose any one of these 3...
-#define CHAR_WIDTH_08
+//#define CHAR_WIDTH_08
 //#define CHAR_WIDTH_16
-//#define CHAR_WIDTH_32
+#define CHAR_WIDTH_32
 #endif
 
 namespace z {
@@ -72,11 +72,6 @@ namespace z {
             return ch;
         }
 
-        explicit inline bstring() {}
-        inline bstring(const charT* s) : _val(s) {}
-        inline bstring(const sstringT& s) : _val(s) {}
-        inline bstring(const size_type& count, const charT& ch) : _val(count, ch) {}
-
         typedef typename sstringT::iterator iterator;
         inline iterator begin() {return _val.begin();}
         inline iterator end() {return _val.end();}
@@ -108,6 +103,12 @@ namespace z {
             for(typename sstringT::size_type next = _val.find(search._val); next != sstringT::npos;next = _val.find(search._val, next)) {
                 _val.replace(next, search.length(), replace._val);
                 next += replace.length();
+            }
+        }
+
+        inline void append08(const char* str) {
+            for(const char* c = str; *c != 0; ++c) {
+                _val += (z::char_t)(*c);
             }
         }
 
@@ -143,6 +144,10 @@ namespace z {
         inline const charT* c_str() const {return _val.c_str();}
         inline const char* toUtf8() const {return _val.c_str();}
 
+        explicit inline bstring() {}
+        inline bstring(const charT* s) : _val(s) {}
+        inline bstring(const sstringT& s) : _val(s) {}
+        inline bstring(const size_type& count, const charT& ch) : _val(count, ch) {}
     protected:
         sstringT _val;
     };
@@ -150,12 +155,6 @@ namespace z {
     // utf8 string
     struct string08 : public bstring<char08_t, string08 > {
         typedef bstring<char08_t, string08 > BaseT;
-
-        inline void append08(const char* str) {
-            for(const char* c = str; *c != 0; ++c) {
-                _val += (z::char_t)(*c);
-            }
-        }
 
         explicit inline string08() : BaseT() {}
         inline string08(const char* s) : BaseT() {append08(s);}
@@ -167,14 +166,8 @@ namespace z {
     struct string16 : public bstring<char16_t, string16 > {
         typedef bstring<char16_t, string16 > BaseT;
 
-//        inline void append(const char* str) {
-//            for(const char* c = str; *c != 0; ++c) {
-//                _val += (z::char_t)(*c);
-//            }
-//        }
-
         explicit inline string16() : BaseT() {}
-        inline string16(const char* s) : BaseT() {append(s);}
+        inline string16(const char* s) : BaseT() {append08(s);}
         inline string16(const BaseT::sstringT& s) : BaseT(s) {}
         inline string16(const size_type& count, const char_t& ch) : BaseT(count, ch) {}
     };
@@ -183,23 +176,17 @@ namespace z {
     struct string32 : public bstring<char32_t, string32 > {
         typedef bstring<char32_t, string32 > BaseT;
 
-        inline void append08(const char* str) {
-            for(const char* c = str; *c != 0; ++c) {
-                _val += (z::char_t)(*c);
-            }
-        }
-
         explicit inline string32() : BaseT() {}
         inline string32(const char* s) : BaseT() {append08(s);}
         inline string32(const BaseT::sstringT& s) : BaseT(s) {}
         inline string32(const size_type& count, const char_t& ch) : BaseT(count, ch) {}
     };
 
-    // define utf8 as 8bitstring
+    // define estring (encoded-string) as 8bit utf8 string
     typedef string08 estring;
 
-    // define unicode as 32 bit string
-    typedef string32 unicode;
+    // define ustring as 32 bit string
+    typedef string32 ustring;
 
     // define string as one of 8, 16 or 32 bit string
 #if defined(CHAR_WIDTH_08)
@@ -222,7 +209,7 @@ namespace z {
     z::string32 c16to32(const z::string16& in);
     z::string16 c32to16(const z::string32& in);
 
-    // conversion from string to utf8
+    // conversion from string to estring
     inline z::estring s2e(const z::string& in) {
 #if defined(CHAR_WIDTH_08)
         return in;
@@ -233,7 +220,7 @@ namespace z {
 #endif
     }
 
-    // conversion from utf8 to string
+    // conversion from estring to string
     inline z::string e2s(const z::estring& in) {
 #if defined(CHAR_WIDTH_08)
         return in;
@@ -255,7 +242,7 @@ inline z::string operator+(const z::string& lhs, const z::string& rhs) {return (
 #if !defined(CHAR_WIDTH_08)
 inline z::string operator+(const z::string& lhs, const char* rhs) {
     z::string rv = lhs;
-    rv.append(rhs);
+    rv.append08(rhs);
     return rv;
 }
 #endif
@@ -280,11 +267,19 @@ inline std::ostream& operator<<(std::ostream& os, const z::string& val) {
 template <typename charT, typename stringT>
 template <typename T>
 inline stringT& z::bstring<charT, stringT>::arg(const stringT& key, const T& value) {
-    std::basic_stringstream<charT> skey;
-    skey << stringT("%{") << key << stringT("}");
-    std::basic_stringstream<charT> sval;
+    // first stream the key:val pair into a regular std::stringstream
+    std::stringstream skey;
+    skey << "%{" << s2e(key) << "}";
+    std::stringstream sval;
     sval << value;
-    replace(skey.str(), sval.str());
+
+    // then use e2s to convert it to current string width
+    stringT sk = e2s(skey.str());
+    stringT sv = e2s(sval.str());
+    std::cout << sk << ":" << sv << ", val:" << value << std::endl;
+
+    // and replace
+    replace(sk, sv);
     return z::ref(static_cast<stringT*>(this));
 }
 

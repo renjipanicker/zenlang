@@ -27,7 +27,7 @@ Window::Handle Button::Create::run(const Window::Handle& parent, const Button::D
     Window::HandleImpl& impl = Window::Native::createChildWindow(def, "BUTTON", BS_DEFPUSHBUTTON|WS_CHILD|WS_VISIBLE, 0, parent);
 #endif
 #if defined(GTK)
-    GtkWidget* hWnd = gtk_button_new_with_label(def.title.c_str());
+    GtkWidget* hWnd = gtk_button_new_with_label(z::s2e(def.title).c_str());
     Window::HandleImpl& impl = Window::Native::createChildWindow(hWnd, def, parent);
 #endif
     Window::Handle win;

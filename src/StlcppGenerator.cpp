@@ -1135,14 +1135,14 @@ namespace {
             if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
                 z::ofile& os = fpDecl(node.accessType());
                 z::string qt = (node.headerType() == Ast::HeaderType::Import)?"<>":"\"\"";
-                os() << "#include " << qt.at(0);
+                os() << "#include " << (char)qt.at(0);
                 z::string sep = "";
                 for(Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                     const Ast::Token& name = it->get().name();
                     os() << sep << name;
                     sep = "/";
                 }
-                os() << ".hpp" << qt.at(1) << std::endl;
+                os() << ".hpp" << (char)qt.at(1) << std::endl;
             }
         }
 

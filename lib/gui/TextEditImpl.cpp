@@ -43,7 +43,7 @@ Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdi
     if(def.title.size() > 0) {
         if(def.multiline) {
             GtkTextBuffer* buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (impl._hWindow));
-            gtk_text_buffer_set_text (buffer, def.title.c_str(), -1);
+            gtk_text_buffer_set_text (buffer, z::s2e(def.title).c_str(), -1);
         } else {
         }
     }
@@ -57,13 +57,13 @@ void TextEdit::AppendText::run(const Window::Handle& window, const z::string& te
 #if defined(WIN32)
     int len = Edit_GetTextLength(Window::impl(window)._hWindow);
     Edit_SetSel(Window::impl(window)._hWindow, len, len);
-    Edit_ReplaceSel(Window::impl(window)._hWindow, text.c_str());
+    Edit_ReplaceSel(Window::impl(window)._hWindow, z::s2e(text).c_str());
 #endif
 #if defined(GTK)
     GtkTextBuffer* buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (Window::impl(window)._hWindow));
     GtkTextIter iter;
     gtk_text_buffer_get_end_iter(buffer, &iter);
-    gtk_text_buffer_insert(buffer, &iter, text.c_str(), text.size());
+    gtk_text_buffer_insert(buffer, &iter, z::s2e(text).c_str(), text.size());
 #endif
 }
 

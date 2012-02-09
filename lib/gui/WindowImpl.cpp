@@ -260,10 +260,10 @@ void Window::Delete::run(const Window::Handle& window) {
 
 void Window::SetTitle::run(const Window::Handle& window, const z::string& title) {
 #if defined(WIN32)
-    ::SetWindowText(Window::impl(window)._hWindow, title.c_str());
+    ::SetWindowText(Window::impl(window)._hWindow, z::s2e(title).c_str());
 #endif
 #if defined(GTK)
-    gtk_window_set_title (GTK_WINDOW (Window::impl(window)._hWindow), title.c_str());
+    gtk_window_set_title (GTK_WINDOW (Window::impl(window)._hWindow), z::s2e(title).c_str());
 #endif
 }
 

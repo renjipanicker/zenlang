@@ -26,12 +26,12 @@ MenuItem::Handle MenuItem::Create::run(const Menu::Handle& pmenu, const MenuItem
 #if defined(WIN32)
     MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
     int wm = Window::Native::getNextWmID();
-    ::InsertMenu(Menu::impl(pmenu)._menu, -1, MF_BYPOSITION, wm, def.label.c_str());
+    ::InsertMenu(Menu::impl(pmenu)._menu, -1, MF_BYPOSITION, wm, z::s2e(def.label).c_str());
     z::ref(impl)._id = wm;
 #endif
 #if defined(GTK)
     MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
-    z::ref(impl)._menuItem = gtk_menu_item_new_with_label(def.label.c_str());
+    z::ref(impl)._menuItem = gtk_menu_item_new_with_label(z::s2e(def.label).c_str());
     gtk_menu_shell_append (GTK_MENU_SHELL (Menu::impl(pmenu)._menu), z::ref(impl)._menuItem);
 #endif
 

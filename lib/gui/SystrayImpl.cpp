@@ -30,13 +30,13 @@ static WinProc s_winProc;
 void Systray::SetTooltip::run(const Systray::Handle& handle, const z::string& text) {
 #if defined(WIN32)
     NOTIFYICONDATA& ni = Systray::impl(handle)._ni;
-    lstrcpyn(ni.szTip, text.c_str(), text.length());
+    lstrcpyn(ni.szTip, z::s2e(text).c_str(), z::s2e(text).length());
     ni.uFlags |= NIF_TIP;
     //SysTray::Native::setIconFile(This._sysTray._impl->_ni, This._text);
     ::Shell_NotifyIcon(NIM_MODIFY, z::ptr(ni));
 #endif
 #if defined(GTK)
-    gtk_status_icon_set_tooltip_text(Systray::impl(handle)._icon, text.c_str());
+    gtk_status_icon_set_tooltip_text(Systray::impl(handle)._icon, z::s2e(text).c_str());
 #endif
 }
 
