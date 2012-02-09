@@ -2208,7 +2208,9 @@ inline z::ostream& operator << (z::ostream& os, const Ast::Token& val) {
     return os;
 }
 
+#if !defined(CHAR_WIDTH_08)
 inline std::ostream& operator << (std::ostream& os, const Ast::Token& val) {
     os << val.string();
     return os;
 }
+#endif

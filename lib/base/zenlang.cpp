@@ -233,11 +233,11 @@ void z::file::mkpath(const z::string& filename) {
     z::string::size_type prev = 0;
     for(z::string::size_type next = filename.find(sep); next != z::string::npos;next = filename.find(sep, next+1)) {
         z::string sdir = filename.substr(prev, next - prev);
-        if(sdir.size() > 0) { // in case of multiple / in path
+        if((base.size() == 0) || (sdir.size() > 0)) { // if base is empty or multiple / in path
             base += sdir;
             base += sep;
-            if(!exists(base)) {
-                int rv = mkdir(s2e(base).c_str());
+            if(!z::file::exists(base)) {
+                int rv = mkdir(base);
                 if(rv != 0) {
                     throw z::Exception("z::file", z::fmt("mkdir failed for: %{s}").add("s", base));
                 }
@@ -245,9 +245,6 @@ void z::file::mkpath(const z::string& filename) {
         }
         prev = next + 1;
     }
-
-    // check if fname is empty
-    assert(filename.substr(prev).size() > 0);
 }
 
 z::string z::file::cwd() {
@@ -262,39 +259,12 @@ z::string z::file::cwd() {
     return rv;
 }
 
-void z::file::open(const z::string& filename, const z::string& mode, const MkPathT& mkp) {
-    if(_val != 0) {
-        close();
-    }
-    assert(_val == 0);
-
-    if(mkp == makePath) {
-        mkpath(filename);
-    }
-
-#if defined(WIN32)
-    errno_t en = fopen_s(&_val, filename.c_str(), mode.c_str());
-    if(en != 0) {
-        _val = 0;
-    }
-#else
-    _val = fopen(s2e(filename).c_str(), s2e(mode).c_str());
-#endif
-    if(_val == 0) {
-        throw z::Exception("z::file", z::fmt("fopen failed for: %{s}").add("s", filename));
-    }
+z::ofile::ofile(const z::string& filename) {
     _name = filename;
-}
-
-void z::file::open(const z::string& dir, const z::string& filename, const z::string& mode, const MkPathT& mkp) {
-    return open(dir + sep + filename, mode, mkp);
-}
-
-void z::file::close() {
-    if(_val == 0)
-        return;
-    fclose(_val);
-    _val = 0;
+    _os.open(s2e(_name).c_str());
+    if(!_os.is_open()) {
+        throw Exception("z::ofile", z::fmt("Error opening %{s}").add("s", filename));
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////
@@ -308,7 +278,7 @@ z::TestResult::~TestResult() {
 }
 
 void z::TestResult::begin(const z::string& name) {
-    Log::get() << name << Log::Out();
+    std::cout << name << std::endl;
     ++s_totalTests;
 }
 
@@ -317,7 +287,7 @@ void z::TestResult::end(const z::string& name, const bool& passed) {
         ++s_passedTests;
 
     const z::string r = passed?" - PASS":" - FAIL ******************";
-    Log::get() << r << "\n" << Log::Out();
+    std::cout << r << "\n" << std::endl;
 }
 
 static z::InitList<z::TestInstance> s_testList;
@@ -482,10 +452,9 @@ int main(int argc, char* argv[]) {
 #endif // GUI
 #endif // Z_EXE
 
-static z::Log s_log;
-z::Log& z::Log::msg() {
-    return s_log;
-}
+z::Log z::Log::s_msg = z::Log();
+z::Log z::Log::s_err = z::Log();
+z::Log z::Log::s_dbg = z::Log();
 
 z::Log& z::Log::operator<<(z::Log::Out) {
     std::cout << _ss.str() << std::endl;

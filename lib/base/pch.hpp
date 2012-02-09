@@ -30,6 +30,7 @@
     #include <direct.h>
     #include <process.h>
     typedef HANDLE mutex_t;
+
     typedef char      int8_t;
     typedef short     int16_t;
     typedef int       int32_t;
@@ -46,10 +47,6 @@
     #include <stdint.h>
     #include <regex.h>
 #endif
-
-//#define CHAR_WIDTH_08
-//#define CHAR_WIDTH_16
-#define CHAR_WIDTH_32
 
 #if defined(WIN32)
     #define snprintf _snprintf_s

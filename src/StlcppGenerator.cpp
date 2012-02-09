@@ -803,7 +803,7 @@ namespace {
             if(!isTest) {
                 // param-instance
                 _os() << Indent::get() << "    z::Pointer<_Out> _out;" << std::endl;
-                _os() << Indent::get() << "    inline " << out2 << "out(const _Out& val) {_out = z::PointerCreator<_Out, _Out>::get(val);";
+                _os() << Indent::get() << "    inline " << out2 << " out(const _Out& val) {_out = z::PointerCreator<_Out, _Out>::get(val);";
                 if(!isVoid(node.sig().outScope())) {
                     _os() << "return _out.get()";
                     if(!node.sig().outScope().isTuple()) {
@@ -883,7 +883,7 @@ namespace {
                 sep = " : ";
                 for(Ast::Scope::List::const_iterator it = node.out().begin(); it != node.out().end(); ++it) {
                     const Ast::VariableDefn& vdef = it->get();
-                    _os() << "%s%s(p%s)" << sep << vdef.name() << "(p" << vdef.name() << ")";
+                    _os() << sep << vdef.name() << "(p" << vdef.name() << ")";
                     sep = ", ";
                 }
                 _os() << "{}" << std::endl;
@@ -918,7 +918,7 @@ namespace {
             } else if(StlcppNameGenerator().tn(node.base()) == "main") {
                 _os() << Indent::get() << "class " << node.name() << " : public z::main_< " << node.name() << " > {" << std::endl;
             } else {
-                _os() << Indent::get() << "class " << node.name() << " : public " << node.name() << " {" << std::endl;
+                _os() << Indent::get() << "class " << node.name() << " : public " << StlcppNameGenerator().tn(node.base()) << " {" << std::endl;
             }
             visitFunctionSig(node, false, false, isTest);
 
@@ -1078,7 +1078,7 @@ namespace {
 
         void visit(const Ast::EventDecl& node) {
             visitChildrenIndent(node);
-            _os() << StlcppNameGenerator().tn(node) << " " << StlcppNameGenerator().tn(node) << std::endl;
+            _os() << StlcppNameGenerator().tn(node) << " " << StlcppNameGenerator().tn(node) << "::instance;" << std::endl;
             if(node.defType() == Ast::DefinitionType::Final) {
                 _os() << "void " << StlcppNameGenerator().tn(node)
                       << "::addHandler(" << StlcppNameGenerator().qtn(node.in().qTypeSpec())
@@ -1202,7 +1202,7 @@ namespace {
                 if(isPtr(node.defn().qTypeSpec().typeSpec())) {
                     pname = tname;
                 }
-                fpDecl(node.structDefn())() << Indent::get() << tname.c_str() << " " << node.defn().name();
+                fpDecl(node.structDefn())() << Indent::get() << tname << " " << node.defn().name() << "; ";
                 fpDecl(node.structDefn())() << "template <typename T> inline T& _" << node.defn().name()
                                             << "(" << pname <<" val) {"
                                             << node.defn().name() << " = val; return z::ref(static_cast<T*>(this));}"
@@ -1244,7 +1244,7 @@ namespace {
         }
 
         virtual void visit(const Ast::PrintStatement& node) {
-            fpDefn()() << Indent::get() << "z::Log::get() << ";
+            fpDefn()() << Indent::get() << "z::Log::msg() << ";
             ExprGenerator(fpDefn()).visitNode(node.expr());
             fpDefn()() << " << z::Log::Out();" << std::endl;
         }
@@ -1310,12 +1310,13 @@ namespace {
                 constit = "const_";
             }
 
-            fpDefn()() << Indent::get() << "%s{" << std::endl;
-            fpDefn()() << Indent::get() << "  %s _str = " << etype.c_str();
+            fpDefn()() << Indent::get() << "{" << std::endl;
+            fpDefn()() << Indent::get() << "  " << etype << " _str = ";
             ExprGenerator(fpDefn()).visitNode(node.expr());
             fpDefn()() << ";" << std::endl;
+
             fpDefn()() << Indent::get() << "  for(" << StlcppNameGenerator().tn(node.expr().qTypeSpec().typeSpec()) << "::" << constit << "iterator _it = _str.begin(); _it != _str.end(); ++_it) {" << std::endl;
-            fpDefn()() << Indent::get() << "  %s %s = *_it;" << StlcppNameGenerator().qtn(node.valDef().qTypeSpec()) << " " << node.valDef().name() << " = *_it;" << std::endl;
+            fpDefn()() << Indent::get() << "  " << StlcppNameGenerator().qtn(node.valDef().qTypeSpec()) << " " << node.valDef().name() << " = *_it;" << std::endl;
 
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::IndentedBrace).run(_config, _fs, node.block());
 

@@ -12,6 +12,13 @@
 inline void trace(const char* txt, ...) {unused(txt);} // empty inline function gets optimized away
 #endif
 
+#if !defined(CHAR_WIDTH_08) && !defined(CHAR_WIDTH_16) && !defined(CHAR_WIDTH_32)
+// choose any one of these 3...
+#define CHAR_WIDTH_08
+//#define CHAR_WIDTH_16
+//#define CHAR_WIDTH_32
+#endif
+
 namespace z {
     template <typename T>
     inline T& ref(T* t) {
@@ -98,7 +105,7 @@ namespace z {
         inline stringT   replace(const size_type& from, const size_type& len, const stringT& to) {return _val.replace(from, len, to._val);}
 
         inline void replace(const stringT& search, const stringT& replace) {
-            for(typename stringT::size_type next = _val.find(search._val); next != stringT::npos;next = _val.find(search._val, next)) {
+            for(typename sstringT::size_type next = _val.find(search._val); next != sstringT::npos;next = _val.find(search._val, next)) {
                 _val.replace(next, search.length(), replace._val);
                 next += replace.length();
             }
@@ -144,14 +151,14 @@ namespace z {
     struct string08 : public bstring<char08_t, string08 > {
         typedef bstring<char08_t, string08 > BaseT;
 
-//        inline void append(const char* str) {
-//            for(const char* c = str; *c != 0; ++c) {
-//                _val += (z::char_t)(*c);
-//            }
-//        }
+        inline void append08(const char* str) {
+            for(const char* c = str; *c != 0; ++c) {
+                _val += (z::char_t)(*c);
+            }
+        }
 
         explicit inline string08() : BaseT() {}
-        inline string08(const char* s) : BaseT() {append(s);}
+        inline string08(const char* s) : BaseT() {append08(s);}
         inline string08(const BaseT::sstringT& s) : BaseT(s) {}
         inline string08(const size_type& count, const char_t& ch) : BaseT(count, ch) {}
     };
@@ -245,11 +252,13 @@ inline z::string operator+(const z::string& lhs, const z::char_t* rhs) {return (
 inline z::string operator+(const z::string& lhs, const z::char_t rhs) {return (lhs.val() + rhs);}
 inline z::string operator+(const z::string& lhs, const z::string& rhs) {return (lhs.val() + rhs.val());}
 
+#if !defined(CHAR_WIDTH_08)
 inline z::string operator+(const z::string& lhs, const char* rhs) {
     z::string rv = lhs;
     rv.append(rhs);
     return rv;
 }
+#endif
 
 //template <typename charT, typename stringT>
 //inline std::basic_ostream<charT>& operator<<(std::basic_ostream<charT>& os, const z::bstring<charT, stringT>& val) {
@@ -264,7 +273,7 @@ inline std::basic_ostream<charT>& operator<<(std::basic_ostream<charT>& os, cons
 }
 
 inline std::ostream& operator<<(std::ostream& os, const z::string& val) {
-    os << z::s2e(val);
+    os << z::s2e(val).val();
     return os;
 }
 
@@ -275,16 +284,18 @@ inline stringT& z::bstring<charT, stringT>::arg(const stringT& key, const T& val
     skey << stringT("%{") << key << stringT("}");
     std::basic_stringstream<charT> sval;
     sval << value;
-    sstringT zk(skey.str());
-    sstringT zv(skey.str());
-    replace(zk, zv);
+    replace(skey.str(), sval.str());
     return z::ref(static_cast<stringT*>(this));
 }
 
 template <typename charT, typename stringT>
 template <typename T>
 inline T z::bstring<charT, stringT>::to() const {
-    std::basic_stringstream<charT> ss(_val);
+    z::estring es = s2e(z::ref(static_cast<const stringT*>(this)));
+    std::stringstream ss(es.val());
+    // converting to utf8 and then to expected type.
+    /// \todo: find out better way to convert from 16 and 32 bit string to expected type
+    //std::basic_stringstream<charT> ss(_val);
     T val;
     ss >> val;
     return val;
@@ -313,40 +324,21 @@ namespace z {
     };
 
     struct file {
-        enum MkPathT {
-            makePath,
-            noMakePath
-        };
-
         static const z::string sep;
         static bool exists(const z::string& path);
         static int mkdir(const z::string& path);
 
-        /// makes a path upto the second-last component, unless path is terminated by a /
+        /// makes a path upto the second-last component, unless filename is terminated by a /
         static void mkpath(const z::string& filename);
 
         static z::string cwd();
-
-        void open(const z::string& filename, const z::string& mode, const MkPathT& mkp = noMakePath);
-        void open(const z::string& dir, const z::string& filename, const z::string& mode, const MkPathT& mkp = noMakePath);
-        void close();
-
-        inline file() : _val(0) {}
-        inline file(const z::string& filename, const z::string& mode, const MkPathT& mkp = noMakePath) : _val(0) {open(filename, mode, mkp);}
-        inline file(const z::string& dir, const z::string& filename, const z::string& mode, const MkPathT& mkp = noMakePath) : _val(0) {open(dir, filename, mode, mkp);}
-        inline ~file() {close();}
-        inline const z::string& name() const {return _name;}
-        inline FILE* val() const {return _val;}
-    private:
-        z::string _name;
-        FILE* _val;
     };
 
     struct ofile {
         inline operator bool() {return _os.is_open();}
         inline std::ostream& operator()() {return _os;}
-        inline ofile(const z::string& filename) {_name = filename; _os.open(s2e(_name).c_str());}
         inline const z::string& name() const {return _name;}
+        ofile(const z::string& filename);
     private:
         z::string _name;
         std::ofstream _os;
@@ -394,11 +386,18 @@ namespace z {
 
     struct Log {
         struct Out{};
-        static Log& msg();
+        static inline Log& msg() {return s_msg;}
+        static inline Log& err() {return s_err;}
+        static inline Log& dbg() {return s_dbg;}
         Log& operator <<(Out);
         template <typename T> inline Log& operator <<(const T& val) {_ss << val; return ref(this);}
     private:
+        inline Log() {}
+        inline Log(const Log& src) {unused(src);}
         std::stringstream _ss;
+        static Log s_msg;
+        static Log s_err;
+        static Log s_dbg;
     };
 
     class Exception {

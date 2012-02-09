@@ -16,5 +16,5 @@ z::string Dir::cleanPath(const z::string& path) {
 }
 
 bool Dir::removePath(const z::string& path) {
-    return (0 == ::remove(path.c_str()));
+    return (0 == ::remove(z::s2e(path).c_str()));
 }

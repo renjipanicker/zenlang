@@ -4,7 +4,7 @@
 
 bool Url::Exists(const url& u) {
     struct stat b;
-    return (0 == stat(u.path.c_str(), &b));
+    return (0 == stat(z::s2e(u.path).c_str(), &b));
 }
 
 bool Url::FileExists(const z::string& path) {
@@ -13,14 +13,15 @@ bool Url::FileExists(const z::string& path) {
 }
 
 void Url::Parse(Url::url& u, const z::string& urlstr) {
-    const std::string url_s = urlstr.val();
-    std::string protocol;
-    std::string host;
-    std::string path;
-    std::string query;
+    const z::string::sstringT url_s = urlstr.val();
+    z::string::sstringT protocol;
+    z::string::sstringT host;
+    z::string::sstringT path;
+    z::string::sstringT query;
 
-    const std::string prot_end("://");
-    std::string::const_iterator prot_i = std::search(url_s.begin(), url_s.end(), prot_end.begin(), prot_end.end());
+    const z::string zprot_end("://");
+    const z::string::sstringT prot_end = zprot_end.val();
+    z::string::sstringT::const_iterator prot_i = std::search(url_s.begin(), url_s.end(), prot_end.begin(), prot_end.end());
     if( prot_i != url_s.end() ) {
         // protocol detected, parse as url
         protocol.reserve(std::distance(url_s.begin(), prot_i));
@@ -37,10 +38,10 @@ void Url::Parse(Url::url& u, const z::string& urlstr) {
         query.assign(query_i, url_s.end());
     } else {
         // protocol not detected, assume regular file path
-        protocol = "file";
-        host = "";
+        protocol = z::string("file").val();
+        host = z::string("").val();
         path = url_s;
-        query = "";
+        query = z::string("").val();;
     }
 
     u._fullUrl<url>(urlstr);

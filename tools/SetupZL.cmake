@@ -1,6 +1,13 @@
+# These are the possible values for CMAKE_BUILD_TYPE:
 IF(CMAKE_CONFIGURATION_TYPES)
-    SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;" CACHE STRING "" FORCE)
+    SET(CMAKE_CONFIGURATION_TYPES "Debug;Release;RelWithDebInfo;MinSizeRel" CACHE STRING "" FORCE)
 ENDIF(CMAKE_CONFIGURATION_TYPES)
+
+# As a matter of convenience, if the current binary dir ends with debug or dbg, create a Debug build.
+GET_FILENAME_COMPONENT(CDIR "${CMAKE_CURRENT_BINARY_DIR}" NAME)
+IF(CDIR STREQUAL "debug" OR CDIR STREQUAL "dbg")
+SET(CMAKE_BUILD_TYPE "Debug")
+ENDIF()
 
 SET(ZENLANG_LIBRARIES)
 
