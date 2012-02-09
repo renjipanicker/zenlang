@@ -33,94 +33,264 @@ namespace z {
 
     typedef std::size_t size;
 
-    struct string {
-        typedef std::string::size_type size_type;
+    typedef char     char08_t;
+    typedef uint16_t char16_t;
+    typedef uint32_t char32_t;
+
+    // define char_t as 8, 16 or 32 bit
+#if defined(CHAR_WIDTH_08)
+    typedef char08_t char_t;
+#elif defined(CHAR_WIDTH_16)
+    typedef char16_t char_t;
+#elif defined(CHAR_WIDTH_32)
+    typedef char32_t char_t;
+#else
+#error CHAR_WIDTH not defined
+#endif
+
+    // base class for all string types
+    template <typename charT, typename stringT>
+    struct bstring {
+        typedef std::basic_string<charT> sstringT;
+
+        typedef typename sstringT::size_type size_type;
 #if defined(WIN32)
         static const size_type npos  = -1;
 #else
-        static const size_type npos  = std::string::npos;
+        static const size_type npos  = sstringT::npos;
 #endif
-        static inline char_t lower(const char_t& ch) {
+        static inline charT lower(const charT& ch) {
             if((ch >= 'A') && (ch <= 'Z'))
                 return 'a' + (ch - 'A');
             return ch;
         }
 
-        explicit inline string() {}
-        inline string(const char* s) : _val(s) {}
-        inline string(const std::string& s) : _val(s) {}
-        inline string(const size_type& count, const char_t& ch) : _val(count, ch) {}
+        explicit inline bstring() {}
+        inline bstring(const charT* s) : _val(s) {}
+        inline bstring(const sstringT& s) : _val(s) {}
+        inline bstring(const size_type& count, const charT& ch) : _val(count, ch) {}
 
-        typedef std::string::iterator iterator;
+        typedef typename sstringT::iterator iterator;
         inline iterator begin() {return _val.begin();}
         inline iterator end() {return _val.end();}
 
-        typedef std::string::const_iterator const_iterator;
+        typedef typename sstringT::const_iterator const_iterator;
         inline const_iterator begin() const {return _val.begin();}
         inline const_iterator end() const {return _val.end();}
 
         inline size_type size() const {return _val.size();}
         inline size_type length() const {return _val.length();}
 
-        inline bool operator==(const z::string& rhs) const {return (_val == rhs._val);}
-        inline bool operator!=(const z::string& rhs) const {return (_val != rhs._val);}
-        inline bool operator< (const z::string& rhs) const {return (_val <  rhs._val);}
-        inline bool operator> (const z::string& rhs) const {return (_val >  rhs._val);}
+        inline bool operator==(const stringT& rhs) const {return (_val == rhs._val);}
+        inline bool operator!=(const stringT& rhs) const {return (_val != rhs._val);}
+        inline bool operator< (const stringT& rhs) const {return (_val <  rhs._val);}
+        inline bool operator> (const stringT& rhs) const {return (_val >  rhs._val);}
 
-        inline char_t at(const size_type& idx) const {return _val.at(idx);}
-        inline z::string substr(const size_type& from, const size_type& len) const {return _val.substr(from, len);}
-        inline z::string substr(const size_type& from) const {return _val.substr(from);}
+        inline charT at(const size_type& idx) const {return _val.at(idx);}
+        inline stringT substr(const size_type& from, const size_type& len) const {return _val.substr(from, len);}
+        inline stringT substr(const size_type& from) const {return _val.substr(from);}
 
-        inline size_type find(const char_t& s) const {return _val.find(s);}
-        inline size_type find(const z::string& s) const {return _val.find(s._val);}
-        inline size_type find(const z::string& s, const size_type& from) const {return _val.find(s._val, from);}
-        inline size_type rfind(const char_t& s) const {return _val.rfind(s);}
-        inline size_type rfind(const z::string& s) const {return _val.rfind(s._val);}
-        inline z::string replace(const size_type& from, const size_type& len, const z::string& to) {return _val.replace(from, len, to._val);}
+        inline size_type find(const charT& s) const {return _val.find(s);}
+        inline size_type find(const stringT& s) const {return _val.find(s._val);}
+        inline size_type find(const stringT& s, const size_type& from) const {return _val.find(s._val, from);}
+        inline size_type rfind(const charT& s) const {return _val.rfind(s);}
+        inline size_type rfind(const stringT& s) const {return _val.rfind(s._val);}
+        inline stringT   replace(const size_type& from, const size_type& len, const stringT& to) {return _val.replace(from, len, to._val);}
 
-        inline void replace(const z::string& search, const z::string& replace) {
-            for(z::string::size_type next = _val.find(search._val); next != z::string::npos;next = _val.find(search._val, next)) {
+        inline void replace(const stringT& search, const stringT& replace) {
+            for(typename stringT::size_type next = _val.find(search._val); next != stringT::npos;next = _val.find(search._val, next)) {
                 _val.replace(next, search.length(), replace._val);
                 next += replace.length();
             }
         }
 
-        inline void append(const char_t& rhs) {_val += rhs;}
-        inline void append(const z::string& rhs) {_val.append(rhs._val);}
+        inline void append(const charT& rhs) {_val += rhs;}
+        inline void append(const stringT& rhs) {_val.append(rhs._val);}
         inline void clear() {_val.clear();}
 
-        inline z::string& operator= (const char_t& rhs) {_val = rhs; return *this;}
-        inline z::string& operator= (const char_t* rhs) {_val = rhs; return *this;}
-        inline z::string& operator= (const z::string& rhs) {_val = rhs._val; return *this;}
-        inline z::string& operator+=(const z::string& rhs) {append(rhs); return *this;}
-        inline z::string& operator+=(const char_t& rhs) {append(rhs); return *this;}
-        inline char_t operator[](const size_type& idx) const {return _val[idx];}
+        inline stringT& operator= (const charT& rhs) {_val = rhs; return static_cast<stringT&>(*this);}
+        inline stringT& operator= (const charT* rhs) {_val = rhs; return static_cast<stringT&>(*this);}
+        inline stringT& operator= (const stringT& rhs) {_val = rhs._val; return static_cast<stringT&>(*this);}
+        inline stringT& operator= (const sstringT& rhs) {_val = rhs; return static_cast<stringT&>(*this);}
+        inline stringT& operator+=(const stringT& rhs) {append(rhs); return static_cast<stringT&>(*this);}
+        inline stringT& operator+=(const charT& rhs) {append(rhs); return static_cast<stringT&>(*this);}
 
-        inline z::string lower() const {
-            z::string r;
-            for(std::string::const_iterator it = _val.begin(); it != _val.end(); ++it) {
-                const char_t& ch = *it;
+        inline charT operator[](const size_type& idx) const {return _val[idx];}
+
+        template <typename T>
+        inline stringT& arg(const stringT& key, const T& value);
+
+        template <typename T>
+        inline T to() const;
+
+        inline stringT lower() const {
+            stringT r;
+            for(typename sstringT::const_iterator it = _val.begin(); it != _val.end(); ++it) {
+                const charT& ch = *it;
                 r += lower(ch);
             }
             return r;
         }
 
-        inline const std::string& val() const {return _val;}
-        inline const char_t* c_str() const {return _val.c_str();}
+        inline const sstringT& val() const {return _val;}
+        inline const charT* c_str() const {return _val.c_str();}
         inline const char* toUtf8() const {return _val.c_str();}
 
-        template <typename T> inline z::string& arg(const z::string& key, const T& value);
-        template <typename T> inline T to() const {
-            std::stringstream ss(_val);
-            T val;
-            ss >> val;
-            return val;
-        }
-
-    private:
-        std::string _val;
+    protected:
+        sstringT _val;
     };
 
+    // utf8 string
+    struct string08 : public bstring<char08_t, string08 > {
+        typedef bstring<char08_t, string08 > BaseT;
+
+//        inline void append(const char* str) {
+//            for(const char* c = str; *c != 0; ++c) {
+//                _val += (z::char_t)(*c);
+//            }
+//        }
+
+        explicit inline string08() : BaseT() {}
+        inline string08(const char* s) : BaseT() {append(s);}
+        inline string08(const BaseT::sstringT& s) : BaseT(s) {}
+        inline string08(const size_type& count, const char_t& ch) : BaseT(count, ch) {}
+    };
+
+    // 16 bit unicode string
+    struct string16 : public bstring<char16_t, string16 > {
+        typedef bstring<char16_t, string16 > BaseT;
+
+//        inline void append(const char* str) {
+//            for(const char* c = str; *c != 0; ++c) {
+//                _val += (z::char_t)(*c);
+//            }
+//        }
+
+        explicit inline string16() : BaseT() {}
+        inline string16(const char* s) : BaseT() {append(s);}
+        inline string16(const BaseT::sstringT& s) : BaseT(s) {}
+        inline string16(const size_type& count, const char_t& ch) : BaseT(count, ch) {}
+    };
+
+    // 32 bit unicode string
+    struct string32 : public bstring<char32_t, string32 > {
+        typedef bstring<char32_t, string32 > BaseT;
+
+        inline void append08(const char* str) {
+            for(const char* c = str; *c != 0; ++c) {
+                _val += (z::char_t)(*c);
+            }
+        }
+
+        explicit inline string32() : BaseT() {}
+        inline string32(const char* s) : BaseT() {append08(s);}
+        inline string32(const BaseT::sstringT& s) : BaseT(s) {}
+        inline string32(const size_type& count, const char_t& ch) : BaseT(count, ch) {}
+    };
+
+    // define utf8 as 8bitstring
+    typedef string08 estring;
+
+    // define unicode as 32 bit string
+    typedef string32 unicode;
+
+    // define string as one of 8, 16 or 32 bit string
+#if defined(CHAR_WIDTH_08)
+    typedef string08 string;
+#elif defined(CHAR_WIDTH_16)
+    typedef string16 string;
+#elif defined(CHAR_WIDTH_32)
+    typedef string32 string;
+#endif
+
+    // convert between utf8 and 32 bit strings
+    z::string08 c32to08(const z::string32& in);
+    z::string32 c08to32(const z::string08& in);
+
+    // convert between utf8 and 16 bit strings
+    z::string08 c16to08(const z::string16& in);
+    z::string16 c08to16(const z::string08& in);
+
+    // convert between 32 bit and 16 bit strings (implemented as direct copy operations)
+    z::string32 c16to32(const z::string16& in);
+    z::string16 c32to16(const z::string32& in);
+
+    // conversion from string to utf8
+    inline z::estring s2e(const z::string& in) {
+#if defined(CHAR_WIDTH_08)
+        return in;
+#elif defined(CHAR_WIDTH_16)
+        return c16to08(in);
+#elif defined(CHAR_WIDTH_32)
+        return c32to08(in);
+#endif
+    }
+
+    // conversion from utf8 to string
+    inline z::string e2s(const z::estring& in) {
+#if defined(CHAR_WIDTH_08)
+        return in;
+#elif defined(CHAR_WIDTH_16)
+        return c08to16(in);
+#elif defined(CHAR_WIDTH_32)
+        return c08to32(in);
+#endif
+    }
+
+    typedef std::basic_ostream<char_t> ostream;
+}
+
+inline z::string operator+(const z::char_t* lhs, const z::string& rhs) {return lhs + rhs.val();}
+inline z::string operator+(const z::string& lhs, const z::char_t* rhs) {return (lhs.val() + rhs);}
+inline z::string operator+(const z::string& lhs, const z::char_t rhs) {return (lhs.val() + rhs);}
+inline z::string operator+(const z::string& lhs, const z::string& rhs) {return (lhs.val() + rhs.val());}
+
+inline z::string operator+(const z::string& lhs, const char* rhs) {
+    z::string rv = lhs;
+    rv.append(rhs);
+    return rv;
+}
+
+//template <typename charT, typename stringT>
+//inline std::basic_ostream<charT>& operator<<(std::basic_ostream<charT>& os, const z::bstring<charT, stringT>& val) {
+//    os << val.val();
+//    return os;
+//}
+
+template <typename charT, typename stringT>
+inline std::basic_ostream<charT>& operator<<(std::basic_ostream<charT>& os, const z::bstring<charT, stringT>& val) {
+    os << val.val();
+    return os;
+}
+
+inline std::ostream& operator<<(std::ostream& os, const z::string& val) {
+    os << z::s2e(val);
+    return os;
+}
+
+template <typename charT, typename stringT>
+template <typename T>
+inline stringT& z::bstring<charT, stringT>::arg(const stringT& key, const T& value) {
+    std::basic_stringstream<charT> skey;
+    skey << stringT("%{") << key << stringT("}");
+    std::basic_stringstream<charT> sval;
+    sval << value;
+    sstringT zk(skey.str());
+    sstringT zv(skey.str());
+    replace(zk, zv);
+    return z::ref(static_cast<stringT*>(this));
+}
+
+template <typename charT, typename stringT>
+template <typename T>
+inline T z::bstring<charT, stringT>::to() const {
+    std::basic_stringstream<charT> ss(_val);
+    T val;
+    ss >> val;
+    return val;
+}
+
+namespace z {
     struct datetime {
         inline datetime() : _val(0) {}
         inline datetime(const int64_t& val) : _val(val) {}
@@ -151,15 +321,19 @@ namespace z {
         static const z::string sep;
         static bool exists(const z::string& path);
         static int mkdir(const z::string& path);
+
+        /// makes a path upto the second-last component, unless path is terminated by a /
+        static void mkpath(const z::string& filename);
+
         static z::string cwd();
 
-        void open(const z::string& filename, const z::string& mode, const MkPathT& mkpath = noMakePath);
-        void open(const z::string& dir, const z::string& filename, const z::string& mode, const MkPathT& mkpath = noMakePath);
+        void open(const z::string& filename, const z::string& mode, const MkPathT& mkp = noMakePath);
+        void open(const z::string& dir, const z::string& filename, const z::string& mode, const MkPathT& mkp = noMakePath);
         void close();
 
         inline file() : _val(0) {}
-        inline file(const z::string& filename, const z::string& mode, const MkPathT& mkpath = noMakePath) : _val(0) {open(filename, mode, mkpath);}
-        inline file(const z::string& dir, const z::string& filename, const z::string& mode, const MkPathT& mkpath = noMakePath) : _val(0) {open(dir, filename, mode, mkpath);}
+        inline file(const z::string& filename, const z::string& mode, const MkPathT& mkp = noMakePath) : _val(0) {open(filename, mode, mkp);}
+        inline file(const z::string& dir, const z::string& filename, const z::string& mode, const MkPathT& mkp = noMakePath) : _val(0) {open(dir, filename, mode, mkp);}
         inline ~file() {close();}
         inline const z::string& name() const {return _name;}
         inline FILE* val() const {return _val;}
@@ -167,29 +341,17 @@ namespace z {
         z::string _name;
         FILE* _val;
     };
-}
 
-inline z::string operator+(const char_t* lhs, const z::string& rhs) {return (lhs + rhs.val());}
-inline z::string operator+(const z::string& lhs, const char_t* rhs) {return (lhs.val() + rhs);}
-inline z::string operator+(const z::string& lhs, const char_t rhs) {return (lhs.val() + rhs);}
-inline z::string operator+(const z::string& lhs, const z::string& rhs) {return (lhs.val() + rhs.val());}
+    struct ofile {
+        inline operator bool() {return _os.is_open();}
+        inline std::ostream& operator()() {return _os;}
+        inline ofile(const z::string& filename) {_name = filename; _os.open(s2e(_name).c_str());}
+        inline const z::string& name() const {return _name;}
+    private:
+        z::string _name;
+        std::ofstream _os;
+    };
 
-inline std::ostream& operator<<(std::ostream& os, const z::string& val) {
-    os << val.val();
-    return os;
-}
-
-template <typename T>
-inline z::string& z::string::arg(const z::string& key, const T& value) {
-    std::stringstream skey;
-    skey << "%{" << key << "}";
-    std::stringstream sval;
-    sval << value;
-    replace(skey.str(), sval.str());
-    return z::ref(this);
-}
-
-namespace z {
     template <typename T>
     inline z::string type_name() {
         const char* name = typeid(T).name();
@@ -227,8 +389,17 @@ namespace z {
         z::string _text;
     };
 
-    inline void mlog(const z::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get() << std::endl;}
-    inline void elog(const z::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get() << std::endl;}
+    inline void mlog(const z::string& src, const z::fmt& msg) {std::cout << s2e(src) << ":" << s2e(msg.get()) << std::endl;}
+    inline void elog(const z::string& src, const z::fmt& msg) {std::cout << s2e(src) << ":" << s2e(msg.get()) << std::endl;}
+
+    struct Log {
+        struct Out{};
+        static Log& msg();
+        Log& operator <<(Out);
+        template <typename T> inline Log& operator <<(const T& val) {_ss << val; return ref(this);}
+    private:
+        std::stringstream _ss;
+    };
 
     class Exception {
     public:
@@ -898,15 +1069,6 @@ namespace z {
         InitT* _next;
     };
 
-    struct Log {
-        struct Out{};
-        static Log& get();
-        Log& operator <<(Out);
-        template <typename T> inline Log& operator <<(const T& val) {_ss << val; return ref(this);}
-    private:
-        std::stringstream _ss;
-    };
-
     #if defined(UNIT_TEST)
     struct TestResult {
         ~TestResult();
@@ -1001,15 +1163,21 @@ namespace z {
 #endif
 
     struct Application {
+        // Application object can be instantiated only from an executable
+#if defined(Z_EXE)
+    public:
+#else
+    private:
+#endif
         Application(int argc, char* argv[]);
         ~Application();
-    #if defined(WIN32)
+#if defined(WIN32)
+    public:
         static HINSTANCE instance();
-    #endif
-#if defined(Z_EXE)
+#endif
+    public:
         int exec();
         int exit(const int& code);
-#endif
     };
 }
 

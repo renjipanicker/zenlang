@@ -266,7 +266,7 @@ void Ast::NodeFactory::aImportStatement(const Ast::Token& pos, const Ast::Access
         for(Ast::NamespaceList::List::const_iterator it = statement.list().begin(); it != statement.list().end(); ++it) {
             const Ast::Token& name = it->get().name();
             filename += sep;
-            filename += name.text();
+            filename += name.string();
             sep = "/";
         }
         filename += ".ipp";
@@ -1831,18 +1831,14 @@ Ast::ChildFunctionDefn* Ast::NodeFactory::aEnterAutoAnonymousFunction(const Ast:
 }
 
 Ast::ConstantFloatExpr& Ast::NodeFactory::aConstantFloatExpr(const Ast::Token& token) {
-    float value = 0;
-    sscanf(token.text(), "%f", &value);
-
+    float value = token.string().to<float>();
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "float");
     Ast::ConstantFloatExpr& expr = unit().addNode(new Ast::ConstantFloatExpr(token, qTypeSpec, value));
     return expr;
 }
 
 Ast::ConstantDoubleExpr& Ast::NodeFactory::aConstantDoubleExpr(const Ast::Token& token) {
-    double value = 0;
-    sscanf(token.text(), "%lf", &value);
-
+    double value = token.string().to<double>();
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "double");
     Ast::ConstantDoubleExpr& expr = unit().addNode(new Ast::ConstantDoubleExpr(token, qTypeSpec, value));
     return expr;
@@ -1868,27 +1864,21 @@ Ast::ConstantCharExpr& Ast::NodeFactory::aConstantCharExpr(const Ast::Token& tok
 }
 
 Ast::ConstantLongExpr& Ast::NodeFactory::aConstantLongExpr(const Ast::Token& token) {
-    long value = 0;
-    sscanf(token.text(), "%ld", &value);
-
+    long value = token.string().to<long>();
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "long");
     Ast::ConstantLongExpr& expr = unit().addNode(new Ast::ConstantLongExpr(token, qTypeSpec, value));
     return expr;
 }
 
 Ast::ConstantIntExpr& Ast::NodeFactory::aConstantIntExpr(const Ast::Token& token) {
-    int value = 0;
-    sscanf(token.text(), "%d", &value);
-
+    int value = token.string().to<int>();
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "int");
     Ast::ConstantIntExpr& expr = unit().addNode(new Ast::ConstantIntExpr(token, qTypeSpec, value));
     return expr;
 }
 
 Ast::ConstantShortExpr& Ast::NodeFactory::aConstantShortExpr(const Ast::Token& token) {
-    int value = 0;
-    sscanf(token.text(), "%d", &value);
-
+    int value = token.string().to<int>();
     const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "short");
     Ast::ConstantShortExpr& expr = unit().addNode(new Ast::ConstantShortExpr(token, qTypeSpec, value));
     return expr;

@@ -73,7 +73,7 @@ z::string Lexer::Impl::getText(const bool& rw) {
 
 TokenData Lexer::Impl::token(Ast::NodeFactory& factory, const int& id, const bool& rw) {
     z::string txt = getText(rw);
-    return TokenData::createT(factory.filename().c_str(), id, _row, _cursor-_sol, txt);
+    return TokenData::createT(factory.filename(), id, _row, _cursor-_sol, txt);
 }
 
 void Lexer::Impl::send(Ast::NodeFactory& factory, const int& id) {
@@ -116,7 +116,7 @@ inline bool Lexer::Impl::trySendId(Ast::NodeFactory& factory, const Ast::TypeSpe
 
 inline void Lexer::Impl::sendId(Ast::NodeFactory& factory) {
     z::string txt = getText(false);
-    Ast::Token tok(factory.filename().c_str(), 0, 0, txt);
+    Ast::Token tok(factory.filename(), 0, 0, txt);
 
     if(_lastToken == ZENTOK_SCOPE) {
         const Ast::TypeSpec* child = factory.unit().currentTypeRefHasChild(tok);

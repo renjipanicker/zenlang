@@ -22,6 +22,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 #include <memory.h>
+#include <errno.h>
 #include <sys/stat.h>
 #include <assert.h>
 
@@ -46,6 +47,10 @@
     #include <regex.h>
 #endif
 
+//#define CHAR_WIDTH_08
+//#define CHAR_WIDTH_16
+#define CHAR_WIDTH_32
+
 #if defined(WIN32)
     #define snprintf _snprintf_s
     #define sprintf sprintf_s
@@ -53,8 +58,6 @@
     #pragma warning (disable:4355) // this used in base ctor initialization.
 #else
 #endif
-
-typedef char char_t;
 
 #if defined __cplusplus
     #include <string>

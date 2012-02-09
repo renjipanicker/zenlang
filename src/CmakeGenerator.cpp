@@ -10,50 +10,50 @@ public:
     void run();
 private:
     inline void generateConfig(const Ast::Config& config);
-    inline void generateProject(const Ast::Config& config);
+    inline void generateProject(const Ast::Config& config, z::ofile& os);
 private:
     const Ast::Project& _project;
 //@    FILE* _fpPro;
 };
 
-inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
+inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config, z::ofile& os) {
 //@    OutputFile ofPro(_fpPro, config.srcdir(), "CMakeLists.txt");unused(ofPro);
-    z::file ofPro(config.srcdir(), "CMakeLists.txt", "w", z::file::makePath);
-    fprintf(ofPro.val(), "CMAKE_MINIMUM_REQUIRED(VERSION 2.6)\n");
-    fprintf(ofPro.val(), "PROJECT(%s)\n", _project.name().c_str());
-    fprintf(ofPro.val(), "SET(ZEN_ROOT \"%s\")\n", config.zlibPath().c_str());
+//    z::file ofPro(config.srcdir(), "CMakeLists.txt", "w", z::file::makePath);
+    os() << "CMAKE_MINIMUM_REQUIRED(VERSION 2.6)" << std::endl;
+    os() << "PROJECT(" << _project.name() << ")\n";
+    os() << "SET(ZEN_ROOT \"" << config.zlibPath() << "\")" << std::endl;
     if(config.gui()) {
-        fprintf(ofPro.val(), "SET(ZEN_GUI 1)\n");
+        os() << "SET(ZEN_GUI 1)" << std::endl;
     }
-    fprintf(ofPro.val(), "INCLUDE(${ZEN_ROOT}/tools/SetupZL.cmake)\n");
-    fprintf(ofPro.val(), "\n");
+    os() << "INCLUDE(${ZEN_ROOT}/tools/SetupZL.cmake)" << std::endl;
+    os() << std::endl;
 
-    fprintf(ofPro.val(), "INCLUDE_DIRECTORIES(\"${ZEN_ROOT}/include/\")\n");
-    fprintf(ofPro.val(), "LINK_DIRECTORIES(\"${ZEN_ROOT}/lib/\")\n");
+    os() << "INCLUDE_DIRECTORIES(\"${ZEN_ROOT}/include/\")" << std::endl;
+    os() << "LINK_DIRECTORIES(\"${ZEN_ROOT}/lib/\")" << std::endl;
 
-    fprintf(ofPro.val(), "IF(CMAKE_COMPILER_IS_GNUCXX)\n");
-    fprintf(ofPro.val(), "    ADD_DEFINITIONS( \"-Wall\" )\n");
-    fprintf(ofPro.val(), "ENDIF(CMAKE_COMPILER_IS_GNUCXX)\n");
-    fprintf(ofPro.val(), "\n");
+    os() << "IF(CMAKE_COMPILER_IS_GNUCXX)" << std::endl;
+    os() << "    ADD_DEFINITIONS( \"-Wall\" )" << std::endl;
+    os() << "ENDIF(CMAKE_COMPILER_IS_GNUCXX)" << std::endl;
+    os() << std::endl;
 
     if(config.debug()) {
-        fprintf(ofPro.val(), "ADD_DEFINITIONS( \"-DDEBUG\" )\n");
+        os() << "ADD_DEFINITIONS( \"-DDEBUG\" )" << std::endl;
     }
 
     if(config.test()) {
-        fprintf(ofPro.val(), "ADD_DEFINITIONS( \"-DUNIT_TEST\" )\n");
+        os() << "ADD_DEFINITIONS( \"-DUNIT_TEST\" )" << std::endl;
     }
 
-    fprintf(ofPro.val(), "INCLUDE_DIRECTORIES(\"${CMAKE_CURRENT_SOURCE_DIR}\")\n");
-    fprintf(ofPro.val(), "INCLUDE_DIRECTORIES(\"%s\")\n", config.apidir().c_str());
-    fprintf(ofPro.val(), "INCLUDE_DIRECTORIES(\"%s\")\n", config.srcdir().c_str());
+    os() << "INCLUDE_DIRECTORIES(\"${CMAKE_CURRENT_SOURCE_DIR}\")" << std::endl;
+    os() << "INCLUDE_DIRECTORIES(\"" << config.apidir() << "\")" << std::endl;
+    os() << "INCLUDE_DIRECTORIES(\"" << config.srcdir() << "\")" << std::endl;
     for(Ast::Config::PathList::const_iterator it = config.includePathList().begin(); it != config.includePathList().end(); ++it) {
         const z::string& dir = *it;
-        fprintf(ofPro.val(), "INCLUDE_DIRECTORIES(\"%s\")\n", dir.c_str());
+        os() << "INCLUDE_DIRECTORIES(\"" << dir << "\")" << std::endl;
     }
-    fprintf(ofPro.val(), "\n");
+    os() << std::endl;
 
-    fprintf(ofPro.val(), "SET(project_SOURCES ${project_SOURCES} ${ZEN_ROOT}/include/base/zenlang.cpp)\n");
+    os() << "SET(project_SOURCES ${project_SOURCES} ${ZEN_ROOT}/include/base/zenlang.cpp)" << std::endl;
 
     z::string zexePath = config.zexePath();
     zexePath.replace("\\", "/");
@@ -63,42 +63,42 @@ inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
         z::string ext = getExtention(filename);
 
         if((_project.hppExt().find(ext) != z::string::npos) || (_project.cppExt().find(ext) != z::string::npos)) {
-            fprintf(ofPro.val(), "SET(project_SOURCES ${project_SOURCES} %s)\n", filename.c_str());
+            os() << "SET(project_SOURCES ${project_SOURCES} " << filename << ")" << std::endl;
         } else if(_project.zppExt().find(ext) != z::string::npos) {
             z::string debugFlag = config.debug()?" --debug":"";
             z::string testFlag = config.test()?" ":" --test";
-            fprintf(ofPro.val(), "ADD_CUSTOM_COMMAND(\n");
-            fprintf(ofPro.val(), "    COMMAND \"%s\"%s%s -c \"%s\"\n", zexePath.c_str(), debugFlag.c_str(), testFlag.c_str(), filename.c_str());
-            fprintf(ofPro.val(), "    OUTPUT \"%s.cpp\"\n", basename.c_str());
-            fprintf(ofPro.val(), "    DEPENDS \"%s\"\n", filename.c_str());
-            fprintf(ofPro.val(), ")\n");
-            fprintf(ofPro.val(), "SET(project_SOURCES ${project_SOURCES} %s.cpp)\n", basename.c_str());
+            os() << "ADD_CUSTOM_COMMAND(" << std::endl;
+            os() << "    COMMAND \"" << zexePath << "\"" << debugFlag << testFlag << " -c \"" << filename << "\"" << std::endl;
+            os() << "    OUTPUT \"" << basename << ".cpp\"" << std::endl;
+            os() << "    DEPENDS \"" << filename << "\"" << std::endl;
+            os() << ")" << std::endl;
+            os() << "SET(project_SOURCES ${project_SOURCES} " << basename << ".cpp)" << std::endl;
         } else {
             throw z::Exception("CmakeGenerator", z::fmt("Unknown file type for: %{s}").add("s", filename));
         }
     }
-    fprintf(ofPro.val(), "\n");
+    os() << std::endl;
 
     switch(config.buildMode()) {
         case Ast::Config::BuildMode::Executable:
-            fprintf(ofPro.val(), "ADD_DEFINITIONS( \"-DZ_EXE\" )\n");
+            os() << "ADD_DEFINITIONS( \"-DZ_EXE\" )" << std::endl;
             if(config.gui()) {
-                fprintf(ofPro.val(), "IF(WIN32)\n");
-                fprintf(ofPro.val(), "    ADD_EXECUTABLE(%s WIN32 ${project_SOURCES})\n", _project.name().c_str());
-                fprintf(ofPro.val(), "ELSE(WIN32)\n");
-                fprintf(ofPro.val(), "    ADD_EXECUTABLE(%s ${project_SOURCES})\n", _project.name().c_str());
-                fprintf(ofPro.val(), "ENDIF(WIN32)\n");
+                os() << "IF(WIN32)" << std::endl;
+                os() << "    ADD_EXECUTABLE(" << _project.name() << " WIN32 ${project_SOURCES})" << std::endl;
+                os() << "ELSE(WIN32)" << std::endl;
+                os() << "    ADD_EXECUTABLE(" << _project.name() << " ${project_SOURCES})" << std::endl;
+                os() << "ENDIF(WIN32)" << std::endl;
             } else {
-                fprintf(ofPro.val(), "ADD_EXECUTABLE(%s ${project_SOURCES})\n", _project.name().c_str());
+                os() << "ADD_EXECUTABLE(" << _project.name() << " ${project_SOURCES})" << std::endl;
             }
             break;
         case Ast::Config::BuildMode::Shared:
-            fprintf(ofPro.val(), "ADD_DEFINITIONS( \"-DZ_DLL\" )\n");
-            fprintf(ofPro.val(), "ADD_LIBRARY(%s SHARED ${project_SOURCES})\n", _project.name().c_str());
+            os() << "ADD_DEFINITIONS( \"-DZ_DLL\" )" << std::endl;
+            os() << "ADD_LIBRARY(" << _project.name() << " SHARED ${project_SOURCES})" << std::endl;
             break;
         case Ast::Config::BuildMode::Static:
-            fprintf(ofPro.val(), "ADD_DEFINITIONS( \"-DZ_LIB\" )\n");
-            fprintf(ofPro.val(), "ADD_LIBRARY(%s STATIC ${project_SOURCES})\n", _project.name().c_str());
+            os() << "ADD_DEFINITIONS( \"-DZ_LIB\" )" << std::endl;
+            os() << "ADD_LIBRARY(" << _project.name() << " STATIC ${project_SOURCES})" << std::endl;
             break;
         case Ast::Config::BuildMode::Compile:
             throw z::Exception("CmakeGenerator", z::fmt("Compile mode not allowed during project generaion"));
@@ -106,19 +106,21 @@ inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config) {
 
     for(Ast::Config::PathList::const_iterator it = config.linkFileList().begin(); it != config.linkFileList().end(); ++it) {
         const z::string& filename = *it;
-        fprintf(ofPro.val(), "TARGET_LINK_LIBRARIES(%s %s)\n", _project.name().c_str(), filename.c_str());
+        os() << "TARGET_LINK_LIBRARIES(" << _project.name() << " " << filename << ")" << std::endl;
     }
 
     if(config.gui()) {
-        fprintf(ofPro.val(), "TARGET_LINK_LIBRARIES(%s ${ZENLANG_LIBRARIES})\n", _project.name().c_str());
-        fprintf(ofPro.val(), "\n");
+        os() << "TARGET_LINK_LIBRARIES(" << _project.name() << " ${ZENLANG_LIBRARIES})" << std::endl;
+        os() << std::endl;
     }
 }
 inline void CmakeGenerator::Impl::generateConfig(const Ast::Config& config) {
     Compiler compiler(_project, config);
     compiler.compile();
     if(config.buildMode() != Ast::Config::BuildMode::Compile) {
-        generateProject(config);
+        z::file::mkpath(config.srcdir() + "/");
+        z::ofile osPro(config.srcdir() + "/" + "CMakeLists.txt");
+        generateProject(config, osPro);
     }
 }
 

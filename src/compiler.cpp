@@ -5,7 +5,7 @@
 #include "StlcppGenerator.hpp"
 
 inline bool checkFile(const z::string& filename) {
-    return std::ifstream( filename.c_str() ).is_open();
+    return std::ifstream( z::s2e(filename).c_str() ).is_open();
 }
 
 inline z::string Compiler::findImport(const z::string& filename) {
@@ -38,11 +38,11 @@ bool Compiler::compileFile(Ast::Module& module, const z::string& filename, const
             indent += "  ";
         }
         indent += msg;
-        printf("-- %s %s\n", indent.c_str(), filename.c_str());
+        std::cout << "-- " << indent << " " << filename;
     }
 
     std::ifstream is;
-    is.open(filename.c_str(), std::ifstream::in);
+    is.open(z::s2e(filename).c_str(), std::ifstream::in);
     if(is.is_open() == false) {
         throw z::Exception("Compiler", z::fmt("Error opening file %{s}").add("s", filename));
     }
@@ -110,5 +110,6 @@ void Compiler::compile() {
 
 void Compiler::compileString(Ast::Module& module, Lexer& lexer, const z::string& data, const bool& isEof) {
     Ast::NodeFactory factory(module, z::ref(this));
-    lexer.push(factory, data.c_str(), data.size(), isEof);
+    const z::estring edata = z::s2e(data);
+    lexer.push(factory, edata.c_str(), edata.size(), isEof);
 }

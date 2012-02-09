@@ -12,6 +12,149 @@ void trace(const char* txt, ...) {
 }
 #endif
 
+// utf8 conversion code adapted from http://www.codeguru.com/cpp/misc/misc/multi-lingualsupport/article.php/c10451
+#define MASKBITS   0x3F
+#define MASKBYTE   0x80
+#define MASK2BYTES 0xC0
+#define MASK3BYTES 0xE0
+#define MASK4BYTES 0xF0
+#define MASK5BYTES 0xF8
+#define MASK6BYTES 0xFC
+
+z::string08 z::c32to08(const z::string32& in) {
+    z::string08 rv;
+    for(z::string32::size_type i = 0; i < in.size(); i++) {
+        if(in[i] < 0x80) {
+            // 0xxxxxxx
+            rv.append((char08_t)in[i]);
+        } else if(in[i] < 0x800) {
+            // 110xxxxx 10xxxxxx
+            rv.append((char08_t)(MASK2BYTES | (in[i] >> 6)));
+            rv.append((char08_t)(MASKBYTE   | (in[i] & MASKBITS)));
+        } else if(in[i] < 0x10000) {
+            // 1110xxxx 10xxxxxx 10xxxxxx
+            rv.append((char08_t)(MASK3BYTES | (in[i] >> 12)));
+            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 6) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | (in[i] & MASKBITS)));
+        } else if(in[i] < 0x200000) {
+            // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+            rv.append((char08_t)(MASK4BYTES | (in[i] >> 18)));
+            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 12) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 6) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | (in[i] & MASKBITS)));
+        } else if(in[i] < 0x4000000) {
+            // 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+            rv.append((char08_t)(MASK5BYTES | (in[i] >> 24)));
+            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 18) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 12) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 6) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | (in[i] & MASKBITS)));
+        } else if(in[i] < 0x8000000) {
+            // 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+            rv.append((char08_t)(MASK6BYTES | (in[i] >> 30)));
+            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 18) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 12) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 6) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | (in[i] & MASKBITS)));
+        }
+    }
+    return rv;
+}
+
+z::string32 z::c08to32(const z::string08& in) {
+    z::string32 rv;
+    for(z::string08::size_type i = 0; i < in.size();) {
+        char32_t ch;
+        if((in[i] & MASK6BYTES) == MASK6BYTES) {
+            // 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+            ch = ((in[i] & 0x01) << 30) | ((in[i+1] & MASKBITS) << 24) | ((in[i+2] & MASKBITS) << 18) | ((in[i+3] & MASKBITS) << 12) | ((in[i+4] & MASKBITS) << 6) | (in[i+5] & MASKBITS);
+            i += 6;
+        } else if((in[i] & MASK5BYTES) == MASK5BYTES) {
+            // 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
+            ch = ((in[i] & 0x03) << 24) | ((in[i+1] & MASKBITS) << 18) | ((in[i+2] & MASKBITS) << 12) | ((in[i+3] & MASKBITS) << 6) | (in[i+4] & MASKBITS);
+            i += 5;
+        } else if((in[i] & MASK4BYTES) == MASK4BYTES) {
+            // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+            ch = ((in[i] & 0x07) << 18) | ((in[i+1] & MASKBITS) << 12) | ((in[i+2] & MASKBITS) << 6) | (in[i+3] & MASKBITS);
+            i += 4;
+        } else if((in[i] & MASK3BYTES) == MASK3BYTES) {
+            // 1110xxxx 10xxxxxx 10xxxxxx
+            ch = ((in[i] & 0x0F) << 12) | ((in[i+1] & MASKBITS) << 6) | (in[i+2] & MASKBITS);
+            i += 3;
+        } else if((in[i] & MASK2BYTES) == MASK2BYTES) {
+            // 110xxxxx 10xxxxxx
+            ch = ((in[i] & 0x1F) << 6) | (in[i+1] & MASKBITS);
+            i += 2;
+        } else if(in[i] < MASKBYTE) {
+            // 0xxxxxxx
+            ch = in[i];
+            i += 1;
+        }
+        rv.append(ch);
+    }
+    return rv;
+}
+
+z::string16 z::c08to16(const z::string08& in) {
+    z::string16 rv;
+    for(z::string08::size_type i = 0; i < in.size();) {
+        char16_t ch;
+        if((in[i] & MASK3BYTES) == MASK3BYTES) {
+            // 1110xxxx 10xxxxxx 10xxxxxx
+            ch = ((in[i] & 0x0F) << 12) | ( (in[i+1] & MASKBITS) << 6) | (in[i+2] & MASKBITS);
+            i += 3;
+        } else if((in[i] & MASK2BYTES) == MASK2BYTES) {
+            // 110xxxxx 10xxxxxx
+            ch = ((in[i] & 0x1F) << 6) | (in[i+1] & MASKBITS);
+            i += 2;
+        } else if(in[i] < MASKBYTE) {
+            // 0xxxxxxx
+            ch = in[i];
+            i += 1;
+        }
+        rv.append(ch);
+    }
+    return rv;
+}
+
+z::string08 z::c16to08(const z::string16& in) {
+    z::string08 rv;
+    for(z::string16::size_type i = 0; i < in.size(); i++) {
+        if(in[i] < 0x80) {
+            // 0xxxxxxx
+            rv.append((char08_t)in[i]);
+        } else if(in[i] < 0x800) {
+            // 110xxxxx 10xxxxxx
+            rv.append((char08_t)(MASK2BYTES | (in[i] >> 6)));
+            rv.append((char08_t)(MASKBYTE | (in[i] & MASKBITS)));
+        } else if(in[i] < 0x10000) {
+            // 1110xxxx 10xxxxxx 10xxxxxx
+            rv.append((char08_t)(MASK3BYTES | (in[i] >> 12)));
+            rv.append((char08_t)(MASKBYTE | ((in[i] >> 6) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE | (in[i] & MASKBITS)));
+        }
+    }
+    return rv;
+}
+
+z::string32 z::c16to32(const z::string16& in) {
+    z::string32 rv;
+    for(z::string16::size_type i = 0; i < in.size(); i++) {
+        const z::char16_t& ch = in.at(i);
+        rv.append(ch);
+    }
+    return rv;
+}
+
+z::string16 z::c32to16(const z::string32& in) {
+    z::string16 rv;
+    for(z::string32::size_type i = 0; i < in.size(); i++) {
+        const z::char32_t& ch = in.at(i);
+        rv.append(ch);
+    }
+    return rv;
+}
+
 z::mutex::mutex() {
 #if defined(WIN32)
     _val = CreateMutex(0, FALSE, 0);
@@ -46,7 +189,7 @@ int z::mutex::leave() {
 
 void z::regex::compile(const z::string& re) {
 #if !defined(WIN32)
-    int res = regcomp(&_val, re.c_str(), 0);
+    int res = regcomp(&_val, s2e(re).c_str(), 0);
     if(res != 0) {
         throw z::Exception("z::regex", z::fmt("regcomp failed for: %{s}").add("s", re));
     }
@@ -55,7 +198,7 @@ void z::regex::compile(const z::string& re) {
 
 void z::regex::match(const z::string& str) {
 #if !defined(WIN32)
-    int res = regexec(&_val, str.c_str(), 0, 0, 0);
+    int res = regexec(&_val, s2e(str).c_str(), 0, 0, 0);
     char buf[128];
     regerror(res, &_val, buf, 128);
 #endif
@@ -69,20 +212,42 @@ const z::string z::file::sep = "/";
 
 bool z::file::exists(const z::string& path) {
     struct stat b;
-    return (0 == stat(path.c_str(), &b));
+    return (0 == stat(s2e(path).c_str(), &b));
 }
 
 int z::file::mkdir(const z::string& path) {
 #if defined(WIN32)
-    int rv = ::_mkdir(path.c_str());
+    int rv = ::_mkdir(s2e(path).c_str());
 #else
-    int rv = ::mkdir(path.c_str(), S_IRWXU | S_IRGRP | S_IROTH);
+    int rv = ::mkdir(s2e(path).c_str(), S_IRWXU | S_IRGRP | S_IROTH);
 #endif
     if(rv == -1) {
         if(errno == EEXIST)
             return 0;
     }
     return rv;
+}
+
+void z::file::mkpath(const z::string& filename) {
+    z::string base = "";
+    z::string::size_type prev = 0;
+    for(z::string::size_type next = filename.find(sep); next != z::string::npos;next = filename.find(sep, next+1)) {
+        z::string sdir = filename.substr(prev, next - prev);
+        if(sdir.size() > 0) { // in case of multiple / in path
+            base += sdir;
+            base += sep;
+            if(!exists(base)) {
+                int rv = mkdir(s2e(base).c_str());
+                if(rv != 0) {
+                    throw z::Exception("z::file", z::fmt("mkdir failed for: %{s}").add("s", base));
+                }
+            }
+        }
+        prev = next + 1;
+    }
+
+    // check if fname is empty
+    assert(filename.substr(prev).size() > 0);
 }
 
 z::string z::file::cwd() {
@@ -97,30 +262,14 @@ z::string z::file::cwd() {
     return rv;
 }
 
-void z::file::open(const z::string& filename, const z::string& mode, const MkPathT& mkpath) {
+void z::file::open(const z::string& filename, const z::string& mode, const MkPathT& mkp) {
     if(_val != 0) {
         close();
     }
     assert(_val == 0);
 
-    if(mkpath == makePath) {
-        z::string base = "";
-        z::string::size_type prev = 0;
-        for(z::string::size_type next = filename.find(sep); next != z::string::npos;next = filename.find(sep, next+1)) {
-            z::string sdir = filename.substr(prev, next - prev);
-            base += sdir;
-            base += sep;
-            if(!exists(base)) {
-                int rv = mkdir(base.c_str());
-                if(rv != 0) {
-                    throw z::Exception("z::file", z::fmt("mkdir failed for: %{s}").add("s", base));
-                }
-            }
-            prev = next + 1;
-        }
-
-        // check if fname is empty
-        assert(filename.substr(prev).size() > 0);
+    if(mkp == makePath) {
+        mkpath(filename);
     }
 
 #if defined(WIN32)
@@ -129,7 +278,7 @@ void z::file::open(const z::string& filename, const z::string& mode, const MkPat
         _val = 0;
     }
 #else
-    _val = fopen(filename.c_str(), mode.c_str());
+    _val = fopen(s2e(filename).c_str(), s2e(mode).c_str());
 #endif
     if(_val == 0) {
         throw z::Exception("z::file", z::fmt("fopen failed for: %{s}").add("s", filename));
@@ -137,8 +286,8 @@ void z::file::open(const z::string& filename, const z::string& mode, const MkPat
     _name = filename;
 }
 
-void z::file::open(const z::string& dir, const z::string& filename, const z::string& mode, const MkPathT& mkpath) {
-    return open(dir + sep + filename, mode, mkpath);
+void z::file::open(const z::string& dir, const z::string& filename, const z::string& mode, const MkPathT& mkp) {
+    return open(dir + sep + filename, mode, mkp);
 }
 
 void z::file::close() {
@@ -155,7 +304,7 @@ static int s_passedTests = 0;
 
 z::TestResult::~TestResult() {
 //    Log::get() << "PASSED: " << s_passedTests << "/" << s_totalTests << "\n" << Log::Out();
-    printf("PASSED %d/%d\n", s_passedTests, s_totalTests);
+    std::cout << "PASSED " << s_passedTests << "/" << s_totalTests << std::endl;
 }
 
 void z::TestResult::begin(const z::string& name) {
@@ -254,7 +403,6 @@ HINSTANCE z::Application::instance() {
 }
 #endif
 
-#if defined(Z_EXE)
 int z::Application::exec() {
 #if defined(UNIT_TEST)
     TestResult tr; unused(tr);
@@ -296,6 +444,7 @@ int z::Application::exit(const int& code) {
     return code;
 }
 
+#if defined(Z_EXE)
 static void initMain(int argc, char* argv[]) {
 #if defined(UNIT_TEST)
     z::TestInstance* ti = s_testList.next();
@@ -334,12 +483,12 @@ int main(int argc, char* argv[]) {
 #endif // Z_EXE
 
 static z::Log s_log;
-z::Log& z::Log::get() {
+z::Log& z::Log::msg() {
     return s_log;
 }
 
 z::Log& z::Log::operator<<(z::Log::Out) {
-    printf("%s", _ss.str().c_str());
+    std::cout << _ss.str() << std::endl;
     _ss.str("");
     return ref(this);
 }

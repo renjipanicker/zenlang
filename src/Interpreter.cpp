@@ -87,7 +87,7 @@ namespace {
                 ValueMap::iterator vit = _valueMap.find(z::ptr(vdef));
 //                trace("Deleting variable %s from scope\n", vdef.name().text());
                 if(vit == _valueMap.end()) {
-                    throw z::Exception("Interpreter", zfmt(scope.pos(), "Internal error: Variable %{s} not found in scope").add("s", vdef.name().text()));
+                    throw z::Exception("Interpreter", zfmt(scope.pos(), "Internal error: Variable %{s} not found in scope").add("s", vdef.name()));
                 }
                 _valueMap.erase(vit);
             }
@@ -126,7 +126,7 @@ namespace {
         inline const ValuePtr& getValue(const Ast::Token& pos, const Ast::VariableDefn& key) {
             ValueMap::iterator it = _valueMap.find(z::ptr(key));
             if(it == _valueMap.end()) {
-                throw z::Exception("Interpreter", zfmt(pos, "Variable not found %{s}").add("s", key.name().text()));
+                throw z::Exception("Interpreter", zfmt(pos, "Variable not found %{s}").add("s", key.name()));
             }
             const ValuePtr& val = it->second;
 //            trace("InterpreterContext::getValue %lu %s\n", z::pad(val.get()), val.str().c_str());
@@ -703,7 +703,7 @@ namespace {
 
         virtual void visit(const Ast::PrintStatement& node) {
             ValuePtr p = ExprGenerator(_ctx).evaluate(node.expr());
-            printf("%s\n", p.str().c_str());
+            std::cout << p.str() << std::endl;
         }
 
         virtual void visit(const Ast::IfStatement& node) {
@@ -859,7 +859,8 @@ inline void Interpreter::Impl::run() {
             if(cmd == ".q")
                 break;
             try {
-                ctx.processCmd(cmd);
+                z::string icmd = z::e2s(cmd);
+                ctx.processCmd(icmd);
             } catch (...) {
                 ctx.reset();
             }

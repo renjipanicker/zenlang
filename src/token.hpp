@@ -7,7 +7,7 @@
 struct TokenData {
 private:
     static const size_t Size = 32;
-    const char* _filename;
+    const z::char_t* _filename;
     int _id;
     int _row;
     int _col;
@@ -23,7 +23,7 @@ public:
     }
 
 public:
-    inline const char* filename() const {return _filename;}
+    inline const z::char_t* filename() const {return _filename;}
     inline const int& id() const {return _id;}
     inline const int& row() const {return _row;}
     inline const int& col() const {return _col;}
@@ -44,11 +44,11 @@ public:
         return txt;
     }
 
-    static TokenData createT(const char* filename, const int& id, const int& row, const int& col, const z::string& txt) {
+    static TokenData createT(const z::string& filename, const int& id, const int& row, const int& col, const z::string& txt) {
 //        printf("createT(%d, %d): start: %lu, end %lu, end-start: %ld\n", row, col, (unsigned long)start, (unsigned long)end, end-start);
         TokenData td;
         td.init();
-        td._filename = filename;
+        td._filename = filename.c_str();
         td._id = id;
         td._row = row;
         td._col = col;

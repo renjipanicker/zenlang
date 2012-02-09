@@ -8,6 +8,10 @@ INCLUDE_DIRECTORIES(${parser_odir})
 INCLUDE_DIRECTORIES("lib/")
 INCLUDE_DIRECTORIES("src/")
 
+IF(!WIN32)
+SET(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} "-Wall")
+ENDIF()
+
 # strictly speaking, these are not required in the compiler project
 # but including them to ease find-replace and source-navigation
 SET(zen_SOURCES ${zen_SOURCES} lib/base/pch.hpp)

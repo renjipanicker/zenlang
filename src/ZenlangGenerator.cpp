@@ -453,7 +453,7 @@ namespace {
         z::string _sep0;
     };
 
-    void runStatementGenerator(const Ast::Config& config, FILE* fp, const Ast::Statement& block);
+    void runStatementGenerator(const Ast::Config& config, z::ofile& fp, const Ast::Statement& block);
 
     struct ImportGenerator : public Ast::TypeSpec::Visitor {
         inline bool canWrite(const Ast::AccessType::T& accessType) const {
@@ -466,28 +466,32 @@ namespace {
 
         void visit(const Ast::TypedefDecl& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%stypedef %s%s;\n", getAccessType(node.pos(), node.accessType()).c_str(), node.name().text(), getDefinitionType(node.pos(), node.defType()).c_str());
+                _os() << getAccessType(node.pos(), node.accessType()) << "typedef " << node.name() << getDefinitionType(node.pos(), node.defType()) << std::endl;
             }
             visitChildrenIndent(node);
         }
 
         void visit(const Ast::TypedefDefn& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%stypedef %s%s %s;\n", getAccessType(node.pos(), node.accessType()).c_str(), node.name().text(), getDefinitionType(node.pos(), node.defType()).c_str(), ZenlangNameGenerator().qtn(node.qTypeSpec()).c_str());
+                _os() << getAccessType(node.pos(), node.accessType())
+                      << "typedef " << node.name()
+                      << getDefinitionType(node.pos(), node.defType())
+                      << " " << ZenlangNameGenerator().qtn(node.qTypeSpec())
+                      << ";" << std::endl;
             }
             visitChildrenIndent(node);
         }
 
         void visit(const Ast::TemplateDecl& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%stemplate <", getAccessType(node.pos(), node.accessType()).c_str());
+                _os() << getAccessType(node.pos(), node.accessType()) << "template <";
                 z::string sep;
                 for(Ast::TemplatePartList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                     const Ast::Token& token = *it;
-                    fprintf(_fp, "%s%s\n", sep.c_str(), token.text());
+                    _os() << sep << token << std::endl;
                     sep = ", ";
                 }
-                fprintf(_fp, "> %s%s;\n", node.name().text(), getDefinitionType(node.pos(), node.defType()).c_str());
+                _os() << "> " << node.name() << getDefinitionType(node.pos(), node.defType()) << ";" << std::endl;
             }
             visitChildrenIndent(node);
         }
@@ -498,39 +502,38 @@ namespace {
 
         void visit(const Ast::EnumDefn& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%senum %s%s {\n", getAccessType(node.pos(), node.accessType()).c_str(), node.name().text(), getDefinitionType(node.pos(), node.defType()).c_str());
+                _os() << getAccessType(node.pos(), node.accessType()) << "enum " << node.name() << getDefinitionType(node.pos(), node.defType()) << " {" << std::endl;
                 for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                     const Ast::VariableDefn& def = it->get();
-                    fprintf(_fp, "    %s", def.name().text());
+                    _os() << "    " << def.name();
                     const Ast::ConstantIntExpr* cexpr = dynamic_cast<const Ast::ConstantIntExpr*>(z::ptr(def.initExpr()));
                     if((cexpr == 0) || (z::ref(cexpr).pos().string() != "#")) { /// \todo workaround, until enum-init implemented
-                        fprintf(_fp, " = ");
-                        z::string estr = ZenlangGenerator::convertExprToString(def.initExpr());
-                        fprintf(_fp, "%s", estr.c_str());
+                        _os() << " = ";
+                        ExprGenerator(_os()).visitNode(def.initExpr());
                     }
-                    fprintf(_fp, ";\n");
+                    _os() << ";" << std::endl;
                 }
-                fprintf(_fp, "};\n");
-                fprintf(_fp, "\n");
+                _os() << "};" << std::endl;
+                _os() << std::endl;
             }
             visitChildrenIndent(node);
         }
 
         inline void visitStructDefn(const Ast::StructDefn& node, const Ast::StructDefn* base) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%sstruct %s", getAccessType(node.pos(), node.accessType()).c_str(), node.name().text());
+                _os() << getAccessType(node.pos(), node.accessType()) << "struct " << node.name();
                 if(base) {
-                    fprintf(_fp, " : %s", ZenlangNameGenerator().tn(z::ref(base)).c_str());
+                    _os() << " : " << ZenlangNameGenerator().tn(z::ref(base));
                 }
-                fprintf(_fp, "%s {\n", getDefinitionType(node.pos(), node.defType()).c_str());
-                runStatementGenerator(_config, _fp, node.block());
-                fprintf(_fp, "};\n");
+                _os() << getDefinitionType(node.pos(), node.defType()) << " {" << std::endl;
+                runStatementGenerator(_config, _os, node.block());
+                _os() << "};" << std::endl;
             }
         }
 
         void visit(const Ast::StructDecl& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%sstruct %s%s;\n", getAccessType(node.pos(), node.accessType()).c_str(), node.name().text(), getDefinitionType(node.pos(), node.defType()).c_str());
+                _os() << getAccessType(node.pos(), node.accessType()) << "struct " << node.name() << getDefinitionType(node.pos(), node.defType()) << ";" << std::endl;
             }
         }
 
@@ -544,36 +547,36 @@ namespace {
 
         void visit(const Ast::PropertyDeclRW& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%sproperty %s %s %s get set;\n",
-                        getAccessType(node.pos(), node.accessType()).c_str(),
-                        ZenlangNameGenerator().qtn(node.qTypeSpec()).c_str(),
-                        node.name().text(),
-                        getDefinitionType(node.pos(), node.defType()).c_str());
+                _os() << getAccessType(node.pos(), node.accessType())
+                      << "property " << ZenlangNameGenerator().qtn(node.qTypeSpec())
+                      << " " << node.name()
+                      << " " << getDefinitionType(node.pos(), node.defType())
+                      << " get set;" << std::endl;
             }
         }
 
         void visit(const Ast::PropertyDeclRO& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%sproperty %s %s %s get;\n",
-                        getAccessType(node.pos(), node.accessType()).c_str(),
-                        ZenlangNameGenerator().qtn(node.qTypeSpec()).c_str(),
-                        node.name().text(),
-                        getDefinitionType(node.pos(), node.defType()).c_str());
+                _os() << getAccessType(node.pos(), node.accessType())
+                      << "property " << ZenlangNameGenerator().qtn(node.qTypeSpec())
+                      << " " << node.name()
+                      << " " << getDefinitionType(node.pos(), node.defType())
+                      << " get;" << std::endl;
             }
         }
 
         inline void visitRoutineImp(const Ast::Routine& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%sroutine %s ", getAccessType(node.pos(), node.accessType()).c_str(), ZenlangNameGenerator().qtn(node.outType()).c_str());
-                fprintf(_fp, "%s", node.name().text());
-                fprintf(_fp, "(");
+                _os() << getAccessType(node.pos(), node.accessType()) << "routine " << ZenlangNameGenerator().qtn(node.outType()) << " ";
+                _os() << node.name();
+                _os() << "(";
                 z::string sep;
                 for(Ast::Scope::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
                     const Ast::VariableDefn& vdef = it->get();
-                    fprintf(_fp, "%s%s %s", sep.c_str(), ZenlangNameGenerator().qtn(vdef.qTypeSpec()).c_str(), vdef.name().text());
+                    _os() << sep << ZenlangNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name();
                     sep = ", ";
                 }
-                fprintf(_fp, ")%s;\n", getDefinitionType(node.pos(), node.defType()).c_str());
+                _os() << ")" << getDefinitionType(node.pos(), node.defType()) << ";" << std::endl;
             }
         }
 
@@ -594,36 +597,36 @@ namespace {
         inline void visitFunctionImp(const Ast::Function& node, const z::string& name, const bool& isEvent) {
             if((name.size() > 0) || (canWrite(node.accessType()))) {
                 if(!isEvent) {
-                    fprintf(_fp, "%s", getAccessType(node.pos(), node.accessType()).c_str());
+                    _os() << getAccessType(node.pos(), node.accessType());
                 }
 
-                fprintf(_fp, "function ");
+                _os() << "function ";
                 if(node.sig().outScope().isTuple()) {
-                    fprintf(_fp, "(");
+                    _os() << "(";
                     z::string sep;
                     for(Ast::Scope::List::const_iterator it = node.sig().out().begin(); it != node.sig().out().end(); ++it) {
                         const Ast::VariableDefn& vdef = it->get();
-                        fprintf(_fp, "%s%s %s", sep.c_str(), ZenlangNameGenerator().qtn(vdef.qTypeSpec()).c_str(), vdef.name().text());
+                        _os() << sep << ZenlangNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name();
                         sep = ", ";
                     }
-                    fprintf(_fp, ")");
+                    _os() << ")";
                 } else {
                     const Ast::VariableDefn& vdef = node.sig().out().front();
-                    fprintf(_fp, "%s ", ZenlangNameGenerator().qtn(vdef.qTypeSpec()).c_str());
+                    _os() << ZenlangNameGenerator().qtn(vdef.qTypeSpec()) << " ";
                 }
 
                 if(name.size() > 0) {
-                    fprintf(_fp, "%s(", name.c_str());
+                    _os() << name << "(";
                 } else {
-                    fprintf(_fp, "%s(", node.name().text());
+                    _os() << node.name() << "(";
                 }
                 z::string sep = "";
                 for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
                     const Ast::VariableDefn& vdef = it->get();
-                    fprintf(_fp, "%s%s %s", sep.c_str(), ZenlangNameGenerator().qtn(vdef.qTypeSpec()).c_str(), vdef.name().text());
+                    _os() << sep << ZenlangNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name();
                     sep = ", ";
                 }
-                fprintf(_fp, ")%s;\n", getDefinitionType(node.pos(), node.defType()).c_str());
+                _os() << ")" << getDefinitionType(node.pos(), node.defType()) << ";" << std::endl;
             }
         }
 
@@ -643,7 +646,9 @@ namespace {
 
         void visit(const Ast::EventDecl& node) {
             if(canWrite(node.accessType())) {
-                fprintf(_fp, "%sevent(%s %s)%s => ", getAccessType(node.pos(), node.accessType()).c_str(), ZenlangNameGenerator().qtn(node.in().qTypeSpec()).c_str(), node.in().name().text(), getDefinitionType(node.pos(), node.defType()).c_str());
+                _os() << getAccessType(node.pos(), node.accessType())
+                      << "event(" << ZenlangNameGenerator().qtn(node.in().qTypeSpec())
+                      << " " << node.in().name() << ")" << getDefinitionType(node.pos(), node.defType()) << " => ";
                 visitFunctionImp(node.handler(), node.name().string(), true);
             }
             visitChildrenIndent(node);
@@ -658,34 +663,34 @@ namespace {
         }
 
     public:
-        inline ImportGenerator(const Ast::Config& config, FILE* fp) : _config(config), _fp(fp) {}
+        inline ImportGenerator(const Ast::Config& config, z::ofile& os) : _config(config), _os(os) {}
 
     private:
         const Ast::Config& _config;
-        FILE* _fp;
+        z::ofile& _os;
     };
 
     struct StatementGenerator : public Ast::Statement::Visitor {
     private:
         virtual void visit(const Ast::ImportStatement& node) {
             if(node.headerType() == Ast::HeaderType::Import) {
-                fprintf(_fp, "import ");
+                _os() << "import ";
             } else {
-                fprintf(_fp, "include ");
+                _os() << "include ";
             }
 
             z::string sep = "";
             for(Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                 const Ast::Token& name = it->get().name();
-                fprintf(_fp, "%s%s", sep.c_str(), name.text());
+                _os() << sep << name;
                 sep = "::";
             }
 
             if(node.defType() == Ast::DefinitionType::Native) {
-                fprintf(_fp, " native");
+                _os() << " native";
             }
 
-            fprintf(_fp, ";\n");
+            _os() << ";" << std::endl;
         }
 
         virtual void visit(const Ast::EnterNamespaceStatement& node) {
@@ -697,7 +702,8 @@ namespace {
                 fqn += ns.name().string();
             }
             if(fqn.size() > 0) {
-                fprintf(_fp, "namespace %s;\n\n", fqn.c_str());
+                _os() << "namespace " << fqn << ";" << std::endl;
+                _os() << std::endl;
             }
         }
 
@@ -706,14 +712,13 @@ namespace {
         }
 
         virtual void visit(const Ast::UserDefinedTypeSpecStatement& node) {
-            ImportGenerator(_config, _fp).visitNode(node.typeSpec());
+            ImportGenerator(_config, _os).visitNode(node.typeSpec());
         }
 
         virtual void visit(const Ast::StructMemberVariableStatement& node) {
-            fprintf(_fp, "%s%s %s = ", Indent::get(), ZenlangNameGenerator().qtn(node.defn().qTypeSpec()).c_str(), node.defn().name().text());
-            z::string estr = ZenlangGenerator::convertExprToString(node.defn().initExpr());
-            fprintf(_fp, "%s", estr.c_str());
-            fprintf(_fp, ";\n");
+            _os() << Indent::get() << ZenlangNameGenerator().qtn(node.defn().qTypeSpec()) << " " << node.defn().name() << " = ";
+            ExprGenerator(_os()).visitNode(node.defn().initExpr());
+            _os() << ";" << std::endl;
         }
 
         virtual void visit(const Ast::StructInitStatement& node) {
@@ -817,14 +822,14 @@ namespace {
         }
 
     public:
-        inline StatementGenerator(const Ast::Config& config, FILE* fp) : _config(config), _fp(fp) {}
+        inline StatementGenerator(const Ast::Config& config, z::ofile& os) : _config(config), _os(os) {}
     private:
         const Ast::Config& _config;
-        FILE* _fp;
+        z::ofile& _os;
     };
 
-    void runStatementGenerator(const Ast::Config& config, FILE* fp, const Ast::Statement& block) {
-        StatementGenerator gen(config, fp);
+    void runStatementGenerator(const Ast::Config& config, z::ofile& os, const Ast::Statement& block) {
+        StatementGenerator gen(config, os);
         gen.visitNode(block);
     }
 }
@@ -843,12 +848,14 @@ private:
 inline void ZenlangGenerator::Impl::run() {
     Indent::init();
     z::string basename = getBaseName(_module.filename());
-    z::file ofImp(_config.apidir(), basename + ".ipp", "w", z::file::makePath);
+    z::file::mkpath(_config.apidir() + "/");
+    z::ofile osImp(_config.apidir() + "/" + basename + ".ipp");
+//@    z::file ofImp(_config.apidir(), basename + ".ipp", "w", z::file::makePath);
 //@    OutputFile ofImp(_fpImp, _config.apidir(), basename + ".ipp");unused(ofImp);
 
     for(Ast::CompoundStatement::List::const_iterator it = _module.globalStatementList().list().begin(); it != _module.globalStatementList().list().end(); ++it) {
         const Ast::Statement& s = it->get();
-        runStatementGenerator(_config, ofImp.val(), s);
+        runStatementGenerator(_config, osImp, s);
     }
 }
 
@@ -858,7 +865,8 @@ ZenlangGenerator::~ZenlangGenerator() {delete _impl;}
 void ZenlangGenerator::run() {return z::ref(_impl).run();}
 
 z::string ZenlangGenerator::convertExprToString(const Ast::Expr& expr) {
+    //@ convert to z::stringstream
     std::stringstream os;
     ExprGenerator(os).visitNode(expr);
-    return os.str();
+    return z::e2s(os.str());
 }

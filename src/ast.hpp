@@ -167,7 +167,7 @@ namespace Ast {
         inline const z::string& filename() const {return _filename;}
         inline const int& row() const {return _row;}
         inline const int& col() const {return _col;}
-        inline const char* text() const {return _text.c_str();}
+//@        inline const char* text() const {return _text.c_str();}
         inline const z::string& string() const {return _text;}
     private:
         const z::string _filename;
@@ -183,11 +183,13 @@ namespace Ast {
     public:
         inline const Token& pos() const {return _pos;}
         inline void dump(const z::string& src, const z::string& act) const {
-            trace("%lu %s refCount%s %lu, ", (unsigned long)this, src.c_str(), act.c_str(), _refCount);
-            fflush(stdout);
-            z::string x = z::type_name(*this);
-            trace("<%s>\n", x.c_str());
-            fflush(stdout);
+            unused(src);
+            unused(act);
+//@            trace("%lu %s refCount%s %lu, ", (unsigned long)this, src.c_str(), act.c_str(), _refCount);
+//            fflush(stdout);
+//            z::string x = z::type_name(*this);
+//            trace("<%s>\n", x.c_str());
+//            fflush(stdout);
         }
 
         inline void inc() const {
@@ -248,7 +250,7 @@ namespace Ast {
             assert(z::ptr(typeSpec.parent()) == this);
 
             Ptr<ChildTypeSpec>& sptr = _childTypeSpecList.add(typeSpec);
-            _childTypeSpecMap[typeSpec.name().text()] = z::ptr(sptr.get());
+            _childTypeSpecMap[typeSpec.name().string()] = z::ptr(sptr.get());
         }
 
         template <typename T>
@@ -2199,6 +2201,11 @@ namespace Ast {
         z::string _zppExt;
         Verbosity::T _verbosity;
     };
+}
+
+inline z::ostream& operator << (z::ostream& os, const Ast::Token& val) {
+    os << val.string();
+    return os;
 }
 
 inline std::ostream& operator << (std::ostream& os, const Ast::Token& val) {

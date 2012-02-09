@@ -13,7 +13,7 @@ z::list<z::string> String::split(const z::string& str, const z::string& sep) {
 
     z::string v;
     for(z::string::const_iterator it = str.begin(); it != str.end(); ++it) {
-        const char_t& ch = *it;
+        const z::char_t& ch = *it;
         switch(state) {
             case sInit:
                 if(sep.find(ch) != z::string::npos) {

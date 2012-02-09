@@ -5,27 +5,27 @@
 #include "Interpreter.hpp"
 
 static int showHelp(const Ast::Config& config) {
-    printf("zen compiler 0.1a");
-    printf(" (%s)", config.zexePath().c_str());
-    printf("\n");
-    printf("Copyright(c) 2011 Renji Panicker.\n");
-    printf("Usage: zen <options> <files>\n");
-    printf("  -h  --help      Show this message\n");
-    printf("  -i              Interpreter mode\n");
-    printf("  -c              Compile only\n");
-    printf("  -px --exe       Executable project (default)\n");
-    printf("  -pd --dll       Shared library project\n");
-    printf("  -pl --lib       Static library project\n");
-    printf("  -n  --name      Project name\n");
-//    printf("  -g  --gui       GUI application\n"); /// \todo To be kept undocumented.
-    printf("  -d  --debug     Debug build\n");
-    printf("  -ol --language  Output language\n");
-    printf("  -op --project   Output project\n");
-    printf("  -ad --api       API directory\n");
-    printf("  -sd --src       Source directory\n");
-    printf("  -v  --verbose   Display verbose output\n");
-    printf("  -t  --test      Don't generate unit tests (Note this is a negative switch)\n");
-    printf("  -z  --zenPath   Zen Library path\n");
+    std::cout << "zen compiler 0.1a";
+    std::cout << " (" << config.zexePath().c_str() << ")" << std::endl;
+    std::cout << std::endl;
+    std::cout << "Copyright(c) 2011 Renji Panicker." << std::endl;
+    std::cout << "Usage: zen <options> <files>" << std::endl;
+    std::cout << "  -h  --help      Show this message" << std::endl;
+    std::cout << "  -i              Interpreter mode" << std::endl;
+    std::cout << "  -c              Compile only" << std::endl;
+    std::cout << "  -px --exe       Executable project (default)" << std::endl;
+    std::cout << "  -pd --dll       Shared library project" << std::endl;
+    std::cout << "  -pl --lib       Static library project" << std::endl;
+    std::cout << "  -n  --name      Project name" << std::endl;
+//    std::cout << "  -g  --gui       GUI application" << std::endl; /// \todo To be kept undocumented.
+    std::cout << "  -d  --debug     Debug build" << std::endl;
+    std::cout << "  -ol --language  Output language" << std::endl;
+    std::cout << "  -op --project   Output project" << std::endl;
+    std::cout << "  -ad --api       API directory" << std::endl;
+    std::cout << "  -sd --src       Source directory" << std::endl;
+    std::cout << "  -v  --verbose   Display verbose output" << std::endl;
+    std::cout << "  -t  --test      Don't generate unit tests (Note this is a negative switch)" << std::endl;
+    std::cout << "  -z  --zenPath   Zen Library path" << std::endl;
     return 0;
 }
 
@@ -40,12 +40,12 @@ int main(int argc, char* argv[]) {
     if(rv == 0) {
         DWORD ec = GetLastError();
         assert(ec != ERROR_SUCCESS);
-        printf("Internal error retreiving process path %d\n", ec);
+        std::cout << "Internal error retreiving process path " << ec << std::endl;
         return -1;
     }
 #else
     if (readlink ("/proc/self/exe", path, len) == -1) {
-        printf("Internal error retreiving process path %s\n", path);
+        std::cout << "Internal error retreiving process path " << path << std::endl;
         return -1;
     }
 #endif

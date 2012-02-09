@@ -37,7 +37,7 @@ namespace z
         {
             z::string rv = _sname + ", " + _lname;
             rv += z::string(w - rv.size(), ' ');
-            str << "  " << rv << _desc << std::endl;
+            str << "  " << z::s2e(rv) << z::s2e(_desc) << std::endl;
         }
 
         template<>
@@ -195,12 +195,12 @@ namespace z
     {
         if(_hasCommands)
         {
-            str << _appName << " <command> <options> " << std::endl;
+            str << z::s2e(_appName) << " <command> <options> " << std::endl;
             str << "commands: ";
             z::string sep = "";
             for(CmdMap_t::const_iterator cit = _cmdMap.begin(), cite = _cmdMap.end(); cit != cite; ++cit)
             {
-                str << sep << cit->first;
+                str << z::s2e(sep) << z::s2e(cit->first);
                 sep = ", ";
             }
             str << std::endl;
@@ -209,7 +209,7 @@ namespace z
             for(CmdMap_t::const_iterator cit = _cmdMap.begin(), cite = _cmdMap.end(); cit != cite; ++cit)
             {
                 const Command& cmd = z::ref(cit->second);
-                str << cit->first << ": " << cmd._desc << std::endl;
+                str << z::s2e(cit->first) << ": " << z::s2e(cmd._desc) << std::endl;
 
                 for(List_t::const_iterator it = cmd._list.begin(), ite = cmd._list.end(); it != ite; ++it)
                 {
@@ -220,7 +220,7 @@ namespace z
             }
         }else
         {
-            str << _appName << " <options>" << std::endl;
+            str << z::s2e(_appName) << " <options>" << std::endl;
             str << "options:" << std::endl;
             const Command& cmd  = _cmdMap.at("");
             for(List_t::const_iterator it = cmd._list.begin(), ite = cmd._list.end(); it != ite; ++it)
