@@ -100,7 +100,8 @@ static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM l
 
 z::string registerClass(HBRUSH bg) {
     z::string className = getNextClassID();
-    WNDCLASSEX wcx;
+    z::estring eclassName = z::s2e(className);
+    WNDCLASSEX wcx = {0};
 
     // Fill in the window class structure with parameters
     // that describe the main window.
@@ -115,12 +116,12 @@ z::string registerClass(HBRUSH bg) {
     wcx.hCursor = LoadCursor(NULL, IDC_ARROW);                    // predefined arrow
     wcx.hbrBackground = bg;
     wcx.lpszMenuName =  _T("MainMenu");    // name of menu resource
-    wcx.lpszClassName = className.c_str();  // name of window class
+    wcx.lpszClassName = eclassName.c_str();  // name of window class
     wcx.hIconSm = (HICON)LoadImage(z::Application::instance(), MAKEINTRESOURCE(5), IMAGE_ICON, GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON), LR_DEFAULTCOLOR);
 
     // Register the window class.
     if(!::RegisterClassEx(&wcx)) {
-        throw z::Exception("Window", z::fmt("Unable to register class %{s}").add("s", className));
+        throw z::Exception("Window", z::fmt("Unable to register class %{s}: %{e}").add("s", className).add("e", ::GetLastError()));
     }
 
     return className;
@@ -158,8 +159,8 @@ Window::HandleImpl& Window::Native::createWindow(const Window::Definition& def, 
 
     Window::HandleImpl* impl = new Window::HandleImpl();
     z::ref(impl)._hWindow = ::CreateWindowEx(xstyle,
-                                     className.c_str(),
-                                     def.title.c_str(),
+                                     z::s2e(className).c_str(),
+                                     z::s2e(def.title).c_str(),
                                      style,
                                      pos.x, pos.y, pos.w, pos.h,
                                      parent, (HMENU)NULL,

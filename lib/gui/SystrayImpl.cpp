@@ -43,7 +43,7 @@ void Systray::SetTooltip::run(const Systray::Handle& handle, const z::string& te
 void Systray::SetIconfile::run(const Systray::Handle& handle, const z::string& filename) {
 #if defined(WIN32)
     NOTIFYICONDATA& ni = Systray::impl(handle)._ni;
-    ni.hIcon = (HICON)LoadImageA(NULL, filename.c_str(), IMAGE_ICON,
+    ni.hIcon = (HICON)LoadImageA(NULL, z::s2e(filename).c_str(), IMAGE_ICON,
                                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
                                  LR_LOADFROMFILE);
     if(0 == ni.hIcon) {
