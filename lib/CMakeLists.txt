@@ -81,4 +81,4 @@ ENDFOREACH()
 
 #########################
 # build libgui. Its in a separate project because it requires the GUI includes and libraries.
-ADD_SUBDIRECTORY(gui)
+#ADD_SUBDIRECTORY(gui)

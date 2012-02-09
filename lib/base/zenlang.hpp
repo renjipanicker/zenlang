@@ -104,8 +104,10 @@ namespace z {
 
         inline void append08(const char* str) {
             for(const char* c = str; *c != 0; ++c) {
-                _val += (z::char_t)(*c);
+                std::cout << "append08(): c = " << *c << ", c = " << (int)(*c) << std::endl;
+                _val.push_back((z::char_t)(*c));
             }
+            std::cout << "append08(): val = " << _val.c_str() << std::endl;
         }
 
         inline void append(const charT& rhs) {_val += rhs;}
@@ -154,6 +156,7 @@ namespace z {
 
         explicit inline string16() : BaseT() {}
         inline string16(const char* s) : BaseT() {append08(s);}
+        inline string16(const char16_t* s) : BaseT(s) {}
         inline string16(const BaseT::sstringT& s) : BaseT(s) {}
         inline string16(const size_type& count, const char_t& ch) : BaseT(count, ch) {}
     };
@@ -164,6 +167,7 @@ namespace z {
 
         explicit inline string32() : BaseT() {}
         inline string32(const char* s) : BaseT() {append08(s);}
+        inline string32(const char32_t* s) : BaseT(s) {}
         inline string32(const BaseT::sstringT& s) : BaseT(s) {}
         inline string32(const size_type& count, const char_t& ch) : BaseT(count, ch) {}
     };
