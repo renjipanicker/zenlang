@@ -1,4 +1,4 @@
 namespace String;
 
 public routine list<string> split(const string& str, const string& sep) native;
-public routine string fold(const char& ch) native;
+public routine char fold(const char& ch) native;

@@ -48,6 +48,8 @@ z::list<z::string> String::split(const z::string& str, const z::string& sep) {
     return sl;
 }
 
-z::string String::fold(const z::char_t& ch) {
+uint16_t sqlite3_unicode_fold(uint16_t c);
 
+z::char_t String::fold(const z::char_t& ch) {
+    return sqlite3_unicode_fold(ch);
 }

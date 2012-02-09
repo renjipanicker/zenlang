@@ -10,7 +10,7 @@
 ** This file implements true UNICODE functionality for SQLite in regards of case-insensitive comparison
 ** of unicode data and SQLite. It uses UNICODE mapping tables to provide the following to SQLite:
 **
-**   * An implementation of SQL scalar upper(), lower(), title(), fold() functions to normalize strings 
+**   * An implementation of SQL scalar upper(), lower(), title(), fold() functions to normalize strings
 **     for comparison by case folding.
 **
 **   * An implementation of SQL scalar unaccent() function to normalize strings for comparison by removing accents.
@@ -21,7 +21,7 @@
 **   * SQLITE_ENABLE_UNICODE and SQLITE_CORE for static  library, (building sqlite3.a  | lib)
 **   * SQLITE_ENABLE_UNICODE                 for dynamic library, (building sqlite3.so | dll)
 **
-** 
+**
 ** The following function needs to be called at program startup to initialise unicode functionality
 **   * sqlite3_unicode_load();
 **
@@ -34,10 +34,10 @@
 ** Un|Comment to provide additional unicode support to SQLite3 or adjust size for unused features
 */
 #define SQLITE3_UNICODE_FOLD      // ~ 10KB increase
-#define SQLITE3_UNICODE_LOWER     // ~ 10KB increase
-#define SQLITE3_UNICODE_UPPER     // ~ 10KB increase
-#define SQLITE3_UNICODE_TITLE     // ~ 10KB increase
-#define SQLITE3_UNICODE_UNACC     // ~ 30KB increase
+//#define SQLITE3_UNICODE_LOWER     // ~ 10KB increase
+//#define SQLITE3_UNICODE_UPPER     // ~ 10KB increase
+//#define SQLITE3_UNICODE_TITLE     // ~ 10KB increase
+//#define SQLITE3_UNICODE_UNACC     // ~ 30KB increase
                                   // _______________
                                   // ~ 70KB increase
 
@@ -192,7 +192,7 @@ SQLITE_EXPORT u16 sqlite3_unicode_title(u16 c);
 SQLITE_EXPORT u16 sqlite3_unicode_unacc(u16 c, u16 **p, int *l);
 
 /*
-** Another built-in collating sequence: NOCASE. 
+** Another built-in collating sequence: NOCASE.
 **
 ** This collating sequence is intended to be used for "case independant
 ** comparison". SQLite's knowledge of upper and lower case equivalents
@@ -207,7 +207,7 @@ SQLITE_EXPORT u16 sqlite3_unicode_unacc(u16 c, u16 **p, int *l);
 ** fold equivalents and test them for equality.
 **
 ** Both UTF-8 and UTF-16 implementations are supported.
-** 
+**
 ** (void *)encoding takes the following values
 **   * SQLITE_UTF8  for UTF-8  encoded string comparison
 **   * SQLITE_UFT16 for UTF-16 encoded string comparison
@@ -2345,7 +2345,7 @@ unicode_unacc_data238
       (l) = 0; \
     } \
   }
-SQLITE_EXPORT u16 sqlite3_unicode_unacc(u16 c, u16 **p, int *l) 
+SQLITE_EXPORT u16 sqlite3_unicode_unacc(u16 c, u16 **p, int *l)
 {
   if( c<0x80 )
   {
@@ -2354,11 +2354,11 @@ SQLITE_EXPORT u16 sqlite3_unicode_unacc(u16 c, u16 **p, int *l)
   }
   else
   {
-    unsigned short index = unicode_unacc_indexes[(c) >> UNICODE_UNACC_BLOCK_SHIFT]; 
-    unsigned char position = (c) & UNICODE_UNACC_BLOCK_MASK; 
-    unsigned short length = unicode_unacc_positions[index][position + 1] - unicode_unacc_positions[index][position]; 
+    unsigned short index = unicode_unacc_indexes[(c) >> UNICODE_UNACC_BLOCK_SHIFT];
+    unsigned char position = (c) & UNICODE_UNACC_BLOCK_MASK;
+    unsigned short length = unicode_unacc_positions[index][position + 1] - unicode_unacc_positions[index][position];
     unsigned short *pointer = &(unicode_unacc_data_table[index][unicode_unacc_positions[index][position]]);
-    
+
     if (l){ *l = length; *p = pointer;}
     return ((length == 1) && (*pointer == 0xFFFF)) ? c : *pointer;
   }
@@ -2392,7 +2392,7 @@ SQLITE_EXPORT u16 sqlite3_unicode_unacc(u16 c, u16 **p, int *l)
 ** pZ is a UTF-8 encoded unicode string. If nByte is less than zero,
 ** return the number of unicode characters in pZ up to (but not including)
 ** the first 0x00 byte. If nByte is not less than zero, return the
-** number of unicode characters in the first nByte of pZ (or up to 
+** number of unicode characters in the first nByte of pZ (or up to
 ** the first 0x00, whichever comes first).
 */
 SQLITE_PRIVATE int sqlite3Utf8CharLen(const char *zIn, int nByte){
@@ -2477,7 +2477,7 @@ SQLITE_PRIVATE int sqlite3Utf8Read(
 }
 
 /* An array to map all upper-case characters into their corresponding
-** lower-case character. 
+** lower-case character.
 **
 ** SQLite only considers US-ASCII (or EBCDIC) characters.  We do not
 ** handle case conversions for the UTF character set since the tables
@@ -2533,7 +2533,7 @@ SQLITE_PRIVATE const unsigned char sqlite3UpperToLower[] = {
 ** unicode strings containing characters over the 0x80 character limit as
 ** per the ASCII encoding imposed by SQlite.
 **
-** The functions below will use the sqlite3_unicode_fold() when 
+** The functions below will use the sqlite3_unicode_fold() when
 ** SQLITE3_UNICODE_FOLD is defined and additonally sqlite_unicode_unacc()
 ** when SQLITE3_UNICODE_UNACC_AUTOMATIC is defined to normilize
 ** UTF-8 and UTF-16 encoded strings.
@@ -2617,7 +2617,7 @@ static int patternCompare(
   u8 matchOne = pInfo->matchOne;
   u8 matchAll = pInfo->matchAll;
   u8 matchSet = pInfo->matchSet;
-  u8 noCase = pInfo->noCase; 
+  u8 noCase = pInfo->noCase;
   int prevEscape = 0;     /* True if the previous character was 'escape' */
 
   while( (c = sqlite3Utf8Read(zPattern,0,&zPattern))!=0 ){
@@ -2735,8 +2735,8 @@ SQLITE_API int sqlite3_like_count = 0;
 ** the GLOB operator.
 */
 static void likeFunc(
-  sqlite3_context *context, 
-  int argc, 
+  sqlite3_context *context,
+  int argc,
   sqlite3_value **argv
 ){
   const unsigned char *zA, *zB;
@@ -2770,7 +2770,7 @@ static void likeFunc(
     const unsigned char *zEsc = sqlite3_value_text(argv[2]);
     if( zEsc==0 ) return;
     if( sqlite3Utf8CharLen((char*)zEsc, -1)!=1 ){
-      sqlite3_result_error(context, 
+      sqlite3_result_error(context,
           "ESCAPE expression must be a single character", -1);
       return;
     }
@@ -2781,7 +2781,7 @@ static void likeFunc(
 #ifdef SQLITE_TEST
     sqlite3_like_count++;
 #endif
-    
+
     sqlite3_result_int(context, patternCompare(zB, zA, pInfo, escape));
   }
 }
@@ -2920,7 +2920,7 @@ SQLITE_PRIVATE void unaccFunc(sqlite3_context *context, int argc, sqlite3_value 
 ** unicode strings containing characters over the 0x80 character limit as
 ** per the ASCII encoding imposed by SQlite.
 **
-** The functions below will use the sqlite3_unicode_fold() when 
+** The functions below will use the sqlite3_unicode_fold() when
 ** SQLITE3_UNICODE_FOLD is defined and additonally sqlite_unicode_unacc()
 ** when SQLITE3_UNICODE_UNACC_AUTOMATIC is defined to normilize
 ** UTF-8 and UTF-16 encoded strings and then compaire them for equality.
@@ -2930,8 +2930,8 @@ SQLITE_PRIVATE int sqlite3StrNICmp(const unsigned char *zLeft, const unsigned ch
   const unsigned char *b = zRight;
   signed int ua = 0, ub = 0;
   int Z = 0;
-  
-  do { 
+
+  do {
     ua = sqlite3Utf8Read(a, 0, &a);  ub = sqlite3Utf8Read(b, 0, &b);
     ua = GlogUpperToLower(ua);       ub = GlogUpperToLower(ub);
     Z = (int)max(a - zLeft, b - zRight);
@@ -2952,7 +2952,7 @@ SQLITE_PRIVATE int sqlite3StrNICmp16(const void *zLeft, const void *zRight, int 
 }
 
 /*
-** Another built-in collating sequence: NOCASE. 
+** Another built-in collating sequence: NOCASE.
 **
 ** This collating sequence is intended to be used for "case independant
 ** comparison". SQLite's knowledge of upper and lower case equivalents
@@ -2967,7 +2967,7 @@ SQLITE_PRIVATE int sqlite3StrNICmp16(const void *zLeft, const void *zRight, int 
 ** fold equivalents and test them for equality.
 **
 ** Both UTF-8 and UTF-16 implementations are supported.
-** 
+**
 ** (void *)encoding takes the following values
 **   * SQLITE_UTF8  for UTF-8  encoded string comparison
 **   * SQLITE_UFT16 for UTF-16 encoded string comparison
@@ -2978,14 +2978,14 @@ SQLITE_EXPORT int sqlite3_unicode_collate(
   int nKey2, const void *pKey2
 ){
   int r = 0;
-  
+
   if ((void*)SQLITE_UTF8 == encoding)
     r = sqlite3StrNICmp(
         (const unsigned char *)pKey1, (const unsigned char *)pKey2, (nKey1<nKey2)?nKey1:nKey2);
   else if  ((void*)SQLITE_UTF16 == encoding)
     r = sqlite3StrNICmp16(
         (const void *)pKey1, (const void *)pKey2, (nKey1<nKey2)?nKey1:nKey2);
-  
+
   if( 0==r ){
     r = nKey1-nKey2;
   }
@@ -3025,7 +3025,7 @@ SQLITE_EXPORT int sqlite3_unicode_init(sqlite3 *db){
   {"like",            3,  SQLITE_ANY,         (void*)&likeInfoNorm, likeFunc   },
 
   {"fold",            1,  SQLITE_ANY,  (void*)sqlite3_unicode_fold, caseFunc   },
-#endif  
+#endif
 #ifdef SQLITE3_UNICODE_LOWER
   {"lower",           1,  SQLITE_ANY, (void*)sqlite3_unicode_lower, caseFunc   },
 #endif
@@ -3067,7 +3067,7 @@ SQLITE_EXPORT int sqlite3_unicode_init(sqlite3 *db){
 */
 #ifndef SQLITE_CORE
 SQLITE_EXPORT int sqlite3_extension_init(
-  sqlite3 *db, 
+  sqlite3 *db,
   char **pzErrMsg,
   const sqlite3_api_routines *pApi
 ){
@@ -3103,7 +3103,7 @@ SQLITE_EXPORT void sqlite3_unicode_free()
 ** Hack for Microsoft Windows where sqlite3_unicode is statically linked to
 ** an sqlite3 dynamically linked library. DllMain will be automatically be called
 ** by Microsoft Windows when the library is loaded into the application to automatically
-** load extension and when unloaded to automatically unload the extension. 
+** load extension and when unloaded to automatically unload the extension.
 */
 #if ((defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(__BORLANDC__)) && (!defined(SQLITE_CORE)))
 int __stdcall DllMain(void *hinstDLL, unsigned long fdwReason, void *lpReserved)
