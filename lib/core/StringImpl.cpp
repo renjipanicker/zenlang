@@ -47,3 +47,7 @@ z::list<z::string> String::split(const z::string& str, const z::string& sep) {
         sl.add(v);
     return sl;
 }
+
+z::string String::fold(const z::char_t& ch) {
+
+}

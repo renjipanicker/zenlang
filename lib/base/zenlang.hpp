@@ -55,6 +55,7 @@ namespace z {
 #error CHAR_WIDTH not defined
 #endif
 
+    ////////////////////////////////////////////////////////////////////////////
     // base class for all string types
     template <typename charT, typename stringT>
     struct bstring {
@@ -66,11 +67,6 @@ namespace z {
 #else
         static const size_type npos  = sstringT::npos;
 #endif
-        static inline charT lower(const charT& ch) {
-            if((ch >= 'A') && (ch <= 'Z'))
-                return 'a' + (ch - 'A');
-            return ch;
-        }
 
         typedef typename sstringT::iterator iterator;
         inline iterator begin() {return _val.begin();}
@@ -297,6 +293,13 @@ inline T z::bstring<charT, stringT>::to() const {
 }
 
 namespace z {
+    ////////////////////////////////////////////////////////////////////////////
+    struct tchar {
+        static char_t toLower(const char_t& ch);
+        static bool isSpace(const char_t& ch);
+    };
+
+    ////////////////////////////////////////////////////////////////////////////
     struct datetime {
         inline datetime() : _val(0) {}
         inline datetime(const int64_t& val) : _val(val) {}

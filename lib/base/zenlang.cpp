@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "zenlang.hpp"
 
+////////////////////////////////////////////////////////////////////////////
 #if defined(DEBUG) && defined(GUI) && defined(WIN32)
 void trace(const char* txt, ...) {
     va_list vlist;
@@ -12,6 +13,7 @@ void trace(const char* txt, ...) {
 }
 #endif
 
+////////////////////////////////////////////////////////////////////////////
 // utf8 conversion code adapted from http://www.codeguru.com/cpp/misc/misc/multi-lingualsupport/article.php/c10451
 #define MASKBITS   0x3F
 #define MASKBYTE   0x80
@@ -155,6 +157,26 @@ z::string16 z::c32to16(const z::string32& in) {
     return rv;
 }
 
+////////////////////////////////////////////////////////////////////////////
+z::char_t z::tchar::toLower(const z::char_t& ch) {
+    if((ch >= 'A') && (ch <= 'Z'))
+        return 'a' + (ch - 'A');
+    return ch;
+}
+
+bool z::tchar::isSpace(const z::char_t& ch) {
+    if((ch >= 9) && (ch <=13))
+        return true;
+
+    if(ch == ' ')
+        return true;
+    if(ch == '\t')
+        return true;
+
+    return false;
+}
+
+////////////////////////////////////////////////////////////////////////////
 z::mutex::mutex() {
 #if defined(WIN32)
     _val = CreateMutex(0, FALSE, 0);
@@ -187,6 +209,7 @@ int z::mutex::leave() {
 #endif
 }
 
+////////////////////////////////////////////////////////////////////////////
 void z::regex::compile(const z::string& re) {
 #if !defined(WIN32)
     int res = regcomp(&_val, s2e(re).c_str(), 0);
@@ -204,6 +227,7 @@ void z::regex::match(const z::string& str) {
 #endif
 }
 
+////////////////////////////////////////////////////////////////////////////
 #ifdef WIN32
 const z::string z::file::sep = "\\";
 #else
@@ -259,6 +283,7 @@ z::string z::file::cwd() {
     return rv;
 }
 
+////////////////////////////////////////////////////////////////////////////
 z::ofile::ofile(const z::string& filename) {
     _name = filename;
     _os.open(s2e(_name).c_str());
