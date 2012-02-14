@@ -28,7 +28,7 @@
 ** Compile this file and link with Zlib library to Sqlite3.
 **
 */
-#include "sqlite3.h"
+#include "utils/sqlite3/sqlite3.h"
 
 #include <stdlib.h>
 #include <stdio.h>

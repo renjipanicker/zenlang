@@ -12,12 +12,12 @@
 ** This header file defines the SQLite interface for use by
 ** shared libraries that want to be imported as extensions into
 ** an SQLite instance.  Shared libraries that intend to be loaded
-** as extensions by SQLite should #include this file instead of 
+** as extensions by SQLite should #include this file instead of
 ** sqlite3.h.
 */
 #ifndef _SQLITE3EXT_H_
 #define _SQLITE3EXT_H_
-#include "sqlite3.h"
+#include "utils/sqlite3/sqlite3.h"
 
 typedef struct sqlite3_api_routines sqlite3_api_routines;
 
