@@ -15,49 +15,49 @@ void trace(const char* txt, ...) {
 
 ////////////////////////////////////////////////////////////////////////////
 // utf8 conversion code adapted from http://www.codeguru.com/cpp/misc/misc/multi-lingualsupport/article.php/c10451
-#define MASKBITS   0x3F
-#define MASKBYTE   0x80
-#define MASK2BYTES 0xC0
-#define MASK3BYTES 0xE0
-#define MASK4BYTES 0xF0
-#define MASK5BYTES 0xF8
-#define MASK6BYTES 0xFC
+#define MASKBITS   (uint64_t)0x3F
+#define MASKBYTE   (uint64_t)0x80
+#define MASK2BYTES (uint64_t)0xC0
+#define MASK3BYTES (uint64_t)0xE0
+#define MASK4BYTES (uint64_t)0xF0
+#define MASK5BYTES (uint64_t)0xF8
+#define MASK6BYTES (uint64_t)0xFC
 
 z::string08 z::c32to08(const z::string32& in) {
     z::string08 rv;
     for(z::string32::size_type i = 0; i < in.size(); i++) {
-        if(in[i] < 0x80) {
+        if(in.at(i) < 0x80) {
             // 0xxxxxxx
-            rv.append((char08_t)in[i]);
-        } else if(in[i] < 0x800) {
+            rv.append((char08_t)in.at(i));
+        } else if(in.at(i) < 0x800) {
             // 110xxxxx 10xxxxxx
-            rv.append((char08_t)(MASK2BYTES | (in[i] >> 6)));
-            rv.append((char08_t)(MASKBYTE   | (in[i] & MASKBITS)));
-        } else if(in[i] < 0x10000) {
+            rv.append((char08_t)(MASK2BYTES | (in.at(i) >> 6)));
+            rv.append((char08_t)(MASKBYTE   | (in.at(i) & MASKBITS)));
+        } else if(in.at(i) < 0x10000) {
             // 1110xxxx 10xxxxxx 10xxxxxx
-            rv.append((char08_t)(MASK3BYTES | (in[i] >> 12)));
-            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 6) & MASKBITS)));
-            rv.append((char08_t)(MASKBYTE   | (in[i] & MASKBITS)));
-        } else if(in[i] < 0x200000) {
+            rv.append((char08_t)(MASK3BYTES | (in.at(i) >> 12)));
+            rv.append((char08_t)(MASKBYTE   | ((in.at(i) >> 6) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | (in.at(i) & MASKBITS)));
+        } else if(in.at(i) < 0x200000) {
             // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-            rv.append((char08_t)(MASK4BYTES | (in[i] >> 18)));
-            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 12) & MASKBITS)));
-            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 6) & MASKBITS)));
-            rv.append((char08_t)(MASKBYTE   | (in[i] & MASKBITS)));
-        } else if(in[i] < 0x4000000) {
+            rv.append((char08_t)(MASK4BYTES | (in.at(i) >> 18)));
+            rv.append((char08_t)(MASKBYTE   | ((in.at(i) >> 12) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | ((in.at(i) >> 6) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | (in.at(i) & MASKBITS)));
+        } else if(in.at(i) < 0x4000000) {
             // 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-            rv.append((char08_t)(MASK5BYTES | (in[i] >> 24)));
-            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 18) & MASKBITS)));
-            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 12) & MASKBITS)));
-            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 6) & MASKBITS)));
-            rv.append((char08_t)(MASKBYTE   | (in[i] & MASKBITS)));
-        } else if(in[i] < 0x8000000) {
+            rv.append((char08_t)(MASK5BYTES | (in.at(i) >> 24)));
+            rv.append((char08_t)(MASKBYTE   | ((in.at(i) >> 18) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | ((in.at(i) >> 12) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | ((in.at(i) >> 6) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | (in.at(i) & MASKBITS)));
+        } else if(in.at(i) < 0x8000000) {
             // 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-            rv.append((char08_t)(MASK6BYTES | (in[i] >> 30)));
-            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 18) & MASKBITS)));
-            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 12) & MASKBITS)));
-            rv.append((char08_t)(MASKBYTE   | ((in[i] >> 6) & MASKBITS)));
-            rv.append((char08_t)(MASKBYTE   | (in[i] & MASKBITS)));
+            rv.append((char08_t)(MASK6BYTES | (in.at(i) >> 30)));
+            rv.append((char08_t)(MASKBYTE   | ((in.at(i) >> 18) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | ((in.at(i) >> 12) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | ((in.at(i) >> 6) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE   | (in.at(i) & MASKBITS)));
         }
     }
     return rv;
@@ -67,29 +67,29 @@ z::string32 z::c08to32(const z::string08& in) {
     z::string32 rv;
     for(z::string08::size_type i = 0; i < in.size();) {
         char32_t ch;
-        if((in[i] & MASK6BYTES) == MASK6BYTES) {
+        if(((uint64_t)in.at(i) & MASK6BYTES) == MASK6BYTES) {
             // 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-            ch = ((in[i] & 0x01) << 30) | ((in[i+1] & MASKBITS) << 24) | ((in[i+2] & MASKBITS) << 18) | ((in[i+3] & MASKBITS) << 12) | ((in[i+4] & MASKBITS) << 6) | (in[i+5] & MASKBITS);
+            ch = ((in.at(i) & 0x01) << 30) | ((in[i+1] & MASKBITS) << 24) | ((in[i+2] & MASKBITS) << 18) | ((in[i+3] & MASKBITS) << 12) | ((in[i+4] & MASKBITS) << 6) | (in[i+5] & MASKBITS);
             i += 6;
-        } else if((in[i] & MASK5BYTES) == MASK5BYTES) {
+        } else if(((uint64_t)in.at(i) & MASK5BYTES) == MASK5BYTES) {
             // 111110xx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
-            ch = ((in[i] & 0x03) << 24) | ((in[i+1] & MASKBITS) << 18) | ((in[i+2] & MASKBITS) << 12) | ((in[i+3] & MASKBITS) << 6) | (in[i+4] & MASKBITS);
+            ch = ((in.at(i) & 0x03) << 24) | ((in[i+1] & MASKBITS) << 18) | ((in[i+2] & MASKBITS) << 12) | ((in[i+3] & MASKBITS) << 6) | (in[i+4] & MASKBITS);
             i += 5;
-        } else if((in[i] & MASK4BYTES) == MASK4BYTES) {
+        } else if(((uint64_t)in.at(i) & MASK4BYTES) == MASK4BYTES) {
             // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-            ch = ((in[i] & 0x07) << 18) | ((in[i+1] & MASKBITS) << 12) | ((in[i+2] & MASKBITS) << 6) | (in[i+3] & MASKBITS);
+            ch = ((in.at(i) & 0x07) << 18) | ((in[i+1] & MASKBITS) << 12) | ((in[i+2] & MASKBITS) << 6) | (in[i+3] & MASKBITS);
             i += 4;
-        } else if((in[i] & MASK3BYTES) == MASK3BYTES) {
+        } else if(((uint64_t)in.at(i) & MASK3BYTES) == MASK3BYTES) {
             // 1110xxxx 10xxxxxx 10xxxxxx
-            ch = ((in[i] & 0x0F) << 12) | ((in[i+1] & MASKBITS) << 6) | (in[i+2] & MASKBITS);
+            ch = ((in.at(i) & 0x0F) << 12) | ((in[i+1] & MASKBITS) << 6) | (in[i+2] & MASKBITS);
             i += 3;
-        } else if((in[i] & MASK2BYTES) == MASK2BYTES) {
+        } else if(((uint64_t)in.at(i) & MASK2BYTES) == MASK2BYTES) {
             // 110xxxxx 10xxxxxx
-            ch = ((in[i] & 0x1F) << 6) | (in[i+1] & MASKBITS);
+            ch = ((in.at(i) & 0x1F) << 6) | (in[i+1] & MASKBITS);
             i += 2;
-        } else if(in[i] < MASKBYTE) {
+        } else if((uint64_t)in.at(i) < MASKBYTE) {
             // 0xxxxxxx
-            ch = in[i];
+            ch = in.at(i);
             i += 1;
         }
         rv.append(ch);
@@ -101,17 +101,17 @@ z::string16 z::c08to16(const z::string08& in) {
     z::string16 rv;
     for(z::string08::size_type i = 0; i < in.size();) {
         char16_t ch;
-        if((in[i] & MASK3BYTES) == MASK3BYTES) {
+        if((in.at(i) & MASK3BYTES) == MASK3BYTES) {
             // 1110xxxx 10xxxxxx 10xxxxxx
-            ch = ((in[i] & 0x0F) << 12) | ( (in[i+1] & MASKBITS) << 6) | (in[i+2] & MASKBITS);
+            ch = ((in.at(i) & 0x0F) << 12) | ( (in[i+1] & MASKBITS) << 6) | (in[i+2] & MASKBITS);
             i += 3;
-        } else if((in[i] & MASK2BYTES) == MASK2BYTES) {
+        } else if((in.at(i) & MASK2BYTES) == MASK2BYTES) {
             // 110xxxxx 10xxxxxx
-            ch = ((in[i] & 0x1F) << 6) | (in[i+1] & MASKBITS);
+            ch = ((in.at(i) & 0x1F) << 6) | (in[i+1] & MASKBITS);
             i += 2;
-        } else if(in[i] < MASKBYTE) {
+        } else if((uint64_t)in.at(i) < MASKBYTE) {
             // 0xxxxxxx
-            ch = in[i];
+            ch = in.at(i);
             i += 1;
         }
         rv.append(ch);
@@ -122,18 +122,18 @@ z::string16 z::c08to16(const z::string08& in) {
 z::string08 z::c16to08(const z::string16& in) {
     z::string08 rv;
     for(z::string16::size_type i = 0; i < in.size(); i++) {
-        if(in[i] < 0x80) {
+        if((uint64_t)in.at(i) < (uint64_t)0x80) {
             // 0xxxxxxx
-            rv.append((char08_t)in[i]);
-        } else if(in[i] < 0x800) {
+            rv.append((char08_t)in.at(i));
+        } else if((uint64_t)in.at(i) < (uint64_t)0x800) {
             // 110xxxxx 10xxxxxx
-            rv.append((char08_t)(MASK2BYTES | (in[i] >> 6)));
-            rv.append((char08_t)(MASKBYTE | (in[i] & MASKBITS)));
-        } else if(in[i] < 0x10000) {
+            rv.append((char08_t)(MASK2BYTES | (in.at(i) >> 6)));
+            rv.append((char08_t)(MASKBYTE | (in.at(i) & MASKBITS)));
+        } else if((uint16_t)in.at(i) < (uint16_t)0x10000) {
             // 1110xxxx 10xxxxxx 10xxxxxx
-            rv.append((char08_t)(MASK3BYTES | (in[i] >> 12)));
-            rv.append((char08_t)(MASKBYTE | ((in[i] >> 6) & MASKBITS)));
-            rv.append((char08_t)(MASKBYTE | (in[i] & MASKBITS)));
+            rv.append((char08_t)(MASK3BYTES | (in.at(i) >> 12)));
+            rv.append((char08_t)(MASKBYTE | ((in.at(i) >> 6) & MASKBITS)));
+            rv.append((char08_t)(MASKBYTE | (in.at(i) & MASKBITS)));
         }
     }
     return rv;
@@ -362,10 +362,13 @@ static gboolean onIdle(gpointer data) {
 z::Application::Application(int argc, char* argv[]) {
 #if defined(GUI)
 #if defined(WIN32)
+    unused(argc); unused(argv);
 #endif
 #if defined(GTK)
     gtk_init(&argc, &argv);
 #endif
+#else
+    unused(argc); unused(argv);
 #endif
 }
 

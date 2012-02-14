@@ -3,11 +3,13 @@
 #include "core/DateTime.hpp"
 
 z::string DateTime::toString(const z::datetime& dt) {
+    unused(dt);
     assert(false);
     return "";
 }
 
 z::datetime DateTime::fromString(const z::string& str) {
+    unused(str);
     assert(false);
     z::datetime dt = std::time(0);
     return dt;

@@ -86,7 +86,7 @@ Using unicode fold db : CaseFolding.txt
 #include "sqlite3ext.h"
 SQLITE_EXTENSION_INIT1
 #else
-#include "sqlite3.h"
+#include "utils/sqlite3/sqlite3.h"
 #endif
 
 #include <assert.h>

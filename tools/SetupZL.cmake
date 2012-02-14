@@ -13,7 +13,7 @@ SET(ZENLANG_LIBRARIES)
 
 # add debug definitions
  IF(CMAKE_COMPILER_IS_GNUCXX)
-     ADD_DEFINITIONS( "-Wall" )
+     ADD_DEFINITIONS( "-Wall -pedantic -Wextra" )
  ENDIF(CMAKE_COMPILER_IS_GNUCXX)
 
 # add debug definitions

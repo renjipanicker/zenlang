@@ -56,11 +56,11 @@ ADD_LIBRARY(core STATIC ${libcore_SOURCES})
 # build all utils/ files (actually just copy them to output dir)
 SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3ext.h")
 SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3.h")
+SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3_unicode.h")
 
-# NOTE: copying from utils/ to util/ (no 's' is dst path)
 FOREACH(_FILE ${libutil_ZPP_SOURCES})
     GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME)
-    CONFIGURE_FILE("${ZEN_ROOT}/lib/utils/sqlite3/${_BASE}" "${ZEN_OUTPUT_PATH}/include/util/sqlite3/${_BASE}" COPYONLY @ONLY)
+    CONFIGURE_FILE("${ZEN_ROOT}/lib/utils/sqlite3/${_BASE}" "${ZEN_OUTPUT_PATH}/include/utils/sqlite3/${_BASE}" COPYONLY @ONLY)
 ENDFOREACH()
 
 #########################

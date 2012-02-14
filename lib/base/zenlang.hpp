@@ -104,10 +104,8 @@ namespace z {
 
         inline void append08(const char* str) {
             for(const char* c = str; *c != 0; ++c) {
-                std::cout << "append08(): c = " << *c << ", c = " << (int)(*c) << std::endl;
                 _val.push_back((z::char_t)(*c));
             }
-            std::cout << "append08(): val = " << _val.c_str() << std::endl;
         }
 
         inline void append(const charT& rhs) {_val += rhs;}
