@@ -104,10 +104,8 @@ namespace z {
 
         inline void append08(const char* str) {
             for(const char* c = str; *c != 0; ++c) {
-                std::cout << "append08(): c = " << *c << ", c = " << (int)(*c) << std::endl;
                 _val.push_back((z::char_t)(*c));
             }
-            std::cout << "append08(): val = " << _val.c_str() << std::endl;
         }
 
         inline void append(const charT& rhs) {_val += rhs;}
@@ -334,6 +332,7 @@ namespace z {
         static const z::string sep;
         static bool exists(const z::string& path);
         static int mkdir(const z::string& path);
+        static z::string getFilename(const z::string& filename);
 
         /// makes a path upto the second-last component, unless filename is terminated by a /
         static void mkpath(const z::string& filename);

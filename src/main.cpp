@@ -29,13 +29,19 @@ static int showHelp(const Ast::Config& config) {
     return 0;
 }
 
+inline void replaceSlash(z::string& path) {
+#if defined(WIN32)
+    path.replace("\\", "/");
+#endif
+}
+
 int main(int argc, char* argv[]) {
     Ast::Project project;
     Ast::Config& config = project.addConfig("");
 
     static const int len = 1024;
     char path[len] = "";
-#ifdef WIN32
+#if defined(WIN32)
     DWORD rv = GetModuleFileName(NULL, path, len);
     if(rv == 0) {
         DWORD ec = GetLastError();
@@ -50,7 +56,9 @@ int main(int argc, char* argv[]) {
     }
 #endif
 
-    config.zexePath(path);
+    z::string p = path;
+    replaceSlash(p);
+    config.zexePath(p);
     config.addIncludeFile("base/pch.hpp");
     config.addIncludeFile("base/zenlang.hpp");
     config.addLinkFile("core");
@@ -90,9 +98,11 @@ int main(int argc, char* argv[]) {
             project.oproject(t);
         } else if((t == "-ad") || (t == "--api")) {
             t = argv[i++];
+            replaceSlash(t);
             config.apidir(t);
         } else if((t == "-sd") || (t == "--src")) {
             t = argv[i++];
+            replaceSlash(t);
             config.srcdir(t);
         } else if((t == "-l") || (t == "--link")) {
             t = argv[i++];
@@ -110,8 +120,10 @@ int main(int argc, char* argv[]) {
             config.test(false);
         } else if((t == "-z") || (t == "--zenPath")) {
             t = argv[i++];
+            replaceSlash(t);
             config.zlibPath(t);
         } else {
+            replaceSlash(t);
             config.addSourceFile(t);
         }
     }
@@ -119,11 +131,7 @@ int main(int argc, char* argv[]) {
     if(config.zlibPath().size() == 0) {
         z::string p = config.zexePath();
         // strip path, if any
-#ifdef WIN32
-        char sep = '\\';
-#else
         char sep = '/';
-#endif
         z::string::size_type idx = p.rfind(sep);
         if(idx != z::string::npos) {
             p = p.substr(0, idx);
@@ -139,7 +147,7 @@ int main(int argc, char* argv[]) {
             p += sep;
         }
 
-        p.replace("\\", "/");
+        replaceSlash(p);
         config.zlibPath(p);
     }
 
