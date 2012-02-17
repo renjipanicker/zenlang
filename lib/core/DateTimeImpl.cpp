@@ -14,11 +14,15 @@ inline std::tm getTm(const z::datetime& dt) {
 #endif
 }
 
-z::string DateTime::toString(const z::datetime& dt) {
+z::string DateTime::toFormatString(const z::datetime& dt, const z::string& format) {
     std::tm tm = getTm(dt);
     char buf[50];
-    ::strftime(buf, 50, "%Y-%m-%d %H:%M:%S %Z", &tm);
+    ::strftime(buf, 50, z::s2e(format).c_str(), &tm);
     return buf;
+}
+
+z::string DateTime::toIsoString(const z::datetime& dt) {
+    return toFormatString(dt, "%Y-%m-%d %H:%M:%S %Z");
 }
 
 z::datetime DateTime::fromString(const z::string& str) {
@@ -36,7 +40,14 @@ z::datetime DateTime::Now() {
 z::datetime DateTime::AddDays(const z::datetime& dt, const int& days) {
     z::datetime ndt = dt.val() + (days * 24 * 60 * 60);
     return ndt;
+}
 
+z::datetime DateTime::ToLocal(const z::datetime& dt) {
+    time_t t = dt.val();
+    std::tm* tm = ::localtime(&t);
+    time_t nt = ::mktime(tm);
+    std::cout << t << ":" << nt << std::endl;
+    return z::datetime(nt);
 }
 
 int DateTime::DaysDiff(const z::datetime& dt1, const z::datetime& dt2) {

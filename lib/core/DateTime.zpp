@@ -1,8 +1,10 @@
 namespace DateTime;
 
-public routine string toString(const datetime& dt) native;
+public routine string toFormatString(const datetime& dt, const string& format) native;
+public routine string toIsoString(const datetime& dt) native;
 public routine datetime fromString(const string& str) native;
 public routine datetime Now() native;
 public routine datetime AddDays(const datetime& dt, const int& days) native;
+public routine datetime ToLocal(const datetime& dt) native;
 public routine int DaysDiff(const datetime& dt1, const datetime& dt2) native;
 public routine int Year(const datetime& dt) native;

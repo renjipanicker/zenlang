@@ -383,6 +383,7 @@ z::Application::Application(int argc, char* argv[]) {
 #else
     unused(argc); unused(argv);
 #endif
+    ::tzset();
 }
 
 z::Application::~Application() {
