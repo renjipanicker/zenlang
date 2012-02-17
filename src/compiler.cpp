@@ -5,6 +5,7 @@
 #include "StlcppGenerator.hpp"
 
 inline bool checkFile(const z::string& filename) {
+    std::cout << "Checking file: " << filename << std::endl;
     return std::ifstream( z::s2e(filename).c_str() ).is_open();
 }
 

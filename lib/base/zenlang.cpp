@@ -252,6 +252,18 @@ void z::file::mkpath(const z::string& filename) {
     }
 }
 
+z::string z::file::getFilename(const z::string& filename) {
+    z::string basename = filename;
+    z::string::size_type idx = -1;
+
+    // strip path, if any
+    idx = basename.rfind('/');
+    if(idx >= 0)
+        basename = basename.substr(idx + 1);
+
+    return basename;
+}
+
 z::string z::file::cwd() {
     static const size_t MAXBUF = 1024;
     char buff[MAXBUF];
@@ -266,6 +278,7 @@ z::string z::file::cwd() {
 
 ////////////////////////////////////////////////////////////////////////////
 z::ofile::ofile(const z::string& filename) {
+    std::cout << "ofile: opening file: " << filename << std::endl;
     _name = filename;
     _os.open(s2e(_name).c_str());
     if(!_os.is_open()) {

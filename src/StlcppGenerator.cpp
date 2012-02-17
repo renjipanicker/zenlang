@@ -1497,6 +1497,7 @@ inline void StlcppGenerator::Impl::run() {
     z::string basename = getBaseName(_module.filename());
 //@    OutputFile ofHdr(_fpHdr, _config.apidir(), basename + ".hpp");unused(ofHdr);
 //    OutputFile ofSrc(_fpSrc, _config.srcdir(), basename + ".cpp");unused(ofSrc);
+    std::cout <<"stlcpp: making path: " << _config.apidir() << std::endl;
     z::file::mkpath(_config.apidir() + "/");
     z::file::mkpath(_config.srcdir() + "/");
     z::ofile ofHdr(_config.apidir() + "/" + basename + ".hpp");

@@ -332,6 +332,7 @@ namespace z {
         static const z::string sep;
         static bool exists(const z::string& path);
         static int mkdir(const z::string& path);
+        static z::string getFilename(const z::string& filename);
 
         /// makes a path upto the second-last component, unless filename is terminated by a /
         static void mkpath(const z::string& filename);
