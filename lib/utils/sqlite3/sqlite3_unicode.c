@@ -2604,6 +2604,7 @@ static void *contextMalloc(sqlite3_context *context, i64 nByte){
 **
 ** SQlite has not supplied us with a reallocate function so we build our own.
 */
+#ifdef SQLITE3_UNICODE_UNACC
 SQLITE_PRIVATE void *contextRealloc(sqlite3_context *context, void* pPrior, i64 nByte){
   char *z = sqlite3_realloc(pPrior, (int)nByte);
   if( !z && nByte>0 ){
@@ -2611,6 +2612,7 @@ SQLITE_PRIVATE void *contextRealloc(sqlite3_context *context, void* pPrior, i64 
   }
   return z;
 }
+#endif
 
 #if (defined(SQLITE3_UNICODE_FOLD) || defined(SQLITE3_UNICODE_LOWER) || defined(SQLITE3_UNICODE_UPPER) || defined(SQLITE3_UNICODE_TITLE))
 /*
@@ -2719,8 +2721,10 @@ SQLITE_PRIVATE int sqlite3StrNICmp(const unsigned char *zLeft, const unsigned ch
   int Z = 0;
 
   do {
-    ua = sqlite3Utf8Read(a, 0, &a);  ub = sqlite3Utf8Read(b, 0, &b);
-    ua = GlogUpperToLower(ua);       ub = GlogUpperToLower(ub);
+    ua = sqlite3Utf8Read(a, 0, &a);
+    ub = sqlite3Utf8Read(b, 0, &b);
+    ua = GlogUpperToLower(ua);
+    ub = GlogUpperToLower(ub);
     Z = (int)max(a - zLeft, b - zRight);
   } while(N > Z && *a!=0 && ua==ub);
   return N<0 ? 0 : ua - ub;
@@ -2828,7 +2832,7 @@ SQLITE_EXPORT int sqlite3_unicode_init(sqlite3 *db){
   };
 
   int rc = SQLITE_OK;
-  int i;
+  size_t i;
 
   for(i=0; rc==SQLITE_OK && i<(sizeof(scalars)/sizeof(struct FuncScalar)); i++){
     struct FuncScalar *p = &scalars[i];

@@ -46,7 +46,6 @@ z::datetime DateTime::ToLocal(const z::datetime& dt) {
     time_t t = dt.val();
     std::tm* tm = ::localtime(&t);
     time_t nt = ::mktime(tm);
-    std::cout << t << ":" << nt << std::endl;
     return z::datetime(nt);
 }
 

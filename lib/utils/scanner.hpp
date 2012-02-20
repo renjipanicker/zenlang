@@ -7,6 +7,12 @@ namespace z {
 
     struct Scanner {
     protected:
+        enum TokenMode {
+            tmNormal,
+            tmExtended
+        };
+
+    protected:
         Scanner(const int& eofTok);
         virtual ~Scanner();
 
@@ -16,19 +22,18 @@ namespace z {
         void done();
         virtual void parse(const int& id, Token* token) = 0;
         inline const int& row() const {return _row;}
+        inline void setExtendedMode() {
+            _text = _cursor;
+            _tokenMode = tmExtended;
+        }
 
     protected:
-        enum TokenType {
-            ttNormal,
-            ttString
-        };
-
-    protected:
-        Token* getToken(const TokenType& tt = ttNormal);
+        Token* getToken();
         void newLine();
 
     protected:
         int _eofTok;
+        TokenMode _tokenMode;
         std::string _buffer;
         std::string _textbfr;
         std::string::const_iterator _start;
