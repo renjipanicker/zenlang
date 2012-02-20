@@ -100,9 +100,9 @@ fix indentation in generated cpp file
 *** Selectively decide which header files to make private.
 
 =========================
-../debug/zen -v ../../zenlang/tests/testBasic.zpp && cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
+../out/bin/zen -v ../../zenlang/tests/testBasic.zpp && cmake -DCMAKE_BUILD_TYPE=Debug . && make && ./main
 
-../debug/zen --name core --verbose --lib \
+../out/bin/zen --name core --verbose --lib \
 ../../zenlang/lib/core/String.zpp ../../zenlang/lib/core/StringImpl.cpp \
 ../../zenlang/lib/core/DateTime.zpp ../../zenlang/lib/core/DateTimeImpl.cpp \
 ../../zenlang/lib/core/File.zpp ../../zenlang/lib/core/FileImpl.cpp \
@@ -111,7 +111,7 @@ fix indentation in generated cpp file
 && cmake -DCMAKE_BUILD_TYPE=Debug . && make
 
 valgrind --leak-check=full --track-origins=yes \
-../debug/zen --verbose --gui \
+../out/bin/zen --verbose --gui \
 ../../zenlang/lib/gui/Widget.zpp ../../zenlang/lib/gui/WidgetImpl.cpp \
 ../../zenlang/lib/gui/Window.zpp ../../zenlang/lib/gui/WindowImpl.cpp \
 ../../zenlang/lib/gui/Mainframe.zpp ../../zenlang/lib/gui/MainframeImpl.cpp \

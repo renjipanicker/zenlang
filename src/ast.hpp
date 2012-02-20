@@ -176,6 +176,11 @@ namespace Ast {
         const z::string _text;
     };
 
+    inline std::ostream& operator << (std::ostream& os, const Ast::Token& val) {
+        os << val.string();
+        return os;
+    }
+
     //////////////////////////////////////////////////////////////////
     class Node {
     public:
@@ -2202,15 +2207,3 @@ namespace Ast {
         Verbosity::T _verbosity;
     };
 }
-
-inline z::ostream& operator << (z::ostream& os, const Ast::Token& val) {
-    os << val.string();
-    return os;
-}
-
-#if !defined(CHAR_WIDTH_08)
-inline std::ostream& operator << (std::ostream& os, const Ast::Token& val) {
-    os << val.string();
-    return os;
-}
-#endif

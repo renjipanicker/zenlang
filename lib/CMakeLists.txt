@@ -38,6 +38,8 @@ SET(libcore_SOURCES ${libcore_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3ext
 SET(libcore_SOURCES ${libcore_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/vfs_compress.c")
 SET(libcore_SOURCES ${libcore_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3_unicode.h")
 SET(libcore_SOURCES ${libcore_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3_unicode.c")
+SET(libcore_SOURCES ${libcore_SOURCES} "${ZEN_ROOT}/lib/utils/scanner.hpp")
+SET(libcore_SOURCES ${libcore_SOURCES} "${ZEN_ROOT}/lib/utils/scanner.cpp")
 
 FOREACH(_FILE ${libcore_ZPP_SOURCES})
     GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME_WE)
@@ -54,13 +56,13 @@ ADD_LIBRARY(core STATIC ${libcore_SOURCES})
 
 #########################
 # build all utils/ files (actually just copy them to output dir)
-SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3ext.h")
-SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3.h")
-SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "${ZEN_ROOT}/lib/utils/sqlite3/sqlite3_unicode.h")
+SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "utils/sqlite3/sqlite3ext.h")
+SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "utils/sqlite3/sqlite3.h")
+SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "utils/sqlite3/sqlite3_unicode.h")
+SET(libutil_ZPP_SOURCES ${libutil_ZPP_SOURCES} "utils/scanner.hpp")
 
 FOREACH(_FILE ${libutil_ZPP_SOURCES})
-    GET_FILENAME_COMPONENT(_BASE ${_FILE} NAME)
-    CONFIGURE_FILE("${ZEN_ROOT}/lib/utils/sqlite3/${_BASE}" "${ZEN_OUTPUT_PATH}/include/utils/sqlite3/${_BASE}" COPYONLY @ONLY)
+    CONFIGURE_FILE("${ZEN_ROOT}/lib/${_FILE}" "${ZEN_OUTPUT_PATH}/include/${_FILE}" COPYONLY @ONLY)
 ENDFOREACH()
 
 #########################

@@ -13,6 +13,8 @@ INCLUDE_DIRECTORIES("src/")
 SET(zen_SOURCES ${zen_SOURCES} lib/base/pch.hpp)
 SET(zen_SOURCES ${zen_SOURCES} lib/base/zenlang.hpp)
 SET(zen_SOURCES ${zen_SOURCES} lib/base/zenlang.cpp)
+SET(zen_SOURCES ${zen_SOURCES} lib/utils/scanner.hpp)
+SET(zen_SOURCES ${zen_SOURCES} lib/utils/scanner.cpp)
 
 SET(zen_SOURCES ${zen_SOURCES} src/ast.hpp)
 SET(zen_SOURCES ${zen_SOURCES} src/ast.cpp)

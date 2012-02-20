@@ -242,70 +242,61 @@ namespace z {
     }
 
     typedef std::basic_ostream<char_t> ostream;
-}
 
-inline z::string operator+(const z::char_t* lhs, const z::string& rhs) {return lhs + rhs.val();}
-inline z::string operator+(const z::string& lhs, const z::char_t* rhs) {return (lhs.val() + rhs);}
-inline z::string operator+(const z::string& lhs, const z::char_t rhs) {return (lhs.val() + rhs);}
-inline z::string operator+(const z::string& lhs, const z::string& rhs) {return (lhs.val() + rhs.val());}
+    inline std::ostream& operator<<(std::ostream& os, const z::estring& val) {
+        os << val.val();
+        return os;
+    }
 
-#if !defined(CHAR_WIDTH_08)
-inline z::string operator+(const z::string& lhs, const char* rhs) {
-    z::string rv = lhs;
-    rv.append08(rhs);
-    return rv;
-}
-#endif
+    inline std::ostream& operator<<(std::ostream& os, const z::string& val) {
+        os << z::s2e(val).val();
+        return os;
+    }
 
-//template <typename charT, typename stringT>
-//inline std::basic_ostream<charT>& operator<<(std::basic_ostream<charT>& os, const z::bstring<charT, stringT>& val) {
-//    os << val.val();
-//    return os;
-//}
+    inline z::string operator+(const z::char_t* lhs, const z::string& rhs) {return lhs + rhs.val();}
+    inline z::string operator+(const z::string& lhs, const z::char_t* rhs) {return (lhs.val() + rhs);}
+    inline z::string operator+(const z::string& lhs, const z::char_t rhs) {return (lhs.val() + rhs);}
+    inline z::string operator+(const z::string& lhs, const z::string& rhs) {return (lhs.val() + rhs.val());}
 
-template <typename charT, typename stringT>
-inline std::basic_ostream<charT>& operator<<(std::basic_ostream<charT>& os, const z::bstring<charT, stringT>& val) {
-    os << val.val();
-    return os;
-}
+    #if !defined(CHAR_WIDTH_08)
+    inline z::string operator+(const z::string& lhs, const char* rhs) {
+        z::string rv = lhs;
+        rv.append08(rhs);
+        return rv;
+    }
+    #endif
 
-inline std::ostream& operator<<(std::ostream& os, const z::string& val) {
-    os << z::s2e(val).val();
-    return os;
-}
+    template <typename charT, typename stringT>
+    template <typename T>
+    inline stringT& z::bstring<charT, stringT>::arg(const stringT& key, const T& value) {
+        // first stream the key:val pair into a regular std::stringstream
+        std::stringstream skey;
+        skey << "%{" << s2e(key) << "}";
+        std::stringstream sval;
+        sval << value;
 
-template <typename charT, typename stringT>
-template <typename T>
-inline stringT& z::bstring<charT, stringT>::arg(const stringT& key, const T& value) {
-    // first stream the key:val pair into a regular std::stringstream
-    std::stringstream skey;
-    skey << "%{" << s2e(key) << "}";
-    std::stringstream sval;
-    sval << value;
+        // then use e2s to convert it to current string width
+        stringT sk = e2s(skey.str());
+        stringT sv = e2s(sval.str());
 
-    // then use e2s to convert it to current string width
-    stringT sk = e2s(skey.str());
-    stringT sv = e2s(sval.str());
+        // and replace
+        replace(sk, sv);
+        return z::ref(static_cast<stringT*>(this));
+    }
 
-    // and replace
-    replace(sk, sv);
-    return z::ref(static_cast<stringT*>(this));
-}
+    template <typename charT, typename stringT>
+    template <typename T>
+    inline T z::bstring<charT, stringT>::to() const {
+        z::estring es = s2e(z::ref(static_cast<const stringT*>(this)));
+        std::stringstream ss(es.val());
+        // converting to utf8 and then to expected type.
+        /// \todo: find out better way to convert from 16 and 32 bit string to expected type
+        //std::basic_stringstream<charT> ss(_val);
+        T val;
+        ss >> val;
+        return val;
+    }
 
-template <typename charT, typename stringT>
-template <typename T>
-inline T z::bstring<charT, stringT>::to() const {
-    z::estring es = s2e(z::ref(static_cast<const stringT*>(this)));
-    std::stringstream ss(es.val());
-    // converting to utf8 and then to expected type.
-    /// \todo: find out better way to convert from 16 and 32 bit string to expected type
-    //std::basic_stringstream<charT> ss(_val);
-    T val;
-    ss >> val;
-    return val;
-}
-
-namespace z {
     ////////////////////////////////////////////////////////////////////////////
     struct datetime {
         inline datetime() : _val(0) {}
@@ -387,8 +378,8 @@ namespace z {
         z::string _text;
     };
 
-    inline void mlog(const z::string& src, const z::fmt& msg) {std::cout << s2e(src) << ":" << s2e(msg.get()) << std::endl;}
-    inline void elog(const z::string& src, const z::fmt& msg) {std::cout << s2e(src) << ":" << s2e(msg.get()) << std::endl;}
+    inline void mlog(const z::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get() << std::endl;}
+    inline void elog(const z::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get() << std::endl;}
 
     struct Log {
         struct Out{};
