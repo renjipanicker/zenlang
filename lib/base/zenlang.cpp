@@ -383,7 +383,12 @@ z::Application::Application(int argc, char* argv[]) {
 #else
     unused(argc); unused(argv);
 #endif
+#if defined(WIN32)
+    ::_tzset();
+#endif
+#if defined(GTK)
     ::tzset();
+#endif
 }
 
 z::Application::~Application() {
