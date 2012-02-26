@@ -27,7 +27,8 @@ namespace Ast {
         inline Ast::Scope& addScope(const Ast::Token& pos, const Ast::ScopeType::T& type);
         inline Ast::Scope& addScopeWithSig(const Ast::Token& pos, const Ast::ScopeType::T& type, const Ast::FunctionSig& sig);
         inline Ast::VariableDefn& addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
-        inline Ast::FunctionDecl& addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
+        inline Ast::RootFunctionDecl& addRootFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
+        inline Ast::ChildFunctionDecl& addChildFunctionDecl(const Ast::TypeSpec& parent, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TypeSpec& base);
         inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& srcTemplateDefn, const Ast::TemplateDefn& templateDefn, const Ast::ExprList& exprList);
         inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
         inline const Ast::Expr& switchDictKeyValue(const Ast::Token& pos, const Unit::ExpectedTypeSpec::Type& popType, const Unit::ExpectedTypeSpec::Type& pushType, const Ast::TemplateDefn::size_type& idx, const Ast::Expr& initExpr);
@@ -74,9 +75,9 @@ namespace Ast {
         Ast::TemplatePartList*   aTemplatePartList(const Ast::Token& name);
         Ast::TemplateDecl*       aTemplateDecl(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TemplatePartList& list);
         Ast::EnumDefn*           aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::Scope& list);
-        Ast::EnumDefn*           aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
+        Ast::EnumDecl*           aEnumDecl(const Ast::Token& name, const Ast::DefinitionType::T& defType);
         Ast::Scope*              aEnumMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& variableDefn);
-        Ast::Scope*              aEnumMemberDefnList(const Ast::VariableDefn& variableDefn);
+        Ast::Scope*              aEnumMemberDefnListEmpty(const Ast::Token& pos);
         Ast::VariableDefn*       aEnumMemberDefn(const Ast::Token& name);
         Ast::VariableDefn*       aEnumMemberDefn(const Ast::Token& name, const Ast::Expr& initExpr);
         Ast::StructDecl*         aStructDecl(const Ast::Token& name, const Ast::DefinitionType::T& defType);
@@ -93,7 +94,8 @@ namespace Ast {
         Ast::RoutineDecl*        aVarArgRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::DefinitionType::T& defType);
         Ast::RoutineDefn*        aRoutineDefn(Ast::RoutineDefn& routineDefn, const Ast::CompoundStatement& block);
         Ast::RoutineDefn*        aEnterRoutineDefn(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType);
-        Ast::FunctionDecl*       aFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
+        Ast::RootFunctionDecl*   aRootFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
+        Ast::ChildFunctionDecl*  aChildFunctionDecl(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType);
         Ast::RootFunctionDefn*   aRootFunctionDefn(Ast::RootFunctionDefn& functionDefn, const Ast::CompoundStatement& block);
         Ast::RootFunctionDefn*   aEnterRootFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType);
         Ast::ChildFunctionDefn*  aChildFunctionDefn(Ast::ChildFunctionDefn& functionImpl, const Ast::CompoundStatement& block);

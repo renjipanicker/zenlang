@@ -946,12 +946,12 @@ namespace z {
     template <typename FunctionT>
     struct FunctorList {
         inline FunctionT& add(FunctionT* h) {
-            _list.push_back(h);
+            _list.add(h);
             return ref(h);
         }
 
     private:
-        typedef std::list<FunctionT*> List;
+        typedef z::olist<FunctionT> List;
         List _list;
     };
 
@@ -961,18 +961,9 @@ namespace z {
         InvocationList _invocationList;
     public:
         typedef InvocationList::size_type size_type;
-    public:
-        struct Ptr {
-            inline Ptr() : _ptr(0) {}
-            inline ~Ptr() {delete _ptr; _ptr = 0;}
-            inline void set(Future* ptr) {delete _ptr; _ptr = 0; _ptr = ptr;}
-            inline Future* operator->() {return _ptr;}
-         private:
-            inline Ptr(const Ptr& src) : _ptr(0) {unused(src);}
-            inline Ptr& operator=(const Ptr& src) {unused(src); return ref(this);}
-            Future* _ptr;
-        };
+        typedef z::autoptr<Future> Ptr;
 
+    public:
         inline size_type size() const {return _invocationList.size();}
 
         template <typename FunctionT>
@@ -985,7 +976,7 @@ namespace z {
         inline bool pop(Ptr& ptr) {
             if(size() == 0)
                 return false;
-            ptr.set(_invocationList.front());
+            ptr.reset(_invocationList.front());
             _invocationList.pop_front();
             return true;
         }
@@ -1007,6 +998,9 @@ namespace z {
         FunctionList _list;
     };
 
+    ///////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////
+    /// \brief List of event handlers
     template <typename KeyT, typename ValT>
     struct HandlerList {
         typedef std::list<ValT*> List;
@@ -1032,6 +1026,8 @@ namespace z {
         }
     };
 
+    ///////////////////////////////////////////////////////////////
+    /// \brief list of functions to execute at init-time
     template <typename InitT>
     struct InitList {
         inline InitList() : _head(0), _tail(0), _next(0) {}

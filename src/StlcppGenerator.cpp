@@ -14,6 +14,9 @@ void StlcppNameGenerator::getTypeName(const Ast::TypeSpec& typeSpec, z::string& 
     if(templateDefn) {
         if(z::ref(templateDefn).name().string() == "ptr") {
             const Ast::QualifiedTypeSpec& qTypeSpec = z::ref(templateDefn).list().front();
+            if(qTypeSpec.isConst()) {
+                name += "const ";
+            }
             name += tn(qTypeSpec.typeSpec());
             name += "*";
             return;
@@ -363,7 +366,7 @@ namespace {
                     ExprGenerator(_os).visitNode(expr);
                     _os() << ")";
                     if(name == "verify")
-                        _os() << ")return out(_Out(false))";
+                        _os() << ")return _Out(false)";
                     sep = ";";
                 }
                 return;
@@ -603,6 +606,12 @@ namespace {
             throw z::Exception("StlcppGenerator", zfmt(node.pos(), "Internal error: template definition cannot be generated '%{s}'").add("s", node.name()) );
         }
 
+        void visit(const Ast::EnumDecl& node) {
+            if(node.defType() != Ast::DefinitionType::Native) {
+                throw z::Exception("StlcppGenerator", zfmt(node.pos(), "Internal error: enum definition cannot be generated '%{s}'").add("s", node.name()) );
+            }
+        }
+
         void visit(const Ast::EnumDefn& node) {
             if(node.defType() != Ast::DefinitionType::Native) {
                 _os() << Indent::get() << "struct " << node.name() << " {" << std::endl;
@@ -766,23 +775,34 @@ namespace {
             return isDecl?node.sig().xrefScope():node.xrefScope();
         }
 
+        inline z::string getOutType(const Ast::Function& node) const {
+            z::string out1;
+            if(isVoid(node.sig().outScope())) {
+                out1 = "void";
+            } else if(node.sig().outScope().isTuple()) {
+//                out1 = "const _Out&";
+                out1 = "_Out";
+            } else {
+                const Ast::VariableDefn& vdef = node.sig().out().front();
+                out1 = StlcppNameGenerator().qtn(vdef.qTypeSpec());
+            }
+            return out1;
+        }
+
         inline void visitFunctionSig(const Ast::Function& node, const bool& isRoot, const bool& isDecl, const bool& isTest) {
-            // child-typespecs
             if(node.childCount() > 0) {
-                _os() << Indent::get() << "public:" << std::endl;
+                _os() << Indent::get() << "public:// child-typespec" << std::endl;
                 visitChildrenIndent(node);
             }
 
-            // xref-list
             if(xref(node, isDecl).list().size() > 0) {
-                _os() << Indent::get() << "public:" << std::endl;
+                _os() << Indent::get() << "public: // xref-list" << std::endl;
                 writeScopeMemberList(xref(node, isDecl));
                 writeCtor(node.name().string(), xref(node, isDecl));
             }
 
-            // in-param-list
             if(isRoot) {
-                _os() << Indent::get() << "public:" << std::endl;
+                _os() << Indent::get() << "public: // in-param-list" << std::endl;
                 INDENT;
                 _os() << Indent::get() << "struct _In {" << std::endl;
                 writeScopeMemberList(node.sig().inScope());
@@ -790,39 +810,10 @@ namespace {
                 _os() << Indent::get() << "};" << std::endl;
             }
 
-            z::string out1;
-            z::string out2;
-            if(isVoid(node.sig().outScope())) {
-                out1 = "void";
-//@                out2 = "const _Out &";
-                out2 = out1;
-            } else if(node.sig().outScope().isTuple()) {
-                out1 = "const _Out&";
-                out2 = out1;
-            } else {
-                const Ast::VariableDefn& vdef = node.sig().out().front();
-                out1 = StlcppNameGenerator().qtn(vdef.qTypeSpec());
-                out2 = out1;
-            }
-
-            if(!isTest) {
-                // param-instance
-                _os() << Indent::get() << "    z::Pointer<_Out> _out;" << std::endl;
-                _os() << Indent::get() << "    inline " << out2 << " out(const _Out& val) {_out = z::PointerCreator<_Out, _Out>::get(val);";
-                if(!isVoid(node.sig().outScope())) {
-                    _os() << "return _out.get()";
-                    if(!node.sig().outScope().isTuple()) {
-                        _os() << "._out";
-                    }
-                    _os() << ";";
-                }
-                _os() << "}" << std::endl;
-            }
-
-            // run-function-type
-            _os() << Indent::get() << "public:" << std::endl;
+            z::string out1 = getOutType(node);
+            _os() << Indent::get() << "public: // run-function" << std::endl;
             if(isTest) {
-                _os() << Indent::get() << "    " << out2 << " test();" << std::endl;
+                _os() << Indent::get() << "    " << out1 << " test();" << std::endl;
             } else {
                 if((isDecl) && ((node.defType() == Ast::DefinitionType::Final) || (node.defType() == Ast::DefinitionType::Abstract))) {
                     _os() << Indent::get() << "    virtual " << out1 << " run(";
@@ -833,17 +824,10 @@ namespace {
                     writeScopeParamList(_os, node.sig().inScope(), "p");
                     _os() << ");" << std::endl;
                 }
-                _os() << Indent::get() << "    inline " << out2 << " _run(const _In& _in) {" << std::endl;
-                if(isVoid(node.sig().outScope())) {
-                    _os() << Indent::get() << "        return run(";
-                    writeScopeInCallList(node.sig().inScope());
-                    _os() << ");" << std::endl;
-                } else {
-                    _os() << Indent::get() << "        return run(";
-                    writeScopeInCallList(node.sig().inScope());
-                    _os() << ");" << std::endl;
-                }
-                _os() << Indent::get() << "    }" << std::endl;
+
+                _os() << Indent::get() << "    inline " << out1 << " _run(const _In& _in) {return run(";
+                writeScopeInCallList(node.sig().inScope());
+                _os() << ");}" << std::endl;
             }
         }
 
@@ -900,8 +884,23 @@ namespace {
             _os() << std::endl;
         }
 
-        void visit(const Ast::FunctionDecl& node) {
+        void visit(const Ast::RootFunctionDecl& node) {
             visitFunction(node, true);
+            _os() << std::endl;
+        }
+
+        void visit(const Ast::ChildFunctionDecl& node) {
+            if(node.defType() == Ast::DefinitionType::Native) {
+                z::string out1 = getOutType(node);
+                _os() << Indent::get() << "class " << node.name() << " : public " << StlcppNameGenerator().tn(node.base()) << " {" << std::endl;
+                _os() << Indent::get() << "public:" << std::endl;
+                _os() << Indent::get() << "    virtual " << out1 << " run(";
+                writeScopeParamList(_os, node.sig().inScope(), "p");
+                _os() << ");" << std::endl;
+                _os() << Indent::get() << "};" << std::endl;
+            } else {
+                _os() << Indent::get() << "class " << node.name() << ";" << std::endl;
+            }
             _os() << std::endl;
         }
 
@@ -995,6 +994,10 @@ namespace {
             visitChildrenIndent(node);
         }
 
+        void visit(const Ast::EnumDecl& node) {
+            visitChildrenIndent(node);
+        }
+
         void visit(const Ast::EnumDefn& node) {
             visitChildrenIndent(node);
         }
@@ -1034,7 +1037,11 @@ namespace {
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::FunctionDecl& node) {
+        void visit(const Ast::RootFunctionDecl& node) {
+            visitChildrenIndent(node);
+        }
+
+        void visit(const Ast::ChildFunctionDecl& node) {
             visitChildrenIndent(node);
         }
 
@@ -1042,7 +1049,7 @@ namespace {
             const z::string tname = StlcppNameGenerator().tn(node);
             z::string out;
             if(node.sig().outScope().isTuple()) {
-                out = "const " + tname + "::_Out&";
+                out = "" + tname + "::_Out";
             } else {
                 const Ast::VariableDefn& vdef = node.sig().out().front();
                 out = StlcppNameGenerator().qtn(vdef.qTypeSpec());
@@ -1094,7 +1101,7 @@ namespace {
                 TypeDeclarationGenerator::writeScopeParamList(_os, node.addFunction().sig().inScope(), "");
                 _os() << ") {" << std::endl;
                 _os() << "    assert(false); //addHandler(in." << node.in().name() << ", in.handler);" << std::endl;
-                _os() << "    return out(_Out());" << std::endl;
+                _os() << "    return _Out();" << std::endl;
                 _os() << "}" << std::endl;
             }
         }
@@ -1439,9 +1446,10 @@ namespace {
         }
 
         virtual void visit(const Ast::FunctionReturnStatement& node) {
-            fpDefn()() << Indent::get() << "return out(_Out(";
+            const z::string out = node.sig().outScope().isTuple()?"_Out":"";
+            fpDefn()() << Indent::get() << "return " << out << "(";
             ExprGenerator(fpDefn(), ", ").visitList(node.exprList());
-            fpDefn()() << "));" << std::endl;
+            fpDefn()() << ");" << std::endl;
         }
 
         virtual void visit(const Ast::CompoundStatement& node) {

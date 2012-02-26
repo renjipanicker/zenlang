@@ -415,9 +415,21 @@ namespace Ast {
         const Ptr<const TemplateTypePartList> _list;
     };
 
-    class EnumDefn : public UserDefinedTypeSpec {
+    class EnumBase : public UserDefinedTypeSpec {
     public:
-        inline EnumDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Scope& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
+        inline EnumBase(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType) {}
+    };
+
+    class EnumDecl : public EnumBase {
+    public:
+        inline EnumDecl(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : EnumBase(parent, name, defType) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class EnumDefn : public EnumBase {
+    public:
+        inline EnumDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Scope& list) : EnumBase(parent, name, defType), _list(list) {}
         inline const Scope::List& list() const {return _list.get().list();}
         inline const Ast::Scope& scope() const {return _list.get();}
     private:
@@ -565,11 +577,28 @@ namespace Ast {
     };
 
     class FunctionDecl : public Function {
-    public:
+    protected:
         inline FunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref)
             : Function(parent, name, defType, sig, xref) {}
+    };
+
+    class RootFunctionDecl : public FunctionDecl {
+    public:
+        inline RootFunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref)
+            : FunctionDecl(parent, name, defType, sig, xref) {}
     private:
         virtual void visit(Visitor& visitor) const;
+    };
+
+    class ChildFunctionDecl : public FunctionDecl {
+    public:
+        inline ChildFunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, const Ast::Function& base)
+            : FunctionDecl(parent, name, defType, sig, xref), _base(base) {}
+        inline const Ast::Function& base() const {return _base.get();}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ptr<const Ast::Function> _base;
     };
 
     class FunctionDefn : public Function {
@@ -619,24 +648,24 @@ namespace Ast {
     public:
         inline const Ast::VariableDefn& in()  const {return _in.get();}
     public:
-        inline void setHandler(Ast::FunctionDecl& funDecl) {
+        inline void setHandler(Ast::RootFunctionDecl& funDecl) {
             addChild(funDecl);
             _funDecl.reset(funDecl);
         }
-        inline const Ast::FunctionDecl& handler() const {return _funDecl.get();}
+        inline const Ast::RootFunctionDecl& handler() const {return _funDecl.get();}
     public:
-        inline void setAddFunction(Ast::FunctionDecl& funDecl) {
+        inline void setAddFunction(Ast::RootFunctionDecl& funDecl) {
             addChild(funDecl);
             _addDecl.reset(funDecl);
         }
-        inline const Ast::FunctionDecl& addFunction() const {return _addDecl.get();}
+        inline const Ast::RootFunctionDecl& addFunction() const {return _addDecl.get();}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         const Ptr<const Ast::FunctionSig> _sig;
         const Ptr<const Ast::VariableDefn> _in;
-        Ptr<Ast::FunctionDecl> _funDecl;
-        Ptr<Ast::FunctionDecl> _addDecl;
+        Ptr<Ast::RootFunctionDecl> _funDecl;
+        Ptr<Ast::RootFunctionDecl> _addDecl;
     };
 
     class Namespace : public ChildTypeSpec {
@@ -669,6 +698,7 @@ namespace Ast {
         virtual void visit(const TypedefDefn& node) = 0;
         virtual void visit(const TemplateDecl& node) = 0;
         virtual void visit(const TemplateDefn& node) = 0;
+        virtual void visit(const EnumDecl& node) = 0;
         virtual void visit(const EnumDefn& node) = 0;
         virtual void visit(const StructDecl& node) = 0;
         virtual void visit(const RootStructDefn& node) = 0;
@@ -677,7 +707,8 @@ namespace Ast {
         virtual void visit(const PropertyDeclRO& node) = 0;
         virtual void visit(const RoutineDecl& node) = 0;
         virtual void visit(const RoutineDefn& node) = 0;
-        virtual void visit(const FunctionDecl& node) = 0;
+        virtual void visit(const RootFunctionDecl& node) = 0;
+        virtual void visit(const ChildFunctionDecl& node) = 0;
         virtual void visit(const RootFunctionDefn& node) = 0;
         virtual void visit(const ChildFunctionDefn& node) = 0;
         virtual void visit(const FunctionRetn& node) = 0;
@@ -1975,9 +2006,12 @@ namespace Ast {
 
     class FunctionReturnStatement : public ReturnStatement {
     public:
-        inline FunctionReturnStatement(const Token& pos, const ExprList& exprList) : ReturnStatement(pos, exprList) {}
+        inline FunctionReturnStatement(const Token& pos, const ExprList& exprList, const FunctionSig& sig) : ReturnStatement(pos, exprList), _sig(sig) {}
+        inline const FunctionSig& sig() const {return _sig;}
     private:
         virtual void visit(Visitor& visitor) const;
+    private:
+        const FunctionSig& _sig;
     };
 
     class CompoundStatement : public Statement {

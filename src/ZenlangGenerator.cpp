@@ -500,6 +500,13 @@ namespace {
             visitChildrenIndent(node);
         }
 
+        void visit(const Ast::EnumDecl& node) {
+            if(canWrite(node.accessType())) {
+                _os() << getAccessType(node.pos(), node.accessType()) << "enum " << node.name() << getDefinitionType(node.pos(), node.defType()) << ";" << std::endl;
+            }
+            visitChildrenIndent(node);
+        }
+
         void visit(const Ast::EnumDefn& node) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType()) << "enum " << node.name() << getDefinitionType(node.pos(), node.defType()) << " {" << std::endl;
@@ -630,8 +637,19 @@ namespace {
             }
         }
 
-        void visit(const Ast::FunctionDecl& node) {
+        void visit(const Ast::RootFunctionDecl& node) {
             visitFunctionImp(node, "", false);
+            visitChildrenIndent(node);
+        }
+
+        void visit(const Ast::ChildFunctionDecl& node) {
+            if(canWrite(node.accessType())) {
+                _os() << getAccessType(node.pos(), node.accessType());
+                _os() << "function " << node.name();
+                _os() << " : " << ZenlangNameGenerator().tn(node.base());
+                _os() << getDefinitionType(node.pos(), node.defType()) << ";" << std::endl;
+            }
+
             visitChildrenIndent(node);
         }
 

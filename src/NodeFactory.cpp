@@ -219,12 +219,26 @@ inline const Ast::TemplateDefn& Ast::NodeFactory::getTemplateDefn(const Ast::Tok
     return z::ref(templateDefn);
 }
 
-inline Ast::FunctionDecl& Ast::NodeFactory::addFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
+inline Ast::RootFunctionDecl& Ast::NodeFactory::addRootFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
     const Ast::Token& name = functionSig.name();
     Ast::Scope& xref = addScope(name, Ast::ScopeType::XRef);
-    Ast::FunctionDecl& functionDecl = unit().addNode(new Ast::FunctionDecl(parent, name, defType, functionSig, xref));
+    Ast::RootFunctionDecl& functionDecl = unit().addNode(new Ast::RootFunctionDecl(parent, name, defType, functionSig, xref));
     Ast::Token token1(name.filename(), name.row(), name.col(), "_Out");
     Ast::FunctionRetn& functionRetn = unit().addNode(new Ast::FunctionRetn(functionDecl, token1, functionSig.outScope()));
+    functionDecl.addChild(functionRetn);
+    return functionDecl;
+}
+
+inline Ast::ChildFunctionDecl& Ast::NodeFactory::addChildFunctionDecl(const Ast::TypeSpec& parent, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TypeSpec& base) {
+    const Ast::Function* function = dynamic_cast<const Ast::Function*>(z::ptr(base));
+    if(function == 0) {
+        throw z::Exception("NodeFactory", zfmt(name, "Base type is not a function '%{s}'").add("s", base.name() ));
+    }
+
+    Ast::Scope& xref = addScope(name, Ast::ScopeType::XRef);
+    Ast::ChildFunctionDecl& functionDecl = unit().addNode(new Ast::ChildFunctionDecl(parent, name, defType, z::ref(function).sig(), xref, z::ref(function)));
+    Ast::Token token1(name.filename(), name.row(), name.col(), "_Out");
+    Ast::FunctionRetn& functionRetn = unit().addNode(new Ast::FunctionRetn(functionDecl, token1, z::ref(function).sig().outScope()));
     functionDecl.addChild(functionRetn);
     return functionDecl;
 }
@@ -416,9 +430,10 @@ Ast::EnumDefn* Ast::NodeFactory::aEnumDefn(const Ast::Token& name, const Ast::De
     return z::ptr(enumDefn);
 }
 
-Ast::EnumDefn* Ast::NodeFactory::aEnumDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
-    Ast::Scope& scope = addScope(name, Ast::ScopeType::Member);
-    return aEnumDefn(name, defType, scope);
+Ast::EnumDecl* Ast::NodeFactory::aEnumDecl(const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    Ast::EnumDecl& enumDecl = unit().addNode(new Ast::EnumDecl(unit().currentTypeSpec(), name, defType));
+    unit().currentTypeSpec().addChild(enumDecl);
+    return z::ptr(enumDecl);
 }
 
 Ast::Scope* Ast::NodeFactory::aEnumMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& variableDefn) {
@@ -426,9 +441,9 @@ Ast::Scope* Ast::NodeFactory::aEnumMemberDefnList(Ast::Scope& list, const Ast::V
     return z::ptr(list);
 }
 
-Ast::Scope* Ast::NodeFactory::aEnumMemberDefnList(const Ast::VariableDefn& variableDefn) {
-    Ast::Scope& scope = addScope(variableDefn.pos(), Ast::ScopeType::Member);
-    return aEnumMemberDefnList(scope, variableDefn);
+Ast::Scope* Ast::NodeFactory::aEnumMemberDefnListEmpty(const Ast::Token& pos) {
+    Ast::Scope& list = addScope(pos, Ast::ScopeType::Member);
+    return z::ptr(list);
 }
 
 Ast::VariableDefn* Ast::NodeFactory::aEnumMemberDefn(const Ast::Token& name) {
@@ -510,12 +525,14 @@ void Ast::NodeFactory::aStructMemberPropertyDefn(Ast::PropertyDecl& typeSpec) {
 }
 
 Ast::PropertyDeclRW* Ast::NodeFactory::aStructPropertyDeclRW(const Ast::Token& pos, const Ast::QualifiedTypeSpec& propertyType, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    unused(pos);
     Ast::PropertyDeclRW& structPropertyDecl = unit().addNode(new Ast::PropertyDeclRW(unit().currentTypeSpec(), name, defType, propertyType));
     unit().currentTypeSpec().addChild(structPropertyDecl);
     return z::ptr(structPropertyDecl);
 }
 
 Ast::PropertyDeclRO* Ast::NodeFactory::aStructPropertyDeclRO(const Ast::Token& pos, const Ast::QualifiedTypeSpec& propertyType, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    unused(pos);
     Ast::PropertyDeclRO& structPropertyDecl = unit().addNode(new Ast::PropertyDeclRO(unit().currentTypeSpec(), name, defType, propertyType));
     unit().currentTypeSpec().addChild(structPropertyDecl);
     return z::ptr(structPropertyDecl);
@@ -550,8 +567,14 @@ Ast::RoutineDefn* Ast::NodeFactory::aEnterRoutineDefn(const Ast::QualifiedTypeSp
     return z::ptr(routineDefn);
 }
 
-Ast::FunctionDecl* Ast::NodeFactory::aFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
-    Ast::FunctionDecl& functionDecl = addFunctionDecl(unit().currentTypeSpec(), functionSig, defType);
+Ast::RootFunctionDecl* Ast::NodeFactory::aRootFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType) {
+    Ast::RootFunctionDecl& functionDecl = addRootFunctionDecl(unit().currentTypeSpec(), functionSig, defType);
+    unit().currentTypeSpec().addChild(functionDecl);
+    return z::ptr(functionDecl);
+}
+
+Ast::ChildFunctionDecl* Ast::NodeFactory::aChildFunctionDecl(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType) {
+    Ast::ChildFunctionDecl& functionDecl = addChildFunctionDecl(unit().currentTypeSpec(), name, defType, base);
     unit().currentTypeSpec().addChild(functionDecl);
     return z::ptr(functionDecl);
 }
@@ -622,7 +645,7 @@ Ast::EventDecl* Ast::NodeFactory::aEventDecl(const Ast::Token& pos, const Ast::V
     Ast::Token handlerName(pos.filename(), pos.row(), pos.col(), "Handler");
     Ast::Scope& emptyXRef = addScope(pos, Ast::ScopeType::XRef);
     Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, emptyXRef, functionSig.inScope());
-    Ast::FunctionDecl& funDecl = addFunctionDecl(eventDef, z::ref(handlerSig), handlerDefType);
+    Ast::RootFunctionDecl& funDecl = addRootFunctionDecl(eventDef, z::ref(handlerSig), handlerDefType);
     eventDef.setHandler(funDecl);
 
     Ast::TemplateTypePartList& list = unit().addNode(new Ast::TemplateTypePartList(pos));
@@ -644,7 +667,7 @@ Ast::EventDecl* Ast::NodeFactory::aEventDecl(const Ast::Token& pos, const Ast::V
     Ast::Scope& inAdd  = addScope(pos, Ast::ScopeType::Param);
     Ast::Token nameAdd(pos.filename(), pos.row(), pos.col(), "Add");
     Ast::FunctionSig* addSig = aFunctionSig(outAdd, nameAdd, emptyXRef, inAdd);
-    Ast::FunctionDecl& addDecl = addFunctionDecl(eventDef, z::ref(addSig), eventDefType);
+    Ast::RootFunctionDecl& addDecl = addRootFunctionDecl(eventDef, z::ref(addSig), eventDefType);
     eventDef.setAddFunction(addDecl);
 
     inAdd.addVariableDef(in);
@@ -1002,7 +1025,21 @@ Ast::RoutineReturnStatement* Ast::NodeFactory::aRoutineReturnStatement(const Ast
 }
 
 Ast::FunctionReturnStatement* Ast::NodeFactory::aFunctionReturnStatement(const Ast::Token& pos, const Ast::ExprList& exprList) {
-    Ast::FunctionReturnStatement& returnStatement = unit().addNode(new Ast::FunctionReturnStatement(pos, exprList));
+    const Ast::FunctionSig* sig = 0;
+    const Ast::RootFunctionDefn* rfd = 0;
+    const Ast::ChildFunctionDefn* cfd = 0;
+    for(Ast::Unit::TypeSpecStack::const_reverse_iterator it = unit().typeSpecStack().rbegin(); it != unit().typeSpecStack().rend(); ++it) {
+        const Ast::TypeSpec& ts = it->get();
+        if((rfd = dynamic_cast<const Ast::RootFunctionDefn*>(z::ptr(ts))) != 0) {
+            sig = z::ptr(z::ref(rfd).sig());
+            break;
+        }
+        if((cfd = dynamic_cast<const Ast::ChildFunctionDefn*>(z::ptr(ts))) != 0) {
+            sig = z::ptr(z::ref(cfd).sig());
+            break;
+        }
+    }
+    Ast::FunctionReturnStatement& returnStatement = unit().addNode(new Ast::FunctionReturnStatement(pos, exprList, z::ref(sig)));
     return z::ptr(returnStatement);
 }
 
@@ -1759,6 +1796,7 @@ const Ast::VariableDefn* Ast::NodeFactory::aEnterStructInitPart(const Ast::Token
 }
 
 void Ast::NodeFactory::aLeaveStructInitPart(const Ast::Token& pos) {
+    unused(pos);
 }
 
 Ast::StructInitPartList* Ast::NodeFactory::aStructInitPartList(Ast::StructInitPartList& list, const Ast::StructInitPart& part) {

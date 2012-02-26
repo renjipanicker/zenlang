@@ -39,6 +39,13 @@
 %extra_argument {Ast::NodeFactory* pctx}
 
 %include {
+#ifdef _WIN32
+#pragma warning( disable : 4100)  /* unreferenced formal parameter */
+#else
+#pragma GCC diagnostic ignored "-Wunused-variable"
+#pragma GCC diagnostic ignored "-Wunused-parameter"
+#endif
+
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "error.hpp"
@@ -186,7 +193,8 @@ rAbstractDefinitionType(L) ::= . {L = Ast::DefinitionType::Abstract;}
 //-------------------------------------------------
 %type rTypeSpecDef {Ast::UserDefinedTypeSpec*}
 rTypeSpecDef(L) ::= rBasicTypeSpecDef(R).  {L = R;}
-rTypeSpecDef(L) ::= rFunctionDecl(R).      {L = R;}
+rTypeSpecDef(L) ::= rRootFunctionDecl(R).  {L = R;}
+rTypeSpecDef(L) ::= rChildFunctionDecl(R). {L = R;}
 rTypeSpecDef(L) ::= rRootFunctionDefn(R).  {L = R;}
 rTypeSpecDef(L) ::= rChildFunctionDefn(R). {L = R;}
 rTypeSpecDef(L) ::= rEventDecl(R).         {L = R;}
@@ -239,26 +247,18 @@ rTemplatePartList(L) ::=                            ID(name). {L = z::ref(pctx).
 
 //-------------------------------------------------
 // enum declaration
-%type rEnumDecl {Ast::EnumDefn*}
-rEnumDecl(L) ::= rPreEnumDecl(R) SEMI. {L = R;}
-
-//-------------------------------------------------
-%type rPreEnumDecl {Ast::EnumDefn*}
-rPreEnumDecl(L) ::= ENUM ID(name) rDefinitionType(D). {L = z::ref(pctx).aEnumDefn(name, D);}
+%type rEnumDecl {Ast::EnumDecl*}
+rEnumDecl(L) ::= ENUM ID(name) rDefinitionType(D) SEMI. {L = z::ref(pctx).aEnumDecl(name, D);}
 
 //-------------------------------------------------
 // enum definition
 %type rEnumDefn {Ast::EnumDefn*}
-rEnumDefn(L) ::= rPreEnumDefn(R) SEMI. {L = R;}
-
-//-------------------------------------------------
-%type rPreEnumDefn {Ast::EnumDefn*}
-rPreEnumDefn(L) ::= ENUM ID(name) rDefinitionType(D) LCURLY rEnumMemberDefnList(list) RCURLY. {L = z::ref(pctx).aEnumDefn(name, D, z::ref(list));}
+rEnumDefn(L) ::= ENUM ID(name) rDefinitionType(D) rEnumMemberDefnList(list) RCURLY SEMI. {L = z::ref(pctx).aEnumDefn(name, D, z::ref(list));}
 
 //-------------------------------------------------
 %type rEnumMemberDefnList {Ast::Scope*}
 rEnumMemberDefnList(L) ::= rEnumMemberDefnList(list) rEnumMemberDefn(enumMemberDef). {L = z::ref(pctx).aEnumMemberDefnList(z::ref(list), z::ref(enumMemberDef));}
-rEnumMemberDefnList(L) ::=                           rEnumMemberDefn(enumMemberDef). {L = z::ref(pctx).aEnumMemberDefnList(z::ref(enumMemberDef));}
+rEnumMemberDefnList(L) ::= LCURLY(B).                                                {L = z::ref(pctx).aEnumMemberDefnListEmpty(B);}
 
 //-------------------------------------------------
 %type rEnumMemberDefn {Ast::VariableDefn*}
@@ -350,9 +350,14 @@ rRoutineId(L) ::= ID(R). {L = R;}
 rRoutineId(L) ::= ROUTINE_TYPE(R). {L = R;}
 
 //-------------------------------------------------
-// function definition
-%type rFunctionDecl {Ast::FunctionDecl*}
-rFunctionDecl(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType) SEMI. {L = z::ref(pctx).aFunctionDecl(z::ref(functionSig), defType);}
+// root function definition
+%type rRootFunctionDecl {Ast::RootFunctionDecl*}
+rRootFunctionDecl(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType) SEMI. {L = z::ref(pctx).aRootFunctionDecl(z::ref(functionSig), defType);}
+
+//-------------------------------------------------
+// child function definition
+%type rChildFunctionDecl {Ast::ChildFunctionDecl*}
+rChildFunctionDecl(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType) SEMI. {L = z::ref(pctx).aChildFunctionDecl(z::ref(base), name, defType);}
 
 //-------------------------------------------------
 // root function declarations

@@ -48,12 +48,12 @@ inline z::string getBaseName(const z::string& filename) {
 
     // strip last extension, if any
     idx = basename.rfind('.');
-    if(idx >= 0)
+    if(idx != z::string::npos)
         basename = basename.substr(0, idx);
 
     // strip path, if any
     idx = basename.rfind('/');
-    if(idx >= 0)
+    if(idx != z::string::npos)
         basename = basename.substr(idx + 1);
 
     return basename;
@@ -64,7 +64,7 @@ inline z::string getExtention(const z::string& filename) {
 
     // find last extension, if any
     idx = filename.rfind('.');
-    if(idx >= 0)
+    if(idx != z::string::npos)
         return filename.substr(idx + 1);
     return "";
 }

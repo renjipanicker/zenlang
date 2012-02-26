@@ -7,6 +7,7 @@ void Ast::TypedefDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this)
 void Ast::TypedefDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::TemplateDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::TemplateDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void Ast::EnumDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::EnumDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::StructDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::RootStructDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
@@ -15,7 +16,8 @@ void Ast::PropertyDeclRW::visit(Visitor& visitor) const {visitor.visit(z::ref(th
 void Ast::PropertyDeclRO::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::RoutineDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::RoutineDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-void Ast::FunctionDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void Ast::RootFunctionDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void Ast::ChildFunctionDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::RootFunctionDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::ChildFunctionDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::FunctionRetn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}

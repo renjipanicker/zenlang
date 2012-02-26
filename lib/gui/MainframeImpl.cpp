@@ -3,7 +3,7 @@
 #include "gui/Mainframe.hpp"
 #include "WindowImpl.hpp"
 
-const MainFrame::Create::_Out& MainFrame::Create::run(const MainFrame::Definition& def) {
+MainFrame::Create::_Out MainFrame::Create::run(const MainFrame::Definition& def) {
 #if defined(WIN32)
     Window::HandleImpl& impl = Window::Native::createMainFrame(def, WS_OVERLAPPEDWINDOW, WS_EX_WINDOWEDGE);
     ::PostMessage(impl._hWindow, WM_SIZE, 0, 0);
@@ -23,5 +23,5 @@ const MainFrame::Create::_Out& MainFrame::Create::run(const MainFrame::Definitio
         Window::Show().run(win);
     }
 
-    return out(_Out(win));
+    return _Out(win);
 }
