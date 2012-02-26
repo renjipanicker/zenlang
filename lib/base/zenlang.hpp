@@ -453,8 +453,18 @@ namespace z {
         mutex& _mutex;
     };
 
+    struct type {
+        explicit inline type(const z::string& name) : _name(name) {}
+        inline const z::string& name() const {return _name;}
+        inline bool operator==(const type& rhs) const {return (_name == rhs._name);}
+        inline bool operator!=(const type& rhs) const {return (_name != rhs._name);}
+    private:
+        z::string _name;
+    };
+
     template <typename V>
-    struct Pointer {
+    struct pointer {
+    private:
         struct value {
         protected:
             inline value(){}
@@ -474,98 +484,75 @@ namespace z {
             DerT _v;
         };
 
-        inline void set(value* val) {
+    private:
+        inline void reset() {
+            _tname = type("");
             delete _val;
+            _val = 0;
+        }
+
+        inline void set(value* val) {
             _val = val;
         }
 
+    public:
         inline bool has() const {return (_val != 0);}
         inline value* clone() const {return ref(_val).clone();}
 
-        inline V& get() const {
-            return ref(_val).get();
+        inline pointer& operator=(const pointer& src) {
+            reset();
+            _tname = src._tname;
+            value* v = src.clone();
+            set(v);
+            return ref(this);
         }
 
-        inline Pointer() : _val(0) {
+        template <typename DerT>
+        inline DerT& getT() const {
+            V& v = ref(_val).get();
+            return static_cast<DerT&>(v);
         }
 
-        inline Pointer(value* val) : _val(val) {
-        }
+        inline const type& tname() const {return _tname;}
 
-        inline ~Pointer() {
-            delete _val;
-        }
+        /// default-ctor is required when this struct is used as the value in a dict.
+        /// \todo Find out way to avoid it.
+        inline pointer() : _tname(""), _val(0) {}
 
-        inline Pointer(const Pointer<V>& src) : _val(0) {
+        inline pointer(const type& tname, value* val) : _tname(tname), _val(val) {}
+
+        inline pointer(const pointer& src) : _tname(""), _val(0) {
+            reset();
             if(src.has()) {
+                _tname = src.tname();
                 value* v = src.clone();
                 set(v);
             }
         }
 
         template <typename DerT>
-        inline Pointer(const Pointer<DerT>& src) : _val(0) {
+        inline pointer(const pointer<DerT>& src) : _tname(""), _val(0) {
+            reset();
             if(src.has()) {
-                const DerT& d = src.get();
+                _tname = src.tname();
+                const DerT& d = src.getT<DerT>();
                 value* v = new valueT<DerT>(d);
                 set(v);
             }
         }
 
-        inline Pointer& operator=(const Pointer& src) {
-            value* v = src.clone();
-            set(v);
-            return ref(this);
-        }
-
-    private:
-        value* _val;
-    };
-
-    struct type {
-        explicit inline type(const z::string& name) : _name(name) {}
-        inline const z::string& name() const {return _name;}
-        inline bool operator==(const type& rhs) const {return (_name == rhs._name);}
-        inline bool operator!=(const type& rhs) const {return (_name != rhs._name);}
-    private:
-        z::string _name;
-    };
-
-    template <typename V>
-    struct pointer : public z::Pointer<V> {
-        /// default-ctor is required when this struct is used as the value in a dict.
-        /// \todo Find out way to avoid it.
-        inline pointer() : z::Pointer<V>(), _tname("") {}
-        inline pointer(const type& tname, typename z::Pointer<V>::value* val) : z::Pointer<V>(val), _tname(tname) {}
-        inline pointer(const pointer& src) : z::Pointer<V>(src), _tname(src._tname) {}
-        inline pointer& operator=(const pointer& val) {
-            _tname = val._tname;
-            return ref(this);
+        inline ~pointer() {
+            reset();
         }
 
         template <typename DerT>
-        inline pointer(const pointer<DerT>& src) : z::Pointer<V>(src), _tname(src.tname()) {}
-
-        template <typename DerT>
-        inline DerT& getT() const {
-            V& v = z::Pointer<V>::get();
-            return static_cast<DerT&>(v);
+        static inline pointer create(const z::string& tname, const DerT& val) {
+            return pointer(z::type(tname), new valueT<DerT>(val));
         }
 
-        inline const type& tname() const {return _tname;}
     private:
         type _tname;
-    };
-
-    template <typename V, typename DerT>
-    struct PointerCreator {
-        typedef typename z::Pointer<V>::template valueT<DerT> VT;
-        static inline z::Pointer<V> get(const DerT& val) {
-            return z::Pointer<V>(new VT(val));
-        }
-        static inline pointer<V> get(const type& tname, const DerT& val) {
-            return pointer<V>(tname, new VT(val));
-        }
+        value* _val;
     };
 
     template <typename V, typename ListT>
@@ -1080,13 +1067,11 @@ namespace z {
             inline _In() {}
         };
     public:
-        Pointer<_Out> _out;
-        inline const _Out& out(const _Out& val) {_out = z::PointerCreator<_Out, _Out>::get(val); return _out.get();}
-        virtual const _Out& _run(const _In& _in) {
+        inline _Out _run(const _In& _in) {
             unused(_in);
             T& t = static_cast<T&>(ref(this));
             TestResult::begin(t.name());
-            const _Out& out = t.test();
+            _Out out = t.test();
             TestResult::end(t.name(), out._passed);
             return out;
         }
@@ -1125,9 +1110,6 @@ namespace z {
             inline _In(const ArgList& pargl) : argl(pargl) {}
             ArgList argl;
         };
-    public:
-        Pointer<_Out> _out;
-        inline const _Out& out(_Out* val) {_out = PointerCreator<_Out, _Out>::get(val); return *_out;}
     };
 
     struct MainInstance {

@@ -452,10 +452,9 @@ namespace {
         virtual void visit(const Ast::PointerInstanceExpr& node) {
             const Ast::Expr& expr = node.exprList().at(0);
             const z::string dname = StlcppNameGenerator().tn(expr.qTypeSpec().typeSpec());
-
             const z::string bname = StlcppNameGenerator().tn(node.templateDefn().at(0).typeSpec());
-            _os() << "z::PointerCreator<" << bname << ", " << dname << ">::get(";
-            _os() << "z::type(\"" << dname << "\"), ";
+
+            _os() << "z::pointer<" << bname << ">::create(\"" << dname << "\", ";
             ExprGenerator(_os).visitNode(expr);
             _os() << ")";
         }
