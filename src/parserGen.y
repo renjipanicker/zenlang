@@ -362,7 +362,7 @@ rChildFunctionDecl(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDef
 //-------------------------------------------------
 // root function declarations
 %type rRootFunctionDefn {Ast::RootFunctionDefn*}
-rRootFunctionDefn(L) ::= rEnterRootFunctionDefn(functionDefn) rCompoundStatement(block). {L = z::ref(pctx).aRootFunctionDefn(z::ref(functionDefn), z::ref(block));}
+rRootFunctionDefn(L) ::= rEnterRootFunctionDefn(functionDefn) rClosureList rCompoundStatement(block). {L = z::ref(pctx).aRootFunctionDefn(z::ref(functionDefn), z::ref(block));}
 
 //-------------------------------------------------
 %type rEnterRootFunctionDefn {Ast::RootFunctionDefn*}
@@ -375,7 +375,7 @@ rChildFunctionDefn(L) ::= rEnterChildFunctionDefn(functionImpl) rCompoundStateme
 
 //-------------------------------------------------
 %type rEnterChildFunctionDefn {Ast::ChildFunctionDefn*}
-rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType). {L = z::ref(pctx).aEnterChildFunctionDefn(z::ref(base), name, defType);}
+rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType) rClosureList. {L = z::ref(pctx).aEnterChildFunctionDefn(z::ref(base), name, defType);}
 
 //-------------------------------------------------
 // event declarations

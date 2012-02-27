@@ -462,9 +462,10 @@ namespace z {
         z::string _name;
     };
 
+    /// \brief Base class for pointer class
     template <typename V>
-    struct pointer {
-    private:
+    struct bpointer {
+    protected:
         struct value {
         protected:
             inline value(){}
@@ -474,24 +475,14 @@ namespace z {
             virtual z::string tname() const = 0;
         };
 
-        template <typename DerT>
-        struct valueT : public value {
-            inline valueT(const DerT& v) : _v(v) {const V& x = v;unused(x);}
-            virtual V& get() {return _v;}
-            virtual value* clone() const {return new valueT<DerT>(_v);}
-            virtual z::string tname() const {return type_name<DerT>();}
-        private:
-            DerT _v;
-        };
-
-    private:
         inline void reset() {
             _tname = type("");
             delete _val;
             _val = 0;
         }
 
-        inline void set(value* val) {
+        inline void set(const type& tname, value* val) {
+            _tname = tname;
             _val = val;
         }
 
@@ -500,30 +491,61 @@ namespace z {
         inline value* clone() const {return ref(_val).clone();}
         inline const type& tname() const {return _tname;}
 
+        inline V& get() const {
+            V& v = ref(_val).get();
+            return (v);
+        }
+
+        inline bpointer() : _tname(""), _val(0) {}
+        inline ~bpointer() {reset();}
+
+    protected:
+        type _tname;
+        value* _val;
+    };
+
+    /// \brief smart pointer class with typename
+    template <typename V>
+    struct pointer : public bpointer<V> {
+        typedef bpointer<V> BaseT;
+        typedef typename bpointer<V>::value value;
+
+        template <typename DerT>
+        struct valueT : public value {
+            inline valueT(const DerT& v) : _v(v) {const V& dummy = v;unused(dummy);}
+            virtual V& get() {return _v;}
+            virtual value* clone() const {return new valueT<DerT>(_v);}
+            virtual z::string tname() const {return type_name<DerT>();}
+        private:
+            DerT _v;
+        };
+
+    public:
         template <typename DerT>
         inline DerT& getT() const {
-            V& v = ref(_val).get();
-            return static_cast<DerT&>(v);
+            V& v = BaseT::get();
+            DerT& r = static_cast<DerT&>(v);
+            const V& dummy = r; unused(dummy); // to check that DerT is a derived class of V
+            return r;
         }
 
         inline pointer& operator=(const pointer& src) {
-            reset();
+            BaseT::reset();
             if(src.has()) {
-                _tname = src.tname();
                 value* v = src.clone();
-                set(v);
+                BaseT::set(src.tname(), v);
             }
             return ref(this);
         }
 
         template <typename DerT>
         inline pointer& operator=(const pointer<DerT>& src) {
-            reset();
+            BaseT::reset();
             if(src.has()) {
-                _tname = src.tname();
-                const DerT& d = src.getT<DerT>();
-                value* v = new valueT<DerT>(d);
-                set(v);
+                const DerT& val = src.getT<DerT>();
+                const V& dummy = val; unused(dummy); // to check that DerT acn be derived from V
+                value* v = new valueT<DerT>(val);
+                BaseT::set(src.tname(), v);
             }
             return ref(this);
         }
@@ -531,34 +553,24 @@ namespace z {
         /// \brief default-ctor
         /// Required when pointer is used as the value in a dict.
         /// \todo Find out way to avoid it.
-        inline pointer() : _tname(""), _val(0) {}
+        inline pointer() {}
 
         /// \brief The primary ctor
         /// This ctor is the one to be invoked when creating a pointer-object.
         template <typename DerT>
-        explicit inline pointer(const z::string& tname, const DerT& val) : _tname(tname), _val(0) {
+        explicit inline pointer(const z::string& tname, const DerT& val) {
+            const V& dummy = val; unused(dummy); // to check that DerT is a derived class of V
             value* v = new valueT<DerT>(val);
-            set(v);
+            BaseT::set(type(tname), v);
         }
 
-        inline pointer(const pointer& src) : _tname(""), _val(0) {
-            (*this) = src;
-        }
+        inline pointer(const pointer& src) { (*this) = src;}
 
         template <typename DerT>
-        inline pointer(const pointer<DerT>& src) : _tname(""), _val(0) {
-            (*this) = src;
-        }
-
-        inline ~pointer() {
-            reset();
-        }
-
-    private:
-        type _tname;
-        value* _val;
+        inline pointer(const pointer<DerT>& src) { (*this) = src;}
     };
 
+    /// \brief Base class for all container classes
     template <typename V, typename ListT>
     struct container {
         typedef ListT List;
@@ -922,18 +934,7 @@ namespace z {
     typedef z::list<z::string> stringlist;
 
     ///////////////////////////////////////////////////////////////
-    struct Future {
-        virtual void run() = 0;
-    };
-
-    template <typename FunctionT>
-    struct FutureT : public Future {
-        FutureT(const FunctionT& function, const typename FunctionT::_In& in) : _function(function), _in(in) {}
-        FunctionT _function;
-        typename FunctionT::_In _in;
-        virtual void run() {_function._run(_in);}
-    };
-
+    /// \brief List of event-handlers
     template <typename FunctionT>
     struct FunctorList {
         inline FunctionT& add(FunctionT* h) {
@@ -946,7 +947,21 @@ namespace z {
         List _list;
     };
 
-    class FunctionList {
+    struct Future {
+        virtual void run() = 0;
+    };
+
+    template <typename FunctionT>
+    struct FutureT : public Future {
+    private:
+        FunctionT _function;
+        typename FunctionT::_In _in;
+        virtual void run() {_function._run(_in);}
+    public:
+        inline FutureT(const FunctionT& function, const typename FunctionT::_In& in) : _function(function), _in(in) {}
+    };
+
+    struct FunctionList {
     private:
         typedef std::list<Future*> InvocationList;
         InvocationList _invocationList;
@@ -973,9 +988,10 @@ namespace z {
         }
     };
 
-    class CallContext {
-    public:
-        static CallContext& get();
+    ///////////////////////////////////////////////////////////////
+    /// \brief Maintains the run queue
+    /// Will maintain multiple run-queue's in future.
+    struct GlobalContext {
     public:
         z::size run(const z::size& cnt);
     public:
@@ -988,6 +1004,21 @@ namespace z {
     private:
         FunctionList _list;
     };
+
+    struct LocalContext {
+    public:
+        inline LocalContext(GlobalContext& gctx) : _gctx(gctx) {}
+    public:
+        template <typename FunctionT>
+        inline FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
+            return _gctx.add(function, in);
+        }
+
+    private:
+        GlobalContext& _gctx;
+    };
+
+    GlobalContext& ctx();
 
     ///////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////
@@ -1087,13 +1118,13 @@ namespace z {
 
     struct TestInstance {
         TestInstance();
-        virtual void enque(CallContext& context) = 0;
+        virtual void enque(GlobalContext& context) = 0;
         TestInstance* _next;
     };
 
     template <typename T>
     struct TestInstanceT : public TestInstance {
-        virtual void enque(CallContext& context) {
+        virtual void enque(GlobalContext& context) {
             T t;
             typename T::_In in;
             context.add(t, in);
@@ -1118,13 +1149,13 @@ namespace z {
 
     struct MainInstance {
         MainInstance();
-        virtual void enque(CallContext& context, const ArgList& argl) = 0;
+        virtual void enque(GlobalContext& context, const ArgList& argl) = 0;
         MainInstance* _next;
     };
 
     template <typename T>
     struct MainInstanceT : public MainInstance {
-        virtual void enque(CallContext& context, const ArgList& argl) {
+        virtual void enque(GlobalContext& context, const ArgList& argl) {
             T t;
             typename T::_In in(argl);
             context.add(t, in);

@@ -385,7 +385,7 @@ namespace {
         }
 
         virtual void visit(const Ast::RunExpr& node) {
-            _os() << "z::CallContext::get().add(";
+            _os() << "z::ctx().add(";
             ExprGenerator(_os).visitNode(node.callExpr().expr());
             _os() << ", ";
             _os() << StlcppNameGenerator().tn(node.callExpr().expr().qTypeSpec().typeSpec()) << "::_In(";
@@ -771,10 +771,6 @@ namespace {
             _os() << " {}" << std::endl;
         }
 
-        inline const Ast::Scope& xref(const Ast::Function& node, const bool& isDecl) {
-            return isDecl?node.sig().xrefScope():node.xrefScope();
-        }
-
         inline z::string getOutType(const Ast::Function& node) const {
             z::string out1;
             if(isVoid(node.sig().outScope())) {
@@ -795,10 +791,10 @@ namespace {
                 visitChildrenIndent(node);
             }
 
-            if(xref(node, isDecl).list().size() > 0) {
+            if(node.xrefScope().list().size() > 0) {
                 _os() << Indent::get() << "public: // xref-list" << std::endl;
-                writeScopeMemberList(xref(node, isDecl));
-                writeCtor(node.name().string(), xref(node, isDecl));
+                writeScopeMemberList(node.xrefScope());
+                writeCtor(node.name().string(), node.xrefScope());
             }
 
             if(isRoot) {

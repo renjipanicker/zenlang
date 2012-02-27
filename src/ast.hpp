@@ -552,11 +552,11 @@ namespace Ast {
     public:
         inline const Ast::Scope::List& out() const {return _out.get().list();}
         inline const Token& name() const {return _name;}
-        inline const Ast::Scope::List& xref() const {return _xref.get().list();}
+//        inline const Ast::Scope::List& xref() const {return _xref.get().list();}
         inline const Ast::Scope::List& in() const {return _in.get().list();}
     public:
         inline const Ast::Scope& outScope()  const {return _out.get();}
-        inline const Ast::Scope& xrefScope() const {return _xref.get();}
+//        inline const Ast::Scope& xrefScope() const {return _xref.get();}
         inline Ast::Scope& inScope()  const {return _in.get();}
     private:
         const Ptr<const Ast::Scope> _out;

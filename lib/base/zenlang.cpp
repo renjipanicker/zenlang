@@ -321,19 +321,24 @@ z::MainInstance::MainInstance() : _next(0) {
     s_mainList.push(this);
 }
 
-z::CallContext g_context = z::CallContext();
-z::CallContext& z::CallContext::get() {
+#if defined(WIN32)
+static z::GlobalContext g_context = z::GlobalContext();
+#else
+static z::GlobalContext g_context = z::GlobalContext();
+#endif
+z::GlobalContext& z::ctx() {
     return g_context;
 }
 
-z::size z::CallContext::run(const z::size& cnt) {
+z::size z::GlobalContext::run(const z::size& cnt) {
     for(z::size i = 0; i < cnt; ++i) {
         if(_list.size() == 0) {
             break;
         }
         FunctionList::Ptr ptr;
-        if(_list.pop(ptr))
+        if(_list.pop(ptr)) {
             ptr->run();
+        }
     }
     return _list.size();
 }
