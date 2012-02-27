@@ -38,25 +38,25 @@
 /*
 ** Un|Comment to provide additional unicode support to SQLite3 or adjust size for unused features
 */
-#define SQLITE3_UNICODE_FOLD      // ~ 10KB increase
-#define SQLITE3_UNICODE_LOWER     // ~ 10KB increase
-//#define SQLITE3_UNICODE_UPPER     // ~ 10KB increase
-//#define SQLITE3_UNICODE_TITLE     // ~ 10KB increase
-//#define SQLITE3_UNICODE_UNACC     // ~ 30KB increase
-                                  // _______________
-                                  // ~ 70KB increase
+#define SQLITE3_UNICODE_FOLD      /* ~ 10KB increase */
+#define SQLITE3_UNICODE_LOWER     /* ~ 10KB increase */
+/* #define SQLITE3_UNICODE_UPPER     // ~ 10KB increase */
+/* #define SQLITE3_UNICODE_TITLE     // ~ 10KB increase */
+/* #define SQLITE3_UNICODE_UNACC     // ~ 30KB increase */
+                                  /* _______________ */
+                                  /* ~ 70KB increase */
 
 /*
 ** SQLITE3_UNICODE_COLLATE will register and use the custom nocase collation instead of the standard
 ** one, which supports case folding and unaccenting.
 */
-#define SQLITE3_UNICODE_COLLATE   // requires SQLITE3_UNICODE_FOLD to be defined as well.
+#define SQLITE3_UNICODE_COLLATE   /* requires SQLITE3_UNICODE_FOLD to be defined as well. */
 
 /*
 ** SQLITE3_UNICODE_UNACC_AUTOMATIC will automatically try to unaccent any characters that
 ** are over the 0x80 character in the LIKE comparison operation and in the NOCASE collation sequence.
 */
-#define SQLITE3_UNICODE_UNACC_AUTOMATIC    // requires SQLITE3_UNICODE_UNACC to be defined as well.
+#define SQLITE3_UNICODE_UNACC_AUTOMATIC    /* requires SQLITE3_UNICODE_UNACC to be defined as well. */
 
 /*************************************************************************************************
 ** DO NOT MODIFY BELOW THIS LINE
@@ -110,9 +110,9 @@ extern "C" {
 */
 #ifndef SQLITE_EXPORT
 # if ((defined(_WIN32) || defined(WIN32) || defined(__CYGWIN__) || defined(__MINGW32__) || defined(__BORLANDC__)) && (!defined(SQLITE_CORE)))
-#  define SQLITE_EXPORT // __declspec(dllexport)
+#  define SQLITE_EXPORT /* __declspec(dllexport) */
 # else
-#  define SQLITE_EXPORT // SQLITE_EXTERN
+#  define SQLITE_EXPORT /* SQLITE_EXTERN */
 # endif
 #endif
 
@@ -250,4 +250,4 @@ SQLITE_EXPORT void sqlite3_unicode_free();
  *************************************************************************************************
  *************************************************************************************************/
 
-#endif  //!defined(SQLITE_CORE) || defined(SQLITE_ENABLE_UNICODE)
+#endif  /* !defined(SQLITE_CORE) || defined(SQLITE_ENABLE_UNICODE) */

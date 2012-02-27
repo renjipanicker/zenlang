@@ -145,7 +145,7 @@ namespace Ast {
         void        leaveScope(Ast::Scope& scope);
         Ast::Scope& currentScope();
         const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name) const;
-        const Ast::VariableDefn* getVariableDef(const z::string& filename, const Ast::Token& name, Ast::RefType::T& refType) const;
+        const Ast::VariableDefn* getVariableDef(const Ast::Token& name, Ast::RefType::T& refType) const;
         inline void setScopeCallback(ScopeCallback* val) {_scopeCallback = val;}
     private:
         ScopeStack _scopeStack;

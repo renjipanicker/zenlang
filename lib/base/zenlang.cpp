@@ -122,18 +122,18 @@ z::string16 z::c08to16(const z::string08& in) {
 z::string08 z::c16to08(const z::string16& in) {
     z::string08 rv;
     for(z::string16::size_type i = 0; i < in.size(); i++) {
-        if((uint64_t)in.at(i) < (uint64_t)0x80) {
+        if((uint16_t)in.at(i) < (uint16_t)0x80) {
             // 0xxxxxxx
             rv.append((char08_t)in.at(i));
-        } else if((uint64_t)in.at(i) < (uint64_t)0x800) {
+        } else if((uint16_t)in.at(i) < (uint16_t)0x0800) {
             // 110xxxxx 10xxxxxx
             rv.append((char08_t)(MASK2BYTES | (in.at(i) >> 6)));
             rv.append((char08_t)(MASKBYTE | (in.at(i) & MASKBITS)));
-        } else if((uint16_t)in.at(i) < (uint16_t)0x10000) {
-            // 1110xxxx 10xxxxxx 10xxxxxx
-            rv.append((char08_t)(MASK3BYTES | (in.at(i) >> 12)));
-            rv.append((char08_t)(MASKBYTE | ((in.at(i) >> 6) & MASKBITS)));
-            rv.append((char08_t)(MASKBYTE | (in.at(i) & MASKBITS)));
+//@        } else if((uint64_t)in.at(i) < (uint64_t)0x10000) {
+//            // 1110xxxx 10xxxxxx 10xxxxxx
+//            rv.append((char08_t)(MASK3BYTES | (in.at(i) >> 12)));
+//            rv.append((char08_t)(MASKBYTE | ((in.at(i) >> 6) & MASKBITS)));
+//            rv.append((char08_t)(MASKBYTE | (in.at(i) & MASKBITS)));
         }
     }
     return rv;
@@ -254,11 +254,10 @@ void z::file::mkpath(const z::string& filename) {
 
 z::string z::file::getFilename(const z::string& filename) {
     z::string basename = filename;
-    z::string::size_type idx = -1;
 
     // strip path, if any
-    idx = basename.rfind('/');
-    if(idx >= 0)
+    z::string::size_type idx = basename.rfind('/');
+    if(idx != z::string::npos)
         basename = basename.substr(idx + 1);
 
     return basename;
@@ -302,6 +301,7 @@ void z::TestResult::begin(const z::string& name) {
 }
 
 void z::TestResult::end(const z::string& name, const bool& passed) {
+    unused(name);
     if(passed)
         ++s_passedTests;
 
@@ -444,6 +444,8 @@ int z::Application::exit(const int& code) {
 
 #if defined(Z_EXE)
 static void initMain(int argc, char* argv[]) {
+    unused(argc);
+    unused(argv);
 #if defined(UNIT_TEST)
     z::TestInstance* ti = s_testList.next();
     while(ti != 0) {

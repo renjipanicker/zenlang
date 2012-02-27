@@ -10,10 +10,12 @@ namespace TestBasic;
 public routine int testNative(const string& s) native;
 
 public routine int testRoutine(const int& x) {
+    unused(x);
     return 12345;
 }
 
 public function (int ri, string rs)testFunction(const int& x) abstract {
+    unused(x);
     return (67890, "testfn");
 }
 
@@ -202,6 +204,7 @@ public function testInnerRootFunction : test {
 
 public function testInnerChildFunction : test {
     function innerFunction : testFunction {
+        unused(x);
         return (214, "aa");
     }
     auto f = innerFunction(2);
@@ -380,6 +383,7 @@ public function testSwitchExprStatement : test {
 }
 
 public function (int ri, string rs)runFunctionTest(const int& x) abstract {
+    unused(x);
     return (67890, "run");
 }
 
@@ -390,10 +394,12 @@ public function testFunctor : test {
 }
 
 public function ()getFunctor(const runFunctionTest& f) {
+    unused(f);
     return ();
 }
 
 public function derivedFunctionTest : runFunctionTest {
+    unused(x);
     return (12345, "derived");
 }
 
@@ -444,6 +450,7 @@ public function testDicts : test {
 }
 
 public function MyMain : main {
+    unused(argl);
     auto f = run runFunctionTest(908);
     unused(f);
     return (0);

@@ -8,6 +8,7 @@ include gui::Systray;
 include gui::WindowCreator;
 
 function MyMain : main {
+    unused(argl);
     auto defn = MainFrame::Definition {
                 name      : @mainFrame;
                 title     : "test";

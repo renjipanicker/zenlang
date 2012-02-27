@@ -210,6 +210,7 @@ inline Lexer::Impl::~Impl() {
 }
 
 inline void Lexer::Impl::dump(const z::string& x) const {
+    unused(x);
 //    trace("%s: buffer %lu, bufferEnd %lu, start %lu, marker %lu, cursor %lu, limit %lu, limit-cursor %ld, text '%s'\n",
 //          x.c_str(), (unsigned long)_buffer, (unsigned long)_bufferEnd, (unsigned long)_start, (unsigned long)_marker, (unsigned long)_cursor, (unsigned long)_limit, _limit - _cursor, "" /*_buffer*/);
 }

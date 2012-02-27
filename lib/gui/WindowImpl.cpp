@@ -195,6 +195,7 @@ Window::HandleImpl& Window::Native::initWindowImpl(GtkWidget* hwnd) {
 }
 
 Window::HandleImpl& Window::Native::createWindow(const Window::Definition& def, GtkWidget *parent) {
+    unused(def);
     unused(parent);
     GtkWidget* hwnd = gtk_window_new (GTK_WINDOW_TOPLEVEL);
     Window::HandleImpl& impl = initWindowImpl(hwnd);

@@ -30,6 +30,12 @@
 */
 #include "sqlite3_unicode.h"
 
+#if !defined(_WIN32)
+#pragma GCC diagnostic ignored "-pedantic" /* disable "long-long not supported" warning in sqlite code */
+#pragma GCC diagnostic ignored "-Wsequence-point" /* may be undefined */
+#pragma GCC diagnostic ignored "-Wunused-parameter" /* unused-parameter */
+#endif
+
 #if !defined(SQLITE_CORE) || defined(SQLITE_ENABLE_UNICODE)
 
 #ifdef SQLITE3_UNICODE_FOLD
@@ -2907,4 +2913,4 @@ int __stdcall DllMain(void *hinstDLL, unsigned long fdwReason, void *lpReserved)
 }
 #endif
 
-#endif  //!defined(SQLITE_CORE) || defined(SQLITE_ENABLE_UNICODE)
+#endif  /* !defined(SQLITE_CORE) || defined(SQLITE_ENABLE_UNICODE) */

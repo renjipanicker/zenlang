@@ -1638,7 +1638,7 @@ Ast::TemplateDefnInstanceExpr* Ast::NodeFactory::aTemplateDefnInstanceExpr(const
 
 Ast::VariableRefExpr* Ast::NodeFactory::aVariableRefExpr(const Ast::Token& name) {
     Ast::RefType::T refType = Ast::RefType::Local;
-    const Ast::VariableDefn* vref = unit().getVariableDef(_module.filename(), name, refType);
+    const Ast::VariableDefn* vref = unit().getVariableDef(name, refType);
     if(vref == 0) {
         throw z::Exception("NodeFactory", zfmt(name, "Variable not found: '%{s}'").add("s", name ));
     }

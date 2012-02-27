@@ -454,7 +454,7 @@ namespace {
             const z::string dname = StlcppNameGenerator().tn(expr.qTypeSpec().typeSpec());
             const z::string bname = StlcppNameGenerator().tn(node.templateDefn().at(0).typeSpec());
 
-            _os() << "z::pointer<" << bname << ">::create(\"" << dname << "\", ";
+            _os() << "z::pointer<" << bname << ">(\"" << dname << "\", ";
             ExprGenerator(_os).visitNode(expr);
             _os() << ")";
         }
@@ -512,6 +512,7 @@ namespace {
         }
 
         inline void visitFunctionTypeInstance(const Ast::Function& function, const Ast::ExprList& exprList) {
+            unused(exprList); // will be implementing function-type-instantiation with ctor parameters in future.
             z::string fname = StlcppNameGenerator().tn(function);
             _os() << fname << "(";
             z::string sep;
@@ -824,7 +825,11 @@ namespace {
                     _os() << ");" << std::endl;
                 }
 
-                _os() << Indent::get() << "    inline " << out1 << " _run(const _In& _in) {return run(";
+                _os() << Indent::get() << "    inline " << out1 << " _run(const _In& _in) {";
+                if(node.sig().in().size() == 0) {
+                    _os() << "unused(_in);";
+                }
+                _os() << "return run(";
                 writeScopeInCallList(node.sig().inScope());
                 _os() << ");}" << std::endl;
             }
@@ -917,7 +922,7 @@ namespace {
             if(isTest) {
                 _os() << Indent::get() << "class " << node.name() << " : public z::test_< " << node.name() << " > {" << std::endl;
                 _os() << Indent::get() << "public:" << std::endl;
-                _os() << Indent::get() << "    inline const char* const name() const {return \"" << StlcppNameGenerator().tn(node) << "\";}" << std::endl;
+                _os() << Indent::get() << "    inline const char* name() const {return \"" << StlcppNameGenerator().tn(node) << "\";}" << std::endl;
             } else if(StlcppNameGenerator().tn(node.base()) == "main") {
                 _os() << Indent::get() << "class " << node.name() << " : public z::main_< " << node.name() << " > {" << std::endl;
             } else {
@@ -1418,10 +1423,12 @@ namespace {
         }
 
         virtual void visit(const Ast::BreakStatement& node) {
+            unused(node);
             fpDefn()() << Indent::get() << "break;" << std::endl;
         }
 
         virtual void visit(const Ast::ContinueStatement& node) {
+            unused(node);
             fpDefn()() << Indent::get() << "continue;" << std::endl;
         }
 

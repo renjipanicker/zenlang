@@ -54,6 +54,7 @@ void Systray::SetIconfile::run(const Systray::Handle& handle, const z::string& f
     ::Shell_NotifyIcon(NIM_MODIFY, z::ptr(ni));
 #endif
 #if defined(GTK)
+    unused(filename);
     gtk_status_icon_set_from_icon_name(Systray::impl(handle)._icon, GTK_STOCK_MEDIA_STOP);
 #endif
 }
@@ -77,6 +78,7 @@ void Systray::Hide::run(const Systray::Handle& handle) {
 }
 
 Systray::Handle Systray::Create::run(const Window::Handle& parent, const Systray::Definition& def) {
+    unused(parent);
     Systray::HandleImpl* impl = new Systray::HandleImpl();
     Systray::Handle handle;
     handle._wdata<Systray::Handle>(impl);

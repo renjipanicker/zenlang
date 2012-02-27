@@ -14,7 +14,7 @@ struct HandleImpl : public Widget::Handle::Impl {
     GtkWidget* _hFixed;
 #endif
 private:
-    inline HandleImpl(const HandleImpl& src) {}
+    inline HandleImpl(const HandleImpl& /*src*/) {}
 };
 
 inline HandleImpl& impl(const Widget::Handle& widget) {return Widget::impl<HandleImpl>(widget);}

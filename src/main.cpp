@@ -32,6 +32,8 @@ static int showHelp(const Ast::Config& config) {
 inline void replaceSlash(z::string& path) {
 #if defined(WIN32)
     path.replace("\\", "/");
+#else
+    unused(path);
 #endif
 }
 

@@ -498,14 +498,7 @@ namespace z {
     public:
         inline bool has() const {return (_val != 0);}
         inline value* clone() const {return ref(_val).clone();}
-
-        inline pointer& operator=(const pointer& src) {
-            reset();
-            _tname = src._tname;
-            value* v = src.clone();
-            set(v);
-            return ref(this);
-        }
+        inline const type& tname() const {return _tname;}
 
         template <typename DerT>
         inline DerT& getT() const {
@@ -513,25 +506,18 @@ namespace z {
             return static_cast<DerT&>(v);
         }
 
-        inline const type& tname() const {return _tname;}
-
-        /// default-ctor is required when this struct is used as the value in a dict.
-        /// \todo Find out way to avoid it.
-        inline pointer() : _tname(""), _val(0) {}
-
-        inline pointer(const type& tname, value* val) : _tname(tname), _val(val) {}
-
-        inline pointer(const pointer& src) : _tname(""), _val(0) {
+        inline pointer& operator=(const pointer& src) {
             reset();
             if(src.has()) {
                 _tname = src.tname();
                 value* v = src.clone();
                 set(v);
             }
+            return ref(this);
         }
 
         template <typename DerT>
-        inline pointer(const pointer<DerT>& src) : _tname(""), _val(0) {
+        inline pointer& operator=(const pointer<DerT>& src) {
             reset();
             if(src.has()) {
                 _tname = src.tname();
@@ -539,15 +525,33 @@ namespace z {
                 value* v = new valueT<DerT>(d);
                 set(v);
             }
+            return ref(this);
+        }
+
+        /// \brief default-ctor
+        /// Required when pointer is used as the value in a dict.
+        /// \todo Find out way to avoid it.
+        inline pointer() : _tname(""), _val(0) {}
+
+        /// \brief The primary ctor
+        /// This ctor is the one to be invoked when creating a pointer-object.
+        template <typename DerT>
+        explicit inline pointer(const z::string& tname, const DerT& val) : _tname(tname), _val(0) {
+            value* v = new valueT<DerT>(val);
+            set(v);
+        }
+
+        inline pointer(const pointer& src) : _tname(""), _val(0) {
+            (*this) = src;
+        }
+
+        template <typename DerT>
+        inline pointer(const pointer<DerT>& src) : _tname(""), _val(0) {
+            (*this) = src;
         }
 
         inline ~pointer() {
             reset();
-        }
-
-        template <typename DerT>
-        static inline pointer create(const z::string& tname, const DerT& val) {
-            return pointer(z::type(tname), new valueT<DerT>(val));
         }
 
     private:

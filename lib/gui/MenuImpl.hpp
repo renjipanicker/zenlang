@@ -14,7 +14,7 @@ namespace Menu {
         GtkWidget* _menu;
 #endif
     private:
-        inline HandleImpl(const HandleImpl& src) {}
+        inline HandleImpl(const HandleImpl& /*src*/) {}
     };
 
     inline HandleImpl& impl(const Widget::Handle& widget) {return Widget::impl<HandleImpl>(widget);}

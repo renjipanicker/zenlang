@@ -3,6 +3,10 @@
 // if first non-comment line is a #include, QtCreator recognizes this as a C/C++ file for syntax highlighting.
 #include <typeinfo>
 
+#if !defined(_WIN32)
+#pragma GCC diagnostic ignored "-pedantic" // disable "comma at end of enum list" warning in generated code
+#endif
+
 // this causes the conditon enum to be generated
 /*!types:re2c */
 
