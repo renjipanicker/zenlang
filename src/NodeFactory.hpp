@@ -30,7 +30,6 @@ namespace Ast {
         inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const TypeSpec& typeSpec, const bool& isRef);
         inline const Ast::QualifiedTypeSpec& getQualifiedTypeSpec(const Ast::Token& pos, const z::string& name);
         inline Ast::Scope& addScope(const Ast::Token& pos, const Ast::ScopeType::T& type);
-        inline Ast::Scope& addScopeWithSig(const Ast::Token& pos, const Ast::ScopeType::T& type, const Ast::FunctionSig& sig);
         inline Ast::VariableDefn& addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
         inline Ast::RootFunctionDecl& addRootFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref);
         inline Ast::ChildFunctionDecl& addChildFunctionDecl(const Ast::TypeSpec& parent, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TypeSpec& base, const Ast::ClosureRef& cref);

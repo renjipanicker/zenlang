@@ -147,17 +147,6 @@ inline Ast::Scope& Ast::NodeFactory::addScope(const Ast::Token& pos, const Ast::
     return scope;
 }
 
-inline Ast::Scope& Ast::NodeFactory::addScopeWithSig(const Ast::Token& pos, const Ast::ScopeType::T& type, const Ast::FunctionSig& sig) {
-    unused(sig);
-    Ast::Scope& scope = addScope(pos, type);
-//@    for(Ast::Scope::List::const_iterator it = sig.xref().begin(); it != sig.xref().end(); ++it) {
-//        const Ast::VariableDefn& vdef = it->get();
-//        Ast::VariableDefn& cvdef = unit().addNode(vdef.clone());
-//        scope.addVariableDef(cvdef);
-//    }
-    return scope;
-}
-
 inline Ast::ExprList& Ast::NodeFactory::addExprList(const Ast::Token& pos) {
     Ast::ExprList& exprList = unit().addNode(new Ast::ExprList(pos));
     return exprList;
