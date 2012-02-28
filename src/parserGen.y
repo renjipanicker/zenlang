@@ -352,21 +352,21 @@ rRoutineId(L) ::= ROUTINE_TYPE(R). {L = R;}
 //-------------------------------------------------
 // root function definition
 %type rRootFunctionDecl {Ast::RootFunctionDecl*}
-rRootFunctionDecl(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType) SEMI. {L = z::ref(pctx).aRootFunctionDecl(z::ref(functionSig), defType);}
+rRootFunctionDecl(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType) rClosureList(xref) SEMI. {L = z::ref(pctx).aRootFunctionDecl(z::ref(functionSig), defType, z::ref(xref));}
 
 //-------------------------------------------------
 // child function definition
 %type rChildFunctionDecl {Ast::ChildFunctionDecl*}
-rChildFunctionDecl(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType) SEMI. {L = z::ref(pctx).aChildFunctionDecl(z::ref(base), name, defType);}
+rChildFunctionDecl(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType) rClosureList(xref) SEMI. {L = z::ref(pctx).aChildFunctionDecl(z::ref(base), name, defType, z::ref(xref));}
 
 //-------------------------------------------------
 // root function declarations
 %type rRootFunctionDefn {Ast::RootFunctionDefn*}
-rRootFunctionDefn(L) ::= rEnterRootFunctionDefn(functionDefn) rClosureList rCompoundStatement(block). {L = z::ref(pctx).aRootFunctionDefn(z::ref(functionDefn), z::ref(block));}
+rRootFunctionDefn(L) ::= rEnterRootFunctionDefn(functionDefn) rCompoundStatement(block). {L = z::ref(pctx).aRootFunctionDefn(z::ref(functionDefn), z::ref(block));}
 
 //-------------------------------------------------
 %type rEnterRootFunctionDefn {Ast::RootFunctionDefn*}
-rEnterRootFunctionDefn(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType). {L = z::ref(pctx).aEnterRootFunctionDefn(z::ref(functionSig), defType);}
+rEnterRootFunctionDefn(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType) rClosureList(xref). {L = z::ref(pctx).aEnterRootFunctionDefn(z::ref(functionSig), defType, z::ref(xref));}
 
 //-------------------------------------------------
 // child function declaration
@@ -375,7 +375,7 @@ rChildFunctionDefn(L) ::= rEnterChildFunctionDefn(functionImpl) rCompoundStateme
 
 //-------------------------------------------------
 %type rEnterChildFunctionDefn {Ast::ChildFunctionDefn*}
-rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType) rClosureList. {L = z::ref(pctx).aEnterChildFunctionDefn(z::ref(base), name, defType);}
+rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType) rClosureList(xref). {L = z::ref(pctx).aEnterChildFunctionDefn(z::ref(base), name, defType, z::ref(xref));}
 
 //-------------------------------------------------
 // event declarations
@@ -385,8 +385,8 @@ rEventDecl(L) ::= EVENT(B) LBRACKET rVariableDefn(in) RBRACKET rDefinitionType(E
 //-------------------------------------------------
 // function signature.
 %type rFunctionSig {Ast::FunctionSig*}
-rFunctionSig(T) ::= FUNCTION rParamsList(out)        ID(name) rClosureList(xref) rInParamsList(in). {T = z::ref(pctx).aFunctionSig(z::ref(out), name, z::ref(xref), z::ref(in));}
-rFunctionSig(T) ::= FUNCTION rQualifiedTypeSpec(out) ID(name) rClosureList(xref) rInParamsList(in). {T = z::ref(pctx).aFunctionSig(z::ref(out), name, z::ref(xref), z::ref(in));}
+rFunctionSig(T) ::= FUNCTION rParamsList(out)        ID(name) rInParamsList(in). {T = z::ref(pctx).aFunctionSig(z::ref(out), name, z::ref(in));}
+rFunctionSig(T) ::= FUNCTION rQualifiedTypeSpec(out) ID(name) rInParamsList(in). {T = z::ref(pctx).aFunctionSig(z::ref(out), name, z::ref(in));}
 
 //-------------------------------------------------
 // in parameter list

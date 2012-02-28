@@ -785,17 +785,21 @@ namespace {
             return out1;
         }
 
+        inline void visitFunctionXRef(const Ast::Function& node) {
+            if(node.xrefScope().list().size() > 0) {
+                _os() << Indent::get() << "public: // xref-list" << std::endl;
+                writeScopeMemberList(node.xrefScope());
+                writeCtor(node.name().string(), node.xrefScope());
+            }
+        }
+
         inline void visitFunctionSig(const Ast::Function& node, const bool& isRoot, const bool& isDecl, const bool& isTest) {
             if(node.childCount() > 0) {
                 _os() << Indent::get() << "public:// child-typespec" << std::endl;
                 visitChildrenIndent(node);
             }
 
-            if(node.xrefScope().list().size() > 0) {
-                _os() << Indent::get() << "public: // xref-list" << std::endl;
-                writeScopeMemberList(node.xrefScope());
-                writeCtor(node.name().string(), node.xrefScope());
-            }
+            visitFunctionXRef(node);
 
             if(isRoot) {
                 _os() << Indent::get() << "public: // in-param-list" << std::endl;
@@ -893,6 +897,7 @@ namespace {
             if(node.defType() == Ast::DefinitionType::Native) {
                 z::string out1 = getOutType(node);
                 _os() << Indent::get() << "class " << node.name() << " : public " << StlcppNameGenerator().tn(node.base()) << " {" << std::endl;
+                visitFunctionXRef(node);
                 _os() << Indent::get() << "public:" << std::endl;
                 _os() << Indent::get() << "    virtual " << out1 << " run(";
                 writeScopeParamList(_os, node.sig().inScope(), "p");
