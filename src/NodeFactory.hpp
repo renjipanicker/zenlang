@@ -4,6 +4,11 @@
 #include "Unit.hpp"
 class Compiler;
 namespace Ast {
+    struct ClosureRef {
+        Ast::Scope* xref;
+        Ast::Scope* iref;
+    };
+
     class NodeFactory {
     public:
         NodeFactory(Ast::Module& module, Compiler& compiler);
@@ -27,10 +32,10 @@ namespace Ast {
         inline Ast::Scope& addScope(const Ast::Token& pos, const Ast::ScopeType::T& type);
         inline Ast::Scope& addScopeWithSig(const Ast::Token& pos, const Ast::ScopeType::T& type, const Ast::FunctionSig& sig);
         inline Ast::VariableDefn& addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
-        inline Ast::RootFunctionDecl& addRootFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, Ast::Scope& xref);
-        inline Ast::ChildFunctionDecl& addChildFunctionDecl(const Ast::TypeSpec& parent, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TypeSpec& base, Ast::Scope& xref);
+        inline Ast::RootFunctionDecl& addRootFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref);
+        inline Ast::ChildFunctionDecl& addChildFunctionDecl(const Ast::TypeSpec& parent, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TypeSpec& base, const Ast::ClosureRef& cref);
         inline Ast::ValueInstanceExpr& getValueInstanceExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& srcTemplateDefn, const Ast::TemplateDefn& templateDefn, const Ast::ExprList& exprList);
-        inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, Ast::Scope& xref);
+        inline Ast::ChildFunctionDefn& createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref);
         inline const Ast::Expr& switchDictKeyValue(const Ast::Token& pos, const Unit::ExpectedTypeSpec::Type& popType, const Unit::ExpectedTypeSpec::Type& pushType, const Ast::TemplateDefn::size_type& idx, const Ast::Expr& initExpr);
         inline const Ast::QualifiedTypeSpec& getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function);
         inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
@@ -94,23 +99,24 @@ namespace Ast {
         Ast::RoutineDecl*        aVarArgRoutineDecl(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, const Ast::DefinitionType::T& defType);
         Ast::RoutineDefn*        aRoutineDefn(Ast::RoutineDefn& routineDefn, const Ast::CompoundStatement& block);
         Ast::RoutineDefn*        aEnterRoutineDefn(const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const Ast::DefinitionType::T& defType);
-        Ast::RootFunctionDecl*   aRootFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, Ast::Scope& xref);
-        Ast::ChildFunctionDecl*  aChildFunctionDecl(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, Ast::Scope& xref);
+        Ast::RootFunctionDecl*   aRootFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref);
+        Ast::ChildFunctionDecl*  aChildFunctionDecl(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref);
         Ast::RootFunctionDefn*   aRootFunctionDefn(Ast::RootFunctionDefn& functionDefn, const Ast::CompoundStatement& block);
-        Ast::RootFunctionDefn*   aEnterRootFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, Ast::Scope& xref);
+        Ast::RootFunctionDefn*   aEnterRootFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref);
         Ast::ChildFunctionDefn*  aChildFunctionDefn(Ast::ChildFunctionDefn& functionImpl, const Ast::CompoundStatement& block);
-        Ast::ChildFunctionDefn*  aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, Ast::Scope& xref);
+        Ast::ChildFunctionDefn*  aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref);
         Ast::EventDecl*          aEventDecl(const Ast::Token& pos, const Ast::VariableDefn& in, const Ast::DefinitionType::T& eventDefType, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& handlerDefType);
         Ast::FunctionSig*        aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in);
         Ast::FunctionSig*        aFunctionSig(const Ast::QualifiedTypeSpec& out, const Ast::Token& name, Ast::Scope& in);
-        Ast::Scope*              aClosureList();
-        Ast::Scope*              aClosureList(Ast::Scope& scope);
+        Ast::ClosureRef          aClosureList(Ast::Scope& xref, Ast::Scope& iref);
+        Ast::ClosureRef          aClosureList(Ast::Scope& xref);
+        Ast::ClosureRef          aClosureList();
         Ast::Scope*              aInParamsList(Ast::Scope& scope);
         Ast::Scope*              aParamsList(Ast::Scope& scope);
         Ast::Scope*              aParamsList(Ast::Scope& scope, const Ast::Scope& posParam);
         Ast::Scope*              aParam(Ast::Scope& list, const Ast::VariableDefn& variableDefn);
         Ast::Scope*              aParam(const Ast::VariableDefn& variableDefn);
-        Ast::Scope*              aParam();
+        Ast::Scope*              aParam(const ScopeType::T& type);
         Ast::VariableDefn*       aVariableDefn(const Ast::Token& name, const Ast::Expr& initExpr);
         Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
         Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr);
@@ -288,6 +294,7 @@ namespace Ast {
         Ast::ChildFunctionDefn*   aEnterAnonymousFunction(const Ast::Function& function);
         Ast::ChildFunctionDefn*   aEnterAutoAnonymousFunction(const Ast::Token& pos);
 
+        Ast::ConstantNullExpr&    aConstantNullExpr(const Ast::Token& value);
         Ast::ConstantFloatExpr&   aConstantFloatExpr(const Ast::Token& value);
         Ast::ConstantDoubleExpr&  aConstantDoubleExpr(const Ast::Token& value);
         Ast::ConstantBooleanExpr& aConstantBooleanExpr(const Ast::Token& value);

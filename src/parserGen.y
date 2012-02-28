@@ -352,12 +352,12 @@ rRoutineId(L) ::= ROUTINE_TYPE(R). {L = R;}
 //-------------------------------------------------
 // root function definition
 %type rRootFunctionDecl {Ast::RootFunctionDecl*}
-rRootFunctionDecl(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType) rClosureList(xref) SEMI. {L = z::ref(pctx).aRootFunctionDecl(z::ref(functionSig), defType, z::ref(xref));}
+rRootFunctionDecl(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType) rClosureList(cref) SEMI. {L = z::ref(pctx).aRootFunctionDecl(z::ref(functionSig), defType, cref);}
 
 //-------------------------------------------------
 // child function definition
 %type rChildFunctionDecl {Ast::ChildFunctionDecl*}
-rChildFunctionDecl(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType) rClosureList(xref) SEMI. {L = z::ref(pctx).aChildFunctionDecl(z::ref(base), name, defType, z::ref(xref));}
+rChildFunctionDecl(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType) rClosureList(cref) SEMI. {L = z::ref(pctx).aChildFunctionDecl(z::ref(base), name, defType, cref);}
 
 //-------------------------------------------------
 // root function declarations
@@ -366,7 +366,7 @@ rRootFunctionDefn(L) ::= rEnterRootFunctionDefn(functionDefn) rCompoundStatement
 
 //-------------------------------------------------
 %type rEnterRootFunctionDefn {Ast::RootFunctionDefn*}
-rEnterRootFunctionDefn(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType) rClosureList(xref). {L = z::ref(pctx).aEnterRootFunctionDefn(z::ref(functionSig), defType, z::ref(xref));}
+rEnterRootFunctionDefn(L) ::= rFunctionSig(functionSig) rExDefinitionType(defType) rClosureList(cref). {L = z::ref(pctx).aEnterRootFunctionDefn(z::ref(functionSig), defType, cref);}
 
 //-------------------------------------------------
 // child function declaration
@@ -375,7 +375,7 @@ rChildFunctionDefn(L) ::= rEnterChildFunctionDefn(functionImpl) rCompoundStateme
 
 //-------------------------------------------------
 %type rEnterChildFunctionDefn {Ast::ChildFunctionDefn*}
-rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType) rClosureList(xref). {L = z::ref(pctx).aEnterChildFunctionDefn(z::ref(base), name, defType, z::ref(xref));}
+rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rExDefinitionType(defType) rClosureList(cref). {L = z::ref(pctx).aEnterChildFunctionDefn(z::ref(base), name, defType, cref);}
 
 //-------------------------------------------------
 // event declarations
@@ -390,16 +390,17 @@ rFunctionSig(T) ::= FUNCTION rQualifiedTypeSpec(out) ID(name) rInParamsList(in).
 
 //-------------------------------------------------
 // in parameter list
-%type rClosureList {Ast::Scope*}
-rClosureList(L) ::= LSQUARE rClosure(R) RSQUARE. {L = z::ref(pctx).aClosureList(z::ref(R));}
-rClosureList(L) ::= .                            {L = z::ref(pctx).aClosureList();}
+%type rClosureList {Ast::ClosureRef}
+rClosureList(L) ::= LSQUARE rClosure(R) SEMI rClosure(I) RSQUARE. {L = z::ref(pctx).aClosureList(z::ref(R), z::ref(I));}
+rClosureList(L) ::= LSQUARE rClosure(R)                  RSQUARE. {L = z::ref(pctx).aClosureList(z::ref(R));}
+rClosureList(L) ::= .                                             {L = z::ref(pctx).aClosureList();}
 
 //-------------------------------------------------
 // variable lists
 %type rClosure {Ast::Scope*}
 rClosure(L) ::= rClosure(list) COMMA rVariableDefn(variableDef). {L = z::ref(pctx).aParam(z::ref(list), z::ref(variableDef));}
 rClosure(L) ::=                      rVariableDefn(variableDef). {L = z::ref(pctx).aParam(z::ref(variableDef));}
-rClosure(L) ::= .                                                {L = z::ref(pctx).aClosureList();}
+rClosure(L) ::= .                                                {L = z::ref(pctx).aParam(Ast::ScopeType::XRef);}
 
 //-------------------------------------------------
 // in parameter list
@@ -417,7 +418,7 @@ rParamsList(L) ::= LBRACKET rParam(R)                    RBRACKET. {L = z::ref(p
 %type rParam {Ast::Scope*}
 rParam(L) ::= rParam(list) COMMA rVariableDefn(variableDef). {L = z::ref(pctx).aParam(z::ref(list), z::ref(variableDef));}
 rParam(L) ::=                    rVariableDefn(variableDef). {L = z::ref(pctx).aParam(z::ref(variableDef));}
-rParam(L) ::= .                                              {L = z::ref(pctx).aParam();}
+rParam(L) ::= .                                              {L = z::ref(pctx).aParam(Ast::ScopeType::Param);}
 
 //-------------------------------------------------
 // positional parameter list
@@ -980,6 +981,8 @@ rCallArgList(L) ::= .                                  {L = z::ref(pctx).aCallAr
 //-------------------------------------------------
 // constant expressions
 %type rConstantExpr {const Ast::ConstantExpr*}
+rConstantExpr(L) ::= NULL_CONST(value).     {L = z::ptr(z::ref(pctx).aConstantNullExpr(value));}
+
 rConstantExpr(L) ::= FLOAT_CONST  (value).  {L = z::ptr(z::ref(pctx).aConstantFloatExpr(value));}
 rConstantExpr(L) ::= DOUBLE_CONST (value).  {L = z::ptr(z::ref(pctx).aConstantDoubleExpr(value));}
 rConstantExpr(L) ::= TRUE_CONST   (value).  {L = z::ptr(z::ref(pctx).aConstantBooleanExpr(value));}

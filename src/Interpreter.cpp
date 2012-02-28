@@ -615,6 +615,10 @@ namespace {
             unused(node);
         }
 
+        virtual void visit(const Ast::ConstantNullExpr& node) {
+            unused(node);
+        }
+
         virtual void visit(const Ast::ConstantFloatExpr& node) {
             unused(node);
         }

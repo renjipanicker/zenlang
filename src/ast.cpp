@@ -88,6 +88,7 @@ void Ast::StructMemberExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(
 void Ast::StructInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::FunctionInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::AnonymousFunctionExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void Ast::ConstantNullExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::ConstantFloatExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::ConstantDoubleExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::ConstantBooleanExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}

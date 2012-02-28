@@ -220,22 +220,22 @@ inline const Ast::TemplateDefn& Ast::NodeFactory::getTemplateDefn(const Ast::Tok
     return z::ref(templateDefn);
 }
 
-inline Ast::RootFunctionDecl& Ast::NodeFactory::addRootFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, Ast::Scope& xref) {
+inline Ast::RootFunctionDecl& Ast::NodeFactory::addRootFunctionDecl(const Ast::TypeSpec& parent, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref) {
     const Ast::Token& name = functionSig.name();
-    Ast::RootFunctionDecl& functionDecl = unit().addNode(new Ast::RootFunctionDecl(parent, name, defType, functionSig, xref));
+    Ast::RootFunctionDecl& functionDecl = unit().addNode(new Ast::RootFunctionDecl(parent, name, defType, functionSig, z::ref(cref.xref), z::ref(cref.iref)));
     Ast::Token token1(name.filename(), name.row(), name.col(), "_Out");
     Ast::FunctionRetn& functionRetn = unit().addNode(new Ast::FunctionRetn(functionDecl, token1, functionSig.outScope()));
     functionDecl.addChild(functionRetn);
     return functionDecl;
 }
 
-inline Ast::ChildFunctionDecl& Ast::NodeFactory::addChildFunctionDecl(const Ast::TypeSpec& parent, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TypeSpec& base, Ast::Scope& xref) {
+inline Ast::ChildFunctionDecl& Ast::NodeFactory::addChildFunctionDecl(const Ast::TypeSpec& parent, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TypeSpec& base, const Ast::ClosureRef& cref) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(z::ptr(base));
     if(function == 0) {
         throw z::Exception("NodeFactory", zfmt(name, "Base type is not a function '%{s}'").add("s", base.name() ));
     }
 
-    Ast::ChildFunctionDecl& functionDecl = unit().addNode(new Ast::ChildFunctionDecl(parent, name, defType, z::ref(function).sig(), xref, z::ref(function)));
+    Ast::ChildFunctionDecl& functionDecl = unit().addNode(new Ast::ChildFunctionDecl(parent, name, defType, z::ref(function).sig(), z::ref(cref.xref), z::ref(cref.iref), z::ref(function)));
     Ast::Token token1(name.filename(), name.row(), name.col(), "_Out");
     Ast::FunctionRetn& functionRetn = unit().addNode(new Ast::FunctionRetn(functionDecl, token1, z::ref(function).sig().outScope()));
     functionDecl.addChild(functionRetn);
@@ -566,14 +566,14 @@ Ast::RoutineDefn* Ast::NodeFactory::aEnterRoutineDefn(const Ast::QualifiedTypeSp
     return z::ptr(routineDefn);
 }
 
-Ast::RootFunctionDecl* Ast::NodeFactory::aRootFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, Ast::Scope& xref) {
-    Ast::RootFunctionDecl& functionDecl = addRootFunctionDecl(unit().currentTypeSpec(), functionSig, defType, xref);
+Ast::RootFunctionDecl* Ast::NodeFactory::aRootFunctionDecl(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref) {
+    Ast::RootFunctionDecl& functionDecl = addRootFunctionDecl(unit().currentTypeSpec(), functionSig, defType, cref);
     unit().currentTypeSpec().addChild(functionDecl);
     return z::ptr(functionDecl);
 }
 
-Ast::ChildFunctionDecl* Ast::NodeFactory::aChildFunctionDecl(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, Ast::Scope& xref) {
-    Ast::ChildFunctionDecl& functionDecl = addChildFunctionDecl(unit().currentTypeSpec(), name, defType, base, xref);
+Ast::ChildFunctionDecl* Ast::NodeFactory::aChildFunctionDecl(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref) {
+    Ast::ChildFunctionDecl& functionDecl = addChildFunctionDecl(unit().currentTypeSpec(), name, defType, base, cref);
     unit().currentTypeSpec().addChild(functionDecl);
     return z::ptr(functionDecl);
 }
@@ -587,9 +587,9 @@ Ast::RootFunctionDefn* Ast::NodeFactory::aRootFunctionDefn(Ast::RootFunctionDefn
     return z::ptr(functionDefn);
 }
 
-Ast::RootFunctionDefn* Ast::NodeFactory::aEnterRootFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, Ast::Scope& xref) {
+Ast::RootFunctionDefn* Ast::NodeFactory::aEnterRootFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref) {
     const Ast::Token& name = functionSig.name();
-    Ast::RootFunctionDefn& functionDefn = unit().addNode(new Ast::RootFunctionDefn(unit().currentTypeSpec(), name, defType, functionSig, xref));
+    Ast::RootFunctionDefn& functionDefn = unit().addNode(new Ast::RootFunctionDefn(unit().currentTypeSpec(), name, defType, functionSig, z::ref(cref.xref), z::ref(cref.iref)));
     unit().currentTypeSpec().addChild(functionDefn);
     unit().enterScope(functionDefn.xrefScope());
     unit().enterScope(functionSig.inScope());
@@ -611,13 +611,12 @@ Ast::ChildFunctionDefn* Ast::NodeFactory::aChildFunctionDefn(Ast::ChildFunctionD
     return z::ptr(functionDefn);
 }
 
-inline Ast::ChildFunctionDefn& Ast::NodeFactory::createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, Ast::Scope& xref) {
+inline Ast::ChildFunctionDefn& Ast::NodeFactory::createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref) {
     if(base.defType() == Ast::DefinitionType::Final) {
         throw z::Exception("NodeFactory", zfmt(name, "Base struct is not abstract '%{s}'").add("s", base.name() ));
     }
 
-//@    Ast::Scope& xref = addScopeWithSig(name, Ast::ScopeType::XRef, base.sig());
-    Ast::ChildFunctionDefn& functionDefn = unit().addNode(new Ast::ChildFunctionDefn(parent, name, defType, base.sig(), xref, base));
+    Ast::ChildFunctionDefn& functionDefn = unit().addNode(new Ast::ChildFunctionDefn(parent, name, defType, base.sig(), z::ref(cref.xref), z::ref(cref.iref), base));
     parent.addChild(functionDefn);
     unit().enterScope(functionDefn.xrefScope());
     unit().enterScope(base.sig().inScope());
@@ -625,12 +624,12 @@ inline Ast::ChildFunctionDefn& Ast::NodeFactory::createChildFunctionDefn(Ast::Ty
     return functionDefn;
 }
 
-Ast::ChildFunctionDefn* Ast::NodeFactory::aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, Ast::Scope& xref) {
+Ast::ChildFunctionDefn* Ast::NodeFactory::aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(z::ptr(base));
     if(function == 0) {
         throw z::Exception("NodeFactory", zfmt(name, "Base type is not a function '%{s}'").add("s", base.name() ));
     }
-    Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(unit().currentTypeSpec(), z::ref(function), name, defType, xref);
+    Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(unit().currentTypeSpec(), z::ref(function), name, defType, cref);
     return z::ptr(functionDefn);
 }
 
@@ -644,7 +643,9 @@ Ast::EventDecl* Ast::NodeFactory::aEventDecl(const Ast::Token& pos, const Ast::V
     Ast::Token handlerName(pos.filename(), pos.row(), pos.col(), "Handler");
     Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, functionSig.inScope());
     Ast::Scope& xref = addScope(getToken(), Ast::ScopeType::XRef);
-    Ast::RootFunctionDecl& funDecl = addRootFunctionDecl(eventDef, z::ref(handlerSig), handlerDefType, xref);
+    Ast::Scope& iref = addScope(getToken(), Ast::ScopeType::XRef);
+    Ast::ClosureRef cref = aClosureList(xref, iref);
+    Ast::RootFunctionDecl& funDecl = addRootFunctionDecl(eventDef, z::ref(handlerSig), handlerDefType, cref);
     eventDef.setHandler(funDecl);
 
     Ast::TemplateTypePartList& list = unit().addNode(new Ast::TemplateTypePartList(pos));
@@ -666,7 +667,7 @@ Ast::EventDecl* Ast::NodeFactory::aEventDecl(const Ast::Token& pos, const Ast::V
     Ast::Scope& inAdd  = addScope(pos, Ast::ScopeType::Param);
     Ast::Token nameAdd(pos.filename(), pos.row(), pos.col(), "Add");
     Ast::FunctionSig* addSig = aFunctionSig(outAdd, nameAdd, inAdd);
-    Ast::RootFunctionDecl& addDecl = addRootFunctionDecl(eventDef, z::ref(addSig), eventDefType, xref);
+    Ast::RootFunctionDecl& addDecl = addRootFunctionDecl(eventDef, z::ref(addSig), eventDefType, cref);
     eventDef.setAddFunction(addDecl);
 
     inAdd.addVariableDef(in);
@@ -691,13 +692,22 @@ Ast::FunctionSig* Ast::NodeFactory::aFunctionSig(const Ast::QualifiedTypeSpec& t
     return aFunctionSig(out, name, in);
 }
 
-Ast::Scope* Ast::NodeFactory::aClosureList(Ast::Scope& scope) {
-    return z::ptr(scope);
+Ast::ClosureRef Ast::NodeFactory::aClosureList(Ast::Scope& xref, Ast::Scope& iref) {
+    Ast::ClosureRef cref;
+    cref.xref = z::ptr(xref);
+    cref.iref = z::ptr(iref);
+    return cref;
 }
 
-Ast::Scope* Ast::NodeFactory::aClosureList() {
-    Ast::Scope& scope = addScope(getToken(), Ast::ScopeType::XRef);
-    return aClosureList(scope);
+Ast::ClosureRef Ast::NodeFactory::aClosureList(Ast::Scope& xref) {
+    Ast::Scope& iref = addScope(getToken(), Ast::ScopeType::XRef);
+    return aClosureList(xref, iref);
+}
+
+Ast::ClosureRef Ast::NodeFactory::aClosureList() {
+    Ast::Scope& xref = addScope(getToken(), Ast::ScopeType::XRef);
+    Ast::Scope& iref = addScope(getToken(), Ast::ScopeType::XRef);
+    return aClosureList(xref, iref);
 }
 
 Ast::Scope* Ast::NodeFactory::aInParamsList(Ast::Scope& scope) {
@@ -723,8 +733,8 @@ Ast::Scope* Ast::NodeFactory::aParam(const Ast::VariableDefn& variableDefn) {
     return aParam(list, variableDefn);
 }
 
-Ast::Scope* Ast::NodeFactory::aParam() {
-    Ast::Scope& list = addScope(getToken(), Ast::ScopeType::Param);
+Ast::Scope* Ast::NodeFactory::aParam(const Ast::ScopeType::T& type) {
+    Ast::Scope& list = addScope(getToken(), type);
     return z::ptr(list);
 }
 
@@ -1854,7 +1864,9 @@ Ast::ChildFunctionDefn* Ast::NodeFactory::aEnterAnonymousFunction(const Ast::Fun
     }
 
     Ast::Scope& xref = addScope(name, Ast::ScopeType::XRef);
-    Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(z::ref(ts), function, name, Ast::DefinitionType::Final, xref);
+    Ast::Scope& iref = addScope(name, Ast::ScopeType::XRef);
+    Ast::ClosureRef cref = aClosureList(xref, iref);
+    Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(z::ref(ts), function, name, Ast::DefinitionType::Final, cref);
     Ast::Statement* statement = aGlobalTypeSpecStatement(Ast::AccessType::Private, functionDefn);
     unused(statement);
     return z::ptr(functionDefn);
@@ -1866,6 +1878,12 @@ Ast::ChildFunctionDefn* Ast::NodeFactory::aEnterAutoAnonymousFunction(const Ast:
         throw z::Exception("NodeFactory", zfmt(pos, "Internal error: no function type expected") );
     }
     return aEnterAnonymousFunction(z::ref(function));
+}
+
+Ast::ConstantNullExpr& Ast::NodeFactory::aConstantNullExpr(const Ast::Token& token) {
+    const Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "void");
+    Ast::ConstantNullExpr& expr = unit().addNode(new Ast::ConstantNullExpr(token, qTypeSpec));
+    return expr;
 }
 
 Ast::ConstantFloatExpr& Ast::NodeFactory::aConstantFloatExpr(const Ast::Token& token) {

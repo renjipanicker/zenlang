@@ -138,6 +138,8 @@ re2c:indent:top              = 2;
 
 <Normal>   "return"    := sendReturn(factory); NEXT();
 
+<Normal>   "null"      := send(factory, ZENTOK_NULL_CONST); NEXT();
+
 <Normal>   "false"     := send(factory, ZENTOK_FALSE_CONST); NEXT();
 <Normal>   "true"      := send(factory, ZENTOK_TRUE_CONST); NEXT();
 

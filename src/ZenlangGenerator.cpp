@@ -409,6 +409,11 @@ namespace {
             visitFunctionTypeInstance(node.function());
         }
 
+        virtual void visit(const Ast::ConstantNullExpr& node) {
+            unused(node);
+            _os << "null";
+        }
+
         virtual void visit(const Ast::ConstantFloatExpr& node) {
             _os << node.value();
         }

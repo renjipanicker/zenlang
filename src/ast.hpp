@@ -564,33 +564,36 @@ namespace Ast {
 
     class Function : public UserDefinedTypeSpec {
     public:
-        inline Function(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref) : UserDefinedTypeSpec(parent, name, defType), _xref(xref), _sig(sig) {}
+        inline Function(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref) : UserDefinedTypeSpec(parent, name, defType), _xref(xref), _iref(iref), _sig(sig) {}
         inline const Ast::Scope::List& xref() const {return _xref.get().list();}
         inline Ast::Scope& xrefScope()  const {return _xref.get();}
+        inline const Ast::Scope::List& iref() const {return _iref.get().list();}
+        inline Ast::Scope& irefScope()  const {return _iref.get();}
         inline const Ast::FunctionSig& sig() const {return _sig.get();}
     private:
         const Ptr<Ast::Scope> _xref;
+        const Ptr<Ast::Scope> _iref;
         const Ptr<const Ast::FunctionSig> _sig;
     };
 
     class FunctionDecl : public Function {
     protected:
-        inline FunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref)
-            : Function(parent, name, defType, sig, xref) {}
+        inline FunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref)
+            : Function(parent, name, defType, sig, xref, iref) {}
     };
 
     class RootFunctionDecl : public FunctionDecl {
     public:
-        inline RootFunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref)
-            : FunctionDecl(parent, name, defType, sig, xref) {}
+        inline RootFunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref)
+            : FunctionDecl(parent, name, defType, sig, xref, iref) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class ChildFunctionDecl : public FunctionDecl {
     public:
-        inline ChildFunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, const Ast::Function& base)
-            : FunctionDecl(parent, name, defType, sig, xref), _base(base) {}
+        inline ChildFunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref, const Ast::Function& base)
+            : FunctionDecl(parent, name, defType, sig, xref, iref), _base(base) {}
         inline const Ast::Function& base() const {return _base.get();}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -600,8 +603,8 @@ namespace Ast {
 
     class FunctionDefn : public Function {
     protected:
-        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref)
-            : Function(parent, name, defType, sig, xref) {}
+        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref)
+            : Function(parent, name, defType, sig, xref, iref) {}
     public:
         inline const Ast::CompoundStatement& block() const {return _block.get();}
         inline void setBlock(const Ast::CompoundStatement& block) {_block.reset(block);}
@@ -611,16 +614,16 @@ namespace Ast {
 
     class RootFunctionDefn : public FunctionDefn {
     public:
-        inline RootFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref)
-            : FunctionDefn(parent, name, defType, sig, xref) {}
+        inline RootFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref)
+            : FunctionDefn(parent, name, defType, sig, xref, iref) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class ChildFunctionDefn : public FunctionDefn {
     public:
-        inline ChildFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, const Ast::Function& base)
-            : FunctionDefn(parent, name, defType, sig, xref), _base(base) {}
+        inline ChildFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref, const Ast::Function& base)
+            : FunctionDefn(parent, name, defType, sig, xref, iref), _base(base) {}
         inline const Ast::Function& base() const {return _base.get();}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1481,6 +1484,13 @@ namespace Ast {
         inline ConstantExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec) : Expr(pos, qTypeSpec) {}
     };
 
+    class ConstantNullExpr : public ConstantExpr {
+    public:
+        inline ConstantNullExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec) : ConstantExpr(pos, qTypeSpec) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
     class ConstantFloatExpr : public ConstantExpr {
     public:
         inline ConstantFloatExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const float& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
@@ -1642,6 +1652,7 @@ namespace Ast {
         virtual void visit(const FunctionInstanceExpr& node) = 0;
         virtual void visit(const AnonymousFunctionExpr& node) = 0;
 
+        virtual void visit(const ConstantNullExpr& node) = 0;
         virtual void visit(const ConstantFloatExpr& node) = 0;
         virtual void visit(const ConstantDoubleExpr& node) = 0;
         virtual void visit(const ConstantBooleanExpr& node) = 0;

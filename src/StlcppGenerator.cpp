@@ -532,6 +532,11 @@ namespace {
             visitFunctionTypeInstance(node.function(), node.exprList());
         }
 
+        virtual void visit(const Ast::ConstantNullExpr& node) {
+            unused(node);
+            _os() << "0";
+        }
+
         virtual void visit(const Ast::ConstantFloatExpr& node) {
             _os() << node.value();
         }
@@ -786,11 +791,19 @@ namespace {
         }
 
         inline void visitFunctionXRef(const Ast::Function& node) {
-            if(node.xrefScope().list().size() > 0) {
+            if((node.xref().size() == 0) && (node.iref().size() == 0)) {
+                return;
+            }
+
+            if(node.xref().size() > 0) {
                 _os() << Indent::get() << "public: // xref-list" << std::endl;
                 writeScopeMemberList(node.xrefScope());
-                writeCtor(node.name().string(), node.xrefScope());
             }
+            if(node.iref().size() > 0) {
+                _os() << Indent::get() << "public: // iref-list" << std::endl;
+                writeScopeMemberList(node.irefScope());
+            }
+            writeCtor(node.name().string(), node.xrefScope());
         }
 
         inline void visitFunctionSig(const Ast::Function& node, const bool& isRoot, const bool& isDecl, const bool& isTest) {
