@@ -121,7 +121,6 @@
 
       <item> test </item>
       <item> main </item>
-      <item> ArgList </item>
     </list>
     <contexts>
       <context attribute="Normal Text" lineEndContext="#stay" name="Normal">

@@ -68,6 +68,5 @@ public routine void verify(...) native;
 public routine void sizeof(...) native;
 public routine void length(...) native;
 
-typedef ArgList list<string> native;
-public function (int code)main(const ArgList& argl) abstract;
+public function (int code)main(const list<string>& argl) abstract;
 public function (int passed)test() abstract;

@@ -315,37 +315,115 @@ z::TestInstance::TestInstance() : _next(0) {
 }
 #endif
 
+///////////////////////////////////////////////////////////////
 static z::InitList<z::MainInstance> s_mainList;
-
 z::MainInstance::MainInstance() : _next(0) {
     s_mainList.push(this);
 }
 
-#if defined(WIN32)
-static z::GlobalContext g_context = z::GlobalContext();
-#else
-static z::GlobalContext g_context = z::GlobalContext();
-#endif
-z::GlobalContext& z::ctx() {
-    return g_context;
+///////////////////////////////////////////////////////////////
+static z::Application* g_app = 0;
+const z::Application& z::app() {
+    return z::ref(g_app);
 }
 
-z::size z::GlobalContext::run(const z::size& cnt) {
+///////////////////////////////////////////////////////////////
+static z::LocalContext* s_lctx = 0;
+
+///////////////////////////////////////////////////////////////
+/// \brief run queue
+struct z::RunQueue {
+private:
+    typedef z::queue<z::Future*> InvocationList;
+    InvocationList _list;
+public:
+    z::size run(const z::size& cnt);
+    void add(Future* future);
+    inline size_t size() const {return _list.size();}
+};
+
+void z::RunQueue::add(z::Future* future) {
+    _list.enqueue(future);
+}
+
+z::size z::RunQueue::run(const z::size& cnt) {
+    assert(s_lctx != 0);
     for(z::size i = 0; i < cnt; ++i) {
         if(_list.size() == 0) {
             break;
         }
-        FunctionList::Ptr ptr;
-        if(_list.pop(ptr)) {
-            ptr->run();
-        }
+        z::autoptr<z::Future> ptr(_list.dequeue());
+        ptr->run();
     }
     return _list.size();
 }
 
+///////////////////////////////////////////////////////////////
+/// \brief Maintains the run queue's
+struct z::GlobalContext {
+private:
+    typedef z::list<z::RunQueue*> QueueList;
+
+public:
+    inline GlobalContext() {
+        _list.add(new z::RunQueue());
+    }
+
+    inline ~GlobalContext() {
+        for(QueueList::iterator it = _list.begin(); it != _list.end(); ++it) {
+            z::RunQueue* queue = *it;
+            delete queue;
+        }
+    }
+
+    inline z::RunQueue& at(const size_t& idx) {
+        return z::ref(_list.at(idx));
+    }
+
+    inline size_t run(const size_t& cnt) {
+        size_t bal = 0;
+        for(QueueList::iterator it = _list.begin(); it != _list.end(); ++it) {
+            z::RunQueue& queue = z::ref(*it);
+            bal += queue.run(cnt);
+        }
+        return bal;
+    }
+
+private:
+    QueueList _list;
+};
+
+inline z::GlobalContext& gctx() {
+    return z::ref(g_app).ctx();
+}
+
+///////////////////////////////////////////////////////////////
+z::LocalContext& z::ctx() {
+    return z::ref(s_lctx);
+}
+
+z::LocalContext::LocalContext(z::RunQueue& queue) : _queue(queue) {
+    assert(s_lctx == 0);
+    s_lctx = this;
+}
+
+z::LocalContext::~LocalContext() {
+    assert(s_lctx != 0);
+    s_lctx = 0;
+}
+
+void z::LocalContext::add(z::Future* future) {
+    _queue.add(future);
+}
+
+size_t z::LocalContext::run(const size_t& cnt) {
+    return _queue.run(cnt);
+}
+
+///////////////////////////////////////////////////////////////
 static const z::size MaxPumpCount = 10;
 static void pump() {
-    while(g_context.run(MaxPumpCount) > 0) {}
+    while(gctx().run(MaxPumpCount) > 0) {}
 }
 #if defined(GUI)
 #if defined(WIN32)
@@ -375,24 +453,32 @@ static gboolean onIdle(gpointer data) {
     return TRUE;
 }
 #endif // GTK
+#if defined(QT)
+static void onIdle() {
+    pump();
+}
+#endif
 #endif // GUI
 
-z::Application::Application(int argc, char* argv[]) {
-#if defined(GUI)
-#if defined(WIN32)
-    unused(argc); unused(argv);
-#endif
-#if defined(GTK)
-    gtk_init(&argc, &argv);
-#endif
-#else
-    unused(argc); unused(argv);
-#endif
+z::Application::Application(int argc, char* argv[]) : _argc(argc), _argv(argv), _isExit(false) {
+    if(g_app != 0) {
+        throw z::Exception("z::Application", z::fmt("Multiple instances of Application not permitted"));
+    }
+    g_app = this;
+    _ctx.reset(new GlobalContext());
+    for(int i = 0; i < _argc; ++i) {
+        _argl.add(_argv[i]);
+    }
+
 #if defined(WIN32)
     ::_tzset();
 #endif
 #if defined(GTK)
     ::tzset();
+#endif
+
+#if defined(GUI) && defined(GTK)
+    gtk_init(&argc, &argv);
 #endif
 }
 
@@ -411,6 +497,11 @@ int z::Application::exec() {
     TestResult tr; unused(tr);
 #endif
     int code = 0;
+
+    // this is the local context for thread-0.
+    // all UI events will run in this context
+    LocalContext lctx(gctx().at(0)); unused(lctx);
+
 #if defined(GUI)
 #if defined(WIN32)
     int timerID = win32::getNextResID();
@@ -429,13 +520,21 @@ int z::Application::exec() {
     g_idle_add(onIdle, 0);
     gtk_main();
 #endif
-#else
-    pump();
+#if defined(QT)
+    pump(); /// \todo: implement qt-timer
+    // this if-statement is a hack until we implement qt-timer
+    if(!_isExit) {
+        code = z::ref(QApplication::instance()).exec();
+    }
 #endif
+#else // GUI
+    pump();
+#endif // GUI
+
     return code;
 }
 
-int z::Application::exit(const int& code) {
+int z::Application::exit(const int& code) const {
 #if defined(GUI)
 #if defined(WIN32)
     ::PostQuitMessage(code);
@@ -443,26 +542,30 @@ int z::Application::exit(const int& code) {
 #if defined(GTK)
     gtk_main_quit();
 #endif
+#if defined(QT)
+    z::ref(QApplication::instance()).exit(code);
 #endif
+#endif
+    z::Application& self = const_cast<z::Application&>(z::ref(this));
+    self._isExit = true;
     return code;
 }
 
 #if defined(Z_EXE)
-static void initMain(int argc, char* argv[]) {
-    unused(argc);
-    unused(argv);
+static void initMain(const z::stringlist& argl) {
+    z::LocalContext lctx(gctx().at(0));
+
 #if defined(UNIT_TEST)
     z::TestInstance* ti = s_testList.next();
     while(ti != 0) {
-        ref(ti).enque(g_context);
+        ref(ti).enque(lctx);
         ti = s_testList.next();
     }
 #endif
 
-    z::ArgList argl;
     z::MainInstance* mi = s_mainList.next();
     while(mi != 0) {
-        ref(mi).enque(g_context, argl);
+        ref(mi).enque(lctx, argl);
         mi = s_mainList.next();
     }
 }
@@ -475,16 +578,19 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     s_hInstance = hInstance;
 
     z::Application a(__argc, __argv);
-    initMain(__argc, __argv);
+    initMain(a.argl());
     return a.exec();
 }
-#else // GUI
+#else // GUI && WIN32
 int main(int argc, char* argv[]) {
+#if defined(GUI) && defined(QT)
+    QApplication qapp(argc, argv);
+#endif
     z::Application a(argc, argv);
-    initMain(argc, argv);
+    initMain(a.argl());
     return a.exec();
 }
-#endif // GUI
+#endif // GUI && WIN32
 #endif // Z_EXE
 
 z::Log z::Log::s_msg = z::Log();

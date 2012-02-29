@@ -1,11 +1,36 @@
 #ifndef PCH_HPP
 #define PCH_HPP
 
-// if compiling in GUI mode and WIN32 is not defined, assume Linux GTK.
+// if compiling in GUI mode and WIN32 is not defined, assume Linux GTK or QT
 /// \todo change this when adding support for other platforms.
 #if defined(GUI)
 #if !defined(WIN32)
-    #define GTK 1
+#if !defined(GTK) && !defined(QT)
+#if defined(QT_GUI_LIB)
+#define QT 1
+#else
+#define GTK 1
+#endif
+#endif
+#endif
+#endif
+
+// validation. one and exactly one of the 3 must be defined in GUI mode
+#if defined(GUI)
+#if defined(WIN32)
+#if defined(GTK) || defined(QT)
+#error GTK/QT defined in WIN32
+#endif
+#elif defined(GTK)
+#if defined(WIN32) || defined(QT)
+#error WIN32/QT defined in GTK
+#endif
+#elif defined(QT)
+#if defined(WIN32) || defined(GTK)
+#error WIN32/GTK defined in QT
+#endif
+#else
+#error "Unknown platform. Please define WIN32 or GTK or QT"
 #endif
 #endif
 
@@ -75,7 +100,7 @@
     #include <ctime>
 #endif // __cplusplus
 
-// all header files are included here.
+// all GUI header files are included here.
 #if defined(GUI)
     #if defined(WIN32)
         #undef UNICODE
@@ -87,10 +112,12 @@
         #include <Shlwapi.h>
         #include <shellapi.h>
         #include <tchar.h>
-    #elif defined(GTK)
+    #endif
+    #if defined(GTK)
         #include <gtk/gtk.h>
-    #else
-        #error "Unknown platform. Please define WIN32 or GTK"
+    #endif
+    #if defined(QT)
+        #include <QtGui/QApplication>
     #endif
 #endif
 

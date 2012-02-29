@@ -988,37 +988,26 @@ namespace z {
         }
     };
 
-    ///////////////////////////////////////////////////////////////
-    /// \brief Maintains the run queue
-    /// Will maintain multiple run-queue's in future.
-    struct GlobalContext {
-    public:
-        z::size run(const z::size& cnt);
-    public:
-        template <typename FunctionT>
-        inline FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
-            return _list.push(function, in);
-        }
-
-        inline FunctionList::size_type size() const {return _list.size();}
-    private:
-        FunctionList _list;
-    };
-
+    struct RunQueue;
     struct LocalContext {
     public:
-        inline LocalContext(GlobalContext& gctx) : _gctx(gctx) {}
+        LocalContext(RunQueue& queue);
+        ~LocalContext();
+        size_t run(const size_t& cnt);
     public:
         template <typename FunctionT>
         inline FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
-            return _gctx.add(function, in);
+            FutureT<FunctionT>* inv = new FutureT<FunctionT>(function, in);
+            add(inv);
+            return ref(inv);
         }
-
     private:
-        GlobalContext& _gctx;
+        void add(z::Future* future);
+    private:
+        RunQueue& _queue;
     };
 
-    GlobalContext& ctx();
+    LocalContext& ctx();
 
     ///////////////////////////////////////////////////////////////
     ///////////////////////////////////////////////////////////////
@@ -1106,7 +1095,7 @@ namespace z {
             unused(_in);
             T& t = static_cast<T&>(ref(this));
             TestResult::begin(t.name());
-            _Out out = t.test();
+            _Out out = t.run();
             TestResult::end(t.name(), out._passed);
             return out;
         }
@@ -1118,21 +1107,19 @@ namespace z {
 
     struct TestInstance {
         TestInstance();
-        virtual void enque(GlobalContext& context) = 0;
+        virtual void enque(LocalContext& ctx) = 0;
         TestInstance* _next;
     };
 
     template <typename T>
     struct TestInstanceT : public TestInstance {
-        virtual void enque(GlobalContext& context) {
+        virtual void enque(LocalContext& ctx) {
             T t;
             typename T::_In in;
-            context.add(t, in);
+            ctx.add(t, in);
         }
     };
     #endif
-
-    typedef std::list<z::string> ArgList;
 
     template <typename T>
     struct main_ {
@@ -1142,23 +1129,29 @@ namespace z {
         };
     public:
         struct _In {
-            inline _In(const ArgList& pargl) : argl(pargl) {}
-            ArgList argl;
+            inline _In(const z::stringlist& pargl) : argl(pargl) {}
+            z::stringlist argl;
         };
+    public:
+        inline _Out _run(const _In& _in) {
+            T& t = static_cast<T&>(ref(this));
+            _Out out = t.run(_in.argl);
+            return out;
+        }
     };
 
     struct MainInstance {
         MainInstance();
-        virtual void enque(GlobalContext& context, const ArgList& argl) = 0;
+        virtual void enque(LocalContext& ctx, const z::stringlist& argl) = 0;
         MainInstance* _next;
     };
 
     template <typename T>
     struct MainInstanceT : public MainInstance {
-        virtual void enque(GlobalContext& context, const ArgList& argl) {
+        virtual void enque(LocalContext& ctx, const z::stringlist& argl) {
             T t;
             typename T::_In in(argl);
-            context.add(t, in);
+            ctx.add(t, in);
         }
     };
 
@@ -1171,6 +1164,8 @@ namespace z {
     };
 #endif
 
+    struct GlobalContext;
+    /// \brief Represents a single running application instance.
     struct Application {
         // Application object can be instantiated only from an executable
 #if defined(Z_EXE)
@@ -1180,14 +1175,34 @@ namespace z {
 #endif
         Application(int argc, char* argv[]);
         ~Application();
-#if defined(WIN32)
+
     public:
+#if defined(WIN32)
         static HINSTANCE instance();
 #endif
-    public:
         int exec();
-        int exit(const int& code);
+        int exit(const int& code) const;
+
+    public:
+        inline const z::stringlist& argl() const {return _argl;}
+        inline const int& argc() const {return _argc;}
+        inline char** argv() const {return _argv;}
+
+    public:
+        // This Application instance can only be accessed through the app() function below.
+        // Since that function returns a const-ref, this ctx() function cannot be called by
+        // any outside function other than those in zenlang.cpp
+        inline z::GlobalContext& ctx() {return _ctx.get();}
+
+    private:
+        z::autoptr<z::GlobalContext> _ctx;
+        z::stringlist _argl;
+        int _argc;
+        char** _argv;
+        bool _isExit;
     };
+
+    const z::Application& app();
 }
 
 #include "args.hpp"

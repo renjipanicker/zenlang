@@ -77,10 +77,6 @@ void StlcppNameGenerator::getTypeName(const Ast::TypeSpec& typeSpec, z::string& 
         return;
     }
 
-    if(typeSpec.name().string() == "ArgList") {
-        name += "z::ArgList";
-        return;
-    }
     name += typeSpec.name().string();
 
     const Ast::EnumDefn* enumDefn = dynamic_cast<const Ast::EnumDefn*>(z::ptr(typeSpec));
@@ -826,7 +822,7 @@ namespace {
             z::string out1 = getOutType(node);
             _os() << Indent::get() << "public: // run-function" << std::endl;
             if(isTest) {
-                _os() << Indent::get() << "    " << out1 << " test();" << std::endl;
+                _os() << Indent::get() << "    " << out1 << " run();" << std::endl;
             } else {
                 if((isDecl) && ((node.defType() == Ast::DefinitionType::Final) || (node.defType() == Ast::DefinitionType::Abstract))) {
                     _os() << Indent::get() << "    virtual " << out1 << " run(";
@@ -906,15 +902,35 @@ namespace {
             _os() << std::endl;
         }
 
+        template<typename T>
+        inline void enterFunction(const T& node) {
+            if(StlcppNameGenerator().tn(node.base()) == "test") {
+                _os() << Indent::get() << "class " << node.name() << " : public z::test_< " << node.name() << " > {" << std::endl;
+                _os() << Indent::get() << "public:" << std::endl;
+                _os() << Indent::get() << "    inline const char* name() const {return \"" << StlcppNameGenerator().tn(node) << "\";}" << std::endl;
+            } else if(StlcppNameGenerator().tn(node.base()) == "main") {
+                _os() << Indent::get() << "class " << node.name() << " : public z::main_< " << node.name() << " > {" << std::endl;
+            } else {
+                _os() << Indent::get() << "class " << node.name() << " : public " << StlcppNameGenerator().tn(node.base()) << " {" << std::endl;
+            }
+        }
+
+
         void visit(const Ast::ChildFunctionDecl& node) {
             if(node.defType() == Ast::DefinitionType::Native) {
                 z::string out1 = getOutType(node);
-                _os() << Indent::get() << "class " << node.name() << " : public " << StlcppNameGenerator().tn(node.base()) << " {" << std::endl;
+
+                enterFunction(node);
                 visitFunctionXRef(node);
                 _os() << Indent::get() << "public:" << std::endl;
                 _os() << Indent::get() << "    virtual " << out1 << " run(";
                 writeScopeParamList(_os, node.sig().inScope(), "p");
                 _os() << ");" << std::endl;
+                if(StlcppNameGenerator().tn(node.base()) == "test") {
+                    _os() << Indent::get() << "    static z::TestInstanceT<" << node.name() << "> s_test;" << std::endl;
+                } else if(StlcppNameGenerator().tn(node.base()) == "main") {
+                    _os() << Indent::get() << "    static z::MainInstanceT<" << node.name() << "> s_main;" << std::endl;
+                }
                 _os() << Indent::get() << "};" << std::endl;
             } else {
                 _os() << Indent::get() << "class " << node.name() << ";" << std::endl;
@@ -933,15 +949,7 @@ namespace {
                 return;
             }
 
-            if(isTest) {
-                _os() << Indent::get() << "class " << node.name() << " : public z::test_< " << node.name() << " > {" << std::endl;
-                _os() << Indent::get() << "public:" << std::endl;
-                _os() << Indent::get() << "    inline const char* name() const {return \"" << StlcppNameGenerator().tn(node) << "\";}" << std::endl;
-            } else if(StlcppNameGenerator().tn(node.base()) == "main") {
-                _os() << Indent::get() << "class " << node.name() << " : public z::main_< " << node.name() << " > {" << std::endl;
-            } else {
-                _os() << Indent::get() << "class " << node.name() << " : public " << StlcppNameGenerator().tn(node.base()) << " {" << std::endl;
-            }
+            enterFunction(node);
             visitFunctionSig(node, false, false, isTest);
 
             if(StlcppNameGenerator().tn(node.base()) == "test") {
@@ -1059,11 +1067,24 @@ namespace {
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::ChildFunctionDecl& node) {
-            visitChildrenIndent(node);
+        template <typename T>
+        inline void writeSpecialStatic(const T& node) {
+            z::string fname = StlcppNameGenerator().tn(node);
+            if((StlcppNameGenerator().tn(node.base()) == "test")) {
+                _os() << "z::TestInstanceT<" << fname << "> " << fname << "::s_test = z::TestInstanceT<" << fname << ">();" << std::endl << std::endl;
+            } else if(StlcppNameGenerator().tn(node.base()) == "main") {
+                _os() << "z::MainInstanceT<" << fname << "> " << fname << "::s_main = z::MainInstanceT<" << fname << ">();" << std::endl << std::endl;
+            }
         }
 
-        inline void visitFunction(const Ast::FunctionDefn& node, const bool& isTest) {
+        void visit(const Ast::ChildFunctionDecl& node) {
+            visitChildrenIndent(node);
+            if(node.defType() == Ast::DefinitionType::Native) {
+                writeSpecialStatic(node);
+            }
+        }
+
+        inline void visitFunction(const Ast::FunctionDefn& node) {
             const z::string tname = StlcppNameGenerator().tn(node);
             z::string out;
             if(node.sig().outScope().isTuple()) {
@@ -1073,20 +1094,16 @@ namespace {
                 out = StlcppNameGenerator().qtn(vdef.qTypeSpec());
             }
 
-            if(isTest) {
-                _os() << out << " " << tname << "::test()";
-            } else {
-                _os() << out << " " << tname << "::run(";
-                TypeDeclarationGenerator::writeScopeParamList(_os, node.sig().inScope(), "");
-                _os() << ") ";
-            }
+            _os() << out << " " << tname << "::run(";
+            TypeDeclarationGenerator::writeScopeParamList(_os, node.sig().inScope(), "");
+            _os() << ") ";
             GeneratorContext(GeneratorContext::TargetMode::Local, GeneratorContext::IndentMode::WithBrace).run(_config, _fs, node.block());
             _os() << std::endl;
         }
 
         void visit(const Ast::RootFunctionDefn& node) {
             visitChildrenIndent(node);
-            visitFunction(node, false);
+            visitFunction(node);
         }
 
         void visit(const Ast::ChildFunctionDefn& node) {
@@ -1096,14 +1113,8 @@ namespace {
             }
 
             visitChildrenIndent(node);
-            visitFunction(node, isTest);
-            z::string fname = StlcppNameGenerator().tn(node);
-
-            if(isTest) {
-                _os() << "z::TestInstanceT<" << fname << "> " << fname << "::s_test = z::TestInstanceT<" << fname << ">();" << std::endl << std::endl;
-            } else if(StlcppNameGenerator().tn(node.base()) == "main") {
-                _os() << "z::MainInstanceT<" << fname << "> " << fname << "::s_main = z::MainInstanceT<" << fname << ">();" << std::endl << std::endl;
-            }
+            visitFunction(node);
+            writeSpecialStatic(node);
         }
 
         void visit(const Ast::EventDecl& node) {
