@@ -78,3 +78,27 @@ bool String::isSpaceChar(const z::char_t& ch) {
     return false;
 }
 
+z::string String::TrimStringCollect(const z::string& str, z::string& prev, z::string& post) {
+    int start = 0;
+    int end = str.length() - 1;
+    while((start < end) && (String::isSpaceChar(str[start])))
+        ++start;
+
+    while((end > start) && (String::isSpaceChar(str[end])))
+        --end;
+
+    prev = str.substr(0, start);
+    post = str.substr(end+1);
+
+    z::string rv;
+    if(end < start)
+        return rv;
+    rv = str.substr(start, end-start+1);
+    return rv;
+}
+
+z::string String::TrimString(const z::string& str) {
+    z::string prev;
+    z::string post;
+    return String::TrimStringCollect(str, prev, post);
+}

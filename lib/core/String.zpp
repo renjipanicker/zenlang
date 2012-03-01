@@ -5,3 +5,5 @@ public routine char fold(const char& ch) native;
 public routine char CharToLower(const char& ch) native;
 public routine string StringToLower(const string& str) native;
 public routine bool isSpaceChar(const char& ch) native;
+public routine string TrimStringCollect(const string& str, string& prev, string& post) native;
+public routine string TrimString(const string& str) native;
