@@ -13,12 +13,9 @@ private:
     inline void generateProject(const Ast::Config& config, z::ofile& os);
 private:
     const Ast::Project& _project;
-//@    FILE* _fpPro;
 };
 
 inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config, z::ofile& os) {
-//@    OutputFile ofPro(_fpPro, config.srcdir(), "CMakeLists.txt");unused(ofPro);
-//    z::file ofPro(config.srcdir(), "CMakeLists.txt", "w", z::file::makePath);
     os() << "CMAKE_MINIMUM_REQUIRED(VERSION 2.6)" << std::endl;
     os() << "PROJECT(" << _project.name() << ")\n";
     os() << "SET(ZEN_ROOT \"" << config.zlibPath() << "\")" << std::endl;

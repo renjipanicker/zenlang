@@ -167,7 +167,6 @@ namespace Ast {
         inline const z::string& filename() const {return _filename;}
         inline const int& row() const {return _row;}
         inline const int& col() const {return _col;}
-//@        inline const char* text() const {return _text.c_str();}
         inline const z::string& string() const {return _text;}
     private:
         const z::string _filename;
@@ -190,7 +189,7 @@ namespace Ast {
         inline void dump(const z::string& src, const z::string& act) const {
             unused(src);
             unused(act);
-//@            trace("%lu %s refCount%s %lu, ", (unsigned long)this, src.c_str(), act.c_str(), _refCount);
+//            trace("%lu %s refCount%s %lu, ", (unsigned long)this, src.c_str(), act.c_str(), _refCount);
 //            fflush(stdout);
 //            z::string x = z::type_name(*this);
 //            trace("<%s>\n", x.c_str());

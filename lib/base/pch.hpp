@@ -117,7 +117,6 @@
         #include <gtk/gtk.h>
     #endif
     #if defined(QT)
-        #include <QtGui/QApplication>
     #endif
 #endif
 

@@ -864,8 +864,6 @@ private:
     const Ast::Project& _project;
     const Ast::Config& _config;
     const Ast::Module& _module;
-//@private:
-//    FILE* _fpImp;
 };
 
 inline void ZenlangGenerator::Impl::run() {
@@ -873,8 +871,6 @@ inline void ZenlangGenerator::Impl::run() {
     z::string basename = getBaseName(_module.filename());
     z::file::mkpath(_config.apidir() + "/");
     z::ofile osImp(_config.apidir() + "/" + basename + ".ipp");
-//@    z::file ofImp(_config.apidir(), basename + ".ipp", "w", z::file::makePath);
-//@    OutputFile ofImp(_fpImp, _config.apidir(), basename + ".ipp");unused(ofImp);
 
     for(Ast::CompoundStatement::List::const_iterator it = _module.globalStatementList().list().begin(); it != _module.globalStatementList().list().end(); ++it) {
         const Ast::Statement& s = it->get();
@@ -888,7 +884,6 @@ ZenlangGenerator::~ZenlangGenerator() {delete _impl;}
 void ZenlangGenerator::run() {return z::ref(_impl).run();}
 
 z::string ZenlangGenerator::convertExprToString(const Ast::Expr& expr) {
-    //@ convert to z::stringstream
     std::stringstream os;
     ExprGenerator(os).visitNode(expr);
     return z::e2s(os.str());

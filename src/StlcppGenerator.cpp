@@ -834,13 +834,23 @@ namespace {
                     _os() << ");" << std::endl;
                 }
 
-                _os() << Indent::get() << "    inline " << out1 << " _run(const _In& _in) {";
+                _os() << Indent::get() << "    inline _Out _run(const _In& _in) {";
                 if(node.sig().in().size() == 0) {
                     _os() << "unused(_in);";
                 }
-                _os() << "return run(";
-                writeScopeInCallList(node.sig().inScope());
-                _os() << ");}" << std::endl;
+
+                // if void function, call the function and return default instance of _Out()
+                if(isVoid(node.sig().outScope())) {
+                    _os() << "run(";
+                    writeScopeInCallList(node.sig().inScope());
+                    _os() << "); return _Out();" << std::endl;
+                } else {
+                    // if non-void function, return the return-value of run() as-is.
+                    _os() << "return run(";
+                    writeScopeInCallList(node.sig().inScope());
+                    _os() << ");" << std::endl;
+                }
+                _os() << "}" << std::endl;
             }
         }
 
@@ -1526,17 +1536,11 @@ private:
     const Ast::Project& _project;
     const Ast::Config& _config;
     const Ast::Module& _module;
-//@private:
-//    FILE* _fpHdr;
-//    FILE* _fpSrc;
 };
 
 inline void StlcppGenerator::Impl::run() {
     Indent::init();
     z::string basename = getBaseName(_module.filename());
-//@    OutputFile ofHdr(_fpHdr, _config.apidir(), basename + ".hpp");unused(ofHdr);
-//    OutputFile ofSrc(_fpSrc, _config.srcdir(), basename + ".cpp");unused(ofSrc);
-    std::cout <<"stlcpp: making path: " << _config.apidir() << std::endl;
     z::file::mkpath(_config.apidir() + "/");
     z::file::mkpath(_config.srcdir() + "/");
     z::ofile ofHdr(_config.apidir() + "/" + basename + ".hpp");

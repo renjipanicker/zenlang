@@ -39,7 +39,6 @@ bool Compiler::compileFile(Ast::Module& module, const z::string& filename, const
             indent += "  ";
         }
         indent += msg;
-//@        z::mlog("Compiler", z::fmt("-- %{i} %{s}").add("i", indent).add("s", filename));
     }
 
     std::ifstream is;

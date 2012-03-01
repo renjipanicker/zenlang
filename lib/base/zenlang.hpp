@@ -934,84 +934,8 @@ namespace z {
     typedef z::list<z::string> stringlist;
 
     ///////////////////////////////////////////////////////////////
-    /// \brief List of event-handlers
-    template <typename FunctionT>
-    struct FunctorList {
-        inline FunctionT& add(FunctionT* h) {
-            _list.add(h);
-            return ref(h);
-        }
-
-    private:
-        typedef z::olist<FunctionT> List;
-        List _list;
-    };
-
-    struct Future {
-        virtual void run() = 0;
-    };
-
-    template <typename FunctionT>
-    struct FutureT : public Future {
-    private:
-        FunctionT _function;
-        typename FunctionT::_In _in;
-        virtual void run() {_function._run(_in);}
-    public:
-        inline FutureT(const FunctionT& function, const typename FunctionT::_In& in) : _function(function), _in(in) {}
-    };
-
-    struct FunctionList {
-    private:
-        typedef std::list<Future*> InvocationList;
-        InvocationList _invocationList;
-    public:
-        typedef InvocationList::size_type size_type;
-        typedef z::autoptr<Future> Ptr;
-
-    public:
-        inline size_type size() const {return _invocationList.size();}
-
-        template <typename FunctionT>
-        FutureT<FunctionT>& push(FunctionT function, const typename FunctionT::_In& in) {
-            FutureT<FunctionT>* inv = new FutureT<FunctionT>(function, in);
-            _invocationList.push_back(inv);
-            return ref(inv);
-        }
-
-        inline bool pop(Ptr& ptr) {
-            if(size() == 0)
-                return false;
-            ptr.reset(_invocationList.front());
-            _invocationList.pop_front();
-            return true;
-        }
-    };
-
-    struct RunQueue;
-    struct LocalContext {
-    public:
-        LocalContext(RunQueue& queue);
-        ~LocalContext();
-        size_t run(const size_t& cnt);
-    public:
-        template <typename FunctionT>
-        inline FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
-            FutureT<FunctionT>* inv = new FutureT<FunctionT>(function, in);
-            add(inv);
-            return ref(inv);
-        }
-    private:
-        void add(z::Future* future);
-    private:
-        RunQueue& _queue;
-    };
-
-    LocalContext& ctx();
-
-    ///////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////
-    /// \brief List of event handlers
+    /// \brief MultiMap of event source to event-handler-list
+    /// This is a helper function for GUI classes
     template <typename KeyT, typename ValT>
     struct HandlerList {
         typedef std::list<ValT*> List;
@@ -1038,7 +962,86 @@ namespace z {
     };
 
     ///////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////////////////
+    /// \brief List of event-handlers
+    template <typename FunctionT>
+    struct FunctorList {
+        inline FunctionT& add(FunctionT* h) {
+            _list.add(h);
+            return ref(h);
+        }
+
+    private:
+        typedef z::olist<FunctionT> List;
+        List _list;
+    };
+
+    ///////////////////////////////////////////////////////////////
+    /// \brief Base class for function and in-param to be enqueued for execution
+    struct Future {
+        virtual void run() = 0;
+    };
+
+    ///////////////////////////////////////////////////////////////
+    /// \brief Spcialization of function instance and in-param. Holds out-param after invocation
+    template <typename FunctionT>
+    struct FutureT : public Future {
+        inline FutureT(const FunctionT& function, const typename FunctionT::_In& in) : _function(function), _in(in) {}
+    private:
+        // the function instance
+        FunctionT _function;
+
+        // the in-params to invoke the function with
+        typedef typename FunctionT::_In In;
+        In _in;
+
+        // the out-params after the function was invoked
+        typedef typename FunctionT::_Out Out;
+        z::autoptr<Out> _out;
+
+        // the actual invocation
+        virtual void run() {Out out = _function._run(_in); _out.reset(new Out(out));}
+    };
+
+    /// \brief Base class for devices.
+    /// Devices are async objects that get periodically polled for input, such as files and sockets.
+    struct Device {
+        virtual void poll(const z::size& timeout) = 0;
+    };
+
+    /// \brief Queue for a single thread
+    struct RunQueue;
+
+    /// \brief thread-local-context
+    struct LocalContext {
+        LocalContext(RunQueue& queue);
+        ~LocalContext();
+
+    public:
+        template <typename FunctionT>
+        inline FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
+            FutureT<FunctionT>* inv = new FutureT<FunctionT>(function, in);
+            add(inv);
+            return ref(inv);
+        }
+
+    public:
+        z::Device& start(z::Device& device);
+        z::Device& stop(z::Device& device);
+        z::size wait();
+
+    private:
+        void add(z::Future* future);
+
+    private:
+        RunQueue& _queue;
+    };
+
+    LocalContext& ctx();
+
+    ///////////////////////////////////////////////////////////////
     /// \brief list of functions to execute at init-time
+    /// This includes main() and test() functions
     template <typename InitT>
     struct InitList {
         inline InitList() : _head(0), _tail(0), _next(0) {}
@@ -1164,7 +1167,9 @@ namespace z {
     };
 #endif
 
+    /// \brief Internal global context
     struct GlobalContext;
+
     /// \brief Represents a single running application instance.
     struct Application {
         // Application object can be instantiated only from an executable
