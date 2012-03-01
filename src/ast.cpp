@@ -1,7 +1,6 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "ast.hpp"
-#include "error.hpp"
 
 void Ast::TypedefDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::TypedefDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}

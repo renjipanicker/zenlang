@@ -2,8 +2,16 @@
 
 #include "ast.hpp"
 #include "Unit.hpp"
+#include "token.hpp"
+
 class Compiler;
 namespace Ast {
+    inline Ast::Token t2t(TokenData& td) {
+        Ast::Token t(td.filename(), td.row(), td.col(), td.text());
+        TokenData::deleteT(td);
+        return t;
+    }
+
     struct ClosureRef {
         Ast::Scope* xref;
         Ast::Scope* iref;

@@ -178,7 +178,7 @@ inline void Lexer::Impl::sendReturn(Ast::NodeFactory& factory) {
         }
     }
     TokenData pos = token(factory, 0, false);
-    throw z::Exception("Lexer", zfmt(pos, "Invalid return in lexer"));
+    throw z::Exception("Lexer", zfmt(Ast::t2t(pos), "Invalid return in lexer"));
 }
 
 inline void Lexer::Impl::reset() {

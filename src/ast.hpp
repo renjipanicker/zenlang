@@ -1,5 +1,4 @@
 #pragma once
-#include "token.hpp"
 
 namespace Ast {
     /// \brief Outer struct for AccessType enumeration.
@@ -163,7 +162,6 @@ namespace Ast {
     class Token {
     public:
         inline Token(const z::string& filename, const int row, const int col, const z::string& text) : _filename(filename), _row(row), _col(col), _text(text) {}
-        inline Token(TokenData& td) : _filename(td.filename()), _row(td.row()), _col(td.col()), _text(td.text()) {TokenData::deleteT(td);}
         inline const z::string& filename() const {return _filename;}
         inline const int& row() const {return _row;}
         inline const int& col() const {return _col;}
