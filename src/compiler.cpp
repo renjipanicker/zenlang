@@ -49,13 +49,14 @@ bool Compiler::compileFile(Ast::Module& module, const z::string& filename, const
 
     Parser parser;
     Lexer lexer(parser);
-    Ast::NodeFactory factory(module, z::ref(this));
+    Ast::NodeFactory factory(module);
+    ParserContext pctx(factory, z::ref(this));
     while(!is.eof()) {
         char buf[1025];
         memset(buf, 0, 1024);
         is.read(buf, 1024);
         std::streamsize got = is.gcount();
-        lexer.push(factory, buf, got, is.eof());
+        lexer.push(pctx, buf, got, is.eof());
     }
     return true;
 }
@@ -109,7 +110,9 @@ void Compiler::compile() {
 }
 
 void Compiler::compileString(Ast::Module& module, Lexer& lexer, const z::string& data, const bool& isEof) {
-    Ast::NodeFactory factory(module, z::ref(this));
+    Ast::NodeFactory factory(module);
+    ParserContext pctx(factory, z::ref(this));
+
     const z::estring edata = z::s2e(data);
-    lexer.push(factory, edata.c_str(), edata.size(), isEof);
+    lexer.push(pctx, edata.c_str(), edata.size(), isEof);
 }

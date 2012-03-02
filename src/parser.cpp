@@ -13,15 +13,15 @@ Parser::~Parser() {
     _parser = 0;
 }
 
-void Parser::feed(Ast::NodeFactory& factory, const TokenData& td) {
+void Parser::feed(ParserContext& pctx, const TokenData& td) {
 //    printf("Parser::feed: %d %s\n", td.id(), td.text());
-    ZenParser(_parser, td.id(), td, z::ptr(factory));
+    ZenParser(_parser, td.id(), td, z::ptr(pctx));
 }
 
-void Parser::done(Ast::NodeFactory& factory) {
+void Parser::done(ParserContext& pctx) {
     TokenData td;
     td.init();
-    ZenParser(_parser, 0, td, z::ptr(factory));
+    ZenParser(_parser, 0, td, z::ptr(pctx));
 }
 
 void Parser::reset() {

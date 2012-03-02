@@ -1,7 +1,6 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "CmakeGenerator.hpp"
-#include "NodeFactory.hpp"
 #include "Interpreter.hpp"
 
 static int showHelp(const Ast::Config& config) {

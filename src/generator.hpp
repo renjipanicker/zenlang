@@ -1,6 +1,7 @@
 #pragma once
 
-#include "ast.hpp"
+#include "base/ast.hpp"
+
 class Generator {
 public:
     virtual void run() = 0;
@@ -32,7 +33,7 @@ private:
 };
 #define INDENT Indent _ind_
 
-//@
+//@ move to String::
 inline z::string getBaseName(const z::string& filename) {
     z::string basename = filename;
     z::string::size_type idx = -1;

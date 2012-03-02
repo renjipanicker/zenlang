@@ -1,7 +1,7 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
+#include "base/typename.hpp"
 #include "ZenlangGenerator.hpp"
-#include "typename.hpp"
 
 namespace {
     inline z::string getDefinitionType(const Ast::Token& pos, const Ast::DefinitionType::T& defType) {

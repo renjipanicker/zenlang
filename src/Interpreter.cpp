@@ -1,9 +1,9 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
+#include "base/typename.hpp"
 #include "Interpreter.hpp"
-#include "ZenlangGenerator.hpp"
-#include "typename.hpp"
 #include "compiler.hpp"
+#include "ZenlangGenerator.hpp"
 
 //#define DBGMODE 1
 

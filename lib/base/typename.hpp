@@ -1,12 +1,5 @@
 #pragma once
-#include "ast.hpp"
-
-struct GenMode {
-    enum T {
-        Stlcpp,
-        Zenlang
-    };
-};
+#include "base/unit.hpp"
 
 struct TypespecNameGenerator {
     z::string tn(const Ast::TypeSpec& typeSpec);

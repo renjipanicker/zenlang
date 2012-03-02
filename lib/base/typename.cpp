@@ -1,7 +1,6 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "generator.hpp"
-#include "typename.hpp"
+#include "base/typename.hpp"
 
 struct NameType {
     enum T {
@@ -13,13 +12,6 @@ struct NameType {
 z::string TypespecNameGenerator::tn(const Ast::TypeSpec& typeSpec) {
     z::string name;
     getName(typeSpec, name);
-//    if(mode == GenMode::Stlcpp) {
-//        StlcppTypespecNameGenerator gen(sep);
-//        gen.getName(typeSpec, sep, name, mode);
-//    } else {
-//        ZenlangTypespecNameGenerator gen;
-//        gen.getName(typeSpec, sep, name, mode);
-//    }
     return name;
 }
 

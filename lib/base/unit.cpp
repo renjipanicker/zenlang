@@ -1,6 +1,6 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "NodeFactory.hpp"
+#include "base/factory.hpp"
 #include "typename.hpp"
 #include "compiler.hpp"
 

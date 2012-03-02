@@ -1,6 +1,6 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "ast.hpp"
+#include "base/ast.hpp"
 
 void Ast::TypedefDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::TypedefDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
@@ -129,3 +129,4 @@ void Ast::CompoundStatement::visit(Visitor& visitor) const {visitor.visit(z::ref
 
 void Ast::RoutineBody::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::FunctionBody::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+

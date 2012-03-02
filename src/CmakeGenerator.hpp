@@ -1,6 +1,6 @@
 #pragma once
 
-#include "ast.hpp"
+#include "base/ast.hpp"
 #include "generator.hpp"
 
 class CmakeGenerator : public Generator {

@@ -1,9 +1,8 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "NodeFactory.hpp"
-#include "error.hpp"
-#include "typename.hpp"
-#include "compiler.hpp"
+#include "base/factory.hpp"
+#include "base/error.hpp"
+#include "base/typename.hpp"
 
 /////////////////////////////////////////////////////////////////////////
 inline Ast::QualifiedTypeSpec& Ast::NodeFactory::addQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const TypeSpec& typeSpec, const bool& isRef) {
@@ -238,8 +237,7 @@ inline Ast::ValueInstanceExpr& Ast::NodeFactory::getValueInstanceExpr(const Ast:
 }
 
 ////////////////////////////////////////////////////////////
-Ast::NodeFactory::NodeFactory(Ast::Module& module, Compiler& compiler)
-    : _module(module), _compiler(compiler), _lastToken(_module.filename(), 0, 0, "") {
+Ast::NodeFactory::NodeFactory(Ast::Module& module) : _module(module), _lastToken(_module.filename(), 0, 0, "") {
     Ast::Root& rootTypeSpec = unit().getRootNamespace(_module.level());
     unit().enterTypeSpec(rootTypeSpec);
 }
@@ -256,12 +254,12 @@ void Ast::NodeFactory::aUnitStatementList(const Ast::EnterNamespaceStatement& ns
     unit().leaveNamespace();
 }
 
-void Ast::NodeFactory::aImportStatement(const Ast::Token& pos, const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list) {
+Ast::Module::Level_t Ast::NodeFactory::aImportStatement(const Ast::Token& pos, const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list, z::string& filename) {
     Ast::ImportStatement& statement = unit().addNode(new Ast::ImportStatement(pos, accessType, headerType, defType, list));
     _module.addGlobalStatement(statement);
 
     if(statement.defType() != Ast::DefinitionType::Native) {
-        z::string filename;
+        filename = "";
         z::string sep = "";
         for(Ast::NamespaceList::List::const_iterator it = statement.list().begin(); it != statement.list().end(); ++it) {
             const Ast::Token& name = it->get().name();
@@ -270,9 +268,9 @@ void Ast::NodeFactory::aImportStatement(const Ast::Token& pos, const Ast::Access
             sep = "/";
         }
         filename += ".ipp";
-        Ast::Module module(unit(), filename, _module.level() + 1);
-        _compiler.import(module);
+        return _module.level() + 1;
     }
+    return 0;
 }
 
 Ast::NamespaceList* Ast::NodeFactory::aImportNamespaceList(Ast::NamespaceList& list, const Ast::Token &name) {

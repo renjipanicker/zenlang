@@ -1,17 +1,8 @@
 #pragma once
 
-#include "ast.hpp"
-#include "Unit.hpp"
-#include "token.hpp"
+#include "base/unit.hpp"
 
-class Compiler;
 namespace Ast {
-    inline Ast::Token t2t(TokenData& td) {
-        Ast::Token t(td.filename(), td.row(), td.col(), td.text());
-        TokenData::deleteT(td);
-        return t;
-    }
-
     struct ClosureRef {
         Ast::Scope* xref;
         Ast::Scope* iref;
@@ -19,7 +10,7 @@ namespace Ast {
 
     class NodeFactory {
     public:
-        NodeFactory(Ast::Module& module, Compiler& compiler);
+        NodeFactory(Ast::Module& module);
         ~NodeFactory();
 
     public:
@@ -58,12 +49,11 @@ namespace Ast {
 
     private:
         Ast::Module& _module;
-        Compiler& _compiler;
         Ast::Token _lastToken;
 
     public:
         void                     aUnitStatementList(const Ast::EnterNamespaceStatement& ns);
-        void                     aImportStatement(const Ast::Token& pos, const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list);
+        Ast::Module::Level_t     aImportStatement(const Ast::Token& pos, const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list, z::string& filename);
         Ast::NamespaceList*      aImportNamespaceList(Ast::NamespaceList& list, const Ast::Token& name);
         Ast::NamespaceList*      aImportNamespaceList(const Ast::Token& name);
         Ast::EnterNamespaceStatement* aNamespaceStatement(const Ast::Token& pos, Ast::NamespaceList& list);
