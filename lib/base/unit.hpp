@@ -1,7 +1,7 @@
 #pragma once
 
-#include "base/unit.hpp"
-#include "error.hpp"
+#include "base/ast.hpp"
+#include "base/error.hpp"
 
 namespace Ast {
     /*! \brief A compilation unit
