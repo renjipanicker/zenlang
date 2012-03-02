@@ -39,24 +39,20 @@ coerce int => size;
 
 typedef char native;
 typedef string native;
-typedef datetime native;
-
-coerce char => string;
-coerce int => datetime;
-
 default char = '';
 default string = "";
+coerce char => string;
+
+typedef datetime native;
 default datetime = 0;
+coerce int => datetime;
 
 typedef type native;
 
-template <F> future native;
-template <F> functor native;
-
-template <V>   pointer native;
-template <V>   value   native;
-
-template <V> ptr native;
+template <F> future  native;
+template <V> pointer native;
+template <V> value   native;
+template <V> ptr     native;
 
 template <V>   list native;
 template <K,V> dict native;

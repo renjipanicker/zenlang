@@ -30,8 +30,8 @@ void StlcppNameGenerator::getTypeName(const Ast::TypeSpec& typeSpec, z::string& 
             name += "z::dict";
         } else if(z::ref(templateDefn).name().string() == "future") {
             name += "z::FutureT";
-        } else if(z::ref(templateDefn).name().string() == "functor") {
-            name += "z::FunctorT";
+//@        } else if(z::ref(templateDefn).name().string() == "functor") {
+//            name += "z::FunctorT";
         } else {
             name += z::ref(templateDefn).name().string();
         }

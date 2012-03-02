@@ -79,7 +79,8 @@ void Compiler::import(Ast::Module& module) {
 
 void Compiler::initContext(Ast::Unit& unit) {
     Ast::Module module(unit, "core/core.ipp", 1);
-    import(module);
+    Ast::Factory factory(module);
+    factory.initUnit();
 }
 
 void Compiler::compile() {

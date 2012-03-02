@@ -1917,3 +1917,223 @@ Ast::ConstantShortExpr& Ast::Factory::aConstantShortExpr(const Ast::Token& token
     Ast::ConstantShortExpr& expr = unit().addNode(new Ast::ConstantShortExpr(token, qTypeSpec, value));
     return expr;
 }
+
+void Ast::Factory::initUnit() {
+    Ast::Factory& f = z::ref(this);
+
+    // typedef void native;
+    Ast::TypedefDecl* tdVoid = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "void"), Ast::DefinitionType::Native);
+
+    // typedef bool native;
+    Ast::TypedefDecl* tdBool = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "bool"), Ast::DefinitionType::Native);
+
+    // typedef ubyte native;
+    Ast::TypedefDecl* tdUByte = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "ubyte"), Ast::DefinitionType::Native);
+
+    // typedef ushort native;
+    Ast::TypedefDecl* tdUShort = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "ushort"), Ast::DefinitionType::Native);
+
+    // typedef uint native;
+    Ast::TypedefDecl* tdUInt = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "uint"), Ast::DefinitionType::Native);
+
+    // typedef ulong native;
+    Ast::TypedefDecl* tdULong = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "ulong"), Ast::DefinitionType::Native);
+
+    // typedef byte native;
+    Ast::TypedefDecl* tdByte = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "byte"), Ast::DefinitionType::Native);
+
+    // typedef short native;
+    Ast::TypedefDecl* tdShort = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "short"), Ast::DefinitionType::Native);
+
+    // typedef int native;
+    Ast::TypedefDecl* tdInt = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "int"), Ast::DefinitionType::Native);
+
+    // typedef long native;
+    Ast::TypedefDecl* tdLong = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "long"), Ast::DefinitionType::Native);
+
+    // typedef float native;
+    Ast::TypedefDecl* tdFloat  = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "float"), Ast::DefinitionType::Native);
+
+    // typedef double native;
+    Ast::TypedefDecl* tdDouble = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "double"), Ast::DefinitionType::Native);
+
+    Ast::ConstantIntExpr& cIntZero = f.aConstantIntExpr(Ast::Token(_module.filename(), 0, 0, "0"));
+    Ast::ConstantBooleanExpr& cBoolFalse = f.aConstantBooleanExpr(Ast::Token(_module.filename(), 0, 0, "false"));
+
+    // default void = 0;
+    f.aGlobalDefaultStatement(z::ref(tdVoid), cIntZero);
+
+    // default bool = false;
+    f.aGlobalDefaultStatement(z::ref(tdBool), cBoolFalse);
+
+    // default ubyte = 0;
+    f.aGlobalDefaultStatement(z::ref(tdUByte), cIntZero);
+
+    // default ushort = 0;
+    f.aGlobalDefaultStatement(z::ref(tdUShort), cIntZero);
+
+    // default uint = 0;
+    f.aGlobalDefaultStatement(z::ref(tdUInt), cIntZero);
+
+    // default ulong = 0;
+    f.aGlobalDefaultStatement(z::ref(tdULong), cIntZero);
+
+    // default byte = 0;
+    f.aGlobalDefaultStatement(z::ref(tdByte), cIntZero);
+
+    // default short = 0;
+    f.aGlobalDefaultStatement(z::ref(tdShort), cIntZero);
+
+    // default int = 0;
+    f.aGlobalDefaultStatement(z::ref(tdInt), cIntZero);
+
+    // default long = 0;
+    f.aGlobalDefaultStatement(z::ref(tdLong), cIntZero);
+
+    // default float = 0;
+    f.aGlobalDefaultStatement(z::ref(tdFloat), cIntZero);
+
+    // default double = 0;
+    f.aGlobalDefaultStatement(z::ref(tdDouble), cIntZero);
+
+    // coerce bool => ubyte => byte => ushort => short => uint => int => ulong => long => float => double;
+    Ast::CoerceList* clNum = f.aCoerceList(z::ref(tdBool));
+    f.aCoerceList(z::ref(clNum), z::ref(tdUByte));
+    f.aCoerceList(z::ref(clNum), z::ref(tdByte));
+    f.aCoerceList(z::ref(clNum), z::ref(tdUShort));
+    f.aCoerceList(z::ref(clNum), z::ref(tdShort));
+    f.aCoerceList(z::ref(clNum), z::ref(tdUInt));
+    f.aCoerceList(z::ref(clNum), z::ref(tdInt));
+    f.aCoerceList(z::ref(clNum), z::ref(tdULong));
+    f.aCoerceList(z::ref(clNum), z::ref(tdLong));
+    f.aCoerceList(z::ref(clNum), z::ref(tdFloat));
+    f.aCoerceList(z::ref(clNum), z::ref(tdDouble));
+    f.aGlobalCoerceStatement(z::ref(clNum));
+
+    // typedef size native;
+    Ast::TypedefDecl* tdSize = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "size"), Ast::DefinitionType::Native);
+
+    // default size = 0;
+    f.aGlobalDefaultStatement(z::ref(tdSize), cIntZero);
+
+    // coerce int => size;
+    Ast::CoerceList* clSize = f.aCoerceList(z::ref(tdInt));
+    f.aCoerceList(z::ref(clSize), z::ref(tdSize));
+    f.aGlobalCoerceStatement(z::ref(clSize));
+
+    // typedef char native;
+    Ast::TypedefDecl* tdChar = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "char"), Ast::DefinitionType::Native);
+
+    // default char = '';
+    Ast::ConstantCharExpr& cCharZero = f.aConstantCharExpr(Ast::Token(_module.filename(), 0, 0, ""));
+    f.aGlobalDefaultStatement(z::ref(tdChar), cCharZero);
+
+    // typedef string native;
+    Ast::TypedefDecl* tdString = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "string"), Ast::DefinitionType::Native);
+
+    // default string = "";
+    Ast::ConstantStringExpr& cStringZero = f.aConstantStringExpr(Ast::Token(_module.filename(), 0, 0, ""));
+    f.aGlobalDefaultStatement(z::ref(tdString), cStringZero);
+
+    // coerce char => string;
+    Ast::CoerceList* clChar = f.aCoerceList(z::ref(tdChar));
+    f.aCoerceList(z::ref(clChar), z::ref(tdString));
+    f.aGlobalCoerceStatement(z::ref(clChar));
+
+    // typedef datetime native;
+    Ast::TypedefDecl* tdDateTime = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "datetime"), Ast::DefinitionType::Native);
+
+    // default datetime = 0;
+    f.aGlobalDefaultStatement(z::ref(tdDateTime), cIntZero);
+
+    // coerce int => datetime;
+    Ast::CoerceList* clDateTime = f.aCoerceList(z::ref(tdInt));
+    f.aCoerceList(z::ref(clDateTime), z::ref(tdDateTime));
+    f.aGlobalCoerceStatement(z::ref(clDateTime));
+
+    // typedef type native;
+    Ast::TypedefDecl* tdType = f.aTypedefDecl(Ast::Token(_module.filename(), 0, 0, "type"), Ast::DefinitionType::Native);
+    unused(tdType);
+
+    // template <K> future native;
+    Ast::TemplatePartList* tplk = f.aTemplatePartList(Ast::Token(_module.filename(), 0, 0, "K"));
+    Ast::TemplateDecl* tmplFuture = f.aTemplateDecl(Ast::Token(_module.filename(), 0, 0, "future"), Ast::DefinitionType::Native, z::ref(tplk));
+    unused(tmplFuture);
+
+    // template <V> pointer native;
+    Ast::TemplatePartList* tplv = f.aTemplatePartList(Ast::Token(_module.filename(), 0, 0, "V"));
+    Ast::TemplateDecl* tmplPointer = f.aTemplateDecl(Ast::Token(_module.filename(), 0, 0, "pointer"), Ast::DefinitionType::Native, z::ref(tplv));
+    unused(tmplPointer);
+
+    // template <V> value native;
+    Ast::TemplateDecl* tmplValue = f.aTemplateDecl(Ast::Token(_module.filename(), 0, 0, "value"), Ast::DefinitionType::Native, z::ref(tplv));
+    unused(tmplValue);
+
+    // template <V> ptr native;
+    Ast::TemplateDecl* tmplPtr = f.aTemplateDecl(Ast::Token(_module.filename(), 0, 0, "ptr"), Ast::DefinitionType::Native, z::ref(tplv));
+    unused(tmplPtr);
+
+    // template <V> list native;
+    Ast::TemplateDecl* tmplList = f.aTemplateDecl(Ast::Token(_module.filename(), 0, 0, "list"), Ast::DefinitionType::Native, z::ref(tplv));
+    unused(tmplList);
+
+    // template <K,V> dict native;
+    Ast::TemplatePartList* tplkv = f.aTemplatePartList(Ast::Token(_module.filename(), 0, 0, "K"));
+    f.aTemplatePartList(z::ref(tplkv), Ast::Token(_module.filename(), 0, 0, "V"));
+    Ast::TemplateDecl* tmplDict = f.aTemplateDecl(Ast::Token(_module.filename(), 0, 0, "dict"), Ast::DefinitionType::Native, z::ref(tplkv));
+    unused(tmplDict);
+
+    // template <K,V> tree native;
+    Ast::TemplateDecl* tmplTree = f.aTemplateDecl(Ast::Token(_module.filename(), 0, 0, "tree"), Ast::DefinitionType::Native, z::ref(tplkv));
+    unused(tmplTree);
+
+    // public routine void assert(...) native;
+    const Ast::QualifiedTypeSpec* qtVoid = f.aQualifiedTypeSpec(Ast::Token(_module.filename(), 0, 0, ""), false, z::ref(tdVoid), true );
+    Ast::RoutineDecl* rnAssert = f.aVarArgRoutineDecl(z::ref(qtVoid), Ast::Token(_module.filename(), 0, 0, "assert"), Ast::DefinitionType::Native);
+    unused(rnAssert);
+
+    // public routine void unused(...) native;
+    Ast::RoutineDecl* rnUnused = f.aVarArgRoutineDecl(z::ref(qtVoid), Ast::Token(_module.filename(), 0, 0, "unused"), Ast::DefinitionType::Native);
+    unused(rnUnused);
+
+    // public routine void verify(...) native;
+    Ast::RoutineDecl* rnVerify = f.aVarArgRoutineDecl(z::ref(qtVoid), Ast::Token(_module.filename(), 0, 0, "verify"), Ast::DefinitionType::Native);
+    unused(rnVerify);
+
+    // public routine void sizeof(...) native;
+    Ast::RoutineDecl* rnSizeof = f.aVarArgRoutineDecl(z::ref(qtVoid), Ast::Token(_module.filename(), 0, 0, "sizeof"), Ast::DefinitionType::Native);
+    unused(rnSizeof);
+
+    // public routine void length(...) native;
+    Ast::RoutineDecl* rnLength = f.aVarArgRoutineDecl(z::ref(qtVoid), Ast::Token(_module.filename(), 0, 0, "length"), Ast::DefinitionType::Native);
+    unused(rnLength);
+
+    // public function (int code)main(const list<string>& argl) abstract;
+    const Ast::QualifiedTypeSpec* qtInt = f.aQualifiedTypeSpec(Ast::Token(_module.filename(), 0, 0, ""), false, z::ref(tdInt), true );
+    unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etAssignment, z::ref(qtInt));
+    const Ast::VariableDefn* vdMain = f.aVariableDefn(z::ref(qtInt), Ast::Token(_module.filename(), 0, 0, "code"));
+    Ast::Scope* outMain = f.aParam(z::ref(vdMain));
+
+    const Ast::TemplateDecl* inList = f.aTemplateTypeSpec(Ast::Token(_module.filename(), 0, 0, "list"));
+    const Ast::QualifiedTypeSpec* qtString = f.aQualifiedTypeSpec(Ast::Token(_module.filename(), 0, 0, ""), false, z::ref(tdString), false );
+    Ast::TemplateTypePartList* ttpl = f.aTemplateTypePartList(z::ref(qtString));
+    const Ast::TemplateDefn* tdArgl = f.aTemplateDefnTypeSpec(z::ref(inList), z::ref(ttpl));
+    const Ast::QualifiedTypeSpec* qtArgl = f.aQualifiedTypeSpec(Ast::Token(_module.filename(), 0, 0, ""), true, z::ref(tdArgl), true );
+    unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etAssignment, z::ref(qtArgl));
+    const Ast::VariableDefn* vdArgl = f.aVariableDefn(z::ref(qtArgl), Ast::Token(_module.filename(), 0, 0, "argl"));
+    Ast::Scope* inMain = f.aParam(z::ref(vdArgl));
+
+    Ast::FunctionSig* mainSig = f.aFunctionSig(z::ref(outMain), Ast::Token(_module.filename(), 0, 0, "main"), z::ref(inMain));
+    Ast::ClosureRef cref = f.aClosureList();
+    Ast::RootFunctionDecl* mainDecl = f.aRootFunctionDecl(z::ref(mainSig), Ast::DefinitionType::Native, cref);
+    unused(mainDecl);
+
+    //public function (int passed)test() abstract;
+    unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etAssignment, z::ref(qtInt));
+    const Ast::VariableDefn* vdTest = f.aVariableDefn(z::ref(qtInt), Ast::Token(_module.filename(), 0, 0, "passed"));
+    Ast::Scope* outTest = f.aParam(z::ref(vdTest));
+    Ast::Scope* inTest = f.aParam(Ast::ScopeType::Param);
+    Ast::FunctionSig* testSig = f.aFunctionSig(z::ref(outTest), Ast::Token(_module.filename(), 0, 0, "test"), z::ref(inTest));
+    Ast::RootFunctionDecl* testDecl = f.aRootFunctionDecl(z::ref(testSig), Ast::DefinitionType::Native, cref);
+    unused(testDecl);
+}
