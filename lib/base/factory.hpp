@@ -8,10 +8,10 @@ namespace Ast {
         Ast::Scope* iref;
     };
 
-    class NodeFactory {
+    class Factory {
     public:
-        NodeFactory(Ast::Module& module);
-        ~NodeFactory();
+        Factory(Ast::Module& module);
+        ~Factory();
 
     public:
         inline const Unit& unit() const {return _module.unit();}

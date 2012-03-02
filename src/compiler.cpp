@@ -5,7 +5,6 @@
 #include "StlcppGenerator.hpp"
 
 inline bool checkFile(const z::string& filename) {
-    std::cout << "Checking file: " << filename << std::endl;
     return std::ifstream( z::s2e(filename).c_str() ).is_open();
 }
 
@@ -49,7 +48,7 @@ bool Compiler::compileFile(Ast::Module& module, const z::string& filename, const
 
     Parser parser;
     Lexer lexer(parser);
-    Ast::NodeFactory factory(module);
+    Ast::Factory factory(module);
     ParserContext pctx(factory, z::ref(this));
     while(!is.eof()) {
         char buf[1025];
@@ -110,7 +109,7 @@ void Compiler::compile() {
 }
 
 void Compiler::compileString(Ast::Module& module, Lexer& lexer, const z::string& data, const bool& isEof) {
-    Ast::NodeFactory factory(module);
+    Ast::Factory factory(module);
     ParserContext pctx(factory, z::ref(this));
 
     const z::estring edata = z::s2e(data);

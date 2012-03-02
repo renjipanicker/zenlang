@@ -5,8 +5,8 @@
 
 class Compiler;
 struct ParserContext {
-    inline ParserContext(Ast::NodeFactory& f, Compiler& c) : factory(f), compiler(c) {}
-    Ast::NodeFactory& factory;
+    inline ParserContext(Ast::Factory& f, Compiler& c) : factory(f), compiler(c) {}
+    Ast::Factory& factory;
     Compiler& compiler;
 };
 
@@ -16,7 +16,7 @@ inline Ast::Token t2t(TokenData& td) {
     return t;
 }
 
-inline Ast::NodeFactory& c2f(ParserContext* pctx) {
+inline Ast::Factory& c2f(ParserContext* pctx) {
     return z::ref(pctx).factory;
 }
 
