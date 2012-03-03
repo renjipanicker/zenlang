@@ -433,6 +433,7 @@ namespace z {
     };
 
     /// \brief Base class for pointer class
+    /// This class holds the base value pointer
     template <typename V>
     struct bpointer {
     protected:
@@ -475,6 +476,7 @@ namespace z {
     };
 
     /// \brief smart pointer class with typename
+    /// This class manages type-casting to/from derived values
     template <typename V>
     struct pointer : public bpointer<V> {
         typedef bpointer<V> BaseT;
@@ -563,6 +565,7 @@ namespace z {
         List _list;
     };
 
+    /// \brief Base class for all list-like classes
     template <typename V, typename ListT>
     struct listbase : public z::container<V, ListT > {
         typedef z::container<V, ListT > BaseT;
@@ -570,6 +573,7 @@ namespace z {
         inline typename BaseT::iterator last() {return --BaseT::_list.end();}
     };
 
+    /// \brief Stack class
     template <typename V>
     struct stack : public z::listbase<V, std::list<V> > {
         typedef z::listbase<V, std::list<V> > BaseT;
@@ -599,6 +603,7 @@ namespace z {
         }
     };
 
+    /// \brief Queue class
     template <typename V>
     struct queue : public z::listbase<V, std::list<V> > {
         typedef z::listbase<V, std::list<V> > BaseT;
@@ -631,6 +636,7 @@ namespace z {
         }
     };
 
+    /// \brief List class
     template <typename V>
     struct list : public z::listbase<V, std::vector<V> > {
         typedef z::listbase<V, std::vector<V> > BaseT;
