@@ -124,8 +124,8 @@ const Ast::QualifiedTypeSpec& Ast::Unit::coerce(const Ast::Token& pos, const Ast
     const Ast::QualifiedTypeSpec* val = canCoerce(lhs, rhs);
     if(!val) {
         throw z::Exception("Unit", zfmt(pos, "Cannot coerce '%{c}'' and '%{t}'")
-                           .add("c", ZenlangNameGenerator().qtn(lhs))
-                           .add("t", ZenlangNameGenerator().qtn(rhs))
+                           .arg("c", ZenlangNameGenerator().qtn(lhs))
+                           .arg("t", ZenlangNameGenerator().qtn(rhs))
                            );
     }
     return z::ref(val);
@@ -191,13 +191,13 @@ const Ast::VariableDefn* Ast::Unit::getVariableDef(const Ast::Token& name, Ast::
             case Ast::RefType::Param:
                 switch(scope.type()) {
                     case Ast::ScopeType::Member:
-                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Param-Member").add("s", name) );
+                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Param-Member").arg("s", name) );
                     case Ast::ScopeType::XRef:
                         refType = Ast::RefType::XRef;
                         break;
                     case Ast::ScopeType::Param:
                     case Ast::ScopeType::VarArg:
-                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Param-Param").add("s", name) );
+                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Param-Param").arg("s", name) );
                     case Ast::ScopeType::Local:
                         refType = Ast::RefType::XRef;
                         break;
@@ -206,9 +206,9 @@ const Ast::VariableDefn* Ast::Unit::getVariableDef(const Ast::Token& name, Ast::
             case Ast::RefType::Local:
                 switch(scope.type()) {
                     case Ast::ScopeType::Member:
-                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Local-Member").add("s", name) );
+                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Local-Member").arg("s", name) );
                     case Ast::ScopeType::XRef:
-                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Local-XRef").add("s", name) );
+                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Local-XRef").arg("s", name) );
                     case Ast::ScopeType::Param:
                     case Ast::ScopeType::VarArg:
                         refType = Ast::RefType::Param;
@@ -325,7 +325,7 @@ Ast::StructDefn& Ast::Unit::getCurrentStructDefn(const Ast::Token& pos) {
     Ast::TypeSpec& ts = currentTypeSpec();
     Ast::StructDefn* sd = dynamic_cast<Ast::StructDefn*>(z::ptr(ts));
     if(sd == 0) {
-        throw z::Exception("Unit", zfmt(pos, "Internal error: not a struct type %{s}").add("s", ts.name()) );
+        throw z::Exception("Unit", zfmt(pos, "Internal error: not a struct type %{s}").arg("s", ts.name()) );
     }
     return z::ref(sd);
 }
@@ -351,7 +351,7 @@ inline z::string Ast::Unit::getExpectedTypeName(const Ast::Token& pos, const Ast
         case ExpectedTypeSpec::etStructInit:
             return "etStructInit";
     }
-    throw z::Exception("Unit", zfmt(pos, "Internal error: Unknown Expected Type %{s}").add("s", exType ));
+    throw z::Exception("Unit", zfmt(pos, "Internal error: Unknown Expected Type %{s}").arg("s", exType ));
 }
 
 inline Ast::Unit::ExpectedTypeSpec::Type Ast::Unit::getExpectedType(const Ast::Token& pos) const {
@@ -373,8 +373,8 @@ void Ast::Unit::pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type) {
 void Ast::Unit::popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type) {
     if(type != getExpectedType(pos)) {
         throw z::Exception("Unit", zfmt(pos, "Internal error: Invalid expected type popped. Popping %{s} got %{t}")
-                           .add("s", getExpectedTypeName(pos, type))
-                           .add("t", getExpectedTypeName(pos, _expectedTypeSpecStack.back().type()))
+                           .arg("s", getExpectedTypeName(pos, type))
+                           .arg("t", getExpectedTypeName(pos, _expectedTypeSpecStack.back().type()))
                            );
     }
 

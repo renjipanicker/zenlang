@@ -169,7 +169,7 @@ int main(int argc, char* argv[]) {
             CmakeGenerator progen(project);
             progen.run();
         } else {
-            throw z::Exception("Main", z::fmt("Unknown project generator %{s}").add("s", project.oproject()));
+            throw z::Exception("Main", z::string("Unknown project generator %{s}").arg("s", project.oproject()));
         }
     }
     return 0;

@@ -68,7 +68,7 @@ inline const Ast::Expr& Ast::Factory::getDefaultValue(const Ast::TypeSpec& typeS
     if(ed != 0) {
         const Ast::Scope::List::const_iterator rit = z::ref(ed).list().begin();
         if(rit == z::ref(ed).list().end()) {
-            throw z::Exception("NodeFactory", zfmt(typeSpec.name(), "Empty enum type %{s}").add("s", z::ref(ed).name() ));
+            throw z::Exception("NodeFactory", zfmt(typeSpec.name(), "Empty enum type %{s}").arg("s", z::ref(ed).name() ));
         }
         const Ast::VariableDefn& vref = rit->get();
         const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, typeSpec, false);
@@ -89,7 +89,7 @@ inline const Ast::Expr& Ast::Factory::getDefaultValue(const Ast::TypeSpec& typeS
         return z::ref(expr);
     }
 
-    throw z::Exception("NodeFactory", zfmt(name, "No default value for type %{s}").add("s", z::ref(ts).name() ));
+    throw z::Exception("NodeFactory", zfmt(name, "No default value for type %{s}").arg("s", z::ref(ts).name() ));
 }
 
 inline const Ast::Expr& Ast::Factory::convertExprToExpectedTypeSpec(const Ast::Token& pos, const Ast::Expr& initExpr) {
@@ -126,9 +126,9 @@ inline const Ast::Expr& Ast::Factory::convertExprToExpectedTypeSpec(const Ast::T
         const Ast::QualifiedTypeSpec* cqts = unit().canCoerceX(z::ref(qts), initExpr.qTypeSpec(), mode);
         if(mode != Unit::CoercionResult::Lhs) {
             throw z::Exception("NodeFactory", zfmt(pos, "Cannot convert expression from '%{f}' to '%{t}' (%{m})")
-                               .add("f", ZenlangNameGenerator().qtn(initExpr.qTypeSpec()) )
-                               .add("t", ZenlangNameGenerator().qtn(z::ref(qts)) )
-                               .add("m", mode )
+                               .arg("f", ZenlangNameGenerator().qtn(initExpr.qTypeSpec()) )
+                               .arg("t", ZenlangNameGenerator().qtn(z::ref(qts)) )
+                               .arg("m", mode )
                                );
         }
         if(z::ptr(z::ref(cqts).typeSpec()) != z::ptr(initExpr.qTypeSpec().typeSpec())) {
@@ -175,7 +175,7 @@ inline const Ast::FunctionRetn& Ast::Factory::getFunctionRetn(const Ast::Token& 
         }
     }
 
-    throw z::Exception("NodeFactory", zfmt(pos, "Unknown function return type %{s}").add("s", function.name() ));
+    throw z::Exception("NodeFactory", zfmt(pos, "Unknown function return type %{s}").arg("s", function.name() ));
 }
 
 inline const Ast::QualifiedTypeSpec& Ast::Factory::getFunctionReturnType(const Ast::Token& pos, const Ast::Function& function) {
@@ -196,14 +196,14 @@ inline Ast::VariableDefn& Ast::Factory::addVariableDefn(const Ast::QualifiedType
 inline const Ast::TemplateDefn& Ast::Factory::getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const z::string& cname, const Ast::TemplateDefn::size_type& len) {
     const Ast::TypeSpec& typeSpec = expr.qTypeSpec().typeSpec();
     if(typeSpec.name().string() != cname) {
-        throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (1)").add("c", cname).add("t", typeSpec.name() ) );
+        throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (1)").arg("c", cname).arg("t", typeSpec.name() ) );
     }
     const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(z::ptr(typeSpec));
     if(templateDefn == 0) {
-        throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (2)").add("c", cname).add("t", typeSpec.name() ) );
+        throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (2)").arg("c", cname).arg("t", typeSpec.name() ) );
     }
     if(z::ref(templateDefn).list().size() != len) {
-        throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (3)").add("c", cname).add("t", typeSpec.name() ) );
+        throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (3)").arg("c", cname).arg("t", typeSpec.name() ) );
     }
     return z::ref(templateDefn);
 }
@@ -220,7 +220,7 @@ inline Ast::RootFunctionDecl& Ast::Factory::addRootFunctionDecl(const Ast::TypeS
 inline Ast::ChildFunctionDecl& Ast::Factory::addChildFunctionDecl(const Ast::TypeSpec& parent, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::TypeSpec& base, const Ast::ClosureRef& cref) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(z::ptr(base));
     if(function == 0) {
-        throw z::Exception("NodeFactory", zfmt(name, "Base type is not a function '%{s}'").add("s", base.name() ));
+        throw z::Exception("NodeFactory", zfmt(name, "Base type is not a function '%{s}'").arg("s", base.name() ));
     }
 
     Ast::ChildFunctionDecl& functionDecl = unit().addNode(new Ast::ChildFunctionDecl(parent, name, defType, z::ref(function).sig(), z::ref(cref.xref), z::ref(cref.iref), z::ref(function)));
@@ -474,7 +474,7 @@ Ast::RootStructDefn* Ast::Factory::aEnterRootStructDefn(const Ast::Token& name, 
 
 Ast::ChildStructDefn* Ast::Factory::aEnterChildStructDefn(const Ast::Token& name, const Ast::StructDefn& base, const Ast::DefinitionType::T& defType) {
     if(base.defType() == Ast::DefinitionType::Final) {
-        throw z::Exception("NodeFactory", zfmt(name, "Base struct is not abstract '%{s}'").add("s", base.name() ));
+        throw z::Exception("NodeFactory", zfmt(name, "Base struct is not abstract '%{s}'").arg("s", base.name() ));
     }
     Ast::Scope& list = addScope(name, Ast::ScopeType::Member);
     Ast::CompoundStatement& block = unit().addNode(new Ast::CompoundStatement(name));
@@ -594,7 +594,7 @@ Ast::ChildFunctionDefn* Ast::Factory::aChildFunctionDefn(Ast::ChildFunctionDefn&
 
 inline Ast::ChildFunctionDefn& Ast::Factory::createChildFunctionDefn(Ast::TypeSpec& parent, const Ast::Function& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref) {
     if(base.defType() == Ast::DefinitionType::Final) {
-        throw z::Exception("NodeFactory", zfmt(name, "Base struct is not abstract '%{s}'").add("s", base.name() ));
+        throw z::Exception("NodeFactory", zfmt(name, "Base struct is not abstract '%{s}'").arg("s", base.name() ));
     }
 
     Ast::ChildFunctionDefn& functionDefn = unit().addNode(new Ast::ChildFunctionDefn(parent, name, defType, base.sig(), z::ref(cref.xref), z::ref(cref.iref), base));
@@ -608,7 +608,7 @@ inline Ast::ChildFunctionDefn& Ast::Factory::createChildFunctionDefn(Ast::TypeSp
 Ast::ChildFunctionDefn* Ast::Factory::aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(z::ptr(base));
     if(function == 0) {
-        throw z::Exception("NodeFactory", zfmt(name, "Base type is not a function '%{s}'").add("s", base.name() ));
+        throw z::Exception("NodeFactory", zfmt(name, "Base type is not a function '%{s}'").arg("s", base.name() ));
     }
     Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(unit().currentTypeSpec(), z::ref(function), name, defType, cref);
     return z::ptr(functionDefn);
@@ -1137,7 +1137,7 @@ template <typename T>
 inline Ast::Expr& Ast::Factory::createBinaryOpExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs) {
     const Ast::IndexExpr* indexExpr = dynamic_cast<const Ast::IndexExpr*>(z::ptr(lhs));
     if(indexExpr) {
-        throw z::Exception("NodeFactory", zfmt(op, "Operator '%{s}' on index expression not implemented").add("s", op ));
+        throw z::Exception("NodeFactory", zfmt(op, "Operator '%{s}' on index expression not implemented").arg("s", op ));
     }
     return createBinaryExpr<T>(op, lhs, rhs);
 }
@@ -1427,7 +1427,7 @@ const Ast::Routine* Ast::Factory::aEnterRoutineCall(const Ast::Routine& routine)
 Ast::FunctorCallExpr* Ast::Factory::aFunctorCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(z::ptr(expr.qTypeSpec().typeSpec()));
     if(function == 0) {
-        throw z::Exception("NodeFactory", zfmt(pos, "Unknown functor being called '%{s}'").add("s", expr.qTypeSpec().typeSpec().name() ));
+        throw z::Exception("NodeFactory", zfmt(pos, "Unknown functor being called '%{s}'").arg("s", expr.qTypeSpec().typeSpec().name() ));
     }
 
     unit().popCallArgList(pos, z::ref(function).sig().inScope());
@@ -1440,7 +1440,7 @@ Ast::FunctorCallExpr* Ast::Factory::aFunctorCallExpr(const Ast::Token& pos, cons
 Ast::Expr* Ast::Factory::aEnterFunctorCall(Ast::Expr& expr) {
     const Ast::Function* function = dynamic_cast<const Ast::Function*>(z::ptr(expr.qTypeSpec().typeSpec()));
     if(function == 0) {
-        throw z::Exception("NodeFactory", zfmt(expr.pos(), "Unknown functor being called '%{s}'").add("s", expr.qTypeSpec().typeSpec().name() ));
+        throw z::Exception("NodeFactory", zfmt(expr.pos(), "Unknown functor being called '%{s}'").arg("s", expr.qTypeSpec().typeSpec().name() ));
     }
 
     unit().pushCallArgList(z::ref(function).sig().inScope());
@@ -1490,7 +1490,7 @@ Ast::RunExpr* Ast::Factory::aRunExpr(const Ast::Token& pos, const Ast::FunctorCa
         return z::ptr(runExpr);
     }
     throw z::Exception("NodeFactory", zfmt(pos, "Unknown functor in run expression '%{s}'")
-                       .add("s", ZenlangNameGenerator().qtn(callExpr.expr().qTypeSpec()) )
+                       .arg("s", ZenlangNameGenerator().qtn(callExpr.expr().qTypeSpec()) )
                        );
 }
 
@@ -1526,7 +1526,7 @@ Ast::IndexExpr* Ast::Factory::aIndexExpr(const Ast::Token& pos, const Ast::Expr&
         }
     }
 
-    throw z::Exception("NodeFactory", zfmt(pos, "'%{s}' is not an indexable type").add("s", ZenlangNameGenerator().qtn(expr.qTypeSpec()) ));
+    throw z::Exception("NodeFactory", zfmt(pos, "'%{s}' is not an indexable type").arg("s", ZenlangNameGenerator().qtn(expr.qTypeSpec()) ));
 }
 
 Ast::SpliceExpr* Ast::Factory::aSpliceExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::Expr& from, const Ast::Expr& to) {
@@ -1538,7 +1538,7 @@ Ast::SpliceExpr* Ast::Factory::aSpliceExpr(const Ast::Token& pos, const Ast::Exp
         return z::ptr(spliceExpr);
     }
 
-    throw z::Exception("NodeFactory", zfmt(pos, "'%{s}' is not an splicable type").add("s", ZenlangNameGenerator().qtn(expr.qTypeSpec()) ));
+    throw z::Exception("NodeFactory", zfmt(pos, "'%{s}' is not an splicable type").arg("s", ZenlangNameGenerator().qtn(expr.qTypeSpec()) ));
 }
 
 Ast::TypeofTypeExpr* Ast::Factory::aTypeofTypeExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec) {
@@ -1591,7 +1591,7 @@ Ast::ValueInstanceExpr* Ast::Factory::aValueInstanceExpr(const Ast::Token& pos, 
         }
     }
 
-    throw z::Exception("NodeFactory", zfmt(pos, "Expression is not a pointer to  '%{s}'").add("s", expr.qTypeSpec().typeSpec().name() ));
+    throw z::Exception("NodeFactory", zfmt(pos, "Expression is not a pointer to  '%{s}'").arg("s", expr.qTypeSpec().typeSpec().name() ));
 }
 
 Ast::TemplateDefnInstanceExpr* Ast::Factory::aTemplateDefnInstanceExpr(const Ast::Token& pos, const Ast::TemplateDefn& templateDefn, const Ast::ExprList& exprList) {
@@ -1613,21 +1613,21 @@ Ast::TemplateDefnInstanceExpr* Ast::Factory::aTemplateDefnInstanceExpr(const Ast
         const Ast::Expr& expr = exprList.at(0);
         const Ast::TemplateDefn* subType = dynamic_cast<const Ast::TemplateDefn*>(z::ptr(expr.qTypeSpec().typeSpec()));
         if((subType == 0) || (z::ref(subType).name().string() != "pointer")) {
-            throw z::Exception("NodeFactory", zfmt(pos, "Expression is not a pointer to '%{s}'").add("s", qTypeSpec.typeSpec().name() ));
+            throw z::Exception("NodeFactory", zfmt(pos, "Expression is not a pointer to '%{s}'").arg("s", qTypeSpec.typeSpec().name() ));
         }
 
         Ast::ValueInstanceExpr& valueInstanceExpr = getValueInstanceExpr(pos, qTypeSpec, templateDefn, templateDefn, exprList);
         return z::ptr(valueInstanceExpr);
     }
 
-    throw z::Exception("NodeFactory", zfmt(pos, "Invalid template instantiation '%{s}'").add("s", templateDefn.name() ));
+    throw z::Exception("NodeFactory", zfmt(pos, "Invalid template instantiation '%{s}'").arg("s", templateDefn.name() ));
 }
 
 Ast::VariableRefExpr* Ast::Factory::aVariableRefExpr(const Ast::Token& name) {
     Ast::RefType::T refType = Ast::RefType::Local;
     const Ast::VariableDefn* vref = unit().getVariableDef(name, refType);
     if(vref == 0) {
-        throw z::Exception("NodeFactory", zfmt(name, "Variable not found: '%{s}'").add("s", name ));
+        throw z::Exception("NodeFactory", zfmt(name, "Variable not found: '%{s}'").arg("s", name ));
     }
 
     // create vref expression
@@ -1659,8 +1659,8 @@ Ast::MemberExpr* Ast::Factory::aMemberVariableExpr(const Ast::Expr& expr, const 
         }
 
         throw z::Exception("NodeFactory", zfmt(name, "'%{s}' is not a member of struct '%{t}'")
-                           .add("s", name )
-                           .add("t", ZenlangNameGenerator().tn(typeSpec) )
+                           .arg("s", name )
+                           .arg("t", ZenlangNameGenerator().tn(typeSpec) )
                            );
     }
 
@@ -1672,14 +1672,14 @@ Ast::MemberExpr* Ast::Factory::aMemberVariableExpr(const Ast::Expr& expr, const 
             return z::ptr(vdefExpr);
         }
         throw z::Exception("NodeFactory", zfmt(name, "'%{s}' is not a member of function: '%{t}'")
-                           .add("s", name)
-                           .add("t", ZenlangNameGenerator().tn(typeSpec))
+                           .arg("s", name)
+                           .arg("t", ZenlangNameGenerator().tn(typeSpec))
                            );
     }
 
     throw z::Exception("NodeFactory", zfmt(name, "Not an aggregate expression type '%{s}' (looking for member '%{t}')")
-                       .add("s", typeSpec.name())
-                       .add("t", name)
+                       .arg("s", typeSpec.name())
+                       .arg("t", name)
                        );
 }
 
@@ -1689,8 +1689,8 @@ Ast::TypeSpecMemberExpr* Ast::Factory::aTypeSpecMemberExpr(const Ast::TypeSpec& 
         const Ast::VariableDefn* vref = unit().hasMember(z::ref(enumDefn).scope(), name);
         if(vref == 0) {
             throw z::Exception("NodeFactory", zfmt(name, "'%{s}' is not a member of type %{t}")
-                               .add("s", name)
-                               .add("t", typeSpec.name())
+                               .arg("s", name)
+                               .arg("t", typeSpec.name())
                                );
         }
         const Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, typeSpec, false);
@@ -1703,8 +1703,8 @@ Ast::TypeSpecMemberExpr* Ast::Factory::aTypeSpecMemberExpr(const Ast::TypeSpec& 
         const Ast::VariableDefn* vref = unit().hasMember(z::ref(structDefn).scope(), name);
         if(vref == 0) {
             throw z::Exception("NodeFactory", zfmt(name, "'%{s}' is not a member of type %{t}")
-                               .add("s", name)
-                               .add("t", typeSpec.name())
+                               .arg("s", name)
+                               .arg("t", typeSpec.name())
                                );
         }
         Ast::StructMemberExpr& typeSpecMemberExpr = unit().addNode(new Ast::StructMemberExpr(name, z::ref(vref).qTypeSpec(), typeSpec, z::ref(vref)));
@@ -1712,8 +1712,8 @@ Ast::TypeSpecMemberExpr* Ast::Factory::aTypeSpecMemberExpr(const Ast::TypeSpec& 
     }
 
     throw z::Exception("NodeFactory", zfmt(name, "Not an aggregate type '%{s}' (looking for member %{t})")
-                       .add("s", typeSpec.name())
-                       .add("t", name)
+                       .arg("s", typeSpec.name())
+                       .arg("t", name)
                        );
 }
 
@@ -1777,8 +1777,8 @@ const Ast::VariableDefn* Ast::Factory::aEnterStructInitPart(const Ast::Token& na
     }
 
     throw z::Exception("NodeFactory", zfmt(name, "member %{c} not found in struct %{t} (1)")
-                       .add("c", name)
-                       .add("t", ZenlangNameGenerator().tn(z::ref(structDefn)))
+                       .arg("c", name)
+                       .arg("t", ZenlangNameGenerator().tn(z::ref(structDefn)))
                        );
 }
 
@@ -1812,7 +1812,7 @@ Ast::FunctionInstanceExpr* Ast::Factory::aFunctionInstanceExpr(const Ast::Token&
         return z::ptr(functionInstanceExpr);
     }
 
-    throw z::Exception("NodeFactory", zfmt(pos, "Not a function type %{s}").add("s", typeSpec.name() ));
+    throw z::Exception("NodeFactory", zfmt(pos, "Not a function type %{s}").arg("s", typeSpec.name() ));
 }
 
 Ast::AnonymousFunctionExpr* Ast::Factory::aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement) {
@@ -1838,7 +1838,7 @@ Ast::ChildFunctionDefn* Ast::Factory::aEnterAnonymousFunction(const Ast::Functio
     }
 
     if(ts == 0) {
-        throw z::Exception("NodeFactory", zfmt(name, "Internal error: Unable to find parent for anonymous function  %{s}").add("s", ZenlangNameGenerator().tn(function) ));
+        throw z::Exception("NodeFactory", zfmt(name, "Internal error: Unable to find parent for anonymous function  %{s}").arg("s", ZenlangNameGenerator().tn(function) ));
     }
 
     Ast::Scope& xref = addScope(name, Ast::ScopeType::XRef);

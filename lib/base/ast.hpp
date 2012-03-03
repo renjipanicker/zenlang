@@ -2215,7 +2215,7 @@ namespace Ast {
         inline Config& config(const z::string& name) {
             ConfigList::iterator it = _configList.find(name);
             if(it == _configList.end()) {
-                throw z::Exception("Config", z::fmt("Config does not exist"));
+                throw z::Exception("Config", z::string("Config does not exist"));
             }
             return z::ref(it->second);
         }
@@ -2223,7 +2223,7 @@ namespace Ast {
         inline Config& addConfig(const z::string& name) {
             ConfigList::iterator it = _configList.find(name);
             if(it != _configList.end()) {
-                throw z::Exception("Config", z::fmt("Config already exists"));
+                throw z::Exception("Config", z::string("Config already exists"));
             }
             _configList[name] = new Config(name);
             return z::ref(_configList[name]);

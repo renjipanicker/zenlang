@@ -13,7 +13,7 @@ namespace {
             case Ast::DefinitionType::Abstract:
                 return " abstract";
         }
-        throw z::Exception("ZenlangGenerator", zfmt(pos, "Internal error: Unknown Definition Type '%{s}'").add("s", defType ));
+        throw z::Exception("ZenlangGenerator", zfmt(pos, "Internal error: Unknown Definition Type '%{s}'").arg("s", defType ));
     }
 
     inline z::string getAccessType(const Ast::Token& pos, const Ast::AccessType::T& accessType) {
@@ -29,7 +29,7 @@ namespace {
             case Ast::AccessType::Parent:
                 return "";
         }
-        throw z::Exception("ZenlangGenerator", zfmt(pos, "Internal error: Unknown Access Type '%{s}'").add("s", accessType ));
+        throw z::Exception("ZenlangGenerator", zfmt(pos, "Internal error: Unknown Access Type '%{s}'").arg("s", accessType ));
     }
 
     struct ExprGenerator : public Ast::Expr::Visitor {

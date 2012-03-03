@@ -1,5 +1,6 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
+#include "base/error.hpp"
 #include "scanner.hpp"
 
 z::Scanner::Scanner(const int& eofTok) : _eofTok(eofTok), _tokenMode(tmNormal), _cond(0), _state(0), _yych(0), _yyaccept(0), _row(1) {
@@ -124,7 +125,7 @@ void z::Scanner::readFile(const z::string& filename, const z::string& source) {
     std::ifstream is;
     is.open(z::s2e(filename).c_str(), std::ifstream::in);
     if(is.is_open() == false) {
-        throw z::Exception(source, z::fmt("Error opening file: %{s}").add("s", filename));
+        throw z::Exception(source, zfmt(Ast::Token(filename, 0, 0, ""), "Error opening file"));
     }
 
     readStream(is);

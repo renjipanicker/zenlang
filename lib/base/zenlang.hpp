@@ -219,8 +219,8 @@ namespace z {
 #endif
     }
 
-    // conversion from string to string32
-    inline z::string32 csto32(const z::string& in) {
+    // conversion from string to ustring
+    inline z::ustring s2u(const z::string& in) {
 #if defined(CHAR_WIDTH_08)
         return c08to32(in);
 #elif defined(CHAR_WIDTH_16)
@@ -230,8 +230,8 @@ namespace z {
 #endif
     }
 
-    // conversion from string32 to string
-    inline z::string c32tos(const z::string32& in) {
+    // conversion from ustring to string
+    inline z::string u2s(const z::ustring& in) {
 #if defined(CHAR_WIDTH_08)
         return c32to08(in);
 #elif defined(CHAR_WIDTH_16)
@@ -365,44 +365,14 @@ namespace z {
         return type_name<T>();
     }
 
-    struct fmt {
-        explicit inline fmt(const z::string& text) : _text(text) {}
-
-        template <typename T>
-        inline fmt& add(const z::string& key, T value) {
-            _text.arg(key, value);
-            return z::ref(this);
-        }
-        inline const z::string& get() const {return _text;}
-    private:
-        z::string _text;
-    };
-
-    inline void mlog(const z::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get() << std::endl;}
-    inline void elog(const z::string& src, const z::fmt& msg) {std::cout << src << ":" << msg.get() << std::endl;}
-
-    struct Log {
-        struct Out{};
-        static inline Log& msg() {return s_msg;}
-        static inline Log& err() {return s_err;}
-        static inline Log& dbg() {return s_dbg;}
-        Log& operator <<(Out);
-        template <typename T> inline Log& operator <<(const T& val) {_ss << val; return ref(this);}
-    private:
-        inline Log() {}
-        inline Log(const Log& src) {unused(src);}
-        std::stringstream _ss;
-        static Log s_msg;
-        static Log s_err;
-        static Log s_dbg;
-    };
+    inline void mlog(const z::string& msg) {std::cout << msg << std::endl;}
+    inline void elog(const z::string& msg) {std::cout << msg << std::endl;}
 
     class Exception {
     public:
-        explicit inline Exception(const z::string& src, const fmt& msg) : _msg(msg) {elog(src, _msg);}
-
+        explicit inline Exception(const z::string& src, const z::string& msg) : _msg(msg) {elog(src + " : " + _msg);}
     private:
-        const fmt _msg;
+        const z::string _msg;
     };
 
     template <typename T>
@@ -667,7 +637,7 @@ namespace z {
 
         inline V at(const typename BaseT::size_type& k) const {
             if(k >= BaseT::_list.size()) {
-                throw Exception("z::list", fmt("%{k} out of list bounds\n").add("k", k));
+                throw Exception("z::list", z::string("%{k} out of list bounds\n").arg("k", k));
             }
             return BaseT::_list.at(k);
         }
@@ -788,7 +758,7 @@ namespace z {
         inline V& at(const K& k) {
             typename BaseT::iterator it = BaseT::_list.find(k);
             if(it == BaseT::_list.end()) {
-                throw Exception("dict", z::fmt("%{k} not found\n").add("k", k));
+                throw Exception("dict", z::string("%{k} not found\n").arg("k", k));
             }
             return it->second;
         }
@@ -796,7 +766,7 @@ namespace z {
         inline const V& at(const K& k) const {
             typename BaseT::const_iterator it = BaseT::_list.find(k);
             if(it == BaseT::_list.end()) {
-                throw Exception("dict", z::fmt("%{k} not found\n").add("k", k));
+                throw Exception("dict", z::string("%{k} not found\n").arg("k", k));
             }
             return it->second;
         }
@@ -988,18 +958,18 @@ namespace z {
     struct FutureT : public Future {
         inline FutureT(const FunctionT& function, const typename FunctionT::_In& in) : _function(function), _in(in) {}
     private:
-        // the function instance
+        /// \brief the function instance
         FunctionT _function;
 
-        // the in-params to invoke the function with
+        /// \brief the in-params to invoke the function with
         typedef typename FunctionT::_In In;
         In _in;
 
-        // the out-params after the function was invoked
+        /// \brief the out-params after the function was invoked
         typedef typename FunctionT::_Out Out;
         z::autoptr<Out> _out;
 
-        // the actual invocation
+        /// \brief the actual invocation
         virtual void run() {Out out = _function._run(_in); _out.reset(new Out(out));}
     };
 
@@ -1028,6 +998,8 @@ namespace z {
     public:
         z::Device& start(z::Device& device);
         z::Device& stop(z::Device& device);
+
+    public:
         z::size wait();
 
     private:
@@ -1037,6 +1009,9 @@ namespace z {
         RunQueue& _queue;
     };
 
+    /// \brief Returns the local context instance
+    /// This instance encapsulates the current run-queue
+    /// and is unique for every thread. Uses TLS internally.
     LocalContext& ctx();
 
     ///////////////////////////////////////////////////////////////
@@ -1207,5 +1182,6 @@ namespace z {
         bool _isExit;
     };
 
+    /// \brief Provides read-only access to singleton app-instance
     const z::Application& app();
 }

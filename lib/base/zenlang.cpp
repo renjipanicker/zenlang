@@ -200,7 +200,7 @@ void z::regex::compile(const z::string& re) {
 #if !defined(WIN32)
     int res = regcomp(&_val, s2e(re).c_str(), 0);
     if(res != 0) {
-        throw z::Exception("z::regex", z::fmt("regcomp failed for: %{s}").add("s", re));
+        throw z::Exception("z::regex", z::string("regcomp failed for: %{s}").arg("s", re));
     }
 #endif
 }
@@ -249,7 +249,7 @@ void z::file::mkpath(const z::string& filename) {
             if(!z::file::exists(base)) {
                 int rv = mkdir(base);
                 if(rv != 0) {
-                    throw z::Exception("z::file", z::fmt("mkdir failed for: %{s}").add("s", base));
+                    throw z::Exception("z::file", z::string("mkdir failed for: %{s}").arg("s", base));
                 }
             }
         }
@@ -285,7 +285,7 @@ z::ofile::ofile(const z::string& filename) {
     _name = filename;
     _os.open(s2e(_name).c_str());
     if(!_os.is_open()) {
-        throw Exception("z::ofile", z::fmt("Error opening %{s}").add("s", filename));
+        throw Exception("z::ofile", z::string("Error opening %{s}").arg("s", filename));
     }
 }
 
@@ -573,7 +573,7 @@ QT_END_MOC_NAMESPACE
 
 z::Application::Application(int argc, char* argv[]) : _argc(argc), _argv(argv), _isExit(false) {
     if(g_app != 0) {
-        throw z::Exception("z::Application", z::fmt("Multiple instances of Application not permitted"));
+        throw z::Exception("z::Application", z::string("Multiple instances of Application not permitted"));
     }
     g_app = this;
     _ctx.reset(new GlobalContext());
@@ -703,13 +703,3 @@ int main(int argc, char* argv[]) {
 }
 #endif // GUI && WIN32
 #endif // Z_EXE
-
-z::Log z::Log::s_msg = z::Log();
-z::Log z::Log::s_err = z::Log();
-z::Log z::Log::s_dbg = z::Log();
-
-z::Log& z::Log::operator<<(z::Log::Out) {
-    std::cout << _ss.str() << std::endl;
-    _ss.str("");
-    return ref(this);
-}

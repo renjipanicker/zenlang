@@ -71,7 +71,7 @@ inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config, z::
             os() << ")" << std::endl;
             os() << "SET(project_SOURCES ${project_SOURCES} " << basename << ".cpp)" << std::endl;
         } else {
-            throw z::Exception("CmakeGenerator", z::fmt("Unknown file type for: %{s}").add("s", filename));
+            throw z::Exception("CmakeGenerator", zfmt(Ast::Token(filename, 0, 0, ""), "Unknown file type for: %{s}").arg("s", filename));
         }
     }
     os() << std::endl;
@@ -98,7 +98,7 @@ inline void CmakeGenerator::Impl::generateProject(const Ast::Config& config, z::
             os() << "ADD_LIBRARY(" << _project.name() << " STATIC ${project_SOURCES})" << std::endl;
             break;
         case Ast::Config::BuildMode::Compile:
-            throw z::Exception("CmakeGenerator", z::fmt("Compile mode not allowed during project generaion"));
+            throw z::Exception("CmakeGenerator", zfmt(Ast::Token("", 0, 0, ""), z::string("Compile mode not allowed during project generation")));
     }
 
     for(Ast::Config::PathList::const_iterator it = config.linkFileList().begin(); it != config.linkFileList().end(); ++it) {

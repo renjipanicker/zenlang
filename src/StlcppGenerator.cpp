@@ -335,18 +335,17 @@ namespace {
         }
 
         virtual void visit(const Ast::FormatExpr& node) {
-            _os() << "z::fmt(";
+            _os() << "z::string(";
             visitNode(node.stringExpr());
             _os() << ")";
             for(Ast::DictList::List::const_iterator it = node.dictExpr().list().list().begin(); it != node.dictExpr().list().list().end(); ++it) {
                 const Ast::DictItem& item = it->get();
-                _os() << ".add(";
+                _os() << ".arg(";
                 visitNode(item.keyExpr());
                 _os() << ", ";
                 visitNode(item.valueExpr());
                 _os() << ")";
             }
-            _os() << ".get()";
         }
 
         virtual void visit(const Ast::RoutineCallExpr& node) {
@@ -587,7 +586,7 @@ namespace {
             if(node.defType() == Ast::DefinitionType::Native) {
                 _os() << Indent::get() << "// typedef " << node.name() << " native;" << std::endl;
             } else {
-                throw z::Exception("StlcppGenerator", zfmt(node.pos(), "Internal error: '%{s}'").add("s", node.name()) );
+                throw z::Exception("StlcppGenerator", zfmt(node.pos(), "Internal error: '%{s}'").arg("s", node.name()) );
             }
         }
 
@@ -599,17 +598,17 @@ namespace {
 
         void visit(const Ast::TemplateDecl& node) {
             if(node.defType() != Ast::DefinitionType::Native) {
-                throw z::Exception("StlcppGenerator", zfmt(node.pos(), "Internal error: template declaration cannot be generated '%{s}'").add("s", node.name()) );
+                throw z::Exception("StlcppGenerator", zfmt(node.pos(), "Internal error: template declaration cannot be generated '%{s}'").arg("s", node.name()) );
             }
         }
 
         void visit(const Ast::TemplateDefn& node) {
-            throw z::Exception("StlcppGenerator", zfmt(node.pos(), "Internal error: template definition cannot be generated '%{s}'").add("s", node.name()) );
+            throw z::Exception("StlcppGenerator", zfmt(node.pos(), "Internal error: template definition cannot be generated '%{s}'").arg("s", node.name()) );
         }
 
         void visit(const Ast::EnumDecl& node) {
             if(node.defType() != Ast::DefinitionType::Native) {
-                throw z::Exception("StlcppGenerator", zfmt(node.pos(), "Internal error: enum definition cannot be generated '%{s}'").add("s", node.name()) );
+                throw z::Exception("StlcppGenerator", zfmt(node.pos(), "Internal error: enum definition cannot be generated '%{s}'").arg("s", node.name()) );
             }
         }
 
@@ -1295,9 +1294,9 @@ namespace {
         }
 
         virtual void visit(const Ast::PrintStatement& node) {
-            fpDefn()() << Indent::get() << "z::Log::msg() << ";
+            fpDefn()() << Indent::get() << "z::mlog(z::string(\"%{s}\\n\").arg(\"s\", ";
             ExprGenerator(fpDefn()).visitNode(node.expr());
-            fpDefn()() << " << z::Log::Out();" << std::endl;
+            fpDefn()() << "));" << std::endl;
         }
 
         virtual void visit(const Ast::IfStatement& node) {
