@@ -341,6 +341,7 @@ namespace z {
         std::ofstream _os;
     };
 
+    /// \brief Return typename of T as string
     template <typename T>
     inline z::string type_name() {
         const char* name = typeid(T).name();
@@ -359,18 +360,19 @@ namespace z {
         return uname;
     }
 
+    /// \brief Return typename of t as string
     template <typename T>
     inline z::string type_name(const T& t) {
         unused(t);
         return type_name<T>();
     }
 
-    inline void mlog(const z::string& msg) {std::cout << msg << std::endl;}
-    inline void elog(const z::string& msg) {std::cout << msg << std::endl;}
+    inline void mlog(const z::string& src, const z::string& msg) {std::cout << src << " : " << msg << std::endl;}
+    inline void elog(const z::string& src, const z::string& msg) {std::cout << src << " : " << msg << std::endl;}
 
     class Exception {
     public:
-        explicit inline Exception(const z::string& src, const z::string& msg) : _msg(msg) {elog(src + " : " + _msg);}
+        explicit inline Exception(const z::string& src, const z::string& msg) : _msg(msg) {elog(src, _msg);}
     private:
         const z::string _msg;
     };
