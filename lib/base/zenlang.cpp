@@ -335,7 +335,7 @@ const z::Application& z::app() {
 }
 
 ///////////////////////////////////////////////////////////////
-static z::LocalContext* s_lctx = 0;
+static z::ThreadContext* s_tctx = 0;
 
 ///////////////////////////////////////////////////////////////
 /// \brief run queue
@@ -354,7 +354,7 @@ void z::RunQueue::add(z::Future* future) {
 }
 
 z::size z::RunQueue::run(const z::size& cnt) {
-    assert(s_lctx != 0);
+    assert(s_tctx != 0);
     for(z::size i = 0; i < cnt; ++i) {
         if(_list.size() == 0) {
             break;
@@ -429,33 +429,33 @@ inline z::GlobalContext& gctx() {
 }
 
 ///////////////////////////////////////////////////////////////
-z::LocalContext& z::ctx() {
-    return z::ref(s_lctx);
+z::ThreadContext& z::ctx() {
+    return z::ref(s_tctx);
 }
 
-z::LocalContext::LocalContext(z::RunQueue& queue) : _queue(queue) {
-    assert(s_lctx == 0);
-    s_lctx = this;
+z::ThreadContext::ThreadContext(z::RunQueue& queue) : _queue(queue) {
+    assert(s_tctx == 0);
+    s_tctx = this;
 }
 
-z::LocalContext::~LocalContext() {
-    assert(s_lctx != 0);
-    s_lctx = 0;
+z::ThreadContext::~ThreadContext() {
+    assert(s_tctx != 0);
+    s_tctx = 0;
 }
 
-void z::LocalContext::add(z::Future* future) {
+void z::ThreadContext::add(z::Future* future) {
     _queue.add(future);
 }
 
-z::Device& z::LocalContext::start(z::Device& device) {
+z::Device& z::ThreadContext::start(z::Device& device) {
     return gctx().start(device);
 }
 
-z::Device& z::LocalContext::stop(z::Device& device) {
+z::Device& z::ThreadContext::stop(z::Device& device) {
     return gctx().stop(device);
 }
 
-z::size z::LocalContext::wait() {
+z::size z::ThreadContext::wait() {
     while(gctx().run(MaxPumpCount) > 0) {}
     return 0;
 }
@@ -611,7 +611,7 @@ int z::Application::exec() {
 
     // this is the local context for thread-0.
     // all UI events will run in this context
-    LocalContext lctx(gctx().at(0)); unused(lctx);
+    ThreadContext tctx(gctx().at(0)); unused(tctx);
 
 #if defined(GUI)
 #if defined(WIN32)
@@ -664,7 +664,7 @@ int z::Application::exit(const int& code) const {
 
 #if defined(Z_EXE)
 static void initMain(const z::stringlist& argl) {
-    z::LocalContext lctx(gctx().at(0));
+    z::ThreadContext tctx(gctx().at(0));
 
 #if defined(UNIT_TEST)
     z::TestInstance* ti = s_testList.next();

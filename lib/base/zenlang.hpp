@@ -991,9 +991,9 @@ namespace z {
     struct RunQueue;
 
     /// \brief thread-local-context
-    struct LocalContext {
-        LocalContext(RunQueue& queue);
-        ~LocalContext();
+    struct ThreadContext {
+        ThreadContext(RunQueue& queue);
+        ~ThreadContext();
 
     public:
         template <typename FunctionT>
@@ -1020,7 +1020,7 @@ namespace z {
     /// \brief Returns the local context instance
     /// This instance encapsulates the current run-queue
     /// and is unique for every thread. Uses TLS internally.
-    LocalContext& ctx();
+    ThreadContext& ctx();
 
     ///////////////////////////////////////////////////////////////
     /// \brief list of functions to execute at init-time
@@ -1093,13 +1093,13 @@ namespace z {
 
     struct TestInstance {
         TestInstance();
-        virtual void enque(LocalContext& ctx) = 0;
+        virtual void enque(ThreadContext& ctx) = 0;
         TestInstance* _next;
     };
 
     template <typename T>
     struct TestInstanceT : public TestInstance {
-        virtual void enque(LocalContext& ctx) {
+        virtual void enque(ThreadContext& ctx) {
             T t;
             typename T::_In in;
             ctx.add(t, in);
@@ -1128,13 +1128,13 @@ namespace z {
 
     struct MainInstance {
         MainInstance();
-        virtual void enque(LocalContext& ctx, const z::stringlist& argl) = 0;
+        virtual void enque(ThreadContext& ctx, const z::stringlist& argl) = 0;
         MainInstance* _next;
     };
 
     template <typename T>
     struct MainInstanceT : public MainInstance {
-        virtual void enque(LocalContext& ctx, const z::stringlist& argl) {
+        virtual void enque(ThreadContext& ctx, const z::stringlist& argl) {
             T t;
             typename T::_In in(argl);
             ctx.add(t, in);
