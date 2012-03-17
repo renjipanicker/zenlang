@@ -1,7 +1,7 @@
 #pragma once
 
 #include "base/factory.hpp"
-#include "token.hpp"
+#include "base/token.hpp"
 
 class Compiler;
 struct ParserContext {

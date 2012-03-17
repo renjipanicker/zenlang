@@ -8,6 +8,8 @@
 #if !defined(GTK) && !defined(QT)
 #if defined(QT_GUI_LIB)
 #define QT 1
+#elif defined(__APPLE__)
+#define COCOA 1
 #else
 #define GTK 1
 #endif
@@ -18,19 +20,23 @@
 // validation. one and exactly one of the 3 must be defined in GUI mode
 #if defined(GUI)
 #if defined(WIN32)
-#if defined(GTK) || defined(QT)
-#error GTK/QT defined in WIN32
-#endif
+    #if defined(GTK) || defined(QT) || defined(COCOA)
+    #error GTK/QT/COCOA defined in WIN32
+    #endif
 #elif defined(GTK)
-#if defined(WIN32) || defined(QT)
-#error WIN32/QT defined in GTK
-#endif
+    #if defined(WIN32) || defined(QT) || defined(COCOA)
+    #error WIN32/QT/COCOA defined in GTK
+    #endif
 #elif defined(QT)
-#if defined(WIN32) || defined(GTK)
-#error WIN32/GTK defined in QT
-#endif
+    #if defined(WIN32) || defined(GTK) || defined(COCOA)
+    #error WIN32/GTK/COCOA defined in QT
+    #endif
+#elif defined(COCOA)
+    #if defined(WIN32) || defined(GTK) || defined(QT)
+    #error WIN32/GTK/QT defined in COCOA
+    #endif
 #else
-#error "Unknown platform. Please define WIN32 or GTK or QT"
+    #error "Unknown platform. Please define WIN32 or GTK or QT or COCOA"
 #endif
 #endif
 
@@ -118,6 +124,10 @@
     #endif
     #if defined(QT)
     #endif
+#endif
+
+#if defined(__APPLE__)
+#include <mach-o/dyld.h>
 #endif
 
 #endif

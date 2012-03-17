@@ -1,6 +1,6 @@
 #pragma once
 
-#include "generator.hpp"
+#include "base/generator.hpp"
 #include "base/unit.hpp"
 
 class StlcppGenerator : public Generator {

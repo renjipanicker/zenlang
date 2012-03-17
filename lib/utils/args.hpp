@@ -8,6 +8,7 @@ namespace z
         public:
             inline OptionBase(const z::string& sname, const z::string& lname, const z::string& desc)
             : _sname(sname), _lname(lname), _desc(desc){}
+            virtual ~OptionBase(){}
 
         public:
             virtual void handle(z::list<z::string>::const_iterator& it, z::list<z::string>::const_iterator& ite, const bool& inc) = 0;

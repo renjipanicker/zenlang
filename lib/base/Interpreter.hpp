@@ -1,6 +1,6 @@
 #pragma once
 
-#include "generator.hpp"
+#include "base/generator.hpp"
 
 class Interpreter : public Generator {
 public:

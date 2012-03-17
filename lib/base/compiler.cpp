@@ -1,8 +1,8 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "compiler.hpp"
-#include "ZenlangGenerator.hpp"
-#include "StlcppGenerator.hpp"
+#include "base/compiler.hpp"
+#include "base/ZenlangGenerator.hpp"
+#include "base/StlcppGenerator.hpp"
 
 inline bool checkFile(const z::string& filename) {
     return std::ifstream( z::s2e(filename).c_str() ).is_open();
@@ -28,7 +28,7 @@ inline z::string Compiler::findImport(const z::string& filename) {
         if(checkFile(cfile))
             return cfile;
     }
-    throw z::Exception("Compiler", zfmt(Ast::Token(filename, 0, 0, ""), "Cannot open include file"));
+    throw z::Exception("Compiler", zfmt(Ast::Token(filename, 0, 0, ""), z::string("Cannot open include file: %{s}").arg("s", filename)));
 }
 
 bool Compiler::compileFile(Ast::Module& module, const z::string& filename, const z::string& msg) {
@@ -43,7 +43,7 @@ bool Compiler::compileFile(Ast::Module& module, const z::string& filename, const
     std::ifstream is;
     is.open(z::s2e(filename).c_str(), std::ifstream::in);
     if(is.is_open() == false) {
-        throw z::Exception("Compiler", zfmt(Ast::Token(filename, 0, 0, ""), "Error opening file"));
+        throw z::Exception("Compiler", zfmt(Ast::Token(filename, 0, 0, ""), z::string("Error opening file %{s}").arg("s", filename)));
     }
 
     Parser parser;
@@ -94,7 +94,7 @@ void Compiler::compile() {
 
             Ast::Module module(unit, filename, 0);
             if(!compileFile(module, filename, "Compiling"))
-                throw z::Exception("Compiler", zfmt(Ast::Token(filename, 0, 0, ""), "Cannot open source file"));
+                throw z::Exception("Compiler", zfmt(Ast::Token(filename, 0, 0, ""), z::string("Cannot open source file: %{s}").arg("s", filename)));
 
             ZenlangGenerator zgenerator(_project, _config, module);
             zgenerator.run();

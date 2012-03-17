@@ -1,7 +1,7 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "base/typename.hpp"
-#include "StlcppGenerator.hpp"
+#include "base/StlcppGenerator.hpp"
 
 struct StlcppNameGenerator : public TypespecNameGenerator {
     virtual void getTypeName(const Ast::TypeSpec& typeSpec, z::string& name);
@@ -824,6 +824,7 @@ namespace {
                 _os() << Indent::get() << "    " << out1 << " run();" << std::endl;
             } else {
                 if((isDecl) && ((node.defType() == Ast::DefinitionType::Final) || (node.defType() == Ast::DefinitionType::Abstract))) {
+                    _os() << Indent::get() << "    virtual ~" << node.sig().name() << "(){}";
                     _os() << Indent::get() << "    virtual " << out1 << " run(";
                     writeScopeParamList(_os, node.sig().inScope(), "p");
                     _os() << ") = 0;" << std::endl;
@@ -932,6 +933,7 @@ namespace {
                 enterFunction(node);
                 visitFunctionXRef(node);
                 _os() << Indent::get() << "public:" << std::endl;
+                _os() << Indent::get() << "    virtual ~" << node.name() << "(){}";
                 _os() << Indent::get() << "    virtual " << out1 << " run(";
                 writeScopeParamList(_os, node.sig().inScope(), "p");
                 _os() << ");" << std::endl;

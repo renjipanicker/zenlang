@@ -443,6 +443,8 @@ namespace z {
         protected:
             inline value(){}
         public:
+            virtual ~value(){}
+        public:
             virtual V& get() = 0;
             virtual value* clone() const = 0;
             virtual z::string tname() const = 0;
@@ -957,6 +959,7 @@ namespace z {
     ///////////////////////////////////////////////////////////////
     /// \brief Base class for function and in-param to be enqueued for execution
     struct Future {
+        virtual ~Future(){}
         virtual void run() = 0;
     };
 
@@ -1021,42 +1024,6 @@ namespace z {
     /// This instance encapsulates the current run-queue
     /// and is unique for every thread. Uses TLS internally.
     ThreadContext& ctx();
-
-    ///////////////////////////////////////////////////////////////
-    /// \brief list of functions to execute at init-time
-    /// This includes main() and test() functions
-    template <typename InitT>
-    struct InitList {
-        inline InitList() : _head(0), _tail(0), _next(0) {}
-
-        inline void push(InitT* inst) {
-            if(_tail == 0) {
-                assert(_head == 0);
-                _head = inst;
-                _next = _head;
-            } else {
-                ref(_tail)._next = inst;
-            }
-            _tail = inst;
-        }
-
-        inline void begin() {
-            _next = _head;
-        }
-
-        inline InitT* next() {
-            InitT* n = _next;
-            if(n != 0) {
-                _next = ref(_next)._next;
-            }
-            return n;
-        }
-
-    private:
-        InitT* _head;
-        InitT* _tail;
-        InitT* _next;
-    };
 
     #if defined(UNIT_TEST)
     struct TestResult {
@@ -1161,7 +1128,7 @@ namespace z {
 #else
     private:
 #endif
-        Application(int argc, char* argv[]);
+        Application(int argc, const char* argv[]);
         ~Application();
 
     public:
@@ -1174,7 +1141,7 @@ namespace z {
     public:
         inline const z::stringlist& argl() const {return _argl;}
         inline const int& argc() const {return _argc;}
-        inline char** argv() const {return _argv;}
+        inline const char** argv() const {return _argv;}
 
     public:
         // This Application instance can only be accessed through the app() function below.
@@ -1186,7 +1153,7 @@ namespace z {
         z::autoptr<z::GlobalContext> _ctx;
         z::stringlist _argl;
         int _argc;
-        char** _argv;
+        const char** _argv;
         bool _isExit;
     };
 

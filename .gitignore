@@ -1,8 +1,9 @@
 *.user
-src/lexerGen.hpp
-src/parserGen.hpp
-src/parserGen.h
-src/parserGen.out
+lib/base/lexerGen.hpp
+lib/base/parserGen.hpp
+lib/base/parserGen.h
+lib/base/parserGen.out
 *~
 *.old
+prj/xcode/zenlang/zenlang.xcodeproj/xcuserdata/
 

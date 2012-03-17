@@ -1,5 +1,5 @@
-#include "pch.hpp"
-#include "zenlang.hpp"
+#include "base/pch.hpp"
+#include "base/zenlang.hpp"
 
 #if defined(QT)
 #include <QtGui/QApplication>
@@ -289,6 +289,42 @@ z::ofile::ofile(const z::string& filename) {
     }
 }
 
+///////////////////////////////////////////////////////////////
+/// \brief list of functions to execute at init-time
+/// This includes main() and test() functions
+template <typename InitT>
+struct InitList {
+    inline InitList() {}
+
+    inline void push(InitT* inst) {
+        if(_tail == 0) {
+            assert(_head == 0);
+            _head = inst;
+            _next = _head;
+        } else {
+            ref(_tail)._next = inst;
+        }
+        _tail = inst;
+    }
+    
+    inline void begin() {
+        _next = _head;
+    }
+    
+    inline InitT* next() {
+        InitT* n = _next;
+        if(n != 0) {
+            _next = ref(_next)._next;
+        }
+        return n;
+    }
+    
+private:
+    static InitT* _head;
+    static InitT* _tail;
+    static InitT* _next;
+};
+
 ////////////////////////////////////////////////////////////////////////
 #if defined(UNIT_TEST)
 static int s_totalTests = 0;
@@ -312,18 +348,21 @@ void z::TestResult::end(const z::string& name, const bool& passed) {
     std::cout << r << "\n" << std::endl;
 }
 
-static z::InitList<z::TestInstance> s_testList;
+///////////////////////////////////////////////////////////////
+template<> z::TestInstance* InitList<z::TestInstance>::_head = 0;
+template<> z::TestInstance* InitList<z::TestInstance>::_tail = 0;
+template<> z::TestInstance* InitList<z::TestInstance>::_next = 0;
+InitList<z::TestInstance> s_testList;
 z::TestInstance::TestInstance() : _next(0) {
     s_testList.push(this);
 }
 #endif
 
 ///////////////////////////////////////////////////////////////
-static const z::size MaxPumpCount = 10;
-static const z::size MaxPollTimeout = 10;
-
-///////////////////////////////////////////////////////////////
-static z::InitList<z::MainInstance> s_mainList;
+template<> z::MainInstance* InitList<z::MainInstance>::_head = 0;
+template<> z::MainInstance* InitList<z::MainInstance>::_tail = 0;
+template<> z::MainInstance* InitList<z::MainInstance>::_next = 0;
+static InitList<z::MainInstance> s_mainList;
 z::MainInstance::MainInstance() : _next(0) {
     s_mainList.push(this);
 }
@@ -336,6 +375,10 @@ const z::Application& z::app() {
 
 ///////////////////////////////////////////////////////////////
 static z::ThreadContext* s_tctx = 0;
+
+///////////////////////////////////////////////////////////////
+static const z::size MaxPumpCount = 10;
+static const z::size MaxPollTimeout = 10;
 
 ///////////////////////////////////////////////////////////////
 /// \brief run queue
@@ -571,7 +614,7 @@ QT_END_MOC_NAMESPACE
 #endif // QT
 #endif // GUI
 
-z::Application::Application(int argc, char* argv[]) : _argc(argc), _argv(argv), _isExit(false) {
+z::Application::Application(int argc, const char* argv[]) : _argc(argc), _argv(argv), _isExit(false) {
     if(g_app != 0) {
         throw z::Exception("z::Application", z::string("Multiple instances of Application not permitted"));
     }
@@ -638,6 +681,9 @@ int z::Application::exec() {
     ts.start(0);
     code = z::ref(QApplication::instance()).exec();
 #endif
+#if defined(COCOA)
+    code = NSApplicationMain(_argc, _argv);
+#endif
 #else // GUI
     pump();
 #endif // GUI
@@ -656,6 +702,9 @@ int z::Application::exit(const int& code) const {
 #if defined(QT)
     z::ref(QApplication::instance()).exit(code);
 #endif
+#if defined(COCOA)
+    [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
+#endif
 #endif
     z::Application& self = const_cast<z::Application&>(z::ref(this));
     self._isExit = true;
@@ -663,20 +712,22 @@ int z::Application::exit(const int& code) const {
 }
 
 #if defined(Z_EXE)
-static void initMain(const z::stringlist& argl) {
+void initMain(const z::stringlist& argl) {
     z::ThreadContext tctx(gctx().at(0));
 
 #if defined(UNIT_TEST)
+    s_testList.begin();
     z::TestInstance* ti = s_testList.next();
     while(ti != 0) {
-        ref(ti).enque(lctx);
+        ref(ti).enque(z::ref(s_tctx));
         ti = s_testList.next();
     }
 #endif
 
+    s_mainList.begin();
     z::MainInstance* mi = s_mainList.next();
     while(mi != 0) {
-        ref(mi).enque(lctx, argl);
+        ref(mi).enque(z::ref(s_tctx), argl);
         mi = s_mainList.next();
     }
 }
@@ -692,8 +743,9 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     initMain(a.argl());
     return a.exec();
 }
+//#elif defined(GUI) && defined(COCOA) 
 #else // GUI && WIN32
-int main(int argc, char* argv[]) {
+int main(int argc, const char* argv[]) {
 #if defined(GUI) && defined(QT)
     QApplication qapp(argc, argv);
 #endif

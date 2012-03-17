@@ -1,7 +1,7 @@
 #pragma once
 
 #include "base/unit.hpp"
-#include "lexer.hpp"
+#include "base/lexer.hpp"
 
 class Compiler {
 public:

@@ -1,8 +1,8 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
 #include "base/factory.hpp"
-#include "lexer.hpp"
-#include "parserGen.h"
+#include "base/lexer.hpp"
+#include "base/parserGen.h"
 
 // the char width could be 8 bit, 16, or 32 in future.
 typedef char inputChar_t;

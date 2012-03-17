@@ -1,7 +1,7 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "CmakeGenerator.hpp"
-#include "compiler.hpp"
+#include "base/CmakeGenerator.hpp"
+#include "base/compiler.hpp"
 
 class CmakeGenerator::Impl {
 public:

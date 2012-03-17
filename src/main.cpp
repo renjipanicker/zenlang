@@ -1,11 +1,11 @@
 #include "base/pch.hpp"
 #include "base/zenlang.hpp"
-#include "CmakeGenerator.hpp"
-#include "Interpreter.hpp"
+#include "base/CmakeGenerator.hpp"
+#include "base/Interpreter.hpp"
 
 static int showHelp(const Ast::Config& config) {
     std::cout << "zen compiler 0.1a";
-    std::cout << " (" << config.zexePath().c_str() << ")" << std::endl;
+    std::cout << " ( at: " << config.zexePath() << ")" << std::endl;
     std::cout << std::endl;
     std::cout << "Copyright(c) 2011 Renji Panicker." << std::endl;
     std::cout << "Usage: zen <options> <files>" << std::endl;
@@ -50,6 +50,12 @@ int main(int argc, char* argv[]) {
         std::cout << "Internal error retreiving process path " << ec << std::endl;
         return -1;
     }
+#elif __APPLE__
+    uint32_t sz = len;
+    if(_NSGetExecutablePath(path, &sz) != 0) {
+        std::cout << "Internal error retreiving process path " << path << std::endl;
+        return -1;
+    }
 #else
     if (readlink ("/proc/self/exe", path, len) == -1) {
         std::cout << "Internal error retreiving process path " << path << std::endl;
@@ -60,8 +66,6 @@ int main(int argc, char* argv[]) {
     z::string p = path;
     replaceSlash(p);
     config.zexePath(p);
-    config.addIncludeFile("base/pch.hpp");
-    config.addIncludeFile("base/zenlang.hpp");
     config.addLinkFile("core");
 
     if (argc < 2) {
@@ -70,6 +74,7 @@ int main(int argc, char* argv[]) {
 
     bool interpreterMode = false;
     int i = 1;
+    z::string pch;
     while(i < argc) {
         z::string t = argv[i++];
         if((t == "-h") || (t == "--help")) {
@@ -105,6 +110,9 @@ int main(int argc, char* argv[]) {
             t = argv[i++];
             replaceSlash(t);
             config.srcdir(t);
+        } else if((t == "-pch") || (t == "--pch")) {
+            t = argv[i++];
+            pch = t;
         } else if((t == "-l") || (t == "--link")) {
             t = argv[i++];
             config.addLinkFile(t);
@@ -129,13 +137,25 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    assert(config.includeFileList().size() == 0);
+    if(pch.length() > 0) {
+        config.addIncludeFile(pch);
+    } else {
+        config.addIncludeFile("base/pch.hpp");
+        config.addIncludeFile("base/zenlang.hpp");
+    }
+
+    config.addIncludePath(config.apidir());
+
     if(config.zlibPath().size() == 0) {
+        // get path component of exe-path
         z::string p = config.zexePath();
         // strip path, if any
         char sep = '/';
         z::string::size_type idx = p.rfind(sep);
         if(idx != z::string::npos) {
             p = p.substr(0, idx);
+            /*
             z::string::size_type idx = p.rfind(sep);
             if(idx != z::string::npos) {
                 p = p.substr(0, idx);
@@ -143,14 +163,18 @@ int main(int argc, char* argv[]) {
                 p = ".";
                 p += sep;
             }
+            */
+            p += "/lib";
         } else {
             p = ".";
             p += sep;
         }
-
-        replaceSlash(p);
+        
         config.zlibPath(p);
     }
+
+    // add lib path to include path list
+    config.addIncludePath(config.zlibPath());
 
     if(project.verbosity() == Ast::Project::Verbosity::Detailed) {
         z::string cwd = z::file::cwd();
@@ -159,6 +183,14 @@ int main(int argc, char* argv[]) {
         std::cout << "lib: " << config.zlibPath() << std::endl;
         std::cout << "api: " << config.apidir() << std::endl;
         std::cout << "src: " << config.srcdir() << std::endl;
+        if(config.includePathList().size() > 0) {
+            std::cout << "inc: ";
+            for (Ast::Config::PathList::const_iterator it = config.includePathList().begin(); it != config.includePathList().end(); ++it) {
+                const z::string& p = *it;
+                std::cout << p << ";";
+            }
+            std::cout << std::endl;
+        }
     }
 
     if(interpreterMode) {

@@ -50,7 +50,7 @@
     #include "base/zenlang.hpp"
     #include "base/factory.hpp"
     #include "base/error.hpp"
-    #include "compiler.hpp"
+    #include "base/compiler.hpp"
 }
 
 //-------------------------------------------------
