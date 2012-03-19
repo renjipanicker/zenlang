@@ -261,7 +261,7 @@ Ast::Root& Ast::Unit::getRootNamespace(const int& level) {
     return (level == 0)?rootNS():importNS();
 }
 
-inline const Ast::TypeSpec* Ast::Unit::hasImportRootTypeSpec(const int& level, const Ast::Token& name) const {
+const Ast::TypeSpec* Ast::Unit::hasImportRootTypeSpec(const int& level, const Ast::Token& name) const {
     if(level == 0) {
         const Ast::TypeSpec* typeSpec = importNS().hasChild<const Ast::TypeSpec>(name.string());
         if(typeSpec)
