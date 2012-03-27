@@ -27,9 +27,13 @@ void Url::Parse(Url::url& u, const z::string& urlstr) {
         protocol.reserve(std::distance(url_s.begin(), prot_i));
         std::transform(url_s.begin(), prot_i, std::back_inserter(protocol), std::ptr_fun<int,int>(tolower)); // protocol is icase
         std::advance(prot_i, prot_end.length());
+
+        // search for path
         z::string::const_iterator path_i = std::find(prot_i, url_s.end(), '/');
         host.reserve(distance(prot_i, path_i));
         std::transform(prot_i, path_i, std::back_inserter(host), std::ptr_fun<int,int>(tolower)); // host is icase
+
+        // search for query
         z::string::const_iterator query_i = std::find(path_i, url_s.end(), '?');
         path.assign(path_i, query_i);
         if( query_i != url_s.end() )

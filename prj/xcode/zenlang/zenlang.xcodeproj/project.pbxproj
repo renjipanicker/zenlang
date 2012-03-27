@@ -7,6 +7,11 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A413A64A151C995A00C54A9F /* NetworkImpl.cpp in Copy core/ Files */ = {isa = PBXBuildFile; fileRef = A413A63D151C60ED00C54A9F /* NetworkImpl.cpp */; };
+		A413A64B151C995A00C54A9F /* RequestImpl.cpp in Copy core/ Files */ = {isa = PBXBuildFile; fileRef = A413A63E151C60ED00C54A9F /* RequestImpl.cpp */; };
+		A413A64C151C995A00C54A9F /* ResponseImpl.cpp in Copy core/ Files */ = {isa = PBXBuildFile; fileRef = A413A63F151C60ED00C54A9F /* ResponseImpl.cpp */; };
+		A413A674151D3AFE00C54A9F /* cJSON.c in Copy utils/ Files */ = {isa = PBXBuildFile; fileRef = A413A670151D3ACB00C54A9F /* cJSON.c */; };
+		A413A675151D3AFE00C54A9F /* cJSON.h in Copy utils/ Files */ = {isa = PBXBuildFile; fileRef = A413A671151D3ACB00C54A9F /* cJSON.h */; };
 		A43D7EF8150C96AC004AA60C /* lemon.osx in Copy tools/ Files */ = {isa = PBXBuildFile; fileRef = A43D7EF4150C9673004AA60C /* lemon.osx */; };
 		A43D7EF9150C96AC004AA60C /* lempar.c in Copy tools/ Files */ = {isa = PBXBuildFile; fileRef = A43D7EF5150C9673004AA60C /* lempar.c */; };
 		A43D7EFA150C96AC004AA60C /* re2c.osx in Copy tools/ Files */ = {isa = PBXBuildFile; fileRef = A43D7EF6150C9673004AA60C /* re2c.osx */; };
@@ -60,10 +65,7 @@
 		A47208BC1509605E00B85316 /* lexerGen.hpp in Copy base/ Files */ = {isa = PBXBuildFile; fileRef = A47208B91509605100B85316 /* lexerGen.hpp */; };
 		A47208BD1509605E00B85316 /* parserGen.h in Copy base/ Files */ = {isa = PBXBuildFile; fileRef = A47208BA1509605100B85316 /* parserGen.h */; };
 		A47208BE1509605E00B85316 /* parserGen.hpp in Copy base/ Files */ = {isa = PBXBuildFile; fileRef = A47208BB1509605100B85316 /* parserGen.hpp */; };
-		A47208DF1509625A00B85316 /* base64.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A47208D41509625A00B85316 /* base64.cpp */; };
 		A47208E01509625A00B85316 /* scanner.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A47208D61509625A00B85316 /* scanner.cpp */; };
-		A47208E21509625A00B85316 /* sqlite3.c in Sources */ = {isa = PBXBuildFile; fileRef = A47208DA1509625A00B85316 /* sqlite3.c */; };
-		A47208E31509625A00B85316 /* sqlite3_unicode.c in Sources */ = {isa = PBXBuildFile; fileRef = A47208DC1509625A00B85316 /* sqlite3_unicode.c */; };
 		A47208E5150962AB00B85316 /* args.hpp in Copy utils/ Files */ = {isa = PBXBuildFile; fileRef = A47208D31509625A00B85316 /* args.hpp */; };
 		A47208E6150962AB00B85316 /* base64.cpp in Copy utils/ Files */ = {isa = PBXBuildFile; fileRef = A47208D41509625A00B85316 /* base64.cpp */; };
 		A47208E7150962AB00B85316 /* base64.hpp in Copy utils/ Files */ = {isa = PBXBuildFile; fileRef = A47208D51509625A00B85316 /* base64.hpp */; };
@@ -140,6 +142,9 @@
 			dstPath = lib/core;
 			dstSubfolderSpec = 16;
 			files = (
+				A413A64A151C995A00C54A9F /* NetworkImpl.cpp in Copy core/ Files */,
+				A413A64B151C995A00C54A9F /* RequestImpl.cpp in Copy core/ Files */,
+				A413A64C151C995A00C54A9F /* ResponseImpl.cpp in Copy core/ Files */,
 				A45C1089150801DC003EFCD5 /* DirImpl.cpp in Copy core/ Files */,
 				A45C108A150801DC003EFCD5 /* FileImpl.cpp in Copy core/ Files */,
 				A45C108B150801DC003EFCD5 /* StringImpl.cpp in Copy core/ Files */,
@@ -155,6 +160,8 @@
 			dstPath = lib/utils;
 			dstSubfolderSpec = 16;
 			files = (
+				A413A674151D3AFE00C54A9F /* cJSON.c in Copy utils/ Files */,
+				A413A675151D3AFE00C54A9F /* cJSON.h in Copy utils/ Files */,
 				A47208E5150962AB00B85316 /* args.hpp in Copy utils/ Files */,
 				A47208E6150962AB00B85316 /* base64.cpp in Copy utils/ Files */,
 				A47208E7150962AB00B85316 /* base64.hpp in Copy utils/ Files */,
@@ -192,6 +199,11 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A413A63D151C60ED00C54A9F /* NetworkImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = NetworkImpl.cpp; path = ../../../lib/core/NetworkImpl.cpp; sourceTree = "<group>"; };
+		A413A63E151C60ED00C54A9F /* RequestImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = RequestImpl.cpp; path = ../../../lib/core/RequestImpl.cpp; sourceTree = "<group>"; };
+		A413A63F151C60ED00C54A9F /* ResponseImpl.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ResponseImpl.cpp; path = ../../../lib/core/ResponseImpl.cpp; sourceTree = "<group>"; };
+		A413A670151D3ACB00C54A9F /* cJSON.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; path = cJSON.c; sourceTree = "<group>"; };
+		A413A671151D3ACB00C54A9F /* cJSON.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = cJSON.h; sourceTree = "<group>"; };
 		A43D7EF4150C9673004AA60C /* lemon.osx */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = lemon.osx; path = ../../../tools/lemon.osx; sourceTree = "<group>"; };
 		A43D7EF5150C9673004AA60C /* lempar.c */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.c; name = lempar.c; path = ../../../tools/lempar.c; sourceTree = "<group>"; };
 		A43D7EF6150C9673004AA60C /* re2c.osx */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.executable"; name = re2c.osx; path = ../../../tools/re2c.osx; sourceTree = "<group>"; };
@@ -311,6 +323,9 @@
 		A45C108815080180003EFCD5 /* core */ = {
 			isa = PBXGroup;
 			children = (
+				A413A63D151C60ED00C54A9F /* NetworkImpl.cpp */,
+				A413A63E151C60ED00C54A9F /* RequestImpl.cpp */,
+				A413A63F151C60ED00C54A9F /* ResponseImpl.cpp */,
 				A45C107F15080175003EFCD5 /* DirImpl.cpp */,
 				A45C108015080175003EFCD5 /* FileImpl.cpp */,
 				A45C108115080175003EFCD5 /* StringImpl.cpp */,
@@ -331,6 +346,8 @@
 		A47208D21509625A00B85316 /* utils */ = {
 			isa = PBXGroup;
 			children = (
+				A413A670151D3ACB00C54A9F /* cJSON.c */,
+				A413A671151D3ACB00C54A9F /* cJSON.h */,
 				A47208D31509625A00B85316 /* args.hpp */,
 				A47208D41509625A00B85316 /* base64.cpp */,
 				A47208D51509625A00B85316 /* base64.hpp */,
@@ -449,7 +466,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
-			shellScript = "${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH} -v -c -ad ${BUILT_PRODUCTS_DIR}/lib/core -sd ${BUILT_PRODUCTS_DIR}/lib/core ${PROJECT_DIR}/../../../lib/core/DateTime.zpp ${PROJECT_DIR}/../../../lib/core/Dir.zpp ${PROJECT_DIR}/../../../lib/core/File.zpp ${PROJECT_DIR}/../../../lib/core/String.zpp ${PROJECT_DIR}/../../../lib/core/String.zpp ${PROJECT_DIR}/../../../lib/core/Url.zpp ${PROJECT_DIR}/../../../lib/core/core.ipp";
+			shellScript = "${BUILT_PRODUCTS_DIR}/${EXECUTABLE_PATH} -v -c -ad ${BUILT_PRODUCTS_DIR}/lib/core -sd ${BUILT_PRODUCTS_DIR}/lib/core ${PROJECT_DIR}/../../../lib/core/DateTime.zpp ${PROJECT_DIR}/../../../lib/core/Dir.zpp ${PROJECT_DIR}/../../../lib/core/File.zpp ${PROJECT_DIR}/../../../lib/core/String.zpp ${PROJECT_DIR}/../../../lib/core/String.zpp ${PROJECT_DIR}/../../../lib/core/Url.zpp  ${PROJECT_DIR}/../../../lib/core/Request.zpp  ${PROJECT_DIR}/../../../lib/core/Response.zpp ${PROJECT_DIR}/../../../lib/core/Network.zpp ${PROJECT_DIR}/../../../lib/core/core.ipp";
 		};
 		A45C1062150767F3003EFCD5 /* Run Parser */ = {
 			isa = PBXShellScriptBuildPhase;
@@ -504,10 +521,7 @@
 				A47208A715095EDC00B85316 /* parser.cpp in Sources */,
 				A47208A815095EDC00B85316 /* StlcppGenerator.cpp in Sources */,
 				A47208A915095EDC00B85316 /* ZenlangGenerator.cpp in Sources */,
-				A47208DF1509625A00B85316 /* base64.cpp in Sources */,
 				A47208E01509625A00B85316 /* scanner.cpp in Sources */,
-				A47208E21509625A00B85316 /* sqlite3.c in Sources */,
-				A47208E31509625A00B85316 /* sqlite3_unicode.c in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -1,0 +1,10 @@
+namespace Response;
+
+public struct response {
+    string protocol;
+    string status;
+    string message;
+    dict<string,string> header;
+    string body;
+    int contentLength;
+};

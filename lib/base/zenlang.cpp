@@ -6,6 +6,10 @@
 #include <QtCore/QTimer>
 #endif
 
+#if defined(WIN32)
+#include <WinSock2.h>
+#endif
+
 ////////////////////////////////////////////////////////////////////////////
 #if defined(DEBUG) && defined(GUI) && defined(WIN32)
 void trace(const char* txt, ...) {
@@ -630,6 +634,14 @@ z::Application::Application(int argc, const char* argv[]) : _argc(argc), _argv(a
 #if defined(GTK)
     ::tzset();
 #endif
+#if defined(WIN32)
+    // Initialize Winsock
+    WSADATA wsaData;
+    int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
+    if (iResult != 0) {
+        throw Exception("WSAStartup failed");
+    }
+#endif
 
 #if defined(GUI) && defined(GTK)
     gtk_init(&argc, &argv);
@@ -637,6 +649,9 @@ z::Application::Application(int argc, const char* argv[]) : _argc(argc), _argv(a
 }
 
 z::Application::~Application() {
+#if defined(WIN32)
+    WSACleanup();
+#endif
 }
 
 #if defined(WIN32)

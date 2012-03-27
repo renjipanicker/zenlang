@@ -4,6 +4,7 @@ public struct url {
     string fullUrl;
     string protocol;
     string host;
+    string port;
     string path;
     string querystring;
 };
