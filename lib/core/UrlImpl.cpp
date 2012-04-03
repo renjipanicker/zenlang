@@ -16,6 +16,7 @@ void Url::Parse(Url::url& u, const z::string& urlstr) {
     const z::string::sstringT url_s = urlstr.val();
     z::string::sstringT protocol;
     z::string::sstringT host;
+    z::string::sstringT port;
     z::string::sstringT path;
     z::string::sstringT query;
 
@@ -48,6 +49,12 @@ void Url::Parse(Url::url& u, const z::string& urlstr) {
         query = z::string("").val();;
     }
 
+    if(port.length() == 0) {
+        if(z::string(protocol) == "http") {
+            z::string t("80");
+            port.assign(t.c_str());
+        }
+    }
     u._fullUrl<url>(urlstr);
     u._protocol<url>(protocol);
     u._host<url>(host);
