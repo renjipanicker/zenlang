@@ -1,7 +1,9 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
+#include "zenlang.hpp"
+#if defined(UN_AMALGAMATED)
+#include "base/base.hpp"
 #include "base/parser.hpp"
 #include "base/parserGen.hpp"
+#endif
 
 Parser::Parser() : _parser(0) {
     _parser = ZenParserAlloc(malloc);

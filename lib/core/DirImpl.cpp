@@ -1,6 +1,4 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
-#include "core/Dir.hpp"
+#include "zenlang.hpp"
 
 #ifndef PATH_MAX
 #define PATH_MAX (255)

@@ -1,6 +1,8 @@
 #pragma once
 
+#if defined(UN_AMALGAMATED)
 #include "base/ast.hpp"
+#endif
 
 class Generator {
 public:

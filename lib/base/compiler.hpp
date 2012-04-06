@@ -1,7 +1,9 @@
 #pragma once
 
+#if defined(UN_AMALGAMATED)
 #include "base/unit.hpp"
 #include "base/lexer.hpp"
+#endif
 
 class Compiler {
 public:

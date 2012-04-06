@@ -1,6 +1,8 @@
 #pragma once
 
+#if defined(UN_AMALGAMATED)
 #include "base/unit.hpp"
+#endif
 
 namespace Ast {
     struct ClosureRef {

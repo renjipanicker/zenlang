@@ -1,5 +1,7 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
+#include "zenlang.hpp"
+#if defined(UN_AMALGAMATED)
+#include "base/base.hpp"
+#endif
 
 #if defined(QT)
 #include <QtGui/QApplication>
@@ -639,7 +641,7 @@ z::Application::Application(int argc, const char* argv[]) : _argc(argc), _argv(a
     WSADATA wsaData;
     int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
     if (iResult != 0) {
-        throw Exception("WSAStartup failed");
+        throw z::Exception("z::Application", z::string("WSAStartup failed"));
     }
 #endif
 

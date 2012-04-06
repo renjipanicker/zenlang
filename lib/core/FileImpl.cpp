@@ -1,6 +1,4 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
-#include "core/File.hpp"
+#include "zenlang.hpp"
 
 z::string File::completeBasePath(const z::string& path) {
     z::string cbase = path;

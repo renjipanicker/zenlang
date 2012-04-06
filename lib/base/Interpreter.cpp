@@ -1,9 +1,11 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
+#include "zenlang.hpp"
+#if defined(UN_AMALGAMATED)
+#include "base/base.hpp"
 #include "base/typename.hpp"
 #include "base/Interpreter.hpp"
 #include "base/compiler.hpp"
 #include "base/ZenlangGenerator.hpp"
+#endif
 
 //#define DBGMODE 1
 

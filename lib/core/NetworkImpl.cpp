@@ -1,6 +1,4 @@
-#include "pch.hpp"
 #include "zenlang.hpp"
-#include "network.hpp"
 
 #if defined(WIN32)
 #include <WinSock2.h>
@@ -153,7 +151,7 @@ static bool queryHttpText(const Url::url& u, OnDataReceivedHandler& drh) {
     }
     bzero((char *) &serv_addr, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr, 
+    bcopy((char *)server->h_addr,
           (char *)&serv_addr.sin_addr.s_addr,
           server->h_length);
     serv_addr.sin_port = htons(portno);

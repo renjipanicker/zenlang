@@ -1,7 +1,9 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
+#include "zenlang.hpp"
+#if defined(UN_AMALGAMATED)
+#include "base/base.hpp"
 #include "base/typename.hpp"
 #include "base/StlcppGenerator.hpp"
+#endif
 
 struct StlcppNameGenerator : public TypespecNameGenerator {
     virtual void getTypeName(const Ast::TypeSpec& typeSpec, z::string& name);

@@ -1,6 +1,4 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
-#include "core/String.hpp"
+#include "zenlang.hpp"
 
 z::list<z::string> String::split(const z::string& str, const z::string& sep) {
     z::list<z::string> sl;

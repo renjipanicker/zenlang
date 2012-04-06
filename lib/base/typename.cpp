@@ -1,6 +1,8 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
+#include "zenlang.hpp"
+#if defined(UN_AMALGAMATED)
+#include "base/base.hpp"
 #include "base/typename.hpp"
+#endif
 
 struct NameType {
     enum T {

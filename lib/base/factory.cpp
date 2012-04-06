@@ -1,8 +1,10 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
+#include "zenlang.hpp"
+#if defined(UN_AMALGAMATED)
+#include "base/base.hpp"
 #include "base/factory.hpp"
 #include "base/error.hpp"
 #include "base/typename.hpp"
+#endif
 
 /////////////////////////////////////////////////////////////////////////
 inline Ast::QualifiedTypeSpec& Ast::Factory::addQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const TypeSpec& typeSpec, const bool& isRef) {

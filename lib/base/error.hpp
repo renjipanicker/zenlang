@@ -1,6 +1,8 @@
 #pragma once
 
+#if defined(UN_AMALGAMATED)
 #include "base/ast.hpp"
+#endif
 
 inline z::string zfmt(const Ast::Token& token, const z::string& fmt) {
 #ifdef _WIN32

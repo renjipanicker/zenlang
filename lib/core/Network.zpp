@@ -1,5 +1,5 @@
-include core::Url public;
-include core::Response public;
+import core::Url public;
+import core::Response public;
 namespace Network;
 
 public routine bool getUrl(const Url::url& u, Response::response& r) native;

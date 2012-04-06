@@ -1,7 +1,9 @@
 #pragma once
 
+#if defined(UN_AMALGAMATED)
 #include "base/generator.hpp"
 #include "base/unit.hpp"
+#endif
 
 class ZenlangGenerator : public Generator {
 public:

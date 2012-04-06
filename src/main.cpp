@@ -1,7 +1,9 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
+#include "zenlang.hpp"
+#if defined(UN_AMALGAMATED)
+#include "base/base.hpp"
 #include "base/CmakeGenerator.hpp"
 #include "base/Interpreter.hpp"
+#endif
 
 static int showHelp(const Ast::Config& config) {
     std::cout << "zen compiler 0.1a";
@@ -141,8 +143,7 @@ int main(int argc, char* argv[]) {
     if(pch.length() > 0) {
         config.addIncludeFile(pch);
     } else {
-        config.addIncludeFile("base/pch.hpp");
-        config.addIncludeFile("base/zenlang.hpp");
+        config.addIncludeFile("zenlang.hpp");
     }
 
     config.addIncludePath(config.apidir());

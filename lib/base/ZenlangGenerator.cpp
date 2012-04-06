@@ -1,7 +1,9 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
+#include "zenlang.hpp"
+#if defined(UN_AMALGAMATED)
+#include "base/base.hpp"
 #include "base/typename.hpp"
 #include "base/ZenlangGenerator.hpp"
+#endif
 
 namespace {
     inline z::string getDefinitionType(const Ast::Token& pos, const Ast::DefinitionType::T& defType) {

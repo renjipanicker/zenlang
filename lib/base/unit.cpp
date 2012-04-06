@@ -1,8 +1,10 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
+#include "zenlang.hpp"
+#if defined(UN_AMALGAMATED)
+#include "base/base.hpp"
 #include "base/factory.hpp"
 #include "base/typename.hpp"
 #include "base/compiler.hpp"
+#endif
 
 Ast::Unit::Unit() : _scopeCallback(0), _currentTypeRef(0), _currentImportedTypeRef(0), _uniqueIdx(0) {
     Ast::Root& rootNS = addNode(new Ast::Root("*root*"));

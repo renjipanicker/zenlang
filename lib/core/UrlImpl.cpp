@@ -1,6 +1,4 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
-#include "core/Url.hpp"
+#include "zenlang.hpp"
 
 bool Url::Exists(const url& u) {
     struct stat b;
