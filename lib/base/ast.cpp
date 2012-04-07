@@ -1,8 +1,6 @@
 #include "zenlang.hpp"
-#if defined(UN_AMALGAMATED)
 #include "base/base.hpp"
 #include "base/ast.hpp"
-#endif
 
 void Ast::TypedefDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void Ast::TypedefDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}

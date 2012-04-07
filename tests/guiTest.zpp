@@ -1,11 +1,11 @@
-include gui::Window public;
-include gui::Mainframe;
-include gui::Button;
-include gui::TextEdit;
-include gui::Menu;
-include gui::MenuItem;
-include gui::Systray;
-include gui::WindowCreator;
+import gui::Window public;
+import gui::Mainframe;
+import gui::Button;
+import gui::TextEdit;
+import gui::Menu;
+import gui::MenuItem;
+import gui::Systray;
+import gui::WindowCreator;
 
 function MyMain : main {
     unused(argl);

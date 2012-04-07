@@ -1,9 +1,7 @@
 #include "zenlang.hpp"
-#if defined(UN_AMALGAMATED)
 #include "base/base.hpp"
 #include "base/CmakeGenerator.hpp"
 #include "base/compiler.hpp"
-#endif
 
 class CmakeGenerator::Impl {
 public:

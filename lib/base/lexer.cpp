@@ -1,10 +1,8 @@
 #include "zenlang.hpp"
-#if defined(UN_AMALGAMATED)
 #include "base/base.hpp"
 #include "base/factory.hpp"
 #include "base/lexer.hpp"
 #include "base/parserGen.h"
-#endif
 
 // the char width could be 8 bit, 16, or 32 in future.
 typedef char inputChar_t;
@@ -217,9 +215,6 @@ inline void Lexer::Impl::dump(const z::string& x) const {
 //          x.c_str(), (unsigned long)_buffer, (unsigned long)_bufferEnd, (unsigned long)_start, (unsigned long)_marker, (unsigned long)_cursor, (unsigned long)_limit, _limit - _cursor, "" /*_buffer*/);
 }
 
-// the lex() function
-#include "lexerGen.hpp"
-
 void Lexer::Impl::push(ParserContext& pctx, const char* input, std::streamsize inputSize, const bool& isEof) {
 //    trace("push(0): isEof %d, inputSize %lu, input '%s'\n", isEof, inputSize, input);
 
@@ -383,3 +378,6 @@ const char* Lexer::Impl::reservedWords[] = {
     "scope"        ,
     "\0"           // End of list marker. Must be here.
 };
+
+// the lex() function
+#include "lexerGen.hpp"

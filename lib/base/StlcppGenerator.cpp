@@ -1,9 +1,7 @@
 #include "zenlang.hpp"
-#if defined(UN_AMALGAMATED)
 #include "base/base.hpp"
 #include "base/typename.hpp"
 #include "base/StlcppGenerator.hpp"
-#endif
 
 struct StlcppNameGenerator : public TypespecNameGenerator {
     virtual void getTypeName(const Ast::TypeSpec& typeSpec, z::string& name);
@@ -88,7 +86,7 @@ void StlcppNameGenerator::getTypeName(const Ast::TypeSpec& typeSpec, z::string& 
     }
 }
 
-namespace {
+namespace sg {
     struct FileSet {
         inline FileSet(z::ofile& osHdr, z::ofile& osSrc) : _osHdr(osHdr), _osSrc(osSrc) {}
         z::ofile& _osHdr;
@@ -1187,6 +1185,9 @@ namespace {
     private:
         virtual void visit(const Ast::ImportStatement& node) {
             if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
+                if (node.headerType() == Ast::HeaderType::Import) {
+                    return;
+                }
                 z::ofile& os = fpDecl(node.accessType());
                 z::string qt = (node.headerType() == Ast::HeaderType::Import)?"<>":"\"\"";
                 os() << "#include " << (char)qt.at(0);
@@ -1548,7 +1549,7 @@ inline void StlcppGenerator::Impl::run() {
     z::file::mkpath(_config.srcdir() + "/");
     z::ofile ofHdr(_config.apidir() + "/" + basename + ".hpp");
     z::ofile ofSrc(_config.srcdir() + "/" + basename + ".cpp");
-    FileSet fs(ofHdr, ofSrc);
+    sg::FileSet fs(ofHdr, ofSrc);
 
     ofHdr() << "#pragma once" << std::endl << std::endl;
     for(Ast::Config::PathList::const_iterator it = _config.includeFileList().begin(); it != _config.includeFileList().end(); ++it) {
@@ -1559,12 +1560,12 @@ inline void StlcppGenerator::Impl::run() {
 
     for(Ast::CompoundStatement::List::const_iterator it = _module.globalStatementList().list().begin(); it != _module.globalStatementList().list().end(); ++it) {
         const Ast::Statement& s = it->get();
-        GeneratorContext(GeneratorContext::TargetMode::TypeDecl, GeneratorContext::IndentMode::WithBrace).run(_config, fs, s);
+        sg::GeneratorContext(sg::GeneratorContext::TargetMode::TypeDecl, sg::GeneratorContext::IndentMode::WithBrace).run(_config, fs, s);
     }
 
     for(Ast::CompoundStatement::List::const_iterator it = _module.globalStatementList().list().begin(); it != _module.globalStatementList().list().end(); ++it) {
         const Ast::Statement& s = it->get();
-        GeneratorContext(GeneratorContext::TargetMode::TypeDefn, GeneratorContext::IndentMode::WithBrace).run(_config, fs, s);
+        sg::GeneratorContext(sg::GeneratorContext::TargetMode::TypeDefn, sg::GeneratorContext::IndentMode::WithBrace).run(_config, fs, s);
     }
     z::string fn = ofHdr.name();
     fn.replace("\\", "_");

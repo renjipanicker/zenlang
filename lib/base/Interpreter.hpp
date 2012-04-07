@@ -1,8 +1,5 @@
 #pragma once
-
-#if defined(UN_AMALGAMATED)
 #include "base/generator.hpp"
-#endif
 
 class Interpreter : public Generator {
 public:

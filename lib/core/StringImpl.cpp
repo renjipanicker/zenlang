@@ -46,7 +46,7 @@ z::list<z::string> String::split(const z::string& str, const z::string& sep) {
     return sl;
 }
 
-#include "utils/sqlite3/sqlite3_unicode.h"
+# include "utils/sqlite3/sqlite3_unicode.h"
 
 z::char_t String::fold(const z::char_t& ch) {
     return sqlite3_unicode_fold(ch);

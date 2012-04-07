@@ -6,4 +6,7 @@ lib/base/parserGen.out
 *~
 *.old
 prj/xcode/zenlang/zenlang.xcodeproj/xcuserdata/
+prj/win32/Debug/
+prj/win32/zenlang.ncb
+prj/win32/zenlang.suo
 

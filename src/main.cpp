@@ -1,9 +1,7 @@
 #include "zenlang.hpp"
-#if defined(UN_AMALGAMATED)
 #include "base/base.hpp"
 #include "base/CmakeGenerator.hpp"
 #include "base/Interpreter.hpp"
-#endif
 
 static int showHelp(const Ast::Config& config) {
     std::cout << "zen compiler 0.1a";
@@ -27,6 +25,7 @@ static int showHelp(const Ast::Config& config) {
     std::cout << "  -v  --verbose   Display verbose output" << std::endl;
     std::cout << "  -t  --test      Don't generate unit tests (Note this is a negative switch)" << std::endl;
     std::cout << "  -z  --zenPath   Zen Library path" << std::endl;
+    std::cout << "  -l  --link      Link module" << std::endl;
     return 0;
 }
 

@@ -45,21 +45,21 @@
     #undef UNICODE
     #undef _UNICODE
     #define WIN32_LEAN_AND_MEAN
-    #include <windows.h>
+    # include <windows.h>
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <stdarg.h>
-#include <memory.h>
-#include <errno.h>
-#include <sys/stat.h>
-#include <assert.h>
+# include <stdio.h>
+# include <string.h>
+# include <stdlib.h>
+# include <stdarg.h>
+# include <memory.h>
+# include <errno.h>
+# include <sys/stat.h>
+# include <assert.h>
 
 #if defined(WIN32)
-    #include <direct.h>
-    #include <process.h>
+    # include <direct.h>
+    # include <process.h>
     typedef HANDLE mutex_t;
 
 //    typedef char      int8_t;
@@ -72,11 +72,11 @@
     typedef unsigned int       uint32_t;
     typedef unsigned long long uint64_t;
 #else
-    #include <libgen.h>
-    #include <pthread.h>
+    # include <libgen.h>
+    # include <pthread.h>
     typedef pthread_mutex_t mutex_t;
-    #include <stdint.h>
-    #include <regex.h>
+    # include <stdint.h>
+    # include <regex.h>
 #endif
 
 #if defined(WIN32)
@@ -88,22 +88,22 @@
 #endif
 
 #if defined __cplusplus
-    #include <string>
-    #include <vector>
-    #include <list>
-    #include <map>
-    #include <iterator>
-    #include <algorithm>
-    #include <iostream>
-    #include <fstream>
-    #include <sstream>
-    #include <iomanip>
-    #include <typeinfo>
+    # include <string>
+    # include <vector>
+    # include <list>
+    # include <map>
+    # include <iterator>
+    # include <algorithm>
+    # include <iostream>
+    # include <fstream>
+    # include <sstream>
+    # include <iomanip>
+    # include <typeinfo>
     #if defined(WIN32)
     #else
-    #include <cxxabi.h>
+    # include <cxxabi.h>
     #endif
-    #include <ctime>
+    # include <ctime>
 #endif // __cplusplus
 
 // all GUI header files are included here.
@@ -112,22 +112,22 @@
         #undef UNICODE
         #undef _UNICODE
         #define WIN32_LEAN_AND_MEAN
-        #include <Windows.h>
-        #include <Windowsx.h>
-        #include <Commctrl.h>
-        #include <Shlwapi.h>
-        #include <shellapi.h>
-        #include <tchar.h>
+        # include <Windows.h>
+        # include <Windowsx.h>
+        # include <Commctrl.h>
+        # include <Shlwapi.h>
+        # include <shellapi.h>
+        # include <tchar.h>
     #endif
     #if defined(GTK)
-        #include <gtk/gtk.h>
+        # include <gtk/gtk.h>
     #endif
     #if defined(QT)
     #endif
 #endif
 
 #if defined(__APPLE__)
-#include <mach-o/dyld.h>
+# include <mach-o/dyld.h>
 #endif
 
 #endif

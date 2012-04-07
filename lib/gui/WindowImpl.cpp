@@ -49,6 +49,10 @@ ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
 
 // Message handler for the app
 static z::InitList<Window::Native::WndProc> s_WndProcList;
+template<> Window::Native::WndProc* z::InitList<Window::Native::WndProc>::_head = 0;
+template<> Window::Native::WndProc* z::InitList<Window::Native::WndProc>::_tail = 0;
+template<> Window::Native::WndProc* z::InitList<Window::Native::WndProc>::_next = 0;
+
 Window::Native::WndProc::WndProc() : _next(0) {
     s_WndProcList.push(this);
 }
@@ -121,7 +125,7 @@ z::string registerClass(HBRUSH bg) {
 
     // Register the window class.
     if(!::RegisterClassEx(&wcx)) {
-        throw z::Exception("Window", z::fmt("Unable to register class %{s}: %{e}").add("s", className).add("e", ::GetLastError()));
+        throw z::Exception("Window", z::string("Unable to register class %{s}: %{e}").arg("s", className).arg("e", ::GetLastError()));
     }
 
     return className;

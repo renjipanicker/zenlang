@@ -6,6 +6,7 @@
 #include "MenuImpl.hpp"
 
 #if defined(WIN32)
+namespace MenuItemImpl {
 static z::HandlerList<int, MenuItem::OnSelect::Handler> onMenuItemSelectHandlerList;
 struct WinProc : public Window::Native::WndProc {
     virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
@@ -20,6 +21,7 @@ struct WinProc : public Window::Native::WndProc {
     }
 };
 static WinProc s_winProc;
+}
 #endif
 
 MenuItem::Handle MenuItem::Create::run(const Menu::Handle& pmenu, const MenuItem::Definition& def) {
@@ -52,7 +54,7 @@ static void onMenuItemSelectClick(GtkMenuItem* item, gpointer phandler) {
 void MenuItem::OnSelect::addHandler(const MenuItem::Handle& menuitem, Handler* handler) {
     MenuItem::OnSelect::add(handler);
 #if defined(WIN32)
-    onMenuItemSelectHandlerList.addHandler(MenuItem::impl(menuitem)._id, handler);
+    MenuItemImpl::onMenuItemSelectHandlerList.addHandler(MenuItem::impl(menuitem)._id, handler);
 #endif
 #if defined(GTK)
     g_signal_connect (G_OBJECT (MenuItem::impl(menuitem)._menuItem), "activate", G_CALLBACK (onMenuItemSelectClick), handler);

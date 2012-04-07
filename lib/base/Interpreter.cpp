@@ -1,15 +1,13 @@
 #include "zenlang.hpp"
-#if defined(UN_AMALGAMATED)
 #include "base/base.hpp"
 #include "base/typename.hpp"
 #include "base/Interpreter.hpp"
 #include "base/compiler.hpp"
 #include "base/ZenlangGenerator.hpp"
-#endif
 
 //#define DBGMODE 1
 
-namespace {
+namespace in {
     struct ValuePtr {
         inline ValuePtr() {}
         inline ValuePtr(const Ast::Expr* value) : _value(z::ref(value)) {}
@@ -835,7 +833,7 @@ inline void Interpreter::Impl::run() {
     printf("Entering interpretor mode\n");
 
     Ast::Token pos("", 0, 0, "");
-    InterpreterContext ctx(_project, _config, pos);
+    in::InterpreterContext ctx(_project, _config, pos);
 
 #if defined(DBGMODE)
 //    const char* str =

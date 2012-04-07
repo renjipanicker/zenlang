@@ -1,7 +1,5 @@
-#include "zenlang.hpp"
-#if defined(UN_AMALGAMATED)
+# include "zenlang.hpp"
 #include "base/base.hpp"
-#endif
 
 #if defined(QT)
 #include <QtGui/QApplication>
@@ -9,7 +7,7 @@
 #endif
 
 #if defined(WIN32)
-#include <WinSock2.h>
+# include <WinSock2.h>
 #endif
 
 ////////////////////////////////////////////////////////////////////////////
@@ -295,42 +293,6 @@ z::ofile::ofile(const z::string& filename) {
     }
 }
 
-///////////////////////////////////////////////////////////////
-/// \brief list of functions to execute at init-time
-/// This includes main() and test() functions
-template <typename InitT>
-struct InitList {
-    inline InitList() {}
-
-    inline void push(InitT* inst) {
-        if(_tail == 0) {
-            assert(_head == 0);
-            _head = inst;
-            _next = _head;
-        } else {
-            ref(_tail)._next = inst;
-        }
-        _tail = inst;
-    }
-    
-    inline void begin() {
-        _next = _head;
-    }
-    
-    inline InitT* next() {
-        InitT* n = _next;
-        if(n != 0) {
-            _next = ref(_next)._next;
-        }
-        return n;
-    }
-    
-private:
-    static InitT* _head;
-    static InitT* _tail;
-    static InitT* _next;
-};
-
 ////////////////////////////////////////////////////////////////////////
 #if defined(UNIT_TEST)
 static int s_totalTests = 0;
@@ -355,20 +317,20 @@ void z::TestResult::end(const z::string& name, const bool& passed) {
 }
 
 ///////////////////////////////////////////////////////////////
-template<> z::TestInstance* InitList<z::TestInstance>::_head = 0;
-template<> z::TestInstance* InitList<z::TestInstance>::_tail = 0;
-template<> z::TestInstance* InitList<z::TestInstance>::_next = 0;
-InitList<z::TestInstance> s_testList;
+template<> z::TestInstance* z::InitList<z::TestInstance>::_head = 0;
+template<> z::TestInstance* z::InitList<z::TestInstance>::_tail = 0;
+template<> z::TestInstance* z::InitList<z::TestInstance>::_next = 0;
+z::InitList<z::TestInstance> s_testList;
 z::TestInstance::TestInstance() : _next(0) {
     s_testList.push(this);
 }
 #endif
 
 ///////////////////////////////////////////////////////////////
-template<> z::MainInstance* InitList<z::MainInstance>::_head = 0;
-template<> z::MainInstance* InitList<z::MainInstance>::_tail = 0;
-template<> z::MainInstance* InitList<z::MainInstance>::_next = 0;
-static InitList<z::MainInstance> s_mainList;
+template<> z::MainInstance* z::InitList<z::MainInstance>::_head = 0;
+template<> z::MainInstance* z::InitList<z::MainInstance>::_tail = 0;
+template<> z::MainInstance* z::InitList<z::MainInstance>::_next = 0;
+static z::InitList<z::MainInstance> s_mainList;
 z::MainInstance::MainInstance() : _next(0) {
     s_mainList.push(this);
 }
@@ -620,7 +582,7 @@ QT_END_MOC_NAMESPACE
 #endif // QT
 #endif // GUI
 
-z::Application::Application(int argc, const char* argv[]) : _argc(argc), _argv(argv), _isExit(false) {
+z::Application::Application(int argc, const char** argv) : _argc(argc), _argv(argv), _isExit(false) {
     if(g_app != 0) {
         throw z::Exception("z::Application", z::string("Multiple instances of Application not permitted"));
     }
@@ -756,7 +718,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     InitCommonControls();
     s_hInstance = hInstance;
 
-    z::Application a(__argc, __argv);
+    z::Application a(__argc, (const char**)__argv);
     initMain(a.argl());
     return a.exec();
 }

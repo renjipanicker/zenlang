@@ -1,8 +1,5 @@
 #pragma once
-
-#if defined(UN_AMALGAMATED)
 #include "base/parser.hpp"
-#endif
 
 class Lexer {
 public:

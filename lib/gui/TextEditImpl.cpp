@@ -4,22 +4,24 @@
 #include "WindowImpl.hpp"
 
 #if defined(WIN32)
-static z::HandlerList<HWND, TextEdit::OnEnter::Handler> onTextEditEnterHandlerList;
-struct WinProc : public Window::Native::WndProc {
-    virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-        switch (message) {
-            case WM_COMMAND:
-                if(LOWORD(wParam) == BN_CLICKED) {
-                    TextEdit::OnEnter::Handler::_In in;
-                    if(onTextEditEnterHandlerList.runHandler((HWND)lParam, in))
-                        return 1;
-                }
-                break;
+namespace TextEditImpl {
+    static z::HandlerList<HWND, TextEdit::OnEnter::Handler> onTextEditEnterHandlerList;
+    struct WinProc : public Window::Native::WndProc {
+        virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+            switch (message) {
+                case WM_COMMAND:
+                    if(LOWORD(wParam) == BN_CLICKED) {
+                        TextEdit::OnEnter::Handler::_In in;
+                        if(onTextEditEnterHandlerList.runHandler((HWND)lParam, in))
+                            return 1;
+                    }
+                    break;
+            }
+            return 0;
         }
-        return 0;
-    }
-};
-static WinProc s_winProc;
+    };
+    static WinProc s_winProc;
+}
 #endif
 
 Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdit::Definition& def) {
@@ -79,7 +81,7 @@ static void onEnterPressed(GtkMenuItem* item, gpointer phandler) {
 void TextEdit::OnEnter::addHandler(const Window::Handle& textedit, Handler* handler) {
     TextEdit::OnEnter::add(handler);
 #if defined(WIN32)
-    onTextEditEnterHandlerList.addHandler(Window::impl(textedit)._hWindow, handler);
+    TextEditImpl::onTextEditEnterHandlerList.addHandler(Window::impl(textedit)._hWindow, handler);
 #endif
 #if defined(GTK)
     g_signal_connect (G_OBJECT (Window::impl(textedit)._hWindow), "activate", G_CALLBACK (onEnterPressed), handler);

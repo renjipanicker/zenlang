@@ -914,6 +914,42 @@ namespace z {
     typedef z::list<z::string> stringlist;
 
     ///////////////////////////////////////////////////////////////
+    /// \brief list of items that get initialized via static ctors
+    /// This includes main() and test() functions
+    template <typename InitT>
+    struct InitList {
+        inline InitList() {}
+
+        inline void push(InitT* inst) {
+            if(_tail == 0) {
+                assert(_head == 0);
+                _head = inst;
+                _next = _head;
+            } else {
+                ref(_tail)._next = inst;
+            }
+            _tail = inst;
+        }
+        
+        inline void begin() {
+            _next = _head;
+        }
+        
+        inline InitT* next() {
+            InitT* n = _next;
+            if(n != 0) {
+                _next = ref(_next)._next;
+            }
+            return n;
+        }
+        
+    private:
+        static InitT* _head;
+        static InitT* _tail;
+        static InitT* _next;
+    };
+
+    ///////////////////////////////////////////////////////////////
     /// \brief MultiMap of event source to event-handler-list
     /// This is a helper function for GUI classes
     template <typename KeyT, typename ValT>
@@ -1128,7 +1164,7 @@ namespace z {
 #else
     private:
 #endif
-        Application(int argc, const char* argv[]);
+        Application(int argc, const char** argv);
         ~Application();
 
     public:

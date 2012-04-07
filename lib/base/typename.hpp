@@ -1,8 +1,5 @@
 #pragma once
-
-#if defined(UN_AMALGAMATED)
 #include "base/unit.hpp"
-#endif
 
 struct TypespecNameGenerator {
     z::string tn(const Ast::TypeSpec& typeSpec);

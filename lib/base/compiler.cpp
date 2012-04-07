@@ -1,10 +1,8 @@
 #include "zenlang.hpp"
-#if defined(UN_AMALGAMATED)
 #include "base/base.hpp"
 #include "base/compiler.hpp"
 #include "base/ZenlangGenerator.hpp"
 #include "base/StlcppGenerator.hpp"
-#endif
 
 inline bool checkFile(const z::string& filename) {
     return std::ifstream( z::s2e(filename).c_str() ).is_open();

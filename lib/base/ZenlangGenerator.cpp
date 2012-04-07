@@ -1,11 +1,9 @@
 #include "zenlang.hpp"
-#if defined(UN_AMALGAMATED)
 #include "base/base.hpp"
 #include "base/typename.hpp"
 #include "base/ZenlangGenerator.hpp"
-#endif
 
-namespace {
+namespace zg {
     inline z::string getDefinitionType(const Ast::Token& pos, const Ast::DefinitionType::T& defType) {
         switch(defType) {
             case Ast::DefinitionType::Final:
@@ -876,7 +874,7 @@ inline void ZenlangGenerator::Impl::run() {
 
     for(Ast::CompoundStatement::List::const_iterator it = _module.globalStatementList().list().begin(); it != _module.globalStatementList().list().end(); ++it) {
         const Ast::Statement& s = it->get();
-        runStatementGenerator(_config, osImp, s);
+        zg::runStatementGenerator(_config, osImp, s);
     }
 }
 
@@ -887,6 +885,6 @@ void ZenlangGenerator::run() {return z::ref(_impl).run();}
 
 z::string ZenlangGenerator::convertExprToString(const Ast::Expr& expr) {
     std::stringstream os;
-    ExprGenerator(os).visitNode(expr);
+    zg::ExprGenerator(os).visitNode(expr);
     return z::e2s(os.str());
 }

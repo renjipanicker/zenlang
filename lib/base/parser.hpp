@@ -1,9 +1,6 @@
 #pragma once
-
-#if defined(UN_AMALGAMATED)
 #include "base/factory.hpp"
 #include "base/token.hpp"
-#endif
 
 class Compiler;
 struct ParserContext {

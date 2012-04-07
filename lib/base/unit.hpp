@@ -1,9 +1,6 @@
 #pragma once
-
-#if defined(UN_AMALGAMATED)
 #include "base/ast.hpp"
 #include "base/error.hpp"
-#endif
 
 namespace Ast {
     /*! \brief A compilation unit

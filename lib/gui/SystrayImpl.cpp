@@ -5,26 +5,28 @@
 #include "SystrayImpl.hpp"
 
 #if defined(WIN32)
-static z::HandlerList<int, Systray::OnActivation::Handler> onSystrayActivationHandlerList;
-static z::HandlerList<int, Systray::OnContextMenu::Handler> onSystrayContextMenuHandlerList;
-struct WinProc : public Window::Native::WndProc {
-    virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-        if(lParam == WM_LBUTTONDOWN) {
-            Systray::OnActivation::Handler::_In in;
-            if(onSystrayActivationHandlerList.runHandler(message, in))
-                return 1;
-        }
+namespace SystrayImpl {
+    static z::HandlerList<int, Systray::OnActivation::Handler> onSystrayActivationHandlerList;
+    static z::HandlerList<int, Systray::OnContextMenu::Handler> onSystrayContextMenuHandlerList;
+    struct WinProc : public Window::Native::WndProc {
+        virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+            if(lParam == WM_LBUTTONDOWN) {
+                Systray::OnActivation::Handler::_In in;
+                if(onSystrayActivationHandlerList.runHandler(message, in))
+                    return 1;
+            }
 
-        if((lParam == WM_RBUTTONDOWN) || (lParam == WM_CONTEXTMENU)) {
-            Systray::OnContextMenu::Handler::_In in;
-            if(onSystrayContextMenuHandlerList.runHandler(message, in))
-                return 1;
-        }
+            if((lParam == WM_RBUTTONDOWN) || (lParam == WM_CONTEXTMENU)) {
+                Systray::OnContextMenu::Handler::_In in;
+                if(onSystrayContextMenuHandlerList.runHandler(message, in))
+                    return 1;
+            }
 
-        return 0;
-    }
-};
-static WinProc s_winProc;
+            return 0;
+        }
+    };
+    static WinProc s_winProc;
+}
 #endif
 
 void Systray::SetTooltip::run(const Systray::Handle& handle, const z::string& text) {
@@ -47,7 +49,7 @@ void Systray::SetIconfile::run(const Systray::Handle& handle, const z::string& f
                                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
                                  LR_LOADFROMFILE);
     if(0 == ni.hIcon) {
-        throw z::Exception("Systray", z::fmt("Unable to load icon %{s}").add("s", filename));
+        throw z::Exception("Systray", z::string("Unable to load icon %{s}").arg("s", filename));
     }
 
     ni.uFlags |= NIF_ICON;
@@ -152,7 +154,7 @@ static gboolean onSystrayActivateEvent(GtkStatusIcon* status_icon, gpointer phan
 void Systray::OnActivation::addHandler(const Systray::Handle& systray, Handler* handler) {
     Systray::OnActivation::add(handler);
 #if defined(WIN32)
-    onSystrayActivationHandlerList.addHandler(Systray::impl(systray)._wm, handler);
+    SystrayImpl::onSystrayActivationHandlerList.addHandler(Systray::impl(systray)._wm, handler);
 #endif
 #if defined(GTK)
     g_signal_connect(G_OBJECT (Systray::impl(systray)._icon), "activate", G_CALLBACK (onSystrayActivateEvent), handler);
@@ -175,7 +177,7 @@ static gboolean onSystrayContextMenuEvent(GtkStatusIcon *status_icon, guint butt
 void Systray::OnContextMenu::addHandler(const Systray::Handle& systray, Handler* handler) {
     Systray::OnContextMenu::add(handler);
 #if defined(WIN32)
-    onSystrayContextMenuHandlerList.addHandler(Systray::impl(systray)._wm, handler);
+    SystrayImpl::onSystrayContextMenuHandlerList.addHandler(Systray::impl(systray)._wm, handler);
 #endif
 #if defined(GTK)
     g_signal_connect(G_OBJECT (Systray::impl(systray)._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), handler);

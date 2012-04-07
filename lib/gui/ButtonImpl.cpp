@@ -4,22 +4,24 @@
 #include "WindowImpl.hpp"
 
 #if defined(WIN32)
-static z::HandlerList<HWND, Button::OnClick::Handler> onButtonClickHandlerList;
-struct WinProc : public Window::Native::WndProc {
-    virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-        switch (message) {
-            case WM_COMMAND:
-                if(LOWORD(wParam) == BN_CLICKED) {
-                    Button::OnClick::Handler::_In in;
-                    if(onButtonClickHandlerList.runHandler((HWND)lParam, in))
-                        return 1;
-                }
-                break;
+namespace ButtonImpl {
+    static z::HandlerList<HWND, Button::OnClick::Handler> onButtonClickHandlerList;
+    struct WinProc : public Window::Native::WndProc {
+        virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+            switch (message) {
+                case WM_COMMAND:
+                    if(LOWORD(wParam) == BN_CLICKED) {
+                        Button::OnClick::Handler::_In in;
+                        if(onButtonClickHandlerList.runHandler((HWND)lParam, in))
+                            return 1;
+                    }
+                    break;
+            }
+            return 0;
         }
-        return 0;
-    }
-};
-static WinProc s_winProc;
+    };
+    static WinProc s_winProc;
+}
 #endif
 
 Window::Handle Button::Create::run(const Window::Handle& parent, const Button::Definition& def) {
@@ -47,7 +49,7 @@ static void onButtonClick(GtkMenuItem* item, gpointer phandler) {
 void Button::OnClick::addHandler(const Window::Handle& button, Handler* handler) {
     Button::OnClick::add(handler);
 #if defined(WIN32)
-    onButtonClickHandlerList.addHandler(Window::impl(button)._hWindow, handler);
+    ButtonImpl::onButtonClickHandlerList.addHandler(Window::impl(button)._hWindow, handler);
 #endif
 #if defined(GTK)
     g_signal_connect (G_OBJECT (Window::impl(button)._hWindow), "clicked", G_CALLBACK (onButtonClick), handler);
