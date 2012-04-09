@@ -12,7 +12,7 @@
 
 #define NEXT() { _start = _cursor; goto yy0; }
 
-void Lexer::Impl::lex(ParserContext& pctx) {
+void z::Lexer::Impl::lex(ParserContext& pctx) {
 /*!re2c
 re2c:define:YYCTYPE          = "inputChar_t";
 re2c:define:YYCURSOR         = _cursor;

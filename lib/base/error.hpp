@@ -2,7 +2,8 @@
 
 #include "base/ast.hpp"
 
-inline z::string zfmt(const Ast::Token& token, const z::string& fmt) {
+namespace z {
+inline z::string zfmt(const z::Ast::Token& token, const z::string& fmt) {
 #ifdef _WIN32
     // MSVC style error message
     z::string str = z::string("%{f}(%{r}, %{c}): %{s}").arg("f", token.filename()).arg("r", token.row()).arg("c", token.col()).arg("s", fmt);
@@ -11,4 +12,5 @@ inline z::string zfmt(const Ast::Token& token, const z::string& fmt) {
     z::string str = z::string("%{f}:%{r}:%{c}: error: %{s}").arg("f", token.filename()).arg("r", token.row()).arg("c", token.col()).arg("s", fmt);
 #endif
     return str;
+}
 }

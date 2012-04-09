@@ -1,5 +1,6 @@
 #pragma once
 
+namespace z {
 namespace Ast {
     /// \brief Outer struct for AccessType enumeration.
     struct AccessType {
@@ -2245,4 +2246,5 @@ namespace Ast {
         z::string _zppExt;
         Verbosity::T _verbosity;
     };
-}
+} // Ast
+} // ns z

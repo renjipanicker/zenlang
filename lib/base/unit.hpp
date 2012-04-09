@@ -2,6 +2,7 @@
 #include "base/ast.hpp"
 #include "base/error.hpp"
 
+namespace z {
 namespace Ast {
     /*! \brief A compilation unit
       The Unit AST node is the owner for all AST nodes in the unit.
@@ -11,12 +12,12 @@ namespace Ast {
     */
     class Unit {
     public:
-        typedef SLst<Ast::Namespace> NamespaceStack;
-        typedef SLst<Ast::Scope> ScopeStack;
-        typedef SLst<Ast::TypeSpec> TypeSpecStack;
-        typedef std::map<const Ast::TypeSpec*, Ptr<const Ast::Expr> > DefaultValueList;
+        typedef SLst<z::Ast::Namespace> NamespaceStack;
+        typedef SLst<z::Ast::Scope> ScopeStack;
+        typedef SLst<z::Ast::TypeSpec> TypeSpecStack;
+        typedef std::map<const z::Ast::TypeSpec*, Ptr<const z::Ast::Expr> > DefaultValueList;
         typedef SLst<const Body> BodyList;
-        typedef SLst<const Ast::CoerceList> CoerceListList;
+        typedef SLst<const z::Ast::CoerceList> CoerceListList;
         typedef std::list<Token> NsPartList;
         typedef std::map<z::string, int> HeaderFileList;
         typedef size_t UniqueId_t;
@@ -40,7 +41,7 @@ namespace Ast {
 
     public: // everything related to namespace stack
         inline NamespaceStack& namespaceStack() {return _namespaceStack;}
-        inline void addNamespace(Ast::Namespace& ns) {_namespaceStack.push(ns);}
+        inline void addNamespace(z::Ast::Namespace& ns) {_namespaceStack.push(ns);}
         void leaveNamespace();
     private:
         NamespaceStack _namespaceStack;
@@ -66,7 +67,7 @@ namespace Ast {
 
     private:
         /// \brief This NS contains all types defined in the current compilation unit.
-        Ptr<Ast::Root> _rootNS;
+        Ptr<z::Ast::Root> _rootNS;
 
     public: // everything related to import namespace
         /// \brief Return the import namespace
@@ -77,17 +78,17 @@ namespace Ast {
     private:
         /// \brief This NS contains all imported typespec's.
         /// It is not used for source file generation, only for reference.
-        Ptr<Ast::Root> _importNS;
+        Ptr<z::Ast::Root> _importNS;
 
     public: // everything related to anonymous namespace
         /// \brief add to the anonymous namespace
-        inline void addAnonymous(Ast::ChildTypeSpec& ts) {_anonymousNS.get().addChild(ts);}
+        inline void addAnonymous(z::Ast::ChildTypeSpec& ts) {_anonymousNS.get().addChild(ts);}
         inline const Root& anonymousNS() const {return _anonymousNS.get();}
 
     private:
         /// \brief This NS contains all imported typespec's.
         /// It is not used for source file generation, only for reference.
-        Ptr<Ast::Root> _anonymousNS;
+        Ptr<z::Ast::Root> _anonymousNS;
 
     public: // everything related to default values
         /// \brief Return the default value list
@@ -112,9 +113,9 @@ namespace Ast {
             };
         };
     public:
-        const Ast::QualifiedTypeSpec* canCoerceX(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const;
-        inline const Ast::QualifiedTypeSpec* canCoerce(const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs) const;
-        const Ast::QualifiedTypeSpec& coerce(const Ast::Token& pos, const Ast::QualifiedTypeSpec& lhs, const Ast::QualifiedTypeSpec& rhs);
+        const z::Ast::QualifiedTypeSpec* canCoerceX(const z::Ast::QualifiedTypeSpec& lhs, const z::Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const;
+        inline const z::Ast::QualifiedTypeSpec* canCoerce(const z::Ast::QualifiedTypeSpec& lhs, const z::Ast::QualifiedTypeSpec& rhs) const;
+        const z::Ast::QualifiedTypeSpec& coerce(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec& lhs, const z::Ast::QualifiedTypeSpec& rhs);
 
     public:
         /// \brief Return the coercion list
@@ -131,42 +132,42 @@ namespace Ast {
 
     public: // everything related to scope stack
         struct ScopeCallback {
-            virtual void enteringScope(Ast::Scope& scope) = 0;
-            virtual void leavingScope(Ast::Scope& scope) = 0;
+            virtual void enteringScope(z::Ast::Scope& scope) = 0;
+            virtual void leavingScope(z::Ast::Scope& scope) = 0;
         protected:
             inline ScopeCallback() {}
         };
 
     public:
-        Ast::Scope& enterScope(const Ast::Token& pos);
-        Ast::Scope& enterScope(Ast::Scope& scope);
+        z::Ast::Scope& enterScope(const z::Ast::Token& pos);
+        z::Ast::Scope& enterScope(z::Ast::Scope& scope);
         void        leaveScope();
-        void        leaveScope(Ast::Scope& scope);
-        Ast::Scope& currentScope();
-        const Ast::VariableDefn* hasMember(const Ast::Scope& scope, const Ast::Token& name) const;
-        const Ast::VariableDefn* getVariableDef(const Ast::Token& name, Ast::RefType::T& refType) const;
+        void        leaveScope(z::Ast::Scope& scope);
+        z::Ast::Scope& currentScope();
+        const z::Ast::VariableDefn* hasMember(const z::Ast::Scope& scope, const z::Ast::Token& name) const;
+        const z::Ast::VariableDefn* getVariableDef(const z::Ast::Token& name, z::Ast::RefType::T& refType) const;
         inline void setScopeCallback(ScopeCallback* val) {_scopeCallback = val;}
     private:
         ScopeStack _scopeStack;
         ScopeCallback* _scopeCallback;
 
     public: // everything related to struct-init stack
-        inline void pushStructInit(const Ast::StructDefn& structDefn) {_structInitStack.push_back(z::ptr(structDefn));}
+        inline void pushStructInit(const z::Ast::StructDefn& structDefn) {_structInitStack.push_back(z::ptr(structDefn));}
         inline void popStructInit() {_structInitStack.pop_back();}
-        inline const Ast::StructDefn* structInit() {if(_structInitStack.size() == 0) return 0; return _structInitStack.back();}
+        inline const z::Ast::StructDefn* structInit() {if(_structInitStack.size() == 0) return 0; return _structInitStack.back();}
     private:
-        typedef std::list<const Ast::StructDefn*> StructInitStack;
+        typedef std::list<const z::Ast::StructDefn*> StructInitStack;
         StructInitStack _structInitStack;
 
     public: // everything related to current typespec
-        template <typename T> inline const T* setCurrentRootTypeRef(const int& level, const Ast::Token& name) {
+        template <typename T> inline const T* setCurrentRootTypeRef(const int& level, const z::Ast::Token& name) {
             const T& td = getRootTypeSpec<T>(level, name);
             _currentTypeRef = z::ptr(td);
             _currentImportedTypeRef = hasImportRootTypeSpec(level, name);
             return z::ptr(td);
         }
 
-        template <typename T> inline const T* setCurrentChildTypeRef(const Ast::TypeSpec& parent, const Ast::Token& name, const z::string& extype) {
+        template <typename T> inline const T* setCurrentChildTypeRef(const z::Ast::TypeSpec& parent, const z::Ast::Token& name, const z::string& extype) {
             if(z::ptr(parent) != _currentTypeRef) {
                 throw z::Exception("Unit", zfmt(name, "Internal error: %{s} parent mismatch '%{t}'")
                                    .arg("s", extype)
@@ -206,20 +207,20 @@ namespace Ast {
             return z::ptr(typeSpec);
         }
 
-        const Ast::TypeSpec* currentTypeRefHasChild(const Ast::Token& name) const;
+        const z::Ast::TypeSpec* currentTypeRefHasChild(const z::Ast::Token& name) const;
     private:
-        const Ast::TypeSpec* _currentTypeRef;
-        const Ast::TypeSpec* _currentImportedTypeRef;
+        const z::Ast::TypeSpec* _currentTypeRef;
+        const z::Ast::TypeSpec* _currentImportedTypeRef;
 
     public: // everything related to typespec-stack
-        Ast::Root& getRootNamespace(const int& level);
-        const Ast::TypeSpec* hasRootTypeSpec(const int& level, const Ast::Token& name) const;
+        z::Ast::Root& getRootNamespace(const int& level);
+        const z::Ast::TypeSpec* hasRootTypeSpec(const int& level, const z::Ast::Token& name) const;
         inline TypeSpecStack& typeSpecStack() {return _typeSpecStack;}
         inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
 
     public:
-        template <typename T> const T& getRootTypeSpec(const int& level, const Ast::Token& name) const {
-            const Ast::TypeSpec* typeSpec = hasRootTypeSpec(level, name);
+        template <typename T> const T& getRootTypeSpec(const int& level, const z::Ast::Token& name) const {
+            const z::Ast::TypeSpec* typeSpec = hasRootTypeSpec(level, name);
             if(!typeSpec) {
                 throw z::Exception("Unit", zfmt(name, "Unknown root type '%{s}'").arg("s", name ));
             }
@@ -231,16 +232,16 @@ namespace Ast {
         }
 
     private:
-        inline const Ast::TypeSpec* findTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name) const;
+        inline const z::Ast::TypeSpec* findTypeSpec(const z::Ast::TypeSpec& parent, const z::Ast::Token& name) const;
 
     public:
-        Ast::TypeSpec& currentTypeSpec() const;
-        Ast::TypeSpec& enterTypeSpec(Ast::TypeSpec& typeSpec);
-        Ast::TypeSpec& leaveTypeSpec(Ast::TypeSpec& typeSpec);
-        Ast::StructDefn& getCurrentStructDefn(const Ast::Token& pos);
+        z::Ast::TypeSpec& currentTypeSpec() const;
+        z::Ast::TypeSpec& enterTypeSpec(z::Ast::TypeSpec& typeSpec);
+        z::Ast::TypeSpec& leaveTypeSpec(z::Ast::TypeSpec& typeSpec);
+        z::Ast::StructDefn& getCurrentStructDefn(const z::Ast::Token& pos);
 
     private:
-        const Ast::TypeSpec* hasImportRootTypeSpec(const int& level, const Ast::Token& name) const;
+        const z::Ast::TypeSpec* hasImportRootTypeSpec(const int& level, const z::Ast::Token& name) const;
     private:
         TypeSpecStack _typeSpecStack;
 
@@ -258,52 +259,52 @@ namespace Ast {
                 etStructInit
             };
 
-            typedef std::vector<const Ast::QualifiedTypeSpec*> List;
+            typedef std::vector<const z::Ast::QualifiedTypeSpec*> List;
 
-            inline ExpectedTypeSpec(const Type& type, const Ast::QualifiedTypeSpec& typeSpec) : _type(type), _typeSpec(typeSpec) {}
+            inline ExpectedTypeSpec(const Type& type, const z::Ast::QualifiedTypeSpec& typeSpec) : _type(type), _typeSpec(typeSpec) {}
             inline ExpectedTypeSpec(const Type& type) : _type(type) {}
             inline const Type& type() const {return _type;}
             inline bool hasTypeSpec() const {return (!_typeSpec.empty());}
-            inline const Ast::QualifiedTypeSpec& typeSpec() const {return _typeSpec.get();}
+            inline const z::Ast::QualifiedTypeSpec& typeSpec() const {return _typeSpec.get();}
         private:
             Type _type;
-            const Ast::Ptr<const Ast::QualifiedTypeSpec> _typeSpec;
+            const z::Ast::Ptr<const z::Ast::QualifiedTypeSpec> _typeSpec;
         };
         typedef std::list<ExpectedTypeSpec> ExpectedTypeSpecStack;
 
     public:
-        const Ast::StructDefn* isStructExpected() const;
-        const Ast::Function* isFunctionExpected() const;
-        const Ast::TemplateDefn* isPointerExpected() const;
-        const Ast::TemplateDefn* isPointerToExprExpected(const Ast::Expr& expr) const;
-        const Ast::StructDefn* isPointerToStructExpected() const;
-        const Ast::StructDefn* isListOfStructExpected() const;
-        const Ast::StructDefn* isListOfPointerToStructExpected() const;
+        const z::Ast::StructDefn* isStructExpected() const;
+        const z::Ast::Function* isFunctionExpected() const;
+        const z::Ast::TemplateDefn* isPointerExpected() const;
+        const z::Ast::TemplateDefn* isPointerToExprExpected(const z::Ast::Expr& expr) const;
+        const z::Ast::StructDefn* isPointerToStructExpected() const;
+        const z::Ast::StructDefn* isListOfStructExpected() const;
+        const z::Ast::StructDefn* isListOfPointerToStructExpected() const;
 
     public:
-        void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type, const Ast::QualifiedTypeSpec& qTypeSpec);
+        void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type, const z::Ast::QualifiedTypeSpec& qTypeSpec);
         void pushExpectedTypeSpec(const ExpectedTypeSpec::Type& type);
-        void popExpectedTypeSpec(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
-        bool popExpectedTypeSpecOrAuto(const Ast::Token& pos, const ExpectedTypeSpec::Type& type);
-        const Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny() const;
-        const Ast::QualifiedTypeSpec& getExpectedTypeSpec(const Ast::Token& pos, const Ast::QualifiedTypeSpec* qTypeSpec) const;
+        void popExpectedTypeSpec(const z::Ast::Token& pos, const ExpectedTypeSpec::Type& type);
+        bool popExpectedTypeSpecOrAuto(const z::Ast::Token& pos, const ExpectedTypeSpec::Type& type);
+        const z::Ast::QualifiedTypeSpec* getExpectedTypeSpecIfAny() const;
+        const z::Ast::QualifiedTypeSpec& getExpectedTypeSpec(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec* qTypeSpec) const;
 
     private:
-        inline z::string getExpectedTypeName(const Ast::Token& pos, const ExpectedTypeSpec::Type& exType);
-        inline ExpectedTypeSpec::Type getExpectedType(const Ast::Token& pos) const;
-        inline const ExpectedTypeSpec& getExpectedTypeList(const Ast::Token& pos) const;
-        inline const Ast::QualifiedTypeSpec& getExpectedTypeSpecEx(const Ast::Token& pos) const;
+        inline z::string getExpectedTypeName(const z::Ast::Token& pos, const ExpectedTypeSpec::Type& exType);
+        inline ExpectedTypeSpec::Type getExpectedType(const z::Ast::Token& pos) const;
+        inline const ExpectedTypeSpec& getExpectedTypeList(const z::Ast::Token& pos) const;
+        inline const z::Ast::QualifiedTypeSpec& getExpectedTypeSpecEx(const z::Ast::Token& pos) const;
 
     public:
-        const Ast::TemplateDefn* isEnteringList() const;
+        const z::Ast::TemplateDefn* isEnteringList() const;
     private:
-        inline const Ast::TypeSpec* isListOfPointerExpected() const;
-        inline const Ast::TemplateDefn* isEnteringTemplate() const;
+        inline const z::Ast::TypeSpec* isListOfPointerExpected() const;
+        inline const z::Ast::TemplateDefn* isEnteringTemplate() const;
 
     public:
-        void pushCallArgList(const Ast::Scope& in);
-        void popCallArgList(const Ast::Token& pos, const Ast::Scope& in);
-        void popCallArg(const Ast::Token& pos);
+        void pushCallArgList(const z::Ast::Scope& in);
+        void popCallArgList(const z::Ast::Token& pos, const z::Ast::Scope& in);
+        void popCallArg(const z::Ast::Token& pos);
 
     private:
         ExpectedTypeSpecStack _expectedTypeSpecStack;
@@ -347,7 +348,7 @@ namespace Ast {
         typedef size_t Level_t;
     public:
         inline Module(Unit& unit, const z::string& filename, const Level_t& level) : _unit(unit), _filename(filename), _level(level) {
-            Ast::CompoundStatement& gs = _unit.addNode(new Ast::CompoundStatement(Token(_filename, 0, 0, "")));
+            z::Ast::CompoundStatement& gs = _unit.addNode(new z::Ast::CompoundStatement(Token(_filename, 0, 0, "")));
             _globalStatementList.reset(gs);
         }
     private:
@@ -356,11 +357,11 @@ namespace Ast {
     public:
         /// \brief Return the unit
         /// \return The unit
-        inline Ast::Unit& unit() const {return _unit;}
+        inline z::Ast::Unit& unit() const {return _unit;}
 
     private:
         /// \brief Unit
-        Ast::Unit& _unit;
+        z::Ast::Unit& _unit;
 
     public:
         inline const z::string& filename() const {return _filename;}
@@ -391,4 +392,5 @@ namespace Ast {
         /// \brief The list of all import statements in this module
         Ptr<CompoundStatement> _globalStatementList;
     };
+}
 }

@@ -2,6 +2,7 @@
 #include "base/factory.hpp"
 #include "base/token.hpp"
 
+namespace z {
 class Compiler;
 struct ParserContext {
     inline ParserContext(Ast::Factory& f, Compiler& c) : factory(f), compiler(c) {}
@@ -34,3 +35,4 @@ public:
 private:
     void* _parser;
 };
+}

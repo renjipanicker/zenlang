@@ -1,6 +1,7 @@
 #pragma once
 #include "base/ast.hpp"
 
+namespace z {
 class Generator {
 public:
     virtual void run() = 0;
@@ -30,7 +31,6 @@ private:
     static char ind[Size];
     static int _indent;
 };
-#define INDENT Indent _ind_
 
 //@ move to String::
 inline z::string getBaseName(const z::string& filename) {
@@ -59,4 +59,6 @@ inline z::string getExtention(const z::string& filename) {
         return filename.substr(idx + 1);
     return "";
 }
+}
 
+#define INDENT z::Indent _ind_

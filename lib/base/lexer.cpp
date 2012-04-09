@@ -7,7 +7,7 @@
 // the char width could be 8 bit, 16, or 32 in future.
 typedef char inputChar_t;
 
-class Lexer::Impl {
+class z::Lexer::Impl {
 public:
     inline Impl(Parser& parser);
     inline ~Impl();
@@ -22,7 +22,7 @@ private:
 
 private:
     void send(ParserContext& pctx, const int& id);
-    bool trySendId(ParserContext& pctx, const Ast::TypeSpec* typeSpec);
+    bool trySendId(ParserContext& pctx, const z::Ast::TypeSpec* typeSpec);
     void sendId(ParserContext& pctx);
     void sendLessThan(ParserContext& pctx);
     void sendOpenCurly(ParserContext& pctx);
@@ -55,12 +55,12 @@ private:
     unsigned int _yyaccept;
 };
 
-void Lexer::Impl::newLine() {
+void z::Lexer::Impl::newLine() {
     _row++;
     _sol = _cursor;
 }
 
-z::string Lexer::Impl::getText(const bool& rw) {
+z::string z::Lexer::Impl::getText(const bool& rw) {
     if(_text > 0) {
         char* t = _text;
         if(rw) {
@@ -71,55 +71,55 @@ z::string Lexer::Impl::getText(const bool& rw) {
     return TokenData::getText(_start, _cursor);
 }
 
-TokenData Lexer::Impl::token(ParserContext& pctx, const int& id, const bool& rw) {
+z::TokenData z::Lexer::Impl::token(ParserContext& pctx, const int& id, const bool& rw) {
     z::string txt = getText(rw);
     return TokenData::createT(pctx.factory.filename(), id, _row, _cursor-_sol, txt);
 }
 
-void Lexer::Impl::send(ParserContext& pctx, const int& id) {
+void z::Lexer::Impl::send(ParserContext& pctx, const int& id) {
     TokenData td = token(pctx, id, true);
     _parser.feed(pctx, td);
     _lastToken = td.id();
 }
 
-inline bool Lexer::Impl::trySendId(ParserContext& pctx, const Ast::TypeSpec* typeSpec) {
+inline bool z::Lexer::Impl::trySendId(ParserContext& pctx, const z::Ast::TypeSpec* typeSpec) {
     if(!typeSpec)
         return false;
 
-    if(dynamic_cast<const Ast::TemplateDecl*>(typeSpec) != 0) {
+    if(dynamic_cast<const z::Ast::TemplateDecl*>(typeSpec) != 0) {
         send(pctx, ZENTOK_TEMPLATE_TYPE);
         return true;
     }
 
-    if(dynamic_cast<const Ast::StructDefn*>(typeSpec) != 0) {
+    if(dynamic_cast<const z::Ast::StructDefn*>(typeSpec) != 0) {
         send(pctx, ZENTOK_STRUCT_TYPE);
         return true;
     }
-    if(dynamic_cast<const Ast::Routine*>(typeSpec) != 0) {
+    if(dynamic_cast<const z::Ast::Routine*>(typeSpec) != 0) {
         send(pctx, ZENTOK_ROUTINE_TYPE);
         return true;
     }
-    if(dynamic_cast<const Ast::Function*>(typeSpec) != 0) {
+    if(dynamic_cast<const z::Ast::Function*>(typeSpec) != 0) {
         send(pctx, ZENTOK_FUNCTION_TYPE);
         return true;
     }
-    if(dynamic_cast<const Ast::EventDecl*>(typeSpec) != 0) {
+    if(dynamic_cast<const z::Ast::EventDecl*>(typeSpec) != 0) {
         send(pctx, ZENTOK_EVENT_TYPE);
         return true;
     }
-    if(dynamic_cast<const Ast::TypeSpec*>(typeSpec) != 0) {
+    if(dynamic_cast<const z::Ast::TypeSpec*>(typeSpec) != 0) {
         send(pctx, ZENTOK_OTHER_TYPE);
         return true;
     }
     return false;
 }
 
-inline void Lexer::Impl::sendId(ParserContext& pctx) {
+inline void z::Lexer::Impl::sendId(ParserContext& pctx) {
     z::string txt = getText(false);
-    Ast::Token tok(pctx.factory.filename(), 0, 0, txt);
+    z::Ast::Token tok(pctx.factory.filename(), 0, 0, txt);
 
     if(_lastToken == ZENTOK_SCOPE) {
-        const Ast::TypeSpec* child = pctx.factory.unit().currentTypeRefHasChild(tok);
+        const z::Ast::TypeSpec* child = pctx.factory.unit().currentTypeRefHasChild(tok);
         if(child) {
             if(trySendId(pctx, child))
                 return;
@@ -139,14 +139,14 @@ inline void Lexer::Impl::sendId(ParserContext& pctx) {
     send(pctx, ZENTOK_ID);
 }
 
-inline void Lexer::Impl::sendLessThan(ParserContext& pctx) {
+inline void z::Lexer::Impl::sendLessThan(ParserContext& pctx) {
     if(_lastToken == ZENTOK_TEMPLATE_TYPE) {
         return send(pctx, ZENTOK_TLT);
     }
     send(pctx, ZENTOK_LT);
 }
 
-inline void Lexer::Impl::sendOpenCurly(ParserContext& pctx) {
+inline void z::Lexer::Impl::sendOpenCurly(ParserContext& pctx) {
     if(pctx.factory.unit().isStructExpected() || pctx.factory.unit().isPointerToStructExpected() || pctx.factory.unit().isListOfStructExpected() || pctx.factory.unit().isListOfPointerToStructExpected()) {
         if((_lastToken != ZENTOK_STRUCT_TYPE) && (_lastToken != ZENTOK_STRUCT)) {
             send(pctx, ZENTOK_STRUCT);
@@ -161,19 +161,19 @@ inline void Lexer::Impl::sendOpenCurly(ParserContext& pctx) {
     send(pctx, ZENTOK_LCURLY);
 }
 
-inline void Lexer::Impl::sendReturn(ParserContext& pctx) {
-    const Ast::RoutineDefn* rd = 0;
-    const Ast::RootFunctionDefn* rfd = 0;
-    const Ast::ChildFunctionDefn* cfd = 0;
-    for(Ast::Unit::TypeSpecStack::const_reverse_iterator it = pctx.factory.unit().typeSpecStack().rbegin(); it != pctx.factory.unit().typeSpecStack().rend(); ++it) {
-        const Ast::TypeSpec& ts = it->get();
-        if((rd = dynamic_cast<const Ast::RoutineDefn*>(z::ptr(ts))) != 0) {
+inline void z::Lexer::Impl::sendReturn(ParserContext& pctx) {
+    const z::Ast::RoutineDefn* rd = 0;
+    const z::Ast::RootFunctionDefn* rfd = 0;
+    const z::Ast::ChildFunctionDefn* cfd = 0;
+    for(z::Ast::Unit::TypeSpecStack::const_reverse_iterator it = pctx.factory.unit().typeSpecStack().rbegin(); it != pctx.factory.unit().typeSpecStack().rend(); ++it) {
+        const z::Ast::TypeSpec& ts = it->get();
+        if((rd = dynamic_cast<const z::Ast::RoutineDefn*>(z::ptr(ts))) != 0) {
             return send(pctx, ZENTOK_RRETURN);
         }
-        if((rfd = dynamic_cast<const Ast::RootFunctionDefn*>(z::ptr(ts))) != 0) {
+        if((rfd = dynamic_cast<const z::Ast::RootFunctionDefn*>(z::ptr(ts))) != 0) {
             return send(pctx, ZENTOK_FRETURN);
         }
-        if((cfd = dynamic_cast<const Ast::ChildFunctionDefn*>(z::ptr(ts))) != 0) {
+        if((cfd = dynamic_cast<const z::Ast::ChildFunctionDefn*>(z::ptr(ts))) != 0) {
             return send(pctx, ZENTOK_FRETURN);
         }
     }
@@ -181,7 +181,7 @@ inline void Lexer::Impl::sendReturn(ParserContext& pctx) {
     throw z::Exception("Lexer", zfmt(t2t(pos), "Invalid return in lexer"));
 }
 
-inline void Lexer::Impl::reset() {
+inline void z::Lexer::Impl::reset() {
     _cond = 0;
     _state = -1;
 
@@ -197,25 +197,25 @@ inline void Lexer::Impl::reset() {
     _yyaccept = 0;
 }
 
-inline Lexer::Impl::Impl(Parser& parser) : _parser(parser), _lastToken(0) {
+inline z::Lexer::Impl::Impl(Parser& parser) : _parser(parser), _lastToken(0) {
     _buffer = 0;
     _bufferEnd = 0;
     reset();
 }
 
-inline Lexer::Impl::~Impl() {
+inline z::Lexer::Impl::~Impl() {
     if(_buffer)
         free(_buffer);
     _buffer = 0;
 }
 
-inline void Lexer::Impl::dump(const z::string& x) const {
+inline void z::Lexer::Impl::dump(const z::string& x) const {
     unused(x);
 //    trace("%s: buffer %lu, bufferEnd %lu, start %lu, marker %lu, cursor %lu, limit %lu, limit-cursor %ld, text '%s'\n",
 //          x.c_str(), (unsigned long)_buffer, (unsigned long)_bufferEnd, (unsigned long)_start, (unsigned long)_marker, (unsigned long)_cursor, (unsigned long)_limit, _limit - _cursor, "" /*_buffer*/);
 }
 
-void Lexer::Impl::push(ParserContext& pctx, const char* input, std::streamsize inputSize, const bool& isEof) {
+void z::Lexer::Impl::push(ParserContext& pctx, const char* input, std::streamsize inputSize, const bool& isEof) {
 //    trace("push(0): isEof %d, inputSize %lu, input '%s'\n", isEof, inputSize, input);
 
     /*
@@ -309,16 +309,16 @@ void Lexer::Impl::push(ParserContext& pctx, const char* input, std::streamsize i
     dump("push(5)");
 }
 
-Lexer::Lexer(Parser& parser) : _impl(0) {_impl = new Impl(parser);}
-Lexer::~Lexer() {delete _impl;}
-void Lexer::push(ParserContext& pctx, const char* buffer, const std::streamsize& len, const bool& isEof) {return z::ref(_impl).push(pctx, buffer, len, isEof);}
-void Lexer::reset() {return z::ref(_impl).reset();}
+z::Lexer::Lexer(Parser& parser) : _impl(0) {_impl = new Impl(parser);}
+z::Lexer::~Lexer() {delete _impl;}
+void z::Lexer::push(ParserContext& pctx, const char* buffer, const std::streamsize& len, const bool& isEof) {return z::ref(_impl).push(pctx, buffer, len, isEof);}
+void z::Lexer::reset() {return z::ref(_impl).reset();}
 
 //-------------------------------------------------
 // All keywords that are not used by zen, but are reserved because
 // 1. they may have a meaning in the generated language.
 // 2. zen might use it later
-const char* Lexer::Impl::reservedWords[] = {
+const char* z::Lexer::Impl::reservedWords[] = {
     "protected"    ,
     "new"          ,
     "delete"       ,

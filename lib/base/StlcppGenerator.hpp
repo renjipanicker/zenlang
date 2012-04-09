@@ -2,6 +2,7 @@
 #include "base/generator.hpp"
 #include "base/unit.hpp"
 
+namespace z {
 class StlcppGenerator : public Generator {
 public:
     StlcppGenerator(const Ast::Project& project, const Ast::Config& config, const Ast::Module& module);
@@ -11,3 +12,4 @@ private:
     struct Impl;
     Impl* _impl;
 };
+}

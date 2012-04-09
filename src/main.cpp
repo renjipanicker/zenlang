@@ -3,7 +3,7 @@
 #include "base/CmakeGenerator.hpp"
 #include "base/Interpreter.hpp"
 
-static int showHelp(const Ast::Config& config) {
+static int showHelp(const z::Ast::Config& config) {
     std::cout << "zen compiler 0.1a";
     std::cout << " ( at: " << config.zexePath() << ")" << std::endl;
     std::cout << std::endl;
@@ -38,8 +38,8 @@ inline void replaceSlash(z::string& path) {
 }
 
 int main(int argc, char* argv[]) {
-    Ast::Project project;
-    Ast::Config& config = project.addConfig("");
+    z::Ast::Project project;
+    z::Ast::Config& config = project.addConfig("");
 
     static const int len = 1024;
     char path[len] = "";
@@ -81,18 +81,18 @@ int main(int argc, char* argv[]) {
         if((t == "-h") || (t == "--help")) {
             return showHelp(config);
         } else if(t == "-c") {
-            config.buildMode(Ast::Config::BuildMode::Compile);
+            config.buildMode(z::Ast::Config::BuildMode::Compile);
         } else if(t == "-i") {
             interpreterMode = true;
         } else if((t == "-n") || (t == "--name")) {
             t = argv[i++];
             project.name(t);
         } else if((t == "-px") || (t == "--exe")) {
-            config.buildMode(Ast::Config::BuildMode::Executable);
+            config.buildMode(z::Ast::Config::BuildMode::Executable);
         } else if((t == "-pd") || (t == "--dll")) {
-            config.buildMode(Ast::Config::BuildMode::Shared);
+            config.buildMode(z::Ast::Config::BuildMode::Shared);
         } else if((t == "-pl") || (t == "--lib")) {
-            config.buildMode(Ast::Config::BuildMode::Static);
+            config.buildMode(z::Ast::Config::BuildMode::Static);
         } else if((t == "-g") || (t == "--gui")) {
             config.gui(true);
         } else if((t == "-d") || (t == "--debug")) {
@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
 //      } else if((t == "-lh") || (t == "--linkShared")) {
 //          t = argv[i++];
         } else if((t == "-v") || (t == "--verbose")) {
-            project.verbosity(Ast::Project::Verbosity::Detailed);
+            project.verbosity(z::Ast::Project::Verbosity::Detailed);
         } else if((t == "-t") || (t == "--test")) {
             config.test(false);
         } else if((t == "-z") || (t == "--zenPath")) {
@@ -176,7 +176,7 @@ int main(int argc, char* argv[]) {
     // add lib path to include path list
     config.addIncludePath(config.zlibPath());
 
-    if(project.verbosity() == Ast::Project::Verbosity::Detailed) {
+    if(project.verbosity() == z::Ast::Project::Verbosity::Detailed) {
         z::string cwd = z::file::cwd();
         std::cout << "cwd: " << cwd << std::endl;
         std::cout << "exe: " << config.zexePath() << std::endl;
@@ -185,7 +185,7 @@ int main(int argc, char* argv[]) {
         std::cout << "src: " << config.srcdir() << std::endl;
         if(config.includePathList().size() > 0) {
             std::cout << "inc: ";
-            for (Ast::Config::PathList::const_iterator it = config.includePathList().begin(); it != config.includePathList().end(); ++it) {
+            for (z::Ast::Config::PathList::const_iterator it = config.includePathList().begin(); it != config.includePathList().end(); ++it) {
                 const z::string& p = *it;
                 std::cout << p << ";";
             }
@@ -194,11 +194,11 @@ int main(int argc, char* argv[]) {
     }
 
     if(interpreterMode) {
-        Interpreter intp(project, config);
+        z::Interpreter intp(project, config);
         intp.run();
     } else {
         if(project.oproject() == "cmake") {
-            CmakeGenerator progen(project);
+            z::CmakeGenerator progen(project);
             progen.run();
         } else {
             throw z::Exception("Main", z::string("Unknown project generator %{s}").arg("s", project.oproject()));

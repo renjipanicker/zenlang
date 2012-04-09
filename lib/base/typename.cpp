@@ -9,13 +9,13 @@ struct NameType {
     };
 };
 
-z::string TypespecNameGenerator::tn(const Ast::TypeSpec& typeSpec) {
+z::string z::TypespecNameGenerator::tn(const Ast::TypeSpec& typeSpec) {
     z::string name;
     getName(typeSpec, name);
     return name;
 }
 
-z::string TypespecNameGenerator::qtn(const Ast::QualifiedTypeSpec& qtypeSpec) {
+z::string z::TypespecNameGenerator::qtn(const Ast::QualifiedTypeSpec& qtypeSpec) {
     z::string name;
     if(qtypeSpec.isConst())
         name += "const ";
@@ -25,7 +25,7 @@ z::string TypespecNameGenerator::qtn(const Ast::QualifiedTypeSpec& qtypeSpec) {
     return name;
 }
 
-bool TypespecNameGenerator::getName(const Ast::TypeSpec& typeSpec, z::string& name) {
+bool z::TypespecNameGenerator::getName(const Ast::TypeSpec& typeSpec, z::string& name) {
     const Ast::ChildTypeSpec* ctypeSpec = dynamic_cast<const Ast::ChildTypeSpec*>(z::ptr(typeSpec));
     if(!ctypeSpec)
         return false;
@@ -38,7 +38,7 @@ bool TypespecNameGenerator::getName(const Ast::TypeSpec& typeSpec, z::string& na
     return true;
 }
 
-void ZenlangNameGenerator::getTypeName(const Ast::TypeSpec& typeSpec, z::string& name) {
+void z::ZenlangNameGenerator::getTypeName(const Ast::TypeSpec& typeSpec, z::string& name) {
     const Ast::TemplateDefn* templateDefn = dynamic_cast<const Ast::TemplateDefn*>(z::ptr(typeSpec));
     if(templateDefn) {
         name += z::ref(templateDefn).name().string();

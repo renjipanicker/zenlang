@@ -4,39 +4,39 @@
 #include "base/ZenlangGenerator.hpp"
 
 namespace zg {
-    inline z::string getDefinitionType(const Ast::Token& pos, const Ast::DefinitionType::T& defType) {
+    inline z::string getDefinitionType(const z::Ast::Token& pos, const z::Ast::DefinitionType::T& defType) {
         switch(defType) {
-            case Ast::DefinitionType::Final:
+            case z::Ast::DefinitionType::Final:
                 return "";
-            case Ast::DefinitionType::Native:
+            case z::Ast::DefinitionType::Native:
                 return " native";
-            case Ast::DefinitionType::Abstract:
+            case z::Ast::DefinitionType::Abstract:
                 return " abstract";
         }
-        throw z::Exception("ZenlangGenerator", zfmt(pos, "Internal error: Unknown Definition Type '%{s}'").arg("s", defType ));
+        throw z::Exception("ZenlangGenerator", z::zfmt(pos, "Internal error: Unknown Definition Type '%{s}'").arg("s", defType ));
     }
 
-    inline z::string getAccessType(const Ast::Token& pos, const Ast::AccessType::T& accessType) {
+    inline z::string getAccessType(const z::Ast::Token& pos, const z::Ast::AccessType::T& accessType) {
         switch(accessType) {
-            case Ast::AccessType::Private:
+            case z::Ast::AccessType::Private:
                 return "";
-            case Ast::AccessType::Public:
+            case z::Ast::AccessType::Public:
                 return "public ";
-            case Ast::AccessType::Internal:
+            case z::Ast::AccessType::Internal:
                 return "internal ";
-            case Ast::AccessType::External:
+            case z::Ast::AccessType::External:
                 return "external ";
-            case Ast::AccessType::Parent:
+            case z::Ast::AccessType::Parent:
                 return "";
         }
-        throw z::Exception("ZenlangGenerator", zfmt(pos, "Internal error: Unknown Access Type '%{s}'").arg("s", accessType ));
+        throw z::Exception("ZenlangGenerator", z::zfmt(pos, "Internal error: Unknown Access Type '%{s}'").arg("s", accessType ));
     }
 
-    struct ExprGenerator : public Ast::Expr::Visitor {
+    struct ExprGenerator : public z::Ast::Expr::Visitor {
     public:
         inline ExprGenerator(std::ostream& os, const z::string& sep2 = "", const z::string& sep1 = "") : _os(os), _sep2(sep2), _sep1(sep1), _sep0(sep1) {}
     private:
-        inline void visitTernary(const Ast::TernaryOpExpr& node) {
+        inline void visitTernary(const z::Ast::TernaryOpExpr& node) {
             _os << "(";
             visitNode(node.lhs());
             _os << node.op1().string();
@@ -46,179 +46,179 @@ namespace zg {
             _os << ")";
         }
 
-        virtual void visit(const Ast::ConditionalExpr& node) {
+        virtual void visit(const z::Ast::ConditionalExpr& node) {
             return visitTernary(node);
         }
 
-        virtual void visitBinary(const Ast::BinaryExpr& node) {
+        virtual void visitBinary(const z::Ast::BinaryExpr& node) {
             visitNode(node.lhs());
             _os << node.op().string();
             visitNode(node.rhs());
         }
 
-        virtual void visit(const Ast::BooleanAndExpr& node) {
+        virtual void visit(const z::Ast::BooleanAndExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BooleanOrExpr& node) {
+        virtual void visit(const z::Ast::BooleanOrExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BooleanEqualExpr& node) {
+        virtual void visit(const z::Ast::BooleanEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BooleanNotEqualExpr& node) {
+        virtual void visit(const z::Ast::BooleanNotEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BooleanLessThanExpr& node) {
+        virtual void visit(const z::Ast::BooleanLessThanExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BooleanGreaterThanExpr& node) {
+        virtual void visit(const z::Ast::BooleanGreaterThanExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BooleanLessThanOrEqualExpr& node) {
+        virtual void visit(const z::Ast::BooleanLessThanOrEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BooleanGreaterThanOrEqualExpr& node) {
+        virtual void visit(const z::Ast::BooleanGreaterThanOrEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BooleanHasExpr& node) {
+        virtual void visit(const z::Ast::BooleanHasExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryAssignEqualExpr& node) {
+        virtual void visit(const z::Ast::BinaryAssignEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryPlusEqualExpr& node) {
+        virtual void visit(const z::Ast::BinaryPlusEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryMinusEqualExpr& node) {
+        virtual void visit(const z::Ast::BinaryMinusEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryTimesEqualExpr& node) {
+        virtual void visit(const z::Ast::BinaryTimesEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryDivideEqualExpr& node) {
+        virtual void visit(const z::Ast::BinaryDivideEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryModEqualExpr& node) {
+        virtual void visit(const z::Ast::BinaryModEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryBitwiseAndEqualExpr& node) {
+        virtual void visit(const z::Ast::BinaryBitwiseAndEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryBitwiseOrEqualExpr& node) {
+        virtual void visit(const z::Ast::BinaryBitwiseOrEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryBitwiseXorEqualExpr& node) {
+        virtual void visit(const z::Ast::BinaryBitwiseXorEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryShiftLeftEqualExpr& node) {
+        virtual void visit(const z::Ast::BinaryShiftLeftEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryShiftRightEqualExpr& node) {
+        virtual void visit(const z::Ast::BinaryShiftRightEqualExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryPlusExpr& node) {
+        virtual void visit(const z::Ast::BinaryPlusExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryMinusExpr& node) {
+        virtual void visit(const z::Ast::BinaryMinusExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryTimesExpr& node) {
+        virtual void visit(const z::Ast::BinaryTimesExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryDivideExpr& node) {
+        virtual void visit(const z::Ast::BinaryDivideExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryModExpr& node) {
+        virtual void visit(const z::Ast::BinaryModExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryBitwiseAndExpr& node) {
+        virtual void visit(const z::Ast::BinaryBitwiseAndExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryBitwiseOrExpr& node) {
+        virtual void visit(const z::Ast::BinaryBitwiseOrExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryBitwiseXorExpr& node) {
+        virtual void visit(const z::Ast::BinaryBitwiseXorExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryShiftLeftExpr& node) {
+        virtual void visit(const z::Ast::BinaryShiftLeftExpr& node) {
             return visitBinary(node);
         }
 
-        virtual void visit(const Ast::BinaryShiftRightExpr& node) {
+        virtual void visit(const z::Ast::BinaryShiftRightExpr& node) {
             return visitBinary(node);
         }
 
-        inline void visitPostfix(const Ast::PostfixExpr& node) {
+        inline void visitPostfix(const z::Ast::PostfixExpr& node) {
             visitNode(node.lhs());
             _os << node.op().string();
         }
 
-        virtual void visit(const Ast::PostfixIncExpr& node) {
+        virtual void visit(const z::Ast::PostfixIncExpr& node) {
             return visitPostfix(node);
         }
 
-        virtual void visit(const Ast::PostfixDecExpr& node) {
+        virtual void visit(const z::Ast::PostfixDecExpr& node) {
             return visitPostfix(node);
         }
 
-        inline void visitPrefix(const Ast::PrefixExpr& node) {
+        inline void visitPrefix(const z::Ast::PrefixExpr& node) {
             _os << node.op().string();
             visitNode(node.rhs());
         }
 
-        virtual void visit(const Ast::PrefixNotExpr& node) {
+        virtual void visit(const z::Ast::PrefixNotExpr& node) {
             return visitPrefix(node);
         }
 
-        virtual void visit(const Ast::PrefixPlusExpr& node) {
+        virtual void visit(const z::Ast::PrefixPlusExpr& node) {
             return visitPrefix(node);
         }
 
-        virtual void visit(const Ast::PrefixMinusExpr& node) {
+        virtual void visit(const z::Ast::PrefixMinusExpr& node) {
             return visitPrefix(node);
         }
 
-        virtual void visit(const Ast::PrefixIncExpr& node) {
+        virtual void visit(const z::Ast::PrefixIncExpr& node) {
             return visitPrefix(node);
         }
 
-        virtual void visit(const Ast::PrefixDecExpr& node) {
+        virtual void visit(const z::Ast::PrefixDecExpr& node) {
             return visitPrefix(node);
         }
 
-        virtual void visit(const Ast::PrefixBitwiseNotExpr& node) {
+        virtual void visit(const z::Ast::PrefixBitwiseNotExpr& node) {
             return visitPrefix(node);
         }
 
-        virtual void visit(const Ast::SetIndexExpr& node) {
+        virtual void visit(const z::Ast::SetIndexExpr& node) {
             visitNode(node.lhs().expr());
             _os << "[";
             visitNode(node.lhs().index());
@@ -226,14 +226,14 @@ namespace zg {
             visitNode(node.rhs());
         }
 
-        virtual void visit(const Ast::ListExpr& node) {
+        virtual void visit(const z::Ast::ListExpr& node) {
             _os << "[";
             if(node.list().list().size() == 0) {
-                _os << ZenlangNameGenerator().qtn(node.list().valueType());
+                _os << z::ZenlangNameGenerator().qtn(node.list().valueType());
             } else {
                 z::string sep;
-                for(Ast::ListList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-                    const Ast::ListItem& item = it->get();
+                for(z::Ast::ListList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
+                    const z::Ast::ListItem& item = it->get();
                     _os << sep;
                     visitNode(item.valueExpr());
                     sep = ", ";
@@ -242,14 +242,14 @@ namespace zg {
             _os << "]";
         }
 
-        virtual void visit(const Ast::DictExpr& node) {
+        virtual void visit(const z::Ast::DictExpr& node) {
             _os << "[";
             if(node.list().list().size() == 0) {
-                _os << ZenlangNameGenerator().qtn(node.list().keyType()) << ":" << ZenlangNameGenerator().qtn(node.list().valueType());
+                _os << z::ZenlangNameGenerator().qtn(node.list().keyType()) << ":" << z::ZenlangNameGenerator().qtn(node.list().valueType());
             } else {
                 z::string sep;
-                for(Ast::DictList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-                    const Ast::DictItem& item = it->get();
+                for(z::Ast::DictList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
+                    const z::Ast::DictItem& item = it->get();
                     _os << sep;
                     visitNode(item.valueExpr());
                     _os << ":";
@@ -260,13 +260,13 @@ namespace zg {
             _os << "]";
         }
 
-        virtual void visit(const Ast::FormatExpr& node) {
+        virtual void visit(const z::Ast::FormatExpr& node) {
             visitNode(node.stringExpr());
             if(node.dictExpr().list().list().size() > 0) {
                 z::string sep;
                 _os << " @ {";
-                for(Ast::DictList::List::const_iterator it = node.dictExpr().list().list().begin(); it != node.dictExpr().list().list().end(); ++it) {
-                    const Ast::DictItem& item = it->get();
+                for(z::Ast::DictList::List::const_iterator it = node.dictExpr().list().list().begin(); it != node.dictExpr().list().list().end(); ++it) {
+                    const z::Ast::DictItem& item = it->get();
                     _os << sep;
                     visitNode(item.keyExpr());
                     _os << ":";
@@ -277,20 +277,20 @@ namespace zg {
             }
         }
 
-        virtual void visit(const Ast::RoutineCallExpr& node) {
-            _os << ZenlangNameGenerator().tn(node.routine()) << "(";
+        virtual void visit(const z::Ast::RoutineCallExpr& node) {
+            _os << z::ZenlangNameGenerator().tn(node.routine()) << "(";
             ExprGenerator(_os, ", ").visitList(node.exprList());
             _os << ")";
         }
 
-        virtual void visit(const Ast::FunctorCallExpr& node) {
+        virtual void visit(const z::Ast::FunctorCallExpr& node) {
             ExprGenerator(_os).visitNode(node.expr());
             _os << "(";
             ExprGenerator(_os, ", ").visitList(node.exprList());
             _os << ")";
         }
 
-        virtual void visit(const Ast::RunExpr& node) {
+        virtual void visit(const z::Ast::RunExpr& node) {
             _os << "run ";
             ExprGenerator(_os).visitNode(node.callExpr().expr());
             _os << "(";
@@ -298,20 +298,20 @@ namespace zg {
             _os << ")";
         }
 
-        virtual void visit(const Ast::OrderedExpr& node) {
+        virtual void visit(const z::Ast::OrderedExpr& node) {
             _os << "(";
             visitNode(node.expr());
             _os << ")";
         }
 
-        virtual void visit(const Ast::IndexExpr& node) {
+        virtual void visit(const z::Ast::IndexExpr& node) {
             visitNode(node.expr());
             _os << "[";
             visitNode(node.index());
             _os << "]";
         }
 
-        virtual void visit(const Ast::SpliceExpr& node) {
+        virtual void visit(const z::Ast::SpliceExpr& node) {
             visitNode(node.expr());
             _os << "[";
             visitNode(node.from());
@@ -320,68 +320,68 @@ namespace zg {
             _os << "]";
         }
 
-        virtual void visit(const Ast::TypeofTypeExpr& node) {
-            _os << "typeof(" << ZenlangNameGenerator().qtn(node.typeSpec()) << ")";
+        virtual void visit(const z::Ast::TypeofTypeExpr& node) {
+            _os << "typeof(" << z::ZenlangNameGenerator().qtn(node.typeSpec()) << ")";
         }
 
-        virtual void visit(const Ast::TypeofExprExpr& node) {
+        virtual void visit(const z::Ast::TypeofExprExpr& node) {
             _os << "typeof(";
             ExprGenerator(_os).visitNode(node.expr());
             _os << ")";
         }
 
-        virtual void visit(const Ast::StaticTypecastExpr& node) {
-            _os << "<" << ZenlangNameGenerator().qtn(node.qTypeSpec()) << ">(";
+        virtual void visit(const z::Ast::StaticTypecastExpr& node) {
+            _os << "<" << z::ZenlangNameGenerator().qtn(node.qTypeSpec()) << ">(";
             ExprGenerator(_os).visitNode(node.expr());
             _os << ")";
         }
 
-        virtual void visit(const Ast::DynamicTypecastExpr& node) {
-            _os << "<" << ZenlangNameGenerator().tn(node.qTypeSpec().typeSpec()) << ">(";
+        virtual void visit(const z::Ast::DynamicTypecastExpr& node) {
+            _os << "<" << z::ZenlangNameGenerator().tn(node.qTypeSpec().typeSpec()) << ">(";
             ExprGenerator(_os).visitNode(node.expr());
             _os << ")";
         }
 
-        virtual void visit(const Ast::PointerInstanceExpr& node) {
-            const Ast::Expr& expr = node.exprList().at(0);
-            const z::string dname = ZenlangNameGenerator().tn(expr.qTypeSpec().typeSpec());
+        virtual void visit(const z::Ast::PointerInstanceExpr& node) {
+            const z::Ast::Expr& expr = node.exprList().at(0);
+            const z::string dname = z::ZenlangNameGenerator().tn(expr.qTypeSpec().typeSpec());
             _os << "&(" <<dname << "())";
         }
 
-        virtual void visit(const Ast::ValueInstanceExpr& node) {
-            _os << "<" << ZenlangNameGenerator().tn(node.qTypeSpec().typeSpec()) << ">(";
+        virtual void visit(const z::Ast::ValueInstanceExpr& node) {
+            _os << "<" << z::ZenlangNameGenerator().tn(node.qTypeSpec().typeSpec()) << ">(";
             ExprGenerator(_os).visitList(node.exprList());
             _os << ")";
         }
 
-        virtual void visit(const Ast::VariableRefExpr& node) {
+        virtual void visit(const z::Ast::VariableRefExpr& node) {
             _os << node.vref().name().string();
         }
 
-        virtual void visit(const Ast::MemberVariableExpr& node) {
+        virtual void visit(const z::Ast::MemberVariableExpr& node) {
             visitNode(node.expr());
             _os << "." << node.vref().name().string();
         }
 
-        virtual void visit(const Ast::MemberPropertyExpr& node) {
+        virtual void visit(const z::Ast::MemberPropertyExpr& node) {
             visitNode(node.expr());
             _os << "." << node.pref().name().string();
         }
 
-        virtual void visit(const Ast::EnumMemberExpr& node) {
-            _os << ZenlangNameGenerator().tn(node.typeSpec());
+        virtual void visit(const z::Ast::EnumMemberExpr& node) {
+            _os << z::ZenlangNameGenerator().tn(node.typeSpec());
             _os << "." << node.vref().name().string();
         }
 
-        virtual void visit(const Ast::StructMemberExpr& node) {
-            _os << ZenlangNameGenerator().tn(node.typeSpec());
+        virtual void visit(const z::Ast::StructMemberExpr& node) {
+            _os << z::ZenlangNameGenerator().tn(node.typeSpec());
             _os << "::" << node.vref().name().string();
         }
 
-        virtual void visit(const Ast::StructInstanceExpr& node) {
-            _os << ZenlangNameGenerator().tn(node.structDefn()) << "(";
-            for(Ast::StructInitPartList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
-                const Ast::StructInitPart& part = it->get();
+        virtual void visit(const z::Ast::StructInstanceExpr& node) {
+            _os << z::ZenlangNameGenerator().tn(node.structDefn()) << "(";
+            for(z::Ast::StructInitPartList::List::const_iterator it = node.list().list().begin(); it != node.list().list().end(); ++it) {
+                const z::Ast::StructInitPart& part = it->get();
                 _os << part.vdef().name().string() << ":";
                 visitNode(part.expr());
                 _os << ";";
@@ -389,60 +389,60 @@ namespace zg {
             _os << ")";
         }
 
-        inline void visitFunctionTypeInstance(const Ast::Function& function) {
-            z::string fname = ZenlangNameGenerator().tn(function);
+        inline void visitFunctionTypeInstance(const z::Ast::Function& function) {
+            z::string fname = z::ZenlangNameGenerator().tn(function);
             _os << fname << "(";
             z::string sep;
-            for(Ast::Scope::List::const_iterator it = function.xref().begin(); it != function.xref().end(); ++it) {
-                const Ast::VariableDefn& vref = it->get();
+            for(z::Ast::Scope::List::const_iterator it = function.xref().begin(); it != function.xref().end(); ++it) {
+                const z::Ast::VariableDefn& vref = it->get();
                 _os << sep << vref.name().string();
                 sep = ", ";
             }
             _os << ")";
         }
 
-        virtual void visit(const Ast::FunctionInstanceExpr& node) {
+        virtual void visit(const z::Ast::FunctionInstanceExpr& node) {
             visitFunctionTypeInstance(node.function());
         }
 
-        virtual void visit(const Ast::AnonymousFunctionExpr& node) {
+        virtual void visit(const z::Ast::AnonymousFunctionExpr& node) {
             visitFunctionTypeInstance(node.function());
         }
 
-        virtual void visit(const Ast::ConstantNullExpr& node) {
+        virtual void visit(const z::Ast::ConstantNullExpr& node) {
             unused(node);
             _os << "null";
         }
 
-        virtual void visit(const Ast::ConstantFloatExpr& node) {
+        virtual void visit(const z::Ast::ConstantFloatExpr& node) {
             _os << node.value();
         }
 
-        virtual void visit(const Ast::ConstantDoubleExpr& node) {
+        virtual void visit(const z::Ast::ConstantDoubleExpr& node) {
             _os << node.value();
         }
 
-        virtual void visit(const Ast::ConstantBooleanExpr& node) {
+        virtual void visit(const z::Ast::ConstantBooleanExpr& node) {
             _os << ((node.value() == true)?"true":"false");
         }
 
-        virtual void visit(const Ast::ConstantStringExpr& node) {
+        virtual void visit(const z::Ast::ConstantStringExpr& node) {
             _os << "\"" << node.value() << "\"";
         }
 
-        virtual void visit(const Ast::ConstantCharExpr& node) {
+        virtual void visit(const z::Ast::ConstantCharExpr& node) {
             _os << "\'" << node.value() << "\'";
         }
 
-        virtual void visit(const Ast::ConstantLongExpr& node) {
+        virtual void visit(const z::Ast::ConstantLongExpr& node) {
             _os << node.value();
         }
 
-        virtual void visit(const Ast::ConstantIntExpr& node) {
+        virtual void visit(const z::Ast::ConstantIntExpr& node) {
             _os << node.value();
         }
 
-        virtual void visit(const Ast::ConstantShortExpr& node) {
+        virtual void visit(const z::Ast::ConstantShortExpr& node) {
             _os << node.value();
         }
 
@@ -458,41 +458,41 @@ namespace zg {
         z::string _sep0;
     };
 
-    void runStatementGenerator(const Ast::Config& config, z::ofile& fp, const Ast::Statement& block);
+    void runStatementGenerator(const z::Ast::Config& config, z::ofile& fp, const z::Ast::Statement& block);
 
-    struct ImportGenerator : public Ast::TypeSpec::Visitor {
-        inline bool canWrite(const Ast::AccessType::T& accessType) const {
-            return ((accessType == Ast::AccessType::Public) || (accessType == Ast::AccessType::Parent));
+    struct ImportGenerator : public z::Ast::TypeSpec::Visitor {
+        inline bool canWrite(const z::Ast::AccessType::T& accessType) const {
+            return ((accessType == z::Ast::AccessType::Public) || (accessType == z::Ast::AccessType::Parent));
         }
 
-        inline void visitChildrenIndent(const Ast::TypeSpec& node) {
+        inline void visitChildrenIndent(const z::Ast::TypeSpec& node) {
             visitChildren(node);
         }
 
-        void visit(const Ast::TypedefDecl& node) {
+        void visit(const z::Ast::TypedefDecl& node) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType()) << "typedef " << node.name() << getDefinitionType(node.pos(), node.defType()) << std::endl;
             }
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::TypedefDefn& node) {
+        void visit(const z::Ast::TypedefDefn& node) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType())
                       << "typedef " << node.name()
                       << getDefinitionType(node.pos(), node.defType())
-                      << " " << ZenlangNameGenerator().qtn(node.qTypeSpec())
+                      << " " << z::ZenlangNameGenerator().qtn(node.qTypeSpec())
                       << ";" << std::endl;
             }
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::TemplateDecl& node) {
+        void visit(const z::Ast::TemplateDecl& node) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType()) << "template <";
                 z::string sep;
-                for(Ast::TemplatePartList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
-                    const Ast::Token& token = *it;
+                for(z::Ast::TemplatePartList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                    const z::Ast::Token& token = *it;
                     _os() << sep << token << std::endl;
                     sep = ", ";
                 }
@@ -501,24 +501,24 @@ namespace zg {
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::TemplateDefn& node) {
+        void visit(const z::Ast::TemplateDefn& node) {
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::EnumDecl& node) {
+        void visit(const z::Ast::EnumDecl& node) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType()) << "enum " << node.name() << getDefinitionType(node.pos(), node.defType()) << ";" << std::endl;
             }
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::EnumDefn& node) {
+        void visit(const z::Ast::EnumDefn& node) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType()) << "enum " << node.name() << getDefinitionType(node.pos(), node.defType()) << " {" << std::endl;
-                for(Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
-                    const Ast::VariableDefn& def = it->get();
+                for(z::Ast::Scope::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                    const z::Ast::VariableDefn& def = it->get();
                     _os() << "    " << def.name();
-                    const Ast::ConstantIntExpr* cexpr = dynamic_cast<const Ast::ConstantIntExpr*>(z::ptr(def.initExpr()));
+                    const z::Ast::ConstantIntExpr* cexpr = dynamic_cast<const z::Ast::ConstantIntExpr*>(z::ptr(def.initExpr()));
                     if((cexpr == 0) || (z::ref(cexpr).pos().string() != "#")) { /// \todo workaround, until enum-init implemented
                         _os() << " = ";
                         ExprGenerator(_os()).visitNode(def.initExpr());
@@ -531,11 +531,11 @@ namespace zg {
             visitChildrenIndent(node);
         }
 
-        inline void visitStructDefn(const Ast::StructDefn& node, const Ast::StructDefn* base) {
+        inline void visitStructDefn(const z::Ast::StructDefn& node, const z::Ast::StructDefn* base) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType()) << "struct " << node.name();
                 if(base) {
-                    _os() << " : " << ZenlangNameGenerator().tn(z::ref(base));
+                    _os() << " : " << z::ZenlangNameGenerator().tn(z::ref(base));
                 }
                 _os() << getDefinitionType(node.pos(), node.defType()) << " {" << std::endl;
                 runStatementGenerator(_config, _os, node.block());
@@ -543,70 +543,70 @@ namespace zg {
             }
         }
 
-        void visit(const Ast::StructDecl& node) {
+        void visit(const z::Ast::StructDecl& node) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType()) << "struct " << node.name() << getDefinitionType(node.pos(), node.defType()) << ";" << std::endl;
             }
         }
 
-        void visit(const Ast::RootStructDefn& node) {
+        void visit(const z::Ast::RootStructDefn& node) {
             visitStructDefn(node, 0);
         }
 
-        void visit(const Ast::ChildStructDefn& node) {
+        void visit(const z::Ast::ChildStructDefn& node) {
             visitStructDefn(node, z::ptr(node.base()));
         }
 
-        void visit(const Ast::PropertyDeclRW& node) {
+        void visit(const z::Ast::PropertyDeclRW& node) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType())
-                      << "property " << ZenlangNameGenerator().qtn(node.qTypeSpec())
+                      << "property " << z::ZenlangNameGenerator().qtn(node.qTypeSpec())
                       << " " << node.name()
                       << " " << getDefinitionType(node.pos(), node.defType())
                       << " get set;" << std::endl;
             }
         }
 
-        void visit(const Ast::PropertyDeclRO& node) {
+        void visit(const z::Ast::PropertyDeclRO& node) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType())
-                      << "property " << ZenlangNameGenerator().qtn(node.qTypeSpec())
+                      << "property " << z::ZenlangNameGenerator().qtn(node.qTypeSpec())
                       << " " << node.name()
                       << " " << getDefinitionType(node.pos(), node.defType())
                       << " get;" << std::endl;
             }
         }
 
-        inline void visitRoutineImp(const Ast::Routine& node) {
+        inline void visitRoutineImp(const z::Ast::Routine& node) {
             if(canWrite(node.accessType())) {
-                _os() << getAccessType(node.pos(), node.accessType()) << "routine " << ZenlangNameGenerator().qtn(node.outType()) << " ";
+                _os() << getAccessType(node.pos(), node.accessType()) << "routine " << z::ZenlangNameGenerator().qtn(node.outType()) << " ";
                 _os() << node.name();
                 _os() << "(";
                 z::string sep;
-                for(Ast::Scope::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
-                    const Ast::VariableDefn& vdef = it->get();
-                    _os() << sep << ZenlangNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name();
+                for(z::Ast::Scope::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
+                    const z::Ast::VariableDefn& vdef = it->get();
+                    _os() << sep << z::ZenlangNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name();
                     sep = ", ";
                 }
                 _os() << ")" << getDefinitionType(node.pos(), node.defType()) << ";" << std::endl;
             }
         }
 
-        void visit(const Ast::RoutineDecl& node) {
+        void visit(const z::Ast::RoutineDecl& node) {
             visitRoutineImp(node);
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::RoutineDefn& node) {
+        void visit(const z::Ast::RoutineDefn& node) {
             visitRoutineImp(node);
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::FunctionRetn& node) {
+        void visit(const z::Ast::FunctionRetn& node) {
             visitChildrenIndent(node);
         }
 
-        inline void visitFunctionImp(const Ast::Function& node, const z::string& name, const bool& isEvent) {
+        inline void visitFunctionImp(const z::Ast::Function& node, const z::string& name, const bool& isEvent) {
             if((name.size() > 0) || (canWrite(node.accessType()))) {
                 if(!isEvent) {
                     _os() << getAccessType(node.pos(), node.accessType());
@@ -616,15 +616,15 @@ namespace zg {
                 if(node.sig().outScope().isTuple()) {
                     _os() << "(";
                     z::string sep;
-                    for(Ast::Scope::List::const_iterator it = node.sig().out().begin(); it != node.sig().out().end(); ++it) {
-                        const Ast::VariableDefn& vdef = it->get();
-                        _os() << sep << ZenlangNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name();
+                    for(z::Ast::Scope::List::const_iterator it = node.sig().out().begin(); it != node.sig().out().end(); ++it) {
+                        const z::Ast::VariableDefn& vdef = it->get();
+                        _os() << sep << z::ZenlangNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name();
                         sep = ", ";
                     }
                     _os() << ")";
                 } else {
-                    const Ast::VariableDefn& vdef = node.sig().out().front();
-                    _os() << ZenlangNameGenerator().qtn(vdef.qTypeSpec()) << " ";
+                    const z::Ast::VariableDefn& vdef = node.sig().out().front();
+                    _os() << z::ZenlangNameGenerator().qtn(vdef.qTypeSpec()) << " ";
                 }
 
                 if(name.size() > 0) {
@@ -633,94 +633,94 @@ namespace zg {
                     _os() << node.name() << "(";
                 }
                 z::string sep = "";
-                for(Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
-                    const Ast::VariableDefn& vdef = it->get();
-                    _os() << sep << ZenlangNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name();
+                for(z::Ast::Scope::List::const_iterator it = node.sig().in().begin(); it != node.sig().in().end(); ++it) {
+                    const z::Ast::VariableDefn& vdef = it->get();
+                    _os() << sep << z::ZenlangNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name();
                     sep = ", ";
                 }
                 _os() << ")" << getDefinitionType(node.pos(), node.defType()) << ";" << std::endl;
             }
         }
 
-        void visit(const Ast::RootFunctionDecl& node) {
+        void visit(const z::Ast::RootFunctionDecl& node) {
             visitFunctionImp(node, "", false);
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::ChildFunctionDecl& node) {
+        void visit(const z::Ast::ChildFunctionDecl& node) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType());
                 _os() << "function " << node.name();
-                _os() << " : " << ZenlangNameGenerator().tn(node.base());
+                _os() << " : " << z::ZenlangNameGenerator().tn(node.base());
                 _os() << getDefinitionType(node.pos(), node.defType()) << ";" << std::endl;
             }
 
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::RootFunctionDefn& node) {
+        void visit(const z::Ast::RootFunctionDefn& node) {
             visitFunctionImp(node, "", false);
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::ChildFunctionDefn& node) {
+        void visit(const z::Ast::ChildFunctionDefn& node) {
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::EventDecl& node) {
+        void visit(const z::Ast::EventDecl& node) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType())
-                      << "event(" << ZenlangNameGenerator().qtn(node.in().qTypeSpec())
+                      << "event(" << z::ZenlangNameGenerator().qtn(node.in().qTypeSpec())
                       << " " << node.in().name() << ")" << getDefinitionType(node.pos(), node.defType()) << " => ";
                 visitFunctionImp(node.handler(), node.name().string(), true);
             }
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::Namespace& node) {
+        void visit(const z::Ast::Namespace& node) {
             visitChildrenIndent(node);
         }
 
-        void visit(const Ast::Root& node) {
+        void visit(const z::Ast::Root& node) {
             visitChildrenIndent(node);
         }
 
     public:
-        inline ImportGenerator(const Ast::Config& config, z::ofile& os) : _config(config), _os(os) {}
+        inline ImportGenerator(const z::Ast::Config& config, z::ofile& os) : _config(config), _os(os) {}
 
     private:
-        const Ast::Config& _config;
+        const z::Ast::Config& _config;
         z::ofile& _os;
     };
 
-    struct StatementGenerator : public Ast::Statement::Visitor {
+    struct StatementGenerator : public z::Ast::Statement::Visitor {
     private:
-        virtual void visit(const Ast::ImportStatement& node) {
-            if(node.headerType() == Ast::HeaderType::Import) {
+        virtual void visit(const z::Ast::ImportStatement& node) {
+            if(node.headerType() == z::Ast::HeaderType::Import) {
                 _os() << "import ";
             } else {
                 _os() << "include ";
             }
 
             z::string sep = "";
-            for(Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
-                const Ast::Token& name = it->get().name();
+            for(z::Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                const z::Ast::Token& name = it->get().name();
                 _os() << sep << name;
                 sep = "::";
             }
 
-            if(node.defType() == Ast::DefinitionType::Native) {
+            if(node.defType() == z::Ast::DefinitionType::Native) {
                 _os() << " native";
             }
 
             _os() << ";" << std::endl;
         }
 
-        virtual void visit(const Ast::EnterNamespaceStatement& node) {
+        virtual void visit(const z::Ast::EnterNamespaceStatement& node) {
             z::string fqn;
             z::string sep;
-            for(Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
-                const Ast::Namespace& ns = it->get();
+            for(z::Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                const z::Ast::Namespace& ns = it->get();
                 fqn += sep;
                 fqn += ns.name().string();
             }
@@ -730,160 +730,160 @@ namespace zg {
             }
         }
 
-        virtual void visit(const Ast::LeaveNamespaceStatement& node) {
+        virtual void visit(const z::Ast::LeaveNamespaceStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::UserDefinedTypeSpecStatement& node) {
+        virtual void visit(const z::Ast::UserDefinedTypeSpecStatement& node) {
             ImportGenerator(_config, _os).visitNode(node.typeSpec());
         }
 
-        virtual void visit(const Ast::StructMemberVariableStatement& node) {
-            _os() << Indent::get() << ZenlangNameGenerator().qtn(node.defn().qTypeSpec()) << " " << node.defn().name() << " = ";
+        virtual void visit(const z::Ast::StructMemberVariableStatement& node) {
+            _os() << z::Indent::get() << z::ZenlangNameGenerator().qtn(node.defn().qTypeSpec()) << " " << node.defn().name() << " = ";
             ExprGenerator(_os()).visitNode(node.defn().initExpr());
             _os() << ";" << std::endl;
         }
 
-        virtual void visit(const Ast::StructInitStatement& node) {
+        virtual void visit(const z::Ast::StructInitStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::EmptyStatement& node) {
+        virtual void visit(const z::Ast::EmptyStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::AutoStatement& node) {
+        virtual void visit(const z::Ast::AutoStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::ExprStatement& node) {
+        virtual void visit(const z::Ast::ExprStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::PrintStatement& node) {
+        virtual void visit(const z::Ast::PrintStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::IfStatement& node) {
+        virtual void visit(const z::Ast::IfStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::IfElseStatement& node) {
+        virtual void visit(const z::Ast::IfElseStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::WhileStatement& node) {
+        virtual void visit(const z::Ast::WhileStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::DoWhileStatement& node) {
+        virtual void visit(const z::Ast::DoWhileStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::ForExprStatement& node) {
+        virtual void visit(const z::Ast::ForExprStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::ForInitStatement& node) {
+        virtual void visit(const z::Ast::ForInitStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::ForeachStringStatement& node) {
+        virtual void visit(const z::Ast::ForeachStringStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::ForeachListStatement& node) {
+        virtual void visit(const z::Ast::ForeachListStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::ForeachDictStatement& node) {
+        virtual void visit(const z::Ast::ForeachDictStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::CaseExprStatement& node) {
+        virtual void visit(const z::Ast::CaseExprStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::CaseDefaultStatement& node) {
+        virtual void visit(const z::Ast::CaseDefaultStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::SwitchValueStatement& node) {
+        virtual void visit(const z::Ast::SwitchValueStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::SwitchExprStatement& node) {
+        virtual void visit(const z::Ast::SwitchExprStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::BreakStatement& node) {
+        virtual void visit(const z::Ast::BreakStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::ContinueStatement& node) {
+        virtual void visit(const z::Ast::ContinueStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::AddEventHandlerStatement& node) {
+        virtual void visit(const z::Ast::AddEventHandlerStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::RoutineReturnStatement& node) {
+        virtual void visit(const z::Ast::RoutineReturnStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::FunctionReturnStatement& node) {
+        virtual void visit(const z::Ast::FunctionReturnStatement& node) {
             unused(node);
         }
 
-        virtual void visit(const Ast::CompoundStatement& node) {
+        virtual void visit(const z::Ast::CompoundStatement& node) {
             INDENT;
-            for(Ast::CompoundStatement::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
-                const Ast::Statement& s = it->get();
+            for(z::Ast::CompoundStatement::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                const z::Ast::Statement& s = it->get();
                 z::ref(this).visitNode(s);
             }
         }
 
     public:
-        inline StatementGenerator(const Ast::Config& config, z::ofile& os) : _config(config), _os(os) {}
+        inline StatementGenerator(const z::Ast::Config& config, z::ofile& os) : _config(config), _os(os) {}
     private:
-        const Ast::Config& _config;
+        const z::Ast::Config& _config;
         z::ofile& _os;
     };
 
-    void runStatementGenerator(const Ast::Config& config, z::ofile& os, const Ast::Statement& block) {
+    void runStatementGenerator(const z::Ast::Config& config, z::ofile& os, const z::Ast::Statement& block) {
         StatementGenerator gen(config, os);
         gen.visitNode(block);
     }
 }
 
-struct ZenlangGenerator::Impl {
-    inline Impl(const Ast::Project& project, const Ast::Config& config, const Ast::Module& module) : _project(project), _config(config), _module(module) {}
+struct z::ZenlangGenerator::Impl {
+    inline Impl(const z::Ast::Project& project, const z::Ast::Config& config, const z::Ast::Module& module) : _project(project), _config(config), _module(module) {}
     inline void run();
 private:
-    const Ast::Project& _project;
-    const Ast::Config& _config;
-    const Ast::Module& _module;
+    const z::Ast::Project& _project;
+    const z::Ast::Config& _config;
+    const z::Ast::Module& _module;
 };
 
-inline void ZenlangGenerator::Impl::run() {
+inline void z::ZenlangGenerator::Impl::run() {
     Indent::init();
     z::string basename = getBaseName(_module.filename());
     z::file::mkpath(_config.apidir() + "/");
     z::ofile osImp(_config.apidir() + "/" + basename + ".ipp");
 
-    for(Ast::CompoundStatement::List::const_iterator it = _module.globalStatementList().list().begin(); it != _module.globalStatementList().list().end(); ++it) {
-        const Ast::Statement& s = it->get();
+    for(z::Ast::CompoundStatement::List::const_iterator it = _module.globalStatementList().list().begin(); it != _module.globalStatementList().list().end(); ++it) {
+        const z::Ast::Statement& s = it->get();
         zg::runStatementGenerator(_config, osImp, s);
     }
 }
 
 //////////////////////////////////////////////
-ZenlangGenerator::ZenlangGenerator(const Ast::Project& project, const Ast::Config& config, const Ast::Module& module) : _impl(0) {_impl = new Impl(project, config, module);}
-ZenlangGenerator::~ZenlangGenerator() {delete _impl;}
-void ZenlangGenerator::run() {return z::ref(_impl).run();}
+z::ZenlangGenerator::ZenlangGenerator(const z::Ast::Project& project, const z::Ast::Config& config, const z::Ast::Module& module) : _impl(0) {_impl = new Impl(project, config, module);}
+z::ZenlangGenerator::~ZenlangGenerator() {delete _impl;}
+void z::ZenlangGenerator::run() {return z::ref(_impl).run();}
 
-z::string ZenlangGenerator::convertExprToString(const Ast::Expr& expr) {
+z::string z::ZenlangGenerator::convertExprToString(const z::Ast::Expr& expr) {
     std::stringstream os;
     zg::ExprGenerator(os).visitNode(expr);
     return z::e2s(os.str());

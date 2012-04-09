@@ -236,9 +236,9 @@ if [[ $platform == 'CYGWIN_NT-5.1' ]]; then
     ./test.exe > test.log
     cl /DWIN32 /DUNIT_TEST /DZ_EXE /DGUI /EHsc /I${OUTDIR} /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
 elif [[ $platform == 'Linux' ]]; then
-    echo "Linux platform"
+    echo "TODO: Linux platform"
 elif [[ $platform == 'Darwin' ]]; then
-    echo "OSX platform"
+    echo "TODO: OSX platform"
 else
     echo "unknown platform"
 fi

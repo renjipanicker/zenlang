@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stdio.h>
 
+namespace z {
 struct TokenData {
 private:
     static const size_t Size = 32;
@@ -80,3 +81,4 @@ public:
         }
     }
 };
+}

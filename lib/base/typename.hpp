@@ -1,40 +1,41 @@
 #pragma once
 #include "base/unit.hpp"
 
+namespace z {
 struct TypespecNameGenerator {
-    z::string tn(const Ast::TypeSpec& typeSpec);
-    z::string qtn(const Ast::QualifiedTypeSpec& qtypeSpec);
+    z::string tn(const z::Ast::TypeSpec& typeSpec);
+    z::string qtn(const z::Ast::QualifiedTypeSpec& qtypeSpec);
 private:
-    bool getName(const Ast::TypeSpec& typeSpec, z::string& name);
-    virtual void getTypeName(const Ast::TypeSpec& typeSpec, z::string& name) = 0;
+    bool getName(const z::Ast::TypeSpec& typeSpec, z::string& name);
+    virtual void getTypeName(const z::Ast::TypeSpec& typeSpec, z::string& name) = 0;
 protected:
     inline TypespecNameGenerator(const z::string& sep) : _sep(sep) {}
     const z::string _sep;
 };
 
 struct ZenlangNameGenerator : public TypespecNameGenerator {
-    virtual void getTypeName(const Ast::TypeSpec& typeSpec, z::string& name);
+    virtual void getTypeName(const z::Ast::TypeSpec& typeSpec, z::string& name);
 public:
     inline ZenlangNameGenerator(const z::string& sep = "::") : TypespecNameGenerator(sep) {}
 };
 
-inline const Ast::TypeSpec* resolveTypedef(const Ast::TypeSpec& typeSpec) {
-    const Ast::TypeSpec* subType = z::ptr(typeSpec);
-    for(const Ast::TypedefDefn* td = dynamic_cast<const Ast::TypedefDefn*>(subType);td != 0; td = dynamic_cast<const Ast::TypedefDefn*>(subType)) {
-        const Ast::QualifiedTypeSpec& qTypeSpec = z::ref(td).qTypeSpec();
+inline const z::Ast::TypeSpec* resolveTypedef(const z::Ast::TypeSpec& typeSpec) {
+    const z::Ast::TypeSpec* subType = z::ptr(typeSpec);
+    for(const z::Ast::TypedefDefn* td = dynamic_cast<const z::Ast::TypedefDefn*>(subType);td != 0; td = dynamic_cast<const z::Ast::TypedefDefn*>(subType)) {
+        const z::Ast::QualifiedTypeSpec& qTypeSpec = z::ref(td).qTypeSpec();
         subType = z::ptr(qTypeSpec.typeSpec());
     }
     return subType;
 }
 
-inline const Ast::TypeSpec& resolveTypedefR(const Ast::TypeSpec& typeSpec) {
-    const Ast::TypeSpec* ts = resolveTypedef(typeSpec);
+inline const z::Ast::TypeSpec& resolveTypedefR(const z::Ast::TypeSpec& typeSpec) {
+    const z::Ast::TypeSpec* ts = resolveTypedef(typeSpec);
     return z::ref(ts);
 }
 
 template <typename T>
-inline const T* resolveTypedefT(const Ast::TypeSpec& typeSpec) {
-    const Ast::TypeSpec* ts = resolveTypedef(typeSpec);
+inline const T* resolveTypedefT(const z::Ast::TypeSpec& typeSpec) {
+    const z::Ast::TypeSpec* ts = resolveTypedef(typeSpec);
     const T* td = dynamic_cast<const T*>(ts);
     return td;
 }
@@ -57,10 +58,11 @@ private:
     const DefnT* _defn;
 };
 
-struct StructBaseIterator : public BaseIterator<Ast::StructDefn, Ast::ChildStructDefn> {
-    inline StructBaseIterator(const Ast::StructDefn* defn) : BaseIterator(defn) {}
+struct StructBaseIterator : public BaseIterator<z::Ast::StructDefn, z::Ast::ChildStructDefn> {
+    inline StructBaseIterator(const z::Ast::StructDefn* defn) : BaseIterator(defn) {}
 };
 
-struct FunctionBaseIterator : public BaseIterator<Ast::Function, Ast::ChildFunctionDefn> {
-    inline FunctionBaseIterator(const Ast::FunctionDefn* defn) : BaseIterator(defn) {}
+struct FunctionBaseIterator : public BaseIterator<z::Ast::Function, z::Ast::ChildFunctionDefn> {
+    inline FunctionBaseIterator(const z::Ast::FunctionDefn* defn) : BaseIterator(defn) {}
 };
+}

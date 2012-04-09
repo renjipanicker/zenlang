@@ -2,6 +2,7 @@
 #include "base/generator.hpp"
 #include "base/unit.hpp"
 
+namespace z {
 class ZenlangGenerator : public Generator {
 public:
     ZenlangGenerator(const Ast::Project& project, const Ast::Config& config, const Ast::Module& module);
@@ -12,3 +13,4 @@ private:
     struct Impl;
     Impl* _impl;
 };
+}

@@ -3,28 +3,28 @@
 #include "base/parser.hpp"
 #include "base/parserGen.hpp"
 
-Parser::Parser() : _parser(0) {
+z::Parser::Parser() : _parser(0) {
     _parser = ZenParserAlloc(malloc);
     //ZenParserTrace(stdout, "TP: ");
 }
 
-Parser::~Parser() {
+z::Parser::~Parser() {
     ZenParserFree(_parser, free);
     _parser = 0;
 }
 
-void Parser::feed(ParserContext& pctx, const TokenData& td) {
+void z::Parser::feed(z::ParserContext& pctx, const z::TokenData& td) {
 //    printf("Parser::feed: %d %s\n", td.id(), td.text());
     ZenParser(_parser, td.id(), td, z::ptr(pctx));
 }
 
-void Parser::done(ParserContext& pctx) {
+void z::Parser::done(z::ParserContext& pctx) {
     TokenData td;
     td.init();
     ZenParser(_parser, 0, td, z::ptr(pctx));
 }
 
-void Parser::reset() {
+void z::Parser::reset() {
     ZenParserFree(_parser, free);
     _parser = ZenParserAlloc(malloc);
 }

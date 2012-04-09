@@ -1,6 +1,7 @@
 #pragma once
 #include "base/unit.hpp"
 
+namespace z {
 namespace Ast {
     struct ClosureRef {
         Ast::Scope* xref;
@@ -303,4 +304,5 @@ namespace Ast {
         Ast::ConstantIntExpr&     aConstantIntExpr(const Ast::Token& value);
         Ast::ConstantShortExpr&   aConstantShortExpr(const Ast::Token& value);
     };
+}
 }

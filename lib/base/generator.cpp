@@ -2,5 +2,5 @@
 #include "base/base.hpp"
 #include "base/generator.hpp"
 
-char Indent::ind[Size] = {32};
-int Indent::_indent = -1;
+char z::Indent::ind[Size] = {32};
+int z::Indent::_indent = -1;

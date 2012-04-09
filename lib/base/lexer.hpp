@@ -1,6 +1,7 @@
 #pragma once
 #include "base/parser.hpp"
 
+namespace z {
 class Lexer {
 public:
     Lexer(Parser& parser);
@@ -11,3 +12,4 @@ private:
     class Impl;
     Impl* _impl;
 };
+}

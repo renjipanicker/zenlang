@@ -2,6 +2,7 @@
 #include "base/unit.hpp"
 #include "base/lexer.hpp"
 
+namespace z {
 class Compiler {
 public:
     inline Compiler(const Ast::Project& project, const Ast::Config& config) : _project(project), _config(config) {}
@@ -17,3 +18,4 @@ private:
     const Ast::Project& _project;
     const Ast::Config& _config;
 };
+}
