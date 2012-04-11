@@ -48,7 +48,7 @@
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="zenlang.hpp"
-				WarningLevel="3"
+				WarningLevel="4"
 				DebugInformationFormat="4"
 			/>
 			<Tool
@@ -123,7 +123,7 @@
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
 				PrecompiledHeaderThrough="zenlang.hpp"
-				WarningLevel="3"
+				WarningLevel="4"
 				DebugInformationFormat="3"
 			/>
 			<Tool
@@ -171,6 +171,10 @@
 	<References>
 	</References>
 	<Files>
+		<File
+			RelativePath="..\..\lib\base\args.hpp"
+			>
+		</File>
 		<File
 			RelativePath="..\..\lib\base\ast.cpp"
 			>
@@ -249,6 +253,14 @@
 		</File>
 		<File
 			RelativePath="..\..\src\main.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\lib\base\MsvcGenerator.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\lib\base\MsvcGenerator.hpp"
 			>
 		</File>
 		<File

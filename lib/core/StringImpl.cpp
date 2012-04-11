@@ -49,11 +49,11 @@ z::list<z::string> String::split(const z::string& str, const z::string& sep) {
 # include "utils/sqlite3/sqlite3_unicode.h"
 
 z::char_t String::fold(const z::char_t& ch) {
-    return sqlite3_unicode_fold(ch);
+    return sqlite3_unicode_fold((z::char16_t)ch);
 }
 
 z::char_t String::CharToLower(const z::char_t& ch) {
-    return sqlite3_unicode_lower(ch);
+    return sqlite3_unicode_lower((z::char16_t)ch);
 }
 
 z::string String::StringToLower(const z::string& str) {

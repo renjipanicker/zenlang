@@ -161,7 +161,7 @@ z::string16 z::c32to16(const z::string32& in) {
     z::string16 rv;
     for(z::string32::size_type i = 0; i < in.size(); i++) {
         const z::char32_t& ch = in.at(i);
-        rv.append(ch);
+        rv.append((z::char16_t)ch);
     }
     return rv;
 }
@@ -206,6 +206,8 @@ void z::regex::compile(const z::string& re) {
     if(res != 0) {
         throw z::Exception("z::regex", z::string("regcomp failed for: %{s}").arg("s", re));
     }
+#else
+    unused(re);
 #endif
 }
 
@@ -214,6 +216,8 @@ void z::regex::match(const z::string& str) {
     int res = regexec(&_val, s2e(str).c_str(), 0, 0, 0);
     char buf[128];
     regerror(res, &_val, buf, 128);
+#else
+    unused(str);
 #endif
 }
 
@@ -261,6 +265,17 @@ void z::file::mkpath(const z::string& filename) {
     }
 }
 
+z::string z::file::getPath(const z::string& filename) {
+    z::string basename = filename;
+
+    // strip path, if any
+    z::string::size_type idx = basename.rfind('/');
+    if(idx != z::string::npos)
+        basename = basename.substr(0, idx + 1);
+
+    return basename;
+}
+
 z::string z::file::getFilename(const z::string& filename) {
     z::string basename = filename;
 
@@ -270,6 +285,33 @@ z::string z::file::getFilename(const z::string& filename) {
         basename = basename.substr(idx + 1);
 
     return basename;
+}
+
+z::string z::file::getBaseName(const z::string& filename) {
+    z::string basename = filename;
+    z::string::size_type idx = z::string::npos;
+
+    // strip last extension, if any
+    idx = basename.rfind('.');
+    if(idx != z::string::npos)
+        basename = basename.substr(0, idx);
+
+    // strip path, if any
+    idx = basename.rfind('/');
+    if(idx != z::string::npos)
+        basename = basename.substr(idx + 1);
+
+    return basename;
+}
+
+z::string z::file::getExtention(const z::string& filename) {
+    z::string::size_type idx = z::string::npos;
+
+    // find last extension, if any
+    idx = filename.rfind('.');
+    if(idx != z::string::npos)
+        return filename.substr(idx + 1);
+    return "";
 }
 
 z::string z::file::cwd() {

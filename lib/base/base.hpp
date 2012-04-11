@@ -63,7 +63,7 @@ namespace z {
 
         typedef typename sstringT::size_type size_type;
 #if defined(WIN32)
-        static const size_type npos  = -1;
+        static const size_type npos  = (size_type)(-1);
 #else
         static const size_type npos  = sstringT::npos;
 #endif
@@ -145,7 +145,7 @@ namespace z {
         explicit inline string08() : BaseT() {}
         inline string08(const char* s) : BaseT() {append08(s);}
         inline string08(const BaseT::sstringT& s) : BaseT(s) {}
-        inline string08(const size_type& count, const char_t& ch) : BaseT(count, ch) {}
+        inline string08(const size_type& count, const char_t& ch) : BaseT(count, (char08_t)ch) {}
     };
 
     // 16 bit unicode string
@@ -156,7 +156,7 @@ namespace z {
         inline string16(const char* s) : BaseT() {append08(s);}
         inline string16(const char16_t* s) : BaseT(s) {}
         inline string16(const BaseT::sstringT& s) : BaseT(s) {}
-        inline string16(const size_type& count, const char_t& ch) : BaseT(count, ch) {}
+        inline string16(const size_type& count, const char_t& ch) : BaseT(count, (char08_t)ch) {}
     };
 
     // 32 bit unicode string
@@ -167,7 +167,7 @@ namespace z {
         inline string32(const char* s) : BaseT() {append08(s);}
         inline string32(const char32_t* s) : BaseT(s) {}
         inline string32(const BaseT::sstringT& s) : BaseT(s) {}
-        inline string32(const size_type& count, const char_t& ch) : BaseT(count, ch) {}
+        inline string32(const size_type& count, const char_t& ch) : BaseT(count, (char08_t)ch) {}
     };
 
     // define estring (encoded-string) as 8bit utf8 string
@@ -323,12 +323,16 @@ namespace z {
         static const z::string sep;
         static bool exists(const z::string& path);
         static int mkdir(const z::string& path);
-        static z::string getFilename(const z::string& filename);
 
         /// makes a path upto the second-last component, unless filename is terminated by a /
         static void mkpath(const z::string& filename);
 
         static z::string cwd();
+
+        static z::string getPath(const z::string& filename);
+        static z::string getFilename(const z::string& filename);
+        static z::string getBaseName(const z::string& filename);
+        static z::string getExtention(const z::string& filename);
     };
 
     struct ofile {

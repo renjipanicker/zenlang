@@ -1,0 +1,12 @@
+Project {
+    name: "testBasic";
+    configList : [
+        "Debug" : {
+            isTest : true;
+            buildMode : Config::BuildMode.Executable;
+            sourceFileList : [
+                "testBasic.zpp",
+            ];
+        },
+    ];
+};

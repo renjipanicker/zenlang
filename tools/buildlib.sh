@@ -33,7 +33,7 @@ appendFile() {
         exit 1
     fi
 
-    LNO=0
+    LNO=1
     AFN=""
     if [ "$dbg" == "y" ]; then
         # get absolute file name of src file (use this when building debug version)
@@ -46,6 +46,8 @@ appendFile() {
         LNO=$(wc -l ${dst_file} | cut -f1 -d ' ')
         let LNO=$LNO+1
     fi
+
+    command -v cygpath > /dev/null && AFN=$(cygpath -m "$AFN")
 
     # generate #line statement
     echo "#line $LNO \"$AFN\"" >> ${dst_file}
@@ -85,6 +87,17 @@ if [ ! -f ${BLDDIR}/${ZCC_FILE} ]; then
     exit 1
 fi
 
+#############################################################
+# make all output directories
+mkdir -p ${INTDIR}
+mkdir -p ${INTDIR}/core
+mkdir -p ${INTDIR}/gui
+
+rm -rf ${OUTDIR}
+mkdir -p ${OUTDIR}
+mkdir -p ${OUTDIR}/utils
+mkdir -p ${OUTDIR}/utils/sqlite3
+
 #########################################################
 # copy exe to OUTDIR
 cp ${BLDDIR}/${ZCC_FILE} ${OUTDIR}/
@@ -96,15 +109,6 @@ cp -r ${LIBDIR}/utils/ ${OUTDIR}/
 #########################################################
 # set ZCC compiler variable
 ZCC=${OUTDIR}/${ZCC_FILE}
-
-#############################################################
-# make all output directories
-mkdir -p ${INTDIR}
-mkdir -p ${INTDIR}/core
-mkdir -p ${INTDIR}/gui
-mkdir -p ${OUTDIR}
-mkdir -p ${OUTDIR}/utils
-mkdir -p ${OUTDIR}/utils/sqlite3
 
 #############################################################
 #generate all core files

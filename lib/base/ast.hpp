@@ -2124,11 +2124,11 @@ namespace Ast {
                 Static
             };
         };
-        typedef std::list<z::string> PathList;
+        typedef z::list<z::string> PathList;
     public:
-        inline Config(const z::string& name)
-            : _name(name), _buildMode(BuildMode::Executable), _gui(false), _debug(true), _test(true), _olanguage("stlcpp"), _apidir("."), _srcdir("."), _zlibPath("") {}
+        inline Config() : _buildMode(BuildMode::Executable), _gui(false), _debug(true), _test(true), _olanguage("stlcpp"), _pch("zenlang.hpp"), _apidir("."), _srcdir(".") {}
     public:
+        inline Config& name(const z::string& val) { _name = val; return z::ref(this);}
         inline const z::string& name() const {return _name;}
     public:
         inline Config& buildMode(const BuildMode::T& val) { _buildMode = val; return z::ref(this);}
@@ -2144,39 +2144,38 @@ namespace Ast {
         inline Config& olanguage(const z::string& val) { _olanguage = val; return z::ref(this);}
         inline const z::string& olanguage() const {return _olanguage;}
     public:
+        inline Config& pch(const z::string& val) { _pch = val; return z::ref(this);}
+        inline const z::string& pch() const {return _pch;}
         inline Config& apidir(const z::string& val) { _apidir = val; return z::ref(this);}
         inline const z::string& apidir() const {return _apidir;}
         inline Config& srcdir(const z::string& val) { _srcdir = val; return z::ref(this);}
         inline const z::string& srcdir() const {return _srcdir;}
     public:
-        inline Config& zexePath(const z::string& val) { _zexePath = val; return z::ref(this);}
-        inline const z::string& zexePath() const {return _zexePath;}
-    public:
-        inline Config& zlibPath(const z::string& val) { _zlibPath = val; return z::ref(this);}
-        inline const z::string& zlibPath() const {return _zlibPath;}
-    public:
-        inline Config& addIncludePath(const z::string& dir) { _includePathList.push_back(dir); return z::ref(this);}
+        inline Config& addIncludePath(const z::string& dir) { _includePathList.add(dir); return z::ref(this);}
+        inline Config& addIncludePathList(const z::stringlist& list) { _includePathList.append(list); return z::ref(this);}
         inline const PathList& includePathList() const {return _includePathList;}
     public:
-        inline Config& addIncludeFile(const z::string& file) { _includeFileList.push_back(file); return z::ref(this);}
+        inline Config& addIncludeFile(const z::string& file) { _includeFileList.add(file); return z::ref(this);}
+        inline Config& addIncludeFileList(const z::stringlist& list) { _includeFileList.append(list); return z::ref(this);}
         inline const PathList& includeFileList() const {return _includeFileList;}
     public:
-        inline Config& addSourceFile(const z::string& file) { _sourceFileList.push_back(file); return z::ref(this);}
+        inline Config& addSourceFile(const z::string& file) { _sourceFileList.add(file); return z::ref(this);}
+        inline Config& addSourceFileList(const z::stringlist& list) { _sourceFileList.append(list); return z::ref(this);}
         inline const PathList& sourceFileList() const {return _sourceFileList;}
     public:
-        inline Config& addLinkFile(const z::string& file) { _linkFileList.push_back(file); return z::ref(this);}
+        inline Config& addLinkFile(const z::string& file) { _linkFileList.add(file); return z::ref(this);}
+        inline Config& addLinkFileList(const z::stringlist& list) { _linkFileList.append(list); return z::ref(this);}
         inline const PathList& linkFileList() const {return _linkFileList;}
     private:
-        const z::string _name;
+        z::string _name;
         BuildMode::T _buildMode;
         bool _gui;
         bool _debug;
         bool _test;
         z::string _olanguage;
+        z::string _pch;
         z::string _apidir;
         z::string _srcdir;
-        z::string _zexePath;
-        z::string _zlibPath;
         PathList _includePathList;
         PathList _includeFileList;
         PathList _sourceFileList;
@@ -2195,7 +2194,7 @@ namespace Ast {
         };
 
     public:
-        inline Project() : _name("main"), _oproject("cmake"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;"), _verbosity(Verbosity::Normal) {}
+        inline Project() : _name("main"), _oproject("cmake"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;"), _verbosity(Verbosity::Normal), _zlibPath("") {}
         inline ~Project() {
             for(ConfigList::iterator it = _configList.begin(); it != _configList.end(); ++it) {
                 Config* cfg = it->second;
@@ -2213,6 +2212,12 @@ namespace Ast {
         inline Project& verbosity(const Verbosity::T& val) { _verbosity = val; return z::ref(this);}
         inline const Verbosity::T& verbosity() const {return _verbosity;}
     public:
+        inline Project& zexePath(const z::string& val) { _zexePath = val; return z::ref(this);}
+        inline const z::string& zexePath() const {return _zexePath;}
+    public:
+        inline Project& zlibPath(const z::string& val) { _zlibPath = val; return z::ref(this);}
+        inline const z::string& zlibPath() const {return _zlibPath;}
+    public:
         inline Config& config(const z::string& name) {
             ConfigList::iterator it = _configList.find(name);
             if(it == _configList.end()) {
@@ -2226,10 +2231,11 @@ namespace Ast {
             if(it != _configList.end()) {
                 throw z::Exception("Config", z::string("Config already exists"));
             }
-            _configList[name] = new Config(name);
-            return z::ref(_configList[name]);
+            _configList[name] = new Config();
+            Config& cfg = z::ref(_configList[name]);
+            cfg.name(name);
+            return cfg;
         }
-
     public:
         inline const ConfigList& configList() const {return _configList;}
     public:
@@ -2245,6 +2251,8 @@ namespace Ast {
         z::string _cppExt;
         z::string _zppExt;
         Verbosity::T _verbosity;
+        z::string _zexePath;
+        z::string _zlibPath;
     };
 } // Ast
 } // ns z

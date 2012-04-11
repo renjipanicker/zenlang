@@ -84,7 +84,7 @@ namespace z
         }
     }
 
-    class Parser
+    class ClParser
     {
     private:
         typedef z::olist<Internal::OptionBase> List_t;
@@ -101,10 +101,10 @@ namespace z
         typedef z::odict<z::string, Command > CmdMap_t;
 
     public:
-        Parser() : _hasCommands(false), _command(0) {}
+        ClParser() : _hasCommands(false), _command(0) {}
 
     public:
-        inline Parser::Command& getCommandMap(const z::string& cmd);
+        inline ClParser::Command& getCommandMap(const z::string& cmd);
         inline void addCommand(const z::string& cmd, int value, const z::string& desc);
 
         template <typename T>
@@ -138,18 +138,18 @@ namespace z
         z::string _error;
     };
 
-    inline const int& Parser::getCommand() const
+    inline const int& ClParser::getCommand() const
     {
         assert(_cmdMap.size() > 0);
         return _command;
     }
 
-    inline const z::string& Parser::getError() const
+    inline const z::string& ClParser::getError() const
     {
         return _error;
     }
 
-    inline Parser::Command& Parser::getCommandMap(const z::string& cmd) {
+    inline ClParser::Command& ClParser::getCommandMap(const z::string& cmd) {
         if(_cmdMap[cmd] == 0) {
             Command* nval = new Command();
             _cmdMap.set(cmd, nval);
@@ -157,7 +157,7 @@ namespace z
         return _cmdMap.at(cmd);
     }
 
-    inline void Parser::addCommand(const z::string& cmd, int value, const z::string& desc)
+    inline void ClParser::addCommand(const z::string& cmd, int value, const z::string& desc)
     {
         assert(_cmdMap.find(cmd) == _cmdMap.end());
         _hasCommands = true;
@@ -167,7 +167,7 @@ namespace z
     }
 
     template <typename T>
-    inline void Parser::addMap(Command& cmd, const z::string& sname, const z::string& lname, const z::string& desc, T& val)
+    inline void ClParser::addMap(Command& cmd, const z::string& sname, const z::string& lname, const z::string& desc, T& val)
     {
         Internal::OptionBase* opt = new Internal::Option<T>(sname, lname, desc, val);
         cmd._list.add(opt);
@@ -177,7 +177,7 @@ namespace z
     }
 
     template <typename T>
-    inline void Parser::add(const z::string& cmd, const z::string& sname, const z::string& lname, const z::string& desc, T& val)
+    inline void ClParser::add(const z::string& cmd, const z::string& sname, const z::string& lname, const z::string& desc, T& val)
     {
         assert(_hasCommands);
         Command& cmdd = _cmdMap.at(cmd);
@@ -185,14 +185,14 @@ namespace z
     }
 
     template <typename T>
-    inline void Parser::add(const z::string& sname, const z::string& lname, const z::string& desc, T& val)
+    inline void ClParser::add(const z::string& sname, const z::string& lname, const z::string& desc, T& val)
     {
         assert(!_hasCommands);
         Command& cmd = getCommandMap("");
         addMap(cmd, sname, lname, desc, val);
     }
 
-    inline void Parser::show(std::ostream& str) const
+    inline void ClParser::show(std::ostream& str) const
     {
         if(_hasCommands)
         {
@@ -232,7 +232,7 @@ namespace z
         }
     }
 
-    inline bool Parser::hasCommandMap(z::list<z::string>::const_iterator& it)
+    inline bool ClParser::hasCommandMap(z::list<z::string>::const_iterator& it)
     {
         if(_hasCommands) {
             z::string cmd = *it;
@@ -246,7 +246,7 @@ namespace z
         return true;
     }
 
-    inline const Parser::Command& Parser::getCommandMap(z::list<z::string>::const_iterator& it)
+    inline const ClParser::Command& ClParser::getCommandMap(z::list<z::string>::const_iterator& it)
     {
         if(_hasCommands) {
             z::string cmd = *it;
@@ -260,7 +260,7 @@ namespace z
         return _cmdMap.at("");
     }
 
-    inline int Parser::parse(const z::list<z::string>& args)
+    inline int ClParser::parse(const z::list<z::string>& args)
     {
         z::list<z::string>::const_iterator it = args.begin();
         z::list<z::string>::const_iterator ite = args.end();
@@ -314,7 +314,7 @@ namespace z
         return 0;
     }
 
-    inline int Parser::parse(int argc, char* argv[])
+    inline int ClParser::parse(int argc, char* argv[])
     {
         z::list<z::string> args;
         for(int i = 0; i < argc; ++i)

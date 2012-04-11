@@ -65,7 +65,7 @@ public:
 
         char* s = buf;
         for(z::string::const_iterator it = txt.begin(); it != txt.end(); ++it) {
-            *s = *it;
+            *s = (char)*it;
             ++s;
         }
         *s = 0;

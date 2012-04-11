@@ -41,6 +41,7 @@
 %include {
     #ifdef _WIN32
     #pragma warning( disable : 4100)  /* unreferenced formal parameter */
+    #pragma warning( disable : 4702)  /* unreachable code */
     #else
     #pragma GCC diagnostic ignored "-Wunused-variable"
     #pragma GCC diagnostic ignored "-Wunused-parameter"

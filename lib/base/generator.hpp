@@ -31,34 +31,6 @@ private:
     static char ind[Size];
     static int _indent;
 };
-
-//@ move to String::
-inline z::string getBaseName(const z::string& filename) {
-    z::string basename = filename;
-    z::string::size_type idx = -1;
-
-    // strip last extension, if any
-    idx = basename.rfind('.');
-    if(idx != z::string::npos)
-        basename = basename.substr(0, idx);
-
-    // strip path, if any
-    idx = basename.rfind('/');
-    if(idx != z::string::npos)
-        basename = basename.substr(idx + 1);
-
-    return basename;
-}
-
-inline z::string getExtention(const z::string& filename) {
-    z::string::size_type idx = -1;
-
-    // find last extension, if any
-    idx = filename.rfind('.');
-    if(idx != z::string::npos)
-        return filename.substr(idx + 1);
-    return "";
-}
 }
 
 #define INDENT z::Indent _ind_

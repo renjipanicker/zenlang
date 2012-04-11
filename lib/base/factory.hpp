@@ -14,9 +14,6 @@ namespace Ast {
         ~Factory();
 
     public:
-        void initUnit();
-
-    public:
         inline const Unit& unit() const {return _module.unit();}
         inline Unit& unit() {return _module.unit();}
         inline const z::string& filename() const {return _module.filename();}

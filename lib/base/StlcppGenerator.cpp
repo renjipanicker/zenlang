@@ -1544,7 +1544,7 @@ private:
 
 inline void z::StlcppGenerator::Impl::run() {
     Indent::init();
-    z::string basename = getBaseName(_module.filename());
+    z::string basename = z::file::getBaseName(_module.filename());
     z::file::mkpath(_config.apidir() + "/");
     z::file::mkpath(_config.srcdir() + "/");
     z::ofile ofHdr(_config.apidir() + "/" + basename + ".hpp");

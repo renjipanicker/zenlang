@@ -83,7 +83,17 @@
     #define snprintf _snprintf_s
     #define sprintf sprintf_s
     #define sscanf sscanf_s
-    #pragma warning (disable:4355) // this used in base ctor initialization.
+
+    // "this used in base ctor initialization."
+    // safe to disable this because ctors are used only for
+    // initializing by reference we never implement any functionality in ctors.
+    #pragma warning (disable:4355)
+
+    // assignment operator could not be generated
+    // caused due to const members in struct's and classes. 
+    // can disable this because an error will be raised if an actual assignment
+    // operation is attempted later on.
+    #pragma warning (disable:4512)
 #else
 #endif
 
@@ -91,6 +101,7 @@
     # include <string>
     # include <vector>
     # include <list>
+    # include <set>
     # include <map>
     # include <iterator>
     # include <algorithm>

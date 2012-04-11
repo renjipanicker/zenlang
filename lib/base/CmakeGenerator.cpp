@@ -18,7 +18,7 @@ private:
 inline void z::CmakeGenerator::Impl::generateProject(const z::Ast::Config& config, z::ofile& os) {
     os() << "CMAKE_MINIMUM_REQUIRED(VERSION 2.6)" << std::endl;
     os() << "PROJECT(" << _project.name() << ")\n";
-    os() << "SET(ZEN_ROOT \"" << config.zlibPath() << "\")" << std::endl;
+    os() << "SET(ZEN_ROOT \"" << _project.zlibPath() << "\")" << std::endl;
     if(config.gui()) {
         os() << "SET(ZEN_GUI 1)" << std::endl;
     }
@@ -52,12 +52,12 @@ inline void z::CmakeGenerator::Impl::generateProject(const z::Ast::Config& confi
 
     os() << "SET(project_SOURCES ${project_SOURCES} ${ZEN_ROOT}/include/base/zenlang.cpp)" << std::endl;
 
-    z::string zexePath = config.zexePath();
+    z::string zexePath = _project.zexePath();
     zexePath.replace("\\", "/");
     for(z::Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
         const z::string& filename = *it;
-        z::string basename = getBaseName(filename);
-        z::string ext = getExtention(filename);
+        z::string basename = z::file::getBaseName(filename);
+        z::string ext = z::file::getExtention(filename);
 
         if((_project.hppExt().find(ext) != z::string::npos) || (_project.cppExt().find(ext) != z::string::npos)) {
             os() << "SET(project_SOURCES ${project_SOURCES} " << filename << ")" << std::endl;
