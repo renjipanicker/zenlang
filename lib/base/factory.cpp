@@ -59,7 +59,7 @@ inline const z::Ast::Expr& z::Ast::Factory::getDefaultValue(const z::Ast::TypeSp
         }
         if(tdName == "ptr") {
             z::Ast::Token value(name.filename(), name.row(), name.col(), "0");
-            z::Ast::ConstantIntExpr& expr = aConstantIntExpr(value);
+            z::Ast::ConstantNullExpr& expr = aConstantNullExpr(value);
             return expr;
         }
     }
@@ -76,6 +76,13 @@ inline const z::Ast::Expr& z::Ast::Factory::getDefaultValue(const z::Ast::TypeSp
         return typeSpecMemberExpr;
     }
 
+    const z::Ast::StructDecl* sl = dynamic_cast<const z::Ast::StructDecl*>(ts);
+    if(sl != 0) {
+        z::Ast::Token value(name.filename(), name.row(), name.col(), "0");
+        z::Ast::ConstantNullExpr& expr = aConstantNullExpr(value);
+        return expr;
+    }
+
     const z::Ast::StructDefn* sd = dynamic_cast<const z::Ast::StructDefn*>(ts);
     if(sd != 0) {
         z::Ast::StructInstanceExpr* expr = aStructInstanceExpr(name, z::ref(sd));
@@ -89,7 +96,7 @@ inline const z::Ast::Expr& z::Ast::Factory::getDefaultValue(const z::Ast::TypeSp
         return z::ref(expr);
     }
 
-    throw z::Exception("NodeFactory", zfmt(name, "No default value for type %{s}").arg("s", z::ref(ts).name() ));
+    throw z::Exception("", zfmt(name, "No default value for type %{s}").arg("s", z::ref(ts).name() ));
 }
 
 inline const z::Ast::Expr& z::Ast::Factory::convertExprToExpectedTypeSpec(const z::Ast::Token& pos, const z::Ast::Expr& initExpr) {
@@ -106,6 +113,16 @@ inline const z::Ast::Expr& z::Ast::Factory::convertExprToExpectedTypeSpec(const 
         const z::Ast::TemplateDefn* td = dynamic_cast<const z::Ast::TemplateDefn*>(z::ptr(z::ref(qts).typeSpec()));
         if((td) && (z::ref(td).name().string() == "ptr")) {
             return initExpr;
+        }
+
+        // if expected type is a struct-decl, no checking
+        const z::Ast::StructDecl* sd = dynamic_cast<const z::Ast::StructDecl*>(z::ptr(z::ref(qts).typeSpec()));
+        if(sd) {
+            // check if rhs typespec is a null-expr
+            const z::Ast::ConstantNullExpr* cne = dynamic_cast<const z::Ast::ConstantNullExpr*>(z::ptr(initExpr));
+            if(cne) {
+                return initExpr;
+            }
         }
 
         // check if rhs is a pointer to lhs, if so, auto-convert
@@ -125,7 +142,7 @@ inline const z::Ast::Expr& z::Ast::Factory::convertExprToExpectedTypeSpec(const 
         Unit::CoercionResult::T mode = Unit::CoercionResult::None;
         const z::Ast::QualifiedTypeSpec* cqts = unit().canCoerceX(z::ref(qts), initExpr.qTypeSpec(), mode);
         if(mode != Unit::CoercionResult::Lhs) {
-            throw z::Exception("NodeFactory", zfmt(pos, "Cannot convert expression from '%{f}' to '%{t}' (%{m})")
+            throw z::Exception("", zfmt(pos, "Cannot convert expression from '%{f}' to '%{t}' (%{m})")
                                .arg("f", ZenlangNameGenerator().qtn(initExpr.qTypeSpec()) )
                                .arg("t", ZenlangNameGenerator().qtn(z::ref(qts)) )
                                .arg("m", mode )
@@ -1031,6 +1048,11 @@ z::Ast::FunctionReturnStatement* z::Ast::Factory::aFunctionReturnStatement(const
     }
     z::Ast::FunctionReturnStatement& returnStatement = unit().addNode(new z::Ast::FunctionReturnStatement(pos, exprList, z::ref(sig)));
     return z::ptr(returnStatement);
+}
+
+z::Ast::ExitStatement* z::Ast::Factory::aExitStatement(const z::Ast::Token& pos, const z::Ast::Expr& expr) {
+    z::Ast::ExitStatement& exitStatement = unit().addNode(new z::Ast::ExitStatement(pos, expr));
+    return z::ptr(exitStatement);
 }
 
 z::Ast::CompoundStatement* z::Ast::Factory::aStatementList(z::Ast::CompoundStatement& list, const z::Ast::Statement& statement) {

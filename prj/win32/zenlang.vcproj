@@ -41,7 +41,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)/../../lib&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\lib&quot;;&quot;$(ProjectDir)&quot;"
 				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;UNIT_TEST"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -117,7 +117,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(ProjectDir)/../../lib&quot;"
+				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\lib&quot;;&quot;$(ProjectDir)&quot;"
 				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;UNIT_TEST"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -244,12 +244,30 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\lib\base\lexerGen.hpp"
-			>
-		</File>
-		<File
 			RelativePath="..\..\lib\base\lexerGen.re"
 			>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Compiling $(InputPath)"
+					CommandLine="$(ProjectDir)\..\..\tools\re2c -f -u -c -i -o $(InputName).hpp $(InputPath)"
+					AdditionalDependencies="parserGen.hpp"
+					Outputs="$(InputName).hpp"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Compiling $(InputPath)"
+					CommandLine="$(ProjectDir)\..\..\tools\re2c -f -u -c -i -o $(InputName).hpp $(InputPath)"
+					AdditionalDependencies="parserGen.hpp"
+					Outputs="$(InputName).hpp"
+				/>
+			</FileConfiguration>
 		</File>
 		<File
 			RelativePath="..\..\src\main.cpp"
@@ -272,16 +290,28 @@
 			>
 		</File>
 		<File
-			RelativePath="..\..\lib\base\parserGen.h"
-			>
-		</File>
-		<File
-			RelativePath="..\..\lib\base\parserGen.hpp"
-			>
-		</File>
-		<File
 			RelativePath="..\..\lib\base\parserGen.y"
 			>
+			<FileConfiguration
+				Name="Debug|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Compiling $(InputPath)"
+					CommandLine="$(ProjectDir)\..\..\tools\lemon o=.hpp -q $(InputPath)&#x0D;&#x0A;"
+					Outputs="$(ProjectDir)\parserGen.hpp"
+				/>
+			</FileConfiguration>
+			<FileConfiguration
+				Name="Release|Win32"
+				>
+				<Tool
+					Name="VCCustomBuildTool"
+					Description="Compiling $(InputPath)"
+					CommandLine="$(ProjectDir)\..\..\tools\lemon o=.hpp -q $(InputPath)&#x0D;&#x0A;"
+					Outputs="$(ProjectDir)\parserGen.hpp"
+				/>
+			</FileConfiguration>
 		</File>
 		<File
 			RelativePath="..\..\lib\base\pch.hpp"

@@ -13,8 +13,7 @@ struct WinProc : public Window::Native::WndProc {
         switch (message) {
             case WM_COMMAND:
                 MenuItem::OnSelect::Handler::_In in;
-                if(onMenuItemSelectHandlerList.runHandler(LOWORD(lParam), in))
-                    return 1;
+                onMenuItemSelectHandlerList.runHandler(LOWORD(lParam), in);
                 break;
         }
         return 0;
@@ -27,14 +26,15 @@ static WinProc s_winProc;
 MenuItem::Handle MenuItem::Create::run(const Menu::Handle& pmenu, const MenuItem::Definition& def) {
 #if defined(WIN32)
     MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
-    int wm = Window::Native::getNextWmID();
-    ::InsertMenu(Menu::impl(pmenu)._menu, -1, MF_BYPOSITION, wm, z::s2e(def.label).c_str());
+    uint32_t wm = Window::Native::getNextWmID();
+    ::InsertMenu(Menu::impl(pmenu)._menu, (UINT)-1, MF_BYPOSITION, wm, z::s2e(def.label).c_str());
     z::ref(impl)._id = wm;
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
     z::ref(impl)._menuItem = gtk_menu_item_new_with_label(z::s2e(def.label).c_str());
     gtk_menu_shell_append (GTK_MENU_SHELL (Menu::impl(pmenu)._menu), z::ref(impl)._menuItem);
+#else
+#error "Unimplemented GUI mode"
 #endif
 
     MenuItem::Handle handle;
@@ -55,8 +55,9 @@ void MenuItem::OnSelect::addHandler(const MenuItem::Handle& menuitem, Handler* h
     MenuItem::OnSelect::add(handler);
 #if defined(WIN32)
     MenuItemImpl::onMenuItemSelectHandlerList.addHandler(MenuItem::impl(menuitem)._id, handler);
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     g_signal_connect (G_OBJECT (MenuItem::impl(menuitem)._menuItem), "activate", G_CALLBACK (onMenuItemSelectClick), handler);
+#else
+#error "Unimplemented GUI mode"
 #endif
 }

@@ -3,8 +3,13 @@ namespace TextEdit;
 
 public struct Definition : Window::Definition {
     auto multiline = false;
+    auto readonly = false;
+    auto wordwrap = true;
 };
 
 public function Window::Handle Create(const Window::Handle& parentWin, const Definition& defn) native;
 public function void AppendText(const Window::Handle& window, const string& text) native;
+public function void Clear(const Window::Handle& window) native;
+public function string GetText(const Window::Handle& window) native;
+
 public event(const Window::Handle& textedit) native => function void OnEnter();

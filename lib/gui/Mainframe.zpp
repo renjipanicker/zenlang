@@ -3,6 +3,7 @@ include gui::Window public;
 namespace MainFrame;
 
 public struct Definition : Window::Definition {
+    auto iconres = "";
 };
 
 public function (Window::Handle window)Create(const Definition& defn) native;

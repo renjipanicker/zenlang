@@ -12,13 +12,6 @@
 inline void trace(const char* txt, ...) {unused(txt);} // empty inline function gets optimized away
 #endif
 
-#if !defined(CHAR_WIDTH_08) && !defined(CHAR_WIDTH_16) && !defined(CHAR_WIDTH_32)
-// choose any one of these 3...
-//#define CHAR_WIDTH_08
-//#define CHAR_WIDTH_16
-#define CHAR_WIDTH_32
-#endif
-
 namespace z {
     template <typename T>
     inline T& ref(T* t) {
@@ -79,10 +72,10 @@ namespace z {
         inline size_type size() const {return _val.size();}
         inline size_type length() const {return _val.length();}
 
-        inline bool operator==(const stringT& rhs) const {return (_val == rhs._val);}
-        inline bool operator!=(const stringT& rhs) const {return (_val != rhs._val);}
-        inline bool operator< (const stringT& rhs) const {return (_val <  rhs._val);}
-        inline bool operator> (const stringT& rhs) const {return (_val >  rhs._val);}
+        inline bool operator==(const stringT& rhs) const {return (_val.compare(rhs._val) == 0);}
+        inline bool operator!=(const stringT& rhs) const {return (_val.compare(rhs._val) != 0);}
+        inline bool operator< (const stringT& rhs) const {return (_val.compare(rhs._val) < 0);}
+        inline bool operator> (const stringT& rhs) const {return (_val.compare(rhs._val) > 0);}
 
         inline charT at(const size_type& idx) const {return _val.at(idx);}
         inline stringT substr(const size_type& from, const size_type& len) const {return _val.substr(from, len);}
@@ -133,6 +126,7 @@ namespace z {
         explicit inline bstring() {}
         inline bstring(const charT* s) : _val(s) {}
         inline bstring(const sstringT& s) : _val(s) {}
+        inline bstring(const bstring& src) : _val(src._val) {}
         inline bstring(const size_type& count, const charT& ch) : _val(count, ch) {}
     protected:
         sstringT _val;
@@ -146,6 +140,7 @@ namespace z {
         inline string08(const char* s) : BaseT() {append08(s);}
         inline string08(const BaseT::sstringT& s) : BaseT(s) {}
         inline string08(const size_type& count, const char_t& ch) : BaseT(count, (char08_t)ch) {}
+        inline string08(const string08& src) : BaseT(src) {}
     };
 
     // 16 bit unicode string
@@ -157,6 +152,7 @@ namespace z {
         inline string16(const char16_t* s) : BaseT(s) {}
         inline string16(const BaseT::sstringT& s) : BaseT(s) {}
         inline string16(const size_type& count, const char_t& ch) : BaseT(count, (char08_t)ch) {}
+        inline string16(const string16& src) : BaseT(src) {}
     };
 
     // 32 bit unicode string
@@ -168,6 +164,7 @@ namespace z {
         inline string32(const char32_t* s) : BaseT(s) {}
         inline string32(const BaseT::sstringT& s) : BaseT(s) {}
         inline string32(const size_type& count, const char_t& ch) : BaseT(count, (char08_t)ch) {}
+        inline string32(const string32& src) : BaseT(src) {}
     };
 
     // define estring (encoded-string) as 8bit utf8 string
@@ -371,12 +368,25 @@ namespace z {
         return type_name<T>();
     }
 
-    inline void mlog(const z::string& src, const z::string& msg) {std::cout << src << " : " << msg << std::endl;}
-    inline void elog(const z::string& src, const z::string& msg) {std::cout << src << " : " << msg << std::endl;}
+    inline void writelog(const z::string& src, const z::string& msg) {
+        z::string s;
+        if(src.length() > 0) {
+            s += src;
+            s += " : ";
+        }
+        s += msg;
+        std::cout << s << std::endl;
+#if defined(GUI) && defined(WIN32)
+        trace("%s\n", z::s2e(s).c_str());
+#endif
+    }
+
+    inline void mlog(const z::string& src, const z::string& msg) {writelog(src, msg);}
+    inline void elog(const z::string& src, const z::string& msg) {writelog(src, msg);}
 
     class Exception {
     public:
-        explicit inline Exception(const z::string& src, const z::string& msg) : _msg(msg) {elog(src, _msg);}
+        explicit inline Exception(const z::string& src, const z::string& msg) : _msg(msg) {elog(src, _msg); assert(false);}
     private:
         const z::string _msg;
     };
@@ -1190,6 +1200,14 @@ namespace z {
         inline z::GlobalContext& ctx() {return _ctx.get();}
 
     private:
+        /// \brief runs the main loop, throws exceptions
+        inline int execEx();
+
+        /// \brief Called on exit
+        /// This function is implemented in ApplicationImpl.cpp
+        void onExit();
+
+    private:
         z::autoptr<z::GlobalContext> _ctx;
         z::stringlist _argl;
         int _argc;
@@ -1199,4 +1217,24 @@ namespace z {
 
     /// \brief Provides read-only access to singleton app-instance
     const z::Application& app();
+
+    /// \brief Simple mechanism for tracing function calls.
+    struct Tracer {
+        inline Tracer(const z::string& cName, const z::string& fName) : _cName(cName), _fName(fName) {
+            z::mlog(_cName, z::string("%{n} enter").arg("n", _fName));
+        }
+
+        inline ~Tracer() {
+            z::mlog(_cName, z::string("%{n} leave").arg("n", _fName));
+        }
+
+    private:
+        z::string _cName;
+        z::string _fName;
+    };
+
 }
+
+#define _TRACE(c, f) z::Tracer _s_(c, f)
+#define DISABLE_ASSIGNMENT(c) private: inline c& operator=(const c& /*src*/){throw z::Exception("", z::string(#c));}
+#define DISABLE_COPYCTOR(c) private: inline c(const c& /*src*/){throw z::Exception("", z::string(#c));}

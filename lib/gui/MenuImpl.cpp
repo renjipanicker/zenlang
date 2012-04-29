@@ -10,11 +10,12 @@ Menu::Handle Menu::Create::run(const Window::Handle& window, const Menu::Definit
     Menu::HandleImpl* impl = new Menu::HandleImpl();
     z::ref(impl)._menu = ::CreatePopupMenu();
     z::ref(impl)._window = Window::impl(window)._hWindow;
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     Menu::HandleImpl* impl = new Menu::HandleImpl();
     z::ref(impl)._menu = gtk_menu_new();
     unused(window);
+#else
+#error "Unimplemented GUI mode"
 #endif
     Menu::Handle handle;
     handle._wdata<Menu::Handle>(impl);
@@ -46,11 +47,12 @@ void Menu::ShowAt::run(const Menu::Handle& handle, const int& x, const int& y) {
 #if defined(WIN32)
     ::SetForegroundWindow(Menu::impl(handle)._window);
     ::TrackPopupMenu(Menu::impl(handle)._menu, TPM_BOTTOMALIGN, x, y, 0, Menu::impl(handle)._window, NULL );
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     gtk_widget_show_all (Menu::impl(handle)._menu);
     pos p(x, y);
     gtk_menu_popup(GTK_MENU(Menu::impl(handle)._menu), NULL, NULL, getMenuPosition, &p, 0, gtk_get_current_event_time());
+#else
+#error "Unimplemented GUI mode"
 #endif
 }
 
@@ -60,9 +62,10 @@ void Menu::Show::run(const Menu::Handle& handle) {
     ::GetCursorPos(&pt);
     ::SetForegroundWindow(Menu::impl(handle)._window);
     ::TrackPopupMenu(Menu::impl(handle)._menu, TPM_BOTTOMALIGN, pt.x, pt.y, 0, Menu::impl(handle)._window, NULL );
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     gtk_widget_show_all (Menu::impl(handle)._menu);
     gtk_menu_popup(GTK_MENU(Menu::impl(handle)._menu), NULL, NULL, getMenuPosition, 0, 0, gtk_get_current_event_time());
+#else
+#error "Unimplemented GUI mode"
 #endif
 }

@@ -17,7 +17,7 @@ inline z::string z::Compiler::findImport(const z::string& filename) {
         return cfile;
 
     // next check zen lib dir
-    cfile = _project.zlibPath() + "/include/" + filename;
+    cfile = _project.zlibPath() + "/" + filename;
     if(checkFile(cfile))
         return cfile;
 
@@ -143,9 +143,13 @@ const z::string ifile =
 "public routine void verify(...) native;\n"
 "public routine void sizeof(...) native;\n"
 "public routine void length(...) native;\n"
-
-"public function (int code)main(const list<string>& argl) abstract;\n"
+"public typedef stringlist list<string>;\n"
+"public function (int code)main(const stringlist& argl) abstract;\n"
 "public function (int passed)test() abstract;\n"
+
+"struct SourceFile {"
+"    string filename;\n"
+"};\n"
 
 "struct Config {"
 "    enum BuildMode {"
@@ -159,14 +163,18 @@ const z::string ifile =
 "    bool gui;\n"
 "    bool dbg;\n"
 "    bool isTest;\n"
+"    bool isAbstract;\n"
+"    string baseConfig;\n"
 "    string olang;\n"
+"    string pch;\n"
+"    string pchfile;\n"
 "    string apidir;\n"
 "    string srcdir;\n"
 "    string zexePath;\n"
 "    string zlibPath;\n"
 "    list<string> includePathList;\n"
 "    list<string> includeFileList;\n"
-"    list<string> sourceFileList;\n"
+"    list<SourceFile> sourceFileList;\n"
 "    list<string> linkFileList;\n"
 "};\n"
 
@@ -187,7 +195,7 @@ const z::string ifile =
 ;
 
 void z::Compiler::initContext(z::Ast::Unit& unit) {
-    z::Ast::Module module(unit, "core.ipp", 1);
+    z::Ast::Module module(unit, "corex.ipp", 1);
     Parser parser;
     Lexer lexer(parser);
     compileString(module, lexer, ifile, true);

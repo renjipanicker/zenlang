@@ -2,7 +2,7 @@
 #include "base/base.hpp"
 #include "base/factory.hpp"
 #include "base/lexer.hpp"
-#include "base/parserGen.h"
+#include "parserGen.h"
 
 // the char width could be 8 bit, 16, or 32 in future.
 typedef char inputChar_t;
@@ -211,13 +211,11 @@ inline z::Lexer::Impl::~Impl() {
 
 inline void z::Lexer::Impl::dump(const z::string& x) const {
     unused(x);
-//    trace("%s: buffer %lu, bufferEnd %lu, start %lu, marker %lu, cursor %lu, limit %lu, limit-cursor %ld, text '%s'\n",
-//          x.c_str(), (unsigned long)_buffer, (unsigned long)_bufferEnd, (unsigned long)_start, (unsigned long)_marker, (unsigned long)_cursor, (unsigned long)_limit, _limit - _cursor, "" /*_buffer*/);
+    //printf("%s: buffer %lu, bufferEnd %lu, start %lu, marker %lu, cursor %lu, limit %lu, limit-cursor %ld, text %lu, text '%s'\n",
+    //    z::s2e(x).c_str(), (unsigned long)_buffer, (unsigned long)_bufferEnd, (unsigned long)_start, (unsigned long)_marker, (unsigned long)_cursor, (unsigned long)_limit, _limit - _cursor, (unsigned long)_text, _text);
 }
 
 void z::Lexer::Impl::push(ParserContext& pctx, const char* input, std::streamsize inputSize, const bool& isEof) {
-//    trace("push(0): isEof %d, inputSize %lu, input '%s'\n", isEof, inputSize, input);
-
     /*
      * We need a small overhang after EOF on the stream which is
      * equal to the length of the largest keyword (maxFill). This is
@@ -251,7 +249,6 @@ void z::Lexer::Impl::push(ParserContext& pctx, const char* input, std::streamsiz
     std::streamsize allocated = _bufferEnd - _buffer;
 
     dump("push(1)");
-//    trace("maxFill %lu, required %lu, used %lu, needed %lu, allocated %lu\n", maxFill, required, used, needed, allocated);
 
     if(allocated < needed) {
         std::streamsize solOffset    = _sol    - _buffer;
@@ -266,7 +263,7 @@ void z::Lexer::Impl::push(ParserContext& pctx, const char* input, std::streamsiz
 
         _sol    = _buffer + solOffset;
         _start  = _buffer + startOffset;
-        _text   = textOffset?(_buffer + textOffset):0;
+        _text   = _text?(_buffer + textOffset):0;
         _marker = _buffer + markerOffset;
         _cursor = _buffer + cursorOffset;
         _limit  = _buffer + limitOffset;
@@ -279,34 +276,32 @@ void z::Lexer::Impl::push(ParserContext& pctx, const char* input, std::streamsiz
     assert((_limit + required) <= _bufferEnd);
     memcpy(_limit, input, (size_t)inputSize);
     _limit += inputSize;
-    dump("push(2.1)");
+    dump("push(3)");
     assert(_limit <= _bufferEnd);
     memset(_limit, 0, _bufferEnd - _limit + 0);
     _limit += maxFill;
     assert(_limit <= _bufferEnd);
 
-//    for(char* x = _buffer; x <= _bufferEnd; x++) {
-//        trace("%ld %d %c\n", x - _buffer + 1, *x, *x);
-//    }
-
-    dump("push(3)");
+    dump("push(4)");
 
     lex(pctx);
 
-    dump("push(4)");
+    dump("push(5)");
 
     //  Once we get here, we can get rid of everything before start and after limit.
-    std::streamsize consumed = _start - _buffer;
-//    trace("consumed %lu, maxFill %lu, *cursor %d, *cursor %c\n", consumed, maxFill, *_cursor, *_cursor);
+    char* start = _start;
+    if(_text < _start)
+        start = _text;
+    std::streamsize consumed = start - _buffer;
     if(consumed > 0) {
-        memmove(_buffer, _start, _limit - _start);
+        memmove(_buffer, start, _limit - start);
         _start -= consumed;
         _text -= (_text > 0)?consumed:0;
         _marker -= consumed;
         _cursor -= consumed;
         _limit -= consumed;
     }
-    dump("push(5)");
+    dump("push(6)");
 }
 
 z::Lexer::Lexer(Parser& parser) : _impl(0) {_impl = new Impl(parser);}

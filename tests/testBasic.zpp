@@ -547,3 +547,13 @@ struct MyListStruct {
 struct MyDictStruct {
     dict<string, int > childList = [string:int];
 };
+
+// test case for protected struct's
+protected struct MyProtectedStruct {
+    int x;
+};
+
+function testProtectedStruct : test {
+    MyProtectedStruct aps0 = struct {x:3;};
+    return (true);
+}

@@ -7,8 +7,9 @@ namespace Ast {
         /// \brief The access type for any user-defined TypeSpec.
         enum T {
             Private,     /// TypeSpec is visible only within current compilation unit (default)
+            Protected,   /// Applicable only for struct's. TypeSpec is a pimpl-struct.
             Public,      /// TypeSpec is visible outside current compilation unit
-            Internal,    /// TypeSpec is visible anywhere within current module
+            Internal,    /// TypeSpec is a struct that is only exposed as a reference.
             External,    /// TypeSpec is visible outside current module (dllexport)
             Parent       /// TypeSpec inherits the access type of its parent
         };
@@ -59,6 +60,9 @@ namespace Ast {
     //////////////////////////////////////////////////////////////////
     template <typename T>
     struct Ptr {
+    private:
+        T* _value;
+    public:
         inline void dec() {
             if(_value) {
                 typename T::RefCnt_t rc = z::ref(_value).dec();
@@ -81,7 +85,7 @@ namespace Ast {
             return z::ref(_value);
         }
 
-        template <typename X> inline bool check() const {
+        template <typename X> inline bool isOfT() const {
             return (dynamic_cast<const X*>(_value) != 0);
         }
 
@@ -111,8 +115,6 @@ namespace Ast {
             if(src._value)
                 inc(z::ref(src._value));
         }
-    private:
-        T* _value;
     };
 
     //////////////////////////////////////////////////////////////////
@@ -2020,6 +2022,16 @@ namespace Ast {
         const FunctionSig& _sig;
     };
 
+    class ExitStatement : public Statement {
+    public:
+        inline ExitStatement(const Token& pos, const Expr& expr) : Statement(pos), _expr(expr) {}
+        inline const Expr& expr() const {return _expr;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Expr& _expr;
+    };
+
     class CompoundStatement : public Statement {
     public:
         typedef SLst<const Statement> List;
@@ -2066,6 +2078,7 @@ namespace Ast {
         virtual void visit(const AddEventHandlerStatement& node) = 0;
         virtual void visit(const RoutineReturnStatement& node) = 0;
         virtual void visit(const FunctionReturnStatement& node) = 0;
+        virtual void visit(const ExitStatement& node) = 0;
         virtual void visit(const CompoundStatement& node) = 0;
     };
 
@@ -2126,7 +2139,7 @@ namespace Ast {
         };
         typedef z::list<z::string> PathList;
     public:
-        inline Config() : _buildMode(BuildMode::Executable), _gui(false), _debug(true), _test(true), _olanguage("stlcpp"), _pch("zenlang.hpp"), _apidir("."), _srcdir(".") {}
+        inline Config() : _buildMode(BuildMode::Executable), _gui(false), _debug(true), _test(true), _abstract(false), _olanguage("stlcpp"), _pch("zenlang.hpp"), _pchfile("zenlang.cpp"), _apidir("."), _srcdir(".") {}
     public:
         inline Config& name(const z::string& val) { _name = val; return z::ref(this);}
         inline const z::string& name() const {return _name;}
@@ -2140,12 +2153,18 @@ namespace Ast {
         inline const bool& debug() const {return _debug;}
         inline Config& test(const bool& val) { _test = val; return z::ref(this);}
         inline const bool& test() const {return _test;}
+        inline Config& abstract(const bool& val) { _abstract = val; return z::ref(this);}
+        inline const bool& abstract() const {return _abstract;}
+        inline Config& baseConfig(const z::string& val) { _baseConfig = val; return z::ref(this);}
+        inline const z::string& baseConfig() const {return _baseConfig;}
     public:
         inline Config& olanguage(const z::string& val) { _olanguage = val; return z::ref(this);}
         inline const z::string& olanguage() const {return _olanguage;}
     public:
         inline Config& pch(const z::string& val) { _pch = val; return z::ref(this);}
         inline const z::string& pch() const {return _pch;}
+        inline Config& pchfile(const z::string& val) { _pchfile = val; return z::ref(this);}
+        inline const z::string& pchfile() const {return _pchfile;}
         inline Config& apidir(const z::string& val) { _apidir = val; return z::ref(this);}
         inline const z::string& apidir() const {return _apidir;}
         inline Config& srcdir(const z::string& val) { _srcdir = val; return z::ref(this);}
@@ -2166,14 +2185,32 @@ namespace Ast {
         inline Config& addLinkFile(const z::string& file) { _linkFileList.add(file); return z::ref(this);}
         inline Config& addLinkFileList(const z::stringlist& list) { _linkFileList.append(list); return z::ref(this);}
         inline const PathList& linkFileList() const {return _linkFileList;}
+        inline void copy(const Config& src) {
+            _buildMode = src._buildMode;
+            _gui = src._gui;
+            _debug = src._debug;
+            _test = src._test;
+            _olanguage = src._olanguage;
+            _pch = src._pch;
+            _pchfile = src._pchfile;
+            _apidir = src._apidir;
+            _srcdir = src._srcdir;
+            _includePathList = src._includePathList;
+            _includeFileList = src._includeFileList;
+            _sourceFileList = src._sourceFileList;
+            _linkFileList = src._linkFileList;
+        }
     private:
         z::string _name;
         BuildMode::T _buildMode;
         bool _gui;
         bool _debug;
         bool _test;
+        bool _abstract;
+        z::string _baseConfig;
         z::string _olanguage;
         z::string _pch;
+        z::string _pchfile;
         z::string _apidir;
         z::string _srcdir;
         PathList _includePathList;

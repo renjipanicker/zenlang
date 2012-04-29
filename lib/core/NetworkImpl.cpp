@@ -1,16 +1,6 @@
 #include "zenlang.hpp"
 
-#if defined(WIN32)
-#include <WinSock2.h>
-#else
-#include <sys/stat.h>
-#include <unistd.h>
-#include <sys/socket.h>
-#include <sys/ioctl.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#endif
-
+namespace z {
 struct OnDataReceivedHandler {
     inline OnDataReceivedHandler(Response::response& r) : _ps(psProtocol), _inHeader(true), _r(r) {}
 private:
@@ -123,68 +113,78 @@ public:
     }
 };
 
-static void error(const char *msg)
-{
-    perror(msg);
-    exit(0);
-}
-
 static bool queryHttpText(const Url::url& u, OnDataReceivedHandler& drh) {
-    int sockfd, portno, n;
+#if defined(WIN32)
+    SOCKET sockfd;
+#else
+    int sockfd;
+#endif
+    int portno, n;
     struct sockaddr_in serv_addr;
     struct hostent *server;
 
-    const char* hname = z::s2e(u.host).c_str();
-    const char* port = z::s2e(u.port).c_str();
-    std::cout << "(z): Connecting to " << hname << ", port " << port << std::endl;
+    z::estring ehost = z::s2e(u.host);
+    z::estring eport = z::s2e(u.port);
+    const char* hname = ehost.c_str();
+    const char* port = eport.c_str();
     const size_t BLEN = 256;
     char buffer[BLEN];
     portno = atoi(port);
-    sockfd = socket(AF_INET, SOCK_STREAM, 0);
+
+    sockfd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+#if defined(WIN32)
+    if (sockfd == INVALID_SOCKET) {
+#else
     if (sockfd < 0) {
+#endif
         return false;
     }
     server = gethostbyname(hname);
     if (server == NULL) {
-        fprintf(stderr,"ERROR, no such host\n");
+        std::cout << "ERROR, no such host" << std::endl;
         return false;
     }
-    bzero((char *) &serv_addr, sizeof(serv_addr));
+    memset((char *) &serv_addr, 0, sizeof(serv_addr));
     serv_addr.sin_family = AF_INET;
-    bcopy((char *)server->h_addr,
-          (char *)&serv_addr.sin_addr.s_addr,
+    memcpy((char *)&serv_addr.sin_addr.s_addr,
+         (char *)server->h_addr,
           server->h_length);
-    serv_addr.sin_port = htons(portno);
+    serv_addr.sin_port = htons((u_short)portno);
     if (connect(sockfd,(struct sockaddr *) &serv_addr,sizeof(serv_addr)) < 0) {
-        error("ERROR connecting");
+        std::cout << "ERROR connecting" << std::endl;
         return false;
     }
 
-    bzero(buffer,BLEN);
+    memset(buffer, 0, BLEN);
     z::string s = "";
     if(u.querystring.length() > 0)
         s = "?";
     sprintf(buffer, "GET %s%s%s\n\n", z::s2e(u.path).c_str(), z::s2e(s).c_str(), z::s2e(u.querystring).c_str());
-    std::cout << "sending " << buffer << std::endl;
-    n = write(sockfd,buffer,strlen(buffer));
+//    std::cout << "sending " << buffer << std::endl;
+    n = send(sockfd,buffer,strlen(buffer), 0);
     if (n < 0) {
-        error("ERROR writing to socket");
+        std::cout << "ERROR writing to socket" << std::endl;
         return false;
     }
     do {
-        bzero(buffer,BLEN);
-        n = read(sockfd,buffer,BLEN-1);
+        memset(buffer, 0, BLEN);
+        n = recv(sockfd, buffer, BLEN-1, 0);
         if (n < 0) {
-            error("ERROR reading from socket");
+            std::cout << "ERROR reading from socket" << std::endl;
             break;
         }
     } while(false == drh.run(buffer));
+#if defined(WIN32)
+    closesocket(sockfd);
+#else
     close(sockfd);
+#endif
     return true;
 }
+} // namespace z
 
-bool Network::getUrl(const Url::url& u, Response::response& r) {
-    OnDataReceivedHandler drh(r);
-    queryHttpText(u, drh);
+bool Network::GetUrl(const Url::url& u, Response::response& r) {
+    z::OnDataReceivedHandler drh(r);
+    z::queryHttpText(u, drh);
     return false;
 }

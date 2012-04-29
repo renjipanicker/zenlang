@@ -40,7 +40,7 @@
 */
 #define SQLITE3_UNICODE_FOLD      /* ~ 10KB increase */
 #define SQLITE3_UNICODE_LOWER     /* ~ 10KB increase */
-/* #define SQLITE3_UNICODE_UPPER     // ~ 10KB increase */
+#define SQLITE3_UNICODE_UPPER     // ~ 10KB increase
 /* #define SQLITE3_UNICODE_TITLE     // ~ 10KB increase */
 /* #define SQLITE3_UNICODE_UNACC     // ~ 30KB increase */
                                   /* _______________ */

@@ -12,14 +12,12 @@ namespace SystrayImpl {
         virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
             if(lParam == WM_LBUTTONDOWN) {
                 Systray::OnActivation::Handler::_In in;
-                if(onSystrayActivationHandlerList.runHandler(message, in))
-                    return 1;
+                onSystrayActivationHandlerList.runHandler(message, in);
             }
 
             if((lParam == WM_RBUTTONDOWN) || (lParam == WM_CONTEXTMENU)) {
                 Systray::OnContextMenu::Handler::_In in;
-                if(onSystrayContextMenuHandlerList.runHandler(message, in))
-                    return 1;
+                onSystrayContextMenuHandlerList.runHandler(message, in);
             }
 
             return 0;
@@ -36,9 +34,10 @@ void Systray::SetTooltip::run(const Systray::Handle& handle, const z::string& te
     ni.uFlags |= NIF_TIP;
     //SysTray::Native::setIconFile(This._sysTray._impl->_ni, This._text);
     ::Shell_NotifyIcon(NIM_MODIFY, z::ptr(ni));
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     gtk_status_icon_set_tooltip_text(Systray::impl(handle)._icon, z::s2e(text).c_str());
+#else
+#error "Unimplemented GUI mode"
 #endif
 }
 
@@ -54,28 +53,31 @@ void Systray::SetIconfile::run(const Systray::Handle& handle, const z::string& f
 
     ni.uFlags |= NIF_ICON;
     ::Shell_NotifyIcon(NIM_MODIFY, z::ptr(ni));
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     unused(filename);
     gtk_status_icon_set_from_icon_name(Systray::impl(handle)._icon, GTK_STOCK_MEDIA_STOP);
+#else
+#error "Unimplemented GUI mode"
 #endif
 }
 
 void Systray::Show::run(const Systray::Handle& handle) {
 #if defined(WIN32)
     ::Shell_NotifyIcon(NIM_ADD, z::ptr(Systray::impl(handle)._ni));
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     gtk_status_icon_set_visible(Systray::impl(handle)._icon, TRUE);
+#else
+#error "Unimplemented GUI mode"
 #endif
 }
 
 void Systray::Hide::run(const Systray::Handle& handle) {
 #if defined(WIN32)
     ::Shell_NotifyIcon(NIM_DELETE, z::ptr(Systray::impl(handle)._ni));
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     gtk_status_icon_set_visible(Systray::impl(handle)._icon, FALSE);
+#else
+#error "Unimplemented GUI mode"
 #endif
 }
 
@@ -120,10 +122,11 @@ Systray::Handle Systray::Create::run(const Window::Handle& parent, const Systray
     z::ref(impl)._ni.hWnd = Window::impl(parent)._hWindow;
     z::ref(impl)._ni.uCallbackMessage = z::ref(impl)._wm;
     ::Shell_NotifyIcon(NIM_ADD, z::ptr(z::ref(impl)._ni));
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     z::ref(impl)._icon = gtk_status_icon_new_from_stock(GTK_STOCK_GO_UP);
     g_object_set_data(G_OBJECT(z::ref(impl)._icon), "impl", impl);
+#else
+#error "Unimplemented GUI mode"
 #endif
 
     if(def.tooltip.length() > 0) {
@@ -155,9 +158,10 @@ void Systray::OnActivation::addHandler(const Systray::Handle& systray, Handler* 
     Systray::OnActivation::add(handler);
 #if defined(WIN32)
     SystrayImpl::onSystrayActivationHandlerList.addHandler(Systray::impl(systray)._wm, handler);
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     g_signal_connect(G_OBJECT (Systray::impl(systray)._icon), "activate", G_CALLBACK (onSystrayActivateEvent), handler);
+#else
+#error "Unimplemented GUI mode"
 #endif
 }
 
@@ -178,8 +182,9 @@ void Systray::OnContextMenu::addHandler(const Systray::Handle& systray, Handler*
     Systray::OnContextMenu::add(handler);
 #if defined(WIN32)
     SystrayImpl::onSystrayContextMenuHandlerList.addHandler(Systray::impl(systray)._wm, handler);
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     g_signal_connect(G_OBJECT (Systray::impl(systray)._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), handler);
+#else
+#error "Unimplemented GUI mode"
 #endif
 }

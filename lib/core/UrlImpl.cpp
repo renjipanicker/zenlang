@@ -56,6 +56,7 @@ void Url::Parse(Url::url& u, const z::string& urlstr) {
     u._fullUrl<url>(urlstr);
     u._protocol<url>(protocol);
     u._host<url>(host);
+    u._port<url>(port);
     u._path<url>(path);
     u._querystring<url>(query);
 }
@@ -64,4 +65,21 @@ Url::url Url::Create(const z::string& urlstr) {
     Url::url u;
     Parse(u, urlstr);
     return u;
+}
+
+bool Url::OpenUrlString(const z::string& u) {
+#if defined(WIN32)
+    HINSTANCE rv = ::ShellExecute(NULL, "open", z::s2e(u).c_str(), NULL, NULL, SW_SHOWNORMAL);
+    unused(rv);
+#elif defined(__APPLE__)
+    z::string nu = z::string("open %{u}").arg("u", u);
+    system(z::s2e(nu).c_str());
+#else
+    assert(false);
+#endif
+    return true;
+}
+
+bool Url::Open(const url& u) {
+    return OpenUrlString(u.fullUrl);
 }

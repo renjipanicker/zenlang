@@ -3,14 +3,15 @@
 
 namespace MenuItem {
     struct HandleImpl : public Widget::Handle::Impl {
-    #if defined(WIN32)
+#if defined(WIN32)
         inline HandleImpl() : _id(0) {}
-        int _id;
-    #endif
-    #if defined(GTK)
+        uint32_t _id;
+#elif defined(GTK)
         inline HandleImpl() : _menuItem(0) {}
         GtkWidget* _menuItem;
-    #endif
+#else
+#error "Unimplemented GUI mode"
+#endif
     private:
         inline HandleImpl(const HandleImpl& /*src*/) {}
     };

@@ -17,8 +17,8 @@ namespace in {
             _value.reset(val.get());
         }
 
-        template <typename T> inline bool check() const {
-            return _value.check<T>();
+        template <typename T> inline bool isOfT() const {
+            return _value.isOfT<T>();
         }
 
         template <typename T> inline const T& value() const {
@@ -51,14 +51,14 @@ namespace in {
     }
 
     inline bool ValuePtr::isLong() const {
-        if(check<z::Ast::ConstantLongExpr>())
+        if(isOfT<z::Ast::ConstantLongExpr>())
             return true;
         return false;
     }
 
     inline bool ValuePtr::isTrue() const {
         const ValuePtr& This = z::ref(this);
-        if(check<z::Ast::ConstantLongExpr>()) {
+        if(isOfT<z::Ast::ConstantLongExpr>()) {
             if((long)This)
                 return true;
         }
@@ -779,6 +779,10 @@ namespace in {
         }
 
         virtual void visit(const z::Ast::FunctionReturnStatement& node) {
+            unused(node);
+        }
+
+        virtual void visit(const z::Ast::ExitStatement& node) {
             unused(node);
         }
 

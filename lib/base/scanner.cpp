@@ -1,6 +1,6 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
-#include "scanner.hpp"
+#include "zenlang.hpp"
+#include "base/base.hpp"
+#include "base/scanner.hpp"
 
 z::Scanner::Scanner(const int& eofTok) : _eofTok(eofTok), _tokenMode(tmNormal), _cond(0), _state(0), _yych(0), _yyaccept(0), _row(1) {
     _buffer = "";
@@ -109,8 +109,8 @@ void z::Scanner::readStream(std::istream& is) {
         char buf[1025];
         memset(buf, 0, 1024);
         is.read(buf, 1024);
-        size_t got = is.gcount();
-        std::string s(buf, got);
+        std::streamsize got = is.gcount();
+        std::string s(buf, (size_t)got);
         if(is.eof()) {
             s += std::string(10, ' ');
         }

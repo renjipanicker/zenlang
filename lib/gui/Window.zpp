@@ -25,9 +25,9 @@ public struct Anchor {
 
 public struct Definition : Widget::Definition abstract {
     auto title = "";
-    auto position = Window::Position{};
+    auto position = Window::Position();
     auto style = Style.Normal;
-    auto visible = false;
+    auto visible = true;
     Anchor left;
     Anchor right;
     Anchor top;
@@ -39,9 +39,10 @@ public routine Position getChildPosition(const Handle& window) native;
 
 public function void Delete(const Handle& window) native;
 public function void SetTitle(const Handle& window, const string& title) native;
+public function void SetFocus(const Handle& window) native;
 public function void Show(const Handle& window) native;
 public function void Hide(const Handle& window) native;
-public function void Move(const Handle& window, const Position& position) native;
+public function void Move(const Handle& window, const Position position) native;
 public function void Size(const Handle& window, const int& w, const int& h) native;
 
 public event(const Handle& window) native => function void OnResize();

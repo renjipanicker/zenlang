@@ -1392,8 +1392,13 @@ static void handle_D_option(char *z){
 #define OSUFFIX_LEN 256
 
 static char ofilesuffix[OSUFFIX_LEN];
+static char odir[OSUFFIX_LEN];
 static void handle_O_option(char *z){
     strncpy(ofilesuffix, z, OSUFFIX_LEN);
+}
+
+static void handle_d_option(char *z){
+    strncpy(odir, z, OSUFFIX_LEN);
 }
 
 /* The main program.  Parse the command line and do it... */
@@ -1421,12 +1426,14 @@ char **argv;
                                    "Print parser stats to standard output."},
     {OPT_FLAG, "x", (char*)&version, "Print the version number."},
     {OPT_FSTR, "o", (char*)handle_O_option, "Output file suffix."},
+    {OPT_FSTR, "d", (char*)handle_d_option, "Output directory."},
     {OPT_FLAG,0,0,0}
   };
   int i;
   struct lemon lem;
 
   strncpy(ofilesuffix, ".c", OSUFFIX_LEN);
+  getcwd( odir, OSUFFIX_LEN);
   OptInit(argv,options,stderr);
   if( version ){
      printf("Lemon version 1.0\n");
@@ -2728,6 +2735,20 @@ char *suffix;
   char *name;
   char *cp;
 
+#if 1 //renji
+  cp = strrchr(lemp->filename,'/');
+  if(cp == 0)
+      cp = strrchr(lemp->filename,'\\');
+  if(cp == 0)
+      cp = lemp->filename;
+
+  name = malloc( lemonStrlen(odir) + lemonStrlen(cp) + lemonStrlen(suffix) + 5 );
+  strcpy(name,odir);
+  strcat(name,cp);
+  cp = strrchr(name,'.');
+  if( cp ) *cp = 0;
+  strcat(name,suffix);
+#else
   name = malloc( lemonStrlen(lemp->filename) + lemonStrlen(suffix) + 5 );
   if( name==0 ){
     fprintf(stderr,"Can't allocate space for a filename.\n");
@@ -2737,6 +2758,8 @@ char *suffix;
   cp = strrchr(name,'.');
   if( cp ) *cp = 0;
   strcat(name,suffix);
+#endif
+
   return name;
 }
 
@@ -2979,7 +3002,6 @@ int modemask;
   char *pathlist;
   char *path,*cp;
   char c;
-
 #ifdef __WIN32__
   cp = strrchr(argv0,'\\');
 #else

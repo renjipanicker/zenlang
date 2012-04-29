@@ -125,6 +125,7 @@ void z::Ast::ContinueStatement::visit(Visitor& visitor) const {visitor.visit(z::
 void z::Ast::AddEventHandlerStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::ExitStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::CompoundStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 
 void z::Ast::RoutineBody::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}

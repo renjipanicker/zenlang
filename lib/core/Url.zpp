@@ -9,7 +9,20 @@ public struct url {
     string querystring;
 };
 
+/// \brief Check if the URL exists
 public routine bool Exists(const url& u) native;
+
+/// \brief Check if the string exists
 public routine bool FileExists(const string& urlstr) native;
+
+/// \brief Parse the string int the url
 public routine void Parse(url& u, const string& urlstr) native;
+
+/// \brief Return a parsed URL.
 public routine url Create(const string& urlstr) native;
+
+/// \brief Open the url-string in default browser
+public routine bool OpenUrlString(const string& u) native;
+
+/// \brief Open the url in default browser
+public routine bool Open(const url& u) native;

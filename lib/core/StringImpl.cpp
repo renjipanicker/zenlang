@@ -1,6 +1,6 @@
 #include "zenlang.hpp"
 
-z::list<z::string> String::split(const z::string& str, const z::string& sep) {
+z::list<z::string> String::Split(const z::string& str, const z::string& sep) {
     z::list<z::string> sl;
     enum State {
         sInit,
@@ -48,7 +48,7 @@ z::list<z::string> String::split(const z::string& str, const z::string& sep) {
 
 # include "utils/sqlite3/sqlite3_unicode.h"
 
-z::char_t String::fold(const z::char_t& ch) {
+z::char_t String::Fold(const z::char_t& ch) {
     return sqlite3_unicode_fold((z::char16_t)ch);
 }
 
@@ -64,7 +64,19 @@ z::string String::StringToLower(const z::string& str) {
     return rv;
 }
 
-bool String::isSpaceChar(const z::char_t& ch) {
+z::char_t String::CharToUpper(const z::char_t& ch) {
+    return sqlite3_unicode_upper((z::char16_t)ch);
+}
+
+z::string String::StringToUpper(const z::string& str) {
+    z::string rv;
+    for(z::string::const_iterator it = str.begin();it != str.end(); ++it) {
+        rv += CharToUpper(*it);
+    }
+    return rv;
+}
+
+bool String::IsSpaceChar(const z::char_t& ch) {
     if((ch >= 9) && (ch <=13))
         return true;
 
@@ -79,10 +91,10 @@ bool String::isSpaceChar(const z::char_t& ch) {
 z::string String::TrimStringCollect(const z::string& str, z::string& prev, z::string& post) {
     int start = 0;
     int end = str.length() - 1;
-    while((start < end) && (String::isSpaceChar(str[start])))
+    while((start < end) && (String::IsSpaceChar(str[start])))
         ++start;
 
-    while((end > start) && (String::isSpaceChar(str[end])))
+    while((end > start) && (String::IsSpaceChar(str[end])))
         --end;
 
     prev = str.substr(0, start);

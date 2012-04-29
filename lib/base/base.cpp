@@ -1,13 +1,13 @@
 # include "zenlang.hpp"
 #include "base/base.hpp"
 
-#if defined(QT)
-#include <QtGui/QApplication>
-#include <QtCore/QTimer>
+#if defined(GUI)
+#if defined(COCOA)
+#import <Cocoa/Cocoa.h>
+#elif defined(QT)
+# include <QtGui/QApplication>
+# include <QtCore/QTimer>
 #endif
-
-#if defined(WIN32)
-# include <WinSock2.h>
 #endif
 
 ////////////////////////////////////////////////////////////////////////////
@@ -17,13 +17,14 @@ void trace(const char* txt, ...) {
     va_start(vlist, txt);
     static const size_t MAXBUF = 1024;
     char buf[MAXBUF];
-    vsnprintf_s(buf, MAXBUF, txt, vlist);
+    vsnprintf_s(buf, MAXBUF, _TRUNCATE, txt, vlist);
     OutputDebugStringA(buf);
 }
 #endif
 
 ////////////////////////////////////////////////////////////////////////////
-// utf8 conversion code adapted from http://www.codeguru.com/cpp/misc/misc/multi-lingualsupport/article.php/c10451
+// utf8 conversion code adapted
+// from http://www.codeguru.com/cpp/misc/misc/multi-lingualsupport/article.php/c10451
 #define MASKBITS   (uint64_t)0x3F
 #define MASKBYTE   (uint64_t)0x80
 #define MASK2BYTES (uint64_t)0xC0
@@ -359,20 +360,26 @@ void z::TestResult::end(const z::string& name, const bool& passed) {
 }
 
 ///////////////////////////////////////////////////////////////
-template<> z::TestInstance* z::InitList<z::TestInstance>::_head = 0;
-template<> z::TestInstance* z::InitList<z::TestInstance>::_tail = 0;
-template<> z::TestInstance* z::InitList<z::TestInstance>::_next = 0;
-z::InitList<z::TestInstance> s_testList;
+namespace z {
+    template<> z::TestInstance* z::InitList<z::TestInstance>::_head = 0;
+    template<> z::TestInstance* z::InitList<z::TestInstance>::_tail = 0;
+    template<> z::TestInstance* z::InitList<z::TestInstance>::_next = 0;
+    z::InitList<z::TestInstance> s_testList;
+}
+
 z::TestInstance::TestInstance() : _next(0) {
     s_testList.push(this);
 }
 #endif
 
 ///////////////////////////////////////////////////////////////
-template<> z::MainInstance* z::InitList<z::MainInstance>::_head = 0;
-template<> z::MainInstance* z::InitList<z::MainInstance>::_tail = 0;
-template<> z::MainInstance* z::InitList<z::MainInstance>::_next = 0;
-static z::InitList<z::MainInstance> s_mainList;
+namespace z {
+    template<> z::MainInstance* z::InitList<z::MainInstance>::_head = 0;
+    template<> z::MainInstance* z::InitList<z::MainInstance>::_tail = 0;
+    template<> z::MainInstance* z::InitList<z::MainInstance>::_next = 0;
+    static z::InitList<z::MainInstance> s_mainList;
+}
+
 z::MainInstance::MainInstance() : _next(0) {
     s_mainList.push(this);
 }
@@ -667,7 +674,7 @@ HINSTANCE z::Application::instance() {
 }
 #endif
 
-int z::Application::exec() {
+inline int z::Application::execEx() {
 #if defined(UNIT_TEST)
     TestResult tr; unused(tr);
 #endif
@@ -712,6 +719,12 @@ int z::Application::exec() {
     return code;
 }
 
+int z::Application::exec() {
+    int rv = execEx();
+    onExit();
+    return rv;
+}
+
 int z::Application::exit(const int& code) const {
 #if defined(GUI)
 #if defined(WIN32)
@@ -737,19 +750,19 @@ void initMain(const z::stringlist& argl) {
     z::ThreadContext tctx(gctx().at(0));
 
 #if defined(UNIT_TEST)
-    s_testList.begin();
-    z::TestInstance* ti = s_testList.next();
+    z::s_testList.begin();
+    z::TestInstance* ti = z::s_testList.next();
     while(ti != 0) {
         ref(ti).enque(z::ref(s_tctx));
-        ti = s_testList.next();
+        ti = z::s_testList.next();
     }
 #endif
 
-    s_mainList.begin();
-    z::MainInstance* mi = s_mainList.next();
+    z::s_mainList.begin();
+    z::MainInstance* mi = z::s_mainList.next();
     while(mi != 0) {
         ref(mi).enque(z::ref(s_tctx), argl);
-        mi = s_mainList.next();
+        mi = z::s_mainList.next();
     }
 }
 

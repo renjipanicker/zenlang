@@ -1,6 +1,6 @@
 #include "zenlang.hpp"
 
-z::string File::completeBasePath(const z::string& path) {
+z::string File::CompleteBasePath(const z::string& path) {
     z::string cbase = path;
     z::string::size_type spos = cbase.rfind('/');
     if(spos != z::string::npos) {

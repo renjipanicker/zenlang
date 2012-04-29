@@ -1,6 +1,34 @@
 #ifndef PCH_HPP
 #define PCH_HPP
 
+////////////////////////////////////////////////////
+// Define this to tell zenlang.hpp that this is a exe
+//#define Z_EXE 1
+
+// Define this to tell zenlang.hpp that this is a GUI exe
+//#define GUI 1
+
+// Define this to tell zenlang.hpp that this is a debug build
+//#define DEBUG 1
+
+// Define this to enable unit tests in the build
+//#define UNIT_TEST 1
+
+////////////////////////////////////////////////////
+// Select char width
+#if !defined(CHAR_WIDTH_08) && !defined(CHAR_WIDTH_16) && !defined(CHAR_WIDTH_32)
+// choose any one of these 3...
+//#define CHAR_WIDTH_08
+//#define CHAR_WIDTH_16
+#define CHAR_WIDTH_32
+#endif
+
+////////////////////////////////////////////////////
+// Define one of these to specify the GUI type
+//#define WIN32 1  // To tell zenlang.hpp that this is a Win32 GUI exe
+//#define QT 1     // To tell zenlang.hpp that this is a Qt GUI exe
+//#define GTK 1    // To tell zenlang.hpp that this is a Gtk GUI exe
+//#define COCOA 1  // To tell zenlang.hpp that this is a Cocoa GUI exe
 // if compiling in GUI mode and WIN32 is not defined, assume Linux GTK or QT
 /// \todo change this when adding support for other platforms.
 #if defined(GUI)
@@ -62,6 +90,8 @@
     # include <process.h>
     typedef HANDLE mutex_t;
 
+    # include <WinSock2.h>
+
 //    typedef char      int8_t;
     typedef short     int16_t;
     typedef int       int32_t;
@@ -77,6 +107,13 @@
     typedef pthread_mutex_t mutex_t;
     # include <stdint.h>
     # include <regex.h>
+
+    # include <sys/stat.h>
+    # include <unistd.h>
+    # include <sys/socket.h>
+    # include <sys/ioctl.h>
+    # include <netinet/in.h>
+    # include <netdb.h>
 #endif
 
 #if defined(WIN32)
@@ -135,7 +172,14 @@
     #endif
     #if defined(QT)
     #endif
+#else
+    // include shellapi.h in non-gui mode, since it can be used in non-gui apps
+    // to, for example, launch browser windows.
+    #if defined(WIN32)
+        # include <Shellapi.h>
+    #endif
 #endif
+
 
 #if defined(__APPLE__)
 # include <mach-o/dyld.h>

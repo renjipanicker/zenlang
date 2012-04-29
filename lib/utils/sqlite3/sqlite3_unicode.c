@@ -30,7 +30,13 @@
 */
 #include "sqlite3_unicode.h"
 
-#if !defined(_WIN32)
+#if defined(WIN32)
+#pragma warning( disable : 4152)  /* nonstandard extension, function/data pointer conversion in expression */
+#pragma warning( disable : 4054)  /* typecast from fn-ptr to data-ptr */
+#pragma warning( disable : 4055)  /* typecast from data-ptr to fn-ptr */
+#pragma warning( disable : 4100)  /* unreferenced parameter */
+#pragma warning( disable : 4244)  /* possible loss of data */
+#else
 #pragma GCC diagnostic ignored "-pedantic" /* disable "long-long not supported" warning in sqlite code */
 #pragma GCC diagnostic ignored "-Wsequence-point" /* may be undefined */
 #pragma GCC diagnostic ignored "-Wunused-parameter" /* unused-parameter */

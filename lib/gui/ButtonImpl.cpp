@@ -12,8 +12,7 @@ namespace ButtonImpl {
                 case WM_COMMAND:
                     if(LOWORD(wParam) == BN_CLICKED) {
                         Button::OnClick::Handler::_In in;
-                        if(onButtonClickHandlerList.runHandler((HWND)lParam, in))
-                            return 1;
+                        onButtonClickHandlerList.runHandler((HWND)lParam, in);
                     }
                     break;
             }
@@ -27,10 +26,11 @@ namespace ButtonImpl {
 Window::Handle Button::Create::run(const Window::Handle& parent, const Button::Definition& def) {
 #if defined(WIN32)
     Window::HandleImpl& impl = Window::Native::createChildWindow(def, "BUTTON", BS_DEFPUSHBUTTON|WS_CHILD|WS_VISIBLE, 0, parent);
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     GtkWidget* hWnd = gtk_button_new_with_label(z::s2e(def.title).c_str());
     Window::HandleImpl& impl = Window::Native::createChildWindow(hWnd, def, parent);
+#else
+#error "Unimplemented GUI mode"
 #endif
     Window::Handle win;
     win._wdata<Window::Handle>(z::ptr(impl));
@@ -50,8 +50,9 @@ void Button::OnClick::addHandler(const Window::Handle& button, Handler* handler)
     Button::OnClick::add(handler);
 #if defined(WIN32)
     ButtonImpl::onButtonClickHandlerList.addHandler(Window::impl(button)._hWindow, handler);
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     g_signal_connect (G_OBJECT (Window::impl(button)._hWindow), "clicked", G_CALLBACK (onButtonClick), handler);
+#else
+#error "Unimplemented GUI mode"
 #endif
 }

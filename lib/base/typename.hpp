@@ -59,10 +59,12 @@ private:
 };
 
 struct StructBaseIterator : public BaseIterator<z::Ast::StructDefn, z::Ast::ChildStructDefn> {
-    inline StructBaseIterator(const z::Ast::StructDefn* defn) : BaseIterator(defn) {}
+    typedef BaseIterator<z::Ast::StructDefn, z::Ast::ChildStructDefn> BaseT;
+    inline StructBaseIterator(const z::Ast::StructDefn* defn) : BaseT(defn) {}
 };
 
 struct FunctionBaseIterator : public BaseIterator<z::Ast::Function, z::Ast::ChildFunctionDefn> {
-    inline FunctionBaseIterator(const z::Ast::FunctionDefn* defn) : BaseIterator(defn) {}
+    typedef BaseIterator<z::Ast::Function, z::Ast::ChildFunctionDefn> BaseT;
+    inline FunctionBaseIterator(const z::Ast::FunctionDefn* defn) : BaseT(defn) {}
 };
 }

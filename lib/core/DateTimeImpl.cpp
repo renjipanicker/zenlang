@@ -12,18 +12,18 @@ inline std::tm getTm(const z::datetime& dt) {
 #endif
 }
 
-z::string DateTime::toFormatString(const z::datetime& dt, const z::string& format) {
+z::string DateTime::ToFormatString(const z::datetime& dt, const z::string& format) {
     std::tm tm = getTm(dt);
     char buf[50];
     ::strftime(buf, 50, z::s2e(format).c_str(), &tm);
     return buf;
 }
 
-z::string DateTime::toIsoString(const z::datetime& dt) {
-    return toFormatString(dt, "%Y-%m-%d %H:%M:%S %Z");
+z::string DateTime::ToIsoString(const z::datetime& dt) {
+    return ToFormatString(dt, "%Y-%m-%d %H:%M:%S %Z");
 }
 
-z::datetime DateTime::fromString(const z::string& str) {
+z::datetime DateTime::FromString(const z::string& str) {
     unused(str);
     assert(false);
     z::datetime dt = std::time(0);
@@ -42,15 +42,22 @@ z::datetime DateTime::AddDays(const z::datetime& dt, const int& days) {
 
 z::datetime DateTime::ToLocal(const z::datetime& dt) {
     time_t t = dt.val();
+#if defined(WIN32)
+    std::tm tm;
+    errno_t eno = ::localtime_s(&tm, &t);
+    unused(eno);
+    time_t nt = ::mktime(&tm);
+#else
     std::tm* tm = ::localtime(&t);
     time_t nt = ::mktime(tm);
+#endif
     return z::datetime(nt);
 }
 
 int DateTime::DaysDiff(const z::datetime& dt1, const z::datetime& dt2) {
     time_t t1 = dt1.val()/(60 * 60 * 24);
     time_t t2 = dt2.val()/(60 * 60 * 24);
-    return t2 - t1;
+    return (int)(t2 - t1);
 }
 
 int DateTime::Year(const z::datetime& dt) {

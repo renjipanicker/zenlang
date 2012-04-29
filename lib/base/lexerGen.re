@@ -95,6 +95,7 @@ re2c:indent:top              = 2;
 <Normal>   "namespace" := send(pctx, ZENTOK_NAMESPACE); NEXT();
 
 <Normal>   "private"   := send(pctx, ZENTOK_PRIVATE); NEXT();
+<Normal>   "protected" := send(pctx, ZENTOK_PROTECTED); NEXT();
 <Normal>   "public"    := send(pctx, ZENTOK_PUBLIC); NEXT();
 <Normal>   "internal"  := send(pctx, ZENTOK_INTERNAL); NEXT();
 <Normal>   "external"  := send(pctx, ZENTOK_EXTERNAL); NEXT();
@@ -135,6 +136,7 @@ re2c:indent:top              = 2;
 <Normal>   "break"     := send(pctx, ZENTOK_BREAK); NEXT();
 <Normal>   "continue"  := send(pctx, ZENTOK_CONTINUE); NEXT();
 <Normal>   "run"       := send(pctx, ZENTOK_RUN); NEXT();
+<Normal>   "exit"      := send(pctx, ZENTOK_EXIT); NEXT();
 
 <Normal>   "return"    := sendReturn(pctx); NEXT();
 

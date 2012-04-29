@@ -20,6 +20,8 @@ namespace zg {
         switch(accessType) {
             case z::Ast::AccessType::Private:
                 return "";
+            case z::Ast::AccessType::Protected:
+                return "protected ";
             case z::Ast::AccessType::Public:
                 return "public ";
             case z::Ast::AccessType::Internal:
@@ -532,6 +534,10 @@ namespace zg {
         }
 
         inline void visitStructDefn(const z::Ast::StructDefn& node, const z::Ast::StructDefn* base) {
+            if(node.accessType() == z::Ast::AccessType::Protected) {
+                _os() << getAccessType(node.pos(), node.accessType()) << "struct " << node.name() << ";" << std::endl;
+                return;
+            }
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType()) << "struct " << node.name();
                 if(base) {
@@ -723,6 +729,7 @@ namespace zg {
                 const z::Ast::Namespace& ns = it->get();
                 fqn += sep;
                 fqn += ns.name().string();
+                sep = "::";
             }
             if(fqn.size() > 0) {
                 _os() << "namespace " << fqn << ";" << std::endl;
@@ -833,6 +840,10 @@ namespace zg {
         }
 
         virtual void visit(const z::Ast::FunctionReturnStatement& node) {
+            unused(node);
+        }
+
+        virtual void visit(const z::Ast::ExitStatement& node) {
             unused(node);
         }
 

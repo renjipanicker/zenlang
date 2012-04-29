@@ -1,7 +1,7 @@
 #include "zenlang.hpp"
 #include "base/base.hpp"
 #include "base/parser.hpp"
-#include "base/parserGen.hpp"
+#include "parserGen.hpp"
 
 z::Parser::Parser() : _parser(0) {
     _parser = ZenParserAlloc(malloc);

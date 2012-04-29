@@ -2,4 +2,5 @@ import core::Url public;
 import core::Response public;
 namespace Network;
 
-public routine bool getUrl(const Url::url& u, Response::response& r) native;
+/// \brief Retrieve the specified Utl into Response.
+public routine bool GetUrl(const Url::url& u, Response::response& r) native;

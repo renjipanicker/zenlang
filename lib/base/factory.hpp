@@ -172,6 +172,7 @@ namespace Ast {
         Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Token& pos);
         Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Token& pos, const Ast::Expr& expr);
         Ast::FunctionReturnStatement*      aFunctionReturnStatement(const Ast::Token& pos, const Ast::ExprList& exprList);
+        Ast::ExitStatement*                aExitStatement(const Ast::Token& pos, const Ast::Expr& expr);
         Ast::CompoundStatement*            aStatementList();
         Ast::CompoundStatement*            aStatementList(Ast::CompoundStatement& list, const Ast::Statement& statement);
         void                               aEnterCompoundStatement(const Ast::Token& pos);

@@ -1,10 +1,25 @@
 namespace DateTime;
 
-public routine string toFormatString(const datetime& dt, const string& format) native;
-public routine string toIsoString(const datetime& dt) native;
-public routine datetime fromString(const string& str) native;
+/// \brief Convert datetime to specified format
+public routine string ToFormatString(const datetime& dt, const string& format) native;
+
+/// \brief Convert datetime to ISO format
+public routine string ToIsoString(const datetime& dt) native;
+
+/// \brief Parse a datetime from a strng
+public routine datetime FromString(const string& str) native;
+
+/// \brief Get current time
 public routine datetime Now() native;
+
+/// \brief Add days to specified datetime
 public routine datetime AddDays(const datetime& dt, const int& days) native;
+
+/// \brief Convert UTC to local time
 public routine datetime ToLocal(const datetime& dt) native;
+
+/// \brief Return difference between two dates
 public routine int DaysDiff(const datetime& dt1, const datetime& dt2) native;
+
+/// \brief Return year of given datetime
 public routine int Year(const datetime& dt) native;

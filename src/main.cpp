@@ -37,13 +37,12 @@ static int showHelp(const z::Ast::Config& config) {
 }
 
 inline void initConfig(z::Ast::Project& project, z::Ast::Config& config) {
-    assert(config.includeFileList().size() == 0);
+//    assert(config.includeFileList().size() == 0);
     config.addIncludeFile(config.pch());
     config.addIncludePath(config.apidir());
 
     // add lib path to include path list
     config.addIncludePath(project.zlibPath());
-
 }
 
 inline void replaceSlash(z::string& path) {
@@ -93,6 +92,34 @@ inline z::stringlist getStringList(const z::Ast::Expr& expr, const z::string& pr
         const z::Ast::ListItem& li = lit->get();
         const z::string& val = getStringValue(li.valueExpr());
         sl.add(prefix + val);
+    }
+    return sl;
+}
+
+inline z::stringlist getSourceFileList(const z::Ast::Expr& expr, const z::string& prefix = "") {
+    z::stringlist sl;
+    const z::Ast::ListExpr& le = resolveTypeTo<z::Ast::ListExpr>(expr);
+    for(z::Ast::ListList::List::const_iterator lit = le.list().list().begin(); lit != le.list().list().end(); ++lit) {
+        const z::Ast::ListItem& li = lit->get();
+
+        const z::Ast::StructInstanceExpr& sie = resolveTypeTo<z::Ast::StructInstanceExpr>(li.valueExpr());
+        const z::string& sname = sie.structDefn().name().string();
+        if(sname == "SourceFile") {
+            for(z::Ast::StructInitPartList::List::const_iterator it = sie.list().list().begin(); it != sie.list().list().end(); ++it) {
+                const z::Ast::StructInitPart& part = it->get();
+                const z::string& skey = part.vdef().name().string();
+                const z::Ast::Expr& sval = part.expr();
+                if(skey == "filename") {
+                    const z::string& val = getStringValue(sval);
+                    sl.add(prefix + val);
+                } else if (skey == "deps") {
+                } else {
+                    std::cout << "Unknown SourceFile key: " << skey << std::endl;
+                }
+            }
+        } else {
+            std::cout << "Unknown struct: " << sname << std::endl;
+        }
     }
     return sl;
 }
@@ -150,10 +177,18 @@ inline void readProjectFile(z::Ast::Project& project, z::Ast::Config& config, co
                                         nconfig.debug(getBoolValue(cval));
                                     } else if (ckey == "isTest") {
                                         nconfig.test(getBoolValue(cval));
+                                    } else if (ckey == "isAbstract") {
+                                        nconfig.abstract(getBoolValue(cval));
+                                    } else if (ckey == "baseConfig") {
+                                        nconfig.baseConfig(getStringValue(cval));
+                                        z::Ast::Config& bc = project.config(nconfig.baseConfig());
+                                        nconfig.copy(bc);
                                     } else if (ckey == "olang") {
                                         nconfig.olanguage(getStringValue(cval));
                                     } else if (ckey == "pch") {
                                         nconfig.pch(getStringValue(cval));
+                                    } else if (ckey == "pchfile") {
+                                        nconfig.pchfile(path + getStringValue(cval));
                                     } else if (ckey == "apidir") {
                                         nconfig.apidir(getStringValue(cval));
                                     } else if (ckey == "srcdir") {
@@ -163,7 +198,7 @@ inline void readProjectFile(z::Ast::Project& project, z::Ast::Config& config, co
                                     } else if (ckey == "includeFileList") {
                                         nconfig.addIncludeFileList(getStringList(cval, path));
                                     } else if (ckey == "sourceFileList") {
-                                        nconfig.addSourceFileList(getStringList(cval, path));
+                                        nconfig.addSourceFileList(getSourceFileList(cval, path));
                                     } else if (ckey == "linkFileList") {
                                         nconfig.addLinkFileList(getStringList(cval, path));
                                     } else {
@@ -191,6 +226,8 @@ inline void readProjectFile(z::Ast::Project& project, z::Ast::Config& config, co
 int main(int argc, char* argv[]) {
     z::Ast::Project project;
     z::Ast::Config& config = project.addConfig("cmd");
+    config.abstract(true);
+
 
     static const int len = 1024;
     char path[len] = "";
@@ -268,9 +305,12 @@ int main(int argc, char* argv[]) {
             t = argv[i++];
             replaceSlash(t);
             config.srcdir(t);
-        } else if((t == "-pch") || (t == "--pch")) {
+        } else if((t == "-ph") || (t == "--pch")) {
             t = argv[i++];
             config.pch(t);
+        } else if((t == "-pf") || (t == "--pchfile")) {
+            t = argv[i++];
+            config.pchfile(t);
         } else if((t == "-l") || (t == "--link")) {
             t = argv[i++];
             config.addLinkFile(t);
@@ -309,8 +349,10 @@ int main(int argc, char* argv[]) {
                 p = ".";
                 p += sep;
             }
-            p += "/lib";
             */
+#if defined(__APPLE__)
+            //p += "/lib";
+#endif
         } else {
             p = ".";
             p += sep;
@@ -318,6 +360,8 @@ int main(int argc, char* argv[]) {
         
         project.zlibPath(p);
     }
+
+    initConfig(project, config);
 
     if(project.verbosity() == z::Ast::Project::Verbosity::Detailed) {
         z::string cwd = z::file::cwd();
@@ -335,7 +379,6 @@ int main(int argc, char* argv[]) {
             std::cout << std::endl;
         }
     }
-    initConfig(project, config);
 
     if(interpreterMode) {
         z::Interpreter intp(project, config);
@@ -354,4 +397,8 @@ int main(int argc, char* argv[]) {
         }
     }
     return 0;
+}
+
+// dummy function
+void z::Application::onExit() {
 }

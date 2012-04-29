@@ -1,5 +1,11 @@
 namespace Dir;
 
+/// \brief Return cwd
 public routine string CurrentDir() native;
-public routine string cleanPath(const string& path) native;
-public routine bool removePath(const string& path) native;
+
+/// \brief Remove extra /'s and ..'s from the path
+/// \todo Not implemented yet
+public routine string CleanPath(const string& path) native;
+
+/// \brief Delete the specified path.
+public routine bool RemovePath(const string& path) native;

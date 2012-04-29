@@ -1,9 +1,28 @@
 namespace String;
 
-public routine list<string> split(const string& str, const string& sep) native;
-public routine char fold(const char& ch) native;
+/// \brief Split the string using specified seperator
+public routine list<string> Split(const string& str, const string& sep) native;
+
+/// \brief Fold the given string
+public routine char Fold(const char& ch) native;
+
+/// \brief Convert Char to lowercase
 public routine char CharToLower(const char& ch) native;
+
+/// \brief Convert String to lowercase
 public routine string StringToLower(const string& str) native;
-public routine bool isSpaceChar(const char& ch) native;
+
+/// \brief Convert Char to uppercase
+public routine char CharToUpper(const char& ch) native;
+
+/// \brief Convert String to uppercase
+public routine string StringToUpper(const string& str) native;
+
+/// \brief Return true if given char is a space character
+public routine bool IsSpaceChar(const char& ch) native;
+
+/// \brief Trim the string, return the trimmed parts
 public routine string TrimStringCollect(const string& str, string& prev, string& post) native;
+
+/// \brief Trim the string.
 public routine string TrimString(const string& str) native;

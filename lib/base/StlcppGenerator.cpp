@@ -78,6 +78,11 @@ namespace sg {
             return;
         }
 
+        if(typeSpec.name().string() == "stringlist") {
+            name += "z::stringlist";
+            return;
+        }
+
         name += typeSpec.name().string();
 
         const z::Ast::EnumDefn* enumDefn = dynamic_cast<const z::Ast::EnumDefn*>(z::ptr(typeSpec));
@@ -111,7 +116,8 @@ namespace sg {
 
         TargetMode::T _targetMode;
         IndentMode::T _indentMode;
-        inline GeneratorContext(const TargetMode::T& targetMode, const IndentMode::T& indentMode) : _targetMode(targetMode), _indentMode(indentMode) {}
+        inline GeneratorContext(const TargetMode::T& targetMode, const IndentMode::T& indentMode)
+            : _targetMode(targetMode), _indentMode(indentMode) {}
         void run(const z::Ast::Config& config, FileSet& fs, const z::Ast::Statement& block);
     };
 
@@ -637,6 +643,11 @@ namespace sg {
         }
 
         inline void visitStructDefn(const z::Ast::StructDefn& node, const z::Ast::StructDefn* base) {
+            if(node.accessType() == z::Ast::AccessType::Protected) {
+                _fs._osHdr() << z::Indent::get() << "struct " << node.name() << ";" << std::endl;
+                // do not return here. We still need to fall-thru and generate the body in the source file.
+            }
+
             if(node.defType() == z::Ast::DefinitionType::Native) {
                 _os() << z::Indent::get() << "struct " << node.name() << ";" << std::endl;
                 return;
@@ -824,7 +835,7 @@ namespace sg {
                 _os() << z::Indent::get() << "    " << out1 << " run();" << std::endl;
             } else {
                 if((isDecl) && ((node.defType() == z::Ast::DefinitionType::Final) || (node.defType() == z::Ast::DefinitionType::Abstract))) {
-                    _os() << z::Indent::get() << "    virtual ~" << node.sig().name() << "(){}";
+                    _os() << z::Indent::get() << "    virtual ~" << node.sig().name() << "(){}" << std::endl;
                     _os() << z::Indent::get() << "    virtual " << out1 << " run(";
                     writeScopeParamList(_os, node.sig().inScope(), "p");
                     _os() << ") = 0;" << std::endl;
@@ -1164,8 +1175,15 @@ namespace sg {
 
     struct StatementGenerator : public z::Ast::Statement::Visitor {
     private:
-        inline z::ofile& fpDecl(const z::Ast::AccessType::T& accessType) const {
-            return (accessType == z::Ast::AccessType::Private)?_fs._osSrc:_fs._osHdr;
+        inline z::ofile& fpDecl1(const z::Ast::AccessType::T& accessType) const {
+            switch(accessType) {
+                case z::Ast::AccessType::Private:
+                case z::Ast::AccessType::Protected:
+                    return _fs._osSrc;
+                default:
+                    break;
+            }
+            return _fs._osHdr;
         }
 
         inline z::ofile& fpDecl(const z::Ast::TypeSpec& node) const {
@@ -1176,7 +1194,7 @@ namespace sg {
                 }
                 return fpDecl(z::ref(child).parent());
             }
-            return (node.accessType() == z::Ast::AccessType::Private)?_fs._osSrc:_fs._osHdr;
+            return fpDecl1(node.accessType());
         }
 
         inline z::ofile& fpDefn() const {
@@ -1188,7 +1206,7 @@ namespace sg {
                 if (node.headerType() == z::Ast::HeaderType::Import) {
                     return;
                 }
-                z::ofile& os = fpDecl(node.accessType());
+                z::ofile& os = fpDecl1(node.accessType());
                 z::string qt = (node.headerType() == z::Ast::HeaderType::Import)?"<>":"\"\"";
                 os() << "#include " << (char)qt.at(0);
                 z::string sep = "";
@@ -1205,8 +1223,8 @@ namespace sg {
             if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
                 for(z::Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
                     const z::Ast::Namespace& ns = it->get();
-                    _fs._osHdr() << "namespace " << ns.name() << " {";
-                    _fs._osSrc() << "namespace " << ns.name() << " {";
+                    _fs._osHdr() << "namespace " << ns.name() << "{ ";
+                    _fs._osSrc() << "namespace " << ns.name() << "{ ";
                 }
 
                 if(node.list().size() > 0) {
@@ -1220,8 +1238,8 @@ namespace sg {
             if(_ctx._targetMode == GeneratorContext::TargetMode::TypeDecl) {
                 for(z::Ast::NamespaceList::List::const_reverse_iterator it = node.statement().list().rbegin(); it != node.statement().list().rend(); ++it) {
                     const z::Ast::Namespace& ns = it->get();
-                    _fs._osHdr() << "} // " << ns.name();
-                    _fs._osSrc() << "} // " << ns.name();
+                    _fs._osHdr() << "}/*" << ns.name() << "*/ ";
+                    _fs._osSrc() << "}/*" << ns.name() << "*/ ";
                 }
                 if(node.statement().list().size() > 0) {
                     _fs._osHdr() << std::endl;
@@ -1477,7 +1495,7 @@ namespace sg {
             ExprGenerator(fpDefn()).visitNode(node.source());
             fpDefn()() << ", ";
             ExprGenerator(fpDefn()).visitNode(node.functor());
-            fpDefn()() << ");";
+            fpDefn()() << ");" << std::endl;
         }
 
         virtual void visit(const z::Ast::RoutineReturnStatement& node) {
@@ -1494,6 +1512,12 @@ namespace sg {
             const z::string out = node.sig().outScope().isTuple()?"_Out":"";
             fpDefn()() << z::Indent::get() << "return " << out << "(";
             ExprGenerator(fpDefn(), ", ").visitList(node.exprList());
+            fpDefn()() << ");" << std::endl;
+        }
+
+        virtual void visit(const z::Ast::ExitStatement& node) {
+            fpDefn()() << z::Indent::get() << "z::app().exit(";
+            ExprGenerator(fpDefn(), ", ").visitNode(node.expr());
             fpDefn()() << ");" << std::endl;
         }
 
