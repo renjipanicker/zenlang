@@ -27,6 +27,7 @@ public struct Definition : Widget::Definition abstract {
     auto title = "";
     auto position = Window::Position();
     auto style = Style.Normal;
+    auto border = 1;
     auto visible = true;
     Anchor left;
     Anchor right;

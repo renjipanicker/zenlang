@@ -10,12 +10,14 @@ namespace TextEditImpl {
     static LRESULT CALLBACK TextWinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch (message) {
             case WM_KEYDOWN:
-                void* p = (void*)::GetWindowLongPtr(hWnd, GWL_USERDATA);
-                Window::HandleImpl* impl = reinterpret_cast<Window::HandleImpl*>(p);
-                unused(impl); /// \todo Use this later when implementing read-only
-                if(wParam == VK_RETURN) {
-                    TextEdit::OnEnter::Handler::_In in;
-                    onTextEditEnterHandlerList.runHandler(hWnd, in);
+                {
+                    //void* p = (void*)::GetWindowLongPtr(hWnd, GWL_USERDATA);
+                    //Window::HandleImpl* impl = reinterpret_cast<Window::HandleImpl*>(p);
+                    //unused(impl); /// \todo Use this later when implementing read-only
+                    if(wParam == VK_RETURN) {
+                        TextEdit::OnEnter::Handler::_In in;
+                        onTextEditEnterHandlerList.runHandler(hWnd, in);
+                    }
                 }
                 break;
         }
@@ -27,7 +29,7 @@ namespace TextEditImpl {
 
 Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdit::Definition& def) {
 #if defined(WIN32)
-    int flags = ES_AUTOVSCROLL;
+    int flags = ES_AUTOVSCROLL | WS_VSCROLL;
     if(def.multiline) {
         flags |= ES_MULTILINE;
     }
@@ -38,20 +40,13 @@ Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdi
         flags |= ES_AUTOHSCROLL;
     }
 
-    // create the window handle
-    Window::HandleImpl& impl = Window::Native::createChildWindow(def, "EDIT", flags, WS_EX_CLIENTEDGE, parent);
+    // create the window handle.
+    // Use richedit because plan edit has ugly gray background in read-only mode that cannot be easily changed.
+    Window::HandleImpl& impl = Window::Native::createChildWindow(def, "RICHEDIT50W", flags, 0, parent);
 
     // set default font
     HFONT hFont=CreateFont(0,8,0,0,FW_NORMAL,0,0,0,0,0,0,0,0,TEXT("Courier"));
-    if(hFont == NULL) {
-        hFont = CreateFont(0,8,0,0,FW_NORMAL,0,0,0,0,0,0,0,0,TEXT("Verdana"));
-    }
     SendMessage(impl._hWindow,WM_SETFONT,(WPARAM)hFont,0);
-    HDC hdc=GetDC(impl._hWindow);
-    SelectObject(hdc, hFont);
-    SIZE tmpSize;
-    GetTextExtentPoint32(hdc,"00000000",8,&tmpSize);
-    ReleaseDC(impl._hWindow, hdc);
 
     // set subclass function
     TextEditImpl::OrigWndProc = (WNDPROC)SetWindowLong(impl._hWindow, GWL_WNDPROC, (LONG)TextEditImpl::TextWinProc);
@@ -86,6 +81,7 @@ void TextEdit::AppendText::run(const Window::Handle& window, const z::string& te
     int len = Edit_GetTextLength(Window::impl(window)._hWindow);
     Edit_SetSel(Window::impl(window)._hWindow, len, len);
     Edit_ReplaceSel(Window::impl(window)._hWindow, z::s2e(text).c_str());
+    ::SendMessage(Window::impl(window)._hWindow, EM_SCROLLCARET, 0, 0);
 #elif defined(GTK)
     GtkTextBuffer* buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (Window::impl(window)._hWindow));
     GtkTextIter iter;

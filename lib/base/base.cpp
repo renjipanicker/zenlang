@@ -770,8 +770,15 @@ void initMain(const z::stringlist& argl) {
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
     unused(hPrevInstance);unused(lpCmdLine);unused(nCmdShow);
 
-    InitCommonControls();
+    INITCOMMONCONTROLSEX icex;
+    icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+    icex.dwICC = ICC_USEREX_CLASSES;
+    InitCommonControlsEx(&icex);
     s_hInstance = hInstance;
+    HMODULE libmod = ::LoadLibrary("msftedit.dll");
+    if(libmod == NULL) {
+        z::elog("main", "Unable to load library: msftedit.dll");
+    }
 
     z::Application a(__argc, (const char**)__argv);
     initMain(a.argl());

@@ -1,12 +1,16 @@
 *.user
+*~
+*.old
+
 lib/base/lexerGen.hpp
 lib/base/parserGen.hpp
 lib/base/parserGen.h
 lib/base/parserGen.out
-*~
-*.old
-prj/xcode/zenlang/zenlang.xcodeproj/xcuserdata/
+prj/win32/lexerGen.hpp
+prj/win32/parserGen.h
+prj/win32/parserGen.hpp
 prj/win32/Debug/
 prj/win32/zenlang.ncb
 prj/win32/zenlang.suo
+prj/xcode/zenlang/zenlang.xcodeproj/xcuserdata/
 

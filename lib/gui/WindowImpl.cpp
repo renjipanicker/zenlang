@@ -153,6 +153,10 @@ Window::HandleImpl& Window::Native::createWindow(const Window::Definition& def, 
                                      pos.x, pos.y, pos.w, pos.h,
                                      parent, (HMENU)NULL,
                                      z::Application::instance(), (LPVOID)impl);
+    if(z::ref(impl)._hWindow == NULL) {
+        throw z::Exception("Window", z::string("Unable to create window of class %{s}: %{e}").arg("s", className).arg("e", ::GetLastError()));
+    }
+
     NONCLIENTMETRICS ncm;
     ncm.cbSize = sizeof(NONCLIENTMETRICS);
     ::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &ncm, 0);
@@ -174,10 +178,15 @@ Window::HandleImpl& Window::Native::createChildFrame(const Window::Definition& d
 }
 
 Window::HandleImpl& Window::Native::createChildWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, const Window::Handle& parent) {
-    style |= (WS_CHILD|WS_BORDER);
+    style |= WS_CHILD;
+    if(def.border == 1) {
+        style |= WS_BORDER;
+        xstyle |= WS_EX_CLIENTEDGE;
+    }
     if(def.visible) {
         style |= WS_VISIBLE;
     }
+
     return createWindow(def, className, style, xstyle, Window::impl(parent)._hWindow);
 }
 #elif defined(GTK)

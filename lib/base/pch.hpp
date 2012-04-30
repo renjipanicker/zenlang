@@ -166,6 +166,7 @@
         # include <Shlwapi.h>
         # include <shellapi.h>
         # include <tchar.h>
+        # include <richedit.h>
     #endif
     #if defined(GTK)
         # include <gtk/gtk.h>
