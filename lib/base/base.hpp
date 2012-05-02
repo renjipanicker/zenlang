@@ -15,8 +15,11 @@ inline void trace(const char* txt, ...) {unused(txt);} // empty inline function 
 namespace z {
     template <typename T>
     inline T& ref(T* t) {
-        assert(t);
-        return *t;
+        // this if-syntax (instead of assert(t)) makes it easier to set breakpoints for debugging.
+        if(t == 0) {
+            assert(false);
+        }
+        return (*t);
     }
 
     template <typename T>

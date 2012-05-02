@@ -25,7 +25,7 @@ z::string z::Scanner::text(const int& id, const std::string& in) {
     return z::e2s(in);
 }
 
-void z::Scanner::send(const int& id) {
+std::string z::Scanner::token() const {
     size_t idx = _start - _buffer.begin();
     assert(_cursor >= _start);
     size_t len = _cursor - _start;
@@ -34,12 +34,21 @@ void z::Scanner::send(const int& id) {
         assert(_text < _cursor);
         idx = _text - _buffer.begin();
         len = _cursor - _text - 1;
-        _tokenMode = tmNormal;
     }
 
-    const std::string rv = _textbfr + _buffer.substr(idx, len);
+    std::string rv = _textbfr + _buffer.substr(idx, len);
+    assert(rv.length() == len);
+    return rv;
+}
+
+void z::Scanner::send(const int& id) {
+    const std::string rv = token();
+    if(_tokenMode == tmExtended) {
+        _tokenMode = tmNormal;
+        _text = _buffer.begin();
+    }
     _textbfr = "";
-    z::Token* t = new Token(text(id, rv), _row, _cursor - _sol - len);
+    z::Token* t = new Token(text(id, rv), _row, _cursor - _sol - rv.length());
     _tokenList.add(t);
     parse(id, t);
 }
@@ -50,12 +59,23 @@ void z::Scanner::append(const std::string& in) {
         assert(_text <= start);
         start = _text;
     }
+
     if(_marker < start) {
         start = _marker;
     }
 
+    if(_sol < start) {
+        start = _sol;
+    }
+
     assert(start >= _buffer.begin());
-    size_t startIndex  = start  - _buffer.begin();
+    size_t shiftIndex  = start  - _buffer.begin();
+
+    size_t startIndex = 0;
+    assert(start >= start);
+    if(_start > start) {
+        startIndex = _start - start;
+    }
 
     size_t textIndex = 0;
     if(_tokenMode == tmExtended) {
@@ -81,11 +101,11 @@ void z::Scanner::append(const std::string& in) {
     }
 
     if(_buffer.size() > 0) {
-        _buffer = _buffer.substr(startIndex);
+        _buffer = _buffer.substr(shiftIndex);
     }
     _buffer += in;
 
-    _start  = _buffer.begin();
+    _start  = _buffer.begin() + startIndex;
     if(_tokenMode == tmExtended) {
         _text   = _buffer.begin() + textIndex;
     }

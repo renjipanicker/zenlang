@@ -28,6 +28,7 @@ namespace z {
         void append(const std::string& in);
         virtual void lex() = 0;
         void done();
+        std::string token() const;
 
     protected:
         virtual z::string text(const int& id, const std::string& in);
