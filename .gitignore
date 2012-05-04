@@ -14,3 +14,15 @@ prj/win32/zenlang.ncb
 prj/win32/zenlang.suo
 prj/xcode/zenlang/zenlang.xcodeproj/xcuserdata/
 
+# Compiled Object files
+*.slo
+*.lo
+*.o
+
+# Compiled Dynamic libraries
+*.so
+
+# Compiled Static libraries
+*.lai
+*.la
+*.a
