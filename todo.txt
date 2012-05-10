@@ -4,6 +4,7 @@ framework for testing gui unit
 use stl i/o everywhere
 split lexer into lexer and scanner (generic scanner)
 
+bug - when a type defined in a private include is referenced in a public type, the private include must be made public (or error)
 bug - validate type when de-referencing pointer<>
 bug - list/dict inside struct does not copy in cctor
 bug - typecast operator should check if can coerce

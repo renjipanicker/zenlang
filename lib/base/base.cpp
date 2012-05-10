@@ -2,11 +2,21 @@
 #include "base/base.hpp"
 
 #if defined(GUI)
-#if defined(COCOA)
-#import <Cocoa/Cocoa.h>
+#if defined(WIN32)
+#elif defined(GTK)
 #elif defined(QT)
 # include <QtGui/QApplication>
 # include <QtCore/QTimer>
+#elif defined(COCOA)
+// Note that this is import, not include. In COCOA mode, this file
+// *must* be compiled as a Obj-C++ file, not C++ file. In Xcode, go to
+// Project/Build Phases/Compile Sources/ and select the zenlang.cpp file.
+// Add "-x objective-c++" to the "Compiler Flags" column.
+// Which is why this must be here, not in pch.hpp
+#import <Cocoa/Cocoa.h>
+#import <AppKit/AppKit.h>
+#else
+#error "Unimplemented GUI mode"
 #endif
 #endif
 
@@ -202,23 +212,25 @@ int z::mutex::leave() {
 
 ////////////////////////////////////////////////////////////////////////////
 void z::regex::compile(const z::string& re) {
-#if !defined(WIN32)
+#if defined(WIN32)
+    unused(re);
+    UNIMPL();
+#else
     int res = regcomp(&_val, s2e(re).c_str(), 0);
     if(res != 0) {
         throw z::Exception("z::regex", z::string("regcomp failed for: %{s}").arg("s", re));
     }
-#else
-    unused(re);
 #endif
 }
 
 void z::regex::match(const z::string& str) {
-#if !defined(WIN32)
+#if defined(WIN32)
+    unused(str);
+    UNIMPL();
+#else
     int res = regexec(&_val, s2e(str).c_str(), 0, 0, 0);
     char buf[128];
     regerror(res, &_val, buf, 128);
-#else
-    unused(str);
 #endif
 }
 
@@ -364,11 +376,11 @@ namespace z {
     template<> z::TestInstance* z::InitList<z::TestInstance>::_head = 0;
     template<> z::TestInstance* z::InitList<z::TestInstance>::_tail = 0;
     template<> z::TestInstance* z::InitList<z::TestInstance>::_next = 0;
-    z::InitList<z::TestInstance> s_testList;
-}
+    static z::InitList<z::TestInstance> s_testList;
 
-z::TestInstance::TestInstance() : _next(0) {
-    s_testList.push(this);
+    TestInstance::TestInstance() : _next(0) {
+        s_testList.push(this);
+    }
 }
 #endif
 
@@ -378,19 +390,23 @@ namespace z {
     template<> z::MainInstance* z::InitList<z::MainInstance>::_tail = 0;
     template<> z::MainInstance* z::InitList<z::MainInstance>::_next = 0;
     static z::InitList<z::MainInstance> s_mainList;
-}
-
-z::MainInstance::MainInstance() : _next(0) {
-    s_mainList.push(this);
+    z::MainInstance::MainInstance() : _next(0) {
+        s_mainList.push(this);
+    }
 }
 
 ///////////////////////////////////////////////////////////////
+/// \brief Global singleton application instance
 static z::Application* g_app = 0;
+
+/// \brief Return reference to global application instance.
 const z::Application& z::app() {
     return z::ref(g_app);
 }
 
 ///////////////////////////////////////////////////////////////
+/// \brief This is a static instance.
+/// It should be stored in the TLS when running in multithreaded mode.
 static z::ThreadContext* s_tctx = 0;
 
 ///////////////////////////////////////////////////////////////
@@ -484,8 +500,15 @@ public:
     }
 };
 
+///////////////////////////////////////////////////////////////
+/// \brief Return reference to global application object
 inline z::GlobalContext& gctx() {
     return z::ref(g_app).ctx();
+}
+
+/// \brief Run global pump until empty.
+static void pump() {
+    while(gctx().run(MaxPumpCount) > 0) {}
 }
 
 ///////////////////////////////////////////////////////////////
@@ -516,14 +539,10 @@ z::Device& z::ThreadContext::stop(z::Device& device) {
 }
 
 z::size z::ThreadContext::wait() {
-    while(gctx().run(MaxPumpCount) > 0) {}
+    pump();
     return 0;
 }
 
-///////////////////////////////////////////////////////////////
-static void pump() {
-    while(gctx().run(MaxPumpCount) > 0) {}
-}
 #if defined(GUI)
 #if defined(WIN32)
 static int lastWM = WM_APP;
@@ -628,7 +647,25 @@ int ZTimer::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     return _id;
 }
 QT_END_MOC_NAMESPACE
-#endif // QT
+#elif defined(COCOA)
+@interface CTimer : NSObject {
+    NSTimer* timer;
+}
+@end
+
+@implementation CTimer
+-(CTimer*) initTimer {
+    timer = [NSTimer scheduledTimerWithTimeInterval: 1.0 target:self selector:@selector(targetMethod:) userInfo:nil repeats: YES];
+    return self;
+}
+
+//define the targetmethod
+-(void) targetMethod:(NSTimer*)theTimer {
+    NSLog(@"pumping");
+    pump();
+}
+@end
+#endif // QT/COCOA
 #endif // GUI
 
 z::Application::Application(int argc, const char** argv) : _argc(argc), _argv(argv), _isExit(false) {
@@ -643,11 +680,24 @@ z::Application::Application(int argc, const char** argv) : _argc(argc), _argv(ar
 
 #if defined(WIN32)
     ::_tzset();
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     ::tzset();
 #endif
+
 #if defined(WIN32)
+#if defined(GUI)
+    // init common controls.
+    INITCOMMONCONTROLSEX icex;
+    icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
+    icex.dwICC = ICC_USEREX_CLASSES;
+    InitCommonControlsEx(&icex);
+
+    // required for rich edit control
+    HMODULE libmod = ::LoadLibrary("msftedit.dll");
+    if(libmod == NULL) {
+        z::elog("main", "Unable to load library msftedit.dll required by win32 edit control.");
+    }
+#endif
     // Initialize Winsock
     WSADATA wsaData;
     int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
@@ -670,6 +720,7 @@ z::Application::~Application() {
 #if defined(WIN32)
 static HINSTANCE s_hInstance = 0;
 HINSTANCE z::Application::instance() {
+    assert(0 != s_hInstance);
     return s_hInstance;
 }
 #endif
@@ -685,10 +736,13 @@ inline int z::Application::execEx() {
     ThreadContext tctx(gctx().at(0)); unused(tctx);
 
 #if defined(GUI)
+    // start timer and message pump
 #if defined(WIN32)
+    // create timer
     int timerID = win32::getNextResID();
     UINT timer = SetTimer(NULL, timerID, 0, IdleProc);
 
+    // spin main loop
     MSG msg;
     while (GetMessage(&msg, NULL, 0, 0)) {
         TranslateMessage(&msg);
@@ -697,23 +751,43 @@ inline int z::Application::execEx() {
 
     KillTimer(NULL, timer);
     code = (int)msg.wParam;
-#endif
-#if defined(GTK)
+#elif defined(GTK)
+    // create idle handler
     g_idle_add(onIdle, 0);
+
+    // spin main loop
     gtk_main();
-#endif
-#if defined(QT)
+#elif defined(QT)
+    // create timer object
     QTimer ts;
     ZTimer td;
     QObject::connect(&ts, SIGNAL(timeout()), &td, SLOT(OnTimer()));
     ts.start(0);
+
+    // spin main loop
     code = z::ref(QApplication::instance()).exec();
+#elif defined(COCOA)
+#if 1 //COCOA_NIB
+    return NSApplicationMain(_argc, (const char **)_argv);
+#else
+    // create timer object
+    CTimer* ctimer = [[CTimer alloc] initTimer];
+    unused(ctimer);
+
+    // spin main loop
+    NSDictionary* infoDictionary = [[NSBundle mainBundle] infoDictionary];
+    Class principalClass = NSClassFromString([infoDictionary objectForKey:@"NSPrincipalClass"]);
+    NSApplication* applicationObject = [principalClass sharedApplication];
+    if ([applicationObject respondsToSelector:@selector(run)]) {
+        [applicationObject performSelectorOnMainThread:@selector(run) withObject:nil waitUntilDone:YES];
+    }
+    code = 0;
 #endif
-#if defined(COCOA)
-    code = NSApplicationMain(_argc, _argv);
+#else
+#error "Unimplemented GUI mode"
 #endif
 #else // GUI
-    pump();
+        pump();
 #endif // GUI
 
     return code;
@@ -729,15 +803,14 @@ int z::Application::exit(const int& code) const {
 #if defined(GUI)
 #if defined(WIN32)
     ::PostQuitMessage(code);
-#endif
-#if defined(GTK)
+#elif defined(GTK)
     gtk_main_quit();
-#endif
-#if defined(QT)
+#elif defined(QT)
     z::ref(QApplication::instance()).exit(code);
-#endif
-#if defined(COCOA)
+#elif defined(COCOA)
     [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
+#else
+#error "Unimplemented GUI mode"
 #endif
 #endif
     z::Application& self = const_cast<z::Application&>(z::ref(this));
@@ -769,25 +842,15 @@ void initMain(const z::stringlist& argl) {
 #if defined(GUI) && defined(WIN32)
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
     unused(hPrevInstance);unused(lpCmdLine);unused(nCmdShow);
-
-    INITCOMMONCONTROLSEX icex;
-    icex.dwSize = sizeof(INITCOMMONCONTROLSEX);
-    icex.dwICC = ICC_USEREX_CLASSES;
-    InitCommonControlsEx(&icex);
     s_hInstance = hInstance;
-    HMODULE libmod = ::LoadLibrary("msftedit.dll");
-    if(libmod == NULL) {
-        z::elog("main", "Unable to load library: msftedit.dll");
-    }
-
     z::Application a(__argc, (const char**)__argv);
     initMain(a.argl());
     return a.exec();
 }
-//#elif defined(GUI) && defined(COCOA) 
 #else // GUI && WIN32
 int main(int argc, const char* argv[]) {
 #if defined(GUI) && defined(QT)
+    // This cannot be in initMain() since it must have application-level lifetime.
     QApplication qapp(argc, argv);
 #endif
     z::Application a(argc, argv);

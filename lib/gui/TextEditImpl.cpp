@@ -67,6 +67,14 @@ Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdi
         } else {
         }
     }
+#elif defined(COCOA)
+    NSView* child = 0;
+    if(def.multiline) {
+        child = [NSTextView alloc];
+    } else {
+        child = [NSTextField alloc];
+    }
+    Window::HandleImpl& impl = Window::Native::createChildWindow(def, parent, child);
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -75,6 +83,25 @@ Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdi
     Window::Position p = Window::getChildPosition(win);
     return win;
 }
+
+#if defined(COCOA)
+inline bool isTextField(const Window::Handle& textedit) {
+    // verify it is a NSTextField
+    bool chk = [Window::impl(textedit)._hWindow isMemberOfClass:[NSTextField class]];
+    if(chk) {
+        return true;
+    }
+
+    // verify it is a NSTextView
+    chk = [Window::impl(textedit)._hWindow isMemberOfClass:[NSTextView class]];
+    if(chk) {
+        return false;
+    }
+
+    z::string className = ""; /// \todo: get class name
+    throw z::Exception("TextEdit", z::string("Instance is not a NSTextField or NSTextView: %{s}").arg("s", className));
+}
+#endif
 
 void TextEdit::AppendText::run(const Window::Handle& window, const z::string& text) {
 #if defined(WIN32)
@@ -87,6 +114,15 @@ void TextEdit::AppendText::run(const Window::Handle& window, const z::string& te
     GtkTextIter iter;
     gtk_text_buffer_get_end_iter(buffer, &iter);
     gtk_text_buffer_insert(buffer, &iter, z::s2e(text).c_str(), text.size());
+#elif defined(COCOA)
+    if(isTextField(window)) {
+        UNIMPL();
+    } else {
+        NSTextView* v = (NSTextView*)(Window::impl(window)._hWindow);
+//        NSString* ntxt = [NSString stringWithUTF8String:z::s2e(text).c_str()];
+        NSString* ntxt = [NSString stringWithUTF8String:""];
+        [[[v textStorage] mutableString] appendString:ntxt];
+    }
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -96,7 +132,9 @@ void TextEdit::Clear::run(const Window::Handle& window) {
 #if defined(WIN32)
     ::SetWindowText(Window::impl(window)._hWindow, "");
 #elif defined(GTK)
-    assert(false);
+    UNIMPL();
+#elif defined(COCOA)
+    UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -110,7 +148,11 @@ z::string TextEdit::GetText::run(const Window::Handle& window) {
     z::string val(buf);
     delete[] buf;
 #elif defined(GTK)
-    assert(false);
+    UNIMPL();
+    z::string val;
+#elif defined(COCOA)
+    UNIMPL();
+    z::string val;
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -124,6 +166,15 @@ static void onEnterPressed(GtkMenuItem* item, gpointer phandler) {
     TextEdit::OnEnter::Handler::_In in;
     z::ref(handler)._run(in);
 }
+#elif defined(COCOA)
+@interface OnEnterHandler : NSObject
+@end
+@implementation OnEnterHandler
+-(IBAction)OnEnter:(id)sender {
+    UNIMPL();
+}
+@end
+
 #endif
 
 void TextEdit::OnEnter::addHandler(const Window::Handle& textedit, Handler* handler) {
@@ -132,6 +183,17 @@ void TextEdit::OnEnter::addHandler(const Window::Handle& textedit, Handler* hand
     TextEditImpl::onTextEditEnterHandlerList.addHandler(Window::impl(textedit)._hWindow, handler);
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (Window::impl(textedit)._hWindow), "activate", G_CALLBACK (onEnterPressed), handler);
+#elif defined(COCOA)
+    OnEnterHandler* h = [OnEnterHandler alloc];
+    if(isTextField(textedit)) {
+        NSTextField* v = (NSTextField*)(Window::impl(textedit)._hWindow);
+        // Set handler
+        NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
+        [nc addObserver:h selector:@selector(OnEnter:) name:NSTextDidEndEditingNotification object:v];
+    } else {
+        UNIMPL();
+    }
+
 #else
 #error "Unimplemented GUI mode"
 #endif

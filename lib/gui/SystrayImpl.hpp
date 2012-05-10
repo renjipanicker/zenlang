@@ -8,10 +8,14 @@ namespace Systray {
         inline HandleImpl() : _wm(0) {}
         int _wm;
         NOTIFYICONDATA _ni;
-#endif
-#if defined(GTK)
+#elif defined(GTK)
         inline HandleImpl() : _icon(0) {}
         GtkStatusIcon* _icon;
+#elif defined(COCOA)
+        inline HandleImpl() : _id(0) {}
+        uint32_t _id;
+#else
+#error "Unimplemented GUI mode"
 #endif
     private:
         inline HandleImpl(const HandleImpl& /*src*/) {}

@@ -8,10 +8,14 @@ namespace Menu {
         inline HandleImpl() : _menu(0), _window(0) {}
         HMENU _menu;
         HWND _window;
-#endif
-#if defined(GTK)
+#elif defined(GTK)
         inline HandleImpl() : _menu(0) {}
         GtkWidget* _menu;
+#elif defined(COCOA)
+        inline HandleImpl() : _id(0) {}
+        uint32_t _id;
+#else
+#error "Unimplemented GUI mode"
 #endif
     private:
         inline HandleImpl(const HandleImpl& /*src*/) {}

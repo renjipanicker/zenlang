@@ -40,7 +40,7 @@ public routine Position getChildPosition(const Handle& window) native;
 
 public function void Delete(const Handle& window) native;
 public function void SetTitle(const Handle& window, const string& title) native;
-public function void SetFocus(const Handle& window) native;
+public function void SetFocus(const Handle& frame, const Handle& window) native;
 public function void Show(const Handle& window) native;
 public function void Hide(const Handle& window) native;
 public function void Move(const Handle& window, const Position position) native;

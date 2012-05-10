@@ -1,0 +1,355 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		A487BF581553A5D500C93C69 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A487BF571553A5D500C93C69 /* main.cpp */; };
+		A492BCB515539B780027F69C /* zenlang.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = A492BCB415539B780027F69C /* zenlang.1 */; };
+		A492BCE015539BA50027F69C /* ast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCBC15539BA50027F69C /* ast.cpp */; };
+		A492BCE115539BA50027F69C /* base.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCBE15539BA50027F69C /* base.cpp */; };
+		A492BCE215539BA50027F69C /* CmakeGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCC015539BA50027F69C /* CmakeGenerator.cpp */; };
+		A492BCE315539BA50027F69C /* compiler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCC215539BA50027F69C /* compiler.cpp */; };
+		A492BCE415539BA50027F69C /* factory.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCC515539BA50027F69C /* factory.cpp */; };
+		A492BCE515539BA50027F69C /* generator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCC715539BA50027F69C /* generator.cpp */; };
+		A492BCE615539BA50027F69C /* Interpreter.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCC915539BA50027F69C /* Interpreter.cpp */; };
+		A492BCE715539BA50027F69C /* lexer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCCB15539BA50027F69C /* lexer.cpp */; };
+		A492BCE815539BA50027F69C /* MsvcGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCCF15539BA50027F69C /* MsvcGenerator.cpp */; };
+		A492BCE915539BA50027F69C /* parser.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCD115539BA50027F69C /* parser.cpp */; };
+		A492BCEB15539BA50027F69C /* scanner.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCD515539BA50027F69C /* scanner.cpp */; };
+		A492BCEC15539BA50027F69C /* StlcppGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCD715539BA50027F69C /* StlcppGenerator.cpp */; };
+		A492BCED15539BA50027F69C /* typename.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCDA15539BA50027F69C /* typename.cpp */; };
+		A492BCEE15539BA50027F69C /* unit.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCDC15539BA50027F69C /* unit.cpp */; };
+		A492BCEF15539BA50027F69C /* ZenlangGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCDE15539BA50027F69C /* ZenlangGenerator.cpp */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A492BCAC15539B780027F69C /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+				A492BCB515539B780027F69C /* zenlang.1 in CopyFiles */,
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		A487BF571553A5D500C93C69 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../../src/main.cpp; sourceTree = "<group>"; };
+		A492BCAE15539B780027F69C /* zenlang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = zenlang; sourceTree = BUILT_PRODUCTS_DIR; };
+		A492BCB415539B780027F69C /* zenlang.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = zenlang.1; sourceTree = "<group>"; };
+		A492BCBB15539BA50027F69C /* args.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = args.hpp; path = ../../../lib/base/args.hpp; sourceTree = "<group>"; };
+		A492BCBC15539BA50027F69C /* ast.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ast.cpp; path = ../../../lib/base/ast.cpp; sourceTree = "<group>"; };
+		A492BCBD15539BA50027F69C /* ast.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ast.hpp; path = ../../../lib/base/ast.hpp; sourceTree = "<group>"; };
+		A492BCBE15539BA50027F69C /* base.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = base.cpp; path = ../../../lib/base/base.cpp; sourceTree = "<group>"; };
+		A492BCBF15539BA50027F69C /* base.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = base.hpp; path = ../../../lib/base/base.hpp; sourceTree = "<group>"; };
+		A492BCC015539BA50027F69C /* CmakeGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = CmakeGenerator.cpp; path = ../../../lib/base/CmakeGenerator.cpp; sourceTree = "<group>"; };
+		A492BCC115539BA50027F69C /* CmakeGenerator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = CmakeGenerator.hpp; path = ../../../lib/base/CmakeGenerator.hpp; sourceTree = "<group>"; };
+		A492BCC215539BA50027F69C /* compiler.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = compiler.cpp; path = ../../../lib/base/compiler.cpp; sourceTree = "<group>"; };
+		A492BCC315539BA50027F69C /* compiler.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = compiler.hpp; path = ../../../lib/base/compiler.hpp; sourceTree = "<group>"; };
+		A492BCC415539BA50027F69C /* error.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = error.hpp; path = ../../../lib/base/error.hpp; sourceTree = "<group>"; };
+		A492BCC515539BA50027F69C /* factory.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = factory.cpp; path = ../../../lib/base/factory.cpp; sourceTree = "<group>"; };
+		A492BCC615539BA50027F69C /* factory.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = factory.hpp; path = ../../../lib/base/factory.hpp; sourceTree = "<group>"; };
+		A492BCC715539BA50027F69C /* generator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = generator.cpp; path = ../../../lib/base/generator.cpp; sourceTree = "<group>"; };
+		A492BCC815539BA50027F69C /* generator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = generator.hpp; path = ../../../lib/base/generator.hpp; sourceTree = "<group>"; };
+		A492BCC915539BA50027F69C /* Interpreter.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Interpreter.cpp; path = ../../../lib/base/Interpreter.cpp; sourceTree = "<group>"; };
+		A492BCCA15539BA50027F69C /* Interpreter.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = Interpreter.hpp; path = ../../../lib/base/Interpreter.hpp; sourceTree = "<group>"; };
+		A492BCCB15539BA50027F69C /* lexer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lexer.cpp; path = ../../../lib/base/lexer.cpp; sourceTree = "<group>"; };
+		A492BCCC15539BA50027F69C /* lexer.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = lexer.hpp; path = ../../../lib/base/lexer.hpp; sourceTree = "<group>"; };
+		A492BCCE15539BA50027F69C /* lexerGen.re */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; name = lexerGen.re; path = ../../../lib/base/lexerGen.re; sourceTree = "<group>"; };
+		A492BCCF15539BA50027F69C /* MsvcGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = MsvcGenerator.cpp; path = ../../../lib/base/MsvcGenerator.cpp; sourceTree = "<group>"; };
+		A492BCD015539BA50027F69C /* MsvcGenerator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = MsvcGenerator.hpp; path = ../../../lib/base/MsvcGenerator.hpp; sourceTree = "<group>"; };
+		A492BCD115539BA50027F69C /* parser.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = parser.cpp; path = ../../../lib/base/parser.cpp; sourceTree = "<group>"; };
+		A492BCD215539BA50027F69C /* parser.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = parser.hpp; path = ../../../lib/base/parser.hpp; sourceTree = "<group>"; };
+		A492BCD315539BA50027F69C /* parserGen.y */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.yacc; name = parserGen.y; path = ../../../lib/base/parserGen.y; sourceTree = "<group>"; };
+		A492BCD415539BA50027F69C /* pch.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = pch.hpp; path = ../../../lib/base/pch.hpp; sourceTree = "<group>"; };
+		A492BCD515539BA50027F69C /* scanner.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = scanner.cpp; path = ../../../lib/base/scanner.cpp; sourceTree = "<group>"; };
+		A492BCD615539BA50027F69C /* scanner.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = scanner.hpp; path = ../../../lib/base/scanner.hpp; sourceTree = "<group>"; };
+		A492BCD715539BA50027F69C /* StlcppGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = StlcppGenerator.cpp; path = ../../../lib/base/StlcppGenerator.cpp; sourceTree = "<group>"; };
+		A492BCD815539BA50027F69C /* StlcppGenerator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = StlcppGenerator.hpp; path = ../../../lib/base/StlcppGenerator.hpp; sourceTree = "<group>"; };
+		A492BCD915539BA50027F69C /* token.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = token.hpp; path = ../../../lib/base/token.hpp; sourceTree = "<group>"; };
+		A492BCDA15539BA50027F69C /* typename.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = typename.cpp; path = ../../../lib/base/typename.cpp; sourceTree = "<group>"; };
+		A492BCDB15539BA50027F69C /* typename.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = typename.hpp; path = ../../../lib/base/typename.hpp; sourceTree = "<group>"; };
+		A492BCDC15539BA50027F69C /* unit.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = unit.cpp; path = ../../../lib/base/unit.cpp; sourceTree = "<group>"; };
+		A492BCDD15539BA50027F69C /* unit.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = unit.hpp; path = ../../../lib/base/unit.hpp; sourceTree = "<group>"; };
+		A492BCDE15539BA50027F69C /* ZenlangGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = ZenlangGenerator.cpp; path = ../../../lib/base/ZenlangGenerator.cpp; sourceTree = "<group>"; };
+		A492BCDF15539BA50027F69C /* ZenlangGenerator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = ZenlangGenerator.hpp; path = ../../../lib/base/ZenlangGenerator.hpp; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		A492BCAB15539B780027F69C /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		A492BCA315539B780027F69C = {
+			isa = PBXGroup;
+			children = (
+				A487BF571553A5D500C93C69 /* main.cpp */,
+				A492BCBB15539BA50027F69C /* args.hpp */,
+				A492BCBC15539BA50027F69C /* ast.cpp */,
+				A492BCBD15539BA50027F69C /* ast.hpp */,
+				A492BCBE15539BA50027F69C /* base.cpp */,
+				A492BCBF15539BA50027F69C /* base.hpp */,
+				A492BCC015539BA50027F69C /* CmakeGenerator.cpp */,
+				A492BCC115539BA50027F69C /* CmakeGenerator.hpp */,
+				A492BCC215539BA50027F69C /* compiler.cpp */,
+				A492BCC315539BA50027F69C /* compiler.hpp */,
+				A492BCC415539BA50027F69C /* error.hpp */,
+				A492BCC515539BA50027F69C /* factory.cpp */,
+				A492BCC615539BA50027F69C /* factory.hpp */,
+				A492BCC715539BA50027F69C /* generator.cpp */,
+				A492BCC815539BA50027F69C /* generator.hpp */,
+				A492BCC915539BA50027F69C /* Interpreter.cpp */,
+				A492BCCA15539BA50027F69C /* Interpreter.hpp */,
+				A492BCCB15539BA50027F69C /* lexer.cpp */,
+				A492BCCC15539BA50027F69C /* lexer.hpp */,
+				A492BCCE15539BA50027F69C /* lexerGen.re */,
+				A492BCCF15539BA50027F69C /* MsvcGenerator.cpp */,
+				A492BCD015539BA50027F69C /* MsvcGenerator.hpp */,
+				A492BCD115539BA50027F69C /* parser.cpp */,
+				A492BCD215539BA50027F69C /* parser.hpp */,
+				A492BCD315539BA50027F69C /* parserGen.y */,
+				A492BCD415539BA50027F69C /* pch.hpp */,
+				A492BCD515539BA50027F69C /* scanner.cpp */,
+				A492BCD615539BA50027F69C /* scanner.hpp */,
+				A492BCD715539BA50027F69C /* StlcppGenerator.cpp */,
+				A492BCD815539BA50027F69C /* StlcppGenerator.hpp */,
+				A492BCD915539BA50027F69C /* token.hpp */,
+				A492BCDA15539BA50027F69C /* typename.cpp */,
+				A492BCDB15539BA50027F69C /* typename.hpp */,
+				A492BCDC15539BA50027F69C /* unit.cpp */,
+				A492BCDD15539BA50027F69C /* unit.hpp */,
+				A492BCDE15539BA50027F69C /* ZenlangGenerator.cpp */,
+				A492BCDF15539BA50027F69C /* ZenlangGenerator.hpp */,
+				A492BCB115539B780027F69C /* zenlang */,
+				A492BCAF15539B780027F69C /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		A492BCAF15539B780027F69C /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				A492BCAE15539B780027F69C /* zenlang */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		A492BCB115539B780027F69C /* zenlang */ = {
+			isa = PBXGroup;
+			children = (
+				A492BCB415539B780027F69C /* zenlang.1 */,
+			);
+			path = zenlang;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		A492BCAD15539B780027F69C /* zenlang */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A492BCB815539B780027F69C /* Build configuration list for PBXNativeTarget "zenlang" */;
+			buildPhases = (
+				A492BCF71553A4620027F69C /* Compile parser */,
+				A487BF591553ABC200C93C69 /* ShellScript */,
+				A492BCAA15539B780027F69C /* Sources */,
+				A492BCAB15539B780027F69C /* Frameworks */,
+				A492BCAC15539B780027F69C /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = zenlang;
+			productName = zenlang;
+			productReference = A492BCAE15539B780027F69C /* zenlang */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		A492BCA515539B780027F69C /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0430;
+			};
+			buildConfigurationList = A492BCA815539B780027F69C /* Build configuration list for PBXProject "zenlang" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = A492BCA315539B780027F69C;
+			productRefGroup = A492BCAF15539B780027F69C /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				A492BCAD15539B780027F69C /* zenlang */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXShellScriptBuildPhase section */
+		A487BF591553ABC200C93C69 /* ShellScript */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PROJECT_DIR}/../../../lib/base/lexerGen.re",
+			);
+			outputPaths = (
+				"${PROJECT_DIR}/lexerGen.hpp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "${PROJECT_DIR}/../../../tools/re2c.osx -f -u -c -i -o ${PROJECT_DIR}/lexerGen.hpp ${PROJECT_DIR}/../../../lib/base/lexerGen.re";
+		};
+		A492BCF71553A4620027F69C /* Compile parser */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PROJECT_DIR}/../../../lib/base/parserGen.y",
+			);
+			name = "Compile parser";
+			outputPaths = (
+				"$(PROJECT_DIR)/parserGen.hpp",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "${PROJECT_DIR}/../../../tools/lemon.osx -q o=.hpp ${PROJECT_DIR}/../../../lib/base/parserGen.y";
+		};
+/* End PBXShellScriptBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		A492BCAA15539B780027F69C /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				A492BCE015539BA50027F69C /* ast.cpp in Sources */,
+				A492BCE115539BA50027F69C /* base.cpp in Sources */,
+				A492BCE215539BA50027F69C /* CmakeGenerator.cpp in Sources */,
+				A492BCE315539BA50027F69C /* compiler.cpp in Sources */,
+				A492BCE415539BA50027F69C /* factory.cpp in Sources */,
+				A492BCE515539BA50027F69C /* generator.cpp in Sources */,
+				A492BCE615539BA50027F69C /* Interpreter.cpp in Sources */,
+				A492BCE715539BA50027F69C /* lexer.cpp in Sources */,
+				A492BCE815539BA50027F69C /* MsvcGenerator.cpp in Sources */,
+				A492BCE915539BA50027F69C /* parser.cpp in Sources */,
+				A492BCEB15539BA50027F69C /* scanner.cpp in Sources */,
+				A492BCEC15539BA50027F69C /* StlcppGenerator.cpp in Sources */,
+				A492BCED15539BA50027F69C /* typename.cpp in Sources */,
+				A492BCEE15539BA50027F69C /* unit.cpp in Sources */,
+				A492BCEF15539BA50027F69C /* ZenlangGenerator.cpp in Sources */,
+				A487BF581553A5D500C93C69 /* main.cpp in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		A492BCB615539B780027F69C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COPY_PHASE_STRIP = NO;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		A492BCB715539B780027F69C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ARCHS = "$(ARCHS_STANDARD_64_BIT)";
+				COPY_PHASE_STRIP = YES;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_ENABLE_OBJC_EXCEPTIONS = YES;
+				GCC_VERSION = com.apple.compilers.llvm.clang.1_0;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.7;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		A492BCB915539B780027F69C /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"${PROJECT_DIR}/../../../lib",
+					"${PROJECT_DIR}",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Debug;
+		};
+		A492BCBA15539B780027F69C /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				HEADER_SEARCH_PATHS = (
+					"${PROJECT_DIR}/../../../lib",
+					"${PROJECT_DIR}",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		A492BCA815539B780027F69C /* Build configuration list for PBXProject "zenlang" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A492BCB615539B780027F69C /* Debug */,
+				A492BCB715539B780027F69C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		A492BCB815539B780027F69C /* Build configuration list for PBXNativeTarget "zenlang" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A492BCB915539B780027F69C /* Debug */,
+				A492BCBA15539B780027F69C /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = A492BCA515539B780027F69C /* Project object */;
+}

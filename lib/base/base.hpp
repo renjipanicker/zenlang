@@ -1241,3 +1241,5 @@ namespace z {
 #define _TRACE(c, f) z::Tracer _s_(c, f)
 #define DISABLE_ASSIGNMENT(c) private: inline c& operator=(const c& /*src*/){throw z::Exception("", z::string(#c));}
 #define DISABLE_COPYCTOR(c) private: inline c(const c& /*src*/){throw z::Exception("", z::string(#c));}
+
+#define UNIMPL() assert(false)

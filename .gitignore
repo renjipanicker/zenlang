@@ -13,6 +13,12 @@ prj/win32/Debug/
 prj/win32/zenlang.ncb
 prj/win32/zenlang.suo
 prj/xcode/zenlang/zenlang.xcodeproj/xcuserdata/
+prj/xcode/zenlang/DerivedData/
+prj/xcode/zenlang/parserGen.h
+prj/xcode/zenlang/parserGen.hpp
+prj/xcode/zenlang/parserGenhpp
+prj/xcode/zenlang/lexerGen.hpp
+prj/xcode/zenlang/zenlang.xcodeproj/project.xcworkspace/
 
 # Compiled Object files
 *.slo

@@ -14,6 +14,9 @@ Menu::Handle Menu::Create::run(const Window::Handle& window, const Menu::Definit
     Menu::HandleImpl* impl = new Menu::HandleImpl();
     z::ref(impl)._menu = gtk_menu_new();
     unused(window);
+#elif defined(COCOA)
+    Menu::HandleImpl* impl = new Menu::HandleImpl();
+    UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -51,6 +54,8 @@ void Menu::ShowAt::run(const Menu::Handle& handle, const int& x, const int& y) {
     gtk_widget_show_all (Menu::impl(handle)._menu);
     pos p(x, y);
     gtk_menu_popup(GTK_MENU(Menu::impl(handle)._menu), NULL, NULL, getMenuPosition, &p, 0, gtk_get_current_event_time());
+#elif defined(COCOA)
+    UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -65,6 +70,8 @@ void Menu::Show::run(const Menu::Handle& handle) {
 #elif defined(GTK)
     gtk_widget_show_all (Menu::impl(handle)._menu);
     gtk_menu_popup(GTK_MENU(Menu::impl(handle)._menu), NULL, NULL, getMenuPosition, 0, 0, gtk_get_current_event_time());
+#elif defined(COCOA)
+    UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif

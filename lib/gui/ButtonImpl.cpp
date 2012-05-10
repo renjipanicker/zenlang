@@ -29,6 +29,10 @@ Window::Handle Button::Create::run(const Window::Handle& parent, const Button::D
 #elif defined(GTK)
     GtkWidget* hWnd = gtk_button_new_with_label(z::s2e(def.title).c_str());
     Window::HandleImpl& impl = Window::Native::createChildWindow(hWnd, def, parent);
+#elif defined(COCOA)
+    NSView* child = 0;
+    Window::HandleImpl& impl = Window::Native::createChildWindow(def, parent, child);
+    UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -52,6 +56,8 @@ void Button::OnClick::addHandler(const Window::Handle& button, Handler* handler)
     ButtonImpl::onButtonClickHandlerList.addHandler(Window::impl(button)._hWindow, handler);
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (Window::impl(button)._hWindow), "clicked", G_CALLBACK (onButtonClick), handler);
+#elif defined(COCOA)
+    UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif

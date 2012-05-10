@@ -167,11 +167,11 @@
         # include <shellapi.h>
         # include <tchar.h>
         # include <richedit.h>
-    #endif
-    #if defined(GTK)
+    #elif defined(GTK)
         # include <gtk/gtk.h>
-    #endif
-    #if defined(QT)
+    #elif defined(QT)
+    #elif defined(COCOA)
+    #else
     #endif
 #else
     // include shellapi.h in non-gui mode, since it can be used in non-gui apps

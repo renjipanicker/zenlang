@@ -4,9 +4,17 @@
 #set -x
 
 mode=rel
-if [ "$1" == "dbg" ]; then
-    mode=dbg
-fi
+dotest=yes
+
+while (( "$#" )); do
+    if [ "$1" == "dbg" ]; then
+        mode=dbg
+    fi
+    if [ "$1" == "notest" ]; then
+        dotest=no
+    fi
+    shift
+done
 
 platform=`uname`
 
@@ -337,35 +345,50 @@ appendFile $ZSRCFILE "${LIBDIR}/gui/MenuItemImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/WindowCreator.cpp"
 appendString $ZSRCFILE "#endif"
 
-#########################################################
-# generate unit test files
-${ZCC} -c ${SRCDIR}/tests/testBasic.zpp
-${ZCC} -c ${SRCDIR}/tests/guiTest.zpp
+if [ "$dotest" == "yes" ]; then
+    #########################################################
+    # generate unit test files
+    ${ZCC} -c ${SRCDIR}/tests/testBasic.zpp
+    ${ZCC} -c ${SRCDIR}/tests/guiTest.zpp
 
-#########################################################
-echo Running unit tests...
-rm test.log
-if [[ $platform == 'CYGWIN_NT-5.1' ]]; then
-    CFLAGS="/Ox /DWIN32 /DUNIT_TEST /DZ_EXE /EHsc /I${OUTDIR} /W4"
-    "${CC}" ${CFLAGS} /Fetest.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
-    ./test.exe > test.log
-    "${CC}" ${CFLAGS} /DGUI /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
-elif [[ $platform == 'Darwin' ]]; then
-    # first compile the C files
-    gcc -c -Os -I${SDKDIR}/include -I${OUTDIR} ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
+    #########################################################
+    echo Running unit tests...
 
-    # next compile the zenlang.cpp file as an objective-c++ file.
-    CFLAGS="-DCOCOA -DUNIT_TEST -DZ_EXE -I${SDKDIR}/include -I${SDKDIR}/include/c++/v1 -I${OUTDIR} -F${SDKDIR}/../System/library/Frameworks -Wall"
-    gcc -c -x objective-c++ ${CFLAGS} -O3 ${OUTDIR}/zenlang.cpp
+    # remove existing log file, if any
+    if [ -f test.log ]; then
+        rm test.log
+    fi
 
-    # now compile the test file
-    g++ ${CFLAGS} -O3 -o test.osx -L${SDKDIR}/lib sqlite3_unicode.o zenlang.o testBasic.cpp -lc++ -lsqlite3
+    # compile and run tests
+    if [[ $platform == 'CYGWIN_NT-5.1' ]]; then
+        CFLAGS="/Ox /DWIN32 /DUNIT_TEST /DZ_EXE /EHsc /I${OUTDIR} /W4"
+        "${CC}" ${CFLAGS} /Fetest.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
+        ./test.exe > test.log
+        "${CC}" ${CFLAGS} /DGUI /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
+    elif [[ $platform == 'Darwin' ]]; then
+        # first compile the C files
+        gcc -c -Os -I${SDKDIR}/include -I${OUTDIR} ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
 
-    # run the test file
-    ./test.osx > test.log
-elif [[ $platform == 'Linux' ]]; then
-    echo "TODO: Linux platform"
-else
-    echo "unknown platform"
+        # next compile the zenlang.cpp file as an objective-c++ file.
+        CFLAGS="-DCOCOA -DUNIT_TEST -DZ_EXE -I${SDKDIR}/include -I${SDKDIR}/include/c++/v1 -I${OUTDIR} -F${SDKDIR}/../System/library/Frameworks -Wall"
+
+        gcc -c -x objective-c++ ${CFLAGS} -O3 ${OUTDIR}/zenlang.cpp
+
+        # now compile the test file
+        g++ ${CFLAGS} -O3 -o test.osx -L${SDKDIR}/lib sqlite3_unicode.o zenlang.o testBasic.cpp -lc++ -lsqlite3
+
+        # run the test file
+        ./test.osx > test.log
+
+        # now compile the test file
+#        gcc -c -x objective-c++ ${CFLAGS} -DGUI -O3 ${OUTDIR}/zenlang.cpp
+#        g++ ${CFLAGS} -DGUI -O3 -o test.osx -L${SDKDIR}/lib sqlite3_unicode.o zenlang.o guiTest.cpp -lc++ -lsqlite3
+    elif [[ $platform == 'Linux' ]]; then
+        echo "TODO: Linux platform"
+    else
+        echo "unknown platform"
+    fi
+
+    # display test result summary
+    cat test.log | grep "PASSED"
 fi
-cat test.log | grep "PASSED"
