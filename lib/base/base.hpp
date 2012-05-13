@@ -287,7 +287,8 @@ namespace z {
     template <typename charT, typename stringT>
     template <typename T>
     inline T z::bstring<charT, stringT>::to() const {
-        z::estring es = s2e(z::ref(static_cast<const stringT*>(this)));
+        const stringT& This = z::ref(static_cast<const stringT*>(this));
+        z::estring es = s2e(This);
         std::stringstream ss(es.val());
         // converting to utf8 and then to expected type.
         /// \todo: find out better way to convert from 16 and 32 bit string to expected type
@@ -389,7 +390,10 @@ namespace z {
 
     class Exception {
     public:
-        explicit inline Exception(const z::string& src, const z::string& msg) : _msg(msg) {elog(src, _msg); assert(false);}
+        explicit inline Exception(const z::string& src, const z::string& msg) : _msg(msg) {
+            elog(src, _msg);
+            assert(false);
+        }
     private:
         const z::string _msg;
     };

@@ -680,7 +680,7 @@ z::Application::Application(int argc, const char** argv) : _argc(argc), _argv(ar
 
 #if defined(WIN32)
     ::_tzset();
-#elif defined(GTK)
+#else
     ::tzset();
 #endif
 
