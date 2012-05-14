@@ -854,6 +854,10 @@ namespace z {
         }
 
         inline V& set(const K& k, V* v) {
+            if(BaseT::has(k)) {
+                V* v = BaseT::at(k);
+                delete v;
+            }
             V* r = BaseT::set(k, v);
             return z::ref(r);
         }
@@ -1213,6 +1217,9 @@ namespace z {
         /// \brief Called on exit
         /// This function is implemented in ApplicationImpl.cpp
         void onExit();
+
+        /// \brief system on exit handler
+        static void _onExit();
 
     private:
         z::autoptr<z::GlobalContext> _ctx;

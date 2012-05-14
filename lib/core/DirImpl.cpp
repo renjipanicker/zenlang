@@ -19,15 +19,10 @@ bool Dir::RemovePath(const z::string& path) {
 
 z::string Dir::ResolveParent(const z::string& parentpath, const z::string& path) {
     z::string p = path;
-    if(parentpath.at(0) != '/') {
-        p = parentpath + '/' + p;
-    }
+    p = parentpath + '/' + p;
     return p;
 }
 
 z::string Dir::GetPath(const z::string& path) {
-    if(path.at(0) == '/') {
-        return path;
-    }
     return z::file::getPath(path);
 }

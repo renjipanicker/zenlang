@@ -661,7 +661,6 @@ QT_END_MOC_NAMESPACE
 
 //define the targetmethod
 -(void) targetMethod:(NSTimer*)theTimer {
-    NSLog(@"pumping");
     pump();
 }
 @end
@@ -767,13 +766,12 @@ inline int z::Application::execEx() {
     // spin main loop
     code = z::ref(QApplication::instance()).exec();
 #elif defined(COCOA)
-#if 1 //COCOA_NIB
-    return NSApplicationMain(_argc, (const char **)_argv);
-#else
     // create timer object
     CTimer* ctimer = [[CTimer alloc] initTimer];
     unused(ctimer);
-
+#if 1 //COCOA_NIB
+    code = NSApplicationMain(_argc, (const char **)_argv);
+#else
     // spin main loop
     NSDictionary* infoDictionary = [[NSBundle mainBundle] infoDictionary];
     Class principalClass = NSClassFromString([infoDictionary objectForKey:@"NSPrincipalClass"]);
@@ -793,9 +791,13 @@ inline int z::Application::execEx() {
     return code;
 }
 
+void z::Application::_onExit() {
+    return z::ref(g_app).onExit();
+}
+
 int z::Application::exec() {
+    ::atexit(_onExit);
     int rv = execEx();
-    onExit();
     return rv;
 }
 
