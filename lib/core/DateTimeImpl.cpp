@@ -48,6 +48,11 @@ z::string DateTime::ToIsoStringLocal(const z::datetime& dt) {
     return ToFormatStringLocal(dt, "%Y-%m-%d %H:%M:%S %Z");
 }
 
+z::string DateTime::ToValueString(const z::datetime& dt) {
+    z::string dstr = z::string("%{s}").arg("s", dt.val());
+    return dstr;
+}
+
 z::datetime DateTime::FromValueString(const z::string& str) {
     int64_t t = str.to<int64_t>();
     z::datetime dt = t;
@@ -100,6 +105,30 @@ z::datetime DateTime::AddMonths(const z::datetime& dt, const int& months) {
 z::datetime DateTime::AddDays(const z::datetime& dt, const int& days) {
     std::tm tm = getTm(dt);
     tm.tm_mday += days;
+    time_t nt = ::mktime(&tm);
+    assert(nt > 0);
+    return z::datetime(nt);
+}
+
+z::datetime DateTime::SetYear(const z::datetime& dt, const int& year) {
+    std::tm tm = getTm(dt);
+    tm.tm_year = year;
+    time_t nt = ::mktime(&tm);
+    assert(nt > 0);
+    return z::datetime(nt);
+}
+
+z::datetime DateTime::SetMonth(const z::datetime& dt, const int& month) {
+    std::tm tm = getTm(dt);
+    tm.tm_mon = month - 1;
+    time_t nt = ::mktime(&tm);
+    assert(nt > 0);
+    return z::datetime(nt);
+}
+
+z::datetime DateTime::SetDay(const z::datetime& dt, const int& day) {
+    std::tm tm = getTm(dt);
+    tm.tm_mday = day - 1;
     time_t nt = ::mktime(&tm);
     assert(nt > 0);
     return z::datetime(nt);

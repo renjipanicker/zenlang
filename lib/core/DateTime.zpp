@@ -12,6 +12,9 @@ public routine string ToIsoString(const datetime& dt) native;
 /// \brief Convert datetime to local time in ISO format
 public routine string ToIsoStringLocal(const datetime& dt) native;
 
+/// \brief Convert datetime to value string
+public routine string ToValueString(const datetime& dt) native;
+
 /// \brief Create a datetime from a epoch value as string
 public routine datetime FromValueString(const string& val) native;
 
@@ -38,6 +41,16 @@ public routine datetime AddMonths(const datetime& dt, const int& months) native;
 
 /// \brief Add days to specified datetime
 public routine datetime AddDays(const datetime& dt, const int& days) native;
+
+/// \brief Set year to specified value
+public routine datetime SetYear(const datetime& dt, const int& year) native;
+
+/// \brief Set month to specified value
+public routine datetime SetMonth(const datetime& dt, const int& month) native;
+
+/// \brief Set day to specified value
+public routine datetime SetDay(const datetime& dt, const int& day) native;
+
 
 /// \brief Return difference between two dates
 public routine int DaysDiff(const datetime& dt1, const datetime& dt2) native;
