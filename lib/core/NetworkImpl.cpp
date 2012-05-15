@@ -156,11 +156,15 @@ static bool queryHttpText(const Url::url& u, OnDataReceivedHandler& drh) {
     }
 
     memset(buffer, 0, BLEN);
-    z::string s = "";
-    if(u.querystring.length() > 0)
-        s = "?";
-    sprintf(buffer, "GET %s%s%s\n\n", z::s2e(u.path).c_str(), z::s2e(s).c_str(), z::s2e(u.querystring).c_str());
-//    std::cout << "sending " << buffer << std::endl;
+    z::string qs;
+    z::string q = u.querystring;
+    if(q.length() > 0) {
+        qs = "?";
+        q.replace(" ", "%20");
+        qs += q;
+    }
+    sprintf(buffer, "GET %s%s\n\n", z::s2e(u.path).c_str(), z::s2e(qs).c_str());
+    std::cout << "sending " << buffer << std::endl;
     n = send(sockfd,buffer,strlen(buffer), 0);
     if (n < 0) {
         std::cout << "ERROR writing to socket" << std::endl;
