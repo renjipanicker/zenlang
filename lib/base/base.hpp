@@ -55,6 +55,7 @@ namespace z {
     // base class for all string types
     template <typename charT, typename stringT>
     struct bstring {
+        typedef charT scharT;
         typedef std::basic_string<charT> sstringT;
 
         typedef typename sstringT::size_type size_type;

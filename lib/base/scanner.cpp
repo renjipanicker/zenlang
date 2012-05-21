@@ -121,7 +121,9 @@ void z::Scanner::append(const std::string& in) {
 }
 
 void z::Scanner::done() {
-    parse(_eofTok, 0);
+    z::Token* t = new Token("", _row, _cursor - _sol);
+    _tokenList.add(t);
+    parse(_eofTok, t);
 }
 
 void z::Scanner::readStream(std::istream& is) {

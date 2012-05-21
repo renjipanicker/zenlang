@@ -26,3 +26,6 @@ public routine bool OpenUrlString(const string& u) native;
 
 /// \brief Open the url in default browser
 public routine bool Open(const url& u) native;
+
+/// \brief url-encode string
+public routine string Encode(const string& s) native;

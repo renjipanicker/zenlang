@@ -83,3 +83,54 @@ bool Url::OpenUrlString(const z::string& u) {
 bool Url::Open(const url& u) {
     return OpenUrlString(u.fullUrl);
 }
+
+z::string Url::Encode(const z::string& u) {
+    z::string qs;
+    for(z::string::const_iterator it = u.begin(); it != u.end(); ++it) {
+        const z::string::scharT& ch = *it;
+        switch(ch) {
+            // reserved characters
+            case '!' : qs += "%21"; break;
+            case '#' : qs += "%23"; break;
+            case '$' : qs += "%24"; break;
+            case '&' : qs += "%26"; break;
+            case '\'': qs += "%27"; break;
+            case '(' : qs += "%28"; break;
+            case ')' : qs += "%29"; break;
+            case '*' : qs += "%2A"; break;
+            case '+' : qs += "%2B"; break;
+            case ',' : qs += "%2C"; break;
+            case '/' : qs += "%2F"; break;
+            case ':' : qs += "%3A"; break;
+            case ';' : qs += "%3B"; break;
+            case '=' : qs += "%3D"; break;
+            case '?' : qs += "%3F"; break;
+            case '@' : qs += "%40"; break;
+            case '[' : qs += "%5B"; break;
+            case ']' : qs += "%5D"; break;
+
+            // common characters
+            case '\r': qs += "%0D"; break;
+            case '\n': qs += "%0A"; break;
+            case ' ' : qs += "%20"; break;
+            case '"' : qs += "%22"; break;
+            case '%' : qs += "%25"; break;
+            case '-' : qs += "%2D"; break;
+            case '.' : qs += "%2E"; break;
+            case '<' : qs += "%3C"; break;
+            case '>' : qs += "%3E"; break;
+            case '\\': qs += "%5C"; break;
+            case '^' : qs += "%5E"; break;
+            case '_' : qs += "%5F"; break;
+            case '`' : qs += "%60"; break;
+            case '{' : qs += "%7B"; break;
+            case '|' : qs += "%7C"; break;
+            case '}' : qs += "%7D"; break;
+            case '~' : qs += "%7E"; break;
+
+            // default
+            default  : qs += ch;    break;
+        }
+    }
+    return qs;
+}

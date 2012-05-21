@@ -166,7 +166,8 @@ mkdir -p ${INTDIR}
 mkdir -p ${INTDIR}/core
 mkdir -p ${INTDIR}/gui
 
-rm -rf ${OUTDIR}
+#rm -rf ${OUTDIR}
+
 mkdir -p ${OUTDIR}
 mkdir -p ${OUTDIR}/core
 mkdir -p ${OUTDIR}/gui

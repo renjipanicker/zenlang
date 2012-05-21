@@ -36,6 +36,9 @@ public:
 //        }
 
         if(_ps != psDone) {
+            if(buffer.substr(0, 4) != "HTTP") {
+                _ps = psBody; /// \todo Ugly hack to handle IIS 7.5 sometimes not sending any headers at all(?)
+            }
             for(size_t i = 0; i < buffer.length(); ++i) {
                 const char& ch = buffer.at(i);
                 if((_inHeader) && (ch == '\r'))
@@ -45,7 +48,7 @@ public:
                 case psProtocol:
                     if(ch == ' ') {
                         _r.protocol = _token0;
-                        _token0 = "";
+                        _token0 = "";   
                         _ps = psStatus;
                     } else {
                         _token0 += ch;
@@ -100,13 +103,15 @@ public:
                     break;
                 case psBody:
                     _r.body += ch;
-                    if(_r.body.length() >= contentLength()) {
+                    if((contentLength() > 0) && (_r.body.length() >= contentLength())) {
                         _ps = psDone;
                     }
                     break;
                 case psDone:
                     break;
                 }
+                if (_ps == psDone)
+                    break;
             }
         }
         return (_ps == psDone);
@@ -160,16 +165,19 @@ static bool queryHttpText(const Url::url& u, OnDataReceivedHandler& drh) {
     z::string q = u.querystring;
     if(q.length() > 0) {
         qs = "?";
-        q.replace(" ", "%20");
         qs += q;
     }
-    sprintf(buffer, "GET %s%s\n\n", z::s2e(u.path).c_str(), z::s2e(qs).c_str());
-    std::cout << "sending " << buffer << std::endl;
+    z::string hdr;
+    hdr += ("Accept: text/plain, text/html, */*\n");
+    hdr += ("User-Agent: Mozilla/5.0+(compatible)\n");
+    hdr += ("Host: " + u.host + "\n");
+    sprintf(buffer, "GET %s%s HTTP/1.1\n%s\n", z::s2e(u.path).c_str(), z::s2e(qs).c_str(), z::s2e(hdr).c_str());
     n = send(sockfd,buffer,strlen(buffer), 0);
     if (n < 0) {
         std::cout << "ERROR writing to socket" << std::endl;
         return false;
     }
+    bool done = false;
     do {
         memset(buffer, 0, BLEN);
         n = recv(sockfd, buffer, BLEN-1, 0);
@@ -177,7 +185,10 @@ static bool queryHttpText(const Url::url& u, OnDataReceivedHandler& drh) {
             std::cout << "ERROR reading from socket" << std::endl;
             break;
         }
-    } while(false == drh.run(buffer));
+        done = drh.run(buffer);
+        if(n == 0)
+            break;
+    } while(!done);
 #if defined(WIN32)
     closesocket(sockfd);
 #else
