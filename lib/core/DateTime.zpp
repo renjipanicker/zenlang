@@ -4,6 +4,7 @@ namespace DateTime;
 public routine string ToFormatString(const datetime& dt, const string& format) native;
 
 /// \brief Convert datetime to localtime in specified format
+/// Note that this function does not work as expected under cygwin (always returns GMT time).
 public routine string ToFormatStringLocal(const datetime& dt, const string& format) native;
 
 /// \brief Convert datetime to ISO format

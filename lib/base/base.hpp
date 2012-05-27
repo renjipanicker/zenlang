@@ -1,6 +1,8 @@
 #pragma once
 
 #define unused(x) ((void)(&x))
+#define NULL_PTR_ERROR (false)
+#define NULL_REF_ERROR (false)
 
 #if defined(DEBUG)
     #if defined(GUI) && defined(WIN32)
@@ -17,20 +19,24 @@ namespace z {
     inline T& ref(T* t) {
         // this if-syntax (instead of assert(t)) makes it easier to set breakpoints for debugging.
         if(t == 0) {
-            assert(false);
+            assert(NULL_PTR_ERROR);
         }
         return (*t);
     }
 
     template <typename T>
     inline T* ptr(T& t) {
-        assert(&t);
+        if((&t) == 0) {
+            assert(NULL_REF_ERROR);
+        }
         return &t;
     }
 
     template <typename T>
     inline unsigned long pad(T& t) {
-        assert(&t);
+        if((&t) == 0) {
+            assert(NULL_REF_ERROR);
+        }
         return (unsigned long)(&t);
     }
 
@@ -302,11 +308,11 @@ namespace z {
     ////////////////////////////////////////////////////////////////////////////
     struct datetime {
         inline datetime() : _val(0) {}
-        inline datetime(const int64_t& val) : _val(val) {}
-        inline datetime& operator=(const int64_t& val) {_val = val; return z::ref(this);}
-        inline const int64_t& val() const {return _val;}
+        inline datetime(const time_t& val) : _val(val) {}
+        inline datetime& operator=(const time_t& val) {_val = val; return z::ref(this);}
+        inline const time_t& val() const {return _val;}
     private:
-        int64_t _val;
+        time_t _val;
     };
 
     struct regex {
