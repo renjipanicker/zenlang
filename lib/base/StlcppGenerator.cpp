@@ -1317,7 +1317,7 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::PrintStatement& node) {
-            fpDefn()() << z::Indent::get() << "z::mlog(\"Message\", z::string(\"%{s}\\n\").arg(\"s\", ";
+            fpDefn()() << z::Indent::get() << "z::mlog(\"Message\", z::string(\"%{s}\").arg(\"s\", ";
             ExprGenerator(fpDefn()).visitNode(node.expr());
             fpDefn()() << "));" << std::endl;
         }

@@ -81,6 +81,7 @@
 # include <stdlib.h>
 # include <stdarg.h>
 # include <memory.h>
+# include <time.h>
 # include <errno.h>
 # include <sys/stat.h>
 # include <assert.h>

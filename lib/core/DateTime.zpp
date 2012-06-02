@@ -22,6 +22,9 @@ public routine datetime FromValueString(const string& val) native;
 /// \brief Parse a datetime from a strng
 public routine datetime FromIsoString(const string& str) native;
 
+/// \brief Parse a datetime from a string containing a local time
+public routine datetime FromIsoStringLocal(const string& str) native;
+
 /// \brief Get current time
 public routine datetime Now() native;
 
