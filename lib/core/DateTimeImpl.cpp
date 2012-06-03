@@ -520,11 +520,7 @@ z::datetime DateTime::FromIsoString(const z::string& str) {
 z::datetime DateTime::FromIsoStringLocal(const z::string& str) {
     std::tm tm;
     ::memset(&tm, 0, sizeof(tm));
-    // set time to 12:00:00, so even if we are parsing a date without time,
-    // after converting to UTC it will remain in the same days.
     tm.tm_hour = 12;
-    tm.tm_min = 0;
-    tm.tm_sec = 0;
     z::estring estr = z::s2e(str);
     zz::parsetime(estr.c_str(), zz::isoFormat, &tm);
     time_t nt = ::mktime(&tm);
@@ -599,7 +595,10 @@ z::datetime DateTime::SetDay(const z::datetime& dt, const int& day) {
 }
 
 int DateTime::DaysDiff(const z::datetime& dt1, const z::datetime& dt2) {
-    time_t t1 = dt1.val()/(60 * 60 * 24);
-    time_t t2 = dt2.val()/(60 * 60 * 24);
-    return (int)(t2 - t1);
+    std::tm tm1 = getTm(dt1);
+    std::tm tm2 = getTm(dt2);
+    time_t tt1 = ::mktime(&tm1);
+    time_t tt2 = ::mktime(&tm2);
+    double d = (::difftime(tt2, tt1) + (60 * 60 * 24)/2)/(60 * 60 * 24); // add half a day to round the diff to nearest day
+    return (int)d;
 }
