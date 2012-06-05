@@ -8,11 +8,10 @@
 # include <QtGui/QApplication>
 # include <QtCore/QTimer>
 #elif defined(COCOA)
-// Note that this is import, not include. In COCOA mode, this file
-// *must* be compiled as a Obj-C++ file, not C++ file. In Xcode, go to
+// Note that this is import, not include. Which is why this must be here, not in pch.hpp
+// In COCOA mode, this file *must* be compiled as a Obj-C++ file, not C++ file. In Xcode, go to
 // Project/Build Phases/Compile Sources/ and select the zenlang.cpp file.
 // Add "-x objective-c++" to the "Compiler Flags" column.
-// Which is why this must be here, not in pch.hpp
 #import <Cocoa/Cocoa.h>
 #import <AppKit/AppKit.h>
 #else
@@ -21,16 +20,15 @@
 #endif
 
 ////////////////////////////////////////////////////////////////////////////
-#if defined(DEBUG) && defined(GUI) && defined(WIN32)
-void trace(const char* txt, ...) {
-    va_list vlist;
-    va_start(vlist, txt);
-    static const size_t MAXBUF = 1024;
-    char buf[MAXBUF];
-    vsnprintf_s(buf, MAXBUF, _TRUNCATE, txt, vlist);
-    OutputDebugStringA(buf);
+void z::writelog(const z::string& src, const z::string& msg) {
+    z::string s;
+    if(src.length() > 0) {
+        s += src;
+        s += " : ";
+    }
+    s += msg;
+    z::app().writeLog(s);
 }
-#endif
 
 ////////////////////////////////////////////////////////////////////////////
 // utf8 conversion code adapted
@@ -818,6 +816,13 @@ int z::Application::exit(const int& code) const {
     z::Application& self = const_cast<z::Application&>(z::ref(this));
     self._isExit = true;
     return code;
+}
+
+void z::Application::writeLog(const z::string& msg) const {
+    std::cout << msg << std::endl;
+#if defined(DEBUG) && defined(GUI) && defined(WIN32)
+    OutputDebugStringA(z::s2e(msg).c_str());
+#endif
 }
 
 #if defined(Z_EXE)

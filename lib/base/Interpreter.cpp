@@ -72,20 +72,16 @@ namespace in {
 
     private:
         virtual void enteringScope(z::Ast::Scope& scope) {
-//            trace("InterpreterContext::enteringScope %lu\n", z::pad(scope));
             for(z::Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
                 const z::Ast::VariableDefn& vdef = it->get();
-//                trace("Adding variable %s to scope\n", vdef.name().text());
                 /*ValuePtr& vptr = */_valueMap[z::ptr(vdef)];
             }
         }
 
         virtual void leavingScope(z::Ast::Scope& scope) {
-//            trace("InterpreterContext::leavingScope %lu\n", z::pad(scope));
             for(z::Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
                 const z::Ast::VariableDefn& vdef = it->get();
                 ValueMap::iterator vit = _valueMap.find(z::ptr(vdef));
-//                trace("Deleting variable %s from scope\n", vdef.name().text());
                 if(vit == _valueMap.end()) {
                     throw z::Exception("Interpreter", z::zfmt(scope.pos(), "Internal error: Variable %{s} not found in scope").arg("s", vdef.name()));
                 }
@@ -114,7 +110,6 @@ namespace in {
         inline void processFile(const z::string& filename);
 
         inline void addValue(const z::Ast::VariableDefn& key, const ValuePtr& val) {
-//            trace("InterpreterContext::addValue %lu, %s\n", z::pad(val.get()), val.str().c_str());
             _valueMap[z::ptr(key)].reset(val);
         }
 
@@ -129,7 +124,6 @@ namespace in {
                 throw z::Exception("Interpreter", z::zfmt(pos, "Variable not found %{s}").arg("s", key.name()));
             }
             const ValuePtr& val = it->second;
-//            trace("InterpreterContext::getValue %lu %s\n", z::pad(val.get()), val.str().c_str());
             return val;
         }
 
@@ -311,14 +305,12 @@ namespace in {
         Stack _stack;
     private:
         inline void push(const ValuePtr& val) {
-//            trace("ExprGenerator::push %lu, %s\n", z::pad(val.get()), val.str().c_str());
             _stack.push_back(val);
         }
 
         inline ValuePtr pop() {
             ValuePtr val = _stack.back();
             _stack.pop_back();
-//            trace("ExprGenerator::pop %lu, %s\n", z::pad(val.get()), val.str().c_str());
             return val;
         }
 
@@ -582,7 +574,6 @@ namespace in {
         }
 
         virtual void visit(const z::Ast::VariableRefExpr& node) {
-//            trace("var-ref %s (%lu)\n", node.vref().name().text(), z::pad(node.vref()));
             ValuePtr val = _ctx.getValue(node.pos(), node.vref());
             push(val);
         }
@@ -694,13 +685,11 @@ namespace in {
         }
 
         virtual void visit(const z::Ast::AutoStatement& node) {
-//            trace("auto statement %s (%lu)\n", node.defn().name().text(), z::pad(node.defn()));
             ValuePtr p = ExprGenerator(_ctx).evaluate(node.defn().initExpr());
             _ctx.addValue(node.defn(), p);
         }
 
         virtual void visit(const z::Ast::ExprStatement& node) {
-//            trace("expr statement\n");
             ExprGenerator g(_ctx);
             /*ValuePtr p = */ExprGenerator(_ctx).evaluate(node.expr());
         }

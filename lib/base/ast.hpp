@@ -187,36 +187,20 @@ namespace Ast {
         typedef size_t RefCnt_t;
     public:
         inline const Token& pos() const {return _pos;}
-        inline void dump(const z::string& src, const z::string& act) const {
-            unused(src);
-            unused(act);
-//            trace("%lu %s refCount%s %lu, ", (unsigned long)this, src.c_str(), act.c_str(), _refCount);
-//            fflush(stdout);
-//            z::string x = z::type_name(*this);
-//            trace("<%s>\n", x.c_str());
-//            fflush(stdout);
-        }
-
         inline void inc() const {
             ++_refCount;
-//            dump("N::inc", "+");
         }
 
         inline RefCnt_t dec() const {
             --_refCount;
-//            dump("N::dec", "-");
             return _refCount;
         }
 
         inline const RefCnt_t& refCount() const {return _refCount;}
 
     protected:
-        inline Node(const Token& pos) : _pos(pos), _refCount(0) {
-//            dump("N::ctr", "*");
-        }
-
+        inline Node(const Token& pos) : _pos(pos), _refCount(0) {}
         virtual ~Node() {
-//            dump("N::dtr", "~");
             assert(_refCount == 0);
         }
 

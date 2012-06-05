@@ -4,16 +4,6 @@
 #define NULL_PTR_ERROR (false)
 #define NULL_REF_ERROR (false)
 
-#if defined(DEBUG)
-    #if defined(GUI) && defined(WIN32)
-        void trace(const char* txt, ...);
-    #else
-        #define trace printf
-    #endif
-#else
-inline void trace(const char* txt, ...) {unused(txt);} // empty inline function gets optimized away
-#endif
-
 namespace z {
     template <typename T>
     inline T& ref(T* t) {
@@ -379,18 +369,7 @@ namespace z {
         return type_name<T>();
     }
 
-    inline void writelog(const z::string& src, const z::string& msg) {
-        z::string s;
-        if(src.length() > 0) {
-            s += src;
-            s += " : ";
-        }
-        s += msg;
-        std::cout << s << std::endl;
-#if defined(GUI) && defined(WIN32)
-        trace("%s\n", z::s2e(s).c_str());
-#endif
-    }
+    void writelog(const z::string& src, const z::string& msg);
 
     inline void mlog(const z::string& src, const z::string& msg) {writelog(src, msg);}
     inline void elog(const z::string& src, const z::string& msg) {writelog(src, msg);}
@@ -1205,6 +1184,9 @@ namespace z {
 #endif
         int exec();
         int exit(const int& code) const;
+
+    public:
+        void writeLog(const z::string& msg) const;
 
     public:
         inline const z::stringlist& argl() const {return _argl;}

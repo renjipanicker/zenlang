@@ -20,7 +20,6 @@ inline const z::Ast::QualifiedTypeSpec& z::Ast::Factory::getQualifiedTypeSpec(co
 inline const z::Ast::Expr& z::Ast::Factory::getDefaultValue(const z::Ast::TypeSpec& typeSpec, const z::Ast::Token& name) {
     const z::Ast::TypeSpec* ts = resolveTypedef(typeSpec);
 
-//    trace("getDef: %s %lu, unit(%lu)\n", ZenlangNameGenerator().tn(z::ref(ts), GenMode::Import).c_str(), (unsigned long)ts, z::pad(_unit));
     const z::Ast::Unit::DefaultValueList& list = unit().defaultValueList();
     z::Ast::Unit::DefaultValueList::const_iterator it = list.find(ts);
     if(it != list.end()) {
@@ -372,7 +371,6 @@ z::Ast::CoerceList* z::Ast::Factory::aCoerceList(const z::Ast::TypeSpec& typeSpe
 }
 
 void z::Ast::Factory::aGlobalDefaultStatement(const z::Ast::TypeSpec& typeSpec, const z::Ast::Expr& expr) {
-//    trace("addDef: %s %lu unit(%lu)\n", ZenlangNameGenerator().tn(typeSpec, GenMode::Import).c_str(), z::pad(typeSpec), z::pad(_unit));
     unit().addDefaultValue(typeSpec, expr);
 }
 
