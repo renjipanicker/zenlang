@@ -665,14 +665,27 @@ QT_END_MOC_NAMESPACE
 #endif // QT/COCOA
 #endif // GUI
 
-z::Application::Application(int argc, const char** argv) : _argc(argc), _argv(argv), _isExit(false) {
+z::Application::Application(int argc, const char** argv) : _argc(argc), _argv(argv), _isExit(false), _log(0) {
     if(g_app != 0) {
         throw z::Exception("z::Application", z::string("Multiple instances of Application not permitted"));
     }
     g_app = this;
     _ctx.reset(new GlobalContext());
     for(int i = 0; i < _argc; ++i) {
-        _argl.add(_argv[i]);
+        std::string a = _argv[i];
+        if((a.length() >= 10) && (a.substr(0, 10) == "---logfile") && (i < (argc-1))) {
+            std::string f = _argv[++i];
+            _log = new std::ofstream(f.c_str());
+        } else {
+            _argl.add(argv[i]);
+        }
+    }
+    if(_log == 0) {
+#if defined(GUI)
+        _log = new std::ofstream("default.log");
+#else
+        _log = z::ptr(std::cout);
+#endif
     }
 
 #if defined(WIN32)
@@ -712,6 +725,9 @@ z::Application::~Application() {
 #if defined(WIN32)
     WSACleanup();
 #endif
+    if(_log != z::ptr(std::cout)) {
+        delete _log;
+    }
 }
 
 #if defined(WIN32)
@@ -819,7 +835,7 @@ int z::Application::exit(const int& code) const {
 }
 
 void z::Application::writeLog(const z::string& msg) const {
-    std::cout << msg << std::endl;
+    z::ref(_log) << msg << std::endl;
 #if defined(DEBUG) && defined(GUI) && defined(WIN32)
     OutputDebugStringA(z::s2e(msg).c_str());
 #endif

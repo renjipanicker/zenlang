@@ -1216,6 +1216,7 @@ namespace z {
         int _argc;
         const char** _argv;
         bool _isExit;
+        std::ostream* _log;
     };
 
     /// \brief Provides read-only access to singleton app-instance
