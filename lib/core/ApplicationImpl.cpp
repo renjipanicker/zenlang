@@ -17,3 +17,15 @@ void Application::OnExit::addHandler(const int& priority, Handler* handler) {
     Application::OnExit::add(handler);
     ApplicationImpl::onApplicationExitHandlerList.addHandler(0, handler);
 }
+
+z::string Application::appDir() {
+    return z::app().path();
+}
+
+z::string Application::baseDir() {
+    return z::app().base();
+}
+
+z::string Application::dataDir() {
+    return z::app().data();
+}

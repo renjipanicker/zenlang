@@ -111,10 +111,10 @@ z::string registerClass(HBRUSH bg) {
     wcx.lpfnWndProc = WinProc;     // points to window procedure
     wcx.cbClsExtra = 0;                // no extra class memory
     wcx.cbWndExtra = sizeof(Window::Handle*);        // store window data
-    wcx.hInstance = z::Application::instance();           // handle to Handle
-    wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION);              // predefined app. icon
-    wcx.hIconSm = LoadIcon(NULL, IDI_APPLICATION);              // predefined app. icon
-    wcx.hCursor = LoadCursor(NULL, IDC_ARROW);                    // predefined arrow
+    wcx.hInstance = z::app().instance();             // handle to Handle
+    wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION);     // predefined app. icon
+    wcx.hIconSm = LoadIcon(NULL, IDI_APPLICATION);   // predefined app. icon
+    wcx.hCursor = LoadCursor(NULL, IDC_ARROW);       // predefined arrow
     wcx.hbrBackground = bg;
     wcx.lpszMenuName =  _T("MainMenu");    // name of menu resource
     wcx.lpszClassName = eclassName.c_str();  // name of window class
@@ -152,7 +152,7 @@ Window::HandleImpl& Window::Native::createWindow(const Window::Definition& def, 
                                      style,
                                      pos.x, pos.y, pos.w, pos.h,
                                      parent, (HMENU)NULL,
-                                     z::Application::instance(), (LPVOID)impl);
+                                     z::app().instance(), (LPVOID)impl);
     if(z::ref(impl)._hWindow == NULL) {
         throw z::Exception("Window", z::string("Unable to create window of class %{s}: %{e}").arg("s", className).arg("e", ::GetLastError()));
     }

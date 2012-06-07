@@ -42,7 +42,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\lib&quot;;&quot;$(ProjectDir)&quot;"
-				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;UNIT_TEST"
+				PreprocessorDefinitions="WIN32;_DEBUG;_CONSOLE;UNIT_TEST;Z_EXE;ZPP_EXE"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -118,7 +118,7 @@
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
 				AdditionalIncludeDirectories="&quot;$(ProjectDir)\..\..\lib&quot;;&quot;$(ProjectDir)&quot;"
-				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;UNIT_TEST"
+				PreprocessorDefinitions="WIN32;NDEBUG;_CONSOLE;UNIT_TEST;Z_EXE;ZPP_EXE"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -252,7 +252,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Compiling $(InputPath)"
-					CommandLine="$(ProjectDir)\..\..\tools\re2c -f -u -c -i -o $(InputName).hpp $(InputPath)"
+					CommandLine="$(ProjectDir)\..\..\tools\re2c -f -u -c -i -o $(InputName).hpp $(InputPath)&#x0D;&#x0A;"
 					AdditionalDependencies="parserGen.hpp"
 					Outputs="$(InputName).hpp"
 				/>
@@ -263,7 +263,7 @@
 				<Tool
 					Name="VCCustomBuildTool"
 					Description="Compiling $(InputPath)"
-					CommandLine="$(ProjectDir)\..\..\tools\re2c -f -u -c -i -o $(InputName).hpp $(InputPath)"
+					CommandLine="$(ProjectDir)\..\..\tools\re2c -f -u -c -i -o $(InputName).hpp $(InputPath)&#x0D;&#x0A;"
 					AdditionalDependencies="parserGen.hpp"
 					Outputs="$(InputName).hpp"
 				/>

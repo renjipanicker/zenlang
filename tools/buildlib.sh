@@ -370,19 +370,20 @@ if [ "$dotest" == "yes" ]; then
         # first compile the C files
         gcc -c -Os -I${SDKDIR}/include -I${OUTDIR} ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
 
+        CFLAGS="-DCOCOA -DUNIT_TEST -DZ_EXE -Wall -I${OUTDIR} -framework Cocoa -O3"
+
         # next compile the zenlang.cpp file as an objective-c++ file.
-        CFLAGS="-DCOCOA -DUNIT_TEST -DZ_EXE -I${SDKDIR}/include -I${SDKDIR}/include/c++/v1 -I${OUTDIR} -F${SDKDIR}/../System/library/Frameworks -Wall"
-
-        gcc -c -x objective-c++ ${CFLAGS} -O3 ${OUTDIR}/zenlang.cpp
-
+        gcc -c -x objective-c++ ${CFLAGS} ${OUTDIR}/zenlang.cpp
+        echo The above warnings can safely be ignored.
+                
         # now compile the test file
-        g++ ${CFLAGS} -O3 -o test.osx -L${SDKDIR}/lib sqlite3_unicode.o zenlang.o testBasic.cpp -lc++ -lsqlite3
+        g++ ${CFLAGS} -o test.osx sqlite3_unicode.o zenlang.o testBasic.cpp -lc++ -lsqlite3
 
         # run the test file
         ./test.osx > test.log
 
         # now compile the test file
-#        gcc -c -x objective-c++ ${CFLAGS} -DGUI -O3 ${OUTDIR}/zenlang.cpp
+#        gcc -c -x objective-c++ ${CFLAGS} -DGUI ${OUTDIR}/zenlang.cpp
 #        g++ ${CFLAGS} -DGUI -O3 -o test.osx -L${SDKDIR}/lib sqlite3_unicode.o zenlang.o guiTest.cpp -lc++ -lsqlite3
     elif [[ $platform == 'Linux' ]]; then
         echo "TODO: Linux platform"

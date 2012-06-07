@@ -148,11 +148,11 @@
     # include <sstream>
     # include <iomanip>
     # include <typeinfo>
+    # include <ctime>
     #if defined(WIN32)
     #else
     # include <cxxabi.h>
     #endif
-    # include <ctime>
 #endif // __cplusplus
 
 // all GUI header files are included here.
@@ -165,7 +165,6 @@
         # include <Windowsx.h>
         # include <Commctrl.h>
         # include <Shlwapi.h>
-        # include <shellapi.h>
         # include <tchar.h>
         # include <richedit.h>
     #elif defined(GTK)
@@ -175,16 +174,13 @@
     #else
     #endif
 #else
-    // include shellapi.h in non-gui mode, since it can be used in non-gui apps
-    // to, for example, launch browser windows.
-    #if defined(WIN32)
-        # include <Shellapi.h>
-    #endif
 #endif
 
-
-#if defined(__APPLE__)
-# include <mach-o/dyld.h>
+// include these in gui and non-gui mode, since it can be used in non-gui apps
+// to, for example, launch browser windows.
+#if defined(WIN32)
+    # include <Shellapi.h>
+    # include <Shlobj.h>
 #endif
 
 #endif

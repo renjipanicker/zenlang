@@ -223,36 +223,14 @@ inline void readProjectFile(z::Ast::Project& project, z::Ast::Config& config, co
     }
 }
 
-int main(int argc, char* argv[]) {
+int main(int argc, const char* argv[]) {
+    z::Application app(argc, argv);
+
     z::Ast::Project project;
     z::Ast::Config& config = project.addConfig("cmd");
     config.abstract(true);
 
-
-    static const int len = 1024;
-    char path[len] = "";
-#if defined(WIN32)
-    DWORD rv = GetModuleFileName(NULL, path, len);
-    if(rv == 0) {
-        DWORD ec = GetLastError();
-        assert(ec != ERROR_SUCCESS);
-        std::cout << "Internal error retreiving process path " << ec << std::endl;
-        return -1;
-    }
-#elif __APPLE__
-    uint32_t sz = len;
-    if(_NSGetExecutablePath(path, &sz) != 0) {
-        std::cout << "Internal error retreiving process path " << path << std::endl;
-        return -1;
-    }
-#else
-    if (readlink ("/proc/self/exe", path, len) == -1) {
-        std::cout << "Internal error retreiving process path " << path << std::endl;
-        return -1;
-    }
-#endif
-
-    z::string p = path;
+    z::string p = z::app().path();
     replaceSlash(p);
     project.zexePath(p);
     config.addLinkFile("core");

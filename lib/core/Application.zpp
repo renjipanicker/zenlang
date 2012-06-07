@@ -1,3 +1,7 @@
 namespace Application;
 
 public event(const int& priority) native => function void OnExit();
+
+public routine string appDir() native;
+public routine string baseDir() native;
+public routine string dataDir() native;

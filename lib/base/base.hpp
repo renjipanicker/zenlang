@@ -322,7 +322,7 @@ namespace z {
         static bool exists(const z::string& path);
         static int mkdir(const z::string& path);
 
-        /// makes a path upto the second-last component, unless filename is terminated by a /
+        /// \brief Makes a path upto the second-last component, unless filename is terminated by a /
         static void mkpath(const z::string& filename);
 
         static z::string cwd();
@@ -1180,7 +1180,7 @@ namespace z {
 
     public:
 #if defined(WIN32)
-        static HINSTANCE instance();
+        HINSTANCE instance() const;
 #endif
         int exec();
         int exit(const int& code) const;
@@ -1192,6 +1192,19 @@ namespace z {
         inline const z::stringlist& argl() const {return _argl;}
         inline const int& argc() const {return _argc;}
         inline const char** argv() const {return _argv;}
+
+    public:
+        /// \brief Return path to executable
+        inline z::string path() const {return _path;}
+
+        /// \brief Return application name
+        inline z::string name() const {return _name;}
+
+        /// \brief Return path to data directory
+        inline z::string data() const {return _data;}
+
+        /// \brief Return path to base directory
+        inline z::string base() const {return _base;}
 
     public:
         // This Application instance can only be accessed through the app() function below.
@@ -1207,11 +1220,12 @@ namespace z {
         /// This function is implemented in ApplicationImpl.cpp
         void onExit();
 
-        /// \brief system on exit handler
-        static void _onExit();
-
     private:
         z::autoptr<z::GlobalContext> _ctx;
+        z::string _path;
+        z::string _name;
+        z::string _data;
+        z::string _base;
         z::stringlist _argl;
         int _argc;
         const char** _argv;

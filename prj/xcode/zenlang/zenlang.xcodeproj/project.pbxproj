@@ -309,6 +309,18 @@
 		A492BCB915539B780027F69C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+					"Z_EXE=1",
+					"ZPP_EXE=1",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"DEBUG=1",
+					"$(inherited)",
+					"Z_EXE=1",
+					"ZPP_EXE=1",
+				);
 				HEADER_SEARCH_PATHS = (
 					"${PROJECT_DIR}/../../../lib",
 					"${PROJECT_DIR}",
@@ -320,6 +332,16 @@
 		A492BCBA15539B780027F69C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"Z_EXE=1",
+					"ZPP_EXE=1",
+				);
+				GCC_PREPROCESSOR_DEFINITIONS_NOT_USED_IN_PRECOMPS = (
+					"DEBUG=1",
+					"$(inherited)",
+					"Z_EXE=1",
+					"ZPP_EXE=1",
+				);
 				HEADER_SEARCH_PATHS = (
 					"${PROJECT_DIR}/../../../lib",
 					"${PROJECT_DIR}",

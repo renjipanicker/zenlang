@@ -300,6 +300,13 @@ namespace z
             }
 
             if(fit == cmd._map.end()) {
+#if defined(COCOA)
+                if(str.substr(0, 4) == "-psn") {
+                    if(it != ite)
+                        ++it;
+                    continue;
+                }
+#endif
                 _error = "Invalid option: " + str;
                 return 1;
             }

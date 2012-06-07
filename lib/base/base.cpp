@@ -12,12 +12,24 @@
 // In COCOA mode, this file *must* be compiled as a Obj-C++ file, not C++ file. In Xcode, go to
 // Project/Build Phases/Compile Sources/ and select the zenlang.cpp file.
 // Add "-x objective-c++" to the "Compiler Flags" column.
-#import <Cocoa/Cocoa.h>
 #import <AppKit/AppKit.h>
 #else
 #error "Unimplemented GUI mode"
 #endif
+#else
+#if defined(COCOA)
+// Same as above note. This is an import.
+#import <Cocoa/Cocoa.h>
 #endif
+#endif
+
+#if defined(__APPLE__)
+# include <mach-o/dyld.h>
+#endif
+
+///////////////////////////////////////////////////////////////
+/// \brief Global singleton application instance
+static z::Application* g_app = 0;
 
 ////////////////////////////////////////////////////////////////////////////
 void z::writelog(const z::string& src, const z::string& msg) {
@@ -27,7 +39,11 @@ void z::writelog(const z::string& src, const z::string& msg) {
         s += " : ";
     }
     s += msg;
-    z::app().writeLog(s);
+    if(g_app) {
+        z::app().writeLog(s);
+    } else {
+        std::cout << s << std::endl;
+    }
 }
 
 ////////////////////////////////////////////////////////////////////////////
@@ -260,11 +276,11 @@ int z::file::mkdir(const z::string& path) {
 void z::file::mkpath(const z::string& filename) {
     z::string base = "";
     z::string::size_type prev = 0;
-    for(z::string::size_type next = filename.find(sep); next != z::string::npos;next = filename.find(sep, next+1)) {
+    for(z::string::size_type next = filename.find("/"); next != z::string::npos;next = filename.find("/", next+1)) {
         z::string sdir = filename.substr(prev, next - prev);
         if((base.size() == 0) || (sdir.size() > 0)) { // if base is empty or multiple / in path
             base += sdir;
-            base += sep;
+            base += "/";
             if(!z::file::exists(base)) {
                 int rv = mkdir(base);
                 if(rv != 0) {
@@ -392,10 +408,6 @@ namespace z {
         s_mainList.push(this);
     }
 }
-
-///////////////////////////////////////////////////////////////
-/// \brief Global singleton application instance
-static z::Application* g_app = 0;
 
 /// \brief Return reference to global application instance.
 const z::Application& z::app() {
@@ -670,19 +682,103 @@ z::Application::Application(int argc, const char** argv) : _argc(argc), _argv(ar
         throw z::Exception("z::Application", z::string("Multiple instances of Application not permitted"));
     }
     g_app = this;
+
     _ctx.reset(new GlobalContext());
+
+    // store path to executable
+    static const int len = 1024;
+    char path[len] = "";
+#if defined(WIN32)
+    DWORD rv = GetModuleFileName(NULL, path, len);
+    if(rv == 0) {
+        DWORD ec = GetLastError();
+        assert(ec != ERROR_SUCCESS);
+        throw z::Exception("z::Application", z::string("Internal error retrieving process path: %{s}").arg("s", ec));
+    }
+#elif defined(__APPLE__)
+    uint32_t sz = len;
+    if(_NSGetExecutablePath(path, &sz) != 0) {
+        throw z::Exception("z::Application", z::string("Internal error retrieving process path: %{s}").arg("s", path));
+    }
+#else
+    if (readlink ("/proc/self/exe", path, len) == -1) {
+        throw z::Exception("z::Application", z::string("Internal error retrieving process path: %{s}").arg("s", path));
+    }
+#endif
+    _path = z::string(path);
+#if defined(WIN32)
+    _path.replace("\\", "/");
+#endif
+
+    // store name of application (this depends on _path)
+    _name = z::file::getBaseName(_path);
+
+
+    // store path to application data directory (this is dependent on _name)
+#if defined(WIN32)
+    char chPath[MAX_PATH];
+    /// \todo Use SHGetKnownFolderPath for vista and later.
+    HRESULT hr = ::SHGetFolderPath(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, chPath);
+    if(!SUCCEEDED(hr)) {
+        throw z::Exception("Application", z::string("Internal error retrieving data directory: %{s}").arg("s", hr));
+    }
+    _data = z::string(chPath);
+    _data.replace("\\", "/");
+#elif defined(COCOA)
+#if !__has_feature(objc_arc)
+    // COCOA system not initialized yet, so we need an explicit pool
+    NSAutoreleasePool* pool = [NSAutoreleasePool new];
+#endif
+    // get the home directory
+    NSString* p = NSHomeDirectory();
+    const char* instr = [p UTF8String];
+    _data = z::string(instr) + "/Library";
+
+    NSString* b = [[NSBundle mainBundle] bundlePath];
+    const char* bstr = [b UTF8String];
+    z::string bpath = z::string(bstr);
+#if !__has_feature(objc_arc)
+    // release the pool
+    [pool drain];
+#endif
+#else
+    const char* p = ::getenv("HOME");
+    if(p) {
+        _data = z::string(p);
+    } else {
+        _data = "./";
+    }
+#endif
+    _data = _data + "/" + z::app().name() + "/";
+    z::file::mkpath(_data);
+
+    // store path to application resource directory
+#if defined(COCOA)
+    _base = bpath;
+#else
+    _base = z::file::getPath(_path);
+#endif
+
+    // convert all argv to argl
     for(int i = 0; i < _argc; ++i) {
         std::string a = _argv[i];
-        if((a.length() >= 10) && (a.substr(0, 10) == "---logfile") && (i < (argc-1))) {
+        if((a.length() >= 10) && (a.substr(0, 10) == "---logfile") && (i < (_argc-1))) {
             std::string f = _argv[++i];
             _log = new std::ofstream(f.c_str());
         } else {
             _argl.add(argv[i]);
         }
     }
+
     if(_log == 0) {
 #if defined(GUI)
-        _log = new std::ofstream("default.log");
+#if defined(DEBUG)
+        z::string logfile = "./default.log";
+#else
+        z::string logfile = _data + "/default.log";
+#endif
+        std::cout << "log: " << logfile << std::endl;
+        _log = new std::ofstream(z::s2e(logfile).c_str());
 #else
         _log = z::ptr(std::cout);
 #endif
@@ -722,17 +818,19 @@ z::Application::Application(int argc, const char** argv) : _argc(argc), _argv(ar
 }
 
 z::Application::~Application() {
+    onExit();
 #if defined(WIN32)
     WSACleanup();
 #endif
     if(_log != z::ptr(std::cout)) {
         delete _log;
     }
+    _log = 0;
 }
 
 #if defined(WIN32)
 static HINSTANCE s_hInstance = 0;
-HINSTANCE z::Application::instance() {
+HINSTANCE z::Application::instance() const {
     assert(0 != s_hInstance);
     return s_hInstance;
 }
@@ -805,12 +903,7 @@ inline int z::Application::execEx() {
     return code;
 }
 
-void z::Application::_onExit() {
-    return z::ref(g_app).onExit();
-}
-
 int z::Application::exec() {
-    ::atexit(_onExit);
     int rv = execEx();
     return rv;
 }
@@ -871,6 +964,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
     return a.exec();
 }
 #else // GUI && WIN32
+#if !defined(ZPP_EXE) // special case for ZPP compiler, which defines its own main()
 int main(int argc, const char* argv[]) {
 #if defined(GUI) && defined(QT)
     // This cannot be in initMain() since it must have application-level lifetime.
@@ -880,5 +974,6 @@ int main(int argc, const char* argv[]) {
     initMain(a.argl());
     return a.exec();
 }
+#endif // ZPP_EXE
 #endif // GUI && WIN32
 #endif // Z_EXE
