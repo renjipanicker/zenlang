@@ -2,25 +2,31 @@
 #include "base/base.hpp"
 
 #if defined(GUI)
-#if defined(WIN32)
-#elif defined(GTK)
-#elif defined(QT)
-# include <QtGui/QApplication>
-# include <QtCore/QTimer>
-#elif defined(COCOA)
-// Note that this is import, not include. Which is why this must be here, not in pch.hpp
-// In COCOA mode, this file *must* be compiled as a Obj-C++ file, not C++ file. In Xcode, go to
-// Project/Build Phases/Compile Sources/ and select the zenlang.cpp file.
-// Add "-x objective-c++" to the "Compiler Flags" column.
-#import <AppKit/AppKit.h>
+    #if defined(WIN32)
+    #elif defined(GTK)
+    #elif defined(QT)
+    # include <QtGui/QApplication>
+    # include <QtCore/QTimer>
+    #elif defined(OSX)
+        // Note that this is import, not include. Which is why this must be here, not in pch.hpp
+        // In OSX mode, this file *must* be compiled as a Obj-C++ file, not C++ file. In Xcode, go to
+        // Project/Build Phases/Compile Sources/ and select the zenlang.cpp file.
+        // Add "-x objective-c++" to the "Compiler Flags" column.
+#pragma message "XXX1"
+        #import <Cocoa/Cocoa.h>
+        #import <AppKit/AppKit.h>
+    #elif defined(IOS)
+        // Same as above note. This is an import.
+        #import <UIKit/UIKit.h>
+    #else
+        #error "Unimplemented GUI mode"
+    #endif
 #else
-#error "Unimplemented GUI mode"
-#endif
-#else
-#if defined(COCOA)
-// Same as above note. This is an import.
-#import <Cocoa/Cocoa.h>
-#endif
+    #if defined(OSX) || defined(IOS)
+        // Same as above note. This is an import.
+#pragma message "XXX2"
+        #import <Cocoa/Cocoa.h>
+    #endif
 #endif
 
 #if defined(__APPLE__)
@@ -39,6 +45,9 @@ void z::writelog(const z::string& src, const z::string& msg) {
         s += " : ";
     }
     s += msg;
+#if defined(OSX) || defined(IOS)
+    std::cout << s << std::endl;
+#endif
     if(g_app) {
         z::app().writeLog(s);
     } else {
@@ -657,7 +666,7 @@ int ZTimer::qt_metacall(QMetaObject::Call _c, int _id, void **_a)
     return _id;
 }
 QT_END_MOC_NAMESPACE
-#elif defined(COCOA)
+#elif defined(OSX) || defined(IOS)
 @interface CTimer : NSObject {
     NSTimer* timer;
 }
@@ -674,10 +683,10 @@ QT_END_MOC_NAMESPACE
     pump();
 }
 @end
-#endif // QT/COCOA
+#endif // QT/OSX
 #endif // GUI
 
-z::Application::Application(int argc, const char** argv) : _argc(argc), _argv(argv), _isExit(false), _log(0) {
+z::Application::Application(int argc, char** argv) : _argc(argc), _argv(argv), _isExit(false), _log(0) {
     if(g_app != 0) {
         throw z::Exception("z::Application", z::string("Multiple instances of Application not permitted"));
     }
@@ -724,9 +733,9 @@ z::Application::Application(int argc, const char** argv) : _argc(argc), _argv(ar
     }
     _data = z::string(chPath);
     _data.replace("\\", "/");
-#elif defined(COCOA)
+#elif defined(OSX) || defined(IOS)
 #if !__has_feature(objc_arc)
-    // COCOA system not initialized yet, so we need an explicit pool
+    // OSX system not initialized yet, so we need an explicit pool
     NSAutoreleasePool* pool = [NSAutoreleasePool new];
 #endif
     // get the home directory
@@ -753,7 +762,7 @@ z::Application::Application(int argc, const char** argv) : _argc(argc), _argv(ar
     z::file::mkpath(_data);
 
     // store path to application resource directory
-#if defined(COCOA)
+#if defined(OSX) || defined(IOS)
     _base = bpath;
 #else
     _base = z::file::getPath(_path);
@@ -818,6 +827,8 @@ z::Application::Application(int argc, const char** argv) : _argc(argc), _argv(ar
 }
 
 z::Application::~Application() {
+    // NOTE: This does not get called under OSX/iOS, because the main loop is terminated
+    // using exit(). This leads to memory leaks. The only way to call this would be using _atexit().
     onExit();
 #if defined(WIN32)
     WSACleanup();
@@ -877,21 +888,22 @@ inline int z::Application::execEx() {
 
     // spin main loop
     code = z::ref(QApplication::instance()).exec();
-#elif defined(COCOA)
+#elif defined(OSX) || defined(IOS)
     // create timer object
     CTimer* ctimer = [[CTimer alloc] initTimer];
     unused(ctimer);
-#if 1 //COCOA_NIB
-    code = NSApplicationMain(_argc, (const char **)_argv);
-#else
-    // spin main loop
-    NSDictionary* infoDictionary = [[NSBundle mainBundle] infoDictionary];
-    Class principalClass = NSClassFromString([infoDictionary objectForKey:@"NSPrincipalClass"]);
-    NSApplication* applicationObject = [principalClass sharedApplication];
-    if ([applicationObject respondsToSelector:@selector(run)]) {
-        [applicationObject performSelectorOnMainThread:@selector(run) withObject:nil waitUntilDone:YES];
+#if defined(OSX) //COCOA_NIB
+    code = NSApplicationMain(_argc, (const char**)_argv);
+#elif defined(IOS)
+    @autoreleasepool {
+        z::string ccn;
+        appClass(ccn);
+        z::estring es = z::s2e(ccn);
+        NSString* ns = [NSString stringWithUTF8String:es.c_str()];
+        return UIApplicationMain(_argc, _argv, nil, ns);
     }
-    code = 0;
+#else
+#error "Unknown MacOs mode"
 #endif
 #else
 #error "Unimplemented GUI mode"
@@ -916,8 +928,12 @@ int z::Application::exit(const int& code) const {
     gtk_main_quit();
 #elif defined(QT)
     z::ref(QApplication::instance()).exit(code);
-#elif defined(COCOA)
+#elif defined(OSX)
     [NSApp performSelector:@selector(terminate:) withObject:nil afterDelay:0.0];
+#elif defined(IOS)
+    // no option to exit IOS app programmatically, no encouraged in Apple HIG
+    // using terminateWithSuccess will get the iOS app rejected from AppStore
+    //[[UIApplication sharedApplication] terminateWithSuccess];
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -959,13 +975,13 @@ void initMain(const z::stringlist& argl) {
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
     unused(hPrevInstance);unused(lpCmdLine);unused(nCmdShow);
     s_hInstance = hInstance;
-    z::Application a(__argc, (const char**)__argv);
+    z::Application a(__argc, (char**)__argv);
     initMain(a.argl());
     return a.exec();
 }
 #else // GUI && WIN32
 #if !defined(ZPP_EXE) // special case for ZPP compiler, which defines its own main()
-int main(int argc, const char* argv[]) {
+int main(int argc, char* argv[]) {
 #if defined(GUI) && defined(QT)
     // This cannot be in initMain() since it must have application-level lifetime.
     QApplication qapp(argc, argv);

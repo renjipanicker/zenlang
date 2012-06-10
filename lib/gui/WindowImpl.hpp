@@ -11,10 +11,11 @@ struct HandleImpl : public Widget::Handle::Impl {
     inline HandleImpl() : _hWindow(0), _hFixed(0) {}
     GtkWidget* _hWindow;
     GtkWidget* _hFixed;
-#elif defined(COCOA)
+#elif defined(OSX)
     inline HandleImpl() : _hFrame(0), _hWindow(0) {}
     NSWindow* _hFrame;
     NSView* _hWindow;
+#elif defined(IOS)
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -47,9 +48,13 @@ Window::HandleImpl& createChildWindow(const Window::Definition& def, const z::st
 Window::HandleImpl& initWindowImpl(GtkWidget* hwnd);
 Window::HandleImpl& createWindow(const Window::Definition& def, GtkWidget *parent);
 Window::HandleImpl& createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const Window::Handle& parent);
-#else
+#elif defined(OSX)
 Window::HandleImpl& createMainFrame(const Window::Definition& def);
 Window::HandleImpl& createChildWindow(const Window::Definition& def, const Window::Handle& parent, NSView* child);
+#elif defined(IOS)
+Window::HandleImpl& createMainFrame(const Window::Definition& def);
+Window::HandleImpl& createChildWindow(const Window::Definition& def, const Window::Handle& parent);
+#else
 #endif
 
 }

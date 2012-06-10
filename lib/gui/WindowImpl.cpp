@@ -212,7 +212,7 @@ Window::HandleImpl& Window::Native::createChildWindow(GtkWidget* hwnd, const Win
     gtk_widget_show(impl._hWindow);
     return impl;
 }
-#elif defined(COCOA)
+#elif defined(OSX)
 Window::HandleImpl& Window::Native::createMainFrame(const Window::Definition& def) {
     Position pos = Position();
     if(def.position.x != -1)
@@ -256,6 +256,14 @@ Window::HandleImpl& Window::Native::createChildWindow(const Window::Definition& 
 //    [Window::impl(parent)._hWindow addSubView:child];
     return z::ref(impl);
 }
+#elif defined(IOS)
+Window::HandleImpl& Window::Native::createMainFrame(const Window::Definition& def) {
+    throw z::Exception("Window", z::string("NotImplemented: createMainFrame()"));
+}
+
+Window::HandleImpl& Window::Native::createChildWindow(const Window::Definition& def, const Window::Handle& parent) {
+    throw z::Exception("Window", z::string("NotImplemented: createChildFrame()"));
+}
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -278,7 +286,10 @@ Window::Position Window::getWindowPosition(const Handle& window) {
             ._y<Window::Position>(0)
             ._w<Window::Position>(req.width)
             ._h<Window::Position>(req.height);
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+    const Window::Position pos;
+#elif defined(IOS)
     UNIMPL();
     const Window::Position pos;
 #else
@@ -305,13 +316,15 @@ Window::Position Window::getChildPosition(const Handle& window) {
             ._y<Window::Position>(0)
             ._w<Window::Position>(req.width)
             ._h<Window::Position>(req.height);
-#elif defined(COCOA)
+#elif defined(OSX)
     NSSize sz = Window::impl(window)._hWindow.frame.size;
     return Window::Position()
             ._x<Window::Position>(0)
             ._y<Window::Position>(0)
             ._w<Window::Position>(sz.width)
             ._h<Window::Position>(sz.height);
+#elif defined(IOS)
+    UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -327,7 +340,9 @@ void Window::SetTitle::run(const Window::Handle& window, const z::string& title)
     ::SetWindowText(Window::impl(window)._hWindow, z::s2e(title).c_str());
 #elif defined(GTK)
     gtk_window_set_title (GTK_WINDOW (Window::impl(window)._hWindow), z::s2e(title).c_str());
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+#elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"
@@ -342,8 +357,10 @@ void Window::SetFocus::run(const Window::Handle& frame, const Window::Handle& wi
     unused(frame);
     unused(window);
     UNIMPL();
-#elif defined(COCOA)
+#elif defined(OSX)
     [Window::impl(frame)._hFrame makeFirstResponder:Window::impl(window)._hWindow];
+#elif defined(IOS)
+    UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -355,9 +372,11 @@ void Window::Show::run(const Window::Handle& window) {
 #elif defined(GTK)
     gtk_widget_show(GTK_WIDGET(Window::impl(window)._hWindow));
     gtk_window_deiconify(GTK_WINDOW(Window::impl(window)._hWindow));
-#elif defined(COCOA)
+#elif defined(OSX)
     UNIMPL();
 //    [Window::impl(window)._hWindow makeKeyAndOrderFront:Window::impl(window)._hWindow];
+#elif defined(IOS)
+    UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -368,7 +387,9 @@ void Window::Hide::run(const Window::Handle& window) {
     ::ShowWindow(Window::impl(window)._hWindow, SW_HIDE);
 #elif defined(GTK)
     gtk_widget_hide(GTK_WIDGET(Window::impl(window)._hWindow));
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+#elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"
@@ -382,7 +403,9 @@ void Window::Move::run(const Window::Handle& window, const Window::Position posi
     unused(window); unused(position);
     //gtk_widget_set_uposition(Window::impl(window)._hWindow, position.x, position.y);
     //gtk_window_set_default_size (Window::impl(window)._hWindow, position.w, position.h);
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+#elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"
@@ -398,7 +421,9 @@ void Window::Size::run(const Window::Handle& window, const int& w, const int& h)
     ::MoveWindow(Window::impl(window)._hWindow, rc.left, rc.top, tw, th, TRUE);
 #elif defined(GTK)
     gtk_widget_set_size_request(Window::impl(window)._hWindow, w, h);
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+#elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"
@@ -416,7 +441,7 @@ static gboolean onConfigureEvent(GtkWindow* window, GdkEvent* event, gpointer ph
 }
 #endif
 
-#if defined(COCOA)
+#if defined(OSX)
 @interface CResizer : NSObject {
     Window::OnResize::Handler* handler;
     NSView* view;
@@ -458,9 +483,11 @@ void Window::OnResize::addHandler(const Window::Handle& window, Handler* handler
     onResizeHandlerList.addHandler(Window::impl(window)._hWindow, handler);
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (Window::impl(window)._hWindow), "configure-event", G_CALLBACK (onConfigureEvent), handler);
-#elif defined(COCOA)
+#elif defined(OSX)
     CResizer* resizer = [CResizer alloc];
     [resizer initResizer:handler withView:Window::impl(window)._hWindow];
+#elif defined(IOS)
+    UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif
@@ -482,9 +509,11 @@ void Window::OnClose::addHandler(const Window::Handle& window, Handler* handler)
     onCloseHandlerList.addHandler(Window::impl(window)._hWindow, handler);
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (Window::impl(window)._hWindow), "closed", G_CALLBACK (onWindowCloseEvent), handler);
-#elif defined(COCOA)
+#elif defined(OSX)
     CCloser* closer = [CCloser alloc];
     [closer initCloser:handler withView:Window::impl(window)._hWindow];
+#elif defined(IOS)
+    UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif

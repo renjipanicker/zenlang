@@ -24,14 +24,17 @@ MainFrame::Create::_Out MainFrame::Create::run(const MainFrame::Definition& def)
     impl._hFixed = gtk_fixed_new();
     gtk_container_add(GTK_CONTAINER(impl._hWindow), impl._hFixed);
     gtk_widget_show(impl._hFixed);
-#elif defined(COCOA)
+#elif defined(OSX)
+    Window::HandleImpl& impl = Window::Native::createMainFrame(def);
+#elif defined(IOS)
+    UNIMPL();
     Window::HandleImpl& impl = Window::Native::createMainFrame(def);
 #else
 #error "Unimplemented GUI mode"
 #endif
     Window::Handle win;
     win._wdata<Window::Handle>(z::ptr(impl));
-#if !defined(COCOA)
+#if !defined(OSX)
     if(def.visible) {
         Window::Show().run(win);
     }

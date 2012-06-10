@@ -1175,12 +1175,14 @@ namespace z {
 #else
     private:
 #endif
-        Application(int argc, const char** argv);
+        Application(int argc, char** argv);
         ~Application();
 
     public:
 #if defined(WIN32)
         HINSTANCE instance() const;
+#elif defined(IOS)
+        void appClass(z::string& cn) const;
 #endif
         int exec();
         int exit(const int& code) const;
@@ -1191,7 +1193,7 @@ namespace z {
     public:
         inline const z::stringlist& argl() const {return _argl;}
         inline const int& argc() const {return _argc;}
-        inline const char** argv() const {return _argv;}
+        inline char** argv() const {return _argv;}
 
     public:
         /// \brief Return path to executable
@@ -1228,7 +1230,7 @@ namespace z {
         z::string _base;
         z::stringlist _argl;
         int _argc;
-        const char** _argv;
+        char** _argv;
         bool _isExit;
         std::ostream* _log;
     };

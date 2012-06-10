@@ -11,7 +11,10 @@ namespace Systray {
 #elif defined(GTK)
         inline HandleImpl() : _icon(0) {}
         GtkStatusIcon* _icon;
-#elif defined(COCOA)
+#elif defined(OSX)
+        inline HandleImpl() : _id(0) {}
+        uint32_t _id;
+#elif defined(IOS)
         inline HandleImpl() : _id(0) {}
         uint32_t _id;
 #else

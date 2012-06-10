@@ -300,7 +300,7 @@ namespace z
             }
 
             if(fit == cmd._map.end()) {
-#if defined(COCOA)
+#if defined(OSX)
                 if(str.substr(0, 4) == "-psn") {
                     if(it != ite)
                         ++it;

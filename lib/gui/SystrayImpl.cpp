@@ -36,7 +36,9 @@ void Systray::SetTooltip::run(const Systray::Handle& handle, const z::string& te
     ::Shell_NotifyIcon(NIM_MODIFY, z::ptr(ni));
 #elif defined(GTK)
     gtk_status_icon_set_tooltip_text(Systray::impl(handle)._icon, z::s2e(text).c_str());
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+#elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"
@@ -58,7 +60,9 @@ void Systray::SetIconfile::run(const Systray::Handle& handle, const z::string& f
 #elif defined(GTK)
     unused(filename);
     gtk_status_icon_set_from_icon_name(Systray::impl(handle)._icon, GTK_STOCK_MEDIA_STOP);
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+#elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"
@@ -70,7 +74,9 @@ void Systray::Show::run(const Systray::Handle& handle) {
     ::Shell_NotifyIcon(NIM_ADD, z::ptr(Systray::impl(handle)._ni));
 #elif defined(GTK)
     gtk_status_icon_set_visible(Systray::impl(handle)._icon, TRUE);
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+#elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"
@@ -82,7 +88,9 @@ void Systray::Hide::run(const Systray::Handle& handle) {
     ::Shell_NotifyIcon(NIM_DELETE, z::ptr(Systray::impl(handle)._ni));
 #elif defined(GTK)
     gtk_status_icon_set_visible(Systray::impl(handle)._icon, FALSE);
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+#elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"
@@ -133,7 +141,9 @@ Systray::Handle Systray::Create::run(const Window::Handle& parent, const Systray
 #elif defined(GTK)
     z::ref(impl)._icon = gtk_status_icon_new_from_stock(GTK_STOCK_GO_UP);
     g_object_set_data(G_OBJECT(z::ref(impl)._icon), "impl", impl);
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+#elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"
@@ -170,7 +180,9 @@ void Systray::OnActivation::addHandler(const Systray::Handle& systray, Handler* 
     SystrayImpl::onSystrayActivationHandlerList.addHandler(Systray::impl(systray)._wm, handler);
 #elif defined(GTK)
     g_signal_connect(G_OBJECT (Systray::impl(systray)._icon), "activate", G_CALLBACK (onSystrayActivateEvent), handler);
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+#elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"
@@ -196,7 +208,9 @@ void Systray::OnContextMenu::addHandler(const Systray::Handle& systray, Handler*
     SystrayImpl::onSystrayContextMenuHandlerList.addHandler(Systray::impl(systray)._wm, handler);
 #elif defined(GTK)
     g_signal_connect(G_OBJECT (Systray::impl(systray)._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), handler);
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+#elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"

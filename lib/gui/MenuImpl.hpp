@@ -11,7 +11,10 @@ namespace Menu {
 #elif defined(GTK)
         inline HandleImpl() : _menu(0) {}
         GtkWidget* _menu;
-#elif defined(COCOA)
+#elif defined(OSX)
+        inline HandleImpl() : _id(0) {}
+        uint32_t _id;
+#elif defined(IOS)
         inline HandleImpl() : _id(0) {}
         uint32_t _id;
 #else

@@ -33,7 +33,10 @@ MenuItem::Handle MenuItem::Create::run(const Menu::Handle& pmenu, const MenuItem
     MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
     z::ref(impl)._menuItem = gtk_menu_item_new_with_label(z::s2e(def.label).c_str());
     gtk_menu_shell_append (GTK_MENU_SHELL (Menu::impl(pmenu)._menu), z::ref(impl)._menuItem);
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+    MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
+#elif defined(IOS)
     UNIMPL();
     MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
 #else
@@ -60,7 +63,9 @@ void MenuItem::OnSelect::addHandler(const MenuItem::Handle& menuitem, Handler* h
     MenuItemImpl::onMenuItemSelectHandlerList.addHandler(MenuItem::impl(menuitem)._id, handler);
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (MenuItem::impl(menuitem)._menuItem), "activate", G_CALLBACK (onMenuItemSelectClick), handler);
-#elif defined(COCOA)
+#elif defined(OSX)
+    UNIMPL();
+#elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"

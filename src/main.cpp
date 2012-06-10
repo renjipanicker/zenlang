@@ -223,7 +223,7 @@ inline void readProjectFile(z::Ast::Project& project, z::Ast::Config& config, co
     }
 }
 
-int main(int argc, const char* argv[]) {
+int main(int argc, char* argv[]) {
     z::Application app(argc, argv);
 
     z::Ast::Project project;

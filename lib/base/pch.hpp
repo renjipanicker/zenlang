@@ -28,43 +28,49 @@
 //#define WIN32 1  // To tell zenlang.hpp that this is a Win32 GUI exe
 //#define QT 1     // To tell zenlang.hpp that this is a Qt GUI exe
 //#define GTK 1    // To tell zenlang.hpp that this is a Gtk GUI exe
-//#define COCOA 1  // To tell zenlang.hpp that this is a Cocoa GUI exe
+//#define OSX 1    // To tell zenlang.hpp that this is a OSX app
+//#define IOS 1    // To tell zenlang.hpp that this is a IOS app
+
 // if compiling in GUI mode and WIN32 is not defined, assume Linux GTK or QT
 /// \todo change this when adding support for other platforms.
 #if defined(GUI)
-#if !defined(WIN32)
-#if !defined(GTK) && !defined(QT)
-#if defined(QT_GUI_LIB)
-#define QT 1
-#elif defined(__APPLE__)
-#define COCOA 1
-#else
-#define GTK 1
-#endif
-#endif
-#endif
+    #if !defined(WIN32) && !defined(GTK) && !defined(QT) && !defined(OSX) && !defined(IOS)
+        #if defined(QT_GUI_LIB)
+            #define QT 1
+        #elif defined(__APPLE__)
+            #if !defined(IOS)
+                #define OSX 1
+            #endif
+        #else
+            #define GTK 1
+        #endif
+    #endif
 #endif
 
 // validation. one and exactly one of the 3 must be defined in GUI mode
 #if defined(GUI)
 #if defined(WIN32)
-    #if defined(GTK) || defined(QT) || defined(COCOA)
-    #error GTK/QT/COCOA defined in WIN32
+    #if defined(GTK) || defined(QT) || defined(OSX) || defined(IOS)
+    #error GTK/QT/OSX/IOS defined in WIN32
     #endif
 #elif defined(GTK)
-    #if defined(WIN32) || defined(QT) || defined(COCOA)
-    #error WIN32/QT/COCOA defined in GTK
+    #if defined(WIN32) || defined(QT) || defined(OSX) || defined(IOS)
+    #error WIN32/QT/OSX/IOS defined in GTK
     #endif
 #elif defined(QT)
-    #if defined(WIN32) || defined(GTK) || defined(COCOA)
-    #error WIN32/GTK/COCOA defined in QT
+    #if defined(WIN32) || defined(GTK) || defined(OSX) || defined(IOS)
+    #error WIN32/GTK/OSX/IOS defined in QT
     #endif
-#elif defined(COCOA)
-    #if defined(WIN32) || defined(GTK) || defined(QT)
-    #error WIN32/GTK/QT defined in COCOA
+#elif defined(OSX)
+    #if defined(WIN32) || defined(GTK) || defined(QT) || defined(IOS)
+    #error WIN32/GTK/QT/IOS defined in OSX
+    #endif
+#elif defined(IOS)
+    #if defined(WIN32) || defined(GTK) || defined(QT) || defined(OSX)
+    #error WIN32/GTK/QT/OSX defined in IOS
     #endif
 #else
-    #error "Unknown platform. Please define WIN32 or GTK or QT or COCOA"
+    #error "Unknown platform. Please define WIN32 or GTK or QT or OSX or IOS"
 #endif
 #endif
 
@@ -170,7 +176,7 @@
     #elif defined(GTK)
         # include <gtk/gtk.h>
     #elif defined(QT)
-    #elif defined(COCOA)
+    #elif defined(OSX)
     #else
     #endif
 #else
