@@ -1,0 +1,4 @@
+namespace FastCGI;
+
+/// \brief Start the FastCGI server on specified port.
+public routine bool StartServer(const int& port) native;

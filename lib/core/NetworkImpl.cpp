@@ -1,6 +1,6 @@
 #include "zenlang.hpp"
 
-namespace z {
+namespace zz {
 struct OnDataReceivedHandler {
     inline OnDataReceivedHandler(Response::response& r) : _ps(psProtocol), _inHeader(true), _r(r) {}
 private:
@@ -118,7 +118,7 @@ public:
     }
 };
 
-static bool queryHttpText(const Url::url& u, OnDataReceivedHandler& drh) {
+static bool queryHttpText(const Url::url& u, zz::OnDataReceivedHandler& drh) {
 #if defined(WIN32)
     SOCKET sockfd;
 #else
@@ -199,7 +199,7 @@ static bool queryHttpText(const Url::url& u, OnDataReceivedHandler& drh) {
 } // namespace z
 
 bool Network::GetUrl(const Url::url& u, Response::response& r) {
-    z::OnDataReceivedHandler drh(r);
-    z::queryHttpText(u, drh);
+    zz::OnDataReceivedHandler drh(r);
+    zz::queryHttpText(u, drh);
     return false;
 }

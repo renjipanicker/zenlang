@@ -121,6 +121,7 @@
     # include <sys/ioctl.h>
     # include <netinet/in.h>
     # include <netdb.h>
+    typedef int SOCKET;
 #endif
 
 #if defined(WIN32)

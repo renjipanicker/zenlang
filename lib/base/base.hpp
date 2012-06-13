@@ -343,6 +343,7 @@ namespace z {
         std::ofstream _os;
     };
 
+    ////////////////////////////////////////////////////////////////////////////
     /// \brief Return typename of T as string
     template <typename T>
     inline z::string type_name() {
@@ -1054,8 +1055,8 @@ namespace z {
         }
 
     public:
-        z::Device& start(z::Device& device);
-        z::Device& stop(z::Device& device);
+        z::Device& startPoll(z::Device& device);
+        z::Device& stopPoll(z::Device& device);
 
     public:
         z::size wait();
@@ -1073,12 +1074,14 @@ namespace z {
     ThreadContext& ctx();
 
     #if defined(UNIT_TEST)
+    ////////////////////////////////////////////////////////////////////////////
     struct TestResult {
         ~TestResult();
         static void begin(const z::string& name);
         static void end(const z::string& name, const bool& passed);
     };
 
+    ////////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct test_ {
     public:
@@ -1105,12 +1108,14 @@ namespace z {
         }
     };
 
+    ////////////////////////////////////////////////////////////////////////////
     struct TestInstance {
         TestInstance();
         virtual void enque(ThreadContext& ctx) = 0;
         TestInstance* _next;
     };
 
+    ////////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct TestInstanceT : public TestInstance {
         virtual void enque(ThreadContext& ctx) {
@@ -1121,6 +1126,7 @@ namespace z {
     };
     #endif
 
+    ////////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct main_ {
         struct _Out {
@@ -1140,12 +1146,14 @@ namespace z {
         }
     };
 
+    ////////////////////////////////////////////////////////////////////////////
     struct MainInstance {
         MainInstance();
         virtual void enque(ThreadContext& ctx, const z::stringlist& argl) = 0;
         MainInstance* _next;
     };
 
+    ////////////////////////////////////////////////////////////////////////////
     template <typename T>
     struct MainInstanceT : public MainInstance {
         virtual void enque(ThreadContext& ctx, const z::stringlist& argl) {
@@ -1164,9 +1172,11 @@ namespace z {
     };
 #endif
 
+    ////////////////////////////////////////////////////////////////////////////
     /// \brief Internal global context
     struct GlobalContext;
 
+    ////////////////////////////////////////////////////////////////////////////
     /// \brief Represents a single running application instance.
     struct Application {
         // Application object can be instantiated only from an executable
@@ -1238,6 +1248,16 @@ namespace z {
     /// \brief Provides read-only access to singleton app-instance
     const z::Application& app();
 
+    ////////////////////////////////////////////////////////////////////////////
+    struct socket {
+        inline socket() : _val(0) {}
+        inline socket(const SOCKET& val) : _val(val) {}
+        inline const SOCKET& val() const {return _val;}
+    private:
+        SOCKET _val;
+    };
+
+    ////////////////////////////////////////////////////////////////////////////
     /// \brief Simple mechanism for tracing function calls.
     struct Tracer {
         inline Tracer(const z::string& cName, const z::string& fName) : _cName(cName), _fName(fName) {

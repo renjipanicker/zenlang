@@ -73,6 +73,11 @@ namespace sg {
             return;
         }
 
+        if(typeSpec.name().string() == "socket") {
+            name += "z::socket";
+            return;
+        }
+
         if(typeSpec.name().string() == "type") {
             name += "z::type";
             return;

@@ -1,0 +1,8 @@
+namespace Socket;
+
+public event(const socket& s) native => function void OnConnect();
+public event(const socket& s) native => function void OnRecv();
+public event(const socket& s) native => function void OnClose();
+
+public routine socket Open(const string& host, const int& port) native;
+public routine string Close(const socket& s) native;

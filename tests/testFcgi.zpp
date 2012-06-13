@@ -1,0 +1,8 @@
+import core::FastCGI;
+namespace TestFCGI;
+
+public function basicTest : test {
+    FastCGI::StartServer(9001);
+    return (true);
+}
+

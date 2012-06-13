@@ -172,6 +172,7 @@ mkdir -p ${OUTDIR}
 mkdir -p ${OUTDIR}/core
 mkdir -p ${OUTDIR}/gui
 mkdir -p ${OUTDIR}/utils
+mkdir -p ${OUTDIR}/utils/fcgi
 mkdir -p ${OUTDIR}/utils/sqlite3
 
 #########################################################
@@ -212,7 +213,9 @@ CZPPLST="${CZPPLST} $LIBDIR/core/Dir.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/core/Url.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/core/Request.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/core/Response.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/core/Socket.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/core/Network.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/core/FastCGI.zpp"
 ${ZCC} --api ${INTDIR}/core -c ${CZPPLST}
 
 # copy core files to OUTDIR
@@ -266,7 +269,9 @@ appendFile $ZHDRFILE "${INTDIR}/core/Dir.hpp"
 appendFile $ZHDRFILE "${INTDIR}/core/Url.hpp"
 appendFile $ZHDRFILE "${INTDIR}/core/Request.hpp"
 appendFile $ZHDRFILE "${INTDIR}/core/Response.hpp"
+appendFile $ZHDRFILE "${INTDIR}/core/Socket.hpp"
 appendFile $ZHDRFILE "${INTDIR}/core/Network.hpp"
+appendFile $ZHDRFILE "${INTDIR}/core/FastCGI.hpp"
 
 appendString $ZHDRFILE "#if defined(GUI)"
 appendFile $ZHDRFILE "${INTDIR}/gui/Widget.hpp"
@@ -318,8 +323,12 @@ appendFile $ZSRCFILE "${INTDIR}/Request.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/core/RequestImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Response.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/core/ResponseImpl.cpp"
+appendFile $ZSRCFILE "${INTDIR}/Socket.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/core/SocketImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Network.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/core/NetworkImpl.cpp"
+appendFile $ZSRCFILE "${INTDIR}/FastCGI.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/core/FastCGIImpl.cpp"
 
 appendString $ZSRCFILE "#if defined(GUI)"
 appendFile $ZSRCFILE "${INTDIR}/Widget.cpp"
@@ -349,8 +358,9 @@ appendString $ZSRCFILE "#endif"
 if [ "$dotest" == "yes" ]; then
     #########################################################
     # generate unit test files
-    ${ZCC} -c ${SRCDIR}/tests/testBasic.zpp
-    ${ZCC} -c ${SRCDIR}/tests/guiTest.zpp
+#    ${ZCC} -c ${SRCDIR}/tests/testBasic.zpp
+    ${ZCC} -c ${SRCDIR}/tests/testFcgi.zpp
+#    ${ZCC} -c ${SRCDIR}/tests/guiTest.zpp
 
     #########################################################
     echo Running unit tests...
@@ -363,9 +373,12 @@ if [ "$dotest" == "yes" ]; then
     # compile and run tests
     if [[ $platform == 'CYGWIN_NT-5.1' ]]; then
         CFLAGS="/Ox /DWIN32 /DUNIT_TEST /DZ_EXE /EHsc /I${OUTDIR} /W4"
-        "${CC}" ${CFLAGS} /Fetest.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
-        ./test.exe > test.log
-        "${CC}" ${CFLAGS} /DGUI /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
+#        "${CC}" ${CFLAGS} /Fetest.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
+#        ./test.exe > test.log
+
+        "${CC}" ${CFLAGS} /Fetest.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/zenlang.cpp testFcgi.cpp ws2_32.lib shell32.lib
+
+#        "${CC}" ${CFLAGS} /DGUI /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
     elif [[ $platform == 'Darwin' ]]; then
         # first compile the C files
         gcc -c -Os -I${SDKDIR}/include -I${OUTDIR} ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
@@ -398,5 +411,5 @@ if [ "$dotest" == "yes" ]; then
     fi
 
     # display test result summary
-    cat test.log | grep "PASSED"
+#    cat test.log | grep "PASSED"
 fi

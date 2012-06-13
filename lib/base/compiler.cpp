@@ -127,6 +127,10 @@ const z::string ifile =
 "default datetime = 0;\n"
 "coerce int => datetime;\n"
 
+"typedef socket native;\n"
+"default socket = 0;\n"
+"coerce int => socket;\n"
+
 "typedef type native;\n"
 
 "template <F> future  native;\n"

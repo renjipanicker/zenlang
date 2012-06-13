@@ -549,11 +549,11 @@ void z::ThreadContext::add(z::Future* future) {
     _queue.add(future);
 }
 
-z::Device& z::ThreadContext::start(z::Device& device) {
+z::Device& z::ThreadContext::startPoll(z::Device& device) {
     return gctx().start(device);
 }
 
-z::Device& z::ThreadContext::stop(z::Device& device) {
+z::Device& z::ThreadContext::stopPoll(z::Device& device) {
     return gctx().stop(device);
 }
 
