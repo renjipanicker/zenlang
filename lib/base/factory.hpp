@@ -112,7 +112,7 @@ namespace Ast {
         Ast::Scope*              aParamsList(Ast::Scope& scope);
         Ast::Scope*              aParamsList(Ast::Scope& scope, const Ast::Scope& posParam);
         Ast::Scope*              aParam(Ast::Scope& list, const Ast::VariableDefn& variableDefn);
-        Ast::Scope*              aParam(const Ast::VariableDefn& variableDefn);
+        Ast::Scope*              aParam(const Ast::VariableDefn& variableDefn, const ScopeType::T& type);
         Ast::Scope*              aParam(const ScopeType::T& type);
         Ast::VariableDefn*       aVariableDefn(const Ast::Token& name, const Ast::Expr& initExpr);
         Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
@@ -177,6 +177,8 @@ namespace Ast {
         Ast::CompoundStatement*            aStatementList(Ast::CompoundStatement& list, const Ast::Statement& statement);
         void                               aEnterCompoundStatement(const Ast::Token& pos);
         void                               aLeaveCompoundStatement();
+        void                               aEnterFunctionBlock(const Ast::Token& pos);
+        void                               aLeaveFunctionBlock();
         Ast::ExprList*                     aExprList(Ast::ExprList& list, const Ast::Expr& expr);
         Ast::ExprList*                     aExprList(const Ast::Expr& expr);
         Ast::ExprList*                     aExprList();
@@ -248,7 +250,6 @@ namespace Ast {
         const Ast::Token&         aEnterList(const Ast::Token& pos);
 
         Ast::FormatExpr*          aFormatExpr(const Ast::Token& pos, const Ast::Expr& stringExpr, const Ast::DictExpr& dictExpr);
-
         Ast::RunExpr*             aRunExpr(const Ast::Token& pos, const Ast::FunctorCallExpr& callExpr);
 
         Ast::FunctorCallExpr*     aFunctorCallExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::ExprList& exprList);
@@ -266,6 +267,8 @@ namespace Ast {
         Ast::OrderedExpr*         aOrderedExpr(const Ast::Token& pos, const Ast::Expr& expr);
         Ast::IndexExpr*           aIndexExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::Expr& index);
         Ast::SpliceExpr*          aSpliceExpr(const Ast::Token& pos, const Ast::Expr& expr, const Ast::Expr& from, const Ast::Expr& to);
+        Ast::SizeofTypeExpr*      aSizeofTypeExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec);
+        Ast::SizeofExprExpr*      aSizeofExprExpr(const Ast::Token& pos, const Ast::Expr& expr);
         Ast::TypeofTypeExpr*      aTypeofTypeExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& typeSpec);
         Ast::TypeofExprExpr*      aTypeofExprExpr(const Ast::Token& pos, const Ast::Expr& expr);
         Ast::TypecastExpr*        aTypecastExpr(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qTypeSpec, const Ast::Expr& expr);
@@ -289,8 +292,9 @@ namespace Ast {
         Ast::StructInitPart*      aStructInitPart(const Ast::Token& pos, const Ast::VariableDefn& vdef, const Ast::Expr& initExpr);
         Ast::FunctionInstanceExpr*  aFunctionInstanceExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
         Ast::AnonymousFunctionExpr* aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement);
-        Ast::ChildFunctionDefn*   aEnterAnonymousFunction(const Ast::Function& function);
-        Ast::ChildFunctionDefn*   aEnterAutoAnonymousFunction(const Ast::Token& pos);
+        Ast::ChildFunctionDefn*   aEnterAnonymousFunction(const Ast::Function& function, const Ast::ClosureRef& closureRef);
+        Ast::ChildFunctionDefn*   aEnterAutoAnonymousFunction(const Ast::Token& pos, const Ast::ClosureRef& closureRef);
+        Ast::ChildFunctionDefn*   aEnterAnonymousFunctionExpr(const Ast::Function& function);
 
         Ast::ConstantNullExpr&    aConstantNullExpr(const Ast::Token& value);
         Ast::ConstantFloatExpr&   aConstantFloatExpr(const Ast::Token& value);
@@ -298,9 +302,16 @@ namespace Ast {
         Ast::ConstantBooleanExpr& aConstantBooleanExpr(const Ast::Token& value);
         Ast::ConstantStringExpr&  aConstantStringExpr(const Ast::Token& value);
         Ast::ConstantCharExpr&    aConstantCharExpr(const Ast::Token& value);
+
         Ast::ConstantLongExpr&    aConstantLongExpr(const Ast::Token& value);
         Ast::ConstantIntExpr&     aConstantIntExpr(const Ast::Token& value);
         Ast::ConstantShortExpr&   aConstantShortExpr(const Ast::Token& value);
+        Ast::ConstantByteExpr&    aConstantByteExpr(const Ast::Token& value);
+
+        Ast::ConstantUnLongExpr&    aConstantUnLongExpr(const Ast::Token& value);
+        Ast::ConstantUnIntExpr&     aConstantUnIntExpr(const Ast::Token& value);
+        Ast::ConstantUnShortExpr&   aConstantUnShortExpr(const Ast::Token& value);
+        Ast::ConstantUnByteExpr&    aConstantUnByteExpr(const Ast::Token& value);
     };
 }
 }

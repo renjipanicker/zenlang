@@ -44,7 +44,7 @@ namespace in {
         z::Ast::Ptr<const z::Ast::Expr> _value;
     };
 
-    template <> inline ValuePtr::operator long() const {
+    template <> inline ValuePtr::operator int64_t() const {
         assert(isLong());
         const z::Ast::ConstantLongExpr& val = value<z::Ast::ConstantLongExpr>();
         return val.value();
@@ -59,7 +59,7 @@ namespace in {
     inline bool ValuePtr::isTrue() const {
         const ValuePtr& This = z::ref(this);
         if(isOfT<z::Ast::ConstantLongExpr>()) {
-            if((long)This)
+            if((int64_t)This)
                 return true;
         }
         return false;
@@ -139,64 +139,64 @@ namespace in {
     struct BooleanOperator {
         inline ValuePtr run(ValuePtr& lhs, ValuePtr& rhs, const z::Ast::Token& op, const z::Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong() && rhs.isLong()) {
-                long nv = runLong((long)lhs, (long)rhs);
+                int64_t nv = runLong((int64_t)lhs, (int64_t)rhs);
                 return ValuePtr(new z::Ast::ConstantLongExpr(op, qTypeSpec, nv));
             }
             throw z::Exception("Interpreter", z::zfmt(op, "Type mismatch"));
         }
-        virtual long runLong(const long& lhs, const long& rhs) const = 0;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const = 0;
     };
 
     struct BooleanAndOperator : public BooleanOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs && (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs && (int64_t)rhs;
         }
     };
 
     struct BooleanOrOperator : public BooleanOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs || (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs || (int64_t)rhs;
         }
     };
 
     struct BooleanEqualOperator : public BooleanOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs == (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs == (int64_t)rhs;
         }
     };
 
     struct BooleanNotEqualOperator : public BooleanOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs != (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs != (int64_t)rhs;
         }
     };
 
     struct BooleanLessThanOperator : public BooleanOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs < (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs < (int64_t)rhs;
         }
     };
 
     struct BooleanGreaterThanOperator : public BooleanOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs > (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs > (int64_t)rhs;
         }
     };
 
     struct BooleanLessThanOrEqualOperator : public BooleanOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs <= (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs <= (int64_t)rhs;
         }
     };
 
     struct BooleanGreaterThanOrEqualOperator : public BooleanOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs >= (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs >= (int64_t)rhs;
         }
     };
 
     struct BooleanHasOperator : public BooleanOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
             unused(lhs);
             unused(rhs);
             assert(false);
@@ -207,7 +207,7 @@ namespace in {
     struct BinaryOperator {
         inline ValuePtr run(ValuePtr& lhs, ValuePtr& rhs, const z::Ast::Token& op, const z::Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong() && rhs.isLong()) {
-                long nv = runLong((long)lhs, (long)rhs);
+                int64_t nv = runLong((int64_t)lhs, (int64_t)rhs);
                 return ValuePtr(new z::Ast::ConstantLongExpr(op, qTypeSpec, nv));
             }
             throw z::Exception("Interpreter", z::zfmt(op, "Type mismatch"));
@@ -218,85 +218,85 @@ namespace in {
             return rv;
         }
 
-        virtual long runLong(const long& lhs, const long& rhs) const = 0;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const = 0;
     };
 
     struct BinaryNoopOperator : public BinaryOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
             unused(lhs);
-            return (long)rhs;
+            return (int64_t)rhs;
         }
     };
 
     struct BinaryPlusOperator : public BinaryOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs + (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs + (int64_t)rhs;
         }
     };
 
     struct BinaryMinusOperator : public BinaryOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs - (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs - (int64_t)rhs;
         }
     };
 
     struct BinaryTimesOperator : public BinaryOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs * (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs * (int64_t)rhs;
         }
     };
 
     struct BinaryDivideOperator : public BinaryOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs / (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs / (int64_t)rhs;
         }
     };
 
     struct BinaryModOperator : public BinaryOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs % (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs % (int64_t)rhs;
         }
     };
 
     struct BinaryBitwiseAndOperator : public BinaryOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs & (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs & (int64_t)rhs;
         }
     };
 
     struct BinaryBitwiseOrOperator : public BinaryOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs | (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs | (int64_t)rhs;
         }
     };
 
     struct BinaryBitwiseXorOperator : public BinaryOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs ^ (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs ^ (int64_t)rhs;
         }
     };
 
     struct BinaryShiftLeftOperator : public BinaryOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs << (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs << (int64_t)rhs;
         }
     };
 
     struct BinaryShiftRightOperator : public BinaryOperator {
-        virtual long runLong(const long& lhs, const long& rhs) const {
-            return (long)lhs >> (long)rhs;
+        virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
+            return (int64_t)lhs >> (int64_t)rhs;
         }
     };
 
     struct UnaryOperator {
         inline ValuePtr run(ValuePtr& lhs, const z::Ast::Token& op, const z::Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong()) {
-                long nv = runLong((long)lhs);
+                int64_t nv = runLong((int64_t)lhs);
                 return ValuePtr(new z::Ast::ConstantLongExpr(op, qTypeSpec, nv));
             }
             throw z::Exception("Interpreter", z::zfmt(op, "Type mismatch"));
         }
-        virtual long runLong(const long& lhs) const = 0;
+        virtual int64_t runLong(const int64_t& lhs) const = 0;
     };
 
     class ExprGenerator : public z::Ast::Expr::Visitor {
@@ -549,6 +549,14 @@ namespace in {
             unused(node);
         }
 
+        virtual void visit(const z::Ast::SizeofTypeExpr& node) {
+            unused(node);
+        }
+
+        virtual void visit(const z::Ast::SizeofExprExpr& node) {
+            unused(node);
+        }
+
         virtual void visit(const z::Ast::TypeofTypeExpr& node) {
             unused(node);
         }
@@ -639,6 +647,26 @@ namespace in {
         }
 
         virtual void visit(const z::Ast::ConstantShortExpr& node) {
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+        }
+
+        virtual void visit(const z::Ast::ConstantByteExpr& node) {
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+        }
+
+        virtual void visit(const z::Ast::ConstantUnLongExpr& node) {
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+        }
+
+        virtual void visit(const z::Ast::ConstantUnIntExpr& node) {
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+        }
+
+        virtual void visit(const z::Ast::ConstantUnShortExpr& node) {
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+        }
+
+        virtual void visit(const z::Ast::ConstantUnByteExpr& node) {
             push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
         }
 

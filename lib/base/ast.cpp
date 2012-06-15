@@ -73,6 +73,8 @@ void z::Ast::FunctorCallExpr::visit(Visitor& visitor) const {visitor.visit(z::re
 void z::Ast::OrderedExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::IndexExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::SpliceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::SizeofTypeExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::SizeofExprExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::TypeofTypeExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::TypeofExprExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::StaticTypecastExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
@@ -93,9 +95,16 @@ void z::Ast::ConstantDoubleExpr::visit(Visitor& visitor) const {visitor.visit(z:
 void z::Ast::ConstantBooleanExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::ConstantStringExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::ConstantCharExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+
 void z::Ast::ConstantLongExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::ConstantIntExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::ConstantShortExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::ConstantByteExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+
+void z::Ast::ConstantUnLongExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::ConstantUnIntExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::ConstantUnShortExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::ConstantUnByteExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 
 void z::Ast::ImportStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::EnterNamespaceStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}

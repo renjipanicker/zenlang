@@ -217,6 +217,9 @@ CZPPLST="${CZPPLST} $LIBDIR/core/Socket.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/core/Network.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/core/FastCGI.zpp"
 ${ZCC} --api ${INTDIR}/core -c ${CZPPLST}
+if [[ $? != 0 ]]; then
+    exit
+fi
 
 # copy core files to OUTDIR
 cp -v -r ${INTDIR}/core/*.ipp ${OUTDIR}/core
@@ -233,6 +236,9 @@ GZPPLST="${GZPPLST} $LIBDIR/gui/Menu.zpp"
 GZPPLST="${GZPPLST} $LIBDIR/gui/MenuItem.zpp"
 GZPPLST="${GZPPLST} $LIBDIR/gui/WindowCreator.zpp"
 ${ZCC} --api ${INTDIR}/gui -c ${GZPPLST}
+if [[ $? != 0 ]]; then
+    exit
+fi
 
 # copy gui files to OUTDIR
 cp -v -r ${INTDIR}/gui/*.ipp ${OUTDIR}/gui
@@ -358,9 +364,20 @@ appendString $ZSRCFILE "#endif"
 if [ "$dotest" == "yes" ]; then
     #########################################################
     # generate unit test files
-#    ${ZCC} -c ${SRCDIR}/tests/testBasic.zpp
+    ${ZCC} -c ${SRCDIR}/tests/testBasic.zpp
+    if [[ $? != 0 ]]; then
+        exit
+    fi
+
     ${ZCC} -c ${SRCDIR}/tests/testFcgi.zpp
+    if [[ $? != 0 ]]; then
+        exit
+    fi
+
 #    ${ZCC} -c ${SRCDIR}/tests/guiTest.zpp
+#    if [[ $? != 0 ]]; then
+#        exit
+#    fi
 
     #########################################################
     echo Running unit tests...
@@ -373,37 +390,67 @@ if [ "$dotest" == "yes" ]; then
     # compile and run tests
     if [[ $platform == 'CYGWIN_NT-5.1' ]]; then
         CFLAGS="/Ox /DWIN32 /DUNIT_TEST /DZ_EXE /EHsc /I${OUTDIR} /W4"
-#        "${CC}" ${CFLAGS} /Fetest.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
-#        ./test.exe > test.log
+        "${CC}" ${CFLAGS} /Fetest.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
+        if [[ $? != 0 ]]; then
+            exit
+        fi
+        ./test.exe > test.log
+        if [[ $? != 0 ]]; then
+            exit
+        fi
 
-        "${CC}" ${CFLAGS} /Fetest.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/zenlang.cpp testFcgi.cpp ws2_32.lib shell32.lib
+        "${CC}" ${CFLAGS} /Fecgitest.exe /DSERVER ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/zenlang.cpp testFcgi.cpp ws2_32.lib shell32.lib
+        if [[ $? != 0 ]]; then
+            exit
+        fi
 
 #        "${CC}" ${CFLAGS} /DGUI /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
+#        if [[ $? != 0 ]]; then
+#            exit
+#        fi
     elif [[ $platform == 'Darwin' ]]; then
         # first compile the C files
         gcc -c -Os -I${SDKDIR}/include -I${OUTDIR} ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
+        if [[ $? != 0 ]]; then
+            exit
+        fi
 
         CFLAGS="-DOSX -DUNIT_TEST -DZ_EXE -Wall -I${OUTDIR} -framework Cocoa -O3"
 
         # next compile the zenlang.cpp file as an objective-c++ file.
         echo CMD test-1
         gcc -c -x objective-c++ ${CFLAGS} ${OUTDIR}/zenlang.cpp
+        if [[ $? != 0 ]]; then
+            exit
+        fi
         echo The above warnings can safely be ignored.
 
         # now compile the test file
         echo CMD test-2
         g++ ${CFLAGS} -o test.osx sqlite3_unicode.o zenlang.o testBasic.cpp -lc++ -lsqlite3
+        if [[ $? != 0 ]]; then
+            exit
+        fi
 
         # run the test file
         echo CMD test-3
         ./test.osx > test.log
+        if [[ $? != 0 ]]; then
+            exit
+        fi
 
         # now compile the test file
 #        echo GUI test-1
 #        gcc -c -x objective-c++ ${CFLAGS} -DGUI -framework AppKit ${OUTDIR}/zenlang.cpp
+#        if [[ $? != 0 ]]; then
+#            exit
+#        fi
 
 #        echo GUI test-2
 #        g++ ${CFLAGS} -DGUI -O3 -o test.osx -L${SDKDIR}/lib sqlite3_unicode.o zenlang.o guiTest.cpp -lc++ -lsqlite3
+#        if [[ $? != 0 ]]; then
+#            exit
+#        fi
     elif [[ $platform == 'Linux' ]]; then
         echo "TODO: Linux platform"
     else

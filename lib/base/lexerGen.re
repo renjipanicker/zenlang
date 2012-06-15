@@ -119,6 +119,8 @@ re2c:indent:top              = 2;
 
 <Normal>   "coerce"    := send(pctx, ZENTOK_COERCE); NEXT();
 <Normal>   "default"   := send(pctx, ZENTOK_DEFAULT); NEXT();
+
+<Normal>   "sizeof"    := send(pctx, ZENTOK_SIZEOF); NEXT();
 <Normal>   "typeof"    := send(pctx, ZENTOK_TYPEOF); NEXT();
 
 <Normal>   "auto"      := send(pctx, ZENTOK_AUTO); NEXT();
@@ -149,16 +151,43 @@ id_seq = [a-zA-Z][a-zA-Z0-9_]*;
 <Normal>   "@" id_seq := send(pctx, ZENTOK_KEY_CONST); NEXT();
 <Normal>       id_seq := sendId(pctx); NEXT();
 
-<Normal>   "0" [0-7]+ [uU]?      := send(pctx, ZENTOK_OCTINT_CONST); NEXT();
-<Normal>   "0" [0-7]+ [uU]? [lL] := send(pctx, ZENTOK_LOCTINT_CONST); NEXT();
 
 dec_digit = [0-9];
 dec_seq = dec_digit+;
-<Normal>   dec_seq      := send(pctx, ZENTOK_DECINT_CONST); NEXT();
-<Normal>   dec_seq [lL] := send(pctx, ZENTOK_LDECINT_CONST); NEXT();
+oct_seq = "0" [0-7]+;
+hex_seq = "0" [xX] [A-Za-z0-9]+;
 
-<Normal>   "0" [xX] [A-Za-z0-9]+      := send(pctx, ZENTOK_HEXINT_CONST); NEXT();
-<Normal>   "0" [xX] [A-Za-z0-9]+ [lL] := send(pctx, ZENTOK_LHEXINT_CONST); NEXT();
+<Normal>   oct_seq [lL] := send(pctx, ZENTOK_LOCTINT_CONST); NEXT();
+<Normal>   dec_seq [lL] := send(pctx, ZENTOK_LDECINT_CONST); NEXT();
+<Normal>   hex_seq [lL] := send(pctx, ZENTOK_LHEXINT_CONST); NEXT();
+
+<Normal>   oct_seq      := send(pctx, ZENTOK_OCTINT_CONST); NEXT();
+<Normal>   dec_seq      := send(pctx, ZENTOK_DECINT_CONST); NEXT();
+<Normal>   hex_seq      := send(pctx, ZENTOK_HEXINT_CONST); NEXT();
+
+<Normal>   oct_seq [sS] := send(pctx, ZENTOK_SOCTINT_CONST); NEXT();
+<Normal>   dec_seq [sS] := send(pctx, ZENTOK_SDECINT_CONST); NEXT();
+<Normal>   hex_seq [sS] := send(pctx, ZENTOK_SHEXINT_CONST); NEXT();
+
+<Normal>   oct_seq [bB] := send(pctx, ZENTOK_BOCTINT_CONST); NEXT();
+<Normal>   dec_seq [bB] := send(pctx, ZENTOK_BDECINT_CONST); NEXT();
+<Normal>   hex_seq [bB] := send(pctx, ZENTOK_BHEXINT_CONST); NEXT();
+
+<Normal>   oct_seq [uU] [lL] := send(pctx, ZENTOK_ULOCTINT_CONST); NEXT();
+<Normal>   dec_seq [uU] [lL] := send(pctx, ZENTOK_ULDECINT_CONST); NEXT();
+<Normal>   hex_seq [uU] [lL] := send(pctx, ZENTOK_ULHEXINT_CONST); NEXT();
+
+<Normal>   oct_seq [uU]      := send(pctx, ZENTOK_UOCTINT_CONST); NEXT();
+<Normal>   dec_seq [uU]      := send(pctx, ZENTOK_UDECINT_CONST); NEXT();
+<Normal>   hex_seq [uU]      := send(pctx, ZENTOK_UHEXINT_CONST); NEXT();
+
+<Normal>   oct_seq [uU] [sS] := send(pctx, ZENTOK_USOCTINT_CONST); NEXT();
+<Normal>   dec_seq [uU] [sS] := send(pctx, ZENTOK_USDECINT_CONST); NEXT();
+<Normal>   hex_seq [uU] [sS] := send(pctx, ZENTOK_USHEXINT_CONST); NEXT();
+
+<Normal>   oct_seq [uU] [bB] := send(pctx, ZENTOK_UBOCTINT_CONST); NEXT();
+<Normal>   dec_seq [uU] [bB] := send(pctx, ZENTOK_UBDECINT_CONST); NEXT();
+<Normal>   hex_seq [uU] [bB] := send(pctx, ZENTOK_UBHEXINT_CONST); NEXT();
 
 exp_seq = [Ee] [+-]? dec_seq;
 <Normal>   dec_digit* "." dec_seq (exp_seq)? [fF]  := send(pctx, ZENTOK_FLOAT_CONST); NEXT();

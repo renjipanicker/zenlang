@@ -322,6 +322,16 @@ namespace zg {
             _os << "]";
         }
 
+        virtual void visit(const z::Ast::SizeofTypeExpr& node) {
+            _os << "sizeof(" << z::ZenlangNameGenerator().qtn(node.typeSpec()) << ")";
+        }
+
+        virtual void visit(const z::Ast::SizeofExprExpr& node) {
+            _os << "sizeof(";
+            ExprGenerator(_os).visitNode(node.expr());
+            _os << ")";
+        }
+
         virtual void visit(const z::Ast::TypeofTypeExpr& node) {
             _os << "typeof(" << z::ZenlangNameGenerator().qtn(node.typeSpec()) << ")";
         }
@@ -445,6 +455,26 @@ namespace zg {
         }
 
         virtual void visit(const z::Ast::ConstantShortExpr& node) {
+            _os << node.value();
+        }
+
+        virtual void visit(const z::Ast::ConstantByteExpr& node) {
+            _os << node.value();
+        }
+
+        virtual void visit(const z::Ast::ConstantUnLongExpr& node) {
+            _os << node.value();
+        }
+
+        virtual void visit(const z::Ast::ConstantUnIntExpr& node) {
+            _os << node.value();
+        }
+
+        virtual void visit(const z::Ast::ConstantUnShortExpr& node) {
+            _os << node.value();
+        }
+
+        virtual void visit(const z::Ast::ConstantUnByteExpr& node) {
             _os << node.value();
         }
 

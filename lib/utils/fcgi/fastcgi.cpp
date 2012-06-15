@@ -14,13 +14,22 @@
  * You should have received a copy of the GNU Lesser General Public License
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
-
+#include "zenlang.hpp"
 #include "fastcgi.hpp"
-#include <iostream>
 
-#include <cstdio>
-#include <cstring>
-#include <cassert>
+//#include <map>
+//#include <queue>
+//#include <vector>
+//#include <string>
+//#include <stdexcept>
+//#if !defined(WIN32)
+//#include <stdint.h>
+//#endif
+//#include <iostream>
+//
+//#include <cstdio>
+//#include <cstring>
+//#include <cassert>
 
 enum message_type_t
   { TYPE_BEGIN_REQUEST     =  1

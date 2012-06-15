@@ -99,7 +99,7 @@
 
     # include <WinSock2.h>
 
-//    typedef char      int8_t;
+    typedef char      int8_t;
     typedef short     int16_t;
     typedef int       int32_t;
     typedef long long int64_t;
@@ -148,6 +148,7 @@
     # include <list>
     # include <set>
     # include <map>
+    # include <queue>
     # include <iterator>
     # include <algorithm>
     # include <iostream>
@@ -155,6 +156,7 @@
     # include <sstream>
     # include <iomanip>
     # include <typeinfo>
+    # include <stdexcept>
     # include <ctime>
     #if defined(WIN32)
     #else

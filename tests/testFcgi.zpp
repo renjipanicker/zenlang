@@ -1,7 +1,8 @@
 import core::FastCGI;
 namespace TestFCGI;
 
-public function basicTest : test {
+public function basicTest : main {
+    unused(argl);
     FastCGI::StartServer(9001);
     return (true);
 }

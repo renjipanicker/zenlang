@@ -248,6 +248,7 @@ namespace Ast {
     public: // everything related to expected typespec
         struct ExpectedTypeSpec {
             enum Type {
+                etNone,
                 etAuto,
                 etVarArg,
                 etCallArg,

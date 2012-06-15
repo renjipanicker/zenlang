@@ -98,15 +98,15 @@ const z::string ifile =
 "default void = 0;\n"
 "default bool = false;\n"
 
-"default byte = 0;\n"
-"default short = 0;\n"
+"default byte = 0b;\n"
+"default short = 0s;\n"
 "default int = 0;\n"
-"default long = 0;\n"
+"default long = 0l;\n"
 
-"default ubyte = 0;\n"
-"default ushort = 0;\n"
+"default ubyte = 0ub;\n"
+"default ushort = 0us;\n"
 "default uint = 0;\n"
-"default ulong = 0;\n"
+"default ulong = 0ul;\n"
 
 "default float = 0;\n"
 "default double = 0;\n"
@@ -131,6 +131,10 @@ const z::string ifile =
 "default socket = 0;\n"
 "coerce int => socket;\n"
 
+"typedef data native;\n"
+"default data = 0;\n"
+"coerce int => data;\n"
+
 "typedef type native;\n"
 
 "template <F> future  native;\n"
@@ -145,11 +149,13 @@ const z::string ifile =
 "public routine void assert(...) native;\n"
 "public routine void unused(...) native;\n"
 "public routine void verify(...) native;\n"
-"public routine void sizeof(...) native;\n"
 "public routine void length(...) native;\n"
+
 "public typedef stringlist list<string>;\n"
+
 "public function (int code)main(const stringlist& argl) abstract;\n"
 "public function (int passed)test() abstract;\n"
+"public function void device(const int& timeout) abstract;\n"
 
 "struct SourceFile {"
 "    string filename;\n"

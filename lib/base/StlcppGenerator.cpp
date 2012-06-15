@@ -4,6 +4,17 @@
 #include "base/StlcppGenerator.hpp"
 
 namespace sg {
+    inline bool isVoid(const z::Ast::Scope& out) {
+        if(out.isTuple())
+            return false;
+
+        const z::Ast::VariableDefn& vdef = out.list().front();
+        if(vdef.qTypeSpec().typeSpec().name().string() == "void")
+            return true;
+
+        return false;
+    }
+
     struct StlcppNameGenerator : public z::TypespecNameGenerator {
         virtual void getTypeName(const z::Ast::TypeSpec& typeSpec, z::string& name);
     public:
@@ -53,6 +64,46 @@ namespace sg {
             return;
         }
 
+        if(typeSpec.name().string() == "long") {
+            name += "int64_t";
+            return;
+        }
+
+        if(typeSpec.name().string() == "int") {
+            name += "int32_t";
+            return;
+        }
+
+        if(typeSpec.name().string() == "short") {
+            name += "int16_t";
+            return;
+        }
+
+        if(typeSpec.name().string() == "byte") {
+            name += "int8_t";
+            return;
+        }
+
+        if(typeSpec.name().string() == "ulong") {
+            name += "uint64_t";
+            return;
+        }
+
+        if(typeSpec.name().string() == "uint") {
+            name += "uint32_t";
+            return;
+        }
+
+        if(typeSpec.name().string() == "ushort") {
+            name += "uint16_t";
+            return;
+        }
+
+        if(typeSpec.name().string() == "ubyte") {
+            name += "uint8_t";
+            return;
+        }
+
         if(typeSpec.name().string() == "size") {
             name += "z::size";
             return;
@@ -85,6 +136,21 @@ namespace sg {
 
         if(typeSpec.name().string() == "stringlist") {
             name += "z::stringlist";
+            return;
+        }
+
+        if(typeSpec.name().string() == "device") {
+            name += "z::device";
+            return;
+        }
+
+        if(typeSpec.name().string() == "data") {
+            name += "z::data";
+            return;
+        }
+
+        if(typeSpec.name().string() == "length") {
+            name += "z::length";
             return;
         }
 
@@ -429,6 +495,20 @@ namespace sg {
             _os() << ")";
         }
 
+        virtual void visit(const z::Ast::SizeofTypeExpr& node) {
+            _os() << "sizeof";
+            _os() << "(";
+            _os() << StlcppNameGenerator().qtn(node.typeSpec());
+            _os() << ")";
+        }
+
+        virtual void visit(const z::Ast::SizeofExprExpr& node) {
+            _os() << "sizeof";
+            _os() << "(";
+            ExprGenerator(_os).visitNode(node.expr());
+            _os() << ")";
+        }
+
         virtual void visit(const z::Ast::TypeofTypeExpr& node) {
             _os() << "z::type(\"" << StlcppNameGenerator().qtn(node.typeSpec()) << "\")";
         }
@@ -476,6 +556,9 @@ namespace sg {
                 case z::Ast::RefType::Global:
                     break;
                 case z::Ast::RefType::XRef:
+                    _os() << "z::ref(this)." << node.vref().name();
+                    break;
+                case z::Ast::RefType::IRef:
                     _os() << "z::ref(this)." << node.vref().name();
                     break;
                 case z::Ast::RefType::Param:
@@ -572,6 +655,26 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::ConstantShortExpr& node) {
+            _os() << node.value();
+        }
+
+        virtual void visit(const z::Ast::ConstantByteExpr& node) {
+            _os() << node.value();
+        }
+
+        virtual void visit(const z::Ast::ConstantUnLongExpr& node) {
+            _os() << node.value();
+        }
+
+        virtual void visit(const z::Ast::ConstantUnIntExpr& node) {
+            _os() << node.value();
+        }
+
+        virtual void visit(const z::Ast::ConstantUnShortExpr& node) {
+            _os() << node.value();
+        }
+
+        virtual void visit(const z::Ast::ConstantUnByteExpr& node) {
             _os() << node.value();
         }
 
@@ -702,17 +805,6 @@ namespace sg {
 
         void visit(const z::Ast::PropertyDeclRO& node) {
             visitProperty(node);
-        }
-
-        inline bool isVoid(const z::Ast::Scope& out) const {
-            if(out.isTuple())
-                return false;
-
-            const z::Ast::VariableDefn& vdef = out.list().front();
-            if(vdef.qTypeSpec().typeSpec().name().string() == "void")
-                return true;
-
-            return false;
         }
 
         static inline void visitRoutine(z::ofile& os, const z::Ast::Routine& node, const bool& inNS) {
@@ -859,12 +951,12 @@ namespace sg {
                 if(isVoid(node.sig().outScope())) {
                     _os() << "run(";
                     writeScopeInCallList(node.sig().inScope());
-                    _os() << "); return _Out();" << std::endl;
+                    _os() << "); return _Out();";
                 } else {
                     // if non-void function, return the return-value of run() as-is.
                     _os() << "return run(";
                     writeScopeInCallList(node.sig().inScope());
-                    _os() << ");" << std::endl;
+                    _os() << ");";
                 }
                 _os() << "}" << std::endl;
             }
@@ -949,7 +1041,7 @@ namespace sg {
                 enterFunction(node);
                 visitFunctionXRef(node);
                 _os() << z::Indent::get() << "public:" << std::endl;
-                _os() << z::Indent::get() << "    virtual ~" << node.name() << "(){}";
+                _os() << z::Indent::get() << "    virtual ~" << node.name() << "(){}" << std::endl;
                 _os() << z::Indent::get() << "    virtual " << out1 << " run(";
                 writeScopeParamList(_os, node.sig().inScope(), "p");
                 _os() << ");" << std::endl;
@@ -1514,10 +1606,14 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::FunctionReturnStatement& node) {
-            const z::string out = node.sig().outScope().isTuple()?"_Out":"";
-            fpDefn()() << z::Indent::get() << "return " << out << "(";
-            ExprGenerator(fpDefn(), ", ").visitList(node.exprList());
-            fpDefn()() << ");" << std::endl;
+            fpDefn()() << z::Indent::get() << "return";
+            if(!isVoid(node.sig().outScope())) {
+                const z::string out = node.sig().outScope().isTuple()?"_Out":"";
+                fpDefn()() << " " << out << "(";
+                ExprGenerator(fpDefn(), ", ").visitList(node.exprList());
+                fpDefn()() << ")";
+            }
+            fpDefn()() << ";" << std::endl;
         }
 
         virtual void visit(const z::Ast::ExitStatement& node) {

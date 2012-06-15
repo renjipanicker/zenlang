@@ -39,7 +39,8 @@ namespace Ast {
         /// \brief The type for any scope
         enum T {
             Member,      /// Member of enum or struct
-            XRef,        /// XRef scope
+            XRef,        /// External ref scope
+            IRef,        /// Internal ref scope
             Param,       /// Param scope
             VarArg,      /// VarArg in-param
             Local        /// local scope
@@ -52,6 +53,7 @@ namespace Ast {
         enum T {
             Global,      /// Variable is in global scope (unused for now)
             XRef,        /// Variable is from outside current function
+            IRef,        /// Reference to shared Variable inside current function
             Param,       /// Reference to current function parameter
             Local        /// variable is in local scope
         };
@@ -1210,6 +1212,31 @@ namespace Ast {
         const Ptr<const Expr> _rhs;
     };
 
+    class SizeofExpr : public Expr {
+    protected:
+        inline SizeofExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec) : Expr(pos, qTypeSpec) {}
+    };
+
+    class SizeofTypeExpr : public SizeofExpr {
+    public:
+        inline SizeofTypeExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const QualifiedTypeSpec& typeSpec) : SizeofExpr(pos, qTypeSpec), _typeSpec(typeSpec) {}
+        inline const QualifiedTypeSpec& typeSpec() const {return _typeSpec.get();}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ptr<const QualifiedTypeSpec> _typeSpec;
+    };
+
+    class SizeofExprExpr : public SizeofExpr {
+    public:
+        inline SizeofExprExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Expr& expr) : SizeofExpr(pos, qTypeSpec), _expr(expr) {}
+        inline const Expr& expr() const {return _expr.get();}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ptr<const Expr> _expr;
+    };
+
     class TypeofExpr : public Expr {
     protected:
         inline TypeofExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec) : Expr(pos, qTypeSpec) {}
@@ -1527,32 +1554,82 @@ namespace Ast {
 
     class ConstantLongExpr : public ConstantExpr {
     public:
-        inline ConstantLongExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const long& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
-        inline const long& value() const {return _value;}
+        inline ConstantLongExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int64_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline const int64_t& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const long _value;
+        const int64_t _value;
     };
 
     class ConstantIntExpr : public ConstantExpr {
     public:
-        inline ConstantIntExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
-        inline const int& value() const {return _value;}
+        inline ConstantIntExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int32_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline const int32_t& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const int _value;
+        const int32_t _value;
     };
 
     class ConstantShortExpr : public ConstantExpr {
     public:
-        inline ConstantShortExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const short& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
-        inline const short& value() const {return _value;}
+        inline ConstantShortExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int16_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline const int16_t& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const short _value;
+        const int16_t _value;
+    };
+
+    class ConstantByteExpr : public ConstantExpr {
+    public:
+        inline ConstantByteExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int8_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline const int8_t& value() const {return _value;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const int8_t _value;
+    };
+
+    class ConstantUnLongExpr : public ConstantExpr {
+    public:
+        inline ConstantUnLongExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const uint64_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline const uint64_t& value() const {return _value;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const uint64_t _value;
+    };
+
+    class ConstantUnIntExpr : public ConstantExpr {
+    public:
+        inline ConstantUnIntExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const uint32_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline const uint32_t& value() const {return _value;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const uint32_t _value;
+    };
+
+    class ConstantUnShortExpr : public ConstantExpr {
+    public:
+        inline ConstantUnShortExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const uint16_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline const uint16_t& value() const {return _value;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const uint16_t _value;
+    };
+
+    class ConstantUnByteExpr : public ConstantExpr {
+    public:
+        inline ConstantUnByteExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const uint8_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline const uint8_t& value() const {return _value;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const uint8_t _value;
     };
 
     struct Expr::Visitor {
@@ -1621,6 +1698,8 @@ namespace Ast {
         virtual void visit(const OrderedExpr& node) = 0;
         virtual void visit(const IndexExpr& node) = 0;
         virtual void visit(const SpliceExpr& node) = 0;
+        virtual void visit(const SizeofTypeExpr& node) = 0;
+        virtual void visit(const SizeofExprExpr& node) = 0;
         virtual void visit(const TypeofTypeExpr& node) = 0;
         virtual void visit(const TypeofExprExpr& node) = 0;
         virtual void visit(const StaticTypecastExpr& node) = 0;
@@ -1642,9 +1721,16 @@ namespace Ast {
         virtual void visit(const ConstantBooleanExpr& node) = 0;
         virtual void visit(const ConstantStringExpr& node) = 0;
         virtual void visit(const ConstantCharExpr& node) = 0;
+
         virtual void visit(const ConstantLongExpr& node) = 0;
         virtual void visit(const ConstantIntExpr& node) = 0;
         virtual void visit(const ConstantShortExpr& node) = 0;
+        virtual void visit(const ConstantByteExpr& node) = 0;
+
+        virtual void visit(const ConstantUnLongExpr& node) = 0;
+        virtual void visit(const ConstantUnIntExpr& node) = 0;
+        virtual void visit(const ConstantUnShortExpr& node) = 0;
+        virtual void visit(const ConstantUnByteExpr& node) = 0;
 
         virtual void sep() = 0;
     };

@@ -18,13 +18,6 @@
 #ifndef FASTCGI_HPP_INCLUDED
 #define FASTCGI_HPP_INCLUDED
 
-#include <map>
-#include <queue>
-#include <vector>
-#include <string>
-#include <stdexcept>
-#include <stdint.h>
-
 // Forward declarations.
 
 class FCGIProtocolDriver;

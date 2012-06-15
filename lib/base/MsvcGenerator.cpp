@@ -241,14 +241,15 @@ void z::MsvcGenerator::Impl::run() {
     }
     os() << "        </Filter>" << std::endl;
 
-    // All source files
+    // All zen source files
     os() << "        <Filter" << std::endl;
-    os() << "            Name=\"Source Files\"" << std::endl;
+    os() << "            Name=\"Zen Source Files\"" << std::endl;
     os() << "            Filter=\"cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx\"" << std::endl;
     os() << "            UniqueIdentifier=\"{4FC737F1-C7A5-4376-A066-2A32D752A2FF}\"" << std::endl;
     os() << "            >" << std::endl;
 
     writeLibFile(_project, os, _project.zlibPath() + "/zenlang.cpp", (_pch == "zenlang.hpp"));
+    writeLibFile(_project, os, _project.zlibPath() + "/utils/fcgi/fastcgi.cpp", false);
     writeLibFile(_project, os, _project.zlibPath() + "/utils/sqlite3/sqlite3.c", false);
     writeLibFile(_project, os, _project.zlibPath() + "/utils/sqlite3/sqlite3_unicode.c", false);
     writeLibFile(_project, os, _project.zlibPath() + "/utils/base64.cpp", false);
@@ -265,6 +266,14 @@ void z::MsvcGenerator::Impl::run() {
         os() << "                </FileConfiguration>" << std::endl;
     }
     os() << "            </File>" << std::endl;
+    os() << "        </Filter>" << std::endl;
+
+    // All source files
+    os() << "        <Filter" << std::endl;
+    os() << "            Name=\"Source Files\"" << std::endl;
+    os() << "            Filter=\"cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx\"" << std::endl;
+    os() << "            UniqueIdentifier=\"{4FC737F1-C7A5-4376-A066-2A32D752A2FF}\"" << std::endl;
+    os() << "            >" << std::endl;
 
     // All .cpp files
     for(FileList::const_iterator it = _cppFileList.begin(); it != _cppFileList.end(); ++it) {

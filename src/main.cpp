@@ -365,9 +365,8 @@ int main(int argc, char* argv[]) {
         if(project.oproject() == "cmake") {
 #if defined(WIN32)
             z::MsvcGenerator progen(project);
-            //z::CmakeGenerator progen(project);
 #else
-                z::CmakeGenerator progen(project);
+            z::CmakeGenerator progen(project);
 #endif
             progen.run();
         } else {

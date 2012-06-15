@@ -188,12 +188,32 @@ const z::Ast::VariableDefn* z::Ast::Unit::getVariableDef(const z::Ast::Token& na
                 break;
             case z::Ast::RefType::XRef:
                 break;
+            case z::Ast::RefType::IRef:
+                switch(scope.type()) {
+                    case z::Ast::ScopeType::Member:
+                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: IRef-Member").arg("s", name) );
+                    case z::Ast::ScopeType::XRef:
+                        refType = z::Ast::RefType::XRef;
+                        break;
+                    case z::Ast::ScopeType::IRef:
+                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: IRef-IRef").arg("s", name) );
+                    case z::Ast::ScopeType::Param:
+                    case z::Ast::ScopeType::VarArg:
+                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: IRef-Param").arg("s", name) );
+                    case z::Ast::ScopeType::Local:
+                        refType = z::Ast::RefType::XRef;
+                        break;
+                }
+                break;
             case z::Ast::RefType::Param:
                 switch(scope.type()) {
                     case z::Ast::ScopeType::Member:
                         throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Param-Member").arg("s", name) );
                     case z::Ast::ScopeType::XRef:
                         refType = z::Ast::RefType::XRef;
+                        break;
+                    case z::Ast::ScopeType::IRef:
+                        refType = z::Ast::RefType::IRef;
                         break;
                     case z::Ast::ScopeType::Param:
                     case z::Ast::ScopeType::VarArg:
@@ -209,6 +229,8 @@ const z::Ast::VariableDefn* z::Ast::Unit::getVariableDef(const z::Ast::Token& na
                         throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Local-Member").arg("s", name) );
                     case z::Ast::ScopeType::XRef:
                         throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Local-XRef").arg("s", name) );
+                    case z::Ast::ScopeType::IRef:
+                        throw z::Exception("Unit", zfmt(name, "Internal error: Invalid vref %{s}: Local-IRef").arg("s", name) );
                     case z::Ast::ScopeType::Param:
                     case z::Ast::ScopeType::VarArg:
                         refType = z::Ast::RefType::Param;

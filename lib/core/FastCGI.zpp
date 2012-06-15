@@ -1,4 +1,31 @@
+import core::Socket;
 namespace FastCGI;
 
+struct Header {
+    ubyte hVersion;
+    ubyte hType;
+    ubyte hRequestIdB1;
+    ubyte hRequestIdB0;
+    ubyte hContentLengthB1;
+    ubyte hContentLengthB0;
+    ubyte hPaddingLength;
+    ubyte hReserved;
+};
+
 /// \brief Start the FastCGI server on specified port.
-public routine bool StartServer(const int& port) native;
+public function bool StartServer(const int& port) {
+    auto s = Socket::InitServer(port);
+    Socket::OnConnect(s) => {
+        print "FastCGI: Socket:OnConnect";
+        Socket::OnRecv(cs) => [; data bfr] {
+            print "FastCGI: Socket:OnRecv";
+            bfr += d;
+            if( length(bfr) >= sizeof(Header) ) {
+                print "xx";
+//                auto h = raw<Header>(bfr, 0);
+            }
+        };
+    };
+    Socket::StartServer(s);
+    return(true);
+}

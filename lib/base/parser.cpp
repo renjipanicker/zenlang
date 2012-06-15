@@ -5,7 +5,7 @@
 
 z::Parser::Parser() : _parser(0) {
     _parser = ZenParserAlloc(malloc);
-    //ZenParserTrace(stdout, "TP: ");
+//    ZenParserTrace(stdout, "TP: ");
 }
 
 z::Parser::~Parser() {

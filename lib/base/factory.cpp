@@ -577,6 +577,7 @@ z::Ast::ChildFunctionDecl* z::Ast::Factory::aChildFunctionDecl(const z::Ast::Typ
 z::Ast::RootFunctionDefn* z::Ast::Factory::aRootFunctionDefn(z::Ast::RootFunctionDefn& functionDefn, const z::Ast::CompoundStatement& block) {
     functionDefn.setBlock(block);
     unit().leaveScope(functionDefn.sig().inScope());
+    unit().leaveScope(functionDefn.irefScope());
     unit().leaveScope(functionDefn.xrefScope());
     unit().leaveTypeSpec(functionDefn);
     unit().addBody(unit().addNode(new z::Ast::FunctionBody(block.pos(), functionDefn, block)));
@@ -588,6 +589,7 @@ z::Ast::RootFunctionDefn* z::Ast::Factory::aEnterRootFunctionDefn(const z::Ast::
     z::Ast::RootFunctionDefn& functionDefn = unit().addNode(new z::Ast::RootFunctionDefn(unit().currentTypeSpec(), name, defType, functionSig, z::ref(cref.xref), z::ref(cref.iref)));
     unit().currentTypeSpec().addChild(functionDefn);
     unit().enterScope(functionDefn.xrefScope());
+    unit().enterScope(functionDefn.irefScope());
     unit().enterScope(functionSig.inScope());
     unit().enterTypeSpec(functionDefn);
 
@@ -601,6 +603,7 @@ z::Ast::RootFunctionDefn* z::Ast::Factory::aEnterRootFunctionDefn(const z::Ast::
 z::Ast::ChildFunctionDefn* z::Ast::Factory::aChildFunctionDefn(z::Ast::ChildFunctionDefn& functionDefn, const z::Ast::CompoundStatement& block) {
     functionDefn.setBlock(block);
     unit().leaveScope(functionDefn.sig().inScope());
+    unit().leaveScope(functionDefn.irefScope());
     unit().leaveScope(functionDefn.xrefScope());
     unit().leaveTypeSpec(functionDefn);
     unit().addBody(unit().addNode(new z::Ast::FunctionBody(block.pos(), functionDefn, block)));
@@ -615,6 +618,7 @@ inline z::Ast::ChildFunctionDefn& z::Ast::Factory::createChildFunctionDefn(z::As
     z::Ast::ChildFunctionDefn& functionDefn = unit().addNode(new z::Ast::ChildFunctionDefn(parent, name, defType, base.sig(), z::ref(cref.xref), z::ref(cref.iref), base));
     parent.addChild(functionDefn);
     unit().enterScope(functionDefn.xrefScope());
+    unit().enterScope(functionDefn.irefScope());
     unit().enterScope(base.sig().inScope());
     unit().enterTypeSpec(functionDefn);
     return functionDefn;
@@ -639,7 +643,7 @@ z::Ast::EventDecl* z::Ast::Factory::aEventDecl(const z::Ast::Token& pos, const z
     z::Ast::Token handlerName(pos.filename(), pos.row(), pos.col(), "Handler");
     z::Ast::FunctionSig* handlerSig = aFunctionSig(functionSig.outScope(), handlerName, functionSig.inScope());
     z::Ast::Scope& xref = addScope(getToken(), z::Ast::ScopeType::XRef);
-    z::Ast::Scope& iref = addScope(getToken(), z::Ast::ScopeType::XRef);
+    z::Ast::Scope& iref = addScope(getToken(), z::Ast::ScopeType::IRef);
     z::Ast::ClosureRef cref = aClosureList(xref, iref);
     z::Ast::RootFunctionDecl& funDecl = addRootFunctionDecl(eventDef, z::ref(handlerSig), handlerDefType, cref);
     eventDef.setHandler(funDecl);
@@ -689,6 +693,8 @@ z::Ast::FunctionSig* z::Ast::Factory::aFunctionSig(const z::Ast::QualifiedTypeSp
 }
 
 z::Ast::ClosureRef z::Ast::Factory::aClosureList(z::Ast::Scope& xref, z::Ast::Scope& iref) {
+    assert(xref.type() == z::Ast::ScopeType::XRef);
+    assert(iref.type() == z::Ast::ScopeType::IRef);
     z::Ast::ClosureRef cref;
     cref.xref = z::ptr(xref);
     cref.iref = z::ptr(iref);
@@ -696,13 +702,13 @@ z::Ast::ClosureRef z::Ast::Factory::aClosureList(z::Ast::Scope& xref, z::Ast::Sc
 }
 
 z::Ast::ClosureRef z::Ast::Factory::aClosureList(z::Ast::Scope& xref) {
-    z::Ast::Scope& iref = addScope(getToken(), z::Ast::ScopeType::XRef);
+    z::Ast::Scope& iref = addScope(getToken(), z::Ast::ScopeType::IRef);
     return aClosureList(xref, iref);
 }
 
 z::Ast::ClosureRef z::Ast::Factory::aClosureList() {
     z::Ast::Scope& xref = addScope(getToken(), z::Ast::ScopeType::XRef);
-    z::Ast::Scope& iref = addScope(getToken(), z::Ast::ScopeType::XRef);
+    z::Ast::Scope& iref = addScope(getToken(), z::Ast::ScopeType::IRef);
     return aClosureList(xref, iref);
 }
 
@@ -724,8 +730,8 @@ z::Ast::Scope* z::Ast::Factory::aParam(z::Ast::Scope& list, const z::Ast::Variab
     return z::ptr(list);
 }
 
-z::Ast::Scope* z::Ast::Factory::aParam(const z::Ast::VariableDefn& variableDefn) {
-    z::Ast::Scope& list = addScope(variableDefn.pos(), z::Ast::ScopeType::Param);
+z::Ast::Scope* z::Ast::Factory::aParam(const z::Ast::VariableDefn& variableDefn, const ScopeType::T& type) {
+    z::Ast::Scope& list = addScope(variableDefn.pos(), type);
     return aParam(list, variableDefn);
 }
 
@@ -1070,6 +1076,16 @@ void z::Ast::Factory::aEnterCompoundStatement(const z::Ast::Token& pos) {
 
 void z::Ast::Factory::aLeaveCompoundStatement() {
     unit().leaveScope();
+}
+
+void z::Ast::Factory::aEnterFunctionBlock(const z::Ast::Token& pos) {
+    unit().pushExpectedTypeSpec(z::Ast::Unit::ExpectedTypeSpec::etNone);
+    return aEnterCompoundStatement(pos);
+}
+
+void z::Ast::Factory::aLeaveFunctionBlock() {
+    unit().popExpectedTypeSpec(getToken(), z::Ast::Unit::ExpectedTypeSpec::etNone);
+    return aLeaveCompoundStatement();
 }
 
 z::Ast::ExprList* z::Ast::Factory::aExprList(z::Ast::ExprList& list, const z::Ast::Expr& expr) {
@@ -1509,9 +1525,8 @@ z::Ast::RunExpr* z::Ast::Factory::aRunExpr(const z::Ast::Token& pos, const z::As
         z::Ast::RunExpr& runExpr = unit().addNode(new z::Ast::RunExpr(pos, qTypeSpec, callExpr));
         return z::ptr(runExpr);
     }
-    throw z::Exception("NodeFactory", zfmt(pos, "Unknown functor in run expression '%{s}'")
-                       .arg("s", ZenlangNameGenerator().qtn(callExpr.expr().qTypeSpec()) )
-                       );
+
+    throw z::Exception("NodeFactory", zfmt(pos, "Unknown functor in run expression '%{s}'").arg("s", ZenlangNameGenerator().qtn(callExpr.expr().qTypeSpec())));
 }
 
 z::Ast::OrderedExpr* z::Ast::Factory::aOrderedExpr(const z::Ast::Token& pos, const z::Ast::Expr& innerExpr) {
@@ -1559,6 +1574,18 @@ z::Ast::SpliceExpr* z::Ast::Factory::aSpliceExpr(const z::Ast::Token& pos, const
     }
 
     throw z::Exception("NodeFactory", zfmt(pos, "'%{s}' is not an splicable type").arg("s", ZenlangNameGenerator().qtn(expr.qTypeSpec()) ));
+}
+
+z::Ast::SizeofTypeExpr* z::Ast::Factory::aSizeofTypeExpr(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec& typeSpec) {
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "size");
+    z::Ast::SizeofTypeExpr& expr = unit().addNode(new z::Ast::SizeofTypeExpr(pos, qTypeSpec, typeSpec));
+    return z::ptr(expr);
+}
+
+z::Ast::SizeofExprExpr* z::Ast::Factory::aSizeofExprExpr(const z::Ast::Token& pos, const z::Ast::Expr& expr) {
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "size");
+    z::Ast::SizeofExprExpr& sizeofExpr = unit().addNode(new z::Ast::SizeofExprExpr(pos, qTypeSpec, expr));
+    return z::ptr(sizeofExpr);
 }
 
 z::Ast::TypeofTypeExpr* z::Ast::Factory::aTypeofTypeExpr(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec& typeSpec) {
@@ -1617,7 +1644,6 @@ z::Ast::ValueInstanceExpr* z::Ast::Factory::aValueInstanceExpr(const z::Ast::Tok
 z::Ast::TemplateDefnInstanceExpr* z::Ast::Factory::aTemplateDefnInstanceExpr(const z::Ast::Token& pos, const z::Ast::TemplateDefn& templateDefn, const z::Ast::ExprList& exprList) {
     z::string name = templateDefn.name().string();
     if(name == "pointer") {
-
         z::Ast::TemplateTypePartList& list = unit().addNode(new z::Ast::TemplateTypePartList(pos));
         const z::Ast::QualifiedTypeSpec& newTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn.at(0).typeSpec(), true);
         list.addType(newTypeSpec);
@@ -1649,7 +1675,6 @@ z::Ast::VariableRefExpr* z::Ast::Factory::aVariableRefExpr(const z::Ast::Token& 
     if(vref == 0) {
         throw z::Exception("NodeFactory", zfmt(name, "Variable not found: '%{s}'").arg("s", name ));
     }
-
     // create vref expression
     z::Ast::VariableRefExpr& vrefExpr = unit().addNode(new z::Ast::VariableRefExpr(name, z::ref(vref).qTypeSpec(), z::ref(vref), refType));
     return z::ptr(vrefExpr);
@@ -1843,10 +1868,9 @@ z::Ast::AnonymousFunctionExpr* z::Ast::Factory::aAnonymousFunctionExpr(z::Ast::C
     return z::ptr(functionInstanceExpr);
 }
 
-z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAnonymousFunction(const z::Ast::Function& function) {
-    char namestr[128];
-    sprintf(namestr, "_anonymous_%lu", unit().uniqueIdx());
-    z::Ast::Token name(filename(), getToken().row(), getToken().col(), namestr);
+z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAnonymousFunction(const z::Ast::Function& function, const Ast::ClosureRef& cref) {
+    z::string ns = z::string("_anonymous_%{i}").arg("i", unit().uniqueIdx());
+    z::Ast::Token name(filename(), getToken().row(), getToken().col(), ns);
 
     z::Ast::TypeSpec* ts = 0;
     for(Unit::TypeSpecStack::reverse_iterator it = unit().typeSpecStack().rbegin(); it != unit().typeSpecStack().rend(); ++it) {
@@ -1861,21 +1885,23 @@ z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAnonymousFunction(const z::Ast
         throw z::Exception("NodeFactory", zfmt(name, "Internal error: Unable to find parent for anonymous function  %{s}").arg("s", ZenlangNameGenerator().tn(function) ));
     }
 
-    z::Ast::Scope& xref = addScope(name, z::Ast::ScopeType::XRef);
-    z::Ast::Scope& iref = addScope(name, z::Ast::ScopeType::XRef);
-    z::Ast::ClosureRef cref = aClosureList(xref, iref);
     z::Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(z::ref(ts), function, name, z::Ast::DefinitionType::Final, cref);
     z::Ast::Statement* statement = aGlobalTypeSpecStatement(z::Ast::AccessType::Private, functionDefn);
     unused(statement);
     return z::ptr(functionDefn);
 }
 
-z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAutoAnonymousFunction(const z::Ast::Token& pos) {
+z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAutoAnonymousFunction(const z::Ast::Token& pos, const Ast::ClosureRef& cref) {
     const z::Ast::Function* function = unit().isFunctionExpected();
     if(function == 0) {
         throw z::Exception("NodeFactory", zfmt(pos, "Internal error: no function type expected") );
     }
-    return aEnterAnonymousFunction(z::ref(function));
+    return aEnterAnonymousFunction(z::ref(function), cref);
+}
+
+z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAnonymousFunctionExpr(const z::Ast::Function& function) {
+    z::Ast::ClosureRef cref = aClosureList();
+    return aEnterAnonymousFunction(function, cref);
 }
 
 z::Ast::ConstantNullExpr& z::Ast::Factory::aConstantNullExpr(const z::Ast::Token& token) {
@@ -1918,22 +1944,57 @@ z::Ast::ConstantCharExpr& z::Ast::Factory::aConstantCharExpr(const z::Ast::Token
 }
 
 z::Ast::ConstantLongExpr& z::Ast::Factory::aConstantLongExpr(const z::Ast::Token& token) {
-    long value = token.string().to<long>();
+    int64_t value = token.string().to<int64_t>();
     const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "long");
     z::Ast::ConstantLongExpr& expr = unit().addNode(new z::Ast::ConstantLongExpr(token, qTypeSpec, value));
     return expr;
 }
 
 z::Ast::ConstantIntExpr& z::Ast::Factory::aConstantIntExpr(const z::Ast::Token& token) {
-    int value = token.string().to<int>();
+    int32_t value = token.string().to<int32_t>();
     const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "int");
     z::Ast::ConstantIntExpr& expr = unit().addNode(new z::Ast::ConstantIntExpr(token, qTypeSpec, value));
     return expr;
 }
 
 z::Ast::ConstantShortExpr& z::Ast::Factory::aConstantShortExpr(const z::Ast::Token& token) {
-    short value = token.string().to<short>();
+    int16_t value = token.string().to<int16_t>();
     const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "short");
     z::Ast::ConstantShortExpr& expr = unit().addNode(new z::Ast::ConstantShortExpr(token, qTypeSpec, value));
+    return expr;
+}
+
+z::Ast::ConstantByteExpr& z::Ast::Factory::aConstantByteExpr(const z::Ast::Token& token) {
+    int8_t value = token.string().to<int8_t>();
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "byte");
+    z::Ast::ConstantByteExpr& expr = unit().addNode(new z::Ast::ConstantByteExpr(token, qTypeSpec, value));
+    return expr;
+}
+
+z::Ast::ConstantUnLongExpr& z::Ast::Factory::aConstantUnLongExpr(const z::Ast::Token& token) {
+    uint64_t value = token.string().to<uint64_t>();
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "ulong");
+    z::Ast::ConstantUnLongExpr& expr = unit().addNode(new z::Ast::ConstantUnLongExpr(token, qTypeSpec, value));
+    return expr;
+}
+
+z::Ast::ConstantUnIntExpr& z::Ast::Factory::aConstantUnIntExpr(const z::Ast::Token& token) {
+    uint32_t value = token.string().to<uint32_t>();
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "uint");
+    z::Ast::ConstantUnIntExpr& expr = unit().addNode(new z::Ast::ConstantUnIntExpr(token, qTypeSpec, value));
+    return expr;
+}
+
+z::Ast::ConstantUnShortExpr& z::Ast::Factory::aConstantUnShortExpr(const z::Ast::Token& token) {
+    uint16_t value = token.string().to<uint16_t>();
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "ushort");
+    z::Ast::ConstantUnShortExpr& expr = unit().addNode(new z::Ast::ConstantUnShortExpr(token, qTypeSpec, value));
+    return expr;
+}
+
+z::Ast::ConstantUnByteExpr& z::Ast::Factory::aConstantUnByteExpr(const z::Ast::Token& token) {
+    uint8_t value = token.string().to<uint8_t>();
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "ubyte");
+    z::Ast::ConstantUnByteExpr& expr = unit().addNode(new z::Ast::ConstantUnByteExpr(token, qTypeSpec, value));
     return expr;
 }

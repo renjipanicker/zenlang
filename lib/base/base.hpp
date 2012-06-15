@@ -125,6 +125,7 @@ namespace z {
 
         explicit inline bstring() {}
         inline bstring(const charT* s) : _val(s) {}
+        inline bstring(const charT* s, const size_t& n) : _val(s, n) {}
         inline bstring(const sstringT& s) : _val(s) {}
         inline bstring(const bstring& src) : _val(src._val) {}
         inline bstring(const size_type& count, const charT& ch) : _val(count, ch) {}
@@ -138,6 +139,7 @@ namespace z {
 
         explicit inline string08() : BaseT() {}
         inline string08(const char* s) : BaseT() {append08(s);}
+        inline string08(const char* s, const size_t& n) : BaseT(s, n) {}
         inline string08(const BaseT::sstringT& s) : BaseT(s) {}
         inline string08(const size_type& count, const char_t& ch) : BaseT(count, (char08_t)ch) {}
         inline string08(const string08& src) : BaseT(src) {}
@@ -295,6 +297,16 @@ namespace z {
         return val;
     }
 
+    /////////////////////////////
+    // bstring helpers
+    template <typename charT, typename stringT>
+    inline typename z::bstring<charT, stringT>::size_type length(const z::bstring<charT, stringT>& s) {
+        return s.size();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    typedef string08 data;
+
     ////////////////////////////////////////////////////////////////////////////
     struct datetime {
         inline datetime() : _val(0) {}
@@ -375,7 +387,7 @@ namespace z {
     inline void mlog(const z::string& src, const z::string& msg) {writelog(src, msg);}
     inline void elog(const z::string& src, const z::string& msg) {writelog(src, msg);}
 
-    class Exception {
+    class Exception /*  : public std::runtime_error */ { /// \todo:
     public:
         explicit inline Exception(const z::string& src, const z::string& msg) : _msg(msg) {
             elog(src, _msg);
@@ -1032,11 +1044,23 @@ namespace z {
         virtual void run() {Out out = _function._run(_in); _out.reset(new Out(out));}
     };
 
+    ////////////////////////////////////////////////////////////////////////////
     /// \brief Base class for devices.
     /// Devices are async objects that get periodically polled for input, such as files and sockets.
-    struct Device {
-        virtual void poll(const z::size& timeout) = 0;
+    struct device {
+        struct _Out {
+            inline _Out() {}
+        };
+    public:
+        struct _In {
+            inline _In(const int& ptimeout) : timeout(ptimeout) {}
+            int timeout;
+        };
+    public:
+        virtual void run(const int& timeout) = 0;
+        inline _Out _run(const _In& _in) {run(_in.timeout); return _Out();}
     };
+
 
     /// \brief Queue for a single thread
     struct RunQueue;
@@ -1055,8 +1079,8 @@ namespace z {
         }
 
     public:
-        z::Device& startPoll(z::Device& device);
-        z::Device& stopPoll(z::Device& device);
+        z::device& startPoll(z::device* device);
+        void stopPoll(z::device& device);
 
     public:
         z::size wait();
@@ -1255,6 +1279,7 @@ namespace z {
         inline const SOCKET& val() const {return _val;}
     private:
         SOCKET _val;
+        z::data _bfr;
     };
 
     ////////////////////////////////////////////////////////////////////////////

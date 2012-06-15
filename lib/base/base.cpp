@@ -468,8 +468,9 @@ private:
     QueueList _queueList;
 
 private:
-    typedef z::list<z::Device*> DeviceList;
+    typedef z::list<z::device*> DeviceList;
     DeviceList _deviceList;
+    DeviceList _newDeviceList;
 
 public:
     inline GlobalContext() {
@@ -487,20 +488,20 @@ public:
         return z::ref(_queueList.at(idx));
     }
 
-    inline z::Device& start(z::Device& device) {
-        _deviceList.add(z::ptr(device));
-        return device;
+    inline z::device& startPoll(z::device* d) {
+        _newDeviceList.add(d);
+        return z::ref(d);
     }
 
-    inline z::Device& stop(z::Device& device) {
+    inline void stopPoll(z::device& d) {
         for(DeviceList::iterator it = _deviceList.begin(); it != _deviceList.end(); ++it) {
-            z::Device& d = z::ref(*it);
-            if(z::ptr(d) == z::ptr(device)) {
+            z::device* d1 = *it;
+            if(z::ptr(d) == d1) {
                 _deviceList.erase(it);
+                delete d1;
                 break;
             }
         }
-        return device;
     }
 
     inline size_t run(const size_t& cnt) {
@@ -510,9 +511,11 @@ public:
             bal += queue.run(cnt);
         }
         if(bal == 0) {
+            _deviceList.append(_newDeviceList);
+            _newDeviceList.clear();
             for(DeviceList::iterator it = _deviceList.begin(); it != _deviceList.end(); ++it) {
-                z::Device& device = z::ref(*it);
-                device.poll(MaxPollTimeout);
+                z::device& d = z::ref(*it);
+                d.run(MaxPollTimeout);
             }
         }
         return bal;
@@ -549,12 +552,12 @@ void z::ThreadContext::add(z::Future* future) {
     _queue.add(future);
 }
 
-z::Device& z::ThreadContext::startPoll(z::Device& device) {
-    return gctx().start(device);
+z::device& z::ThreadContext::startPoll(z::device* d) {
+    return gctx().startPoll(d);
 }
 
-z::Device& z::ThreadContext::stopPoll(z::Device& device) {
-    return gctx().stop(device);
+void z::ThreadContext::stopPoll(z::device& d) {
+    return gctx().stopPoll(d);
 }
 
 z::size z::ThreadContext::wait() {
@@ -909,7 +912,13 @@ inline int z::Application::execEx() {
 #error "Unimplemented GUI mode"
 #endif
 #else // GUI
+#if defined(SERVER)
+    while(!_isExit) {
         pump();
+    }
+#else
+        pump();
+#endif
 #endif // GUI
 
     return code;
