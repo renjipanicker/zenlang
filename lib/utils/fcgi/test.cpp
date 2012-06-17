@@ -15,20 +15,7 @@
  * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <iostream>
-#include <stdexcept>
-#include <string>
-#include <sstream>
-
-#include <string.h>
-#include <sys/types.h>
-#if defined(WIN32)
-# include <WinSock2.h>
-#else
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-#endif
+#include "zenlang.hpp"
 #include "fastcgi.hpp"
 
 #if defined(WIN32)

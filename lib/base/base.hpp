@@ -81,6 +81,8 @@ namespace z {
         inline stringT substr(const size_type& from, const size_type& len) const {return _val.substr(from, len);}
         inline stringT substr(const size_type& from) const {return _val.substr(from);}
 
+        inline stringT slice(const size_type& from, const size_type& len) const {return substr(from, len);}
+
         inline size_type find(const charT& s) const {return _val.find(s);}
         inline size_type find(const stringT& s) const {return _val.find(s._val);}
         inline size_type find(const stringT& s, const size_type& from) const {return _val.find(s._val, from);}
@@ -171,6 +173,9 @@ namespace z {
 
     // define estring (encoded-string) as 8bit utf8 string
     typedef string08 estring;
+
+    // define wstring as 16 bit string
+    typedef string16 wstring;
 
     // define ustring as 32 bit string
     typedef string32 ustring;
@@ -305,9 +310,6 @@ namespace z {
     }
 
     ////////////////////////////////////////////////////////////////////////////
-    typedef string08 data;
-
-    ////////////////////////////////////////////////////////////////////////////
     struct datetime {
         inline datetime() : _val(0) {}
         inline datetime(const time_t& val) : _val(val) {}
@@ -419,6 +421,42 @@ namespace z {
         T* _val;
     };
 
+    ////////////////////////////////////////////////////////////////////////////
+    struct data : public bstring< uint8_t, data > {
+        typedef bstring< uint8_t, data > BaseT;
+
+        explicit inline data() : BaseT() {}
+        inline data(const uint8_t* s, const size_t& n) : BaseT(s, n) {}
+        inline data(const BaseT::sstringT& s) : BaseT(s) {}
+        inline data(const data& src) : BaseT(src) {}
+    };
+
+    /////////////////////////////
+    // data helpers
+    template <typename T>
+    inline T raw(const data& d, const size_t& from, const size_t& len ) {
+        if((from + len) > d.length()) {
+            throw Exception("z::raw", z::string("%{k} out of bounds\n").arg("k", from));
+        }
+        const uint8_t* v = d.c_str() + from;
+        assert(v);
+        const T* t = reinterpret_cast<const T*>(v);
+        return z::ref(t);
+    }
+
+    template <>
+    inline z::string raw<z::string>(const data& d, const size_t& from, const size_t& len) {
+        if((from + len) > d.length()) {
+            throw Exception("z::raw", z::string("%{k} out of bounds\n").arg("k", from));
+        }
+        const uint8_t* v = d.c_str() + from;
+        assert(v);
+        z::estring es((const char*)v, len);
+        z::string r = z::e2s(es);
+        return r;
+    }
+
+    /////////////////////////////
     struct mutex {
         mutex();
         ~mutex();
@@ -705,9 +743,9 @@ namespace z {
             std::sort(BaseT::_list.begin(), BaseT::_list.end(), fn);
         }
 
-        inline list<V> splice(const typename BaseT::size_type& from, const typename BaseT::size_type& to) const {
+        inline list<V> slice(const typename BaseT::size_type& from, const typename BaseT::size_type& len) const {
             list<V> nl;
-            for(typename BaseT::size_type i = from; i < to; ++i) {
+            for(typename BaseT::size_type i = from; i < len; ++i) {
                 const V& v = BaseT::_list.at(i);
                 nl.add(v);
             }
@@ -783,6 +821,16 @@ namespace z {
             else
                 BaseT::_list[k] = v;
             return BaseT::_list[k];
+        }
+
+        inline V& remove(const K& k) {
+            typename BaseT::iterator it = BaseT::_list.find(k);
+            if(it == BaseT::_list.end()) {
+                throw Exception("dict", z::string("%{k} not found\n").arg("k", k));
+            }
+            V& v = it->second;
+            BaseT::erase(it);
+            return v;
         }
 
         inline V& at(const K& k) {
@@ -896,6 +944,33 @@ namespace z {
     };
 
     /////////////////////////////
+    // slice helpers
+    template <typename T>
+    inline T slice(const T& t, const int32_t& from, const int32_t& len) {
+        T::size_type f = from;
+        while(f < 0) {
+            f = t.size() + f;
+        }
+
+        T::size_type l = len;
+        while(l < 0) {
+            l = t.size() + l;
+        }
+
+        if(l == 0)
+            l = t.size() - 1;
+
+        return t.slice(f, l);
+    }
+
+    /////////////////////////////
+    // generic helpers
+    template <typename T>
+    inline void clear(T& l) {
+        return l.clear();
+    }
+
+    /////////////////////////////
     // list helpers
     template <typename V>
     inline const V& at(const list<V>& l, const typename list<V>::size_type& idx) {
@@ -905,11 +980,6 @@ namespace z {
     template <typename V>
     inline V& at(list<V>& l, const typename list<V>::size_type& idx) {
         return l.at(idx);
-    }
-
-    template <typename V>
-    inline list<V> splice(const list<V>& l, const typename list<V>::size_type& from, const typename list<V>::size_type& to) {
-        return l.splice(from, to);
     }
 
     template <typename V>
@@ -932,6 +1002,11 @@ namespace z {
     template <typename K, typename V>
     inline typename dict<K,V>::size_type length(const dict<K, V>& l) {
         return l.size();
+    }
+
+    template <typename K, typename V>
+    inline const V& remove(dict<K, V>& l, const K& idx) {
+        return l.remove(idx);
     }
 
     /////////////////////////////

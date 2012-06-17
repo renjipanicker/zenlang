@@ -3,7 +3,7 @@ namespace TestFCGI;
 
 public function basicTest : main {
     unused(argl);
-    FastCGI::StartServer(9001);
+    auto h = FastCGI::Create(9001);
+    FastCGI::Start(h);
     return (true);
 }
-

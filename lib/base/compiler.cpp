@@ -111,16 +111,18 @@ const z::string ifile =
 "default float = 0;\n"
 "default double = 0;\n"
 
-"coerce bool => ubyte => byte => ushort => short => uint => int => ulong => long => float => double;\n"
-
 "typedef size native;\n"
 "default size = 0;\n"
-"coerce int => size;\n"
+
+"coerce bool => ubyte => byte => ushort => short => uint => int => ulong => long => size => float => double;\n"
+"coerce size => ulong;\n"
 
 "typedef char native;\n"
-"typedef string native;\n"
 "default char = '';\n"
+
+"typedef string native;\n"
 "default string = \"\";\n"
+
 "coerce char => string;\n"
 
 "typedef datetime native;\n"
@@ -146,10 +148,15 @@ const z::string ifile =
 "template <K,V> dict native;\n"
 "template <K,V> tree native;\n"
 
+"template <V> raw native;\n"
+
 "public routine void assert(...) native;\n"
 "public routine void unused(...) native;\n"
 "public routine void verify(...) native;\n"
 "public routine void length(...) native;\n"
+
+"public routine void remove(...) native;\n"
+"public routine void clear(...) native;\n"
 
 "public typedef stringlist list<string>;\n"
 

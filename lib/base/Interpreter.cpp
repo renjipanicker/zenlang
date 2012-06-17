@@ -581,6 +581,14 @@ namespace in {
             unused(node);
         }
 
+        virtual void visit(const z::Ast::RawDataInstanceExpr& node) {
+            unused(node);
+        }
+
+        virtual void visit(const z::Ast::DeRefInstanceExpr& node) {
+            unused(node);
+        }
+
         virtual void visit(const z::Ast::VariableRefExpr& node) {
             ValuePtr val = _ctx.getValue(node.pos(), node.vref());
             push(val);

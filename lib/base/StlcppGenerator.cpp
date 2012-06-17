@@ -44,6 +44,8 @@ namespace sg {
                 name += "z::FutureT";
     //@        } else if(z::ref(templateDefn).name().string() == "functor") {
     //            name += "z::FunctorT";
+            } else if(z::ref(templateDefn).name().string() == "raw") {
+                name += "z::raw";
             } else {
                 name += z::ref(templateDefn).name().string();
             }
@@ -154,6 +156,11 @@ namespace sg {
             return;
         }
 
+        if(typeSpec.name().string() == "remove") {
+            name += "z::remove";
+            return;
+        }
+
         name += typeSpec.name().string();
 
         const z::Ast::EnumDefn* enumDefn = dynamic_cast<const z::Ast::EnumDefn*>(z::ptr(typeSpec));
@@ -249,7 +256,10 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::BooleanHasExpr& node) {
-            return visitBinary(node);
+            visitNode(node.lhs());
+            _os() << ".has(";
+            visitNode(node.rhs());
+            _os() << ")";
         }
 
         virtual void visit(const z::Ast::BinaryAssignEqualExpr& node) {
@@ -486,7 +496,7 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::SpliceExpr& node) {
-            _os() << "splice(";
+            _os() << "slice(";
             visitNode(node.expr());
             _os() << ", ";
             visitNode(node.from());
@@ -549,6 +559,26 @@ namespace sg {
             const z::Ast::Expr& expr = node.exprList().at(0);
             ExprGenerator(_os).visitNode(expr);
             _os() << ".getT<" << StlcppNameGenerator().tn(node.qTypeSpec().typeSpec()) << ">()";
+        }
+
+        virtual void visit(const z::Ast::RawDataInstanceExpr& node) {
+            _os() << "z::raw<" << StlcppNameGenerator().tn(node.templateDefn().at(0).typeSpec()) << ">(";
+            ExprGenerator(_os).visitNode(node.exprList().at(0));
+            _os() << ", ";
+            ExprGenerator(_os).visitNode(node.exprList().at(1));
+            _os() << ", ";
+            if(node.exprList().list().size() >= 3) {
+                ExprGenerator(_os).visitNode(node.exprList().at(2));
+            } else {
+                _os() << "sizeof(" << StlcppNameGenerator().tn(node.templateDefn().at(0).typeSpec()) << ")";
+            }
+            _os() << ")";
+        }
+
+        virtual void visit(const z::Ast::DeRefInstanceExpr& node) {
+            _os() << "z::ref(";
+            ExprGenerator(_os, ", ").visitList(node.exprList());
+            _os() << ")";
         }
 
         virtual void visit(const z::Ast::VariableRefExpr& node) {
@@ -1245,11 +1275,10 @@ namespace sg {
                       << " " << node.in().name() << ", Handler* h) {"
                       << std::endl;
                 _os() << "}" << std::endl;
-                _os() << "const " << StlcppNameGenerator().tn(node) << "::Add::_Out& " << StlcppNameGenerator().tn(node) << "::Add::run(";
+                _os() << "void " << StlcppNameGenerator().tn(node) << "::Add::run(";
                 TypeDeclarationGenerator::writeScopeParamList(_os, node.addFunction().sig().inScope(), "");
                 _os() << ") {" << std::endl;
                 _os() << "    assert(false); //addHandler(in." << node.in().name() << ", in.handler);" << std::endl;
-                _os() << "    return _Out();" << std::endl;
                 _os() << "}" << std::endl;
             }
         }

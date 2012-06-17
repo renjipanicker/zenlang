@@ -319,7 +319,7 @@ const char* z::Lexer::Impl::reservedWords[] = {
     "delete"       ,
     "create"       ,
     "insert"       ,
-    "remove"       ,
+//    "remove"       ,
     "class"        ,
     "each"         ,
     "throw"        ,

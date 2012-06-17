@@ -393,6 +393,7 @@ namespace Ast {
             : UserDefinedTypeSpec(parent, name, defType), _templateDecl(templateDecl), _list(list) {}
     public:
         inline const TemplateTypePartList::List& list() const {return _list.get().list();}
+        inline const TemplateTypePartList& partList() const {return _list.get();}
         inline const QualifiedTypeSpec& at(const size_type& idx) const {return list().at(idx);}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1316,6 +1317,22 @@ namespace Ast {
         virtual void visit(Visitor& visitor) const;
     };
 
+    class RawDataInstanceExpr : public TemplateDefnInstanceExpr {
+    public:
+        inline RawDataInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& srcTemplateDefn, const Ast::TemplateDefn& templateDefn, const ExprList& exprList)
+            : TemplateDefnInstanceExpr(pos, qTypeSpec, srcTemplateDefn, templateDefn, exprList) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
+    class DeRefInstanceExpr : public TemplateDefnInstanceExpr {
+    public:
+        inline DeRefInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& srcTemplateDefn, const Ast::TemplateDefn& templateDefn, const ExprList& exprList)
+            : TemplateDefnInstanceExpr(pos, qTypeSpec, srcTemplateDefn, templateDefn, exprList) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
     class CallExpr : public Expr {
     protected:
         inline CallExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const ExprList& exprList) : Expr(pos, qTypeSpec), _exprList(exprList) {}
@@ -1706,6 +1723,8 @@ namespace Ast {
         virtual void visit(const DynamicTypecastExpr& node) = 0;
         virtual void visit(const PointerInstanceExpr& node) = 0;
         virtual void visit(const ValueInstanceExpr& node) = 0;
+        virtual void visit(const RawDataInstanceExpr& node) = 0;
+        virtual void visit(const DeRefInstanceExpr& node) = 0;
         virtual void visit(const VariableRefExpr& node) = 0;
         virtual void visit(const MemberVariableExpr& node) = 0;
         virtual void visit(const MemberPropertyExpr& node) = 0;

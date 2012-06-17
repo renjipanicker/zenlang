@@ -343,13 +343,13 @@ namespace zg {
         }
 
         virtual void visit(const z::Ast::StaticTypecastExpr& node) {
-            _os << "<" << z::ZenlangNameGenerator().qtn(node.qTypeSpec()) << ">(";
+            _os << "(" << z::ZenlangNameGenerator().qtn(node.qTypeSpec()) << ")(";
             ExprGenerator(_os).visitNode(node.expr());
             _os << ")";
         }
 
         virtual void visit(const z::Ast::DynamicTypecastExpr& node) {
-            _os << "<" << z::ZenlangNameGenerator().tn(node.qTypeSpec().typeSpec()) << ">(";
+            _os << "(" << z::ZenlangNameGenerator().tn(node.qTypeSpec().typeSpec()) << ")(";
             ExprGenerator(_os).visitNode(node.expr());
             _os << ")";
         }
@@ -361,9 +361,19 @@ namespace zg {
         }
 
         virtual void visit(const z::Ast::ValueInstanceExpr& node) {
-            _os << "<" << z::ZenlangNameGenerator().tn(node.qTypeSpec().typeSpec()) << ">(";
+            _os << "<" << z::ZenlangNameGenerator().qtn(node.qTypeSpec()) << ">(";
             ExprGenerator(_os).visitList(node.exprList());
             _os << ")";
+        }
+
+        virtual void visit(const z::Ast::RawDataInstanceExpr& node) {
+            _os << "raw<" << z::ZenlangNameGenerator().qtn(node.qTypeSpec()) << ">(";
+            ExprGenerator(_os).visitList(node.exprList());
+            _os << ")";
+        }
+
+        virtual void visit(const z::Ast::DeRefInstanceExpr& node) {
+            ExprGenerator(_os).visitList(node.exprList());
         }
 
         virtual void visit(const z::Ast::VariableRefExpr& node) {

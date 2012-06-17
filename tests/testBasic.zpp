@@ -135,7 +135,7 @@ public function int testAdvancedExpr(const int& x, const MyStruct& myStruct, con
         return (9);
     }
 
-    auto t = <MyStruct>p;
+    auto t = (MyStruct)p;
     if(t.j != 540) {
         return (10);
     }
@@ -143,7 +143,7 @@ public function int testAdvancedExpr(const int& x, const MyStruct& myStruct, con
         return (11);
     }
 
-    auto y = <long>v;
+    auto y = (long)v;
     if(y != 321) {
         return (12);
     }
@@ -164,7 +164,7 @@ public function int testAdvancedExpr(const int& x, const MyStruct& myStruct, con
         return (16);
     }
 
-    auto z = &<MyStruct>p;
+    auto z = &(MyStruct)p;
     if((*z).j != 540) {
         return (17);
     }
@@ -526,7 +526,7 @@ function testAutoInitStruct : test {
     list< pointer<MyAutoStruct> > alpds1 = [MyDerivedStruct{i:4;}];
 
     pointer<MyAutoStruct> pds0 = MyDerivedStruct{i:88;};
-    MyDerivedStruct& mas0 = <MyDerivedStruct&>pds0;
+    MyDerivedStruct& mas0 = (MyDerivedStruct&)pds0;
     MyDerivedStruct& mas1 = pds0;
 
     unused(mas0, mas1);

@@ -1,6 +1,32 @@
 import core::Socket;
 namespace FastCGI;
 
+enum MessageType {
+    TYPE_BEGIN_REQUEST     =  1;
+    TYPE_ABORT_REQUEST     =  2;
+    TYPE_END_REQUEST       =  3;
+    TYPE_PARAMS            =  4;
+    TYPE_STDIN             =  5;
+    TYPE_STDOUT            =  6;
+    TYPE_STDERR            =  7;
+    TYPE_DATA              =  8;
+    TYPE_GET_VALUES        =  9;
+    TYPE_GET_VALUES_RESULT = 10;
+    TYPE_UNKNOWN           = 11;
+};
+
+enum Role {
+    NONE       = 0;
+    RESPONDER  = 1;
+    AUTHORIZER = 2;
+    FILTER     = 3;
+};
+
+enum Flags {
+    NONE            = 0;
+    FLAG_KEEP_CONN  = 1;
+};
+
 struct Header {
     ubyte hVersion;
     ubyte hType;
@@ -12,20 +38,188 @@ struct Header {
     ubyte hReserved;
 };
 
+struct BeginRequest : Header {
+    ubyte roleB1;
+    ubyte roleB0;
+    ubyte flags;
+    ubyte reserved1;
+    ubyte reserved2;
+    ubyte reserved3;
+    ubyte reserved4;
+    ubyte reserved5;
+};
+
+struct EndRequest : Header {
+    ubyte appStatusB3;
+    ubyte appStatusB2;
+    ubyte appStatusB1;
+    ubyte appStatusB0;
+    ubyte protocolStatus;
+    ubyte reserved1;
+    ubyte reserved2;
+    ubyte reserved3;
+};
+
+public struct Request {
+    auto rid = 0;
+    dict<string, string> paramList;
+    auto input = "";
+};
+
+struct RequestData : Request {
+    auto role = Role.NONE;
+    auto keepAlive = false;
+};
+
+typedef RequestMap dict<uint, RequestData>;
+
+routine size processRequest(const data& bfr, RequestMap& requestMap) {
+    auto h = raw<Header>(bfr, 0);
+    print "version: %{@v0}, type: %{@t0}, rid0: %{@r0}, rid1: %{@r1}, cid0: %{@c0}, cid1: %{@c1}, pad: %{@p0}, resv: %{@h0}" @ {
+        @v0: (int)h.hVersion,
+        @t0: (int)h.hType,
+        @r0: (int)h.hRequestIdB0,
+        @r1: (int)h.hRequestIdB1,
+        @c0: (int)h.hContentLengthB0,
+        @c1: (int)h.hContentLengthB1,
+        @p0: (int)h.hPaddingLength,
+        @h0: (int)h.hReserved,
+    };
+
+    if(h.hVersion != 1) {
+        print "Cannot handle version %{@v}" @ {@v: h.hVersion};
+        return 0;
+    }
+
+    auto rid = (uint)((h.hRequestIdB1 << 8) + h.hRequestIdB0);
+    auto len = (uint)((h.hContentLengthB1 << 8) + h.hContentLengthB0);
+
+    if( length(bfr) < (sizeof(Header) + len + h.hPaddingLength) ) {
+        print "Insufficient data: bfr:%{@b}, hdr: %{@h}, len: %{@l}, pad: @p" @ {@b: length(bfr), @h: sizeof(Header), @l: len, @p:h.hPaddingLength };
+        return 0;
+    }
+
+    switch(h.hType) {
+        case MessageType.TYPE_BEGIN_REQUEST: {
+            if(requestMap has rid) {
+                print "Received duplicate request ID %{@v}" @ {@v: rid};
+                return 0;
+            }
+
+            auto br = raw<BeginRequest>(bfr, 0);
+            auto role = (Role)((br.roleB1 << 8) + br.roleB0);
+            auto kc = ((br.flags & (int)Flags.FLAG_KEEP_CONN) == (int)Flags.FLAG_KEEP_CONN);
+            requestMap[rid] = RequestData{rid:rid; role:role; keepAlive:kc;};
+            break;
+        }
+
+        case MessageType.TYPE_ABORT_REQUEST: {
+            if(!(requestMap has rid)) {
+                print "Unknown request ID %{@v}" @ {@v: rid};
+                return 0;
+            }
+            remove(requestMap, rid);
+            break;
+        }
+
+        case MessageType.TYPE_END_REQUEST: {
+            if(!(requestMap has rid)) {
+                print "Unknown request ID %{@v}" @ {@v: rid};
+                return 0;
+            }
+            remove(requestMap, rid);
+            break;
+        }
+
+        case MessageType.TYPE_PARAMS: {
+            if(!(requestMap has rid)) {
+                print "Unknown request ID %{@v}" @ {@v: rid};
+                return 0;
+            }
+
+            if(len == 0) {
+                /// \todo do end of request processing here, invoke user-defined handler
+            }
+
+            auto req = requestMap[rid];
+
+            auto name_len = 0u;
+            auto data_len = 0u;
+            size i = sizeof(Header);
+            while(i < (sizeof(Header) + len)) {
+                if((bfr[i] >> 7) == 0) {
+                    name_len = bfr[i];
+                    i++;
+                } else {
+                    name_len = ((bfr[i] & 0x7F) << 24) + (bfr[i+1] << 16) + (bfr[i+2] << 8) + bfr[i+3];
+                    i += 4;
+                }
+
+                if((bfr[i] >> 7) == 0) {
+                    data_len = bfr[i];
+                    i++;
+                } else {
+                    data_len = ((bfr[i] & 0x7F) << 24) + (bfr[i+1] << 16) + (bfr[i+2] << 8) + bfr[i+3];
+                    i += 4;
+                }
+
+                if((i + name_len + data_len) > (sizeof(Header) + len)) {
+                    print "Malformed request ID %{@v}" @ {@v: rid};
+                    return 0;
+                }
+
+                auto key = raw<string>(bfr, i, name_len);
+                i += name_len;
+
+                auto val = raw<string>(bfr, i, data_len);
+                i += data_len;
+
+                print "param: " + key + ", " + val;
+                req.paramList[key] = val;
+            }
+            break;
+        }
+        case MessageType.TYPE_STDIN: {
+            if(!(requestMap has rid)) {
+                print "Unknown request ID %{@v}" @ {@v: rid};
+                return 0;
+            }
+            break;
+        }
+    }
+
+    return sizeof(Header) + len + h.hPaddingLength;
+}
+
+public struct Handle {
+    socket ss = 0;
+};
+
+public event(const Handle& f) => function void OnRequest(const Request& r);
+
 /// \brief Start the FastCGI server on specified port.
-public function bool StartServer(const int& port) {
+public function Handle Create(const int& port) {
     auto s = Socket::InitServer(port);
     Socket::OnConnect(s) => {
         print "FastCGI: Socket:OnConnect";
-        Socket::OnRecv(cs) => [; data bfr] {
-            print "FastCGI: Socket:OnRecv";
+        Socket::OnRecv(cs) => [; data bfr, RequestMap requestMap] {
             bfr += d;
-            if( length(bfr) >= sizeof(Header) ) {
-                print "xx";
-//                auto h = raw<Header>(bfr, 0);
+            print "FastCGI: Socket:OnRecv: Header-size: %{@h}, bfr-count: %{@b}" @ {@h: sizeof(Header), @b: sizeof(Header)};
+            while( length(bfr) >= sizeof(Header) ) {
+                auto l = processRequest(bfr, requestMap);
+                if(l == 0) {
+                    clear(bfr);
+                    break;
+                }
+                bfr = bfr[ l : 0];
             }
         };
     };
-    Socket::StartServer(s);
-    return(true);
+    auto h = Handle{ss:s;};
+    return(h);
+}
+
+public function void Start(const Handle& h) {
+    Socket::StartServer(h.ss);
+    return();
 }

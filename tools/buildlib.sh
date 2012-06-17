@@ -216,8 +216,9 @@ CZPPLST="${CZPPLST} $LIBDIR/core/Response.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/core/Socket.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/core/Network.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/core/FastCGI.zpp"
-${ZCC} --api ${INTDIR}/core -c ${CZPPLST}
+${ZCC} --api ${INTDIR}/core/ -c ${CZPPLST}
 if [[ $? != 0 ]]; then
+    echo Error generating core files.
     exit
 fi
 
@@ -237,6 +238,7 @@ GZPPLST="${GZPPLST} $LIBDIR/gui/MenuItem.zpp"
 GZPPLST="${GZPPLST} $LIBDIR/gui/WindowCreator.zpp"
 ${ZCC} --api ${INTDIR}/gui -c ${GZPPLST}
 if [[ $? != 0 ]]; then
+    echo Error generating gui/ files.
     exit
 fi
 
@@ -366,18 +368,21 @@ if [ "$dotest" == "yes" ]; then
     # generate unit test files
     ${ZCC} -c ${SRCDIR}/tests/testBasic.zpp
     if [[ $? != 0 ]]; then
+        echo Error generating testBasic files.
         exit
     fi
 
     ${ZCC} -c ${SRCDIR}/tests/testFcgi.zpp
     if [[ $? != 0 ]]; then
+        echo Error generating testFcgi files.
         exit
     fi
 
-#    ${ZCC} -c ${SRCDIR}/tests/guiTest.zpp
-#    if [[ $? != 0 ]]; then
-#        exit
-#    fi
+    ${ZCC} -c ${SRCDIR}/tests/guiTest.zpp
+    if [[ $? != 0 ]]; then
+        echo Error generating guiTest files.
+        exit
+    fi
 
     #########################################################
     echo Running unit tests...
@@ -390,22 +395,32 @@ if [ "$dotest" == "yes" ]; then
     # compile and run tests
     if [[ $platform == 'CYGWIN_NT-5.1' ]]; then
         CFLAGS="/Ox /DWIN32 /DUNIT_TEST /DZ_EXE /EHsc /I${OUTDIR} /W4"
-        "${CC}" ${CFLAGS} /Fetest.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
+        "${CC}" ${CFLAGS} /FetestBasic.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
         if [[ $? != 0 ]]; then
+            echo Error compiling testBasic files.
             exit
         fi
-        ./test.exe > test.log
+        ./testBasic.exe > test.log
         if [[ $? != 0 ]]; then
+            echo Error running testBasic.
             exit
         fi
 
-        "${CC}" ${CFLAGS} /Fecgitest.exe /DSERVER ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/zenlang.cpp testFcgi.cpp ws2_32.lib shell32.lib
+        "${CC}" ${CFLAGS} /FetestFcgi.exe /DSERVER ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/zenlang.cpp testFcgi.cpp ws2_32.lib shell32.lib
         if [[ $? != 0 ]]; then
+            echo Error compiling testFcgi files.
             exit
         fi
+
+#        "${CC}" /Fefastcgi.exe /EHsc -DWIN32 -DDEBUG_FASTCGI -I ${OUTDIR} ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/utils/fcgi/test.cpp ws2_32.lib
+#        if [[ $? != 0 ]]; then
+#            echo Error compiling fastcgi files.
+#            exit
+#        fi
 
 #        "${CC}" ${CFLAGS} /DGUI /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
 #        if [[ $? != 0 ]]; then
+#            echo Error compiling testGui files.
 #            exit
 #        fi
     elif [[ $platform == 'Darwin' ]]; then
@@ -458,5 +473,5 @@ if [ "$dotest" == "yes" ]; then
     fi
 
     # display test result summary
-#    cat test.log | grep "PASSED"
+    cat test.log | grep "PASSED"
 fi

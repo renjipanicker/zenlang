@@ -87,7 +87,7 @@ void Socket::OnRecvDevice::run(const int& timeout) {
             return;
         }
 
-        z::data d(buf, rc);
+        z::data d((const uint8_t*)buf, rc);
         z::ref(h).run(d);
         return;
     }

@@ -904,7 +904,7 @@ rExpr(L) ::= TYPEOF(B) LBRACKET rExpr(E)              RBRACKET. {L = z::c2f(pctx
 
 //-------------------------------------------------
 // type-cast expression
-rExpr(L) ::= LT(B) rQualifiedTypeSpec(T) GT rExpr(E). {L = z::c2f(pctx).aTypecastExpr(z::t2t(B), z::ref(T), z::ref(E));}
+rExpr(L) ::= LBRACKET(B) rQualifiedTypeSpec(T) RBRACKET rExpr(E). {L = z::c2f(pctx).aTypecastExpr(z::t2t(B), z::ref(T), z::ref(E));}
 
 //-------------------------------------------------
 // address-of expression
@@ -953,15 +953,15 @@ rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B) rStructInitPart
 rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LCURLY(B)                        rLeaveStructInstanceExpr. {L = z::c2f(pctx).aStructInstanceExpr(z::t2t(B), z::ref(R));}
 
 //-------------------------------------------------
+// special case - struct can be instantiated with {} or () for syntactic equivalence with C/C++.
+rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LBRACKET(B) rStructInitPartList(P) RBRACKET. {L = z::c2f(pctx).aStructInstanceExpr(z::t2t(B), z::ref(R), z::ref(P));}
+rStructInstanceExpr(L) ::= rEnterStructInstanceExpr(R) LBRACKET(B)                        RBRACKET. {L = z::c2f(pctx).aStructInstanceExpr(z::t2t(B), z::ref(R));}
+
+//-------------------------------------------------
 // auto struct instance expressions
 %type rAutoStructInstanceExpr {z::Ast::Expr*}
 rAutoStructInstanceExpr(L) ::= STRUCT(B) rEnterAutoStructInstanceExpr(R) rStructInitPartList(P) rLeaveStructInstanceExpr. {L = z::c2f(pctx).aAutoStructInstanceExpr(z::t2t(B), z::ref(R), z::ref(P));}
 rAutoStructInstanceExpr(L) ::= STRUCT(B) rEnterAutoStructInstanceExpr(R)                        rLeaveStructInstanceExpr. {L = z::c2f(pctx).aAutoStructInstanceExpr(z::t2t(B), z::ref(R));}
-
-//-------------------------------------------------
-// special case - struct can be instantiated with {} or () for syntactic equivalence with C/C++.
-rStructInstanceExpr(L) ::= rStructTypeSpec(R) LBRACKET(B) rStructInitPartList(P) RBRACKET. {L = z::c2f(pctx).aStructInstanceExpr(z::t2t(B), z::ref(R), z::ref(P));}
-rStructInstanceExpr(L) ::= rStructTypeSpec(R) LBRACKET(B)                        RBRACKET. {L = z::c2f(pctx).aStructInstanceExpr(z::t2t(B), z::ref(R));}
 
 //-------------------------------------------------
 %type rEnterStructInstanceExpr {const z::Ast::StructDefn*}

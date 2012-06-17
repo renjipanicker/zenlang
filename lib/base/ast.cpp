@@ -81,6 +81,8 @@ void z::Ast::StaticTypecastExpr::visit(Visitor& visitor) const {visitor.visit(z:
 void z::Ast::DynamicTypecastExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::PointerInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::ValueInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::RawDataInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::DeRefInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::MemberVariableExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::MemberPropertyExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
