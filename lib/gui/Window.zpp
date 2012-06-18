@@ -14,11 +14,11 @@ public struct Position {
     auto h = -1;
 };
 
-public struct Handle : Widget::Handle {
-};
+//public struct Handle : Widget::Handle {
+//};
 
 public struct Anchor {
-    Handle wnd;
+    widget wnd;
     string target;
     auto margin = 0;
 };
@@ -35,16 +35,16 @@ public struct Definition : Widget::Definition abstract {
     Anchor bottom;
 };
 
-public routine Position getWindowPosition(const Handle& wnd) native;
-public routine Position getChildPosition(const Handle& wnd) native;
+public routine Position getWindowPosition(const widget& wnd) native;
+public routine Position getChildPosition(const widget& wnd) native;
 
-public function void Delete(const Handle& wnd) native;
-public function void SetTitle(const Handle& wnd, const string& title) native;
-public function void SetFocus(const Handle& frame, const Handle& wnd) native;
-public function void Show(const Handle& wnd) native;
-public function void Hide(const Handle& wnd) native;
-public function void Move(const Handle& wnd, const Position position) native;
-public function void Size(const Handle& wnd, const int& w, const int& h) native;
+public function void Delete(const widget& wnd) native;
+public function void SetTitle(const widget& wnd, const string& title) native;
+public function void SetFocus(const widget& frame, const widget& wnd) native;
+public function void Show(const widget& wnd) native;
+public function void Hide(const widget& wnd) native;
+public function void Move(const widget& wnd, const Position position) native;
+public function void Size(const widget& wnd, const int& w, const int& h) native;
 
-public event(const Handle& wnd) native => function void OnResize();
-public event(const Handle& wnd) native => function void OnClose();
+public event(const widget& wnd) native => function void OnResize();
+public event(const widget& wnd) native => function void OnClose();

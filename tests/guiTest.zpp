@@ -57,12 +57,13 @@ function MyMain : main {
 
     auto mainFrame = WindowCreator::Create(defn);
 
-    Window::Handle inputBtn  = mainFrame.child@@inputBox;
-    Window::Handle outputBox = mainFrame.child@@outputBox;
+    auto inputBtn  = mainFrame@@inputBox;
+    auto outputBox = mainFrame@@outputBox;
 
-    Systray::Handle sysTray     = mainFrame.child@@systray;
-    Menu::Handle systrayMenu    = mainFrame.child@@systrayMenu;
-    MenuItem::Handle showMenu   = systrayMenu.child@@showItem;
+    auto sysTray     = mainFrame@@systray;
+    auto systrayMenu = mainFrame@@systrayMenu;
+/*
+    auto showMenu    = systrayMenu@@showItem;
 
     Window::OnResize(mainFrame) => {
         auto pp = Window::getWindowPosition(mainFrame);
@@ -85,6 +86,6 @@ function MyMain : main {
     MenuItem::OnSelect(showMenu) => {
         print "on show\n";
     };
-
+*/
     return (0);
 }

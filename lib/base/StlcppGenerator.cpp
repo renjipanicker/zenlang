@@ -131,6 +131,11 @@ namespace sg {
             return;
         }
 
+        if(typeSpec.name().string() == "widget") {
+            name += "z::widget";
+            return;
+        }
+
         if(typeSpec.name().string() == "type") {
             name += "z::type";
             return;

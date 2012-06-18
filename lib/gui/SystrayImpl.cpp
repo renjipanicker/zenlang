@@ -5,37 +5,39 @@
 #include "SystrayImpl.hpp"
 
 #if defined(WIN32)
+namespace zz {
 namespace SystrayImpl {
-    static z::HandlerList<int, Systray::OnActivation::Handler> onSystrayActivationHandlerList;
-    static z::HandlerList<int, Systray::OnContextMenu::Handler> onSystrayContextMenuHandlerList;
-    struct WinProc : public Window::Native::WndProc {
-        virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
-            if(lParam == WM_LBUTTONDOWN) {
-                Systray::OnActivation::Handler::_In in;
-                onSystrayActivationHandlerList.runHandler(message, in);
-            }
+    typedef Window::Native::WidgetMap<UINT> IconMap;
+    static IconMap iconMap;
 
-            if((lParam == WM_RBUTTONDOWN) || (lParam == WM_CONTEXTMENU)) {
-                Systray::OnContextMenu::Handler::_In in;
-                onSystrayContextMenuHandlerList.runHandler(message, in);
-            }
-
-            return 0;
+    static WNDPROC OrigWndProc = 0;
+    static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+        if(lParam == WM_LBUTTONDOWN) {
+            Systray::OnActivation::Handler::_In in;
+            Systray::OnActivation::list().run(iconMap.impl(message), in);
         }
-    };
-    static WinProc s_winProc;
+
+        if((lParam == WM_RBUTTONDOWN) || (lParam == WM_CONTEXTMENU)) {
+            Systray::OnContextMenu::Handler::_In in;
+            Systray::OnContextMenu::list().run(iconMap.impl(message), in);
+        }
+
+        assert(OrigWndProc);
+        return CallWindowProc(OrigWndProc, hWnd, message, wParam, lParam);
+    }
+}
 }
 #endif
 
-void Systray::SetTooltip::run(const Systray::Handle& handle, const z::string& text) {
+void Systray::SetTooltip::run(const z::widget& handle, const z::string& text) {
 #if defined(WIN32)
-    NOTIFYICONDATA& ni = Systray::impl(handle)._ni;
+    NOTIFYICONDATA& ni = handle.ni();
     lstrcpyn(ni.szTip, z::s2e(text).c_str(), z::s2e(text).length());
     ni.uFlags |= NIF_TIP;
     //SysTray::Native::setIconFile(This._sysTray._impl->_ni, This._text);
     ::Shell_NotifyIcon(NIM_MODIFY, z::ptr(ni));
 #elif defined(GTK)
-    gtk_status_icon_set_tooltip_text(Systray::impl(handle)._icon, z::s2e(text).c_str());
+    gtk_status_icon_set_tooltip_text(handle.val()._icon, z::s2e(text).c_str());
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -45,9 +47,9 @@ void Systray::SetTooltip::run(const Systray::Handle& handle, const z::string& te
 #endif
 }
 
-void Systray::SetIconfile::run(const Systray::Handle& handle, const z::string& filename) {
+void Systray::SetIconfile::run(const z::widget& handle, const z::string& filename) {
 #if defined(WIN32)
-    NOTIFYICONDATA& ni = Systray::impl(handle)._ni;
+    NOTIFYICONDATA& ni = handle.ni();
     ni.hIcon = (HICON)LoadImageA(NULL, z::s2e(filename).c_str(), IMAGE_ICON,
                                  GetSystemMetrics(SM_CXSMICON), GetSystemMetrics(SM_CYSMICON),
                                  LR_LOADFROMFILE);
@@ -59,7 +61,7 @@ void Systray::SetIconfile::run(const Systray::Handle& handle, const z::string& f
     ::Shell_NotifyIcon(NIM_MODIFY, z::ptr(ni));
 #elif defined(GTK)
     unused(filename);
-    gtk_status_icon_set_from_icon_name(Systray::impl(handle)._icon, GTK_STOCK_MEDIA_STOP);
+    gtk_status_icon_set_from_icon_name(handle.val()._icon, GTK_STOCK_MEDIA_STOP);
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -69,11 +71,11 @@ void Systray::SetIconfile::run(const Systray::Handle& handle, const z::string& f
 #endif
 }
 
-void Systray::Show::run(const Systray::Handle& handle) {
+void Systray::Show::run(const z::widget& handle) {
 #if defined(WIN32)
-    ::Shell_NotifyIcon(NIM_ADD, z::ptr(Systray::impl(handle)._ni));
+    ::Shell_NotifyIcon(NIM_ADD, z::ptr(handle.ni()));
 #elif defined(GTK)
-    gtk_status_icon_set_visible(Systray::impl(handle)._icon, TRUE);
+    gtk_status_icon_set_visible(handle.val()._icon, TRUE);
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -83,11 +85,11 @@ void Systray::Show::run(const Systray::Handle& handle) {
 #endif
 }
 
-void Systray::Hide::run(const Systray::Handle& handle) {
+void Systray::Hide::run(const z::widget& handle) {
 #if defined(WIN32)
-    ::Shell_NotifyIcon(NIM_DELETE, z::ptr(Systray::impl(handle)._ni));
+    ::Shell_NotifyIcon(NIM_DELETE, z::ptr(handle.ni()));
 #elif defined(GTK)
-    gtk_status_icon_set_visible(Systray::impl(handle)._icon, FALSE);
+    gtk_status_icon_set_visible(handle.val()._icon, FALSE);
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -97,13 +99,14 @@ void Systray::Hide::run(const Systray::Handle& handle) {
 #endif
 }
 
-Systray::Handle Systray::Create::run(const Window::Handle& parent, const Systray::Definition& def) {
+z::widget Systray::Create::run(const z::widget& parent, const Systray::Definition& def) {
     unused(parent);
-    Systray::HandleImpl* impl = new Systray::HandleImpl();
-    Systray::Handle handle;
-    handle._wdata<Systray::Handle>(impl);
+    z::widget::impl* impl = new z::widget::impl();
+    z::widget handle(impl);
 #if defined(WIN32)
-    z::ref(impl)._wm = Window::Native::getNextWmID();
+    z::ref(impl)._id = Window::Native::getNextWmID();
+    zz::SystrayImpl::iconMap.add(z::ref(impl)._id, impl);
+
     int res = Window::Native::getNextResID();
 
     // Fill the NOTIFYICONDATA structure and call Shell_NotifyIcon
@@ -135,9 +138,12 @@ Systray::Handle Systray::Create::run(const Window::Handle& parent, const Systray
     // the window to send messages to and the message to send
     //      note:   the message value should be in the
     //              range of WM_APP through 0xBFFF
-    z::ref(impl)._ni.hWnd = Window::impl(parent)._hWindow;
-    z::ref(impl)._ni.uCallbackMessage = z::ref(impl)._wm;
+    z::ref(impl)._ni.hWnd = parent.val()._val;
+    z::ref(impl)._ni.uCallbackMessage = z::ref(impl)._id;
     ::Shell_NotifyIcon(NIM_ADD, z::ptr(z::ref(impl)._ni));
+
+    // set subclass function
+    zz::SystrayImpl::OrigWndProc = (WNDPROC)SetWindowLong(parent.val()._val, GWL_WNDPROC, (LONG)zz::SystrayImpl::WinProc);
 #elif defined(GTK)
     z::ref(impl)._icon = gtk_status_icon_new_from_stock(GTK_STOCK_GO_UP);
     g_object_set_data(G_OBJECT(z::ref(impl)._icon), "impl", impl);
@@ -174,12 +180,13 @@ static gboolean onSystrayActivateEvent(GtkStatusIcon* status_icon, gpointer phan
 }
 #endif
 
-Systray::OnActivation::Handler& Systray::OnActivation::addHandler(const Systray::Handle& systray, Handler* handler) {
-//    Systray::OnActivation::add(handler);
+Systray::OnActivation::Handler& Systray::OnActivation::addHandler(const z::widget& systray, Handler* handler) {
+//@    Systray::OnActivation::add(handler);
+//@    Systray::OnActivation::list().add(systray, handler);
 #if defined(WIN32)
-    SystrayImpl::onSystrayActivationHandlerList.addHandler(Systray::impl(systray)._wm, handler);
+//@    SystrayImpl::onSystrayActivationHandlerList.addHandler(systray.val()._wm, handler);
 #elif defined(GTK)
-    g_signal_connect(G_OBJECT (Systray::impl(systray)._icon), "activate", G_CALLBACK (onSystrayActivateEvent), handler);
+    g_signal_connect(G_OBJECT (systray.val()._icon), "activate", G_CALLBACK (onSystrayActivateEvent), handler);
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -203,12 +210,13 @@ static gboolean onSystrayContextMenuEvent(GtkStatusIcon *status_icon, guint butt
 }
 #endif
 
-Systray::OnContextMenu::Handler& Systray::OnContextMenu::addHandler(const Systray::Handle& systray, Handler* handler) {
-//    Systray::OnContextMenu::add(handler);
+Systray::OnContextMenu::Handler& Systray::OnContextMenu::addHandler(const z::widget& systray, Handler* handler) {
+//@    Systray::OnContextMenu::add(handler);
+//@    Systray::OnContextMenu::list().add(systray, handler);
 #if defined(WIN32)
-    SystrayImpl::onSystrayContextMenuHandlerList.addHandler(Systray::impl(systray)._wm, handler);
+//@    SystrayImpl::onSystrayContextMenuHandlerList.addHandler(systray.val()._wm, handler);
 #elif defined(GTK)
-    g_signal_connect(G_OBJECT (Systray::impl(systray)._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), handler);
+    g_signal_connect(G_OBJECT (systray.val()._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), handler);
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)

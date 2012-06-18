@@ -1,5 +1,6 @@
 namespace Widget;
 
+/*
 public struct Handle abstract {
     struct Impl abstract {
         typedef ChildList dict<string, pointer<Widget::Handle> >;
@@ -8,6 +9,7 @@ public struct Handle abstract {
     ptr<Impl> wdata;
     property Impl::ChildList child get;
 };
+*/
 
 public struct Definition abstract {
     auto name = "";

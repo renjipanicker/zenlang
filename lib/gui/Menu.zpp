@@ -2,12 +2,12 @@ include gui::Widget public;
 include gui::Window public;
 namespace Menu;
 
-public struct Handle : Widget::Handle {
-};
+//public struct Handle : Widget::Handle {
+//};
 
 public struct Definition : Widget::Definition {
 };
 
-public function Menu::Handle Create(const Window::Handle& parentWin, const Definition& defn) native;
-public function void ShowAt(const Menu::Handle& handle, const int& x, const int& y) native;
-public function void Show(const Menu::Handle& handle) native;
+public function widget Create(const widget& parentWin, const Definition& defn) native;
+public function void ShowAt(const widget& handle, const int& x, const int& y) native;
+public function void Show(const widget& handle) native;

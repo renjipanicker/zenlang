@@ -6,4 +6,4 @@ public struct Definition : Window::Definition {
     auto iconres = "";
 };
 
-public function (Window::Handle wnd)Create(const Definition& defn) native;
+public function (widget wnd)Create(const Definition& defn) native;

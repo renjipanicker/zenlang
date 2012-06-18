@@ -395,6 +395,7 @@ if [ "$dotest" == "yes" ]; then
     # compile and run tests
     if [[ $platform == 'CYGWIN_NT-5.1' ]]; then
         CFLAGS="/Ox /DWIN32 /DUNIT_TEST /DZ_EXE /EHsc /I${OUTDIR} /W4"
+
         "${CC}" ${CFLAGS} /FetestBasic.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
         if [[ $? != 0 ]]; then
             echo Error compiling testBasic files.

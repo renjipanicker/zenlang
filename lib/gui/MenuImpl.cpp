@@ -4,27 +4,26 @@
 #include "WindowImpl.hpp"
 #include "MenuImpl.hpp"
 
-Menu::Handle Menu::Create::run(const Window::Handle& wnd, const Menu::Definition& def) {
+z::widget Menu::Create::run(const z::widget& wnd, const Menu::Definition& def) {
     unused(def);
 #if defined(WIN32)
-    Menu::HandleImpl* impl = new Menu::HandleImpl();
+    z::widget::impl* impl = new z::widget::impl();
     z::ref(impl)._menu = ::CreatePopupMenu();
-    z::ref(impl)._window = Window::impl(wnd)._hWindow;
+    z::ref(impl)._val = wnd.val()._val;
 #elif defined(GTK)
-    Menu::HandleImpl* impl = new Menu::HandleImpl();
+    z::widget::impl* impl = new z::widget::impl();
     z::ref(impl)._menu = gtk_menu_new();
     unused(wnd);
 #elif defined(OSX)
-    Menu::HandleImpl* impl = new Menu::HandleImpl();
+    z::widget::impl* impl = new z::widget::impl();
     UNIMPL();
 #elif defined(IOS)
     UNIMPL();
-    Menu::HandleImpl* impl = new Menu::HandleImpl();
+    z::widget::impl* impl = new z::widget::impl();
 #else
 #error "Unimplemented GUI mode"
 #endif
-    Menu::Handle handle;
-    handle._wdata<Menu::Handle>(impl);
+    z::widget handle(impl);
     return handle;
 }
 
@@ -49,14 +48,14 @@ static void getMenuPosition(GtkMenu* menu, gint* x, gint* y, gboolean* push_in, 
 }
 #endif
 
-void Menu::ShowAt::run(const Menu::Handle& handle, const int& x, const int& y) {
+void Menu::ShowAt::run(const z::widget& handle, const int& x, const int& y) {
 #if defined(WIN32)
-    ::SetForegroundWindow(Menu::impl(handle)._window);
-    ::TrackPopupMenu(Menu::impl(handle)._menu, TPM_BOTTOMALIGN, x, y, 0, Menu::impl(handle)._window, NULL );
+    ::SetForegroundWindow(handle.val()._val);
+    ::TrackPopupMenu(handle.val()._menu, TPM_BOTTOMALIGN, x, y, 0, handle.val()._val, NULL );
 #elif defined(GTK)
-    gtk_widget_show_all (Menu::impl(handle)._menu);
+    gtk_widget_show_all (handle.val()._menu);
     pos p(x, y);
-    gtk_menu_popup(GTK_MENU(Menu::impl(handle)._menu), NULL, NULL, getMenuPosition, &p, 0, gtk_get_current_event_time());
+    gtk_menu_popup(GTK_MENU(handle.val()._menu), NULL, NULL, getMenuPosition, &p, 0, gtk_get_current_event_time());
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -66,15 +65,15 @@ void Menu::ShowAt::run(const Menu::Handle& handle, const int& x, const int& y) {
 #endif
 }
 
-void Menu::Show::run(const Menu::Handle& handle) {
+void Menu::Show::run(const z::widget& handle) {
 #if defined(WIN32)
     POINT pt;
     ::GetCursorPos(&pt);
-    ::SetForegroundWindow(Menu::impl(handle)._window);
-    ::TrackPopupMenu(Menu::impl(handle)._menu, TPM_BOTTOMALIGN, pt.x, pt.y, 0, Menu::impl(handle)._window, NULL );
+    ::SetForegroundWindow(handle.val()._val);
+    ::TrackPopupMenu(handle.val()._menu, TPM_BOTTOMALIGN, pt.x, pt.y, 0, handle.val()._val, NULL );
 #elif defined(GTK)
-    gtk_widget_show_all (Menu::impl(handle)._menu);
-    gtk_menu_popup(GTK_MENU(Menu::impl(handle)._menu), NULL, NULL, getMenuPosition, 0, 0, gtk_get_current_event_time());
+    gtk_widget_show_all (handle.val()._menu);
+    gtk_menu_popup(GTK_MENU(handle.val()._menu), NULL, NULL, getMenuPosition, 0, 0, gtk_get_current_event_time());
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)

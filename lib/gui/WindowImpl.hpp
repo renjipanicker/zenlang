@@ -3,35 +3,71 @@
 #include "WidgetImpl.hpp"
 
 namespace Window {
-struct HandleImpl : public Widget::Handle::Impl {
-#if defined(WIN32)
-    inline HandleImpl() : _hWindow(0) {}
-    HWND _hWindow;
-#elif defined(GTK)
-    inline HandleImpl() : _hWindow(0), _hFixed(0) {}
-    GtkWidget* _hWindow;
-    GtkWidget* _hFixed;
-#elif defined(OSX)
-    inline HandleImpl() : _hFrame(0), _hWindow(0) {}
-    NSWindow* _hFrame;
-    NSView* _hWindow;
-#elif defined(IOS)
-#else
-#error "Unimplemented GUI mode"
-#endif
-private:
-    inline HandleImpl(const HandleImpl& /*src*/) {}
-};
+//struct HandleImpl : public Widget::Handle::Impl {
+//#if defined(WIN32)
+//    inline HandleImpl() : _hWindow(0) {}
+//    HWND _hWindow;
+//#elif defined(GTK)
+//    inline HandleImpl() : _hWindow(0), _hFixed(0) {}
+//    GtkWidget* _hWindow;
+//    GtkWidget* _hFixed;
+//#elif defined(OSX)
+//    inline HandleImpl() : _hFrame(0), _hWindow(0) {}
+//    NSWindow* _hFrame;
+//    NSView* _hWindow;
+//#elif defined(IOS)
+//#else
+//#error "Unimplemented GUI mode"
+//#endif
+//private:
+//    inline HandleImpl(const HandleImpl& /*src*/) {}
+//};
 
-inline HandleImpl& impl(const Widget::Handle& widget) {return Widget::impl<HandleImpl>(widget);}
+//inline HandleImpl& impl(const Widget::Handle& widget) {return Widget::impl<HandleImpl>(widget);}
 
 namespace Native {
 
 #if defined(WIN32)
-struct WndProc {
-    WndProc();
-    virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) = 0;
-    WndProc* _next;
+inline z::widget impl(HWND hwnd) {
+    void* p = (void*)::GetWindowLongPtr(hwnd, GWL_USERDATA);
+    z::widget::impl* impl = reinterpret_cast<z::widget::impl*>(p);
+    z::mlog("getImpl", z::string("hwnd: %{p}, impl: %{i}").arg("p", hwnd).arg("i", impl));
+    return z::widget(impl);
+}
+
+//inline void setImpl(UINT message, HWND hWnd, LPARAM lParam) {
+//    if(message != WM_NCCREATE) {
+//        return;
+//    }
+//
+//    LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
+//    void* p = z::ref(pcs).lpCreateParams;
+//    z::widget::impl* impl = reinterpret_cast<z::widget::impl*>(p);
+//    z::mlog("setImpl", z::string("hwnd: %{p}, impl: %{i}").arg("p", hWnd).arg("i", impl));
+//    ::SetWindowLongPtr(hWnd, GWL_USERDATA, reinterpret_cast<long>(impl));
+//}
+
+inline void setImpl(HWND hWnd, z::widget::impl* impl) {
+    z::mlog("setImpl", z::string("hwnd: %{p}, impl: %{i}").arg("p", hWnd).arg("i", impl));
+    ::SetWindowLongPtr(hWnd, GWL_USERDATA, reinterpret_cast<long>(impl));
+}
+
+template<typename KeyT>
+struct WidgetMap {
+    typedef z::dict<KeyT, z::widget::impl*> Map;
+    Map map;
+    inline void add(KeyT k, z::widget::impl* v) {
+        map[k] = v;
+    }
+
+    inline z::widget impl(KeyT id) {
+        Map::const_iterator it = map.find(id);
+        if(it == map.end()) {
+            throw z::Exception("WidgetMap", z::string("Unknown ID %{i}").arg("i", id));
+        }
+        z::widget::impl* impl = it->second;
+        return z::widget(impl);
+    }
 };
 #endif
 
@@ -40,20 +76,20 @@ uint32_t getNextWmID();
 uint32_t getNextResID();
 ULONGLONG GetDllVersion(LPCTSTR lpszDllName);
 
-Window::HandleImpl& createWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, HWND parent);
-Window::HandleImpl& createMainFrame(const Window::Definition& def, int style, int xstyle);
-Window::HandleImpl& createChildFrame(const Window::Definition& def, int style, int xstyle, const Window::Handle &parent);
-Window::HandleImpl& createChildWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, const Window::Handle& parent);
+z::widget::impl& createWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, HWND parent);
+z::widget::impl& createMainFrame(const Window::Definition& def, int style, int xstyle);
+z::widget::impl& createChildFrame(const Window::Definition& def, int style, int xstyle, const z::widget &parent);
+z::widget::impl& createChildWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, const z::widget& parent);
 #elif defined(GTK)
-Window::HandleImpl& initWindowImpl(GtkWidget* hwnd);
-Window::HandleImpl& createWindow(const Window::Definition& def, GtkWidget *parent);
-Window::HandleImpl& createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const Window::Handle& parent);
+z::widget::impl& initWindowImpl(GtkWidget* hwnd);
+z::widget::impl& createWindow(const Window::Definition& def, GtkWidget *parent);
+z::widget::impl& createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const z::widget& parent);
 #elif defined(OSX)
-Window::HandleImpl& createMainFrame(const Window::Definition& def);
-Window::HandleImpl& createChildWindow(const Window::Definition& def, const Window::Handle& parent, NSView* child);
+z::widget::impl& createMainFrame(const Window::Definition& def);
+z::widget::impl& createChildWindow(const Window::Definition& def, const z::widget& parent, NSView* child);
 #elif defined(IOS)
-Window::HandleImpl& createMainFrame(const Window::Definition& def);
-Window::HandleImpl& createChildWindow(const Window::Definition& def, const Window::Handle& parent);
+z::widget::impl& createMainFrame(const Window::Definition& def);
+z::widget::impl& createChildWindow(const Window::Definition& def, const z::widget& parent);
 #else
 #endif
 

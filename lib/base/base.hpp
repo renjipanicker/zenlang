@@ -331,32 +331,6 @@ namespace z {
 #endif
     };
 
-    struct file {
-        static const z::string sep;
-        static bool exists(const z::string& path);
-        static int mkdir(const z::string& path);
-
-        /// \brief Makes a path upto the second-last component, unless filename is terminated by a /
-        static void mkpath(const z::string& filename);
-
-        static z::string cwd();
-
-        static z::string getPath(const z::string& filename);
-        static z::string getFilename(const z::string& filename);
-        static z::string getBaseName(const z::string& filename);
-        static z::string getExtention(const z::string& filename);
-    };
-
-    struct ofile {
-        inline operator bool() {return _os.is_open();}
-        inline std::ostream& operator()() {return _os;}
-        inline const z::string& name() const {return _name;}
-        ofile(const z::string& filename);
-    private:
-        z::string _name;
-        std::ofstream _os;
-    };
-
     ////////////////////////////////////////////////////////////////////////////
     /// \brief Return typename of T as string
     template <typename T>
@@ -455,33 +429,6 @@ namespace z {
         z::string r = z::e2s(es);
         return r;
     }
-
-    /////////////////////////////
-    struct mutex {
-        mutex();
-        ~mutex();
-        int enter();
-        int leave();
-    private:
-        inline mutex(const mutex& /*src*/) {}
-    private:
-        mutex_t _val;
-    };
-
-    struct mlock {
-        inline mlock(mutex& m) : _mutex(m) {
-            _mutex.enter();
-        }
-
-        inline ~mlock() {
-            _mutex.leave();
-        }
-
-    private:
-        inline mlock(const mlock& src) : _mutex(src._mutex) {}
-    private:
-        mutex& _mutex;
-    };
 
     struct type {
         explicit inline type(const z::string& name) : _name(name) {}
@@ -1068,11 +1015,6 @@ namespace z {
             return z::ref(val);
         }
 
-        template<typename T>
-        inline ValT& addT(const KeyT& key, T h) {
-            return add(key, new T(h));
-        }
-
         inline bool run(const KeyT& key, typename ValT::_In in) {
             typename Map::const_iterator it = map.find(key);
             if(it == map.end())
@@ -1097,6 +1039,11 @@ namespace z {
             HandlerListS<KeyT, ValT>::add(key, val);
             return EventT::addHandler(key, val);
         }
+        template<typename T>
+        inline ValT& addT(const KeyT& key, T h) {
+            return add(key, new T(h));
+        }
+
     };
 
     ///////////////////////////////////////////////////////////////
@@ -1371,6 +1318,64 @@ namespace z {
     const z::Application& app();
 
     ////////////////////////////////////////////////////////////////////////////
+    /// intrinsic types that represent system objects
+    ////////////////////////////////////////////////////////////////////////////
+    struct mutex {
+        mutex();
+        ~mutex();
+        int enter();
+        int leave();
+    private:
+        inline mutex(const mutex& /*src*/) {}
+    private:
+        mutex_t _val;
+    };
+
+    ////////////////////////////////////////////////////////////////////////////
+    struct mlock {
+        inline mlock(mutex& m) : _mutex(m) {
+            _mutex.enter();
+        }
+
+        inline ~mlock() {
+            _mutex.leave();
+        }
+
+    private:
+        inline mlock(const mlock& src) : _mutex(src._mutex) {}
+    private:
+        mutex& _mutex;
+    };
+
+    ////////////////////////////////////////////////////////////////////////////
+    struct file {
+        static const z::string sep;
+        static bool exists(const z::string& path);
+        static int mkdir(const z::string& path);
+
+        /// \brief Makes a path upto the second-last component, unless filename is terminated by a /
+        static void mkpath(const z::string& filename);
+
+        static z::string cwd();
+
+        static z::string getPath(const z::string& filename);
+        static z::string getFilename(const z::string& filename);
+        static z::string getBaseName(const z::string& filename);
+        static z::string getExtention(const z::string& filename);
+    };
+
+    ////////////////////////////////////////////////////////////////////////////
+    struct ofile {
+        inline operator bool() {return _os.is_open();}
+        inline std::ostream& operator()() {return _os;}
+        inline const z::string& name() const {return _name;}
+        ofile(const z::string& filename);
+    private:
+        z::string _name;
+        std::ofstream _os;
+    };
+
+    ////////////////////////////////////////////////////////////////////////////
     struct socket {
         inline socket() : _val(0) {}
         inline socket(const SOCKET& val) : _val(val) {}
@@ -1381,25 +1386,49 @@ namespace z {
     };
 
 #if defined(GUI)
+    ////////////////////////////////////////////////////////////////////////////
     struct widget {
-#if defined(WIN32)
-        inline widget() : _val(0), menu(0) {}
-        HWND _val;          /// contains HWND if this is a window
-        HMENU menu;         /// contains HMENU if this is a menu (\_val will point to parent window)
-        uint32_t id;        /// contains id if this is menuitem or systray
-        NOTIFYICONDATA _ni; /// if this is a systray
-#elif defined(GTK)
-        inline widget() : _val(0), fixed(0) {}
-        GtkWidget* _val;    /// contains window or menu or menuitem
-        GtkWidget* fixed;   /// contains pointer to fixed layout child if _val is a parent frame
-#elif defined(OSX)
-        inline widget() : _val(0), frame(0) {}
-        NSView* _val;
-        NSWindow* frame;
-#elif defined(IOS)
-#else
-#error "Unimplemented GUI mode"
-#endif
+        struct impl {
+        #if defined(WIN32)
+            inline impl() : _val(0), _menu(0), _id(0) {}
+            HWND _val;          /// contains HWND if this is a window
+            HMENU _menu;         /// contains HMENU if this is a menu (\_val will point to parent window)
+            uint32_t _id;        /// contains id if this is menuitem or systray. 
+            NOTIFYICONDATA _ni; /// if this is a systray. The member hWnd contains handle to parent window
+        #elif defined(GTK)
+            inline impl() : _val(0), _fixed(0) {}
+            GtkWidget* _val;    /// contains window or menu or menuitem
+            GtkWidget* _fixed;   /// contains pointer to fixed layout child if _val is a parent frame
+        #elif defined(OSX)
+            inline impl() : _val(0), _frame(0) {}
+            NSView* _val;
+            NSWindow* _frame;
+        #elif defined(IOS)
+        #else
+        #error "Unimplemented GUI mode"
+        #endif
+            typedef dict<string, widget> ChildList;
+            ChildList _childList;
+        };
+    public:
+        inline widget() : _val(0) {}
+        inline widget(impl* i) : _val(i) {}
+        inline widget(impl& i) : _val(&i) {}
+        inline const impl& val() const {return z::ref(_val);}
+        inline void clear() const {delete _val; _val = 0;}
+        inline void set(const z::string& key, const z::widget& v) {
+            z::ref(_val)._childList[key] = v;
+        }
+        inline z::widget at(const z::string& key) {
+            return z::ref(_val)._childList.at(key);
+        }
+    public:
+    #if defined(WIN32)
+        NOTIFYICONDATA& ni() const {return z::ref(_val)._ni;}
+    #endif
+        inline bool operator<(const widget& rhs) const {return (_val < rhs._val);}
+    private:
+        mutable impl* _val;
     };
 #endif
 

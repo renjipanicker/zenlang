@@ -1517,6 +1517,12 @@ z::Ast::IndexExpr* z::Ast::Factory::aIndexExpr(const z::Ast::Token& pos, const z
         return z::ptr(indexExpr);
     }
 
+    if(z::ref(listTypeSpec).name().string() == "widget") {
+        const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "widget");
+        z::Ast::IndexExpr& indexExpr = unit().addNode(new z::Ast::IndexExpr(pos, qTypeSpec, expr, index));
+        return z::ptr(indexExpr);
+    }
+
     const z::Ast::TemplateDefn* td = dynamic_cast<const z::Ast::TemplateDefn*>(listTypeSpec);
     if(td) {
         if(z::ref(td).name().string() == "list") {
@@ -1542,7 +1548,7 @@ z::Ast::IndexExpr* z::Ast::Factory::aIndexExpr(const z::Ast::Token& pos, const z
         }
     }
 
-    throw z::Exception("NodeFactory", zfmt(pos, "'%{s}' is not an indexable type").arg("s", ZenlangNameGenerator().qtn(expr.qTypeSpec()) ));
+    throw z::Exception("NodeFactory", zfmt(pos, "'%{s}' is not an indexable type").arg("s", ZenlangNameGenerator().tn(expr.qTypeSpec().typeSpec()) ));
 }
 
 z::Ast::SpliceExpr* z::Ast::Factory::aSpliceExpr(const z::Ast::Token& pos, const z::Ast::Expr& expr, const z::Ast::Expr& from, const z::Ast::Expr& to) {
@@ -1606,8 +1612,8 @@ z::Ast::PointerInstanceExpr* z::Ast::Factory::aPointerInstanceExpr(const z::Ast:
     const z::Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(pos, expr.qTypeSpec().isConst(), expr.qTypeSpec().typeSpec(), true);
     list.addType(typeSpec);
     z::Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "pointer", list);
-
     const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false);
+
     z::Ast::ExprList& exprList = addExprList(pos);
     exprList.addExpr(expr);
 

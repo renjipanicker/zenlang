@@ -3,12 +3,12 @@
 #include "gui/Application.hpp"
 
 namespace ApplicationImpl {
-    static z::HandlerListS<int, Application::OnExit::Handler> onApplicationExitHandlerList;
+//@    static z::HandlerListS<int, Application::OnExit::Handler> onApplicationExitHandlerList;
 }
 
 void z::Application::onExit() {
     ::Application::OnExit::Handler::_In in;
-    ApplicationImpl::onApplicationExitHandlerList.run(0, in);
+    ::Application::OnExit::list().run(0, in);
 }
 
 z::string Application::appDir() {

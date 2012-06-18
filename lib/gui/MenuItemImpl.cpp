@@ -6,45 +6,49 @@
 #include "MenuImpl.hpp"
 
 #if defined(WIN32)
+namespace zz {
 namespace MenuItemImpl {
-static z::HandlerList<int, MenuItem::OnSelect::Handler> onMenuItemSelectHandlerList;
-struct WinProc : public Window::Native::WndProc {
-    virtual LRESULT handle(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+    typedef Window::Native::WidgetMap<UINT> ItemMap;
+    static ItemMap itemMap;
+
+    static WNDPROC OrigWndProc = 0;
+    static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch (message) {
             case WM_COMMAND:
                 MenuItem::OnSelect::Handler::_In in;
-                onMenuItemSelectHandlerList.runHandler(LOWORD(lParam), in);
+                MenuItem::OnSelect::list().run(itemMap.impl(LOWORD(lParam)), in);
                 break;
         }
-        return 0;
+        assert(OrigWndProc);
+        return CallWindowProc(OrigWndProc, hWnd, message, wParam, lParam);
     }
-};
-static WinProc s_winProc;
+}
 }
 #endif
 
-MenuItem::Handle MenuItem::Create::run(const Menu::Handle& pmenu, const MenuItem::Definition& def) {
+z::widget MenuItem::Create::run(const z::widget& pmenu, const MenuItem::Definition& def) {
 #if defined(WIN32)
-    MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
+    z::widget::impl* impl = new z::widget::impl();
     uint32_t wm = Window::Native::getNextWmID();
-    ::InsertMenu(Menu::impl(pmenu)._menu, (UINT)-1, MF_BYPOSITION, wm, z::s2e(def.label).c_str());
+    ::InsertMenu(pmenu.val()._menu, (UINT)-1, MF_BYPOSITION, wm, z::s2e(def.label).c_str());
     z::ref(impl)._id = wm;
+    // set subclass function
+    zz::MenuItemImpl::OrigWndProc = (WNDPROC)SetWindowLong(pmenu.val()._val, GWL_WNDPROC, (LONG)zz::MenuItemImpl::WinProc);
 #elif defined(GTK)
-    MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
+    z::widget::impl* impl = new z::widget::impl();
     z::ref(impl)._menuItem = gtk_menu_item_new_with_label(z::s2e(def.label).c_str());
     gtk_menu_shell_append (GTK_MENU_SHELL (Menu::impl(pmenu)._menu), z::ref(impl)._menuItem);
 #elif defined(OSX)
     UNIMPL();
-    MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
+    z::widget::impl* impl = new z::widget::impl();
 #elif defined(IOS)
     UNIMPL();
-    MenuItem::HandleImpl* impl = new MenuItem::HandleImpl();
+    z::widget::impl* impl = new z::widget::impl();
 #else
 #error "Unimplemented GUI mode"
 #endif
 
-    MenuItem::Handle handle;
-    handle._wdata<MenuItem::Handle>(impl);
+    z::widget handle(impl);
     return handle;
 }
 
@@ -57,10 +61,11 @@ static void onMenuItemSelectClick(GtkMenuItem* item, gpointer phandler) {
 }
 #endif
 
-MenuItem::OnSelect::Handler& MenuItem::OnSelect::addHandler(const MenuItem::Handle& menuitem, Handler* handler) {
-//    MenuItem::OnSelect::add(handler);
+MenuItem::OnSelect::Handler& MenuItem::OnSelect::addHandler(const z::widget& menuitem, Handler* handler) {
+//@    MenuItem::OnSelect::add(handler);
+//@    MenuItem::OnSelect::list().add(menuitem, handler);
 #if defined(WIN32)
-    MenuItemImpl::onMenuItemSelectHandlerList.addHandler(MenuItem::impl(menuitem)._id, handler);
+//@    MenuItemImpl::onMenuItemSelectHandlerList.addHandler(MenuItem::impl(menuitem)._id, handler);
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (MenuItem::impl(menuitem)._menuItem), "activate", G_CALLBACK (onMenuItemSelectClick), handler);
 #elif defined(OSX)
