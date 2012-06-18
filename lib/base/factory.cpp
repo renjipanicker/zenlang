@@ -1667,10 +1667,6 @@ z::Ast::TemplateDefnInstanceExpr* z::Ast::Factory::aTemplateDefnInstanceExpr(con
     }
 
     if(name == "raw") {
-        //@z::Ast::TemplateDefn& newTemplateDefn = createTemplateDefn(pos, "ptr", templateDefn.partList());
-        //const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, true, newTemplateDefn, false);
-        //z::Ast::RawDataInstanceExpr& expr = unit().addNode(new z::Ast::RawDataInstanceExpr(pos, qTypeSpec, templateDefn, newTemplateDefn, exprList));
-
         const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn.at(0).typeSpec(), false);
         z::Ast::RawDataInstanceExpr& expr = unit().addNode(new z::Ast::RawDataInstanceExpr(pos, qTypeSpec, templateDefn, templateDefn, exprList));
         return z::ptr(expr);

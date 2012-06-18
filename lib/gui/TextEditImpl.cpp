@@ -186,10 +186,7 @@ static void onEnterPressed(GtkMenuItem* item, gpointer phandler) {
 #endif
 
 TextEdit::OnEnter::Handler& TextEdit::OnEnter::addHandler(const z::widget& textedit, Handler* handler) {
-//@    TextEdit::OnEnter::add(handler);
-//@    TextEdit::OnEnter::list().add(textedit, handler);
 #if defined(WIN32)
-//@    TextEditImpl::onTextEditEnterHandlerList.addHandler(Window::impl(textedit)._hWindow, handler);
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (Window::impl(textedit)._hWindow), "activate", G_CALLBACK (onEnterPressed), handler);
 #elif defined(OSX)

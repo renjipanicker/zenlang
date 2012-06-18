@@ -326,10 +326,6 @@ namespace Ast {
     public: // owning-list of all nodes
         template<typename T> inline T& addNode(T* node) {/*_nodeList.push_back(node); */return z::ref(node);}
 
-//    private:
-//        /// \brief The owner list of all nodes in this unit
-//        std::list<const Node*> _nodeList;
-
     public: // A unique numeric id for anonymous functions
         /// \brief Return unique id
         /// \return unique id

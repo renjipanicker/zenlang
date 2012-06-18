@@ -13,13 +13,11 @@ routine const widget& processWindow(widget& win, const Window::Definition& defn)
 
 routine void createMenuItem(widget& pmenu, const pointer<Widget::Definition>& defn) {
     auto w = MenuItem::Create(pmenu, defn);
-//    pmenu.child[(*defn).name] = &(w);
     pmenu[(*defn).name] = w;
 }
 
 routine widget createMenu(widget& pwin, const pointer<Widget::Definition>& defn) {
     auto w = Menu::Create(pwin, defn);
-//    pwin.child[(*defn).name] = &(w);
     pwin[(*defn).name] = w;
     foreach(d in (*defn).childList) {
         createMenuItem(w, d);
@@ -31,19 +29,16 @@ routine void createWindow(widget& pwin, const pointer<Widget::Definition>& defn)
     switch {
         case (typeof(defn) == typeof(Button::Definition)): {
             auto w = Button::Create(pwin, defn);
-         //   pwin.child[(*defn).name] = &(w);
             pwin[(*defn).name] = w;
             processWindow(w, defn);
         }
         case (typeof(defn) == typeof(TextEdit::Definition)): {
             auto w = TextEdit::Create(pwin, defn);
-            //pwin.child[(*defn).name] = &(w);
             pwin[(*defn).name] = w;
             processWindow(w, defn);
         }
         case (typeof(defn) == typeof(Systray::Definition)): {
             auto w = Systray::Create(pwin, defn);
-            //pwin.child[(*defn).name] = &(w);
             pwin[(*defn).name] = w;
         }
         case (typeof(defn) == typeof(Menu::Definition)): {

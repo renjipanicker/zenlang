@@ -14,9 +14,6 @@ public struct Position {
     auto h = -1;
 };
 
-//public struct Handle : Widget::Handle {
-//};
-
 public struct Anchor {
     widget wnd;
     string target;

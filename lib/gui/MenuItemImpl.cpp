@@ -62,10 +62,7 @@ static void onMenuItemSelectClick(GtkMenuItem* item, gpointer phandler) {
 #endif
 
 MenuItem::OnSelect::Handler& MenuItem::OnSelect::addHandler(const z::widget& menuitem, Handler* handler) {
-//@    MenuItem::OnSelect::add(handler);
-//@    MenuItem::OnSelect::list().add(menuitem, handler);
 #if defined(WIN32)
-//@    MenuItemImpl::onMenuItemSelectHandlerList.addHandler(MenuItem::impl(menuitem)._id, handler);
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (MenuItem::impl(menuitem)._menuItem), "activate", G_CALLBACK (onMenuItemSelectClick), handler);
 #elif defined(OSX)

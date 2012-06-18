@@ -181,10 +181,7 @@ static gboolean onSystrayActivateEvent(GtkStatusIcon* status_icon, gpointer phan
 #endif
 
 Systray::OnActivation::Handler& Systray::OnActivation::addHandler(const z::widget& systray, Handler* handler) {
-//@    Systray::OnActivation::add(handler);
-//@    Systray::OnActivation::list().add(systray, handler);
 #if defined(WIN32)
-//@    SystrayImpl::onSystrayActivationHandlerList.addHandler(systray.val()._wm, handler);
 #elif defined(GTK)
     g_signal_connect(G_OBJECT (systray.val()._icon), "activate", G_CALLBACK (onSystrayActivateEvent), handler);
 #elif defined(OSX)
@@ -211,10 +208,7 @@ static gboolean onSystrayContextMenuEvent(GtkStatusIcon *status_icon, guint butt
 #endif
 
 Systray::OnContextMenu::Handler& Systray::OnContextMenu::addHandler(const z::widget& systray, Handler* handler) {
-//@    Systray::OnContextMenu::add(handler);
-//@    Systray::OnContextMenu::list().add(systray, handler);
 #if defined(WIN32)
-//@    SystrayImpl::onSystrayContextMenuHandlerList.addHandler(systray.val()._wm, handler);
 #elif defined(GTK)
     g_signal_connect(G_OBJECT (systray.val()._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), handler);
 #elif defined(OSX)

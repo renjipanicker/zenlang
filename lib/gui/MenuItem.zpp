@@ -3,9 +3,6 @@ include gui::Window public;
 include gui::Menu public;
 namespace MenuItem;
 
-//public struct Handle : Widget::Handle {
-//};
-
 public struct Definition : Widget::Definition {
     auto label = "";
 };

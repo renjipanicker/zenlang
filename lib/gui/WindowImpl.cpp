@@ -18,9 +18,7 @@ uint32_t Window::Native::getNextResID() {
 namespace zz {
     static z::string getNextClassID() {
         static int lastclassId = 1;
-        char name[128];
-        snprintf(name, 128, "classX%d", lastclassId++);
-        return name;
+        return z::string("zenclass_%{d}").arg("d", lastclassId++);
     }
 
     ULONGLONG GetDllVersion(LPCTSTR lpszDllName) {
@@ -304,8 +302,6 @@ Window::Position Window::getChildPosition(const z::widget& wnd) {
 }
 
 void Window::Delete::run(const z::widget& wnd) {
-    //delete wnd.wdata;
-   //wnd.wdata = 0;
     wnd.clear();
 }
 
@@ -454,10 +450,7 @@ namespace zz {
 #endif
 
 Window::OnResize::Handler& Window::OnResize::addHandler(const z::widget& wnd, Handler* handler) {
-//    Window::OnResize::add(handler);
-//@    Window::OnResize::list().add(wnd, handler);
 #if defined(WIN32)
-    //onResizeHandlerList.addHandler(wnd.val()._val, handler);
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (wnd.val()._val), "configure-event", G_CALLBACK (zz::onConfigureEvent), handler);
 #elif defined(OSX)
@@ -484,10 +477,7 @@ namespace zz {
 #endif
 
 Window::OnClose::Handler& Window::OnClose::addHandler(const z::widget& wnd, Handler* handler) {
-//    Window::OnClose::add(handler);
-//@    Window::OnClose::list().add(wnd, handler);
 #if defined(WIN32)
-//    onCloseHandlerList.addHandler(wnd.val()._val, handler);
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (wnd.val()._val), "closed", G_CALLBACK (zz::onWindowCloseEvent), handler);
 #elif defined(OSX)

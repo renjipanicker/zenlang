@@ -3,28 +3,6 @@
 #include "WidgetImpl.hpp"
 
 namespace Window {
-//struct HandleImpl : public Widget::Handle::Impl {
-//#if defined(WIN32)
-//    inline HandleImpl() : _hWindow(0) {}
-//    HWND _hWindow;
-//#elif defined(GTK)
-//    inline HandleImpl() : _hWindow(0), _hFixed(0) {}
-//    GtkWidget* _hWindow;
-//    GtkWidget* _hFixed;
-//#elif defined(OSX)
-//    inline HandleImpl() : _hFrame(0), _hWindow(0) {}
-//    NSWindow* _hFrame;
-//    NSView* _hWindow;
-//#elif defined(IOS)
-//#else
-//#error "Unimplemented GUI mode"
-//#endif
-//private:
-//    inline HandleImpl(const HandleImpl& /*src*/) {}
-//};
-
-//inline HandleImpl& impl(const Widget::Handle& widget) {return Widget::impl<HandleImpl>(widget);}
-
 namespace Native {
 
 #if defined(WIN32)
@@ -34,18 +12,6 @@ inline z::widget impl(HWND hwnd) {
     z::mlog("getImpl", z::string("hwnd: %{p}, impl: %{i}").arg("p", hwnd).arg("i", impl));
     return z::widget(impl);
 }
-
-//inline void setImpl(UINT message, HWND hWnd, LPARAM lParam) {
-//    if(message != WM_NCCREATE) {
-//        return;
-//    }
-//
-//    LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
-//    void* p = z::ref(pcs).lpCreateParams;
-//    z::widget::impl* impl = reinterpret_cast<z::widget::impl*>(p);
-//    z::mlog("setImpl", z::string("hwnd: %{p}, impl: %{i}").arg("p", hWnd).arg("i", impl));
-//    ::SetWindowLongPtr(hWnd, GWL_USERDATA, reinterpret_cast<long>(impl));
-//}
 
 inline void setImpl(HWND hWnd, z::widget::impl* impl) {
     z::mlog("setImpl", z::string("hwnd: %{p}, impl: %{i}").arg("p", hWnd).arg("i", impl));

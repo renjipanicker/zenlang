@@ -998,8 +998,8 @@ namespace z {
     ///////////////////////////////////////////////////////////////
     /// \brief MultiMap of event source to event-handler-list
     /// This is a simpler helper function for events
-    template <typename KeyT, typename ValT>
-    struct HandlerListS {
+    template <typename KeyT, typename ValT, typename EventT>
+    struct HandlerList {
     private:
         typedef z::olist<ValT> OList;
         OList _olist;
@@ -1012,7 +1012,12 @@ namespace z {
             _olist.add(val);
             List& list = map[key];
             list.add(val);
-            return z::ref(val);
+            return EventT::addHandler(key, val);
+        }
+
+        template<typename T>
+        inline ValT& addT(const KeyT& key, T h) {
+            return add(key, new T(h));
         }
 
         inline bool run(const KeyT& key, typename ValT::_In in) {
@@ -1027,38 +1032,6 @@ namespace z {
             }
             return true;
         }
-    };
-
-    ///////////////////////////////////////////////////////////////
-    /// \brief MultiMap of event source to event-handler-list
-    /// This is a helper function for events
-    template <typename KeyT, typename ValT, typename EventT>
-    struct HandlerList : public HandlerListS<KeyT, ValT> {
-    public:
-        inline ValT& add(const KeyT& key, ValT* val) {
-            HandlerListS<KeyT, ValT>::add(key, val);
-            return EventT::addHandler(key, val);
-        }
-        template<typename T>
-        inline ValT& addT(const KeyT& key, T h) {
-            return add(key, new T(h));
-        }
-
-    };
-
-    ///////////////////////////////////////////////////////////////
-    ///////////////////////////////////////////////////////////////
-    /// \brief List of event-handlers
-    template <typename FunctionT>
-    struct FunctorList {
-        inline FunctionT& add(FunctionT* h) {
-            _list.add(h);
-            return ref(h);
-        }
-
-    private:
-        typedef z::olist<FunctionT> List;
-        List _list;
     };
 
     ///////////////////////////////////////////////////////////////

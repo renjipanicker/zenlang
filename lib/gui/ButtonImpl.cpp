@@ -57,9 +57,7 @@ static void onButtonClick(GtkMenuItem* item, gpointer phandler) {
 #endif
 
 Button::OnClick::Handler& Button::OnClick::addHandler(const z::widget& button, Handler* handler) {
-//@    Button::OnClick::list().add(button, handler);
 #if defined(WIN32)
-//@    ButtonImpl::onButtonClickHandlerList.addHandler(Window::impl(button)._hWindow, handler);
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (Window::impl(button)._hWindow), "clicked", G_CALLBACK (onButtonClick), handler);
 #elif defined(OSX)

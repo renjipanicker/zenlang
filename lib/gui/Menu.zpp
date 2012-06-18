@@ -2,9 +2,6 @@ include gui::Widget public;
 include gui::Window public;
 namespace Menu;
 
-//public struct Handle : Widget::Handle {
-//};
-
 public struct Definition : Widget::Definition {
 };
 

@@ -2,9 +2,6 @@ include gui::Widget public;
 include gui::Window public;
 namespace Systray;
 
-//public struct Handle : Widget::Handle {
-//};
-
 public event(const widget& systray) native => function void OnActivation();
 public event(const widget& systray) native => function void OnContextMenu();
 
