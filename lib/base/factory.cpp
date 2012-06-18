@@ -648,31 +648,6 @@ z::Ast::EventDecl* z::Ast::Factory::aEventDecl(const z::Ast::Token& pos, const z
     z::Ast::RootFunctionDecl& funDecl = addRootFunctionDecl(eventDef, z::ref(handlerSig), handlerDefType, cref);
     eventDef.setHandler(funDecl);
 
-    z::Ast::TemplateTypePartList& list = unit().addNode(new z::Ast::TemplateTypePartList(pos));
-    z::Ast::QualifiedTypeSpec& qFunTypeSpec = addQualifiedTypeSpec(pos, false, funDecl, false);
-    list.addType(qFunTypeSpec);
-    z::Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "pointer", list);
-    const z::Ast::QualifiedTypeSpec& qFunctorTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false);
-
-    z::Ast::Token hVarName(pos.filename(), pos.row(), pos.col(), "handler");
-    z::Ast::VariableDefn& vdef = addVariableDefn(qFunctorTypeSpec, hVarName);
-
-    z::Ast::Scope& outAdd = addScope(pos, z::Ast::ScopeType::Param);
-    z::Ast::Token oname(name.filename(), name.row(), name.col(), "_out");
-    const z::Ast::QualifiedTypeSpec& voidTypeSpec = getQualifiedTypeSpec(pos, "void");
-    z::Ast::VariableDefn& voidVdef = addVariableDefn(voidTypeSpec, oname);
-    outAdd.addVariableDef(voidVdef);
-    outAdd.isTuple(false);
-
-    z::Ast::Scope& inAdd  = addScope(pos, z::Ast::ScopeType::Param);
-    z::Ast::Token nameAdd(pos.filename(), pos.row(), pos.col(), "Add");
-    z::Ast::FunctionSig* addSig = aFunctionSig(outAdd, nameAdd, inAdd);
-    z::Ast::RootFunctionDecl& addDecl = addRootFunctionDecl(eventDef, z::ref(addSig), eventDefType, cref);
-    eventDef.setAddFunction(addDecl);
-
-    inAdd.addVariableDef(in);
-    inAdd.addVariableDef(vdef);
-
     return z::ptr(eventDef);
 }
 

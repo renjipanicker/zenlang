@@ -26,9 +26,10 @@ void Socket::StartServer(const z::socket& s) {
     }
 }
 
-void Socket::OnConnect::addHandler(const z::socket& s, Socket::OnConnect::Handler* h) {
+Socket::OnConnect::Handler& Socket::OnConnect::addHandler(const z::socket& s, Socket::OnConnect::Handler* h) {
     Socket::OnConnectDevice* d = new Socket::OnConnectDevice(s, h);
     z::ctx().startPoll(d);
+    return z::ref(h);
 }
 
 namespace zz {
@@ -64,9 +65,10 @@ void Socket::OnConnectDevice::run(const int& timeout) {
     }
 }
 
-void Socket::OnRecv::addHandler(const z::socket& s, Socket::OnRecv::Handler* h) {
+Socket::OnRecv::Handler& Socket::OnRecv::addHandler(const z::socket& s, Socket::OnRecv::Handler* h) {
     Socket::OnRecvDevice* d = new Socket::OnRecvDevice(s, h);
     z::ctx().startPoll(d);
+    return z::ref(h);
 }
 
 void Socket::OnRecvDevice::run(const int& timeout) {

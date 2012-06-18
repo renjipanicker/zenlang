@@ -418,11 +418,11 @@ if [ "$dotest" == "yes" ]; then
 #            exit
 #        fi
 
-#        "${CC}" ${CFLAGS} /DGUI /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
-#        if [[ $? != 0 ]]; then
-#            echo Error compiling testGui files.
-#            exit
-#        fi
+        "${CC}" ${CFLAGS} /DGUI /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
+        if [[ $? != 0 ]]; then
+            echo Error compiling testGui files.
+            exit
+        fi
     elif [[ $platform == 'Darwin' ]]; then
         # first compile the C files
         gcc -c -Os -I${SDKDIR}/include -I${OUTDIR} ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c

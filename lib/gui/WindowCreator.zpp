@@ -56,6 +56,6 @@ routine const Window::Handle& processWindow(Window::Handle& win, const Window::D
 
 public function Window::Handle Create(const MainFrame::Definition& defn) {
     auto w = MainFrame::Create(defn);
-    processWindow(w.window, defn);
-    return (w.window);
+    processWindow(w.wnd, defn);
+    return (w.wnd);
 }

@@ -103,23 +103,23 @@ z::string registerClass(HBRUSH bg) {
     z::estring eclassName = z::s2e(className);
     WNDCLASSEX wcx = {0};
 
-    // Fill in the window class structure with parameters
-    // that describe the main window.
+    // Fill in the wnd class structure with parameters
+    // that describe the main wnd.
 
     wcx.cbSize = sizeof(wcx);          // size of structure
     wcx.style = CS_HREDRAW | CS_VREDRAW;                    // redraw if size changes
-    wcx.lpfnWndProc = WinProc;     // points to window procedure
+    wcx.lpfnWndProc = WinProc;     // points to wnd procedure
     wcx.cbClsExtra = 0;                // no extra class memory
-    wcx.cbWndExtra = sizeof(Window::Handle*);        // store window data
+    wcx.cbWndExtra = sizeof(Window::Handle*);        // store wnd data
     wcx.hInstance = z::app().instance();             // handle to Handle
     wcx.hIcon = LoadIcon(NULL, IDI_APPLICATION);     // predefined app. icon
     wcx.hIconSm = LoadIcon(NULL, IDI_APPLICATION);   // predefined app. icon
     wcx.hCursor = LoadCursor(NULL, IDC_ARROW);       // predefined arrow
     wcx.hbrBackground = bg;
     wcx.lpszMenuName =  _T("MainMenu");    // name of menu resource
-    wcx.lpszClassName = eclassName.c_str();  // name of window class
+    wcx.lpszClassName = eclassName.c_str();  // name of wnd class
 
-    // Register the window class.
+    // Register the wnd class.
     if(!::RegisterClassEx(&wcx)) {
         throw z::Exception("Window", z::string("Unable to register class %{s}: %{e}").arg("s", className).arg("e", ::GetLastError()));
     }
@@ -154,7 +154,7 @@ Window::HandleImpl& Window::Native::createWindow(const Window::Definition& def, 
                                      parent, (HMENU)NULL,
                                      z::app().instance(), (LPVOID)impl);
     if(z::ref(impl)._hWindow == NULL) {
-        throw z::Exception("Window", z::string("Unable to create window of class %{s}: %{e}").arg("s", className).arg("e", ::GetLastError()));
+        throw z::Exception("Window", z::string("Unable to create wnd of class %{s}: %{e}").arg("s", className).arg("e", ::GetLastError()));
     }
 
     NONCLIENTMETRICS ncm;
@@ -242,14 +242,14 @@ Window::HandleImpl& Window::Native::createMainFrame(const Window::Definition& de
     z::ref(impl)._hWindow = v;
 
     if(z::ref(impl)._hWindow == 0) {
-        throw z::Exception("Window", z::string("Unable to create main window"));
+        throw z::Exception("Window", z::string("Unable to create main wnd"));
     }
     return z::ref(impl);
 }
 
 Window::HandleImpl& Window::Native::createChildWindow(const Window::Definition& def, const Window::Handle& parent, NSView* child) {
     if(child == 0) {
-        throw z::Exception("Window", z::string("Unable to create child window"));
+        throw z::Exception("Window", z::string("Unable to create child wnd"));
     }
     Window::HandleImpl* impl = new Window::HandleImpl();
     z::ref(impl)._hWindow = child;
@@ -269,10 +269,10 @@ Window::HandleImpl& Window::Native::createChildWindow(const Window::Definition& 
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
-Window::Position Window::getWindowPosition(const Handle& window) {
+Window::Position Window::getWindowPosition(const Handle& wnd) {
 #if defined(WIN32)
     RECT rc;
-    ::GetWindowRect(Window::impl(window)._hWindow, &rc);
+    ::GetWindowRect(Window::impl(wnd)._hWindow, &rc);
     const Window::Position pos = Window::Position()
             ._x<Window::Position>(rc.left)
             ._y<Window::Position>(rc.top)
@@ -280,7 +280,7 @@ Window::Position Window::getWindowPosition(const Handle& window) {
             ._h<Window::Position>(rc.bottom - rc.top);
 #elif defined(GTK)
     GtkRequisition req;
-    gtk_widget_size_request(Window::impl(window)._hWindow, &req);
+    gtk_widget_size_request(Window::impl(wnd)._hWindow, &req);
     const Window::Position pos = Window::Position()
             ._x<Window::Position>(0)
             ._y<Window::Position>(0)
@@ -298,11 +298,11 @@ Window::Position Window::getWindowPosition(const Handle& window) {
     return pos;
 }
 
-Window::Position Window::getChildPosition(const Handle& window) {
+Window::Position Window::getChildPosition(const Handle& wnd) {
 #if defined(WIN32)
     RECT rc;
-    ::GetWindowRect(Window::impl(window)._hWindow, &rc);
-    ::MapWindowPoints(HWND_DESKTOP, ::GetParent(Window::impl(window)._hWindow), (LPPOINT) &rc, 2);
+    ::GetWindowRect(Window::impl(wnd)._hWindow, &rc);
+    ::MapWindowPoints(HWND_DESKTOP, ::GetParent(Window::impl(wnd)._hWindow), (LPPOINT) &rc, 2);
     return Window::Position()
             ._x<Window::Position>(rc.left)
             ._y<Window::Position>(rc.top)
@@ -310,14 +310,14 @@ Window::Position Window::getChildPosition(const Handle& window) {
             ._h<Window::Position>(rc.bottom - rc.top);
 #elif defined(GTK)
     GtkRequisition req;
-    gtk_widget_size_request(Window::impl(window)._hWindow, &req);
+    gtk_widget_size_request(Window::impl(wnd)._hWindow, &req);
     return Window::Position()
             ._x<Window::Position>(0)
             ._y<Window::Position>(0)
             ._w<Window::Position>(req.width)
             ._h<Window::Position>(req.height);
 #elif defined(OSX)
-    NSSize sz = Window::impl(window)._hWindow.frame.size;
+    NSSize sz = Window::impl(wnd)._hWindow.frame.size;
     return Window::Position()
             ._x<Window::Position>(0)
             ._y<Window::Position>(0)
@@ -330,16 +330,16 @@ Window::Position Window::getChildPosition(const Handle& window) {
 #endif
 }
 
-void Window::Delete::run(const Window::Handle& window) {
-    delete window.wdata;
-   //window.wdata = 0;
+void Window::Delete::run(const Window::Handle& wnd) {
+    delete wnd.wdata;
+   //wnd.wdata = 0;
 }
 
-void Window::SetTitle::run(const Window::Handle& window, const z::string& title) {
+void Window::SetTitle::run(const Window::Handle& wnd, const z::string& title) {
 #if defined(WIN32)
-    ::SetWindowText(Window::impl(window)._hWindow, z::s2e(title).c_str());
+    ::SetWindowText(Window::impl(wnd)._hWindow, z::s2e(title).c_str());
 #elif defined(GTK)
-    gtk_window_set_title (GTK_WINDOW (Window::impl(window)._hWindow), z::s2e(title).c_str());
+    gtk_window_set_title (GTK_WINDOW (Window::impl(wnd)._hWindow), z::s2e(title).c_str());
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -349,16 +349,16 @@ void Window::SetTitle::run(const Window::Handle& window, const z::string& title)
 #endif
 }
 
-void Window::SetFocus::run(const Window::Handle& frame, const Window::Handle& window) {
+void Window::SetFocus::run(const Window::Handle& frame, const Window::Handle& wnd) {
 #if defined(WIN32)
     unused(frame);
-    ::SetFocus(Window::impl(window)._hWindow);
+    ::SetFocus(Window::impl(wnd)._hWindow);
 #elif defined(GTK)
     unused(frame);
-    unused(window);
+    unused(wnd);
     UNIMPL();
 #elif defined(OSX)
-    [Window::impl(frame)._hFrame makeFirstResponder:Window::impl(window)._hWindow];
+    [Window::impl(frame)._hFrame makeFirstResponder:Window::impl(wnd)._hWindow];
 #elif defined(IOS)
     UNIMPL();
 #else
@@ -366,15 +366,15 @@ void Window::SetFocus::run(const Window::Handle& frame, const Window::Handle& wi
 #endif
 }
 
-void Window::Show::run(const Window::Handle& window) {
+void Window::Show::run(const Window::Handle& wnd) {
 #if defined(WIN32)
-    ::ShowWindow(Window::impl(window)._hWindow, SW_SHOW);
+    ::ShowWindow(Window::impl(wnd)._hWindow, SW_SHOW);
 #elif defined(GTK)
-    gtk_widget_show(GTK_WIDGET(Window::impl(window)._hWindow));
-    gtk_window_deiconify(GTK_WINDOW(Window::impl(window)._hWindow));
+    gtk_widget_show(GTK_WIDGET(Window::impl(wnd)._hWindow));
+    gtk_window_deiconify(GTK_WINDOW(Window::impl(wnd)._hWindow));
 #elif defined(OSX)
     UNIMPL();
-//    [Window::impl(window)._hWindow makeKeyAndOrderFront:Window::impl(window)._hWindow];
+//    [Window::impl(wnd)._hWindow makeKeyAndOrderFront:Window::impl(wnd)._hWindow];
 #elif defined(IOS)
     UNIMPL();
 #else
@@ -382,11 +382,11 @@ void Window::Show::run(const Window::Handle& window) {
 #endif
 }
 
-void Window::Hide::run(const Window::Handle& window) {
+void Window::Hide::run(const Window::Handle& wnd) {
 #if defined(WIN32)
-    ::ShowWindow(Window::impl(window)._hWindow, SW_HIDE);
+    ::ShowWindow(Window::impl(wnd)._hWindow, SW_HIDE);
 #elif defined(GTK)
-    gtk_widget_hide(GTK_WIDGET(Window::impl(window)._hWindow));
+    gtk_widget_hide(GTK_WIDGET(Window::impl(wnd)._hWindow));
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -396,13 +396,13 @@ void Window::Hide::run(const Window::Handle& window) {
 #endif
 }
 
-void Window::Move::run(const Window::Handle& window, const Window::Position position) {
+void Window::Move::run(const Window::Handle& wnd, const Window::Position position) {
 #if defined(WIN32)
-    ::MoveWindow(Window::impl(window)._hWindow, position.x, position.y, position.w, position.h, TRUE);
+    ::MoveWindow(Window::impl(wnd)._hWindow, position.x, position.y, position.w, position.h, TRUE);
 #elif defined(GTK)
-    unused(window); unused(position);
-    //gtk_widget_set_uposition(Window::impl(window)._hWindow, position.x, position.y);
-    //gtk_window_set_default_size (Window::impl(window)._hWindow, position.w, position.h);
+    unused(wnd); unused(position);
+    //gtk_widget_set_uposition(Window::impl(wnd)._hWindow, position.x, position.y);
+    //gtk_window_set_default_size (Window::impl(wnd)._hWindow, position.w, position.h);
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -412,15 +412,15 @@ void Window::Move::run(const Window::Handle& window, const Window::Position posi
 #endif
 }
 
-void Window::Size::run(const Window::Handle& window, const int& w, const int& h) {
+void Window::Size::run(const Window::Handle& wnd, const int& w, const int& h) {
 #if defined(WIN32)
     RECT rc;
-    ::GetWindowRect(Window::impl(window)._hWindow, &rc);
+    ::GetWindowRect(Window::impl(wnd)._hWindow, &rc);
     int tw = (w == -1)?(rc.right - rc.left): w;
     int th = (h == -1)?(rc.bottom - rc.top): h;
-    ::MoveWindow(Window::impl(window)._hWindow, rc.left, rc.top, tw, th, TRUE);
+    ::MoveWindow(Window::impl(wnd)._hWindow, rc.left, rc.top, tw, th, TRUE);
 #elif defined(GTK)
-    gtk_widget_set_size_request(Window::impl(window)._hWindow, w, h);
+    gtk_widget_set_size_request(Window::impl(wnd)._hWindow, w, h);
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -431,8 +431,8 @@ void Window::Size::run(const Window::Handle& window, const int& w, const int& h)
 }
 
 #if defined(GTK)
-static gboolean onConfigureEvent(GtkWindow* window, GdkEvent* event, gpointer phandler) {
-    unused(window);
+static gboolean onConfigureEvent(GtkWindow* wnd, GdkEvent* event, gpointer phandler) {
+    unused(wnd);
     unused(event);
     Window::OnResize::Handler* handler = static_cast<Window::OnResize::Handler*>(phandler);
     Window::OnResize::Handler::_In in;
@@ -477,25 +477,26 @@ static gboolean onConfigureEvent(GtkWindow* window, GdkEvent* event, gpointer ph
 @end
 #endif
 
-void Window::OnResize::addHandler(const Window::Handle& window, Handler* handler) {
-    Window::OnResize::add(handler);
+Window::OnResize::Handler& Window::OnResize::addHandler(const Window::Handle& wnd, Handler* handler) {
+//    Window::OnResize::add(handler);
 #if defined(WIN32)
-    onResizeHandlerList.addHandler(Window::impl(window)._hWindow, handler);
+    onResizeHandlerList.addHandler(Window::impl(wnd)._hWindow, handler);
 #elif defined(GTK)
-    g_signal_connect (G_OBJECT (Window::impl(window)._hWindow), "configure-event", G_CALLBACK (onConfigureEvent), handler);
+    g_signal_connect (G_OBJECT (Window::impl(wnd)._hWindow), "configure-event", G_CALLBACK (onConfigureEvent), handler);
 #elif defined(OSX)
     CResizer* resizer = [CResizer alloc];
-    [resizer initResizer:handler withView:Window::impl(window)._hWindow];
+    [resizer initResizer:handler withView:Window::impl(wnd)._hWindow];
 #elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif
+    return z::ref(handler);
 }
 
 #if defined(GTK)
-static gboolean onWindowCloseEvent(GtkWindow* window, gpointer phandler) {
-    unused(window);
+static gboolean onWindowCloseEvent(GtkWindow* wnd, gpointer phandler) {
+    unused(wnd);
     Window::OnClose::Handler* handler = static_cast<Window::OnClose::Handler*>(phandler);
     Window::OnClose::Handler::_In in;
     z::ref(handler)._run(in);
@@ -503,18 +504,19 @@ static gboolean onWindowCloseEvent(GtkWindow* window, gpointer phandler) {
 }
 #endif
 
-void Window::OnClose::addHandler(const Window::Handle& window, Handler* handler) {
-    Window::OnClose::add(handler);
+Window::OnClose::Handler& Window::OnClose::addHandler(const Window::Handle& wnd, Handler* handler) {
+//    Window::OnClose::add(handler);
 #if defined(WIN32)
-    onCloseHandlerList.addHandler(Window::impl(window)._hWindow, handler);
+    onCloseHandlerList.addHandler(Window::impl(wnd)._hWindow, handler);
 #elif defined(GTK)
-    g_signal_connect (G_OBJECT (Window::impl(window)._hWindow), "closed", G_CALLBACK (onWindowCloseEvent), handler);
+    g_signal_connect (G_OBJECT (Window::impl(wnd)._hWindow), "closed", G_CALLBACK (onWindowCloseEvent), handler);
 #elif defined(OSX)
     CCloser* closer = [CCloser alloc];
-    [closer initCloser:handler withView:Window::impl(window)._hWindow];
+    [closer initCloser:handler withView:Window::impl(wnd)._hWindow];
 #elif defined(IOS)
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"
 #endif
+    return z::ref(handler);
 }

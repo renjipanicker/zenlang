@@ -57,8 +57,8 @@ static void onMenuItemSelectClick(GtkMenuItem* item, gpointer phandler) {
 }
 #endif
 
-void MenuItem::OnSelect::addHandler(const MenuItem::Handle& menuitem, Handler* handler) {
-    MenuItem::OnSelect::add(handler);
+MenuItem::OnSelect::Handler& MenuItem::OnSelect::addHandler(const MenuItem::Handle& menuitem, Handler* handler) {
+//    MenuItem::OnSelect::add(handler);
 #if defined(WIN32)
     MenuItemImpl::onMenuItemSelectHandlerList.addHandler(MenuItem::impl(menuitem)._id, handler);
 #elif defined(GTK)
@@ -70,4 +70,5 @@ void MenuItem::OnSelect::addHandler(const MenuItem::Handle& menuitem, Handler* h
 #else
 #error "Unimplemented GUI mode"
 #endif
+    return z::ref(handler);
 }

@@ -174,8 +174,8 @@ static gboolean onSystrayActivateEvent(GtkStatusIcon* status_icon, gpointer phan
 }
 #endif
 
-void Systray::OnActivation::addHandler(const Systray::Handle& systray, Handler* handler) {
-    Systray::OnActivation::add(handler);
+Systray::OnActivation::Handler& Systray::OnActivation::addHandler(const Systray::Handle& systray, Handler* handler) {
+//    Systray::OnActivation::add(handler);
 #if defined(WIN32)
     SystrayImpl::onSystrayActivationHandlerList.addHandler(Systray::impl(systray)._wm, handler);
 #elif defined(GTK)
@@ -187,6 +187,7 @@ void Systray::OnActivation::addHandler(const Systray::Handle& systray, Handler* 
 #else
 #error "Unimplemented GUI mode"
 #endif
+    return z::ref(handler);
 }
 
 #if defined(GTK)
@@ -202,8 +203,8 @@ static gboolean onSystrayContextMenuEvent(GtkStatusIcon *status_icon, guint butt
 }
 #endif
 
-void Systray::OnContextMenu::addHandler(const Systray::Handle& systray, Handler* handler) {
-    Systray::OnContextMenu::add(handler);
+Systray::OnContextMenu::Handler& Systray::OnContextMenu::addHandler(const Systray::Handle& systray, Handler* handler) {
+//    Systray::OnContextMenu::add(handler);
 #if defined(WIN32)
     SystrayImpl::onSystrayContextMenuHandlerList.addHandler(Systray::impl(systray)._wm, handler);
 #elif defined(GTK)
@@ -215,4 +216,5 @@ void Systray::OnContextMenu::addHandler(const Systray::Handle& systray, Handler*
 #else
 #error "Unimplemented GUI mode"
 #endif
+    return z::ref(handler);
 }

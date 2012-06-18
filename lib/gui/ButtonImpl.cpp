@@ -53,8 +53,8 @@ static void onButtonClick(GtkMenuItem* item, gpointer phandler) {
 }
 #endif
 
-void Button::OnClick::addHandler(const Window::Handle& button, Handler* handler) {
-    Button::OnClick::add(handler);
+Button::OnClick::Handler& Button::OnClick::addHandler(const Window::Handle& button, Handler* handler) {
+//    Button::OnClick::add(handler);
 #if defined(WIN32)
     ButtonImpl::onButtonClickHandlerList.addHandler(Window::impl(button)._hWindow, handler);
 #elif defined(GTK)
@@ -66,4 +66,5 @@ void Button::OnClick::addHandler(const Window::Handle& button, Handler* handler)
 #else
 #error "Unimplemented GUI mode"
 #endif
+    return z::ref(handler);
 }

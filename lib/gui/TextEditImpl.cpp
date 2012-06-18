@@ -40,7 +40,7 @@ Window::Handle TextEdit::Create::run(const Window::Handle& parent, const TextEdi
         flags |= ES_AUTOHSCROLL;
     }
 
-    // create the window handle.
+    // create the wnd handle.
     // Use richedit because plan edit has ugly gray background in read-only mode that cannot be easily changed.
     Window::HandleImpl& impl = Window::Native::createChildWindow(def, "RICHEDIT50W", flags, 0, parent);
 
@@ -106,22 +106,22 @@ inline bool isTextField(const Window::Handle& textedit) {
 }
 #endif
 
-void TextEdit::AppendText::run(const Window::Handle& window, const z::string& text) {
+void TextEdit::AppendText::run(const Window::Handle& wnd, const z::string& text) {
 #if defined(WIN32)
-    int len = Edit_GetTextLength(Window::impl(window)._hWindow);
-    Edit_SetSel(Window::impl(window)._hWindow, len, len);
-    Edit_ReplaceSel(Window::impl(window)._hWindow, z::s2e(text).c_str());
-    ::SendMessage(Window::impl(window)._hWindow, EM_SCROLLCARET, 0, 0);
+    int len = Edit_GetTextLength(Window::impl(wnd)._hWindow);
+    Edit_SetSel(Window::impl(wnd)._hWindow, len, len);
+    Edit_ReplaceSel(Window::impl(wnd)._hWindow, z::s2e(text).c_str());
+    ::SendMessage(Window::impl(wnd)._hWindow, EM_SCROLLCARET, 0, 0);
 #elif defined(GTK)
-    GtkTextBuffer* buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (Window::impl(window)._hWindow));
+    GtkTextBuffer* buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (Window::impl(wnd)._hWindow));
     GtkTextIter iter;
     gtk_text_buffer_get_end_iter(buffer, &iter);
     gtk_text_buffer_insert(buffer, &iter, z::s2e(text).c_str(), text.size());
 #elif defined(OSX)
-    if(isTextField(window)) {
+    if(isTextField(wnd)) {
         UNIMPL();
     } else {
-        NSTextView* v = (NSTextView*)(Window::impl(window)._hWindow);
+        NSTextView* v = (NSTextView*)(Window::impl(wnd)._hWindow);
 //        NSString* ntxt = [NSString stringWithUTF8String:z::s2e(text).c_str()];
         NSString* ntxt = [NSString stringWithUTF8String:""];
         [[[v textStorage] mutableString] appendString:ntxt];
@@ -133,9 +133,9 @@ void TextEdit::AppendText::run(const Window::Handle& window, const z::string& te
 #endif
 }
 
-void TextEdit::Clear::run(const Window::Handle& window) {
+void TextEdit::Clear::run(const Window::Handle& wnd) {
 #if defined(WIN32)
-    ::SetWindowText(Window::impl(window)._hWindow, "");
+    ::SetWindowText(Window::impl(wnd)._hWindow, "");
 #elif defined(GTK)
     UNIMPL();
 #elif defined(OSX)
@@ -147,11 +147,11 @@ void TextEdit::Clear::run(const Window::Handle& window) {
 #endif
 }
 
-z::string TextEdit::GetText::run(const Window::Handle& window) {
+z::string TextEdit::GetText::run(const Window::Handle& wnd) {
 #if defined(WIN32)
-    int size = ::GetWindowTextLength(Window::impl(window)._hWindow);
+    int size = ::GetWindowTextLength(Window::impl(wnd)._hWindow);
     char* buf = new char[size+2];
-    ::GetWindowText(Window::impl(window)._hWindow, buf, size+1);
+    ::GetWindowText(Window::impl(wnd)._hWindow, buf, size+1);
     z::string val(buf);
     delete[] buf;
 #elif defined(GTK)
@@ -187,8 +187,8 @@ static void onEnterPressed(GtkMenuItem* item, gpointer phandler) {
 
 #endif
 
-void TextEdit::OnEnter::addHandler(const Window::Handle& textedit, Handler* handler) {
-    TextEdit::OnEnter::add(handler);
+TextEdit::OnEnter::Handler& TextEdit::OnEnter::addHandler(const Window::Handle& textedit, Handler* handler) {
+//    TextEdit::OnEnter::add(handler);
 #if defined(WIN32)
     TextEditImpl::onTextEditEnterHandlerList.addHandler(Window::impl(textedit)._hWindow, handler);
 #elif defined(GTK)
@@ -208,4 +208,5 @@ void TextEdit::OnEnter::addHandler(const Window::Handle& textedit, Handler* hand
 #else
 #error "Unimplemented GUI mode"
 #endif
+    return z::ref(handler);
 }

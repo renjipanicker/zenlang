@@ -1118,13 +1118,11 @@ namespace sg {
                 _os() << z::Indent::get() << "public:" << std::endl;
                 visitChildrenIndent(node);
             }
-            _os() << z::Indent::get() << "    z::FunctorList<Handler> _list;" << std::endl;
+            _os() << z::Indent::get() << "    typedef z::HandlerList<" << StlcppNameGenerator().tn(node.in().qTypeSpec().typeSpec()) << ", Handler, " << node.name() << "> HandlerListT;" << std::endl;
+            _os() << z::Indent::get() << "    HandlerListT _list;" << std::endl;
             _os() << z::Indent::get() << "    static " << node.name() << " instance;" << std::endl;
-            _os() << z::Indent::get() << "    static inline Handler& add(Handler* h) {return instance._list.add(h);}" << std::endl;
-            _os() << z::Indent::get() << "    static void addHandler(" << StlcppNameGenerator().qtn(node.in().qTypeSpec()) << " " << node.in().name() << ", Handler* h);" << std::endl;
-            _os() << z::Indent::get() << "    template<typename T>static inline void addHandlerT("
-                  << StlcppNameGenerator().qtn(node.in().qTypeSpec()) << " " << node.in().name() << ", T h) {return addHandler("
-                  << node.in().name() << ", new T(h));}" << std::endl;
+            _os() << z::Indent::get() << "    static inline HandlerListT& list() {return instance._list;}" << std::endl;
+            _os() << z::Indent::get() << "    static Handler& addHandler(" << StlcppNameGenerator().qtn(node.in().qTypeSpec()) << " " << node.in().name() << ", Handler* h);" << std::endl;
             _os() << z::Indent::get() << "};" << std::endl;
             _os() << std::endl;
             return;
@@ -1270,15 +1268,11 @@ namespace sg {
             visitChildrenIndent(node);
             _os() << StlcppNameGenerator().tn(node) << " " << StlcppNameGenerator().tn(node) << "::instance;" << std::endl;
             if(node.defType() == z::Ast::DefinitionType::Final) {
-                _os() << "void " << StlcppNameGenerator().tn(node)
+                _os() << StlcppNameGenerator().tn(node) << "::Handler& " << StlcppNameGenerator().tn(node)
                       << "::addHandler(" << StlcppNameGenerator().qtn(node.in().qTypeSpec())
                       << " " << node.in().name() << ", Handler* h) {"
                       << std::endl;
-                _os() << "}" << std::endl;
-                _os() << "void " << StlcppNameGenerator().tn(node) << "::Add::run(";
-                TypeDeclarationGenerator::writeScopeParamList(_os, node.addFunction().sig().inScope(), "");
-                _os() << ") {" << std::endl;
-                _os() << "    assert(false); //addHandler(in." << node.in().name() << ", in.handler);" << std::endl;
+                _os() << "    return z::ref(h);" << std::endl;
                 _os() << "}" << std::endl;
             }
         }
@@ -1617,7 +1611,7 @@ namespace sg {
 
         virtual void visit(const z::Ast::AddEventHandlerStatement& node) {
             z::string ename = StlcppNameGenerator().tn(node.event());
-            fpDefn()() << z::Indent::get() << ename << "::addHandlerT(";
+            fpDefn()() << z::Indent::get() << ename << "::list().addT(";
             ExprGenerator(fpDefn()).visitNode(node.source());
             fpDefn()() << ", ";
             ExprGenerator(fpDefn()).visitNode(node.functor());

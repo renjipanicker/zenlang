@@ -4,16 +4,16 @@
 #include "WindowImpl.hpp"
 #include "MenuImpl.hpp"
 
-Menu::Handle Menu::Create::run(const Window::Handle& window, const Menu::Definition& def) {
+Menu::Handle Menu::Create::run(const Window::Handle& wnd, const Menu::Definition& def) {
     unused(def);
 #if defined(WIN32)
     Menu::HandleImpl* impl = new Menu::HandleImpl();
     z::ref(impl)._menu = ::CreatePopupMenu();
-    z::ref(impl)._window = Window::impl(window)._hWindow;
+    z::ref(impl)._window = Window::impl(wnd)._hWindow;
 #elif defined(GTK)
     Menu::HandleImpl* impl = new Menu::HandleImpl();
     z::ref(impl)._menu = gtk_menu_new();
-    unused(window);
+    unused(wnd);
 #elif defined(OSX)
     Menu::HandleImpl* impl = new Menu::HandleImpl();
     UNIMPL();

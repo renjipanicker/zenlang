@@ -1050,19 +1050,30 @@ namespace z {
 
     ///////////////////////////////////////////////////////////////
     /// \brief MultiMap of event source to event-handler-list
-    /// This is a helper function for GUI classes
+    /// This is a simpler helper function for events
     template <typename KeyT, typename ValT>
-    struct HandlerList {
-        typedef std::list<ValT*> List;
-        typedef std::map<KeyT, List> Map;
+    struct HandlerListS {
+    private:
+        typedef z::olist<ValT> OList;
+        OList _olist;
+        typedef z::list<ValT*> List;
+        typedef z::dict<KeyT, List> Map;
         Map map;
 
-        inline void addHandler(const KeyT& key, ValT* val) {
+    public:
+        inline ValT& add(const KeyT& key, ValT* val) {
+            _olist.add(val);
             List& list = map[key];
-            list.push_back(val);
+            list.add(val);
+            return z::ref(val);
         }
 
-        inline bool runHandler(const KeyT& key, typename ValT::_In in) {
+        template<typename T>
+        inline ValT& addT(const KeyT& key, T h) {
+            return add(key, new T(h));
+        }
+
+        inline bool run(const KeyT& key, typename ValT::_In in) {
             typename Map::const_iterator it = map.find(key);
             if(it == map.end())
                 return false;
@@ -1073,6 +1084,18 @@ namespace z {
                 handler->_run(in);
             }
             return true;
+        }
+    };
+
+    ///////////////////////////////////////////////////////////////
+    /// \brief MultiMap of event source to event-handler-list
+    /// This is a helper function for events
+    template <typename KeyT, typename ValT, typename EventT>
+    struct HandlerList : public HandlerListS<KeyT, ValT> {
+    public:
+        inline ValT& add(const KeyT& key, ValT* val) {
+            HandlerListS<KeyT, ValT>::add(key, val);
+            return EventT::addHandler(key, val);
         }
     };
 
@@ -1352,10 +1375,33 @@ namespace z {
         inline socket() : _val(0) {}
         inline socket(const SOCKET& val) : _val(val) {}
         inline const SOCKET& val() const {return _val;}
+        inline bool operator<(const socket& rhs) const {return (_val < rhs._val);}
     private:
         SOCKET _val;
-        z::data _bfr;
     };
+
+#if defined(GUI)
+    struct widget {
+#if defined(WIN32)
+        inline widget() : _val(0), menu(0) {}
+        HWND _val;          /// contains HWND if this is a window
+        HMENU menu;         /// contains HMENU if this is a menu (\_val will point to parent window)
+        uint32_t id;        /// contains id if this is menuitem or systray
+        NOTIFYICONDATA _ni; /// if this is a systray
+#elif defined(GTK)
+        inline widget() : _val(0), fixed(0) {}
+        GtkWidget* _val;    /// contains window or menu or menuitem
+        GtkWidget* fixed;   /// contains pointer to fixed layout child if _val is a parent frame
+#elif defined(OSX)
+        inline widget() : _val(0), frame(0) {}
+        NSView* _val;
+        NSWindow* frame;
+#elif defined(IOS)
+#else
+#error "Unimplemented GUI mode"
+#endif
+    };
+#endif
 
     ////////////////////////////////////////////////////////////////////////////
     /// \brief Simple mechanism for tracing function calls.

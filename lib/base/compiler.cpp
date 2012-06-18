@@ -139,6 +139,10 @@ const z::string ifile =
 
 "typedef type native;\n"
 
+"typedef widget native;\n"
+"default widget = 0;\n"
+"coerce int => widget;\n"
+
 "template <F> future  native;\n"
 "template <V> pointer native;\n"
 "template <V> value   native;\n"
