@@ -73,6 +73,8 @@ struct RequestData : Request {
 
 typedef RequestMap dict<uint, RequestData>;
 
+public event(const socket& s) => function void OnRequest(const Request& r);
+
 routine size processRequest(const data& bfr, RequestMap& requestMap) {
     auto h = raw<Header>(bfr, 0);
     print "version: %{@v0}, type: %{@t0}, rid0: %{@r0}, rid1: %{@r1}, cid0: %{@c0}, cid1: %{@c1}, pad: %{@p0}, resv: %{@h0}" @ {
@@ -191,14 +193,8 @@ routine size processRequest(const data& bfr, RequestMap& requestMap) {
     return sizeof(Header) + len + h.hPaddingLength;
 }
 
-public struct Handle {
-    socket ss = 0;
-};
-
-public event(const Handle& f) => function void OnRequest(const Request& r);
-
 /// \brief Start the FastCGI server on specified port.
-public function Handle Create(const int& port) {
+public function socket Create(const int& port) {
     auto s = Socket::InitServer(port);
     Socket::OnConnect(s) => {
         print "FastCGI: Socket:OnConnect";
@@ -215,11 +211,10 @@ public function Handle Create(const int& port) {
             }
         };
     };
-    auto h = Handle{ss:s;};
-    return(h);
+    return(s);
 }
 
-public function void Start(const Handle& h) {
-    Socket::StartServer(h.ss);
+public function void Start(const socket& s) {
+    Socket::StartServer(s);
     return();
 }

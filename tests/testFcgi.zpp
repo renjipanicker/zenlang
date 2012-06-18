@@ -3,7 +3,12 @@ namespace TestFCGI;
 
 public function basicTest : main {
     unused(argl);
-    auto h = FastCGI::Create(9001);
-    FastCGI::Start(h);
+    auto s = FastCGI::Create(9001);
+
+    FastCGI::OnRequest(s) => {
+        print "testFcgi: OnRequest";
+    };
+
+    FastCGI::Start(s);
     return (true);
 }
