@@ -449,7 +449,7 @@ namespace zz {
 @end
 #endif
 
-Window::OnResize::Handler& Window::OnResize::addHandler(const z::widget& wnd, Handler* handler) {
+void Window::OnResize::addHandler(const z::widget& wnd, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (wnd.val()._val), "configure-event", G_CALLBACK (zz::onConfigureEvent), handler);
@@ -461,7 +461,6 @@ Window::OnResize::Handler& Window::OnResize::addHandler(const z::widget& wnd, Ha
 #else
 #error "Unimplemented GUI mode"
 #endif
-    return z::ref(handler);
 }
 
 #if defined(GTK)
@@ -476,7 +475,7 @@ namespace zz {
 }
 #endif
 
-Window::OnClose::Handler& Window::OnClose::addHandler(const z::widget& wnd, Handler* handler) {
+void Window::OnClose::addHandler(const z::widget& wnd, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (wnd.val()._val), "closed", G_CALLBACK (zz::onWindowCloseEvent), handler);
@@ -488,5 +487,4 @@ Window::OnClose::Handler& Window::OnClose::addHandler(const z::widget& wnd, Hand
 #else
 #error "Unimplemented GUI mode"
 #endif
-    return z::ref(handler);
 }

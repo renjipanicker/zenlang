@@ -26,10 +26,9 @@ void Socket::StartServer(const z::socket& s) {
     }
 }
 
-Socket::OnConnect::Handler& Socket::OnConnect::addHandler(const z::socket& s, Socket::OnConnect::Handler* h) {
+void Socket::OnConnect::addHandler(const z::socket& s, const z::pointer<Handler>& h) {
     Socket::OnConnectDevice* d = new Socket::OnConnectDevice(s, h);
     z::ctx().startPoll(d);
-    return z::ref(h);
 }
 
 namespace zz {
@@ -59,16 +58,15 @@ void Socket::OnConnectDevice::run(const int& timeout) {
         if (fd < 0) {
             throw z::Exception("Socket::OnConnectDevice", z::string("Error accept() failed"));
         }
-        z::ref(h).run(fd);
+        h.get().run(fd);
         std::cout << "leave" << std::endl;
         return;
     }
 }
 
-Socket::OnRecv::Handler& Socket::OnRecv::addHandler(const z::socket& s, Socket::OnRecv::Handler* h) {
+void Socket::OnRecv::addHandler(const z::socket& s, const z::pointer<Handler>& h) {
     Socket::OnRecvDevice* d = new Socket::OnRecvDevice(s, h);
     z::ctx().startPoll(d);
-    return z::ref(h);
 }
 
 void Socket::OnRecvDevice::run(const int& timeout) {
@@ -90,7 +88,7 @@ void Socket::OnRecvDevice::run(const int& timeout) {
         }
 
         z::data d((const uint8_t*)buf, rc);
-        z::ref(h).run(d);
+        h.get().run(d);
         return;
     }
 }

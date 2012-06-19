@@ -180,7 +180,7 @@ static gboolean onSystrayActivateEvent(GtkStatusIcon* status_icon, gpointer phan
 }
 #endif
 
-Systray::OnActivation::Handler& Systray::OnActivation::addHandler(const z::widget& systray, Handler* handler) {
+void Systray::OnActivation::addHandler(const z::widget& systray, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
     g_signal_connect(G_OBJECT (systray.val()._icon), "activate", G_CALLBACK (onSystrayActivateEvent), handler);
@@ -191,7 +191,6 @@ Systray::OnActivation::Handler& Systray::OnActivation::addHandler(const z::widge
 #else
 #error "Unimplemented GUI mode"
 #endif
-    return z::ref(handler);
 }
 
 #if defined(GTK)
@@ -207,7 +206,7 @@ static gboolean onSystrayContextMenuEvent(GtkStatusIcon *status_icon, guint butt
 }
 #endif
 
-Systray::OnContextMenu::Handler& Systray::OnContextMenu::addHandler(const z::widget& systray, Handler* handler) {
+void Systray::OnContextMenu::addHandler(const z::widget& systray, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
     g_signal_connect(G_OBJECT (systray.val()._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), handler);
@@ -218,5 +217,4 @@ Systray::OnContextMenu::Handler& Systray::OnContextMenu::addHandler(const z::wid
 #else
 #error "Unimplemented GUI mode"
 #endif
-    return z::ref(handler);
 }

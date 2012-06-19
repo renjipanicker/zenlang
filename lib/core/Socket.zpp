@@ -4,8 +4,8 @@ public event(const socket& s) native => function void OnConnect(const socket& cs
 public event(const socket& s) native => function void OnRecv(const data& d);
 public event(const socket& s) native => function void OnClose();
 
-private function OnConnectDevice : device[socket s, ptr<OnConnect::Handler> h] native;
-private function OnRecvDevice : device[socket s, ptr<OnRecv::Handler> h] native;
+private function OnConnectDevice : device[socket s, pointer<OnConnect::Handler> h] native;
+private function OnRecvDevice : device[socket s, pointer<OnRecv::Handler> h] native;
 
 public routine socket InitServer(const int& port) native;
 public routine socket InitClient(const string& host, const int& port) native;

@@ -185,7 +185,7 @@ static void onEnterPressed(GtkMenuItem* item, gpointer phandler) {
 
 #endif
 
-TextEdit::OnEnter::Handler& TextEdit::OnEnter::addHandler(const z::widget& textedit, Handler* handler) {
+void TextEdit::OnEnter::addHandler(const z::widget& textedit, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (Window::impl(textedit)._hWindow), "activate", G_CALLBACK (onEnterPressed), handler);
@@ -204,5 +204,4 @@ TextEdit::OnEnter::Handler& TextEdit::OnEnter::addHandler(const z::widget& texte
 #else
 #error "Unimplemented GUI mode"
 #endif
-    return z::ref(handler);
 }

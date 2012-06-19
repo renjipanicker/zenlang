@@ -673,7 +673,7 @@ namespace z {
             BaseT::_list.at(k) = v;
         }
 
-        inline V add(const V& v) {
+        inline V& add(const V& v) {
             BaseT::_list.push_back(v);
             return BaseT::back();
         }
@@ -1001,23 +1001,24 @@ namespace z {
     template <typename KeyT, typename ValT, typename EventT>
     struct HandlerList {
     private:
-        typedef z::olist<ValT> OList;
+        typedef z::list< pointer<ValT> > OList;
         OList _olist;
-        typedef z::list<ValT*> List;
+        typedef z::rlist<ValT> List;
         typedef z::dict<KeyT, List> Map;
         Map map;
 
     public:
-        inline ValT& add(const KeyT& key, ValT* val) {
-            _olist.add(val);
+        inline ValT& add(const KeyT& key, z::pointer<ValT> val) {
+            z::pointer<ValT>& vv = _olist.add(val);
             List& list = map[key];
-            list.add(val);
-            return EventT::addHandler(key, val);
+            list.add(vv.get());
+            EventT::addHandler(key, vv);
+            return vv.get();
         }
 
         template<typename T>
         inline ValT& addT(const KeyT& key, T h) {
-            return add(key, new T(h));
+            return add(key, z::pointer<T>("XX", h));
         }
 
         inline bool run(const KeyT& key, typename ValT::_In in) {
@@ -1027,8 +1028,8 @@ namespace z {
 
             const List& list = it->second;
             for(typename List::const_iterator itl = list.begin(); itl != list.end(); ++itl) {
-                ValT* handler = *itl;
-                handler->_run(in);
+                ValT& handler = z::ref(*itl);
+                handler._run(in);
             }
             return true;
         }
