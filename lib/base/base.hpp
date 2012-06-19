@@ -1053,7 +1053,7 @@ namespace z {
 
     public:
         template <typename FunctionT>
-        inline FutureT<FunctionT>& add(FunctionT function, const typename FunctionT::_In& in) {
+        inline FutureT<FunctionT>& addT(FunctionT function, const typename FunctionT::_In& in) {
             FutureT<FunctionT>* inv = new FutureT<FunctionT>(function, in);
             add(inv);
             return ref(inv);
@@ -1109,6 +1109,7 @@ namespace z {
             const List& list = it->second;
             for(typename List::const_iterator itl = list.begin(); itl != list.end(); ++itl) {
                 ValT& handler = z::ref(*itl);
+//                ctx().add(
                 handler._run(in);
             }
             return true;
@@ -1163,7 +1164,7 @@ namespace z {
         virtual void enque(ThreadContext& ctx) {
             T t;
             typename T::_In in;
-            ctx.add(t, in);
+            ctx.addT(t, in);
         }
     };
     #endif
@@ -1201,7 +1202,7 @@ namespace z {
         virtual void enque(ThreadContext& ctx, const z::stringlist& argl) {
             T t;
             typename T::_In in(argl);
-            ctx.add(t, in);
+            ctx.addT(t, in);
         }
     };
 

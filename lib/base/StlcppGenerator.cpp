@@ -470,7 +470,7 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::RunExpr& node) {
-            _os() << "z::ctx().add(";
+            _os() << "z::ctx().addT(";
             ExprGenerator(_os).visitNode(node.callExpr().expr());
             _os() << ", ";
             _os() << StlcppNameGenerator().tn(node.callExpr().expr().qTypeSpec().typeSpec()) << "::_In(";
