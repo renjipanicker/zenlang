@@ -9,12 +9,10 @@ namespace Native {
 inline z::widget impl(HWND hwnd) {
     void* p = (void*)::GetWindowLongPtr(hwnd, GWL_USERDATA);
     z::widget::impl* impl = reinterpret_cast<z::widget::impl*>(p);
-    z::mlog("getImpl", z::string("hwnd: %{p}, impl: %{i}").arg("p", hwnd).arg("i", impl));
     return z::widget(impl);
 }
 
 inline void setImpl(HWND hWnd, z::widget::impl* impl) {
-    z::mlog("setImpl", z::string("hwnd: %{p}, impl: %{i}").arg("p", hWnd).arg("i", impl));
     ::SetWindowLongPtr(hWnd, GWL_USERDATA, reinterpret_cast<long>(impl));
 }
 

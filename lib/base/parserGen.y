@@ -480,10 +480,12 @@ rAutoQualifiedVariableDefn ::= AUTO. {z::c2f(pctx).aAutoQualifiedVariableDefn();
 //-------------------------------------------------
 // qualified types
 %type rQualifiedTypeSpec {const z::Ast::QualifiedTypeSpec*}
-rQualifiedTypeSpec(L) ::=          rTypeSpec(typeSpec).               {L = z::c2f(pctx).aQualifiedTypeSpec(             false, z::ref(typeSpec), false);}
-rQualifiedTypeSpec(L) ::=          rTypeSpec(typeSpec) BITWISEAND(B). {L = z::c2f(pctx).aQualifiedTypeSpec(z::t2t(B), false, z::ref(typeSpec), true );}
-rQualifiedTypeSpec(L) ::= CONST(B) rTypeSpec(typeSpec).               {L = z::c2f(pctx).aQualifiedTypeSpec(z::t2t(B), true,  z::ref(typeSpec), false);}
-rQualifiedTypeSpec(L) ::= CONST(B) rTypeSpec(typeSpec) BITWISEAND.    {L = z::c2f(pctx).aQualifiedTypeSpec(z::t2t(B), true,  z::ref(typeSpec), true );}
+rQualifiedTypeSpec(L) ::=          rTypeSpec(typeSpec).               {L = z::c2f(pctx).aQualifiedTypeSpec(           false, z::ref(typeSpec), false, false);}
+rQualifiedTypeSpec(L) ::=          rTypeSpec(typeSpec) BITWISEAND(B). {L = z::c2f(pctx).aQualifiedTypeSpec(z::t2t(B), false, z::ref(typeSpec), true , false);}
+rQualifiedTypeSpec(L) ::=          rTypeSpec(typeSpec) AND(B).        {L = z::c2f(pctx).aQualifiedTypeSpec(z::t2t(B), false, z::ref(typeSpec), true , true );}
+rQualifiedTypeSpec(L) ::= CONST(B) rTypeSpec(typeSpec).               {L = z::c2f(pctx).aQualifiedTypeSpec(z::t2t(B), true,  z::ref(typeSpec), false, false);}
+rQualifiedTypeSpec(L) ::= CONST(B) rTypeSpec(typeSpec) BITWISEAND.    {L = z::c2f(pctx).aQualifiedTypeSpec(z::t2t(B), true,  z::ref(typeSpec), true , false);}
+rQualifiedTypeSpec(L) ::= CONST(B) rTypeSpec(typeSpec) AND.           {L = z::c2f(pctx).aQualifiedTypeSpec(z::t2t(B), true,  z::ref(typeSpec), true , true );}
 
 //-------------------------------------------------
 // "public" type references, can be invoked from other rules

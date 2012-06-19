@@ -5,15 +5,15 @@
 #include "base/typename.hpp"
 
 /////////////////////////////////////////////////////////////////////////
-inline z::Ast::QualifiedTypeSpec& z::Ast::Factory::addQualifiedTypeSpec(const z::Ast::Token& pos, const bool& isConst, const TypeSpec& typeSpec, const bool& isRef) {
-    z::Ast::QualifiedTypeSpec& qualifiedTypeSpec = unit().addNode(new z::Ast::QualifiedTypeSpec(pos, isConst, typeSpec, isRef));
+inline z::Ast::QualifiedTypeSpec& z::Ast::Factory::addQualifiedTypeSpec(const z::Ast::Token& pos, const bool& isConst, const TypeSpec& typeSpec, const bool& isRef, const bool& isStrong) {
+    z::Ast::QualifiedTypeSpec& qualifiedTypeSpec = unit().addNode(new z::Ast::QualifiedTypeSpec(pos, isConst, typeSpec, isRef, isStrong));
     return qualifiedTypeSpec;
 }
 
 inline const z::Ast::QualifiedTypeSpec& z::Ast::Factory::getQualifiedTypeSpec(const z::Ast::Token& pos, const z::string& name) {
     z::Ast::Token token(filename(), pos.row(), pos.col(), name);
     const z::Ast::TypeSpec& typeSpec = unit().getRootTypeSpec<z::Ast::TypeSpec>(_module.level(), token);
-    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, typeSpec, false);
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, typeSpec, false, false);
     return qTypeSpec;
 }
 
@@ -30,7 +30,7 @@ inline const z::Ast::Expr& z::Ast::Factory::getDefaultValue(const z::Ast::TypeSp
     if(td != 0) {
         const z::string tdName = z::ref(td).name().string() ; // ZenlangNameGenerator().tn(z::ref(td), GenMode::Import); \todo this is incorrect, it will match any type called, say, list.
         if(tdName == "pointer") {
-            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false);
+            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false, false);
             z::Ast::ExprList& exprList = addExprList(name);
             const z::Ast::QualifiedTypeSpec& subType = z::ref(td).at(0);
             const z::Ast::Expr& nameExpr = getDefaultValue(subType.typeSpec(), name);
@@ -39,7 +39,7 @@ inline const z::Ast::Expr& z::Ast::Factory::getDefaultValue(const z::Ast::TypeSp
             return expr;
         }
         if(tdName == "list") {
-            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false);
+            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false, false);
             z::Ast::ListList& llist = unit().addNode(new z::Ast::ListList(name));
             const z::Ast::QualifiedTypeSpec& qlType = z::ref(td).list().at(0);
             llist.valueType(qlType);
@@ -47,7 +47,7 @@ inline const z::Ast::Expr& z::Ast::Factory::getDefaultValue(const z::Ast::TypeSp
             return expr;
         }
         if(tdName == "dict") {
-            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false);
+            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false, false);
             z::Ast::DictList& llist = unit().addNode(new z::Ast::DictList(name));
             const z::Ast::QualifiedTypeSpec& qlType = z::ref(td).list().at(0);
             const z::Ast::QualifiedTypeSpec& qrType = z::ref(td).list().at(1);
@@ -70,7 +70,7 @@ inline const z::Ast::Expr& z::Ast::Factory::getDefaultValue(const z::Ast::TypeSp
             throw z::Exception("NodeFactory", zfmt(typeSpec.name(), "Empty enum type %{s}").arg("s", z::ref(ed).name() ));
         }
         const z::Ast::VariableDefn& vref = rit->get();
-        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, typeSpec, false);
+        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, typeSpec, false, false);
         z::Ast::EnumMemberExpr& typeSpecMemberExpr = unit().addNode(new z::Ast::EnumMemberExpr(name, qTypeSpec, typeSpec, vref));
         return typeSpecMemberExpr;
     }
@@ -131,7 +131,7 @@ inline const z::Ast::Expr& z::Ast::Factory::convertExprToExpectedTypeSpec(const 
             Unit::CoercionResult::T mode = Unit::CoercionResult::None;
             unit().canCoerceX(z::ref(qts), rhsQts, mode);
             if(mode == Unit::CoercionResult::Rhs) {
-                const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(qts).isConst(), z::ref(qts).typeSpec(), true);
+                const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(qts).isConst(), z::ref(qts).typeSpec(), true, false);
                 z::Ast::TypecastExpr& typecastExpr = unit().addNode(new z::Ast::DynamicTypecastExpr(pos, qTypeSpec, qTypeSpec, initExpr));
                 return typecastExpr;
             }
@@ -148,7 +148,7 @@ inline const z::Ast::Expr& z::Ast::Factory::convertExprToExpectedTypeSpec(const 
                                );
         }
         if(z::ptr(z::ref(cqts).typeSpec()) != z::ptr(initExpr.qTypeSpec().typeSpec())) {
-            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(cqts).isConst(), z::ref(qts).typeSpec(), false);
+            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(cqts).isConst(), z::ref(qts).typeSpec(), false, false);
             z::Ast::TypecastExpr& typecastExpr = unit().addNode(new z::Ast::StaticTypecastExpr(pos, qTypeSpec, qTypeSpec, initExpr));
             return typecastExpr;
         }
@@ -197,7 +197,7 @@ inline const z::Ast::FunctionRetn& z::Ast::Factory::getFunctionRetn(const z::Ast
 inline const z::Ast::QualifiedTypeSpec& z::Ast::Factory::getFunctionReturnType(const z::Ast::Token& pos, const z::Ast::Function& function) {
     if(function.sig().outScope().isTuple()) {
         const z::Ast::FunctionRetn& functionRetn = getFunctionRetn(pos, function);
-        z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, functionRetn, false);
+        z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, functionRetn, false, false);
         return qTypeSpec;
     }
     return function.sig().out().front().qTypeSpec();
@@ -247,7 +247,7 @@ inline z::Ast::ChildFunctionDecl& z::Ast::Factory::addChildFunctionDecl(const z:
 }
 
 inline z::Ast::ValueInstanceExpr& z::Ast::Factory::getValueInstanceExpr(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec& qTypeSpec, const z::Ast::TemplateDefn& srcTemplateDefn, const z::Ast::TemplateDefn& templateDefn, const z::Ast::ExprList& exprList) {
-    const z::Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(pos, qTypeSpec.isConst(), qTypeSpec.typeSpec(), true);
+    const z::Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(pos, qTypeSpec.isConst(), qTypeSpec.typeSpec(), true, false);
     z::Ast::ValueInstanceExpr& valueInstanceExpr = unit().addNode(new z::Ast::ValueInstanceExpr(pos, typeSpec, srcTemplateDefn, templateDefn, exprList));
     return valueInstanceExpr;
 }
@@ -741,13 +741,13 @@ void z::Ast::Factory::aAutoQualifiedVariableDefn() {
     unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etAuto);
 }
 
-z::Ast::QualifiedTypeSpec* z::Ast::Factory::aQualifiedTypeSpec(const z::Ast::Token& pos, const bool& isConst, const z::Ast::TypeSpec& typeSpec, const bool& isRef) {
-    z::Ast::QualifiedTypeSpec& qualifiedTypeSpec = addQualifiedTypeSpec(pos, isConst, typeSpec, isRef);
+z::Ast::QualifiedTypeSpec* z::Ast::Factory::aQualifiedTypeSpec(const z::Ast::Token& pos, const bool& isConst, const z::Ast::TypeSpec& typeSpec, const bool& isRef, const bool& isStrong) {
+    z::Ast::QualifiedTypeSpec& qualifiedTypeSpec = addQualifiedTypeSpec(pos, isConst, typeSpec, isRef, isStrong);
     return z::ptr(qualifiedTypeSpec);
 }
 
-z::Ast::QualifiedTypeSpec* z::Ast::Factory::aQualifiedTypeSpec(const bool& isConst, const z::Ast::TypeSpec& typeSpec, const bool& isRef) {
-    return aQualifiedTypeSpec(getToken(), isConst, typeSpec, isRef);
+z::Ast::QualifiedTypeSpec* z::Ast::Factory::aQualifiedTypeSpec(const bool& isConst, const z::Ast::TypeSpec& typeSpec, const bool& isRef, const bool& isStrong) {
+    return aQualifiedTypeSpec(getToken(), isConst, typeSpec, isRef, isStrong);
 }
 
 const z::Ast::TemplateDecl* z::Ast::Factory::aTemplateTypeSpec(const z::Ast::TypeSpec& parent, const z::Ast::Token& name) {
@@ -920,7 +920,7 @@ z::Ast::ForeachStatement* z::Ast::Factory::aEnterForeachInit(const z::Ast::Token
     }
 
     const z::Ast::TemplateDefn& templateDefn = getTemplateDefn(valName, expr, "list", 1);
-    const z::Ast::QualifiedTypeSpec& valTypeSpec = addQualifiedTypeSpec(valName, expr.qTypeSpec().isConst(), templateDefn.at(0).typeSpec(), true);
+    const z::Ast::QualifiedTypeSpec& valTypeSpec = addQualifiedTypeSpec(valName, expr.qTypeSpec().isConst(), templateDefn.at(0).typeSpec(), true, false);
     const z::Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
     z::Ast::Scope& scope = addScope(valName, z::Ast::ScopeType::Local);
     scope.addVariableDef(valDef);
@@ -931,8 +931,8 @@ z::Ast::ForeachStatement* z::Ast::Factory::aEnterForeachInit(const z::Ast::Token
 
 z::Ast::ForeachDictStatement* z::Ast::Factory::aEnterForeachInit(const z::Ast::Token& keyName, const z::Ast::Token& valName, const z::Ast::Expr& expr) {
     const z::Ast::TemplateDefn& templateDefn = getTemplateDefn(valName, expr, "dict", 2);
-    const z::Ast::QualifiedTypeSpec& keyTypeSpec = addQualifiedTypeSpec(keyName, true, templateDefn.at(0).typeSpec(), true);
-    const z::Ast::QualifiedTypeSpec& valTypeSpec = addQualifiedTypeSpec(keyName, expr.qTypeSpec().isConst(), templateDefn.at(1).typeSpec(), true);
+    const z::Ast::QualifiedTypeSpec& keyTypeSpec = addQualifiedTypeSpec(keyName, true, templateDefn.at(0).typeSpec(), true, false);
+    const z::Ast::QualifiedTypeSpec& valTypeSpec = addQualifiedTypeSpec(keyName, expr.qTypeSpec().isConst(), templateDefn.at(1).typeSpec(), true, false);
     const z::Ast::VariableDefn& keyDef = addVariableDefn(keyTypeSpec, keyName);
     const z::Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
     z::Ast::Scope& scope = addScope(keyName, z::Ast::ScopeType::Local);
@@ -992,7 +992,7 @@ z::Ast::AddEventHandlerStatement* z::Ast::Factory::aAddEventHandlerStatement(con
 }
 
 const z::Ast::EventDecl* z::Ast::Factory::aEnterAddEventHandler(const z::Ast::EventDecl& eventDecl) {
-    z::Ast::QualifiedTypeSpec& qts = addQualifiedTypeSpec(getToken(), false, eventDecl.handler(), false);
+    z::Ast::QualifiedTypeSpec& qts = addQualifiedTypeSpec(getToken(), false, eventDecl.handler(), false, false);
     unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etEventHandler, qts);
     return z::ptr(eventDecl);
 }
@@ -1284,7 +1284,7 @@ z::Ast::ListExpr* z::Ast::Factory::aListExpr(const z::Ast::Token& pos, const z::
     z::Ast::TemplateTypePartList& tlist = unit().addNode(new z::Ast::TemplateTypePartList(pos));
     tlist.addType(list.valueType());
     z::Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "list", tlist);
-    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false);
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false, false);
 
     z::Ast::ListExpr& expr = unit().addNode(new z::Ast::ListExpr(pos, qTypeSpec, list));
     return z::ptr(expr);
@@ -1335,7 +1335,7 @@ z::Ast::DictExpr* z::Ast::Factory::aDictExpr(const z::Ast::Token& pos, const z::
     tlist.addType(list.valueType());
     z::Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "dict", tlist);
 
-    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false);
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false, false);
 
     z::Ast::DictExpr& expr = unit().addNode(new z::Ast::DictExpr(pos, qTypeSpec, list));
     return z::ptr(expr);
@@ -1464,7 +1464,7 @@ z::Ast::Expr* z::Ast::Factory::aEnterFunctorCall(const z::Ast::Token& name) {
 }
 
 z::Ast::Expr* z::Ast::Factory::aEnterFunctorCall(const z::Ast::Function& function) {
-    z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(getToken(), false, function, false);
+    z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(getToken(), false, function, false, false);
     z::Ast::ExprList& exprList = addExprList(getToken());
     z::Ast::FunctionInstanceExpr& expr = unit().addNode(new z::Ast::FunctionInstanceExpr(getToken(), qTypeSpec, function, exprList));
     return aEnterFunctorCall(expr);
@@ -1490,12 +1490,12 @@ z::Ast::ExprList* z::Ast::Factory::aCallArgList() {
 z::Ast::RunExpr* z::Ast::Factory::aRunExpr(const z::Ast::Token& pos, const z::Ast::FunctorCallExpr& callExpr) {
     const z::Ast::Function* function = dynamic_cast<const z::Ast::Function*>(z::ptr(callExpr.expr().qTypeSpec().typeSpec()));
     if(function != 0) {
-        z::Ast::QualifiedTypeSpec& qRetTypeSpec = addQualifiedTypeSpec(pos, false, z::ref(function), false);
+        z::Ast::QualifiedTypeSpec& qRetTypeSpec = addQualifiedTypeSpec(pos, false, z::ref(function), false, false);
 
         z::Ast::TemplateTypePartList& list = unit().addNode(new z::Ast::TemplateTypePartList(pos));
         list.addType(qRetTypeSpec);
         z::Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "future", list);
-        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, true);
+        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, true, false);
 
         z::Ast::RunExpr& runExpr = unit().addNode(new z::Ast::RunExpr(pos, qTypeSpec, callExpr));
         return z::ptr(runExpr);
@@ -1526,13 +1526,13 @@ z::Ast::IndexExpr* z::Ast::Factory::aIndexExpr(const z::Ast::Token& pos, const z
     const z::Ast::TemplateDefn* td = dynamic_cast<const z::Ast::TemplateDefn*>(listTypeSpec);
     if(td) {
         if(z::ref(td).name().string() == "list") {
-            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(td).at(0).isConst(), z::ref(td).at(0).typeSpec(), false);
+            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(td).at(0).isConst(), z::ref(td).at(0).typeSpec(), false, false);
             z::Ast::IndexExpr& indexExpr = unit().addNode(new z::Ast::IndexExpr(pos, qTypeSpec, expr, index));
             return z::ptr(indexExpr);
         }
 
         if(z::ref(td).name().string() == "dict") {
-            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(td).at(1).isConst(), z::ref(td).at(1).typeSpec(), true);
+            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(td).at(1).isConst(), z::ref(td).at(1).typeSpec(), true, false);
             z::Ast::IndexExpr& indexExpr = unit().addNode(new z::Ast::IndexExpr(pos, qTypeSpec, expr, index));
             return z::ptr(indexExpr);
         }
@@ -1542,7 +1542,7 @@ z::Ast::IndexExpr* z::Ast::Factory::aIndexExpr(const z::Ast::Token& pos, const z
     if(sd) {
         const z::Ast::Routine* routine = z::ref(sd).hasChild<const z::Ast::Routine>("at");
         if(routine) {
-            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(routine).outType().isConst(), z::ref(routine).outType().typeSpec(), true);
+            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(routine).outType().isConst(), z::ref(routine).outType().typeSpec(), true, false);
             z::Ast::IndexExpr& indexExpr = unit().addNode(new z::Ast::IndexExpr(pos, qTypeSpec, expr, index));
             return z::ptr(indexExpr);
         }
@@ -1555,14 +1555,14 @@ z::Ast::SpliceExpr* z::Ast::Factory::aSpliceExpr(const z::Ast::Token& pos, const
     const z::Ast::TypeSpec* listTypeSpec = resolveTypedef(expr.qTypeSpec().typeSpec());
 
     if((listTypeSpec) && (z::ref(listTypeSpec).name().string() == "data")) {
-        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, expr.qTypeSpec().typeSpec(), false);
+        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, expr.qTypeSpec().typeSpec(), false, false);
         z::Ast::SpliceExpr& spliceExpr = unit().addNode(new z::Ast::SpliceExpr(pos, qTypeSpec, expr, from, to));
         return z::ptr(spliceExpr);
     }
 
     const z::Ast::TemplateDefn* td = dynamic_cast<const z::Ast::TemplateDefn*>(listTypeSpec);
     if((td) && (z::ref(td).name().string() == "list")) {
-        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(td).at(0).isConst(), expr.qTypeSpec().typeSpec(), false);
+        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(td).at(0).isConst(), expr.qTypeSpec().typeSpec(), false, false);
         z::Ast::SpliceExpr& spliceExpr = unit().addNode(new z::Ast::SpliceExpr(pos, qTypeSpec, expr, from, to));
         return z::ptr(spliceExpr);
     }
@@ -1598,7 +1598,7 @@ z::Ast::TypecastExpr* z::Ast::Factory::aTypecastExpr(const z::Ast::Token& pos, c
     /// \todo check if canCoerce
     const z::Ast::TemplateDefn* subType = dynamic_cast<const z::Ast::TemplateDefn*>(z::ptr(expr.qTypeSpec().typeSpec()));
     if((subType) && (z::ref(subType).name().string() == "pointer")) {
-        const z::Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(pos, qTypeSpec.isConst(), qTypeSpec.typeSpec(), true);
+        const z::Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(pos, qTypeSpec.isConst(), qTypeSpec.typeSpec(), true, false);
         z::Ast::TypecastExpr& typecastExpr = unit().addNode(new z::Ast::DynamicTypecastExpr(pos, qTypeSpec, typeSpec, expr));
         return z::ptr(typecastExpr);
     }
@@ -1609,10 +1609,10 @@ z::Ast::TypecastExpr* z::Ast::Factory::aTypecastExpr(const z::Ast::Token& pos, c
 
 z::Ast::PointerInstanceExpr* z::Ast::Factory::aPointerInstanceExpr(const z::Ast::Token& pos, const z::Ast::Expr& expr) {
     z::Ast::TemplateTypePartList& list = unit().addNode(new z::Ast::TemplateTypePartList(pos));
-    const z::Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(pos, expr.qTypeSpec().isConst(), expr.qTypeSpec().typeSpec(), true);
+    const z::Ast::QualifiedTypeSpec& typeSpec = addQualifiedTypeSpec(pos, expr.qTypeSpec().isConst(), expr.qTypeSpec().typeSpec(), true, false);
     list.addType(typeSpec);
     z::Ast::TemplateDefn& templateDefn = createTemplateDefn(pos, "pointer", list);
-    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false);
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn, false, false);
 
     z::Ast::ExprList& exprList = addExprList(pos);
     exprList.addExpr(expr);
@@ -1644,11 +1644,11 @@ z::Ast::TemplateDefnInstanceExpr* z::Ast::Factory::aValueInstanceExpr(const z::A
 z::Ast::TemplateDefnInstanceExpr* z::Ast::Factory::aTemplateDefnInstanceExpr(const z::Ast::Token& pos, const z::Ast::TemplateDefn& templateDefn, const z::Ast::ExprList& exprList) {
     z::string name = templateDefn.name().string();
     if(name == "pointer") {
-        const z::Ast::QualifiedTypeSpec& newTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn.at(0).typeSpec(), true);
+        const z::Ast::QualifiedTypeSpec& newTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn.at(0).typeSpec(), true, false);
         z::Ast::TemplateTypePartList& list = unit().addNode(new z::Ast::TemplateTypePartList(pos));
         list.addType(newTypeSpec);
         z::Ast::TemplateDefn& newTemplateDefn = createTemplateDefn(pos, "pointer", list);
-        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, newTemplateDefn, false);
+        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, newTemplateDefn, false, false);
 
         z::Ast::PointerInstanceExpr& expr = unit().addNode(new z::Ast::PointerInstanceExpr(pos, qTypeSpec, templateDefn, newTemplateDefn, exprList));
         return z::ptr(expr);
@@ -1667,7 +1667,7 @@ z::Ast::TemplateDefnInstanceExpr* z::Ast::Factory::aTemplateDefnInstanceExpr(con
     }
 
     if(name == "raw") {
-        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn.at(0).typeSpec(), false);
+        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn.at(0).typeSpec(), false, false);
         z::Ast::RawDataInstanceExpr& expr = unit().addNode(new z::Ast::RawDataInstanceExpr(pos, qTypeSpec, templateDefn, templateDefn, exprList));
         return z::ptr(expr);
     }
@@ -1731,7 +1731,7 @@ z::Ast::MemberExpr* z::Ast::Factory::aMemberVariableExpr(const z::Ast::Expr& exp
         for(StructBaseIterator sbi(structDefn); sbi.hasNext(); sbi.next()) {
             const z::Ast::VariableDefn* vref = unit().hasMember(sbi.get().scope(), name);
             if(vref) {
-                const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, expr.qTypeSpec().isConst(), z::ref(vref).qTypeSpec().typeSpec(), true);
+                const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, expr.qTypeSpec().isConst(), z::ref(vref).qTypeSpec().typeSpec(), true, false);
                 z::Ast::MemberVariableExpr& vdefExpr = unit().addNode(new z::Ast::MemberVariableExpr(name, qTypeSpec, expr, z::ref(vref)));
                 return z::ptr(vdefExpr);
             }
@@ -1739,7 +1739,7 @@ z::Ast::MemberExpr* z::Ast::Factory::aMemberVariableExpr(const z::Ast::Expr& exp
             for(z::Ast::StructDefn::PropertyList::const_iterator it = sbi.get().propertyList().begin(); it != sbi.get().propertyList().end(); ++it) {
                 const z::Ast::PropertyDecl& pref = it->get();
                 if(pref.name().string() == name.string()) {
-                    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, expr.qTypeSpec().isConst(), pref.qTypeSpec().typeSpec(), true);
+                    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, expr.qTypeSpec().isConst(), pref.qTypeSpec().typeSpec(), true, false);
                     z::Ast::MemberPropertyExpr& vdefExpr = unit().addNode(new z::Ast::MemberPropertyExpr(name, qTypeSpec, expr, pref));
                     return z::ptr(vdefExpr);
                 }
@@ -1781,7 +1781,7 @@ z::Ast::TypeSpecMemberExpr* z::Ast::Factory::aTypeSpecMemberExpr(const z::Ast::T
                                .arg("t", typeSpec.name())
                                );
         }
-        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, typeSpec, false);
+        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, typeSpec, false, false);
         z::Ast::EnumMemberExpr& typeSpecMemberExpr = unit().addNode(new z::Ast::EnumMemberExpr(name, qTypeSpec, typeSpec, z::ref(vref)));
         return z::ptr(typeSpecMemberExpr);
     }
@@ -1806,7 +1806,7 @@ z::Ast::TypeSpecMemberExpr* z::Ast::Factory::aTypeSpecMemberExpr(const z::Ast::T
 }
 
 z::Ast::StructInstanceExpr* z::Ast::Factory::aStructInstanceExpr(const z::Ast::Token& pos, const z::Ast::StructDefn& structDefn, const z::Ast::StructInitPartList& list) {
-    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, structDefn, false);
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, structDefn, false, false);
     z::Ast::StructInstanceExpr& structInstanceExpr = unit().addNode(new z::Ast::StructInstanceExpr(pos, qTypeSpec, structDefn, list));
     return z::ptr(structInstanceExpr);
 }
@@ -1817,7 +1817,7 @@ z::Ast::StructInstanceExpr* z::Ast::Factory::aStructInstanceExpr(const z::Ast::T
 }
 
 z::Ast::Expr* z::Ast::Factory::aAutoStructInstanceExpr(const z::Ast::Token& pos, const z::Ast::StructDefn& structDefn, const z::Ast::StructInitPartList& list) {
-    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, structDefn, false);
+    const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, structDefn, false, false);
     z::Ast::StructInstanceExpr& structInstanceExpr = unit().addNode(new z::Ast::StructInstanceExpr(pos, qTypeSpec, structDefn, list));
     return z::ptr(structInstanceExpr);
 }
@@ -1895,7 +1895,7 @@ z::Ast::StructInitPart* z::Ast::Factory::aStructInitPart(const z::Ast::Token& po
 z::Ast::FunctionInstanceExpr* z::Ast::Factory::aFunctionInstanceExpr(const z::Ast::Token& pos, const z::Ast::TypeSpec& typeSpec, const z::Ast::ExprList& exprList) {
     const z::Ast::Function* function = dynamic_cast<const z::Ast::Function*>(z::ptr(typeSpec));
     if(function != 0) {
-        z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, z::ref(function), false);
+        z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, z::ref(function), false, false);
         z::Ast::FunctionInstanceExpr& functionInstanceExpr = unit().addNode(new z::Ast::FunctionInstanceExpr(pos, qTypeSpec, z::ref(function), exprList));
         return z::ptr(functionInstanceExpr);
     }
@@ -1906,7 +1906,7 @@ z::Ast::FunctionInstanceExpr* z::Ast::Factory::aFunctionInstanceExpr(const z::As
 z::Ast::AnonymousFunctionExpr* z::Ast::Factory::aAnonymousFunctionExpr(z::Ast::ChildFunctionDefn& functionDefn, const z::Ast::CompoundStatement& compoundStatement) {
     aChildFunctionDefn(functionDefn, compoundStatement);
     z::Ast::ExprList& exprList = addExprList(getToken());
-    z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(getToken(), false, functionDefn, false);
+    z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(getToken(), false, functionDefn, false, false);
     z::Ast::AnonymousFunctionExpr& functionInstanceExpr = unit().addNode(new z::Ast::AnonymousFunctionExpr(getToken(), qTypeSpec, functionDefn, exprList));
     return z::ptr(functionInstanceExpr);
 }

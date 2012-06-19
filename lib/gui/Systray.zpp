@@ -2,13 +2,13 @@ include gui::Widget public;
 include gui::Window public;
 namespace Systray;
 
-public event(const widget& systray) native => function void OnActivation();
-public event(const widget& systray) native => function void OnContextMenu();
-
 public struct Definition : Window::Definition {
     auto tooltip = "";
     auto iconFile = "";
 };
+
+public event(const widget& systray) native => function void OnActivation();
+public event(const widget& systray) native => function void OnContextMenu();
 
 public function widget Create(const widget& parentWin, const Definition& defn) native;
 

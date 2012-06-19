@@ -54,7 +54,7 @@ routine const widget& processWindow(widget& win, const Window::Definition& defn)
     return win;
 }
 
-public function widget Create(const MainFrame::Definition& defn) {
+public function widget Create(const MainFrame::Definition defn) {
     auto w = MainFrame::Create(defn);
     processWindow(w.wnd, defn);
     return (w.wnd);

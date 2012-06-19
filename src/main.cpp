@@ -377,5 +377,5 @@ int main(int argc, char* argv[]) {
 }
 
 // dummy function
-void z::Application::onExit() {
+void z::Application::onExit() const {
 }

@@ -470,9 +470,13 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::RunExpr& node) {
-            _os() << "z::ctx().addT(";
+            _os() << "z::ctx().addT(z::pointer<";
+            _os() << StlcppNameGenerator().tn(node.callExpr().expr().qTypeSpec().typeSpec());
+            _os() << ">(\"";
+            _os() << StlcppNameGenerator().tn(node.callExpr().expr().qTypeSpec().typeSpec());
+            _os() << "\", ";
             ExprGenerator(_os).visitNode(node.callExpr().expr());
-            _os() << ", ";
+            _os() << "), ";
             _os() << StlcppNameGenerator().tn(node.callExpr().expr().qTypeSpec().typeSpec()) << "::_In(";
             ExprGenerator(_os, ", ").visitList(node.callExpr().exprList());
             _os() << "))";
@@ -857,18 +861,31 @@ namespace sg {
             os() << ")";
         }
 
+        inline void writeScopeMember(const z::Ast::VariableDefn& vdef) {
+            _os() << z::Indent::get();
+            if(vdef.qTypeSpec().isStrong()) {
+                if(vdef.qTypeSpec().isConst()) {
+                    _os() << "const ";
+                }
+                _os() << StlcppNameGenerator().tn(vdef.qTypeSpec().typeSpec()) << "&";
+            } else {
+                _os() << StlcppNameGenerator().tn(vdef.qTypeSpec().typeSpec());
+            }
+            _os() << " " << vdef.name() << ";" << std::endl;
+        }
+
         inline void writeScopeMemberList(const z::Ast::Scope& scope) {
             for(z::Ast::Scope::List::const_iterator it = scope.list().begin(); it != scope.list().end(); ++it) {
                 INDENT;
                 const z::Ast::VariableDefn& vdef = it->get();
-                _os() << z::Indent::get() << StlcppNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name() << ";" << std::endl;
+                writeScopeMember(vdef);
             }
             if(scope.hasPosParam()) {
                 const z::Ast::Scope& posParam = scope.posParam();
                 for(z::Ast::Scope::List::const_iterator it = posParam.list().begin(); it != posParam.list().end(); ++it) {
                     INDENT;
                     const z::Ast::VariableDefn& vdef = it->get();
-                    _os() << z::Indent::get() << StlcppNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name() << ";" << std::endl;
+                    writeScopeMember(vdef);
                 }
             }
         }

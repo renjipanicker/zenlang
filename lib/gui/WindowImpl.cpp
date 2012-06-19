@@ -127,7 +127,6 @@ z::widget::impl& Window::Native::createWindow(const Window::Definition& def, con
         throw z::Exception("Window", z::string("Unable to create wnd of class %{s}: %{e}").arg("s", className).arg("e", ::GetLastError()));
     }
 
-    z::mlog("createWindow", z::string("hwnd: %{p}, cname: %{i}").arg("p", z::ref(impl)._val).arg("i", className));
     NONCLIENTMETRICS ncm;
     ncm.cbSize = sizeof(NONCLIENTMETRICS);
     ::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &ncm, 0);
@@ -366,8 +365,9 @@ void Window::Hide::run(const z::widget& wnd) {
 #endif
 }
 
-void Window::Move::run(const z::widget& wnd, const Window::Position position) {
+void Window::Move::run(const z::widget& wnd, const Window::Position& position) {
 #if defined(WIN32)
+    z::mlog("moving", z::string("move: hwnd: %{w}").arg("w", wnd.val()._val));
     ::MoveWindow(wnd.val()._val, position.x, position.y, position.w, position.h, TRUE);
 #elif defined(GTK)
     unused(wnd); unused(position);

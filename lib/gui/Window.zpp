@@ -40,7 +40,7 @@ public function void SetTitle(const widget& wnd, const string& title) native;
 public function void SetFocus(const widget& frame, const widget& wnd) native;
 public function void Show(const widget& wnd) native;
 public function void Hide(const widget& wnd) native;
-public function void Move(const widget& wnd, const Position position) native;
+public function void Move(const widget& wnd, const Position& position) native;
 public function void Size(const widget& wnd, const int& w, const int& h) native;
 
 public event(const widget& wnd) native => function void OnResize();

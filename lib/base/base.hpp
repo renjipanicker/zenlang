@@ -1006,10 +1006,15 @@ namespace z {
     /// \brief Spcialization of function instance and in-param. Holds out-param after invocation
     template <typename FunctionT>
     struct FutureT : public Future {
-        inline FutureT(const FunctionT& function, const typename FunctionT::_In& in) : _function(function), _in(in) {}
+        inline FutureT(const z::pointer<FunctionT>& function, const typename FunctionT::_In& in) : _function(function), _in(in) {
+            z::mlog("FutureT", z::string("ctor: %{w}").arg("w", this));
+        }
+        inline ~FutureT() {
+            z::mlog("FutureT", z::string("dtor: %{w}").arg("w", this));
+        }
     private:
         /// \brief the function instance
-        FunctionT _function;
+        z::pointer<FunctionT> _function;
 
         /// \brief the in-params to invoke the function with
         typedef typename FunctionT::_In In;
@@ -1020,7 +1025,7 @@ namespace z {
         z::autoptr<Out> _out;
 
         /// \brief the actual invocation
-        virtual void run() {Out out = _function._run(_in); _out.reset(new Out(out));}
+        virtual void run() {Out out = _function.get()._run(_in); _out.reset(new Out(out));}
     };
 
     ////////////////////////////////////////////////////////////////////////////
@@ -1053,7 +1058,7 @@ namespace z {
 
     public:
         template <typename FunctionT>
-        inline FutureT<FunctionT>& addT(FunctionT function, const typename FunctionT::_In& in) {
+        inline FutureT<FunctionT>& addT(const z::pointer<FunctionT>& function, const typename FunctionT::_In& in) {
             FutureT<FunctionT>* inv = new FutureT<FunctionT>(function, in);
             add(inv);
             return ref(inv);
@@ -1086,7 +1091,7 @@ namespace z {
     private:
         typedef z::list< pointer<ValT> > OList;
         OList _olist;
-        typedef z::rlist<ValT> List;
+        typedef z::rlist< pointer<ValT> > List;
         typedef z::dict<KeyT, List> Map;
         Map map;
 
@@ -1094,7 +1099,7 @@ namespace z {
         inline ValT& insertHandler(const KeyT& key, z::pointer<ValT> val) {
             z::pointer<ValT>& vv = _olist.add(val);
             List& list = map[key];
-            list.add(vv.get());
+            list.add(vv);
             EventT::addHandler(key, vv);
             return vv.get();
         }
@@ -1108,9 +1113,9 @@ namespace z {
 
             const List& list = it->second;
             for(typename List::const_iterator itl = list.begin(); itl != list.end(); ++itl) {
-                ValT& handler = z::ref(*itl);
-//                ctx().add(
-                handler._run(in);
+                const z::pointer<ValT>& handler = z::ref(*itl);
+                ctx().addT(handler, in);
+//                handler.get()._run(in);
             }
             return true;
         }
@@ -1164,7 +1169,7 @@ namespace z {
         virtual void enque(ThreadContext& ctx) {
             T t;
             typename T::_In in;
-            ctx.addT(t, in);
+            ctx.addT(z::pointer<T>("test", t), in);
         }
     };
     #endif
@@ -1202,7 +1207,7 @@ namespace z {
         virtual void enque(ThreadContext& ctx, const z::stringlist& argl) {
             T t;
             typename T::_In in(argl);
-            ctx.addT(t, in);
+            ctx.addT(z::pointer<T>("main", t), in);
         }
     };
 
@@ -1273,7 +1278,7 @@ namespace z {
 
         /// \brief Called on exit
         /// This function is implemented in ApplicationImpl.cpp
-        void onExit();
+        void onExit() const;
 
     private:
         z::autoptr<z::GlobalContext> _ctx;

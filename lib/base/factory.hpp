@@ -26,7 +26,7 @@ namespace Ast {
         inline const Ast::Token& getToken() const {return _lastToken;}
         inline Ast::Namespace& getUnitNamespace(const Ast::Token& name);
         inline Ast::ExprList& addExprList(const Ast::Token& pos);
-        inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const TypeSpec& typeSpec, const bool& isRef);
+        inline Ast::QualifiedTypeSpec& addQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const TypeSpec& typeSpec, const bool& isRef, const bool& isStrong);
         inline const Ast::QualifiedTypeSpec& getQualifiedTypeSpec(const Ast::Token& pos, const z::string& name);
         inline Ast::Scope& addScope(const Ast::Token& pos, const Ast::ScopeType::T& type);
         inline Ast::VariableDefn& addVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name);
@@ -119,8 +119,8 @@ namespace Ast {
         Ast::VariableDefn*       aVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec, const Ast::Token& name, const Ast::Expr& initExpr);
         const Ast::QualifiedTypeSpec* aQualifiedVariableDefn(const Ast::QualifiedTypeSpec& qualifiedTypeSpec);
         void                     aAutoQualifiedVariableDefn();
-        Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
-        Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef);
+        Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const Ast::Token& pos, const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef, const bool& isStrong);
+        Ast::QualifiedTypeSpec*  aQualifiedTypeSpec(const bool& isConst, const Ast::TypeSpec& typeSpec, const bool& isRef, const bool& isStrong);
         const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
         const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::Token& name);
         const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::TemplateDecl& templateDecl);

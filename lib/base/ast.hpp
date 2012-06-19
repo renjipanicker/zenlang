@@ -265,15 +265,17 @@ namespace Ast {
 
     class QualifiedTypeSpec : public Node {
     public:
-        inline QualifiedTypeSpec(const Token& pos, const bool& isConst, const TypeSpec& typeSpec, const bool& isRef)
-            : Node(pos), _isConst(isConst), _typeSpec(typeSpec), _isRef(isRef) {}
+        inline QualifiedTypeSpec(const Token& pos, const bool& isConst, const TypeSpec& typeSpec, const bool& isRef, const bool& isStrong)
+            : Node(pos), _isConst(isConst), _typeSpec(typeSpec), _isRef(isRef), _isStrong(isStrong) {}
         inline const bool& isConst() const {return _isConst;}
         inline const TypeSpec& typeSpec() const {return _typeSpec;}
         inline const bool& isRef() const {return _isRef;}
+        inline const bool& isStrong() const {return _isStrong;}
     private:
         const bool _isConst;
         const TypeSpec& _typeSpec;
         const bool _isRef;
+        const bool _isStrong;
     };
 
     class Expr;

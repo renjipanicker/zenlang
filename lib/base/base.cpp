@@ -830,9 +830,6 @@ z::Application::Application(int argc, char** argv) : _argc(argc), _argv(argv), _
 }
 
 z::Application::~Application() {
-    // NOTE: This does not get called under OSX/iOS, because the main loop is terminated
-    // using exit(). This leads to memory leaks. The only way to call this would be using _atexit().
-    onExit();
 #if defined(WIN32)
     WSACleanup();
 #endif
@@ -930,6 +927,11 @@ int z::Application::exec() {
 }
 
 int z::Application::exit(const int& code) const {
+    // Enqueue all at-exit functions.
+    // NOTE: This does not get called under OSX/iOS, because the main loop is terminated
+    // using exit(). This leads to memory leaks. The only way to call this would be using _atexit().
+    onExit();
+
 #if defined(GUI)
 #if defined(WIN32)
     ::PostQuitMessage(code);
@@ -947,6 +949,7 @@ int z::Application::exit(const int& code) const {
 #error "Unimplemented GUI mode"
 #endif
 #endif
+
     z::Application& self = const_cast<z::Application&>(z::ref(this));
     self._isExit = true;
     return code;
@@ -955,7 +958,7 @@ int z::Application::exit(const int& code) const {
 void z::Application::writeLog(const z::string& msg) const {
     z::ref(_log) << msg << std::endl;
 #if defined(DEBUG) && defined(GUI) && defined(WIN32)
-    OutputDebugStringA(z::s2e(msg).c_str());
+    OutputDebugStringA(z::s2e(msg + "\n").c_str());
 #endif
 }
 
