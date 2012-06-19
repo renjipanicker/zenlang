@@ -12,7 +12,7 @@ namespace ButtonImpl {
             case WM_COMMAND: {
                 if(LOWORD(wParam) == BN_CLICKED) {
                     Button::OnClick::Handler::_In in;
-                    Button::OnClick::list().run(Window::Native::impl(hWnd), in);
+                    Button::OnClick::list().runHandler(Window::Native::impl(hWnd), in);
                 }
                 break;
             }

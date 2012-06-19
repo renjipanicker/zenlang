@@ -14,12 +14,12 @@ namespace SystrayImpl {
     static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         if(lParam == WM_LBUTTONDOWN) {
             Systray::OnActivation::Handler::_In in;
-            Systray::OnActivation::list().run(iconMap.impl(message), in);
+            Systray::OnActivation::list().runHandler(iconMap.impl(message), in);
         }
 
         if((lParam == WM_RBUTTONDOWN) || (lParam == WM_CONTEXTMENU)) {
             Systray::OnContextMenu::Handler::_In in;
-            Systray::OnContextMenu::list().run(iconMap.impl(message), in);
+            Systray::OnContextMenu::list().runHandler(iconMap.impl(message), in);
         }
 
         assert(OrigWndProc);

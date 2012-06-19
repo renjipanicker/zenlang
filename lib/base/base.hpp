@@ -996,46 +996,6 @@ namespace z {
     };
 
     ///////////////////////////////////////////////////////////////
-    /// \brief MultiMap of event source to event-handler-list
-    /// This is a simpler helper function for events
-    template <typename KeyT, typename ValT, typename EventT>
-    struct HandlerList {
-    private:
-        typedef z::list< pointer<ValT> > OList;
-        OList _olist;
-        typedef z::rlist<ValT> List;
-        typedef z::dict<KeyT, List> Map;
-        Map map;
-
-    public:
-        inline ValT& add(const KeyT& key, z::pointer<ValT> val) {
-            z::pointer<ValT>& vv = _olist.add(val);
-            List& list = map[key];
-            list.add(vv.get());
-            EventT::addHandler(key, vv);
-            return vv.get();
-        }
-
-        template<typename T>
-        inline ValT& addT(const KeyT& key, T h) {
-            return add(key, z::pointer<T>("XX", h));
-        }
-
-        inline bool run(const KeyT& key, typename ValT::_In in) {
-            typename Map::const_iterator it = map.find(key);
-            if(it == map.end())
-                return false;
-
-            const List& list = it->second;
-            for(typename List::const_iterator itl = list.begin(); itl != list.end(); ++itl) {
-                ValT& handler = z::ref(*itl);
-                handler._run(in);
-            }
-            return true;
-        }
-    };
-
-    ///////////////////////////////////////////////////////////////
     /// \brief Base class for function and in-param to be enqueued for execution
     struct Future {
         virtual ~Future(){}
@@ -1081,9 +1041,11 @@ namespace z {
     };
 
 
+    ////////////////////////////////////////////////////////////////////////////
     /// \brief Queue for a single thread
     struct RunQueue;
 
+    ////////////////////////////////////////////////////////////////////////////
     /// \brief thread-local-context
     struct ThreadContext {
         ThreadContext(RunQueue& queue);
@@ -1111,10 +1073,47 @@ namespace z {
         RunQueue& _queue;
     };
 
+    ////////////////////////////////////////////////////////////////////////////
     /// \brief Returns the local context instance
     /// This instance encapsulates the current run-queue
     /// and is unique for every thread. Uses TLS internally.
     ThreadContext& ctx();
+
+    ///////////////////////////////////////////////////////////////
+    /// \brief MultiMap of event source to event-handler-list
+    template <typename KeyT, typename ValT, typename EventT>
+    struct HandlerList {
+    private:
+        typedef z::list< pointer<ValT> > OList;
+        OList _olist;
+        typedef z::rlist<ValT> List;
+        typedef z::dict<KeyT, List> Map;
+        Map map;
+
+    public:
+        inline ValT& insertHandler(const KeyT& key, z::pointer<ValT> val) {
+            z::pointer<ValT>& vv = _olist.add(val);
+            List& list = map[key];
+            list.add(vv.get());
+            EventT::addHandler(key, vv);
+            return vv.get();
+        }
+
+        inline void removeHandler() {} /// \todo: later
+
+        inline bool runHandler(const KeyT& key, typename ValT::_In in) {
+            typename Map::const_iterator it = map.find(key);
+            if(it == map.end())
+                return false;
+
+            const List& list = it->second;
+            for(typename List::const_iterator itl = list.begin(); itl != list.end(); ++itl) {
+                ValT& handler = z::ref(*itl);
+                handler._run(in);
+            }
+            return true;
+        }
+    };
 
     #if defined(UNIT_TEST)
     ////////////////////////////////////////////////////////////////////////////

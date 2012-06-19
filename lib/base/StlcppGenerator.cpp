@@ -1613,11 +1613,15 @@ namespace sg {
 
         virtual void visit(const z::Ast::AddEventHandlerStatement& node) {
             z::string ename = StlcppNameGenerator().tn(node.event());
-            fpDefn()() << z::Indent::get() << ename << "::list().addT(";
+            fpDefn()() << z::Indent::get() << ename << "::list().insertHandler(";
             ExprGenerator(fpDefn()).visitNode(node.source());
-            fpDefn()() << ", ";
+            fpDefn()() << ", z::pointer<";
+            fpDefn()() << StlcppNameGenerator().tn(node.functor().qTypeSpec().typeSpec());
+            fpDefn()() << ">(\"";
+            fpDefn()() << StlcppNameGenerator().tn(node.functor().qTypeSpec().typeSpec());
+            fpDefn()() << "\", ";
             ExprGenerator(fpDefn()).visitNode(node.functor());
-            fpDefn()() << ");" << std::endl;
+            fpDefn()() << "));" << std::endl;
         }
 
         virtual void visit(const z::Ast::RoutineReturnStatement& node) {

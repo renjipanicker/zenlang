@@ -12,7 +12,7 @@ namespace TextEditImpl {
             case WM_KEYDOWN: {
                 if(wParam == VK_RETURN) {
                     TextEdit::OnEnter::Handler::_In in;
-                    TextEdit::OnEnter::list().run(Window::Native::impl(hWnd), in);
+                    TextEdit::OnEnter::list().runHandler(Window::Native::impl(hWnd), in);
                 }
                 break;
             }

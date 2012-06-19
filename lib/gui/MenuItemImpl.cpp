@@ -16,7 +16,7 @@ namespace MenuItemImpl {
         switch (message) {
             case WM_COMMAND:
                 MenuItem::OnSelect::Handler::_In in;
-                MenuItem::OnSelect::list().run(itemMap.impl(LOWORD(lParam)), in);
+                MenuItem::OnSelect::list().runHandler(itemMap.impl(LOWORD(lParam)), in);
                 break;
         }
         assert(OrigWndProc);

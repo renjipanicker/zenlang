@@ -53,13 +53,13 @@ namespace zz {
         switch (message) {
             case WM_SIZE: {
                 Window::OnResize::Handler::_In in;
-                Window::OnResize::list().run(Window::Native::impl(hWnd), in);
+                Window::OnResize::list().runHandler(Window::Native::impl(hWnd), in);
                 break;
             }
 
             case WM_CLOSE: {
                 Window::OnClose::Handler::_In in;
-                Window::OnClose::list().run(Window::Native::impl(hWnd), in);
+                Window::OnClose::list().runHandler(Window::Native::impl(hWnd), in);
                 break;
             }
         }

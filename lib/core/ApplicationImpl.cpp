@@ -4,7 +4,7 @@
 
 void z::Application::onExit() {
     ::Application::OnExit::Handler::_In in;
-    ::Application::OnExit::list().run(0, in);
+    ::Application::OnExit::list().runHandler(0, in);
 }
 
 z::string Application::appDir() {
