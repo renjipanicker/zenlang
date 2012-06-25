@@ -50,18 +50,23 @@ namespace zz {
     }
 }
 
-void Socket::OnConnectDevice::run(const int& timeout) {
+bool Socket::OnConnectDevice::run(const int& timeout) {
     static int cnt = 0;
     std::cout << "\ronc::poll: " << ++cnt;
-    if(zz::isDataAvailable(s, timeout) == 1) {
-        SOCKET fd = ::accept(s.val(), 0, 0);
-        if (fd < 0) {
-            throw z::Exception("Socket::OnConnectDevice", z::string("Error accept() failed"));
-        }
-        h.get().run(fd);
-        std::cout << "leave" << std::endl;
-        return;
+    if(!zz::isDataAvailable(s, timeout)) {
+        return false;
     }
+
+    SOCKET fd = ::accept(s.val(), 0, 0);
+    if (fd < 0) {
+        throw z::Exception("Socket::OnConnectDevice", z::string("Error accept() failed"));
+    }
+    if (fd == 0) {
+        return true;
+    }
+    h.get().run(fd);
+    std::cout << "leave" << std::endl;
+    return false;
 }
 
 void Socket::OnRecv::addHandler(const z::socket& s, const z::pointer<Handler>& h) {
@@ -69,26 +74,28 @@ void Socket::OnRecv::addHandler(const z::socket& s, const z::pointer<Handler>& h
     z::ctx().startPoll(d);
 }
 
-void Socket::OnRecvDevice::run(const int& timeout) {
+bool Socket::OnRecvDevice::run(const int& timeout) {
     static int cnt = 0;
     std::cout << "\ronr::poll: " << ++cnt;
-    if(zz::isDataAvailable(s, timeout) == 1) {
-        char buf[4*1024];
-#if defined(WIN32)
-        size_t rc = ::recv(s.val(), buf, sizeof(buf), 0);
-#else
-        size_t rc = ::read(s.val(), buf, sizeof(buf));
-#endif
-        if (rc < 0) {
-            throw z::Exception("Socket::OnRecvDevice", z::string("Error read() failed"));
-        }
-
-        if (rc == 0) {
-            return;
-        }
-
-        z::data d((const uint8_t*)buf, rc);
-        h.get().run(d);
-        return;
+    if(!zz::isDataAvailable(s, timeout)) {
+        return false;
     }
+
+    char buf[4*1024];
+#if defined(WIN32)
+    int rc = ::recv(s.val(), buf, sizeof(buf), 0);
+#else
+    int rc = ::read(s.val(), buf, sizeof(buf));
+#endif
+    if (rc < 0) {
+        throw z::Exception("Socket::OnRecvDevice", z::string("Error read() failed"));
+    }
+
+    if (rc == 0) {
+        return true;
+    }
+
+    z::data d((const uint8_t*)buf, rc);
+    h.get().run(d);
+    return false;
 }

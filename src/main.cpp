@@ -125,7 +125,7 @@ inline z::stringlist getSourceFileList(const z::Ast::Expr& expr, const z::string
 }
 
 inline void readProjectFile(z::Ast::Project& project, z::Ast::Config& config, const z::string& filename) {
-    const z::string path = z::file::getPath(filename);
+    const z::string path = z::dir::getPath(filename);
     z::Ast::Unit unit;
     z::Ast::Module module(unit, filename, 1);
     z::Compiler compiler(project, config);
@@ -342,7 +342,7 @@ int main(int argc, char* argv[]) {
     initConfig(project, config);
 
     if(project.verbosity() == z::Ast::Project::Verbosity::Detailed) {
-        z::string cwd = z::file::cwd();
+        z::string cwd = z::dir::cwd();
         std::cout << "cwd: " << cwd << std::endl;
         std::cout << "exe: " << project.zexePath() << std::endl;
         std::cout << "lib: " << project.zlibPath() << std::endl;

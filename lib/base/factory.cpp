@@ -38,23 +38,29 @@ inline const z::Ast::Expr& z::Ast::Factory::getDefaultValue(const z::Ast::TypeSp
             z::Ast::PointerInstanceExpr& expr = unit().addNode(new z::Ast::PointerInstanceExpr(name, qTypeSpec, z::ref(td), z::ref(td), exprList));
             return expr;
         }
-        if(tdName == "list") {
-            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false, false);
-            z::Ast::ListList& llist = unit().addNode(new z::Ast::ListList(name));
-            const z::Ast::QualifiedTypeSpec& qlType = z::ref(td).list().at(0);
-            llist.valueType(qlType);
-            z::Ast::ListExpr& expr = unit().addNode(new z::Ast::ListExpr(name, qTypeSpec, llist));
+        if((tdName == "list") || (tdName == "stack") || (tdName == "queue")) {
+            z::Ast::Token value(name.filename(), name.row(), name.col(), "0");
+            z::Ast::ConstantNullExpr& expr = aConstantNullExpr(value);
             return expr;
+            //const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false, false);
+            //z::Ast::ListList& llist = unit().addNode(new z::Ast::ListList(name));
+            //const z::Ast::QualifiedTypeSpec& qlType = z::ref(td).list().at(0);
+            //llist.valueType(qlType);
+            //z::Ast::ListExpr& expr = unit().addNode(new z::Ast::ListExpr(name, qTypeSpec, llist));
+            //return expr;
         }
         if(tdName == "dict") {
-            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false, false);
-            z::Ast::DictList& llist = unit().addNode(new z::Ast::DictList(name));
-            const z::Ast::QualifiedTypeSpec& qlType = z::ref(td).list().at(0);
-            const z::Ast::QualifiedTypeSpec& qrType = z::ref(td).list().at(1);
-            llist.keyType(qlType);
-            llist.valueType(qrType);
-            z::Ast::DictExpr& expr = unit().addNode(new z::Ast::DictExpr(name, qTypeSpec, llist));
+            z::Ast::Token value(name.filename(), name.row(), name.col(), "0");
+            z::Ast::ConstantNullExpr& expr = aConstantNullExpr(value);
             return expr;
+            //const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false, false);
+            //z::Ast::DictList& llist = unit().addNode(new z::Ast::DictList(name));
+            //const z::Ast::QualifiedTypeSpec& qlType = z::ref(td).list().at(0);
+            //const z::Ast::QualifiedTypeSpec& qrType = z::ref(td).list().at(1);
+            //llist.keyType(qlType);
+            //llist.valueType(qrType);
+            //z::Ast::DictExpr& expr = unit().addNode(new z::Ast::DictExpr(name, qTypeSpec, llist));
+            //return expr;
         }
         if(tdName == "ptr") {
             z::Ast::Token value(name.filename(), name.row(), name.col(), "0");
@@ -99,6 +105,12 @@ inline const z::Ast::Expr& z::Ast::Factory::getDefaultValue(const z::Ast::TypeSp
 }
 
 inline const z::Ast::Expr& z::Ast::Factory::convertExprToExpectedTypeSpec(const z::Ast::Token& pos, const z::Ast::Expr& initExpr) {
+    // if it is null type, do nothing
+    const z::Ast::ConstantNullExpr* cne = dynamic_cast<const z::Ast::ConstantNullExpr*>(z::ptr(initExpr));
+    if(cne != 0) {
+        return initExpr;
+    }
+
     // check if lhs is a pointer to rhs, if so auto-convert
     const z::Ast::TemplateDefn* ts = unit().isPointerToExprExpected(initExpr);
     if(ts) {
@@ -140,18 +152,19 @@ inline const z::Ast::Expr& z::Ast::Factory::convertExprToExpectedTypeSpec(const 
         // check if initExpr can be converted to expected type, if any
         Unit::CoercionResult::T mode = Unit::CoercionResult::None;
         const z::Ast::QualifiedTypeSpec* cqts = unit().canCoerceX(z::ref(qts), initExpr.qTypeSpec(), mode);
-        if(mode != Unit::CoercionResult::Lhs) {
-            throw z::Exception("", zfmt(pos, "Cannot convert expression from '%{f}' to '%{t}' (%{m})")
-                               .arg("f", ZenlangNameGenerator().qtn(initExpr.qTypeSpec()) )
-                               .arg("t", ZenlangNameGenerator().qtn(z::ref(qts)) )
-                               .arg("m", mode )
-                               );
-        }
-        if(z::ptr(z::ref(cqts).typeSpec()) != z::ptr(initExpr.qTypeSpec().typeSpec())) {
+        if(mode == Unit::CoercionResult::Lhs) {
+            if(z::ptr(z::ref(cqts).typeSpec()) == z::ptr(initExpr.qTypeSpec().typeSpec())) {
+                return initExpr;
+            }
             const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(cqts).isConst(), z::ref(qts).typeSpec(), false, false);
             z::Ast::TypecastExpr& typecastExpr = unit().addNode(new z::Ast::StaticTypecastExpr(pos, qTypeSpec, qTypeSpec, initExpr));
             return typecastExpr;
         }
+        throw z::Exception("", zfmt(pos, "Cannot convert expression from '%{f}' to '%{t}' (%{m})")
+                           .arg("f", ZenlangNameGenerator().qtn(initExpr.qTypeSpec()) )
+                           .arg("t", ZenlangNameGenerator().qtn(z::ref(qts)) )
+                           .arg("m", mode )
+                           );
     }
 
     return initExpr;
@@ -381,7 +394,7 @@ inline void z::Ast::Factory::setDefaultDummyValue(const z::Ast::Token& name, z::
     list.addTypeSpec(typeSpec);
     unit().addCoercionList(list);
 
-    z::Ast::ConstantIntExpr& expr = unit().addNode(new z::Ast::ConstantIntExpr(name, qTypeSpec, 0));
+    z::Ast::ConstantNullExpr& expr = unit().addNode(new z::Ast::ConstantNullExpr(name, qTypeSpec));
     unit().addDefaultValue(typeSpec, expr);
 }
 
@@ -1686,16 +1699,18 @@ z::Ast::VariableRefExpr* z::Ast::Factory::aVariableRefExpr(const z::Ast::Token& 
     return z::ptr(vrefExpr);
 }
 
-z::Ast::MemberExpr* z::Ast::Factory::aMemberVariableExpr(const z::Ast::Expr& exprx, const z::Ast::Token& name) {
-    const z::Ast::TypeSpec& typeSpec = exprx.qTypeSpec().typeSpec();
-
-    struct Item {
-        inline Item(const z::Ast::TemplateDefn* ptd, const z::Ast::QualifiedTypeSpec* pqts) : td(ptd), qts(pqts) {}
+namespace zz {
+    struct FindMemberVarItem {
+        inline FindMemberVarItem(const z::Ast::TemplateDefn* ptd, const z::Ast::QualifiedTypeSpec* pqts) : td(ptd), qts(pqts) {}
         const z::Ast::TemplateDefn* td;
         const z::Ast::QualifiedTypeSpec* qts;
     };
+}
 
-    z::stack<Item> tss;
+z::Ast::MemberExpr* z::Ast::Factory::aMemberVariableExpr(const z::Ast::Expr& exprx, const z::Ast::Token& name) {
+    const z::Ast::TypeSpec& typeSpec = exprx.qTypeSpec().typeSpec();
+
+    z::stack<zz::FindMemberVarItem> tss;
     const z::Ast::QualifiedTypeSpec* qpts = z::ptr(exprx.qTypeSpec());
     while(qpts != 0) {
         const z::Ast::TypeSpec& ts = z::ref(qpts).typeSpec();
@@ -1708,7 +1723,7 @@ z::Ast::MemberExpr* z::Ast::Factory::aMemberVariableExpr(const z::Ast::Expr& exp
             break;
         }
 
-        tss.push(Item(td, qpts));
+        tss.push(zz::FindMemberVarItem(td, qpts));
         const z::Ast::QualifiedTypeSpec& qcts = z::ref(td).at(0);
         qpts = z::ptr(qcts);
     }
@@ -1716,7 +1731,7 @@ z::Ast::MemberExpr* z::Ast::Factory::aMemberVariableExpr(const z::Ast::Expr& exp
     assert(qpts != 0);
     const Ast::Expr* expr1 = z::ptr(exprx);
     while(tss.size() > 0) {
-        Item it = tss.pop();
+        zz::FindMemberVarItem it = tss.pop();
         assert(z::ref(it.td).name().string() == "ptr");
         z::Ast::ExprList& exprList = addExprList(name);
         exprList.addExpr(z::ref(expr1));

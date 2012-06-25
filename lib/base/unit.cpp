@@ -354,6 +354,8 @@ z::Ast::StructDefn& z::Ast::Unit::getCurrentStructDefn(const z::Ast::Token& pos)
 
 inline z::string z::Ast::Unit::getExpectedTypeName(const z::Ast::Token& pos, const z::Ast::Unit::ExpectedTypeSpec::Type& exType) {
     switch(exType) {
+        case ExpectedTypeSpec::etNone:
+            break;
         case ExpectedTypeSpec::etAuto:
             return "etAuto";
         case ExpectedTypeSpec::etVarArg:

@@ -153,7 +153,7 @@ inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::C
 
     for(z::Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
         const z::string& p = *it;
-        const z::string ext = z::file::getExtention(p);
+        const z::string ext = z::dir::getExtention(p);
         if(ext == "zpp") {
             _zppFileList.insert(p);
         } else if ((ext == "h") || (ext == "hpp") || (ext == "inl")) {
@@ -338,9 +338,9 @@ void z::MsvcGenerator::Impl::run() {
             os() << "                    <Tool" << std::endl;
             os() << "                        Name=\"VCCustomBuildTool\"" << std::endl;
             os() << "                        Description=\"Compiling $(InputPath)\"" << std::endl;
-            if(z::file::getExtention(f) == "y") {
+            if(z::dir::getExtention(f) == "y") {
                 os() << "                        CommandLine='" << nfn(_project.zlibPath()) << "\\lemon.exe o=.cpp -q \"$(InputPath)\"'" << std::endl;
-            } else if(z::file::getExtention(f) == "re") {
+            } else if(z::dir::getExtention(f) == "re") {
                 os() << "                        CommandLine='" << nfn(_project.zlibPath()) << "\\re2c.exe -f -u -c -i -o $(InputName).cpp \"$(InputPath)\"'" << std::endl;
             } else {
                 assert(false);
@@ -376,7 +376,7 @@ void z::MsvcGenerator::Impl::run() {
     // all files generated from .zpp files
     for(FileList::const_iterator it = _zppFileList.begin(); it != _zppFileList.end(); ++it) {
         const z::string& f = *it;
-        const z::string basename = z::file::getBaseName(f);
+        const z::string basename = z::dir::getBaseName(f);
 
         // The following is a hack.
         // The .ipp and .hpp files are actually config-specific.
@@ -388,7 +388,7 @@ void z::MsvcGenerator::Impl::run() {
 
     for(FileList::const_iterator it = _otherFileList.begin(); it != _otherFileList.end(); ++it) {
         const z::string& f = *it;
-        const z::string basename = z::file::getBaseName(f);
+        const z::string basename = z::dir::getBaseName(f);
         os() << "            <File RelativePath=\".\\" << basename << ".cpp" << "\" />" << std::endl;
     }
     os() << "        </Filter>" << std::endl;

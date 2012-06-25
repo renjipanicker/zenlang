@@ -12,7 +12,6 @@
         // In OSX mode, this file *must* be compiled as a Obj-C++ file, not C++ file. In Xcode, go to
         // Project/Build Phases/Compile Sources/ and select the zenlang.cpp file.
         // Add "-x objective-c++" to the "Compiler Flags" column.
-#pragma message "XXX1"
         #import <Cocoa/Cocoa.h>
         #import <AppKit/AppKit.h>
     #elif defined(IOS)
@@ -24,7 +23,6 @@
 #else
     #if defined(OSX) || defined(IOS)
         // Same as above note. This is an import.
-#pragma message "XXX2"
         #import <Cocoa/Cocoa.h>
     #endif
 #endif
@@ -259,17 +257,17 @@ void z::regex::match(const z::string& str) {
 
 ////////////////////////////////////////////////////////////////////////////
 #ifdef WIN32
-const z::string z::file::sep = "\\";
+const z::string z::dir::sep = "\\";
 #else
-const z::string z::file::sep = "/";
+const z::string z::dir::sep = "/";
 #endif
 
-bool z::file::exists(const z::string& path) {
+bool z::dir::exists(const z::string& path) {
     struct stat b;
     return (0 == stat(s2e(path).c_str(), &b));
 }
 
-int z::file::mkdir(const z::string& path) {
+int z::dir::mkdir(const z::string& path) {
 #if defined(WIN32)
     int rv = ::_mkdir(s2e(path).c_str());
 #else
@@ -282,7 +280,7 @@ int z::file::mkdir(const z::string& path) {
     return rv;
 }
 
-void z::file::mkpath(const z::string& filename) {
+void z::dir::mkpath(const z::string& filename) {
     z::string base = "";
     z::string::size_type prev = 0;
     for(z::string::size_type next = filename.find("/"); next != z::string::npos;next = filename.find("/", next+1)) {
@@ -290,10 +288,10 @@ void z::file::mkpath(const z::string& filename) {
         if((base.size() == 0) || (sdir.size() > 0)) { // if base is empty or multiple / in path
             base += sdir;
             base += "/";
-            if(!z::file::exists(base)) {
+            if(!z::dir::exists(base)) {
                 int rv = mkdir(base);
                 if(rv != 0) {
-                    throw z::Exception("z::file", z::string("mkdir failed for: %{s}").arg("s", base));
+                    throw z::Exception("z::dir", z::string("mkdir failed for: %{s}").arg("s", base));
                 }
             }
         }
@@ -301,7 +299,7 @@ void z::file::mkpath(const z::string& filename) {
     }
 }
 
-z::string z::file::getPath(const z::string& filename) {
+z::string z::dir::getPath(const z::string& filename) {
     z::string basename = filename;
 
     // strip path, if any
@@ -312,7 +310,7 @@ z::string z::file::getPath(const z::string& filename) {
     return basename;
 }
 
-z::string z::file::getFilename(const z::string& filename) {
+z::string z::dir::getFilename(const z::string& filename) {
     z::string basename = filename;
 
     // strip path, if any
@@ -323,7 +321,7 @@ z::string z::file::getFilename(const z::string& filename) {
     return basename;
 }
 
-z::string z::file::getBaseName(const z::string& filename) {
+z::string z::dir::getBaseName(const z::string& filename) {
     z::string basename = filename;
     z::string::size_type idx = z::string::npos;
 
@@ -340,7 +338,7 @@ z::string z::file::getBaseName(const z::string& filename) {
     return basename;
 }
 
-z::string z::file::getExtention(const z::string& filename) {
+z::string z::dir::getExtention(const z::string& filename) {
     z::string::size_type idx = z::string::npos;
 
     // find last extension, if any
@@ -350,7 +348,7 @@ z::string z::file::getExtention(const z::string& filename) {
     return "";
 }
 
-z::string z::file::cwd() {
+z::string z::dir::cwd() {
     static const size_t MAXBUF = 1024;
     char buff[MAXBUF];
 #if defined(WIN32)
@@ -370,6 +368,51 @@ z::ofile::ofile(const z::string& filename) {
         throw Exception("z::ofile", z::string("Error opening %{s}").arg("s", filename));
     }
 }
+
+////////////////////////////////////////////////////////////////////////
+#if defined(GUI)
+struct z::widget::impl {
+#if defined(WIN32)
+    inline impl() : _val(0), _menu(0), _id(0) {}
+    HWND _val;          /// contains HWND if this is a window
+    HMENU _menu;         /// contains HMENU if this is a menu (\_val will point to parent window)
+    uint32_t _id;        /// contains id if this is menuitem or systray. 
+    NOTIFYICONDATA _ni; /// if this is a systray. The member hWnd contains handle to parent window
+#elif defined(GTK)
+    inline impl() : _val(0), _fixed(0) {}
+    GtkWidget* _val;    /// contains window or menu or menuitem
+    GtkWidget* _fixed;   /// contains pointer to fixed layout child if _val is a parent frame
+#elif defined(OSX)
+    inline impl() {} // : _val(0), _frame(0) {}
+    NSView* _val;
+    NSWindow* _frame;
+#elif defined(IOS)
+#else
+#error "Unimplemented GUI mode"
+#endif
+    typedef dict<string, widget> ChildList;
+    ChildList _childList;
+};
+
+void z::widget::clear() const {
+    delete _val;
+    _val = 0;
+}
+
+void z::widget::set(const z::string& key, const z::widget& v) {
+    z::ref(_val)._childList[key] = v;
+}
+
+z::widget z::widget::at(const z::string& key) const {
+    return z::ref(_val)._childList.at(key);
+}
+
+#if defined(WIN32)
+NOTIFYICONDATA& z::widget::ni() const {
+    return z::ref(_val)._ni;
+}
+#endif
+#endif
 
 ////////////////////////////////////////////////////////////////////////
 #if defined(UNIT_TEST)
@@ -513,9 +556,16 @@ public:
         if(bal == 0) {
             _deviceList.append(_newDeviceList);
             _newDeviceList.clear();
-            for(DeviceList::iterator it = _deviceList.begin(); it != _deviceList.end(); ++it) {
+            for(DeviceList::iterator it = _deviceList.begin(), ite = _deviceList.end(); it != ite;) {
                 z::device& d = z::ref(*it);
-                d.run(MaxPollTimeout);
+                // if run() returns true, end polling for this device
+                if(d.run(MaxPollTimeout)) {
+                    z::device* ed = *it;
+                    it = _deviceList.erase(it); // right way to erase while iterating
+                    delete ed;
+                } else {
+                    ++it;
+                }
             }
         }
         return bal;
@@ -723,7 +773,7 @@ z::Application::Application(int argc, char** argv) : _argc(argc), _argv(argv), _
 #endif
 
     // store name of application (this depends on _path)
-    _name = z::file::getBaseName(_path);
+    _name = z::dir::getBaseName(_path);
 
 
     // store path to application data directory (this is dependent on _name)
@@ -762,13 +812,13 @@ z::Application::Application(int argc, char** argv) : _argc(argc), _argv(argv), _
     }
 #endif
     _data = _data + "/" + z::app().name() + "/";
-    z::file::mkpath(_data);
+    z::dir::mkpath(_data);
 
     // store path to application resource directory
 #if defined(OSX) || defined(IOS)
     _base = bpath;
 #else
-    _base = z::file::getPath(_path);
+    _base = z::dir::getPath(_path);
 #endif
 
     // convert all argv to argl
@@ -776,7 +826,12 @@ z::Application::Application(int argc, char** argv) : _argc(argc), _argv(argv), _
         std::string a = _argv[i];
         if((a.length() >= 10) && (a.substr(0, 10) == "---logfile") && (i < (_argc-1))) {
             std::string f = _argv[++i];
-            _log = new std::ofstream(f.c_str());
+            if(f == "-") {
+                _log = new std::ofstream();
+                z::ref(_log).setstate(std::ios_base::badbit);
+            } else {
+                _log = new std::ofstream(f.c_str());
+            }
         } else {
             _argl.add(argv[i]);
         }

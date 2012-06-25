@@ -919,8 +919,8 @@ private:
 
 inline void z::ZenlangGenerator::Impl::run() {
     Indent::init();
-    z::string basename = z::file::getBaseName(_module.filename());
-    z::file::mkpath(_config.apidir() + "/");
+    z::string basename = z::dir::getBaseName(_module.filename());
+    z::dir::mkpath(_config.apidir() + "/");
     z::ofile osImp(_config.apidir() + "/" + basename + ".ipp");
 
     for(z::Ast::CompoundStatement::List::const_iterator it = _module.globalStatementList().list().begin(); it != _module.globalStatementList().list().end(); ++it) {

@@ -569,7 +569,6 @@ namespace z {
         inline bool empty() const {return (_list.size() == 0);}
 
         inline void clear() {_list.clear();}
-        inline void erase(iterator& it) {_list.erase(it);}
     protected:
         List _list;
     };
@@ -578,8 +577,33 @@ namespace z {
     template <typename V, typename ListT>
     struct listbase : public z::container<V, ListT > {
         typedef z::container<V, ListT > BaseT;
-        inline V& back() {return BaseT::_list.back();}
+
+        inline V& front() {
+            assert(BaseT::_list.size() > 0);
+            V& v = BaseT::_list.front();
+            return v;
+        }
+
+        inline const V& front() const {
+            assert(BaseT::_list.size() > 0);
+            const V& v = BaseT::_list.front();
+            return v;
+        }
+
+        inline V& back() {
+            assert(BaseT::_list.size() > 0);
+            V& v = BaseT::_list.back();
+            return v;
+        }
+
+        inline const V& back() const {
+            assert(BaseT::_list.size() > 0);
+            const V& v = BaseT::_list.back();
+            return v;
+        }
+
         inline typename BaseT::iterator last() {return --BaseT::_list.end();}
+        inline typename BaseT::iterator erase(typename BaseT::iterator& it) {return BaseT::_list.erase(it);}
     };
 
     /// \brief Stack class
@@ -617,18 +641,6 @@ namespace z {
     struct queue : public z::listbase<V, std::list<V> > {
         typedef z::listbase<V, std::list<V> > BaseT;
 
-        inline V& front() {
-            assert(BaseT::_list.size() > 0);
-            V& v = BaseT::_list.front();
-            return v;
-        }
-
-        inline const V& front() const {
-            assert(BaseT::_list.size() > 0);
-            const V& v = BaseT::_list.front();
-            return v;
-        }
-
         inline void enqueue(const V& v) {
             BaseT::_list.push_back(v);
         }
@@ -638,10 +650,6 @@ namespace z {
             V v = BaseT::_list.front();
             BaseT::_list.pop_front();
             return v;
-        }
-
-        inline typename BaseT::iterator erase(typename BaseT::iterator it) {
-            return BaseT::_list.erase(it);
         }
     };
 
@@ -730,7 +738,7 @@ namespace z {
                 V* vv = *it;
                 if(vv == v) {
                     delete vv;
-                    BaseT::_list.erase(it);
+                    BaseT::erase(it);
                     return;
                 }
             }
@@ -776,9 +784,11 @@ namespace z {
                 throw Exception("dict", z::string("%{k} not found\n").arg("k", k));
             }
             V& v = it->second;
-            BaseT::erase(it);
+            BaseT::_list.erase(it);
             return v;
         }
+
+        inline void erase(typename BaseT::iterator& it) {BaseT::_list.erase(it);}
 
         inline V& at(const K& k) {
             typename BaseT::iterator it = BaseT::_list.find(k);
@@ -894,12 +904,12 @@ namespace z {
     // slice helpers
     template <typename T>
     inline T slice(const T& t, const int32_t& from, const int32_t& len) {
-        T::size_type f = from;
+        int32_t f = from;
         while(f < 0) {
             f = t.size() + f;
         }
 
-        T::size_type l = len;
+        int32_t l = len;
         while(l < 0) {
             l = t.size() + l;
         }
@@ -1006,12 +1016,7 @@ namespace z {
     /// \brief Spcialization of function instance and in-param. Holds out-param after invocation
     template <typename FunctionT>
     struct FutureT : public Future {
-        inline FutureT(const z::pointer<FunctionT>& function, const typename FunctionT::_In& in) : _function(function), _in(in) {
-            z::mlog("FutureT", z::string("ctor: %{w}").arg("w", this));
-        }
-        inline ~FutureT() {
-            z::mlog("FutureT", z::string("dtor: %{w}").arg("w", this));
-        }
+        inline FutureT(const z::pointer<FunctionT>& function, const typename FunctionT::_In& in) : _function(function), _in(in) {}
     private:
         /// \brief the function instance
         z::pointer<FunctionT> _function;
@@ -1032,8 +1037,10 @@ namespace z {
     /// \brief Base class for devices.
     /// Devices are async objects that get periodically polled for input, such as files and sockets.
     struct device {
+        virtual ~device(){}
         struct _Out {
-            inline _Out() {}
+            inline _Out(const bool& done) : _done(done) {}
+            bool _done;
         };
     public:
         struct _In {
@@ -1041,8 +1048,8 @@ namespace z {
             int timeout;
         };
     public:
-        virtual void run(const int& timeout) = 0;
-        inline _Out _run(const _In& _in) {run(_in.timeout); return _Out();}
+        virtual bool run(const int& timeout) = 0;
+        inline _Out _run(const _In& _in) {bool r = run(_in.timeout); return _Out(r);}
     };
 
 
@@ -1327,7 +1334,7 @@ namespace z {
     };
 
     ////////////////////////////////////////////////////////////////////////////
-    struct file {
+    struct dir {
         static const z::string sep;
         static bool exists(const z::string& path);
         static int mkdir(const z::string& path);
@@ -1341,6 +1348,26 @@ namespace z {
         static z::string getFilename(const z::string& filename);
         static z::string getBaseName(const z::string& filename);
         static z::string getExtention(const z::string& filename);
+    };
+
+    ////////////////////////////////////////////////////////////////////////////
+    struct file {
+        inline const z::string& name() const {return _name;}
+        inline void close() {
+            if(_val == 0) {
+                return;
+            }
+            fclose(_val);
+            _val = 0;
+        }
+
+        inline file() : _val(0) {}
+        inline file(const z::string& name, FILE* val) : _name(name), _val(val) {}
+        inline ~file() {close();}
+        inline FILE* val() const {return _val;}
+    private:
+        z::string _name;
+        FILE* _val;
     };
 
     ////////////////////////////////////////////////////////////////////////////
@@ -1367,43 +1394,18 @@ namespace z {
 #if defined(GUI)
     ////////////////////////////////////////////////////////////////////////////
     struct widget {
-        struct impl {
-        #if defined(WIN32)
-            inline impl() : _val(0), _menu(0), _id(0) {}
-            HWND _val;          /// contains HWND if this is a window
-            HMENU _menu;         /// contains HMENU if this is a menu (\_val will point to parent window)
-            uint32_t _id;        /// contains id if this is menuitem or systray. 
-            NOTIFYICONDATA _ni; /// if this is a systray. The member hWnd contains handle to parent window
-        #elif defined(GTK)
-            inline impl() : _val(0), _fixed(0) {}
-            GtkWidget* _val;    /// contains window or menu or menuitem
-            GtkWidget* _fixed;   /// contains pointer to fixed layout child if _val is a parent frame
-        #elif defined(OSX)
-            inline impl() : _val(0), _frame(0) {}
-            NSView* _val;
-            NSWindow* _frame;
-        #elif defined(IOS)
-        #else
-        #error "Unimplemented GUI mode"
-        #endif
-            typedef dict<string, widget> ChildList;
-            ChildList _childList;
-        };
+        struct impl;
     public:
         inline widget() : _val(0) {}
         inline widget(impl* i) : _val(i) {}
         inline widget(impl& i) : _val(&i) {}
         inline const impl& val() const {return z::ref(_val);}
-        inline void clear() const {delete _val; _val = 0;}
-        inline void set(const z::string& key, const z::widget& v) {
-            z::ref(_val)._childList[key] = v;
-        }
-        inline z::widget at(const z::string& key) {
-            return z::ref(_val)._childList.at(key);
-        }
+        void clear() const;
+        void set(const z::string& key, const z::widget& v);
+        z::widget at(const z::string& key) const;
     public:
     #if defined(WIN32)
-        NOTIFYICONDATA& ni() const {return z::ref(_val)._ni;}
+        NOTIFYICONDATA& ni() const;
     #endif
         inline bool operator<(const widget& rhs) const {return (_val < rhs._val);}
     private:

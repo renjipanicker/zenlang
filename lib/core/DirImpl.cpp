@@ -5,7 +5,7 @@
 #endif
 
 z::string Dir::CurrentDir() {
-    return z::file::cwd();
+    return z::dir::cwd();
 }
 
 z::string Dir::CleanPath(const z::string& path) {
@@ -24,5 +24,5 @@ z::string Dir::ResolveParent(const z::string& parentpath, const z::string& path)
 }
 
 z::string Dir::GetPath(const z::string& path) {
-    return z::file::getPath(path);
+    return z::dir::getPath(path);
 }

@@ -1,3 +1,9 @@
 namespace File;
 
 public routine string CompleteBasePath(const string& path) native;
+
+public routine file Open(const string& filename, const string& mode) native;
+
+public event(const string& s) native => function void ReadEachLine(const string& line);
+
+function ReadLineDevice : device[file f, pointer<ReadEachLine::Handler> h; string bfr] native;

@@ -125,23 +125,12 @@ const z::string ifile =
 
 "coerce char => string;\n"
 
-"typedef datetime native;\n"
-"default datetime = 0;\n"
-"coerce int => datetime;\n"
-
-"typedef socket native;\n"
-"default socket = 0;\n"
-"coerce int => socket;\n"
-
-"typedef data native;\n"
-"default data = 0;\n"
-"coerce int => data;\n"
-
-"typedef type native;\n"
-
-"typedef widget native;\n"
-"default widget = 0;\n"
-"coerce int => widget;\n"
+"struct datetime native;\n"
+"struct data native;\n"
+"struct type native;\n"
+"struct socket native;\n"
+"struct file native;\n"
+"struct widget native;\n"
 
 "template <F> future  native;\n"
 "template <V> pointer native;\n"
@@ -149,6 +138,8 @@ const z::string ifile =
 "template <V> ptr     native;\n"
 
 "template <V>   list native;\n"
+"template <V>   stack native;\n"
+"template <V>   queue native;\n"
 "template <K,V> dict native;\n"
 "template <K,V> tree native;\n"
 
@@ -166,7 +157,7 @@ const z::string ifile =
 
 "public function (int code)main(const stringlist& argl) abstract;\n"
 "public function (int passed)test() abstract;\n"
-"public function void device(const int& timeout) abstract;\n"
+"public function bool device(const int& timeout) abstract;\n"
 
 "struct SourceFile {"
 "    string filename;\n"
@@ -225,7 +216,7 @@ void z::Compiler::initContext(z::Ast::Unit& unit) {
 void z::Compiler::compile() {
     for(z::Ast::Config::PathList::const_iterator it = _config.sourceFileList().begin(); it != _config.sourceFileList().end(); ++it) {
         const z::string& filename = *it;
-        z::string ext = z::file::getExtention(filename);
+        z::string ext = z::dir::getExtention(filename);
         if(_project.zppExt().find(ext) == z::string::npos) {
             continue;
         }

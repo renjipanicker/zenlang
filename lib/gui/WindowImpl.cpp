@@ -95,8 +95,8 @@ namespace zz {
 
         return className;
     }
-#endif
 } // namespace zz
+#endif
 
 #if defined(WIN32)
 z::widget::impl& Window::Native::createWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, HWND parent) {
@@ -208,7 +208,7 @@ z::widget::impl& Window::Native::createMainFrame(const Window::Definition& def) 
     [w makeKeyAndOrderFront:nil];
     [w setLevel:3];
 
-    z::ref(impl)._hFrame = w;
+    z::ref(impl)._frame = w;
     z::ref(impl)._val = v;
 
     if(z::ref(impl)._val == 0) {
@@ -327,7 +327,7 @@ void Window::SetFocus::run(const z::widget& frame, const z::widget& wnd) {
     unused(wnd);
     UNIMPL();
 #elif defined(OSX)
-    [Window::impl(frame)._hFrame makeFirstResponder:wnd.val()._val];
+    [frame.val()._frame makeFirstResponder:wnd.val()._val];
 #elif defined(IOS)
     UNIMPL();
 #else
@@ -455,7 +455,7 @@ void Window::OnResize::addHandler(const z::widget& wnd, const z::pointer<Handler
     g_signal_connect (G_OBJECT (wnd.val()._val), "configure-event", G_CALLBACK (zz::onConfigureEvent), handler);
 #elif defined(OSX)
     CResizer* resizer = [CResizer alloc];
-    [resizer initResizer:handler withView:wnd.val()._val];
+    [resizer initResizer:z::ptr(handler.get()) withView:wnd.val()._val];
 #elif defined(IOS)
     UNIMPL();
 #else
@@ -478,10 +478,10 @@ namespace zz {
 void Window::OnClose::addHandler(const z::widget& wnd, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
-    g_signal_connect (G_OBJECT (wnd.val()._val), "closed", G_CALLBACK (zz::onWindowCloseEvent), handler);
+    g_signal_connect (G_OBJECT (wnd.val()._val), "closed", G_CALLBACK (zz::onWindowCloseEvent), z::ref(handler));
 #elif defined(OSX)
     CCloser* closer = [CCloser alloc];
-    [closer initCloser:handler withView:wnd.val()._val];
+    [closer initCloser:z::ptr(handler.get()) withView:wnd.val()._val];
 #elif defined(IOS)
     UNIMPL();
 #else

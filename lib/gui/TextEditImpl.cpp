@@ -88,13 +88,13 @@ z::widget TextEdit::Create::run(const z::widget& parent, const TextEdit::Definit
 #if defined(OSX)
 inline bool isTextField(const z::widget& textedit) {
     // verify it is a NSTextField
-    bool chk = [Window::impl(textedit)._hWindow isMemberOfClass:[NSTextField class]];
+    bool chk = [textedit.val()._val isMemberOfClass:[NSTextField class]];
     if(chk) {
         return true;
     }
 
     // verify it is a NSTextView
-    chk = [Window::impl(textedit)._hWindow isMemberOfClass:[NSTextView class]];
+    chk = [textedit.val()._val isMemberOfClass:[NSTextView class]];
     if(chk) {
         return false;
     }
@@ -188,11 +188,11 @@ static void onEnterPressed(GtkMenuItem* item, gpointer phandler) {
 void TextEdit::OnEnter::addHandler(const z::widget& textedit, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
-    g_signal_connect (G_OBJECT (Window::impl(textedit)._hWindow), "activate", G_CALLBACK (onEnterPressed), handler);
+    g_signal_connect (G_OBJECT (textedit.val()._val), "activate", G_CALLBACK (onEnterPressed), handler);
 #elif defined(OSX)
     OnEnterHandler* h = [OnEnterHandler alloc];
     if(isTextField(textedit)) {
-        NSTextField* v = (NSTextField*)(Window::impl(textedit)._hWindow);
+        NSTextField* v = (NSTextField*)(textedit.val()._val);
         // Set handler
         NSNotificationCenter* nc = [NSNotificationCenter defaultCenter];
         [nc addObserver:h selector:@selector(OnEnter:) name:NSTextDidEndEditingNotification object:v];

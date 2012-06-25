@@ -56,8 +56,8 @@ inline void z::CmakeGenerator::Impl::generateProject(const z::Ast::Config& confi
     zexePath.replace("\\", "/");
     for(z::Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
         const z::string& filename = *it;
-        z::string basename = z::file::getBaseName(filename);
-        z::string ext = z::file::getExtention(filename);
+        z::string basename = z::dir::getBaseName(filename);
+        z::string ext = z::dir::getExtention(filename);
 
         if((_project.hppExt().find(ext) != z::string::npos) || (_project.cppExt().find(ext) != z::string::npos)) {
             os() << "SET(project_SOURCES ${project_SOURCES} " << filename << ")" << std::endl;
@@ -116,7 +116,7 @@ inline void z::CmakeGenerator::Impl::generateConfig(const z::Ast::Config& config
     z::Compiler compiler(_project, config);
     compiler.compile();
     if(config.buildMode() != z::Ast::Config::BuildMode::Compile) {
-        z::file::mkpath(config.srcdir() + "/");
+        z::dir::mkpath(config.srcdir() + "/");
         z::ofile osPro(config.srcdir() + "/" + "CMakeLists.txt");
         generateProject(config, osPro);
     }

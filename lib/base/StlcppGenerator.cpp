@@ -38,6 +38,10 @@ namespace sg {
                 name += "z::pointer";
             } else if(z::ref(templateDefn).name().string() == "list") {
                 name += "z::list";
+            } else if(z::ref(templateDefn).name().string() == "stack") {
+                name += "z::stack";
+            } else if(z::ref(templateDefn).name().string() == "queue") {
+                name += "z::queue";
             } else if(z::ref(templateDefn).name().string() == "dict") {
                 name += "z::dict";
             } else if(z::ref(templateDefn).name().string() == "future") {
@@ -126,6 +130,11 @@ namespace sg {
 
         if(typeSpec.name().string() == "socket") {
             name += "z::socket";
+            return;
+        }
+
+        if(typeSpec.name().string() == "file") {
+            name += "z::file";
             return;
         }
 
@@ -1430,7 +1439,10 @@ namespace sg {
                 for(z::Ast::Scope::List::const_iterator it = node.structDefn().list().begin(); it != node.structDefn().list().end(); ++it) {
                     const z::Ast::VariableDefn& vdef = it->get();
                     fpDecl(node.structDefn())() << sep << vdef.name() << "(";
-                    ExprGenerator(fpDecl(node.structDefn())).visitNode(vdef.initExpr());
+                    const z::Ast::ConstantNullExpr* cne = dynamic_cast<const z::Ast::ConstantNullExpr*>(z::ptr(vdef.initExpr()));
+                    if(cne == 0) {
+                        ExprGenerator(fpDecl(node.structDefn())).visitNode(vdef.initExpr());
+                    }
                     fpDecl(node.structDefn())() << ")";
                     sep = ", ";
                 }
@@ -1715,9 +1727,9 @@ private:
 
 inline void z::StlcppGenerator::Impl::run() {
     Indent::init();
-    z::string basename = z::file::getBaseName(_module.filename());
-    z::file::mkpath(_config.apidir() + "/");
-    z::file::mkpath(_config.srcdir() + "/");
+    z::string basename = z::dir::getBaseName(_module.filename());
+    z::dir::mkpath(_config.apidir() + "/");
+    z::dir::mkpath(_config.srcdir() + "/");
     z::ofile ofHdr(_config.apidir() + "/" + basename + ".hpp");
     z::ofile ofSrc(_config.srcdir() + "/" + basename + ".cpp");
     sg::FileSet fs(ofHdr, ofSrc);

@@ -59,10 +59,9 @@
 
 //-------------------------------------------------
 // All operators, in increasing order of precedence
+// \todo make consistent with C/C++
 %left DEFINEEQUAL.
 %left ASSIGNEQUAL TIMESEQUAL DIVIDEEQUAL MINUSEQUAL PLUSEQUAL MODEQUAL SHIFTLEFTEQUAL SHIFTRIGHTEQUAL BITWISEANDEQUAL BITWISEXOREQUAL BITWISEOREQUAL.
-%left LSQUARE RSQUARE.
-%left LBRACKET RBRACKET.
 %left QUESTION.
 %left AND OR.
 %left BITWISEAND BITWISEXOR BITWISEOR.
@@ -71,12 +70,16 @@
 %left SHL SHR.
 %left PLUS MINUS MOD.
 %left DIVIDE STAR.
+
 %left INC DEC BITWISENOT NOT.
+%left LSQUARE RSQUARE.
+%left LBRACKET RBRACKET.
 %left AMP.
 %left DOT.
 %left KEY.
 %left QUERY_SCOPE.
 %left TYPE_SCOPE.
+
 %left COLON.
 
 %start_symbol rstart

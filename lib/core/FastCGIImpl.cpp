@@ -14,7 +14,7 @@ namespace zz {
         }
 
         virtual void operator() (void const* buf, size_t count) {
-            size_t rc;
+            int rc;
 #if defined(WIN32)
             rc = send(fd, (const char*)buf, count, 0);
 #else
@@ -32,9 +32,9 @@ namespace zz {
             do {
                 char buf[4*1024];
     #if defined(WIN32)
-                size_t rc = recv(fd, buf, sizeof(buf), 0);
+                int rc = recv(fd, buf, sizeof(buf), 0);
     #else
-                size_t rc = read(fd, buf, sizeof(buf));
+                int rc = read(fd, buf, sizeof(buf));
     #endif
                 if (rc < 0)
                     throw std::runtime_error("read() failed.");
@@ -87,9 +87,9 @@ namespace zz {
             while(req->stdin_eof == false) {
                 char buf[4*1024];
     #if defined(WIN32)
-                size_t rc = recv(fd, buf, sizeof(buf), 0);
+                int rc = recv(fd, buf, sizeof(buf), 0);
     #else
-                size_t rc = read(fd, buf, sizeof(buf));
+                int rc = read(fd, buf, sizeof(buf));
     #endif
                 if (rc < 0)
                     throw std::runtime_error("read() failed.");

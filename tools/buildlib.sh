@@ -391,7 +391,13 @@ if [ "$dotest" == "yes" ]; then
     if [[ $platform == 'CYGWIN_NT-5.1' ]]; then
         CFLAGS="/Ox /DWIN32 /DUNIT_TEST /DZ_EXE /EHsc /I${OUTDIR} /W4"
 
-        "${CC}" ${CFLAGS} /FetestBasic.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
+        "${CC}" ${CFLAGS} -c ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
+        if [[ $? != 0 ]]; then
+            echo Error compiling library files.
+            exit
+        fi
+
+        "${CC}" ${CFLAGS} /FetestBasic.exe sqlite3.obj sqlite3_unicode.obj ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
         if [[ $? != 0 ]]; then
             echo Error compiling testBasic files.
             exit
@@ -402,7 +408,7 @@ if [ "$dotest" == "yes" ]; then
             exit
         fi
 
-        "${CC}" ${CFLAGS} /FetestFcgi.exe /DSERVER ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/zenlang.cpp testFcgi.cpp ws2_32.lib shell32.lib
+        "${CC}" ${CFLAGS} /FetestFcgi.exe /DSERVER sqlite3.obj sqlite3_unicode.obj ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/zenlang.cpp testFcgi.cpp ws2_32.lib shell32.lib
         if [[ $? != 0 ]]; then
             echo Error compiling testFcgi files.
             exit
