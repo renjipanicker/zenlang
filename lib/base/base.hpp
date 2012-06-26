@@ -638,8 +638,8 @@ namespace z {
 
     /// \brief Queue class
     template <typename V>
-    struct queue : public z::listbase<V, std::list<V> > {
-        typedef z::listbase<V, std::list<V> > BaseT;
+    struct queue : public z::listbase<V, std::deque<V> > {
+        typedef z::listbase<V, std::deque<V> > BaseT;
 
         inline void enqueue(const V& v) {
             BaseT::_list.push_back(v);
