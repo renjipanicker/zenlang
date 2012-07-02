@@ -58,8 +58,16 @@ initFile() {
     echo Initializing $dst_file
     if [ -f ${dst_file} ]; then
         rm ${dst_file}
+        if [[ $? != 0 ]]; then
+            echo Error deleting file: ${dst_file}
+            exit
+        fi
     fi
     touch ${dst_file}
+    if [[ $? != 0 ]]; then
+        echo Error creating file: ${dst_file}
+        exit
+    fi
 }
 
 #############################################################
@@ -175,6 +183,13 @@ mkdir -p ${OUTDIR}/utils
 mkdir -p ${OUTDIR}/utils/fcgi
 mkdir -p ${OUTDIR}/utils/sqlite3
 
+#############################################################
+# initialize amalgamated zenlang files
+ZHDRFILE=${OUTDIR}/zenlang.hpp
+initFile $ZHDRFILE
+ZSRCFILE=${OUTDIR}/zenlang.cpp
+initFile $ZSRCFILE
+
 #########################################################
 # copy exe to OUTDIR
 if [[ $platform == 'Darwin' ]]; then
@@ -247,8 +262,6 @@ cp -v -r ${INTDIR}/gui/*.ipp ${OUTDIR}/gui
 
 #############################################################
 # create amalgamated zenlang.hpp
-ZHDRFILE=${OUTDIR}/zenlang.hpp
-initFile $ZHDRFILE
 appendString $ZHDRFILE "#pragma once"
 appendFile $ZHDRFILE "${LIBDIR}/base/pch.hpp"
 appendFile $ZHDRFILE "${LIBDIR}/base/base.hpp"
@@ -295,8 +308,6 @@ appendString $ZHDRFILE "#endif"
 
 #############################################################
 # create amalgamated zenlang.cpp
-ZSRCFILE=${OUTDIR}/zenlang.cpp
-initFile $ZSRCFILE
 appendFile $ZSRCFILE "${LIBDIR}/base/base.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/base/ast.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/base/unit.cpp"
@@ -381,7 +392,7 @@ if [ "$dotest" == "yes" ]; then
 
     #########################################################
     echo Running unit tests...
-
+    dotest=max
     # remove existing log file, if any
     if [ -f test.log ]; then
         rm test.log
@@ -391,39 +402,49 @@ if [ "$dotest" == "yes" ]; then
     if [[ $platform == 'CYGWIN_NT-5.1' ]]; then
         CFLAGS="/Ox /DWIN32 /DUNIT_TEST /DZ_EXE /EHsc /I${OUTDIR} /W4"
 
-        "${CC}" ${CFLAGS} -c ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
-        if [[ $? != 0 ]]; then
-            echo Error compiling library files.
-            exit
+        if [ "$dotest" == "max" ]; then
+            "${CC}" ${CFLAGS} -c ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
+            if [[ $? != 0 ]]; then
+                echo Error compiling library files.
+                exit
+            fi
         fi
 
-        "${CC}" ${CFLAGS} /FetestBasic.exe sqlite3.obj sqlite3_unicode.obj ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
-        if [[ $? != 0 ]]; then
-            echo Error compiling testBasic files.
-            exit
-        fi
-        ./testBasic.exe > test.log
-        if [[ $? != 0 ]]; then
-            echo Error running testBasic.
-            exit
-        fi
-
-        "${CC}" ${CFLAGS} /FetestFcgi.exe /DSERVER sqlite3.obj sqlite3_unicode.obj ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/zenlang.cpp testFcgi.cpp ws2_32.lib shell32.lib
-        if [[ $? != 0 ]]; then
-            echo Error compiling testFcgi files.
-            exit
+        if [ "$dotest" == "max" ]; then
+            "${CC}" ${CFLAGS} /FetestBasic.exe sqlite3.obj sqlite3_unicode.obj ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
+            if [[ $? != 0 ]]; then
+                echo Error compiling testBasic files.
+                exit
+            fi
+            ./testBasic.exe > test.log
+            if [[ $? != 0 ]]; then
+                echo Error running testBasic.
+                exit
+            fi
         fi
 
-#        "${CC}" /Fefastcgi.exe /EHsc -DWIN32 -DDEBUG_FASTCGI -I ${OUTDIR} ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/utils/fcgi/test.cpp ws2_32.lib
-#        if [[ $? != 0 ]]; then
-#            echo Error compiling fastcgi files.
-#            exit
-#        fi
+        if [ "$dotest" == "max" ]; then
+            "${CC}" ${CFLAGS} /FetestFcgi.exe /DSERVER sqlite3.obj sqlite3_unicode.obj ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/zenlang.cpp testFcgi.cpp ws2_32.lib shell32.lib
+            if [[ $? != 0 ]]; then
+                echo Error compiling testFcgi files.
+                exit
+            fi
+        fi
 
-        "${CC}" ${CFLAGS} /DGUI /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
-        if [[ $? != 0 ]]; then
-            echo Error compiling testGui files.
-            exit
+        if [ "$dotest" == "max" ]; then
+            "${CC}" /Fefastcgi.exe /EHsc -DWIN32 -DDEBUG_FASTCGI -I ${OUTDIR} ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/utils/fcgi/test.cpp ws2_32.lib
+            if [[ $? != 0 ]]; then
+                echo Error compiling fastcgi files.
+                exit
+            fi
+        fi
+
+        if [ "$dotest" == "max" ]; then
+            "${CC}" ${CFLAGS} /DGUI /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
+            if [[ $? != 0 ]]; then
+                echo Error compiling testGui files.
+                exit
+            fi
         fi
     elif [[ $platform == 'Darwin' ]]; then
         # first compile the C files

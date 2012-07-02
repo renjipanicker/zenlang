@@ -98,14 +98,14 @@ const z::string ifile =
 "default void = 0;\n"
 "default bool = false;\n"
 
-"default byte = 0b;\n"
+"default byte = 0y;\n"
 "default short = 0s;\n"
 "default int = 0;\n"
 "default long = 0l;\n"
 
-"default ubyte = 0ub;\n"
+"default ubyte = 0uy;\n"
 "default ushort = 0us;\n"
-"default uint = 0;\n"
+"default uint = 0u;\n"
 "default ulong = 0ul;\n"
 
 "default float = 0;\n"
@@ -143,7 +143,7 @@ const z::string ifile =
 "template <K,V> dict native;\n"
 "template <K,V> tree native;\n"
 
-"template <V> raw native;\n"
+"template <V> map native;\n"
 
 "public routine void assert(...) native;\n"
 "public routine void unused(...) native;\n"
@@ -152,6 +152,7 @@ const z::string ifile =
 
 "public routine void remove(...) native;\n"
 "public routine void clear(...) native;\n"
+"public routine data raw(...) native;\n"
 
 "public typedef stringlist list<string>;\n"
 

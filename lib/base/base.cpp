@@ -556,7 +556,7 @@ public:
         if(bal == 0) {
             _deviceList.append(_newDeviceList);
             _newDeviceList.clear();
-            for(DeviceList::iterator it = _deviceList.begin(), ite = _deviceList.end(); it != ite;) {
+            for(DeviceList::iterator it = _deviceList.begin(); it != _deviceList.end();) {
                 z::device& d = z::ref(*it);
                 // if run() returns true, end polling for this device
                 if(d.run(MaxPollTimeout)) {

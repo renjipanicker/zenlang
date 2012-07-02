@@ -455,8 +455,8 @@ z::Ast::Scope* z::Ast::Factory::aEnumMemberDefnListEmpty(const z::Ast::Token& po
 }
 
 z::Ast::VariableDefn* z::Ast::Factory::aEnumMemberDefn(const z::Ast::Token& name) {
-    z::Ast::Token value(name.filename(), name.row(), name.col(), "#");
-    const z::Ast::ConstantIntExpr& initExpr = aConstantIntExpr(value);
+    z::Ast::Token value(name.filename(), name.row(), name.col(), "0");
+    const z::Ast::ConstantNullExpr& initExpr = aConstantNullExpr(value);
     z::Ast::VariableDefn& variableDefn = unit().addNode(new z::Ast::VariableDefn(initExpr.qTypeSpec(), name, initExpr));
     return z::ptr(variableDefn);
 }
@@ -1040,6 +1040,11 @@ z::Ast::FunctionReturnStatement* z::Ast::Factory::aFunctionReturnStatement(const
     }
     z::Ast::FunctionReturnStatement& returnStatement = unit().addNode(new z::Ast::FunctionReturnStatement(pos, exprList, z::ref(sig)));
     return z::ptr(returnStatement);
+}
+
+z::Ast::RaiseStatement* z::Ast::Factory::aRaiseStatement(const Ast::Token& pos, const Ast::EventDecl& eventDecl, const Ast::Expr& expr, const Ast::ExprList& exprList) {
+    z::Ast::RaiseStatement& raiseStatement = unit().addNode(new z::Ast::RaiseStatement(pos, eventDecl, expr, exprList));
+    return z::ptr(raiseStatement);
 }
 
 z::Ast::ExitStatement* z::Ast::Factory::aExitStatement(const z::Ast::Token& pos, const z::Ast::Expr& expr) {
@@ -1679,11 +1684,12 @@ z::Ast::TemplateDefnInstanceExpr* z::Ast::Factory::aTemplateDefnInstanceExpr(con
         return z::ptr(valueInstanceExpr);
     }
 
-    if(name == "raw") {
+    if(name == "map") {
         const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, templateDefn.at(0).typeSpec(), false, false);
-        z::Ast::RawDataInstanceExpr& expr = unit().addNode(new z::Ast::RawDataInstanceExpr(pos, qTypeSpec, templateDefn, templateDefn, exprList));
+        z::Ast::MapDataInstanceExpr& expr = unit().addNode(new z::Ast::MapDataInstanceExpr(pos, qTypeSpec, templateDefn, templateDefn, exprList));
         return z::ptr(expr);
     }
+
 
     throw z::Exception("NodeFactory", zfmt(pos, "Invalid template instantiation '%{s}'").arg("s", templateDefn.name() ));
 }
@@ -2001,58 +2007,59 @@ z::Ast::ConstantCharExpr& z::Ast::Factory::aConstantCharExpr(const z::Ast::Token
     return expr;
 }
 
-z::Ast::ConstantLongExpr& z::Ast::Factory::aConstantLongExpr(const z::Ast::Token& token) {
-    int64_t value = token.string().to<int64_t>();
+///////////
+z::Ast::ConstantLongExpr& z::Ast::Factory::aConstantLongExpr(const z::Ast::Token& token, const char& fmt) {
+    int64_t value = z::s2n<int64_t>(token.string());
     const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "long");
-    z::Ast::ConstantLongExpr& expr = unit().addNode(new z::Ast::ConstantLongExpr(token, qTypeSpec, value));
+    z::Ast::ConstantLongExpr& expr = unit().addNode(new z::Ast::ConstantLongExpr(token, qTypeSpec, value, fmt));
     return expr;
 }
 
-z::Ast::ConstantIntExpr& z::Ast::Factory::aConstantIntExpr(const z::Ast::Token& token) {
-    int32_t value = token.string().to<int32_t>();
+z::Ast::ConstantIntExpr& z::Ast::Factory::aConstantIntExpr(const z::Ast::Token& token, const char& fmt) {
+    int32_t value = z::s2n<int32_t>(token.string());
     const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "int");
-    z::Ast::ConstantIntExpr& expr = unit().addNode(new z::Ast::ConstantIntExpr(token, qTypeSpec, value));
+    z::Ast::ConstantIntExpr& expr = unit().addNode(new z::Ast::ConstantIntExpr(token, qTypeSpec, value, fmt));
     return expr;
 }
 
-z::Ast::ConstantShortExpr& z::Ast::Factory::aConstantShortExpr(const z::Ast::Token& token) {
-    int16_t value = token.string().to<int16_t>();
+z::Ast::ConstantShortExpr& z::Ast::Factory::aConstantShortExpr(const z::Ast::Token& token, const char& fmt) {
+    int16_t value = z::s2n<int16_t>(token.string());
     const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "short");
-    z::Ast::ConstantShortExpr& expr = unit().addNode(new z::Ast::ConstantShortExpr(token, qTypeSpec, value));
+    z::Ast::ConstantShortExpr& expr = unit().addNode(new z::Ast::ConstantShortExpr(token, qTypeSpec, value, fmt));
     return expr;
 }
 
-z::Ast::ConstantByteExpr& z::Ast::Factory::aConstantByteExpr(const z::Ast::Token& token) {
-    int8_t value = token.string().to<int8_t>();
+z::Ast::ConstantByteExpr& z::Ast::Factory::aConstantByteExpr(const z::Ast::Token& token, const char& fmt) {
+    int8_t value = z::s2n<int8_t>(token.string());
     const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "byte");
-    z::Ast::ConstantByteExpr& expr = unit().addNode(new z::Ast::ConstantByteExpr(token, qTypeSpec, value));
+    z::Ast::ConstantByteExpr& expr = unit().addNode(new z::Ast::ConstantByteExpr(token, qTypeSpec, value, fmt));
     return expr;
 }
 
-z::Ast::ConstantUnLongExpr& z::Ast::Factory::aConstantUnLongExpr(const z::Ast::Token& token) {
-    uint64_t value = token.string().to<uint64_t>();
+z::Ast::ConstantUnLongExpr& z::Ast::Factory::aConstantUnLongExpr(const z::Ast::Token& token, const char& fmt) {
+    uint64_t value = z::s2n<uint64_t>(token.string());
     const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "ulong");
-    z::Ast::ConstantUnLongExpr& expr = unit().addNode(new z::Ast::ConstantUnLongExpr(token, qTypeSpec, value));
+    z::Ast::ConstantUnLongExpr& expr = unit().addNode(new z::Ast::ConstantUnLongExpr(token, qTypeSpec, value, fmt));
     return expr;
 }
 
-z::Ast::ConstantUnIntExpr& z::Ast::Factory::aConstantUnIntExpr(const z::Ast::Token& token) {
-    uint32_t value = token.string().to<uint32_t>();
+z::Ast::ConstantUnIntExpr& z::Ast::Factory::aConstantUnIntExpr(const z::Ast::Token& token, const char& fmt) {
+    uint32_t value = z::s2n<uint32_t>(token.string());
     const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "uint");
-    z::Ast::ConstantUnIntExpr& expr = unit().addNode(new z::Ast::ConstantUnIntExpr(token, qTypeSpec, value));
+    z::Ast::ConstantUnIntExpr& expr = unit().addNode(new z::Ast::ConstantUnIntExpr(token, qTypeSpec, value, fmt));
     return expr;
 }
 
-z::Ast::ConstantUnShortExpr& z::Ast::Factory::aConstantUnShortExpr(const z::Ast::Token& token) {
-    uint16_t value = token.string().to<uint16_t>();
+z::Ast::ConstantUnShortExpr& z::Ast::Factory::aConstantUnShortExpr(const z::Ast::Token& token, const char& fmt) {
+    uint16_t value = z::s2n<uint16_t>(token.string());
     const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "ushort");
-    z::Ast::ConstantUnShortExpr& expr = unit().addNode(new z::Ast::ConstantUnShortExpr(token, qTypeSpec, value));
+    z::Ast::ConstantUnShortExpr& expr = unit().addNode(new z::Ast::ConstantUnShortExpr(token, qTypeSpec, value, fmt));
     return expr;
 }
 
-z::Ast::ConstantUnByteExpr& z::Ast::Factory::aConstantUnByteExpr(const z::Ast::Token& token) {
-    uint8_t value = token.string().to<uint8_t>();
+z::Ast::ConstantUnByteExpr& z::Ast::Factory::aConstantUnByteExpr(const z::Ast::Token& token, const char& fmt) {
+    uint8_t value = z::s2n<uint8_t>(token.string());
     const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(token, "ubyte");
-    z::Ast::ConstantUnByteExpr& expr = unit().addNode(new z::Ast::ConstantUnByteExpr(token, qTypeSpec, value));
+    z::Ast::ConstantUnByteExpr& expr = unit().addNode(new z::Ast::ConstantUnByteExpr(token, qTypeSpec, value, fmt));
     return expr;
 }

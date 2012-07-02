@@ -120,7 +120,10 @@ namespace z {
         inline stringT& arg(const stringT& key, const T& value);
 
         template <typename T>
-        inline T to() const;
+        inline T to(const char& fmt = 0) const;
+
+        template <typename T>
+        inline stringT& from(const T& t, const char& fmt = 0);
 
         inline const sstringT& val() const {return _val;}
         inline const charT* c_str() const {return _val.c_str();}
@@ -270,6 +273,7 @@ namespace z {
     }
     #endif
 
+    /// \brief Function to replace occurences of %{key} with value
     template <typename charT, typename stringT>
     template <typename T>
     inline stringT& z::bstring<charT, stringT>::arg(const stringT& key, const T& value) {
@@ -288,17 +292,118 @@ namespace z {
         return z::ref(static_cast<stringT*>(this));
     }
 
+    /// \brief for converting strings to native types.
+    /// In case of integers, converts to C++-style string
     template <typename charT, typename stringT>
     template <typename T>
-    inline T z::bstring<charT, stringT>::to() const {
+    inline stringT& z::bstring<charT, stringT>::from(const T& t, const char& fmt) {
+        stringT& This = z::ref(static_cast<stringT*>(this));
+        z::string prefix;
+        std::stringstream ss;
+        switch(fmt) {
+            case 'x':
+                ss << std::hex;
+                prefix = "0x";
+                break;
+            case 'd':
+                ss << std::dec;
+                break;
+            case 'o':
+                ss << std::oct;
+                prefix = "0";
+                break;
+        }
+        ss << t;
+        This = (prefix + z::e2s(ss.str()));
+        return This;
+    }
+
+    template <typename charT, typename stringT>
+    template <typename T>
+    inline T z::bstring<charT, stringT>::to(const char& fmt) const {
         const stringT& This = z::ref(static_cast<const stringT*>(this));
         z::estring es = s2e(This);
         std::stringstream ss(es.val());
+        switch(fmt) {
+            case 'x':
+                ss >> std::hex;
+                break;
+            case 'd':
+                ss >> std::dec;
+                break;
+            case 'o':
+                ss >> std::oct;
+                break;
+        }
         // converting to utf8 and then to expected type.
         /// \todo: find out better way to convert from 16 and 32 bit string to expected type
         //std::basic_stringstream<charT> ss(_val);
         T val;
         ss >> val;
+        return val;
+    }
+
+    /// \brief Converts integers to zen-style strings ("oxfful")
+    template <typename T>
+    inline z::string n2s(const T& s, const char& fmt) {
+        z::string v = z::string().from(s, fmt);
+        /// \todo: add ul, etc postfix
+        return v;
+    }
+
+    template <typename T>
+    inline T s2n(const z::string& s) {
+        z::estring es = s2e(s);
+
+        T val = 0;
+        char fmt = 'd';
+        z::estring::const_iterator it = es.begin();
+        z::estring::const_iterator ite = es.end();
+        if(*it == '0') {
+            ++it;
+            if(it == ite)
+                return val;
+            if(*it == 'x') {
+                fmt = 'x';
+                ++it;
+                if(it == ite)
+                    return val;
+            } else {
+                fmt = 'o';
+            }
+        }
+
+        for(;it != ite; ++it) {
+            const char& c = *it;
+            switch(fmt) {
+                case 'x':
+                    if((c >= '0') && (c <= '9')) {
+                        val = (val * 16) + (c - '0');
+                    } else if((c >= 'A') && (c <= 'F')) {
+                        val = (val * 16) + (c - 'A' + 10);
+                    } else if((c >= 'a') && (c <= 'f')) {
+                        val = (val * 16) + (c - 'a' + 10);
+                    } else {
+                        return val;
+                    }
+                    break;
+                case 'd':
+                    if((c >= '0') && (c <= '9')) {
+                        val = (val * 10) + (c - '0');
+                    } else {
+                        return val;
+                    }
+                    break;
+                case 'o':
+                    if((c >= '0') && (c <= '7')) {
+                        val = (val * 8) + (c - '0');
+                    } else {
+                        return val;
+                    }
+                    break;
+            }
+        }
+
         return val;
     }
 
@@ -402,15 +507,17 @@ namespace z {
         explicit inline data() : BaseT() {}
         inline data(const uint8_t* s, const size_t& n) : BaseT(s, n) {}
         inline data(const BaseT::sstringT& s) : BaseT(s) {}
+        inline data(const size_type& count, const char_t& ch) : BaseT(count, (uint8_t)ch) {}
         inline data(const data& src) : BaseT(src) {}
     };
 
     /////////////////////////////
     // data helpers
+    /// \brief Convert data to specified type T
     template <typename T>
-    inline T raw(const data& d, const size_t& from, const size_t& len ) {
+    inline T map(const data& d, const size_t& from, const size_t& len ) {
         if((from + len) > d.length()) {
-            throw Exception("z::raw", z::string("%{k} out of bounds\n").arg("k", from));
+            throw Exception("z::map", z::string("%{k} out of bounds\n").arg("k", from));
         }
         const uint8_t* v = d.c_str() + from;
         assert(v);
@@ -418,10 +525,11 @@ namespace z {
         return z::ref(t);
     }
 
+    /// \brief Converts data to string.
     template <>
-    inline z::string raw<z::string>(const data& d, const size_t& from, const size_t& len) {
+    inline z::string map<z::string>(const data& d, const size_t& from, const size_t& len) {
         if((from + len) > d.length()) {
-            throw Exception("z::raw", z::string("%{k} out of bounds\n").arg("k", from));
+            throw Exception("z::map", z::string("%{k} out of bounds\n").arg("k", from));
         }
         const uint8_t* v = d.c_str() + from;
         assert(v);
@@ -430,6 +538,15 @@ namespace z {
         return r;
     }
 
+    /// \brief Converts any type to a raw data type.
+    template <typename T>
+    inline z::data raw(const T& t) {
+        z::data d((const z::data::scharT*)z::ptr(t), sizeof(t));
+        return d;
+    }
+
+    /// \brief Represents a type
+    /// Thsi struct represents a type as a value.
     struct type {
         explicit inline type(const z::string& name) : _name(name) {}
         inline const z::string& name() const {return _name;}
@@ -497,6 +614,8 @@ namespace z {
             virtual V& get() {return _v;}
             virtual value* clone() const {return new valueT<DerT>(_v);}
             virtual z::string tname() const {return type_name<DerT>();}
+            template <typename VisT>
+            inline void visit(VisT& vis) {vis.visit(_v);}
         private:
             DerT _v;
         };
@@ -529,6 +648,11 @@ namespace z {
                 BaseT::set(src.tname(), v);
             }
             return ref(this);
+        }
+
+        template <typename VisT>
+        inline void visit(VisT& vis) {
+            vis.visit(_v);
         }
 
         /// \brief default-ctor
@@ -1099,13 +1223,13 @@ namespace z {
         typedef z::list< pointer<ValT> > OList;
         OList _olist;
         typedef z::rlist< pointer<ValT> > List;
-        typedef z::dict<KeyT, List> Map;
-        Map map;
+        typedef z::dict<KeyT, List> Dict;
+        Dict _dict;
 
     public:
         inline ValT& insertHandler(const KeyT& key, z::pointer<ValT> val) {
             z::pointer<ValT>& vv = _olist.add(val);
-            List& list = map[key];
+            List& list = _dict[key];
             list.add(vv);
             EventT::addHandler(key, vv);
             return vv.get();
@@ -1114,15 +1238,14 @@ namespace z {
         inline void removeHandler() {} /// \todo: later
 
         inline bool runHandler(const KeyT& key, typename ValT::_In in) {
-            typename Map::const_iterator it = map.find(key);
-            if(it == map.end())
+            typename Dict::const_iterator it = _dict.find(key);
+            if(it == _dict.end())
                 return false;
 
             const List& list = it->second;
             for(typename List::const_iterator itl = list.begin(); itl != list.end(); ++itl) {
                 const z::pointer<ValT>& handler = z::ref(*itl);
                 ctx().addT(handler, in);
-//                handler.get()._run(in);
             }
             return true;
         }

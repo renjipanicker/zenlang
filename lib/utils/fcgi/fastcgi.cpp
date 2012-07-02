@@ -447,8 +447,8 @@ void FCGIRequest::end_request(uint32_t appStatus, FCGIRequest::protocol_status_t
 
   new(p) Header(TYPE_STDOUT, id, 0);
   p += sizeof(Header);
-  new(p) Header(TYPE_STDERR, id, 0);
-  p += sizeof(Header);
+  //new(p) Header(TYPE_STDERR, id, 0);
+  //p += sizeof(Header);
   new(p) EndRequestMsg(id, appStatus, protStatus);
   p += sizeof(EndRequestMsg);
   driver.output_cb(buf, p - buf);

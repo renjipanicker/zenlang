@@ -1319,9 +1319,9 @@ namespace Ast {
         virtual void visit(Visitor& visitor) const;
     };
 
-    class RawDataInstanceExpr : public TemplateDefnInstanceExpr {
+    class MapDataInstanceExpr : public TemplateDefnInstanceExpr {
     public:
-        inline RawDataInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& srcTemplateDefn, const Ast::TemplateDefn& templateDefn, const ExprList& exprList)
+        inline MapDataInstanceExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const Ast::TemplateDefn& srcTemplateDefn, const Ast::TemplateDefn& templateDefn, const ExprList& exprList)
             : TemplateDefnInstanceExpr(pos, qTypeSpec, srcTemplateDefn, templateDefn, exprList) {}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1571,9 +1571,18 @@ namespace Ast {
         const z::string _value;
     };
 
-    class ConstantLongExpr : public ConstantExpr {
+    class ConstantNumericExpr : public ConstantExpr {
+    protected:
+        inline ConstantNumericExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const char& fmt) : ConstantExpr(pos, qTypeSpec), _fmt(fmt) {}
     public:
-        inline ConstantLongExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int64_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline const char& fmt() const {return _fmt;}
+    private:
+        const char _fmt;
+    };
+
+    class ConstantLongExpr : public ConstantNumericExpr {
+    public:
+        inline ConstantLongExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int64_t& value, const char& fmt) : ConstantNumericExpr(pos, qTypeSpec, fmt), _value(value) {}
         inline const int64_t& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1581,9 +1590,9 @@ namespace Ast {
         const int64_t _value;
     };
 
-    class ConstantIntExpr : public ConstantExpr {
+    class ConstantIntExpr : public ConstantNumericExpr {
     public:
-        inline ConstantIntExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int32_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline ConstantIntExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int32_t& value, const char& fmt) : ConstantNumericExpr(pos, qTypeSpec, fmt), _value(value) {}
         inline const int32_t& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1591,9 +1600,9 @@ namespace Ast {
         const int32_t _value;
     };
 
-    class ConstantShortExpr : public ConstantExpr {
+    class ConstantShortExpr : public ConstantNumericExpr {
     public:
-        inline ConstantShortExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int16_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline ConstantShortExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int16_t& value, const char& fmt) : ConstantNumericExpr(pos, qTypeSpec, fmt), _value(value) {}
         inline const int16_t& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1601,9 +1610,9 @@ namespace Ast {
         const int16_t _value;
     };
 
-    class ConstantByteExpr : public ConstantExpr {
+    class ConstantByteExpr : public ConstantNumericExpr {
     public:
-        inline ConstantByteExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int8_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline ConstantByteExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const int8_t& value, const char& fmt) : ConstantNumericExpr(pos, qTypeSpec, fmt), _value(value) {}
         inline const int8_t& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1611,9 +1620,9 @@ namespace Ast {
         const int8_t _value;
     };
 
-    class ConstantUnLongExpr : public ConstantExpr {
+    class ConstantUnLongExpr : public ConstantNumericExpr {
     public:
-        inline ConstantUnLongExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const uint64_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline ConstantUnLongExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const uint64_t& value, const char& fmt) : ConstantNumericExpr(pos, qTypeSpec, fmt), _value(value) {}
         inline const uint64_t& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1621,9 +1630,9 @@ namespace Ast {
         const uint64_t _value;
     };
 
-    class ConstantUnIntExpr : public ConstantExpr {
+    class ConstantUnIntExpr : public ConstantNumericExpr {
     public:
-        inline ConstantUnIntExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const uint32_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline ConstantUnIntExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const uint32_t& value, const char& fmt) : ConstantNumericExpr(pos, qTypeSpec, fmt), _value(value) {}
         inline const uint32_t& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1631,9 +1640,9 @@ namespace Ast {
         const uint32_t _value;
     };
 
-    class ConstantUnShortExpr : public ConstantExpr {
+    class ConstantUnShortExpr : public ConstantNumericExpr {
     public:
-        inline ConstantUnShortExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const uint16_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline ConstantUnShortExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const uint16_t& value, const char& fmt) : ConstantNumericExpr(pos, qTypeSpec, fmt), _value(value) {}
         inline const uint16_t& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1641,9 +1650,9 @@ namespace Ast {
         const uint16_t _value;
     };
 
-    class ConstantUnByteExpr : public ConstantExpr {
+    class ConstantUnByteExpr : public ConstantNumericExpr {
     public:
-        inline ConstantUnByteExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const uint8_t& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
+        inline ConstantUnByteExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const uint8_t& value, const char& fmt) : ConstantNumericExpr(pos, qTypeSpec, fmt), _value(value) {}
         inline const uint8_t& value() const {return _value;}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -1725,7 +1734,7 @@ namespace Ast {
         virtual void visit(const DynamicTypecastExpr& node) = 0;
         virtual void visit(const PointerInstanceExpr& node) = 0;
         virtual void visit(const ValueInstanceExpr& node) = 0;
-        virtual void visit(const RawDataInstanceExpr& node) = 0;
+        virtual void visit(const MapDataInstanceExpr& node) = 0;
         virtual void visit(const DeRefInstanceExpr& node) = 0;
         virtual void visit(const VariableRefExpr& node) = 0;
         virtual void visit(const MemberVariableExpr& node) = 0;
@@ -2113,6 +2122,21 @@ namespace Ast {
         const FunctionSig& _sig;
     };
 
+    class RaiseStatement : public Statement {
+    public:
+        inline RaiseStatement(const Ast::Token& pos, const Ast::EventDecl& eventDecl, const Ast::Expr& expr, const Ast::ExprList& exprList)
+            : Statement(pos), _eventDecl(eventDecl), _expr(expr), _exprList(exprList) {}
+        inline const EventDecl& eventDecl() const {return _eventDecl;}
+        inline const Expr& expr() const {return _expr;}
+        inline const ExprList& exprList() const {return _exprList;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ast::EventDecl& _eventDecl;
+        const Ast::Expr& _expr;
+        const Ast::ExprList& _exprList;
+    };
+
     class ExitStatement : public Statement {
     public:
         inline ExitStatement(const Token& pos, const Expr& expr) : Statement(pos), _expr(expr) {}
@@ -2169,6 +2193,7 @@ namespace Ast {
         virtual void visit(const AddEventHandlerStatement& node) = 0;
         virtual void visit(const RoutineReturnStatement& node) = 0;
         virtual void visit(const FunctionReturnStatement& node) = 0;
+        virtual void visit(const RaiseStatement& node) = 0;
         virtual void visit(const ExitStatement& node) = 0;
         virtual void visit(const CompoundStatement& node) = 0;
     };

@@ -98,6 +98,7 @@
     typedef HANDLE mutex_t;
 
     # include <WinSock2.h>
+    typedef int ssize_t;
 
     typedef char      int8_t;
     typedef short     int16_t;

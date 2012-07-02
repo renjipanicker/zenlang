@@ -366,8 +366,8 @@ namespace zg {
             _os << ")";
         }
 
-        virtual void visit(const z::Ast::RawDataInstanceExpr& node) {
-            _os << "raw<" << z::ZenlangNameGenerator().qtn(node.qTypeSpec()) << ">(";
+        virtual void visit(const z::Ast::MapDataInstanceExpr& node) {
+            _os << "map<" << z::ZenlangNameGenerator().qtn(node.qTypeSpec()) << ">(";
             ExprGenerator(_os).visitList(node.exprList());
             _os << ")";
         }
@@ -457,7 +457,7 @@ namespace zg {
         }
 
         virtual void visit(const z::Ast::ConstantLongExpr& node) {
-            _os << node.value();
+            _os << node.value() << "l";
         }
 
         virtual void visit(const z::Ast::ConstantIntExpr& node) {
@@ -465,27 +465,27 @@ namespace zg {
         }
 
         virtual void visit(const z::Ast::ConstantShortExpr& node) {
-            _os << node.value();
+            _os << node.value() << "s";
         }
 
         virtual void visit(const z::Ast::ConstantByteExpr& node) {
-            _os << node.value();
+            _os << node.value() << "b";
         }
 
         virtual void visit(const z::Ast::ConstantUnLongExpr& node) {
-            _os << node.value();
+            _os << node.value() << "ul";
         }
 
         virtual void visit(const z::Ast::ConstantUnIntExpr& node) {
-            _os << node.value();
+            _os << node.value() << "u";
         }
 
         virtual void visit(const z::Ast::ConstantUnShortExpr& node) {
-            _os << node.value();
+            _os << node.value() << "us";
         }
 
         virtual void visit(const z::Ast::ConstantUnByteExpr& node) {
-            _os << node.value();
+            _os << node.value() << "ub";
         }
 
         virtual void sep() {
@@ -880,6 +880,10 @@ namespace zg {
         }
 
         virtual void visit(const z::Ast::FunctionReturnStatement& node) {
+            unused(node);
+        }
+
+        virtual void visit(const z::Ast::RaiseStatement& node) {
             unused(node);
         }
 

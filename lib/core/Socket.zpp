@@ -10,5 +10,8 @@ private function OnRecvDevice : device[socket s, pointer<OnRecv::Handler> h] nat
 public routine socket InitServer(const int& port) native;
 public routine socket InitClient(const string& host, const int& port) native;
 public routine void StartServer(const socket& s) native;
-public routine string Close(const socket& s) native;
+public routine void Close(const socket& s) native;
 public routine ptr<void> PeekPtr(const socket& s) native;
+
+public routine int SendData(const socket& s, const data& d) native;
+public routine int SendString(const socket& s, const string& d) native;

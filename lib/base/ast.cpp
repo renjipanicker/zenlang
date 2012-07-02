@@ -81,7 +81,7 @@ void z::Ast::StaticTypecastExpr::visit(Visitor& visitor) const {visitor.visit(z:
 void z::Ast::DynamicTypecastExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::PointerInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::ValueInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
-void z::Ast::RawDataInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::MapDataInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::DeRefInstanceExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::VariableRefExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::MemberVariableExpr::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
@@ -136,6 +136,7 @@ void z::Ast::ContinueStatement::visit(Visitor& visitor) const {visitor.visit(z::
 void z::Ast::AddEventHandlerStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::RaiseStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::ExitStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::CompoundStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 

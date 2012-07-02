@@ -27,8 +27,15 @@ enum Flags {
     FLAG_KEEP_CONN  = 1;
 };
 
+public enum ProtocolStatus {
+    REQUEST_COMPLETE = 0;
+    CANT_MPX_CONN    = 1;
+    OVERLOADED       = 2;
+    UNKNOWN_ROLE     = 3;
+};
+
 struct Header {
-    ubyte hVersion;
+    ubyte hVersion = 1uy;
     ubyte hType;
     ubyte hRequestIdB1;
     ubyte hRequestIdB0;
@@ -61,7 +68,7 @@ struct EndRequest : Header {
 };
 
 public struct Request {
-    auto rid = 0;
+    auto rid = 0u;
     dict<string, string> paramList;
     auto input = "";
 };
@@ -73,21 +80,43 @@ struct RequestData : Request {
 
 typedef RequestMap dict<uint, RequestData>;
 
-public event(const socket& s) => function void OnRequest(const Request& r);
+public event(const socket& s) => function void OnRequest(const socket& cs, const Request& r);
 
-routine size processRequest(const data& bfr, RequestMap& requestMap) {
-    auto h = raw<Header>(bfr, 0);
-    print "version: %{@v0}, type: %{@t0}, rid0: %{@r0}, rid1: %{@r1}, cid0: %{@c0}, cid1: %{@c1}, pad: %{@p0}, resv: %{@h0}" @ {
-        @v0: (int)h.hVersion,
-        @t0: (int)h.hType,
-        @r0: (int)h.hRequestIdB0,
-        @r1: (int)h.hRequestIdB1,
-        @c0: (int)h.hContentLengthB0,
-        @c1: (int)h.hContentLengthB1,
-        @p0: (int)h.hPaddingLength,
-        @h0: (int)h.hReserved,
+private routine void OnRequestReceived(const socket& s, const socket& cs, const Request& r) {
+    raise OnRequest(s: cs, r);
+}
+
+routine Header CreateHeader(const MessageType& t, const uint& mid, const uint& len) {
+    auto h = Header {
+        hType            : (ubyte)t;
+        hRequestIdB1     : (ubyte)(mid >> 8);
+        hRequestIdB0     : (ubyte)(mid & 0xff);
+        hContentLengthB1 : (ubyte)(len >> 8);
+        hContentLengthB0 : (ubyte)(len & 0xff);
     };
+    return h;
+}
 
+routine EndRequest CreateEndRequest(const MessageType& t, const uint& mid, const uint& appStatus, const ProtocolStatus& protStatus) {
+    auto lens = sizeof(EndRequest) - sizeof(Header);
+    uint len = (uint)lens;
+    auto h = EndRequest {
+        hType            : (ubyte)t;
+        hRequestIdB1     : (ubyte)(mid >> 8);
+        hRequestIdB0     : (ubyte)(mid & 0xff);
+        hContentLengthB1 : (ubyte)(len >> 8);
+        hContentLengthB0 : (ubyte)(len & 0xff);
+        appStatusB3      : (ubyte)((appStatus >> 24) & 0xff);
+        appStatusB2      : (ubyte)((appStatus >> 16) & 0xff);
+        appStatusB1      : (ubyte)((appStatus >>  8) & 0xff);
+        appStatusB0      : (ubyte)((appStatus >>  0) & 0xff);
+        protocolStatus   : (ubyte)(protStatus);
+    };
+    return h;
+}
+
+routine size processRequest(const socket& s, const socket& cs, const data& bfr, RequestMap& requestMap) {
+    auto h = map<Header>(bfr, 0);
     if(h.hVersion != 1) {
         print "Cannot handle version %{@v}" @ {@v: h.hVersion};
         return 0;
@@ -108,7 +137,7 @@ routine size processRequest(const data& bfr, RequestMap& requestMap) {
                 return 0;
             }
 
-            auto br = raw<BeginRequest>(bfr, 0);
+            auto br = map<BeginRequest>(bfr, 0);
             auto role = (Role)((br.roleB1 << 8) + br.roleB0);
             auto kc = ((br.flags & (int)Flags.FLAG_KEEP_CONN) == (int)Flags.FLAG_KEEP_CONN);
             requestMap[rid] = RequestData{rid:rid; role:role; keepAlive:kc;};
@@ -140,7 +169,8 @@ routine size processRequest(const data& bfr, RequestMap& requestMap) {
             }
 
             if(len == 0) {
-                /// \todo do end of request processing here, invoke user-defined handler
+                // end of params
+                break;
             }
 
             auto req = requestMap[rid];
@@ -170,13 +200,12 @@ routine size processRequest(const data& bfr, RequestMap& requestMap) {
                     return 0;
                 }
 
-                auto key = raw<string>(bfr, i, name_len);
+                auto key = map<string>(bfr, i, name_len);
                 i += name_len;
 
-                auto val = raw<string>(bfr, i, data_len);
+                auto val = map<string>(bfr, i, data_len);
                 i += data_len;
 
-                print "param: " + key + ", " + val;
                 req.paramList[key] = val;
             }
             break;
@@ -186,6 +215,15 @@ routine size processRequest(const data& bfr, RequestMap& requestMap) {
                 print "Unknown request ID %{@v}" @ {@v: rid};
                 return 0;
             }
+
+            auto req = requestMap[rid];
+
+            if(len == 0) {
+                // end of stdin
+                OnRequestReceived(s, cs, req);
+            }
+            
+            /// \todo: store stdin into req
             break;
         }
     }
@@ -197,12 +235,10 @@ routine size processRequest(const data& bfr, RequestMap& requestMap) {
 public function socket Create(const int& port) {
     auto s = Socket::InitServer(port);
     Socket::OnConnect(s) => {
-        print "FastCGI: Socket:OnConnect";
         Socket::OnRecv(cs) => [; data bfr, RequestMap requestMap] {
             bfr += d;
-            print "FastCGI: Socket:OnRecv: Header-size: %{@h}, bfr-count: %{@b}" @ {@h: sizeof(Header), @b: sizeof(Header)};
             while( length(bfr) >= sizeof(Header) ) {
-                auto l = processRequest(bfr, requestMap);
+                auto l = processRequest(s, cs, bfr, requestMap);
                 if(l == 0) {
                     clear(bfr);
                     break;
@@ -212,6 +248,21 @@ public function socket Create(const int& port) {
         };
     };
     return(s);
+}
+
+public function void SendOutput(const Request& req, const socket& s, const string& o) {
+    auto h = CreateHeader(MessageType.TYPE_STDOUT, req.rid, length(o));
+    auto d = raw(h);
+    Socket::SendData(s, d);
+    Socket::SendString(s, o);
+}
+
+public function void SendEndRequest(const Request& req, const socket& s, const uint& appStatus, const ProtocolStatus& protStatus) {
+    SendOutput(req, s, "");
+    auto h = CreateEndRequest(MessageType.TYPE_END_REQUEST, req.rid, appStatus, protStatus);
+    auto d = raw(h);
+    Socket::SendData(s, d);
+    Socket::Close(s);
 }
 
 public function void Start(const socket& s) {

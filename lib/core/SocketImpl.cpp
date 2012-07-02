@@ -2,7 +2,7 @@
 
 z::socket Socket::InitServer(const int& port) {
     sockaddr_in sa;
-    SOCKET sfd = socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    SOCKET sfd = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
 
     if(-1 == sfd) {
         throw z::Exception("Socket::StartServer", z::string("Error creating socket"));
@@ -14,15 +14,25 @@ z::socket Socket::InitServer(const int& port) {
     sa.sin_port = htons((short)port);
     sa.sin_addr.s_addr = INADDR_ANY;
 
-    if(-1 == bind(sfd,(sockaddr *)&sa, sizeof(sa))) {
+    if(-1 == ::bind(sfd,(sockaddr *)&sa, sizeof(sa))) {
         throw z::Exception("Socket::StartServer", z::string("Error bind() failed"));
     }
     return z::socket(sfd);
 }
 
 void Socket::StartServer(const z::socket& s) {
-    if(-1 == listen(s.val(), 10)) {
+    if(-1 == ::listen(s.val(), 10)) {
         throw z::Exception("Socket::StartServer", z::string("Error listen() failed"));
+    }
+}
+
+void Socket::Close(const z::socket& s) {
+#if defined(WIN32)
+    if(-1 == ::closesocket(s.val())) {
+#else
+    if(-1 == ::close(s.val())) {
+#endif
+        throw z::Exception("Socket::Close", z::string("Error close() failed"));
     }
 }
 
@@ -52,7 +62,6 @@ namespace zz {
 
 bool Socket::OnConnectDevice::run(const int& timeout) {
     static int cnt = 0;
-    std::cout << "\ronc::poll: " << ++cnt;
     if(!zz::isDataAvailable(s, timeout)) {
         return false;
     }
@@ -65,7 +74,6 @@ bool Socket::OnConnectDevice::run(const int& timeout) {
         return true;
     }
     h.get().run(fd);
-    std::cout << "leave" << std::endl;
     return false;
 }
 
@@ -76,26 +84,55 @@ void Socket::OnRecv::addHandler(const z::socket& s, const z::pointer<Handler>& h
 
 bool Socket::OnRecvDevice::run(const int& timeout) {
     static int cnt = 0;
-    std::cout << "\ronr::poll: " << ++cnt;
     if(!zz::isDataAvailable(s, timeout)) {
         return false;
     }
 
     char buf[4*1024];
 #if defined(WIN32)
-    int rc = ::recv(s.val(), buf, sizeof(buf), 0);
+    ssize_t rc = ::recv(s.val(), buf, sizeof(buf), 0);
 #else
-    int rc = ::read(s.val(), buf, sizeof(buf));
+    ssize_t rc = ::recv(s.val(), buf, sizeof(buf), 0);
+//    int rc = ::read(s.val(), buf, sizeof(buf));
 #endif
-    if (rc < 0) {
-        throw z::Exception("Socket::OnRecvDevice", z::string("Error read() failed"));
-    }
-
-    if (rc == 0) {
+    if (rc <= 0) {
+        if (rc < 0) {
+            /// \todo invoke error-handler
+            //DWORD e = ::WSAGetLastError();
+            z::mlog("Socket::OnrecvDevice", z::string("recv() error: %{e}").arg("e", rc));
+        }
         return true;
     }
 
     z::data d((const uint8_t*)buf, rc);
     h.get().run(d);
     return false;
+}
+
+namespace zz {
+    inline int SendSocket(const z::socket& s, const char* bfr, const size_t& len) {
+#if defined(WIN32)
+        ssize_t rc = ::send(s.val(), bfr, len, 0);
+#else
+        ssize_t rc = ::send(s.val(), bfr, len, 0);
+//    int rc = ::write(s.val(), (const char*)d.c_str(), d.length());
+#endif
+        if (rc <= 0) {
+            if (rc < 0) {
+                z::mlog("zz::SendSocket", z::string("send() error: %{e}").arg("e", rc));
+                //throw z::Exception("Socket::SendString", z::string("Error send() failed: socket: %{s}").arg("s", s.val()));
+            }
+            return rc;
+        }
+        return rc;
+    }
+}
+
+int Socket::SendData(const z::socket& s, const z::data& d) {
+    return zz::SendSocket(s, (const char*)d.c_str(), d.length());
+}
+
+int Socket::SendString(const z::socket& s, const z::string& d) {
+    z::estring es = z::s2e(d);
+    return zz::SendSocket(s, (const char*)es.c_str(), es.length());
 }

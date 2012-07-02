@@ -367,7 +367,6 @@ void Window::Hide::run(const z::widget& wnd) {
 
 void Window::Move::run(const z::widget& wnd, const Window::Position& position) {
 #if defined(WIN32)
-    z::mlog("moving", z::string("move: hwnd: %{w}").arg("w", wnd.val()._val));
     ::MoveWindow(wnd.val()._val, position.x, position.y, position.w, position.h, TRUE);
 #elif defined(GTK)
     unused(wnd); unused(position);

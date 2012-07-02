@@ -324,7 +324,6 @@ const char* z::Lexer::Impl::reservedWords[] = {
     "throw"        ,
     "catch"        ,
     "try"          ,
-    "raise"        ,
     "lambda"       ,
     "api"          ,
     "inline"       ,

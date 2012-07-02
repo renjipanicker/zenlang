@@ -46,8 +46,8 @@ namespace sg {
                 name += "z::dict";
             } else if(z::ref(templateDefn).name().string() == "future") {
                 name += "z::FutureT";
-            } else if(z::ref(templateDefn).name().string() == "raw") {
-                name += "z::raw";
+            } else if(z::ref(templateDefn).name().string() == "map") {
+                name += "z::map";
             } else {
                 name += z::ref(templateDefn).name().string();
             }
@@ -170,6 +170,11 @@ namespace sg {
 
         if(typeSpec.name().string() == "remove") {
             name += "z::remove";
+            return;
+        }
+
+        if(typeSpec.name().string() == "raw") {
+            name += "z::raw";
             return;
         }
 
@@ -577,8 +582,8 @@ namespace sg {
             _os() << ".getT<" << StlcppNameGenerator().tn(node.qTypeSpec().typeSpec()) << ">()";
         }
 
-        virtual void visit(const z::Ast::RawDataInstanceExpr& node) {
-            _os() << "z::raw<" << StlcppNameGenerator().tn(node.templateDefn().at(0).typeSpec()) << ">(";
+        virtual void visit(const z::Ast::MapDataInstanceExpr& node) {
+            _os() << "z::map<" << StlcppNameGenerator().tn(node.templateDefn().at(0).typeSpec()) << ">(";
             ExprGenerator(_os).visitNode(node.exprList().at(0));
             _os() << ", ";
             ExprGenerator(_os).visitNode(node.exprList().at(1));
@@ -693,35 +698,35 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::ConstantLongExpr& node) {
-            _os() << node.value();
+            _os() << z::string().from(node.value(), node.fmt());
         }
 
         virtual void visit(const z::Ast::ConstantIntExpr& node) {
-            _os() << node.value();
+            _os() << z::string().from(node.value(), node.fmt());
         }
 
         virtual void visit(const z::Ast::ConstantShortExpr& node) {
-            _os() << node.value();
+            _os() << z::string().from(node.value(), node.fmt());
         }
 
         virtual void visit(const z::Ast::ConstantByteExpr& node) {
-            _os() << node.value();
+            _os() << z::string().from<int>(node.value(), node.fmt());
         }
 
         virtual void visit(const z::Ast::ConstantUnLongExpr& node) {
-            _os() << node.value();
+            _os() << z::string().from(node.value(), node.fmt());
         }
 
         virtual void visit(const z::Ast::ConstantUnIntExpr& node) {
-            _os() << node.value();
+            _os() << z::string().from(node.value(), node.fmt());
         }
 
         virtual void visit(const z::Ast::ConstantUnShortExpr& node) {
-            _os() << node.value();
+            _os() << z::string().from(node.value(), node.fmt());
         }
 
         virtual void visit(const z::Ast::ConstantUnByteExpr& node) {
-            _os() << node.value();
+            _os() << z::string().from<unsigned int>(node.value(), node.fmt());
         }
 
         virtual void sep() {
@@ -781,10 +786,13 @@ namespace sg {
                     INDENT;
                     const z::Ast::VariableDefn& def = it->get();
                     _os() << z::Indent::get() << sep << " " << def.name();
-                    const z::Ast::ConstantIntExpr* cexpr = dynamic_cast<const z::Ast::ConstantIntExpr*>(z::ptr(def.initExpr()));
-                    if((cexpr == 0) || (z::ref(cexpr).pos().string() != "#")) { /// \todo hack
-                        _os() << " = ";
-                        ExprGenerator(_os).visitNode(def.initExpr());
+                    const z::Ast::ConstantNumericExpr* nexpr = dynamic_cast<const z::Ast::ConstantNumericExpr*>(z::ptr(def.initExpr()));
+                    if(nexpr != 0) {
+                        const z::Ast::ConstantIntExpr* cexpr = dynamic_cast<const z::Ast::ConstantIntExpr*>(z::ptr(def.initExpr()));
+                        if(cexpr != 0) {
+                            _os() << " = ";
+                            ExprGenerator(_os).visitNode(def.initExpr());
+                        }
                     }
                     _os() << std::endl;
                     sep = ",";
@@ -1299,9 +1307,7 @@ namespace sg {
             if(node.defType() == z::Ast::DefinitionType::Final) {
                 _os() << "void " << StlcppNameGenerator().tn(node)
                       << "::addHandler(" << StlcppNameGenerator().qtn(node.in().qTypeSpec())
-                      << " " << node.in().name() << ", const z::pointer<Handler>& h) {"
-                      << std::endl;
-                _os() << "}" << std::endl;
+                      << " " << node.in().name() << ", const z::pointer<Handler>& h) {/*actual addition done in base class*/}" << std::endl;
             }
         }
 
@@ -1672,6 +1678,14 @@ namespace sg {
                 fpDefn()() << ")";
             }
             fpDefn()() << ";" << std::endl;
+        }
+
+        virtual void visit(const z::Ast::RaiseStatement& node) {
+            fpDefn()() << z::Indent::get() << StlcppNameGenerator().tn(node.eventDecl()) << "::list().runHandler(";
+            ExprGenerator(fpDefn()).visitNode(node.expr());
+            fpDefn()() << ", " << StlcppNameGenerator().tn(node.eventDecl()) << "::Handler::_In(";
+            ExprGenerator(fpDefn(), ", ").visitList(node.exprList());
+            fpDefn()() << "));" << std::endl;
         }
 
         virtual void visit(const z::Ast::ExitStatement& node) {

@@ -140,7 +140,7 @@ namespace in {
         inline ValuePtr run(ValuePtr& lhs, ValuePtr& rhs, const z::Ast::Token& op, const z::Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong() && rhs.isLong()) {
                 int64_t nv = runLong((int64_t)lhs, (int64_t)rhs);
-                return ValuePtr(new z::Ast::ConstantLongExpr(op, qTypeSpec, nv));
+                return ValuePtr(new z::Ast::ConstantLongExpr(op, qTypeSpec, nv, 'd'));
             }
             throw z::Exception("Interpreter", z::zfmt(op, "Type mismatch"));
         }
@@ -208,7 +208,7 @@ namespace in {
         inline ValuePtr run(ValuePtr& lhs, ValuePtr& rhs, const z::Ast::Token& op, const z::Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong() && rhs.isLong()) {
                 int64_t nv = runLong((int64_t)lhs, (int64_t)rhs);
-                return ValuePtr(new z::Ast::ConstantLongExpr(op, qTypeSpec, nv));
+                return ValuePtr(new z::Ast::ConstantLongExpr(op, qTypeSpec, nv, 'd'));
             }
             throw z::Exception("Interpreter", z::zfmt(op, "Type mismatch"));
         }
@@ -292,7 +292,7 @@ namespace in {
         inline ValuePtr run(ValuePtr& lhs, const z::Ast::Token& op, const z::Ast::QualifiedTypeSpec& qTypeSpec) const {
             if(lhs.isLong()) {
                 int64_t nv = runLong((int64_t)lhs);
-                return ValuePtr(new z::Ast::ConstantLongExpr(op, qTypeSpec, nv));
+                return ValuePtr(new z::Ast::ConstantLongExpr(op, qTypeSpec, nv, 'd'));
             }
             throw z::Exception("Interpreter", z::zfmt(op, "Type mismatch"));
         }
@@ -581,7 +581,7 @@ namespace in {
             unused(node);
         }
 
-        virtual void visit(const z::Ast::RawDataInstanceExpr& node) {
+        virtual void visit(const z::Ast::MapDataInstanceExpr& node) {
             unused(node);
         }
 
@@ -635,7 +635,7 @@ namespace in {
         }
 
         virtual void visit(const z::Ast::ConstantBooleanExpr& node) {
-            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value(), 'd'));
         }
 
         virtual void visit(const z::Ast::ConstantStringExpr& node) {
@@ -647,35 +647,35 @@ namespace in {
         }
 
         virtual void visit(const z::Ast::ConstantLongExpr& node) {
-            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value(), 'd'));
         }
 
         virtual void visit(const z::Ast::ConstantIntExpr& node) {
-            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value(), 'd'));
         }
 
         virtual void visit(const z::Ast::ConstantShortExpr& node) {
-            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value(), 'd'));
         }
 
         virtual void visit(const z::Ast::ConstantByteExpr& node) {
-            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value(), 'd'));
         }
 
         virtual void visit(const z::Ast::ConstantUnLongExpr& node) {
-            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value(), 'd'));
         }
 
         virtual void visit(const z::Ast::ConstantUnIntExpr& node) {
-            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value(), 'd'));
         }
 
         virtual void visit(const z::Ast::ConstantUnShortExpr& node) {
-            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value(), 'd'));
         }
 
         virtual void visit(const z::Ast::ConstantUnByteExpr& node) {
-            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value()));
+            push(new z::Ast::ConstantLongExpr(node.pos(), node.qTypeSpec(), node.value(), 'd'));
         }
 
         virtual void sep() {
@@ -804,6 +804,10 @@ namespace in {
         }
 
         virtual void visit(const z::Ast::FunctionReturnStatement& node) {
+            unused(node);
+        }
+
+        virtual void visit(const z::Ast::RaiseStatement& node) {
             unused(node);
         }
 

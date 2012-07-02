@@ -585,6 +585,7 @@ rInnerStatement(L) ::= rContinueStatement(R).            {L = R;}
 rInnerStatement(L) ::= rAddEventHandlerStatement(R).     {L = R;}
 rInnerStatement(L) ::= rRoutineReturnStatement(R).       {L = R;}
 rInnerStatement(L) ::= rFunctionReturnStatement(R).      {L = R;}
+rInnerStatement(L) ::= rRaiseStatement(R).               {L = R;}
 rInnerStatement(L) ::= rExitStatement(R).                {L = R;}
 rInnerStatement(L) ::= rCompoundStatement(R).            {L = R;}
 
@@ -689,6 +690,10 @@ rRoutineReturnStatement(L) ::= RRETURN(B) rExpr(S) SEMI. {L = z::c2f(pctx).aRout
 //-------------------------------------------------
 %type rFunctionReturnStatement {z::Ast::FunctionReturnStatement*}
 rFunctionReturnStatement(L) ::= FRETURN(B) rExprsList(S) SEMI. {L = z::c2f(pctx).aFunctionReturnStatement(z::t2t(B), z::ref(S));}
+
+//-------------------------------------------------
+%type rRaiseStatement {z::Ast::RaiseStatement*}
+rRaiseStatement(L) ::= RAISE(B) rEventTypeSpec(E) LBRACKET rExpr(S) COLON rExprList(X) RBRACKET SEMI. {L = z::c2f(pctx).aRaiseStatement(z::t2t(B), z::ref(E), z::ref(S), z::ref(X));}
 
 //-------------------------------------------------
 %type rExitStatement {z::Ast::ExitStatement*}
@@ -1051,37 +1056,37 @@ rConstantExpr(L) ::= FALSE_CONST  (value).  {L = z::ptr(z::c2f(pctx).aConstantBo
 rConstantExpr(L) ::= STRING_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantStringExpr(z::t2t(value)));}
 rConstantExpr(L) ::= CHAR_CONST   (value).  {L = z::ptr(z::c2f(pctx).aConstantCharExpr(z::t2t(value)));}
 
-rConstantExpr(L) ::= LHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantLongExpr(z::t2t(value)));}
-rConstantExpr(L) ::= LDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantLongExpr(z::t2t(value)));}
-rConstantExpr(L) ::= LOCTINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantLongExpr(z::t2t(value)));}
+rConstantExpr(L) ::= LHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantLongExpr(z::t2t(value), 'x'));}
+rConstantExpr(L) ::= LDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantLongExpr(z::t2t(value), 'd'));}
+rConstantExpr(L) ::= LOCTINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantLongExpr(z::t2t(value), 'o'));}
 
-rConstantExpr(L) ::= HEXINT_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantIntExpr(z::t2t(value)));}
-rConstantExpr(L) ::= DECINT_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantIntExpr(z::t2t(value)));}
-rConstantExpr(L) ::= OCTINT_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantIntExpr(z::t2t(value)));}
+rConstantExpr(L) ::= HEXINT_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantIntExpr(z::t2t(value), 'x'));}
+rConstantExpr(L) ::= DECINT_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantIntExpr(z::t2t(value), 'd'));}
+rConstantExpr(L) ::= OCTINT_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantIntExpr(z::t2t(value), 'o'));}
 
-rConstantExpr(L) ::= SHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantShortExpr(z::t2t(value)));}
-rConstantExpr(L) ::= SDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantShortExpr(z::t2t(value)));}
-rConstantExpr(L) ::= SOCTINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantShortExpr(z::t2t(value)));}
+rConstantExpr(L) ::= SHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantShortExpr(z::t2t(value), 'x'));}
+rConstantExpr(L) ::= SDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantShortExpr(z::t2t(value), 'd'));}
+rConstantExpr(L) ::= SOCTINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantShortExpr(z::t2t(value), 'o'));}
 
-rConstantExpr(L) ::= BHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantByteExpr(z::t2t(value)));}
-rConstantExpr(L) ::= BDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantByteExpr(z::t2t(value)));}
-rConstantExpr(L) ::= BOCTINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantByteExpr(z::t2t(value)));}
+rConstantExpr(L) ::= BHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantByteExpr(z::t2t(value), 'x'));}
+rConstantExpr(L) ::= BDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantByteExpr(z::t2t(value), 'd'));}
+rConstantExpr(L) ::= BOCTINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantByteExpr(z::t2t(value), 'o'));}
 
-rConstantExpr(L) ::= ULHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnLongExpr(z::t2t(value)));}
-rConstantExpr(L) ::= ULDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnLongExpr(z::t2t(value)));}
-rConstantExpr(L) ::= ULOCTINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnLongExpr(z::t2t(value)));}
+rConstantExpr(L) ::= ULHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnLongExpr(z::t2t(value), 'x'));}
+rConstantExpr(L) ::= ULDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnLongExpr(z::t2t(value), 'd'));}
+rConstantExpr(L) ::= ULOCTINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnLongExpr(z::t2t(value), 'o'));}
 
-rConstantExpr(L) ::= UHEXINT_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantUnIntExpr(z::t2t(value)));}
-rConstantExpr(L) ::= UDECINT_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantUnIntExpr(z::t2t(value)));}
-rConstantExpr(L) ::= UOCTINT_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantUnIntExpr(z::t2t(value)));}
+rConstantExpr(L) ::= UHEXINT_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantUnIntExpr(z::t2t(value), 'x'));}
+rConstantExpr(L) ::= UDECINT_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantUnIntExpr(z::t2t(value), 'd'));}
+rConstantExpr(L) ::= UOCTINT_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantUnIntExpr(z::t2t(value), 'o'));}
 
-rConstantExpr(L) ::= USHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnShortExpr(z::t2t(value)));}
-rConstantExpr(L) ::= USDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnShortExpr(z::t2t(value)));}
-rConstantExpr(L) ::= USOCTINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnShortExpr(z::t2t(value)));}
+rConstantExpr(L) ::= USHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnShortExpr(z::t2t(value), 'x'));}
+rConstantExpr(L) ::= USDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnShortExpr(z::t2t(value), 'd'));}
+rConstantExpr(L) ::= USOCTINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnShortExpr(z::t2t(value), 'o'));}
 
-rConstantExpr(L) ::= UBHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnByteExpr(z::t2t(value)));}
-rConstantExpr(L) ::= UBDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnByteExpr(z::t2t(value)));}
-rConstantExpr(L) ::= UBOCTINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnByteExpr(z::t2t(value)));}
+rConstantExpr(L) ::= UBHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnByteExpr(z::t2t(value), 'x'));}
+rConstantExpr(L) ::= UBDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnByteExpr(z::t2t(value), 'd'));}
+rConstantExpr(L) ::= UBOCTINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantUnByteExpr(z::t2t(value), 'o'));}
 
 rConstantExpr(L) ::= rKeyConstantExpr(R).   {L = R;}
 

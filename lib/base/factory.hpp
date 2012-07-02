@@ -172,6 +172,7 @@ namespace Ast {
         Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Token& pos);
         Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Token& pos, const Ast::Expr& expr);
         Ast::FunctionReturnStatement*      aFunctionReturnStatement(const Ast::Token& pos, const Ast::ExprList& exprList);
+        Ast::RaiseStatement*               aRaiseStatement(const Ast::Token& pos, const Ast::EventDecl& eventDecl, const Ast::Expr& expr, const Ast::ExprList& exprList);
         Ast::ExitStatement*                aExitStatement(const Ast::Token& pos, const Ast::Expr& expr);
         Ast::CompoundStatement*            aStatementList();
         Ast::CompoundStatement*            aStatementList(Ast::CompoundStatement& list, const Ast::Statement& statement);
@@ -303,15 +304,15 @@ namespace Ast {
         Ast::ConstantStringExpr&  aConstantStringExpr(const Ast::Token& value);
         Ast::ConstantCharExpr&    aConstantCharExpr(const Ast::Token& value);
 
-        Ast::ConstantLongExpr&    aConstantLongExpr(const Ast::Token& value);
-        Ast::ConstantIntExpr&     aConstantIntExpr(const Ast::Token& value);
-        Ast::ConstantShortExpr&   aConstantShortExpr(const Ast::Token& value);
-        Ast::ConstantByteExpr&    aConstantByteExpr(const Ast::Token& value);
+        Ast::ConstantLongExpr&    aConstantLongExpr(const Ast::Token& value, const char& fmt);
+        Ast::ConstantIntExpr&     aConstantIntExpr(const Ast::Token& value, const char& fmt);
+        Ast::ConstantShortExpr&   aConstantShortExpr(const Ast::Token& value, const char& fmt);
+        Ast::ConstantByteExpr&    aConstantByteExpr(const Ast::Token& value, const char& fmt);
 
-        Ast::ConstantUnLongExpr&    aConstantUnLongExpr(const Ast::Token& value);
-        Ast::ConstantUnIntExpr&     aConstantUnIntExpr(const Ast::Token& value);
-        Ast::ConstantUnShortExpr&   aConstantUnShortExpr(const Ast::Token& value);
-        Ast::ConstantUnByteExpr&    aConstantUnByteExpr(const Ast::Token& value);
+        Ast::ConstantUnLongExpr&    aConstantUnLongExpr(const Ast::Token& value, const char& fmt);
+        Ast::ConstantUnIntExpr&     aConstantUnIntExpr(const Ast::Token& value, const char& fmt);
+        Ast::ConstantUnShortExpr&   aConstantUnShortExpr(const Ast::Token& value, const char& fmt);
+        Ast::ConstantUnByteExpr&    aConstantUnByteExpr(const Ast::Token& value, const char& fmt);
     };
 }
 }

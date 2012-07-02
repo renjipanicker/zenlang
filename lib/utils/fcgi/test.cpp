@@ -41,6 +41,10 @@ public:
   }
   virtual void operator() (void const* buf, size_t count)
   {
+      const char* bb = (const char*)buf;
+      for(size_t i = 0; i < count; ++i) {
+          std::cout << i << ":" << (int)(bb[i]) << std::endl;
+      }
     size_t rc;
 #if defined(WIN32)
     rc = send(fd, (const char*)buf, count, 0);
@@ -148,19 +152,20 @@ try
     std::cerr << argv[0] << "[" << getpid() << "]: Starting to handle request #" << req->id << "." << std::endl;
     ++req_counter;
     std::ostringstream os;
-    os << "Content-type: text/html\r\n"
-       << "\r\n"
-       << "<title>FastCGI Test Program</title>" << std::endl
-       << "<h1 align=center>FastCGI Test Program</h1>" << std::endl
-       << "<h3>FastCGI Status</h3>" << std::endl
-       << "Test Program Compile Time = " << __DATE__ " " __TIME__ << "<br>" << std::endl
-       << "Process id                = " << getpid() << "<br>" << std::endl
-       << "Request socket            = " << socket << "<br>" << std::endl
-       << "Request id                = " << req->id << "<br>" << std::endl
-       << "Request number            = " << req_counter << "<br>" << std::endl
-       << "<h3>Request Environment</h3>" << std::endl;
-    for (std::map<std::string,std::string>::const_iterator i = req->params.begin(); i != req->params.end(); ++i)
-      os << i->first << "&nbsp;=&nbsp;" << i->second << "<br>" << std::endl;
+    os << "Content-type: text/html\r\n\r\n<html><body>Hello</body></html>\n";
+    //os << "Content-type: text/html\r\n"
+    //   << "\r\n"
+    //   << "<title>FastCGI Test Program</title>" << std::endl
+    //   << "<h1 align=center>FastCGI Test Program</h1>" << std::endl
+    //   << "<h3>FastCGI Status</h3>" << std::endl
+    //   << "Test Program Compile Time = " << __DATE__ " " __TIME__ << "<br>" << std::endl
+    //   << "Process id                = " << getpid() << "<br>" << std::endl
+    //   << "Request socket            = " << socket << "<br>" << std::endl
+    //   << "Request id                = " << req->id << "<br>" << std::endl
+    //   << "Request number            = " << req_counter << "<br>" << std::endl
+    //   << "<h3>Request Environment</h3>" << std::endl;
+    //for (std::map<std::string,std::string>::const_iterator i = req->params.begin(); i != req->params.end(); ++i)
+    //  os << i->first << "&nbsp;=&nbsp;" << i->second << "<br>" << std::endl;
     req->write(os.str().data(), os.str().size());
 
     // Make sure we read the entire standard input stream, then
@@ -168,23 +173,23 @@ try
 
     req->write("<h3>Input Stream</h3>\n" \
               "<pre>\n");
-    while(req->stdin_eof == false)
-    {
-      char buf[4*1024];
-#if defined(WIN32)
-      size_t rc = recv(socket, buf, sizeof(buf), 0);
-#else
-      size_t rc = read(socket, buf, sizeof(buf));
-#endif
-      if (rc < 0)
-        throw std::runtime_error("read() failed.");
-      driver.process_input(buf, rc);
-    }
-    if (req->stdin_stream.empty() == false)
-    {
-      req->write(req->stdin_stream);
-      req->stdin_stream.erase();
-    }
+//    while(req->stdin_eof == false)
+//    {
+//      char buf[4*1024];
+//#if defined(WIN32)
+//      size_t rc = recv(socket, buf, sizeof(buf), 0);
+//#else
+//      size_t rc = read(socket, buf, sizeof(buf));
+//#endif
+//      if (rc < 0)
+//        throw std::runtime_error("read() failed.");
+//      driver.process_input(buf, rc);
+//    }
+//    if (req->stdin_stream.empty() == false)
+//    {
+//      req->write(req->stdin_stream);
+//      req->stdin_stream.erase();
+//    }
     req->write("</pre>\n");
 
     // Terminate the request.
