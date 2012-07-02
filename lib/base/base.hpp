@@ -652,7 +652,8 @@ namespace z {
 
         template <typename VisT>
         inline void visit(VisT& vis) {
-            vis.visit(_v);
+            assert(false);
+//            vis.visit(_v);
         }
 
         /// \brief default-ctor
