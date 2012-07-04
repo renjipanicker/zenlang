@@ -19,6 +19,9 @@ prj/xcode/zenlang/parserGen.hpp
 prj/xcode/zenlang/parserGenhpp
 prj/xcode/zenlang/lexerGen.hpp
 prj/xcode/zenlang/zenlang.xcodeproj/project.xcworkspace/
+prj/qt/zenlang.pro.user
+prj/zenlang-build-desktop-Qt_4_8_1_in_PATH__System__Debug/
+prj/zenlang-build-desktop-Qt_4_8_1_in_PATH__System__Release/
 
 # Compiled Object files
 *.slo

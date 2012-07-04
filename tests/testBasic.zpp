@@ -555,5 +555,6 @@ protected struct MyProtectedStruct {
 
 function testProtectedStruct : test {
     MyProtectedStruct aps0 = struct {x:3;};
+    unused(aps0);
     return (true);
 }

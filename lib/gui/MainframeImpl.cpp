@@ -21,11 +21,14 @@ MainFrame::Create::_Out MainFrame::Create::run(const MainFrame::Definition& def)
     if((def.position.w != -1) && (def.position.h != -1))
         gtk_widget_set_size_request (impl._val, def.position.w, def.position.h);
 
-    impl._hFixed = gtk_fixed_new();
-    gtk_container_add(GTK_CONTAINER(impl._val), impl._hFixed);
-    gtk_widget_show(impl._hFixed);
+    impl._fixed = gtk_fixed_new();
+    gtk_container_add(GTK_CONTAINER(impl._val), impl._fixed);
+    gtk_widget_show(impl._fixed);
 #elif defined(OSX)
     z::widget::impl& impl = Window::Native::createMainFrame(def);
+#elif defined(QT)
+    UNIMPL();
+    z::widget::impl& impl = *((z::widget::impl*)(0));
 #elif defined(IOS)
     UNIMPL();
     z::widget::impl& impl = Window::Native::createMainFrame(def);

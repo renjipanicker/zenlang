@@ -131,7 +131,7 @@ z::widget::impl& Window::Native::createWindow(const Window::Definition& def, con
     ncm.cbSize = sizeof(NONCLIENTMETRICS);
     ::SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(NONCLIENTMETRICS), &ncm, 0);
     HFONT hFont = ::CreateFontIndirect(&ncm.lfMessageFont);
-    ::SendMessage(z::ref(impl)._val, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(FALSE, 0)); 
+    ::SendMessage(z::ref(impl)._val, WM_SETFONT, (WPARAM)hFont, MAKELPARAM(FALSE, 0));
     return z::ref(impl);
 }
 
@@ -163,7 +163,7 @@ z::widget::impl& Window::Native::createChildWindow(const Window::Definition& def
 z::widget::impl& Window::Native::initWindowImpl(GtkWidget* hwnd) {
     z::widget::impl* impl = new z::widget::impl();
     z::ref(impl)._val = hwnd;
-    z::ref(impl)._hFixed = 0;
+    z::ref(impl)._fixed = 0;
     g_object_set_data(G_OBJECT(z::ref(impl)._val), "impl", impl);
     return z::ref(impl);
 }
@@ -177,11 +177,13 @@ z::widget::impl& Window::Native::createWindow(const Window::Definition& def, Gtk
 }
 
 z::widget::impl& Window::Native::createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const z::widget& parent) {
-    gtk_fixed_put (GTK_FIXED (parent.val()._hFixed), hwnd, def.position.x, def.position.y);
+    gtk_fixed_put (GTK_FIXED (parent.val()._fixed), hwnd, def.position.x, def.position.y);
     z::widget::impl& impl = initWindowImpl(hwnd);
     gtk_widget_show(impl._val);
     return impl;
 }
+#elif defined(QT)
+// no functions defined here.
 #elif defined(OSX)
 z::widget::impl& Window::Native::createMainFrame(const Window::Definition& def) {
     Position pos = Position();
@@ -256,6 +258,9 @@ Window::Position Window::getWindowPosition(const z::widget& wnd) {
             ._y<Window::Position>(0)
             ._w<Window::Position>(req.width)
             ._h<Window::Position>(req.height);
+#elif defined(QT)
+    UNIMPL();
+    const Window::Position pos;
 #elif defined(OSX)
     UNIMPL();
     const Window::Position pos;
@@ -286,6 +291,8 @@ Window::Position Window::getChildPosition(const z::widget& wnd) {
             ._y<Window::Position>(0)
             ._w<Window::Position>(req.width)
             ._h<Window::Position>(req.height);
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     NSSize sz = wnd.val()._val.frame.size;
     return Window::Position()
@@ -309,6 +316,8 @@ void Window::SetTitle::run(const z::widget& wnd, const z::string& title) {
     ::SetWindowText(wnd.val()._val, z::s2e(title).c_str());
 #elif defined(GTK)
     gtk_window_set_title (GTK_WINDOW (wnd.val()._val), z::s2e(title).c_str());
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -326,6 +335,8 @@ void Window::SetFocus::run(const z::widget& frame, const z::widget& wnd) {
     unused(frame);
     unused(wnd);
     UNIMPL();
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     [frame.val()._frame makeFirstResponder:wnd.val()._val];
 #elif defined(IOS)
@@ -341,6 +352,8 @@ void Window::Show::run(const z::widget& wnd) {
 #elif defined(GTK)
     gtk_widget_show(GTK_WIDGET(wnd.val()._val));
     gtk_window_deiconify(GTK_WINDOW(wnd.val()._val));
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 //    [wnd.val()._val makeKeyAndOrderFront:wnd.val()._val];
@@ -356,6 +369,8 @@ void Window::Hide::run(const z::widget& wnd) {
     ::ShowWindow(wnd.val()._val, SW_HIDE);
 #elif defined(GTK)
     gtk_widget_hide(GTK_WIDGET(wnd.val()._val));
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -372,6 +387,8 @@ void Window::Move::run(const z::widget& wnd, const Window::Position& position) {
     unused(wnd); unused(position);
     //gtk_widget_set_uposition(wnd.val()._val, position.x, position.y);
     //gtk_window_set_default_size (wnd.val()._val, position.w, position.h);
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -390,6 +407,8 @@ void Window::Size::run(const z::widget& wnd, const int& w, const int& h) {
     ::MoveWindow(wnd.val()._val, rc.left, rc.top, tw, th, TRUE);
 #elif defined(GTK)
     gtk_widget_set_size_request(wnd.val()._val, w, h);
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -451,7 +470,9 @@ namespace zz {
 void Window::OnResize::addHandler(const z::widget& wnd, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
-    g_signal_connect (G_OBJECT (wnd.val()._val), "configure-event", G_CALLBACK (zz::onConfigureEvent), handler);
+    g_signal_connect (G_OBJECT (wnd.val()._val), "configure-event", G_CALLBACK (zz::onConfigureEvent), z::ptr(handler.get()) );
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     CResizer* resizer = [CResizer alloc];
     [resizer initResizer:z::ptr(handler.get()) withView:wnd.val()._val];
@@ -477,7 +498,9 @@ namespace zz {
 void Window::OnClose::addHandler(const z::widget& wnd, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
-    g_signal_connect (G_OBJECT (wnd.val()._val), "closed", G_CALLBACK (zz::onWindowCloseEvent), z::ref(handler));
+    g_signal_connect (G_OBJECT (wnd.val()._val), "closed", G_CALLBACK (zz::onWindowCloseEvent), z::ptr(handler.get()) );
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     CCloser* closer = [CCloser alloc];
     [closer initCloser:z::ptr(handler.get()) withView:wnd.val()._val];

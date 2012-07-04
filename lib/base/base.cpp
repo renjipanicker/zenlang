@@ -354,7 +354,8 @@ z::string z::dir::cwd() {
 #if defined(WIN32)
     ::_getcwd( buff, MAXBUF);
 #else
-    ::getcwd( buff, MAXBUF);
+    char* p = ::getcwd( buff, MAXBUF);
+    unused(p);
 #endif
     z::string rv(buff);
     return rv;
@@ -376,12 +377,16 @@ struct z::widget::impl {
     inline impl() : _val(0), _menu(0), _id(0) {}
     HWND _val;          /// contains HWND if this is a window
     HMENU _menu;         /// contains HMENU if this is a menu (\_val will point to parent window)
-    uint32_t _id;        /// contains id if this is menuitem or systray. 
+    uint32_t _id;        /// contains id if this is menuitem or systray.
     NOTIFYICONDATA _ni; /// if this is a systray. The member hWnd contains handle to parent window
 #elif defined(GTK)
-    inline impl() : _val(0), _fixed(0) {}
+    inline impl() : _val(0), _fixed(0), _icon(0), _menu(0), _menuItem(0) {}
     GtkWidget* _val;    /// contains window or menu or menuitem
     GtkWidget* _fixed;   /// contains pointer to fixed layout child if _val is a parent frame
+    GtkStatusIcon* _icon;
+    GtkWidget* _menu;
+    GtkWidget* _menuItem;
+#elif defined(QT)
 #elif defined(OSX)
     inline impl() {} // : _val(0), _frame(0) {}
     NSView* _val;

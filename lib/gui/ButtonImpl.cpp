@@ -33,6 +33,9 @@ z::widget Button::Create::run(const z::widget& parent, const Button::Definition&
 #elif defined(GTK)
     GtkWidget* hWnd = gtk_button_new_with_label(z::s2e(def.title).c_str());
     z::widget::impl& impl = Window::Native::createChildWindow(hWnd, def, parent);
+#elif defined(QT)
+    UNIMPL();
+    z::widget::impl* impl = new z::widget::impl();
 #elif defined(OSX)
     NSView* child = 0;
     z::widget::impl& impl = Window::Native::createChildWindow(def, parent, child);
@@ -59,7 +62,9 @@ static void onButtonClick(GtkMenuItem* item, gpointer phandler) {
 void Button::OnClick::addHandler(const z::widget& button, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
-    g_signal_connect (G_OBJECT (Window::impl(button)._hWindow), "clicked", G_CALLBACK (onButtonClick), handler);
+    g_signal_connect (G_OBJECT (button.val()._val), "clicked", G_CALLBACK (onButtonClick), z::ptr(handler.get()) );
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)

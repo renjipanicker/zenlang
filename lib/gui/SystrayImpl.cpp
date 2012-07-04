@@ -38,6 +38,8 @@ void Systray::SetTooltip::run(const z::widget& handle, const z::string& text) {
     ::Shell_NotifyIcon(NIM_MODIFY, z::ptr(ni));
 #elif defined(GTK)
     gtk_status_icon_set_tooltip_text(handle.val()._icon, z::s2e(text).c_str());
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -62,6 +64,8 @@ void Systray::SetIconfile::run(const z::widget& handle, const z::string& filenam
 #elif defined(GTK)
     unused(filename);
     gtk_status_icon_set_from_icon_name(handle.val()._icon, GTK_STOCK_MEDIA_STOP);
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -76,6 +80,8 @@ void Systray::Show::run(const z::widget& handle) {
     ::Shell_NotifyIcon(NIM_ADD, z::ptr(handle.ni()));
 #elif defined(GTK)
     gtk_status_icon_set_visible(handle.val()._icon, TRUE);
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -90,6 +96,8 @@ void Systray::Hide::run(const z::widget& handle) {
     ::Shell_NotifyIcon(NIM_DELETE, z::ptr(handle.ni()));
 #elif defined(GTK)
     gtk_status_icon_set_visible(handle.val()._icon, FALSE);
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -147,6 +155,8 @@ z::widget Systray::Create::run(const z::widget& parent, const Systray::Definitio
 #elif defined(GTK)
     z::ref(impl)._icon = gtk_status_icon_new_from_stock(GTK_STOCK_GO_UP);
     g_object_set_data(G_OBJECT(z::ref(impl)._icon), "impl", impl);
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -183,7 +193,9 @@ static gboolean onSystrayActivateEvent(GtkStatusIcon* status_icon, gpointer phan
 void Systray::OnActivation::addHandler(const z::widget& systray, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
-    g_signal_connect(G_OBJECT (systray.val()._icon), "activate", G_CALLBACK (onSystrayActivateEvent), handler);
+    g_signal_connect(G_OBJECT (systray.val()._icon), "activate", G_CALLBACK (onSystrayActivateEvent), z::ptr(handler.get()) );
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -209,7 +221,9 @@ static gboolean onSystrayContextMenuEvent(GtkStatusIcon *status_icon, guint butt
 void Systray::OnContextMenu::addHandler(const z::widget& systray, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
-    g_signal_connect(G_OBJECT (systray.val()._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), handler);
+    g_signal_connect(G_OBJECT (systray.val()._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), z::ptr(handler.get()));
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)

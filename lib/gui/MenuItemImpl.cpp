@@ -37,7 +37,10 @@ z::widget MenuItem::Create::run(const z::widget& pmenu, const MenuItem::Definiti
 #elif defined(GTK)
     z::widget::impl* impl = new z::widget::impl();
     z::ref(impl)._menuItem = gtk_menu_item_new_with_label(z::s2e(def.label).c_str());
-    gtk_menu_shell_append (GTK_MENU_SHELL (Menu::impl(pmenu)._menu), z::ref(impl)._menuItem);
+    gtk_menu_shell_append (GTK_MENU_SHELL (pmenu.val()._menu), z::ref(impl)._menuItem);
+#elif defined(QT)
+    UNIMPL();
+    z::widget::impl* impl = new z::widget::impl();
 #elif defined(OSX)
     UNIMPL();
     z::widget::impl* impl = new z::widget::impl();
@@ -64,7 +67,9 @@ static void onMenuItemSelectClick(GtkMenuItem* item, gpointer phandler) {
 void MenuItem::OnSelect::addHandler(const z::widget& menuitem, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
-    g_signal_connect (G_OBJECT (MenuItem::impl(menuitem)._menuItem), "activate", G_CALLBACK (onMenuItemSelectClick), handler);
+    g_signal_connect (G_OBJECT (menuitem.val()._menuItem), "activate", G_CALLBACK (onMenuItemSelectClick), z::ptr(handler.get()) );
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)

@@ -43,6 +43,8 @@ if [[ $platform == 'CYGWIN_NT-5.1' ]]; then
     fi
 elif [[ $platform == 'Darwin' ]]; then
     SDKDIR=`find /Applications/Xcode.app/ -name usr | grep "MacOSX10.7.sdk/usr$"`
+elif [[ $platform == 'Linux' ]]; then
+    SDKDIR='xx'
 else
     echo "unknown platform"
     exit
@@ -139,15 +141,13 @@ if [[ $platform == 'CYGWIN_NT-5.1' ]]; then
     GENDIR=${BLDDIR}/../
     OUTDIR=../../../../zenlang_bld
 elif [[ $platform == 'Linux' ]]; then
-    echo Linux not implemented
-    exit 1
     ZCC_FILE=zenlang
-    SRCDIR=../../../../../zenlang/
+    SRCDIR=../../../zenlang/
     LIBDIR=${SRCDIR}/lib
     BLDDIR=.
     INTDIR=${BLDDIR}
-    GENDIR=${BLDDIR}/../
-    OUTDIR=../../../../../zenlang_bld
+    GENDIR=${BLDDIR}
+    OUTDIR=../../../zenlang_bld
 elif [[ $platform == 'Darwin' ]]; then
     ZCC_FILE=zenlang
     SRCDIR=../../../../../../../../
@@ -490,7 +490,47 @@ if [ "$dotest" == "yes" ]; then
 #            exit
 #        fi
     elif [[ $platform == 'Linux' ]]; then
-        echo "TODO: Linux platform"
+        # first compile the C files
+        gcc -c -Os -I${OUTDIR} ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
+        if [[ $? != 0 ]]; then
+            exit
+        fi
+
+        CFLAGS="-DUNIT_TEST -DZ_EXE -Wall -I${OUTDIR} -O3"
+
+        # next compile the zenlang.cpp file as an objective-c++ file.
+        echo CMD test-1
+        gcc -c ${CFLAGS} ${OUTDIR}/zenlang.cpp
+        if [[ $? != 0 ]]; then
+            exit
+        fi
+
+        # now compile the test file
+        echo CMD test-2
+        g++ ${CFLAGS} -o test sqlite3_unicode.o zenlang.o testBasic.cpp -lsqlite3
+        if [[ $? != 0 ]]; then
+            exit
+        fi
+
+        # run the test file
+        echo CMD test-3
+        ./test > test.log
+        if [[ $? != 0 ]]; then
+            exit
+        fi
+
+        #now compile the test file
+        #echo GUI test-1
+        #gcc -c ${CFLAGS} -DGUI ${OUTDIR}/zenlang.cpp
+        #if [[ $? != 0 ]]; then
+        #    exit
+        #fi
+
+        #echo GUI test-2
+        #g++ ${CFLAGS} -DGUI -O3 -o test.osx -L${SDKDIR}/lib sqlite3_unicode.o zenlang.o guiTest.cpp -lc++ -lsqlite3
+        #if [[ $? != 0 ]]; then
+        #    exit
+        #fi
     else
         echo "unknown platform"
     fi

@@ -74,6 +74,9 @@ z::widget TextEdit::Create::run(const z::widget& parent, const TextEdit::Definit
         child = [NSTextField alloc];
     }
     z::widget::impl& impl = Window::Native::createChildWindow(def, parent, child);
+#elif defined(QT)
+    UNIMPL();
+    z::widget::impl* impl = new z::widget::impl();
 #elif defined(IOS)
     UNIMPL();
     z::widget::impl& impl = Window::Native::createChildWindow(def, parent);
@@ -82,6 +85,7 @@ z::widget TextEdit::Create::run(const z::widget& parent, const TextEdit::Definit
 #endif
     z::widget win(impl);
     Window::Position p = Window::getChildPosition(win);
+    unused(p);
     return win;
 }
 
@@ -124,6 +128,8 @@ void TextEdit::AppendText::run(const z::widget& wnd, const z::string& text) {
         NSString* ntxt = [NSString stringWithUTF8String:""];
         [[[v textStorage] mutableString] appendString:ntxt];
     }
+#elif defined(QT)
+    UNIMPL();
 #elif defined(IOS)
     UNIMPL();
 #else
@@ -135,6 +141,8 @@ void TextEdit::Clear::run(const z::widget& wnd) {
 #if defined(WIN32)
     ::SetWindowText(wnd.val()._val, "");
 #elif defined(GTK)
+    UNIMPL();
+#elif defined(QT)
     UNIMPL();
 #elif defined(OSX)
     UNIMPL();
@@ -153,6 +161,9 @@ z::string TextEdit::GetText::run(const z::widget& wnd) {
     z::string val(buf);
     delete[] buf;
 #elif defined(GTK)
+    UNIMPL();
+    z::string val;
+#elif defined(QT)
     UNIMPL();
     z::string val;
 #elif defined(OSX)
@@ -188,7 +199,9 @@ static void onEnterPressed(GtkMenuItem* item, gpointer phandler) {
 void TextEdit::OnEnter::addHandler(const z::widget& textedit, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
-    g_signal_connect (G_OBJECT (textedit.val()._val), "activate", G_CALLBACK (onEnterPressed), handler);
+    g_signal_connect (G_OBJECT (textedit.val()._val), "activate", G_CALLBACK (onEnterPressed), z::ptr(handler.get()) );
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     OnEnterHandler* h = [OnEnterHandler alloc];
     if(isTextField(textedit)) {

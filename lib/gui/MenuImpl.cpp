@@ -12,11 +12,14 @@ z::widget Menu::Create::run(const z::widget& wnd, const Menu::Definition& def) {
     z::ref(impl)._val = wnd.val()._val;
 #elif defined(GTK)
     z::widget::impl* impl = new z::widget::impl();
-    z::ref(impl)._menu = gtk_menu_new();
+    z::ref(impl)._menu = (GtkWidget*)gtk_menu_new();
     unused(wnd);
 #elif defined(OSX)
     z::widget::impl* impl = new z::widget::impl();
     UNIMPL();
+#elif defined(QT)
+    UNIMPL();
+    z::widget::impl* impl = new z::widget::impl();
 #elif defined(IOS)
     UNIMPL();
     z::widget::impl* impl = new z::widget::impl();
@@ -56,6 +59,8 @@ void Menu::ShowAt::run(const z::widget& handle, const int& x, const int& y) {
     gtk_widget_show_all (handle.val()._menu);
     pos p(x, y);
     gtk_menu_popup(GTK_MENU(handle.val()._menu), NULL, NULL, getMenuPosition, &p, 0, gtk_get_current_event_time());
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
@@ -74,6 +79,8 @@ void Menu::Show::run(const z::widget& handle) {
 #elif defined(GTK)
     gtk_widget_show_all (handle.val()._menu);
     gtk_menu_popup(GTK_MENU(handle.val()._menu), NULL, NULL, getMenuPosition, 0, 0, gtk_get_current_event_time());
+#elif defined(QT)
+    UNIMPL();
 #elif defined(OSX)
     UNIMPL();
 #elif defined(IOS)
