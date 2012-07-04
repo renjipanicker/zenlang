@@ -3,6 +3,7 @@
 z::socket Socket::InitServer(const int& port) {
     sockaddr_in sa;
     SOCKET sfd = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
+    std::cout << "server initialized" << std::endl;
 
     if(-1 == sfd) {
         throw z::Exception("Socket::StartServer", z::string("Error creating socket"));
@@ -21,6 +22,7 @@ z::socket Socket::InitServer(const int& port) {
 }
 
 void Socket::StartServer(const z::socket& s) {
+    std::cout << "server starting" << std::endl;
     if(-1 == ::listen(s.val(), 10)) {
         throw z::Exception("Socket::StartServer", z::string("Error listen() failed"));
     }
@@ -56,12 +58,11 @@ namespace zz {
         timeval to;
         to.tv_sec = 0;
         to.tv_usec = timeout;
-        return (::select(s.val(), &aset, NULL, NULL, &to) == 1);
+        return (::select(s.val()+1, &aset, NULL, NULL, &to) != 0);
     }
 }
 
 bool Socket::OnConnectDevice::run(const int& timeout) {
-    static int cnt = 0;
     if(!zz::isDataAvailable(s, timeout)) {
         return false;
     }
@@ -83,7 +84,6 @@ void Socket::OnRecv::addHandler(const z::socket& s, const z::pointer<Handler>& h
 }
 
 bool Socket::OnRecvDevice::run(const int& timeout) {
-    static int cnt = 0;
     if(!zz::isDataAvailable(s, timeout)) {
         return false;
     }

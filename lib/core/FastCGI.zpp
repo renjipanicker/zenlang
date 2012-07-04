@@ -222,7 +222,7 @@ routine size processRequest(const socket& s, const socket& cs, const data& bfr, 
                 // end of stdin
                 OnRequestReceived(s, cs, req);
             }
-            
+
             /// \todo: store stdin into req
             break;
         }
@@ -235,7 +235,9 @@ routine size processRequest(const socket& s, const socket& cs, const data& bfr, 
 public function socket Create(const int& port) {
     auto s = Socket::InitServer(port);
     Socket::OnConnect(s) => {
+        print "onconnect";
         Socket::OnRecv(cs) => [; data bfr, RequestMap requestMap] {
+            print "on recv";
             bfr += d;
             while( length(bfr) >= sizeof(Header) ) {
                 auto l = processRequest(s, cs, bfr, requestMap);
