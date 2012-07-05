@@ -1,4 +1,6 @@
 import core::Socket;
+import core::Request;
+import core::Response;
 namespace FastCGI;
 
 enum MessageType {
@@ -67,23 +69,17 @@ struct EndRequest : Header {
     ubyte reserved3;
 };
 
-public struct Request {
-    auto rid = 0u;
-    dict<string, string> paramList;
-    auto input = "";
-};
-
-struct RequestData : Request {
+struct RequestData : Request::Data {
     auto role = Role.NONE;
     auto keepAlive = false;
 };
 
 typedef RequestMap dict<uint, RequestData>;
 
-public event(const socket& s) => function void OnRequest(const socket& cs, const Request& r);
+public event(const socket& s) => function void OnRequest(const socket& cs, const Request::Data& req);
 
-private routine void OnRequestReceived(const socket& s, const socket& cs, const Request& r) {
-    raise OnRequest(s: cs, r);
+private routine void OnRequestReceived(const socket& s, const socket& cs, const Request::Data& req) {
+    raise OnRequest(s: cs, req);
 }
 
 routine Header CreateHeader(const MessageType& t, const uint& mid, const uint& len) {
@@ -252,18 +248,19 @@ public function socket Create(const int& port) {
     return(s);
 }
 
-public function void SendOutput(const Request& req, const socket& s, const string& o) {
-    auto h = CreateHeader(MessageType.TYPE_STDOUT, req.rid, length(o));
-    auto d = raw(h);
-    Socket::SendData(s, d);
-    Socket::SendString(s, o);
-}
+public function void SendResponse(const Request::Data& req, const socket& s, const Response::Data& res) {
+    auto h1 = CreateHeader(MessageType.TYPE_STDOUT, req.rid, length(res.body));
+    auto d1 = raw(h1);
+    Socket::SendData(s, d1);
+    Socket::SendString(s, res.body);
 
-public function void SendEndRequest(const Request& req, const socket& s, const uint& appStatus, const ProtocolStatus& protStatus) {
-    SendOutput(req, s, "");
-    auto h = CreateEndRequest(MessageType.TYPE_END_REQUEST, req.rid, appStatus, protStatus);
-    auto d = raw(h);
-    Socket::SendData(s, d);
+    auto h2 = CreateHeader(MessageType.TYPE_STDOUT, req.rid, 0u);
+    auto d2 = raw(h2);
+    Socket::SendData(s, d2);
+
+    auto h3 = CreateEndRequest(MessageType.TYPE_END_REQUEST, req.rid, 0u, FastCGI::ProtocolStatus.REQUEST_COMPLETE);
+    auto d3 = raw(h3);
+    Socket::SendData(s, d3);
     Socket::Close(s);
 }
 

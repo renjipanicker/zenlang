@@ -1,3 +1,8 @@
-import core::Url public;
+import core::Packet;
 namespace Request;
 
+public struct Data : Packet::Data {
+    auto rid = 0u;
+    dict<string, string> paramList;
+    dict<string, string> fieldList;
+};

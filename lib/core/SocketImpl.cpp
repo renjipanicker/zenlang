@@ -1,14 +1,17 @@
 #include "zenlang.hpp"
 
 z::socket Socket::InitServer(const int& port) {
-    sockaddr_in sa;
     SOCKET sfd = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    std::cout << "server initialized" << std::endl;
-
     if(-1 == sfd) {
         throw z::Exception("Socket::StartServer", z::string("Error creating socket"));
     }
 
+    int on = 1;
+    if(::setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
+        throw z::Exception("Socket::StartServer", z::string("Error setsocketopt() failed"));
+    }
+
+    sockaddr_in sa;
     memset(&sa, 0, sizeof(sa));
 
     sa.sin_family = AF_INET;

@@ -6,7 +6,7 @@ public function basicTest : main {
     auto s = FastCGI::Create(9001);
 
     FastCGI::OnRequest(s) => {
-        unused(r);
+        unused(req);
         print "testFcgi: OnRequest";
     };
 

@@ -1,0 +1,6 @@
+namespace Packet;
+
+public struct Data {
+    dict<string, string> cookieList;
+    auto body = "";
+};

@@ -2,7 +2,7 @@
 
 namespace zz {
 struct OnDataReceivedHandler {
-    inline OnDataReceivedHandler(Response::response& r) : _ps(psProtocol), _inHeader(true), _r(r) {}
+    inline OnDataReceivedHandler(Response::Data& r) : _ps(psProtocol), _inHeader(true), _r(r) {}
 private:
     enum ParseState {
         psProtocol,
@@ -18,10 +18,10 @@ private:
     z::string _token1;
     ParseState _ps;
     bool _inHeader;
-    Response::response& _r;
+    Response::Data& _r;
     inline size_t contentLength() const {
-        z::dict<z::string,z::string>::const_iterator it = _r.header.find("Content-Length");
-        if(it == _r.header.end()) {
+        z::dict<z::string,z::string>::const_iterator it = _r.headerList.find("Content-Length");
+        if(it == _r.headerList.end()) {
             return 0;
         }
         const z::string& v = it->second;
@@ -48,7 +48,7 @@ public:
                 case psProtocol:
                     if(ch == ' ') {
                         _r.protocol = _token0;
-                        _token0 = "";   
+                        _token0 = "";
                         _ps = psStatus;
                     } else {
                         _token0 += ch;
@@ -93,7 +93,7 @@ public:
                     break;
                 case psVal:
                     if(ch == '\n') {
-                        _r.header[_token0] = _token1.substr(1);
+                        _r.headerList[_token0] = _token1.substr(1);
                         _token0 = "";
                         _token1 = "";
                         _ps = psKey;
@@ -198,8 +198,8 @@ static bool queryHttpText(const Url::url& u, zz::OnDataReceivedHandler& drh) {
 }
 } // namespace z
 
-bool Network::GetUrl(const Url::url& u, Response::response& r) {
-    zz::OnDataReceivedHandler drh(r);
+bool Network::GetUrl(const Url::url& u, Response::Data& req) {
+    zz::OnDataReceivedHandler drh(req);
     zz::queryHttpText(u, drh);
     return false;
 }
