@@ -1,4 +1,4 @@
-import core::Packet;
+import z::Packet;
 namespace Request;
 
 public struct Data : Packet::Data {

@@ -1,5 +1,5 @@
-include gui::WindowImpl native;
-include gui::Widget public;
+include WindowImpl native;
+import z::Widget public;
 namespace Window;
 
 public enum Style {

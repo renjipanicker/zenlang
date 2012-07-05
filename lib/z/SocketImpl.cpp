@@ -6,7 +6,7 @@ z::socket Socket::InitServer(const int& port) {
         throw z::Exception("Socket::StartServer", z::string("Error creating socket"));
     }
 
-    int on = 1;
+    char on = 1;
     if(::setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
         throw z::Exception("Socket::StartServer", z::string("Error setsocketopt() failed"));
     }

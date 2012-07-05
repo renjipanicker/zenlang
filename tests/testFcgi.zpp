@@ -1,4 +1,4 @@
-import core::FastCGI;
+import z::FastCGI;
 namespace TestFCGI;
 
 public function basicTest : main {

@@ -171,14 +171,12 @@ fi
 #############################################################
 # make all output directories
 mkdir -p ${INTDIR}
-mkdir -p ${INTDIR}/core
-mkdir -p ${INTDIR}/gui
+mkdir -p ${INTDIR}/z
 
 #rm -rf ${OUTDIR}
 
 mkdir -p ${OUTDIR}
-mkdir -p ${OUTDIR}/core
-mkdir -p ${OUTDIR}/gui
+mkdir -p ${OUTDIR}/z
 mkdir -p ${OUTDIR}/utils
 mkdir -p ${OUTDIR}/utils/fcgi
 mkdir -p ${OUTDIR}/utils/sqlite3
@@ -219,47 +217,38 @@ cp -v "${SRCDIR}/tools/re2c.osx"  ${OUTDIR}/
 cp -v "${SRCDIR}/tools/re2c"      ${OUTDIR}/re2c.linux
 
 #############################################################
-#generate all core files
-CZPPLST="${CZPPLST} $LIBDIR/core/Application.zpp"
-CZPPLST="${CZPPLST} $LIBDIR/core/String.zpp"
-CZPPLST="${CZPPLST} $LIBDIR/core/DateTime.zpp"
-CZPPLST="${CZPPLST} $LIBDIR/core/File.zpp"
-CZPPLST="${CZPPLST} $LIBDIR/core/Dir.zpp"
-CZPPLST="${CZPPLST} $LIBDIR/core/Url.zpp"
-CZPPLST="${CZPPLST} $LIBDIR/core/Packet.zpp"
-CZPPLST="${CZPPLST} $LIBDIR/core/Request.zpp"
-CZPPLST="${CZPPLST} $LIBDIR/core/Response.zpp"
-CZPPLST="${CZPPLST} $LIBDIR/core/Socket.zpp"
-CZPPLST="${CZPPLST} $LIBDIR/core/Network.zpp"
-CZPPLST="${CZPPLST} $LIBDIR/core/FastCGI.zpp"
-${ZCC} --api ${INTDIR}/core/ -c ${CZPPLST}
+#generate all library files
+CZPPLST="${CZPPLST} $LIBDIR/z/Application.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/String.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/DateTime.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/File.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/Dir.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/Url.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/Packet.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/Request.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/Response.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/Socket.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/Network.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/FastCGI.zpp"
+
+CZPPLST="${CZPPLST} $LIBDIR/z/Widget.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/Window.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/MainFrame.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/TextEdit.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/Button.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/Systray.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/Menu.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/MenuItem.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/WindowCreator.zpp"
+
+${ZCC} --verbose --api ${INTDIR}/z/ -c ${CZPPLST}
 if [[ $? != 0 ]]; then
-    echo Error generating core files.
+    echo Error generating library files.
     exit
 fi
 
-# copy core files to OUTDIR
-cp -v -r ${INTDIR}/core/*.ipp ${OUTDIR}/core
-
-#############################################################
-#generate all gui files
-GZPPLST="${GZPPLST} $LIBDIR/gui/Widget.zpp"
-GZPPLST="${GZPPLST} $LIBDIR/gui/Window.zpp"
-GZPPLST="${GZPPLST} $LIBDIR/gui/MainFrame.zpp"
-GZPPLST="${GZPPLST} $LIBDIR/gui/TextEdit.zpp"
-GZPPLST="${GZPPLST} $LIBDIR/gui/Button.zpp"
-GZPPLST="${GZPPLST} $LIBDIR/gui/Systray.zpp"
-GZPPLST="${GZPPLST} $LIBDIR/gui/Menu.zpp"
-GZPPLST="${GZPPLST} $LIBDIR/gui/MenuItem.zpp"
-GZPPLST="${GZPPLST} $LIBDIR/gui/WindowCreator.zpp"
-${ZCC} --api ${INTDIR}/gui -c ${GZPPLST}
-if [[ $? != 0 ]]; then
-    echo Error generating gui/ files.
-    exit
-fi
-
-# copy gui files to OUTDIR
-cp -v -r ${INTDIR}/gui/*.ipp ${OUTDIR}/gui
+# copy library files to OUTDIR
+cp -v -r ${INTDIR}/z/*.ipp ${OUTDIR}/z/
 
 #############################################################
 # create amalgamated zenlang.hpp
@@ -283,29 +272,29 @@ appendFile $ZHDRFILE "${LIBDIR}/base/StlcppGenerator.hpp"
 appendFile $ZHDRFILE "${LIBDIR}/base/CMakeGenerator.hpp"
 appendFile $ZHDRFILE "${LIBDIR}/base/Interpreter.hpp"
 
-appendFile $ZHDRFILE "${INTDIR}/core/Application.hpp"
-appendFile $ZHDRFILE "${INTDIR}/core/String.hpp"
-appendFile $ZHDRFILE "${INTDIR}/core/DateTime.hpp"
-appendFile $ZHDRFILE "${INTDIR}/core/File.hpp"
-appendFile $ZHDRFILE "${INTDIR}/core/Dir.hpp"
-appendFile $ZHDRFILE "${INTDIR}/core/Url.hpp"
-appendFile $ZHDRFILE "${INTDIR}/core/Packet.hpp"
-appendFile $ZHDRFILE "${INTDIR}/core/Request.hpp"
-appendFile $ZHDRFILE "${INTDIR}/core/Response.hpp"
-appendFile $ZHDRFILE "${INTDIR}/core/Socket.hpp"
-appendFile $ZHDRFILE "${INTDIR}/core/Network.hpp"
-appendFile $ZHDRFILE "${INTDIR}/core/FastCGI.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Application.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/String.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/DateTime.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/File.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Dir.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Url.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Packet.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Request.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Response.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Socket.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Network.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/FastCGI.hpp"
 
 appendString $ZHDRFILE "#if defined(GUI)"
-appendFile $ZHDRFILE "${INTDIR}/gui/Widget.hpp"
-appendFile $ZHDRFILE "${INTDIR}/gui/Window.hpp"
-appendFile $ZHDRFILE "${INTDIR}/gui/MainFrame.hpp"
-appendFile $ZHDRFILE "${INTDIR}/gui/TextEdit.hpp"
-appendFile $ZHDRFILE "${INTDIR}/gui/Button.hpp"
-appendFile $ZHDRFILE "${INTDIR}/gui/Systray.hpp"
-appendFile $ZHDRFILE "${INTDIR}/gui/Menu.hpp"
-appendFile $ZHDRFILE "${INTDIR}/gui/MenuItem.hpp"
-appendFile $ZHDRFILE "${INTDIR}/gui/WindowCreator.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Widget.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Window.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/MainFrame.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/TextEdit.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Button.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Systray.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Menu.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/MenuItem.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/WindowCreator.hpp"
 appendString $ZHDRFILE "#endif"
 
 #############################################################
@@ -329,46 +318,46 @@ appendFile $ZSRCFILE "${LIBDIR}/base/CMakeGenerator.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/base/Interpreter.cpp"
 
 appendFile $ZSRCFILE "${INTDIR}/Application.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/core/ApplicationImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/ApplicationImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/String.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/core/StringImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/StringImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/DateTime.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/core/DateTimeImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/DateTimeImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Dir.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/core/DirImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/DirImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/File.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/core/FileImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/FileImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Url.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/core/UrlImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/UrlImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Packet.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Request.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/core/RequestImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/RequestImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Response.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/core/ResponseImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/ResponseImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Socket.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/core/SocketImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/SocketImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Network.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/core/NetworkImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/NetworkImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/FastCGI.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/core/FastCGIImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/FastCGIImpl.cpp"
 
 appendString $ZSRCFILE "#if defined(GUI)"
 appendFile $ZSRCFILE "${INTDIR}/Widget.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Window.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/gui/WindowImpl.hpp"
-appendFile $ZSRCFILE "${LIBDIR}/gui/WindowImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/WindowImpl.hpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/WindowImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/MainFrame.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/gui/MainFrameImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/MainFrameImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/TextEdit.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/gui/TextEditImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/TextEditImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Button.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/gui/ButtonImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/ButtonImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Systray.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/gui/SystrayImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/SystrayImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Menu.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/gui/MenuImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/MenuImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/MenuItem.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/gui/MenuItemImpl.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/MenuItemImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/WindowCreator.cpp"
 appendString $ZSRCFILE "#endif"
 

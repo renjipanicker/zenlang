@@ -1,5 +1,5 @@
-import core::Url public;
-import core::Response public;
+import z::Url public;
+import z::Response public;
 namespace Network;
 
 /// \brief Retrieve the specified Utl into Response.

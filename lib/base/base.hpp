@@ -1111,11 +1111,11 @@ namespace z {
             }
             _tail = inst;
         }
-        
+
         inline void begin() {
             _next = _head;
         }
-        
+
         inline InitT* next() {
             InitT* n = _next;
             if(n != 0) {
@@ -1123,7 +1123,7 @@ namespace z {
             }
             return n;
         }
-        
+
     private:
         static InitT* _head;
         static InitT* _tail;
@@ -1462,6 +1462,8 @@ namespace z {
         static const z::string sep;
         static bool exists(const z::string& path);
         static int mkdir(const z::string& path);
+
+        static z::string cleanPath(const z::string& path);
 
         /// \brief Makes a path upto the second-last component, unless filename is terminated by a /
         static void mkpath(const z::string& filename);

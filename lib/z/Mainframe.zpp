@@ -1,4 +1,4 @@
-include gui::Window public;
+include z::Window public;
 
 namespace MainFrame;
 

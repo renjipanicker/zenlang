@@ -37,7 +37,7 @@ bool z::Compiler::compileFile(z::Ast::Module& module, const z::string& filename,
         for(z::Ast::Module::Level_t i = 0; i < module.level(); ++i) {
             indent += "  ";
         }
-        indent += msg;
+        std::cout << indent << msg << " " << filename << std::endl;
     }
 
     std::ifstream is;
@@ -66,6 +66,7 @@ inline bool z::Compiler::parseFile(z::Ast::Module& module, const z::string& msg)
 
 void z::Compiler::import(z::Ast::Module& module) {
     z::string ifilename = findImport(module.filename());
+    ifilename = z::dir::cleanPath(ifilename);
 
     // check if file is already imported
     if(module.unit().headerFileList().find(ifilename) != module.unit().headerFileList().end()) {

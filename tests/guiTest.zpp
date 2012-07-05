@@ -1,11 +1,11 @@
-import gui::Window public;
-import gui::Mainframe;
-import gui::Button;
-import gui::TextEdit;
-import gui::Menu;
-import gui::MenuItem;
-import gui::Systray;
-import gui::WindowCreator;
+import z::Window public;
+import z::Mainframe;
+import z::Button;
+import z::TextEdit;
+import z::Menu;
+import z::MenuItem;
+import z::Systray;
+import z::WindowCreator;
 
 function MyMain : main {
     unused(argl);

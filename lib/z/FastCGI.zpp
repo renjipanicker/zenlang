@@ -1,6 +1,6 @@
-import core::Socket;
-import core::Request;
-import core::Response;
+import z::Socket;
+import z::Request;
+import z::Response;
 namespace FastCGI;
 
 enum MessageType {

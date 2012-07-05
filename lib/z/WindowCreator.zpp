@@ -1,11 +1,11 @@
-include gui::WindowImpl native;
-include gui::Window public;
-include gui::Mainframe public;
-include gui::Button;
-include gui::TextEdit;
-include gui::Systray;
-include gui::Menu;
-include gui::MenuItem;
+include z::WindowImpl native;
+import z::Window public;
+include z::Mainframe public;
+include z::Button;
+include z::TextEdit;
+include z::Systray;
+include z::Menu;
+include z::MenuItem;
 
 namespace WindowCreator;
 

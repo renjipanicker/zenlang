@@ -262,6 +262,13 @@ const z::string z::dir::sep = "\\";
 const z::string z::dir::sep = "/";
 #endif
 
+z::string z::dir::cleanPath(const z::string& path) {
+    z::string r = path;
+    r.replace("//", "/");
+    r.replace("/./", "/");
+    return r;
+}
+
 bool z::dir::exists(const z::string& path) {
     struct stat b;
     return (0 == stat(s2e(path).c_str(), &b));

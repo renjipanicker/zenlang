@@ -1,6 +1,6 @@
-include gui::Widget public;
-include gui::Window public;
-include gui::Menu public;
+include z::Widget public;
+include z::Window public;
+include z::Menu public;
 namespace MenuItem;
 
 public struct Definition : Widget::Definition {
