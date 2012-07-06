@@ -209,10 +209,19 @@ const z::string ifile =
 ;
 
 void z::Compiler::initContext(z::Ast::Unit& unit) {
-    z::Ast::Module module(unit, "corex.ipp", 1);
-    Parser parser;
-    Lexer lexer(parser);
-    compileString(module, lexer, ifile, true);
+    // import core.ipp. This is a string constant
+    {
+        z::Ast::Module module(unit, "core.ipp", 1);
+        Parser parser;
+        Lexer lexer(parser);
+        compileString(module, lexer, ifile, true);
+    }
+
+    // import zenlang.ipp. This is a generated file
+    {
+        z::Ast::Module module(unit, "zenlang.ipp", 1);
+        import(module);
+    }
 }
 
 void z::Compiler::compile() {

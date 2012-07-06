@@ -631,6 +631,26 @@ namespace Ast {
         const Ptr<const Ast::Scope> _out;
     };
 
+    class InterfaceDefn : public UserDefinedTypeSpec {
+    protected:
+        inline InterfaceDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, Ast::Scope& list, Ast::CompoundStatement& block) : UserDefinedTypeSpec(parent, name, defType), _list(list), _block(block) {}
+    public:
+        inline const Ast::Scope::List& list() const {return _list.get().list();}
+        inline const Ast::Scope& scope() const {return _list.get();}
+        inline Ast::CompoundStatement& block() {return _block.get();}
+        inline const Ast::CompoundStatement& block() const {return _block.get();}
+    private:
+        const Ptr<Ast::Scope> _list;
+        const Ptr<Ast::CompoundStatement> _block;
+    };
+
+    class RootInterfaceDefn : public InterfaceDefn {
+    public:
+        inline RootInterfaceDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, Ast::Scope& list, Ast::CompoundStatement& block) : InterfaceDefn(parent, name, defType, list, block) {}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    };
+
     class EventDecl : public UserDefinedTypeSpec {
     public:
         inline EventDecl(const TypeSpec& parent, const Ast::Token& name, const Ast::FunctionSig& sig, const Ast::VariableDefn& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _sig(sig), _in(in) {}
@@ -701,6 +721,7 @@ namespace Ast {
         virtual void visit(const RootFunctionDefn& node) = 0;
         virtual void visit(const ChildFunctionDefn& node) = 0;
         virtual void visit(const FunctionRetn& node) = 0;
+        virtual void visit(const RootInterfaceDefn& node) = 0;
         virtual void visit(const EventDecl& node) = 0;
         virtual void visit(const Namespace& node) = 0;
         virtual void visit(const Root& node) = 0;

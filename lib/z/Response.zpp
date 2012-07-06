@@ -1,14 +1,15 @@
 import z::Packet;
-namespace Response;
 
-public struct Cookie {
-    dict<string, string> attrList;
-};
+public interface Response {
+    struct Cookie {
+        dict<string, string> attrList;
+    };
 
-public struct Data : Packet::Data {
-    auto protocol = "";
-    auto status = "";
-    auto message = "";
-    dict<string,string> headerList;
-    auto contentLength = 0;
+    struct Data : Packet::Data {
+        auto protocol = "";
+        auto status = "";
+        auto message = "";
+        dict<string,string> headerList;
+        auto contentLength = 0;
+    };
 };

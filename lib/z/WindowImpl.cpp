@@ -5,12 +5,12 @@
 #include "WindowImpl.hpp"
 
 #if defined(WIN32)
-uint32_t Window::Native::getNextWmID() {
+uint32_t WindowImpl::getNextWmID() {
     static uint32_t lastWM = WM_APP;
     return lastWM++;
 }
 
-uint32_t Window::Native::getNextResID() {
+uint32_t WindowImpl::getNextResID() {
     static uint32_t lastRes = 1000;
     return lastRes++;
 }
@@ -48,18 +48,18 @@ namespace zz {
             LPCREATESTRUCT pcs = (LPCREATESTRUCT)lParam;
             void* p = z::ref(pcs).lpCreateParams;
             z::widget::impl* impl = reinterpret_cast<z::widget::impl*>(p);
-            Window::Native::setImpl(hWnd, impl);
+            WindowImpl::setImpl(hWnd, impl);
         }
         switch (message) {
             case WM_SIZE: {
                 Window::OnResize::Handler::_In in;
-                Window::OnResize::list().runHandler(Window::Native::impl(hWnd), in);
+                Window::OnResize::list().runHandler(WindowImpl::impl(hWnd), in);
                 break;
             }
 
             case WM_CLOSE: {
                 Window::OnClose::Handler::_In in;
-                Window::OnClose::list().runHandler(Window::Native::impl(hWnd), in);
+                Window::OnClose::list().runHandler(WindowImpl::impl(hWnd), in);
                 break;
             }
         }
@@ -99,12 +99,12 @@ namespace zz {
 #endif
 
 #if defined(WIN32)
-z::widget::impl& Window::Native::createWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, HWND parent) {
-    Position pos = Position()
-            ._x<Position>(CW_USEDEFAULT)
-            ._y<Position>(CW_USEDEFAULT)
-            ._w<Position>(CW_USEDEFAULT)
-            ._h<Position>(CW_USEDEFAULT);
+z::widget::impl& WindowImpl::createWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, HWND parent) {
+    Window::Position pos = Window::Position()
+            ._x<Window::Position>(CW_USEDEFAULT)
+            ._y<Window::Position>(CW_USEDEFAULT)
+            ._w<Window::Position>(CW_USEDEFAULT)
+            ._h<Window::Position>(CW_USEDEFAULT);
 
     if(def.position.x != -1)
         pos.x = def.position.x;
@@ -135,19 +135,19 @@ z::widget::impl& Window::Native::createWindow(const Window::Definition& def, con
     return z::ref(impl);
 }
 
-z::widget::impl& Window::Native::createMainFrame(const Window::Definition& def, int style, int xstyle) {
+z::widget::impl& WindowImpl::createMainFrame(const Window::Definition& def, int style, int xstyle) {
     HBRUSH brush = (def.style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
     z::string className = zz::registerClass(brush);
     return createWindow(def, className, style, xstyle, (HWND)NULL);
 }
 
-z::widget::impl& Window::Native::createChildFrame(const Window::Definition& def, int style, int xstyle, const z::widget &parent) {
+z::widget::impl& WindowImpl::createChildFrame(const Window::Definition& def, int style, int xstyle, const z::widget &parent) {
     HBRUSH brush = (def.style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
     z::string className = zz::registerClass(brush);
     return createWindow(def, className, style, xstyle, parent.val()._val);
 }
 
-z::widget::impl& Window::Native::createChildWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, const z::widget& parent) {
+z::widget::impl& WindowImpl::createChildWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, const z::widget& parent) {
     style |= WS_CHILD;
     if(def.border == 1) {
         style |= WS_BORDER;
@@ -160,7 +160,7 @@ z::widget::impl& Window::Native::createChildWindow(const Window::Definition& def
     return createWindow(def, className, style, xstyle, parent.val()._val);
 }
 #elif defined(GTK)
-z::widget::impl& Window::Native::initWindowImpl(GtkWidget* hwnd) {
+z::widget::impl& WindowImpl::initWindowImpl(GtkWidget* hwnd) {
     z::widget::impl* impl = new z::widget::impl();
     z::ref(impl)._val = hwnd;
     z::ref(impl)._fixed = 0;
@@ -168,7 +168,7 @@ z::widget::impl& Window::Native::initWindowImpl(GtkWidget* hwnd) {
     return z::ref(impl);
 }
 
-z::widget::impl& Window::Native::createWindow(const Window::Definition& def, GtkWidget *parent) {
+z::widget::impl& WindowImpl::createWindow(const Window::Definition& def, GtkWidget *parent) {
     unused(def);
     unused(parent);
     GtkWidget* hwnd = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -176,7 +176,7 @@ z::widget::impl& Window::Native::createWindow(const Window::Definition& def, Gtk
     return impl;
 }
 
-z::widget::impl& Window::Native::createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const z::widget& parent) {
+z::widget::impl& WindowImpl::createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const z::widget& parent) {
     gtk_fixed_put (GTK_FIXED (parent.val()._fixed), hwnd, def.position.x, def.position.y);
     z::widget::impl& impl = initWindowImpl(hwnd);
     gtk_widget_show(impl._val);
@@ -185,8 +185,8 @@ z::widget::impl& Window::Native::createChildWindow(GtkWidget* hwnd, const Window
 #elif defined(QT)
 // no functions defined here.
 #elif defined(OSX)
-z::widget::impl& Window::Native::createMainFrame(const Window::Definition& def) {
-    Position pos = Position();
+z::widget::impl& WindowImpl::createMainFrame(const Window::Definition& def) {
+    Window::Position pos = Window::Position();
     if(def.position.x != -1)
         pos.x = def.position.x;
     if(def.position.y != -1)
@@ -219,7 +219,7 @@ z::widget::impl& Window::Native::createMainFrame(const Window::Definition& def) 
     return z::ref(impl);
 }
 
-z::widget::impl& Window::Native::createChildWindow(const Window::Definition& def, const z::widget& parent, NSView* child) {
+z::widget::impl& WindowImpl::createChildWindow(const Window::Definition& def, const z::widget& parent, NSView* child) {
     if(child == 0) {
         throw z::Exception("Window", z::string("Unable to create child wnd"));
     }
@@ -229,11 +229,11 @@ z::widget::impl& Window::Native::createChildWindow(const Window::Definition& def
     return z::ref(impl);
 }
 #elif defined(IOS)
-z::widget::impl& Window::Native::createMainFrame(const Window::Definition& def) {
+z::widget::impl& WindowImpl::createMainFrame(const Window::Definition& def) {
     throw z::Exception("Window", z::string("NotImplemented: createMainFrame()"));
 }
 
-z::widget::impl& Window::Native::createChildWindow(const Window::Definition& def, const z::widget& parent) {
+z::widget::impl& WindowImpl::createChildWindow(const Window::Definition& def, const z::widget& parent) {
     throw z::Exception("Window", z::string("NotImplemented: createChildFrame()"));
 }
 #else

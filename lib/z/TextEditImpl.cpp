@@ -12,7 +12,7 @@ namespace TextEditImpl {
             case WM_KEYDOWN: {
                 if(wParam == VK_RETURN) {
                     TextEdit::OnEnter::Handler::_In in;
-                    TextEdit::OnEnter::list().runHandler(Window::Native::impl(hWnd), in);
+                    TextEdit::OnEnter::list().runHandler(WindowImpl::impl(hWnd), in);
                 }
                 break;
             }
@@ -39,10 +39,10 @@ z::widget TextEdit::Create::run(const z::widget& parent, const TextEdit::Definit
 
     // create the wnd handle.
     // Use richedit because plan edit has ugly gray background in read-only mode that cannot be easily changed.
-    z::widget::impl& impl = Window::Native::createChildWindow(def, "RICHEDIT50W", flags, 0, parent);
+    z::widget::impl& impl = WindowImpl::createChildWindow(def, "RICHEDIT50W", flags, 0, parent);
 
     // set subclass function
-    Window::Native::setImpl(impl._val, z::ptr(impl));
+    WindowImpl::setImpl(impl._val, z::ptr(impl));
     zz::TextEditImpl::OrigWndProc = (WNDPROC)SetWindowLong(impl._val, GWL_WNDPROC, (LONG)zz::TextEditImpl::WinProc);
 
     // set default font
@@ -58,7 +58,7 @@ z::widget TextEdit::Create::run(const z::widget& parent, const TextEdit::Definit
         gtk_entry_set_has_frame(GTK_ENTRY(hWnd), 1);
     }
 
-    z::widget::impl& impl = Window::Native::createChildWindow(hWnd, def, parent);
+    z::widget::impl& impl = WindowImpl::createChildWindow(hWnd, def, parent);
     if(def.title.size() > 0) {
         if(def.multiline) {
             GtkTextBuffer* buffer = gtk_text_view_get_buffer (GTK_TEXT_VIEW (impl._val));
@@ -73,13 +73,13 @@ z::widget TextEdit::Create::run(const z::widget& parent, const TextEdit::Definit
     } else {
         child = [NSTextField alloc];
     }
-    z::widget::impl& impl = Window::Native::createChildWindow(def, parent, child);
+    z::widget::impl& impl = WindowImpl::createChildWindow(def, parent, child);
 #elif defined(QT)
     UNIMPL();
     z::widget::impl* impl = new z::widget::impl();
 #elif defined(IOS)
     UNIMPL();
-    z::widget::impl& impl = Window::Native::createChildWindow(def, parent);
+    z::widget::impl& impl = WindowImpl::createChildWindow(def, parent);
 #else
 #error "Unimplemented GUI mode"
 #endif

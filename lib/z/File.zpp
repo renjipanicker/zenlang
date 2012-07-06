@@ -1,9 +1,9 @@
-namespace File;
+public interface File {
+    routine string CompleteBasePath(const string& path) native;
 
-public routine string CompleteBasePath(const string& path) native;
+    routine file Open(const string& filename, const string& mode) native;
 
-public routine file Open(const string& filename, const string& mode) native;
+    event(const string& s) native => function void ReadEachLine(const string& line);
 
-public event(const string& s) native => function void ReadEachLine(const string& line);
-
-function ReadLineDevice : device[file f, pointer<ReadEachLine::Handler> h; string bfr] native;
+    function ReadLineDevice : device[file f, pointer<ReadEachLine::Handler> h; string bfr] native;
+};

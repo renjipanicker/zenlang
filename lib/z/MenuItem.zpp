@@ -1,11 +1,12 @@
-include z::Widget public;
-include z::Window public;
-include z::Menu public;
-namespace MenuItem;
+import z::Widget public;
+import z::Window public;
+import z::Menu public;
 
-public struct Definition : Widget::Definition {
-    auto label = "";
+public interface MenuItem {
+    struct Definition : Widget::Definition {
+        auto label = "";
+    };
+
+    function widget Create(const widget& pmenu, const Definition& defn) native;
+    event(const widget& menuitem) native => function void OnSelect();
 };
-
-public function widget Create(const widget& pmenu, const Definition& defn) native;
-public event(const widget& menuitem) native => function void OnSelect();

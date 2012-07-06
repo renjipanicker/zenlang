@@ -88,6 +88,8 @@ appendFile() {
         exit 1
     fi
 
+    fn=$(basename "$dst_file")
+    ext="${fn##*.}"
     if [ "$mode" == "dbg" ]; then
         # get absolute file name of src file (use this when building debug version)
         AFN=""
@@ -101,18 +103,31 @@ appendFile() {
         command -v cygpath > /dev/null && AFN=$(cygpath -m "$AFN")
 
         # generate #line statement
-        echo "#line 1 \"$AFN\"" >> ${dst_file}
+        if [ "$ext" != "ipp" ]; then
+            # generate #line statement
+            echo "#line 1 \"$AFN\"" >> ${dst_file}
+        else
+            echo "//#line 1 \"$AFN\"" >> ${dst_file}
+        fi
 
         # append src_file to dst_file, commenting out all #include statements
         # if any include must be retained, write it as '# include'
         # (with a space between the '#' and the 'include')
-        sed 's|#include|//#include|' $src_file | sed 's|#pragma once|//#pragma once|' >> ${dst_file}
+        if [ "$ext" != "ipp" ]; then
+            sed 's|#include|//#include|' $src_file | sed 's|#pragma once|//#pragma once|' >> ${dst_file}
+        else
+            sed 's|import|//import|' $src_file >> ${dst_file}
+        fi
     else
         # write src file name to dst file.
         echo "// \"$src_file\"" >> ${dst_file}
 
         # same as above sed command, additionally also comment out #line statements, if any
-        sed 's|#include|//#include|' $src_file | sed 's|#pragma once|//#pragma once|' | sed 's|#line|//#line|' >> ${dst_file}
+        if [ "$ext" != "ipp" ]; then
+            sed 's|#include|//#include|' $src_file | sed 's|#pragma once|//#pragma once|' | sed 's|#line|//#line|' >> ${dst_file}
+        else
+            sed 's|import|//import|' $src_file >> ${dst_file}
+        fi
     fi
 
 }
@@ -171,12 +186,10 @@ fi
 #############################################################
 # make all output directories
 mkdir -p ${INTDIR}
-mkdir -p ${INTDIR}/z
 
 #rm -rf ${OUTDIR}
 
 mkdir -p ${OUTDIR}
-mkdir -p ${OUTDIR}/z
 mkdir -p ${OUTDIR}/utils
 mkdir -p ${OUTDIR}/utils/fcgi
 mkdir -p ${OUTDIR}/utils/sqlite3
@@ -187,6 +200,8 @@ ZHDRFILE=${OUTDIR}/zenlang.hpp
 initFile $ZHDRFILE
 ZSRCFILE=${OUTDIR}/zenlang.cpp
 initFile $ZSRCFILE
+ZINCFILE=${OUTDIR}/zenlang.ipp
+initFile $ZINCFILE
 
 #########################################################
 # copy exe to OUTDIR
@@ -246,9 +261,6 @@ if [[ $? != 0 ]]; then
     echo Error generating library files.
     exit
 fi
-
-# copy library files to OUTDIR
-cp -v -r ${INTDIR}/z/*.ipp ${OUTDIR}/z/
 
 #############################################################
 # create amalgamated zenlang.hpp
@@ -361,12 +373,43 @@ appendFile $ZSRCFILE "${LIBDIR}/z/MenuItemImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/WindowCreator.cpp"
 appendString $ZSRCFILE "#endif"
 
+appendFile $ZINCFILE "${INTDIR}/z/Application.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/String.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/DateTime.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/File.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/Dir.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/Url.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/Packet.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/Request.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/Response.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/Socket.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/Network.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/FastCGI.ipp"
+
+#appendString $ZINCFILE "#if defined(GUI)"
+appendFile $ZINCFILE "${INTDIR}/z/Widget.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/Window.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/MainFrame.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/TextEdit.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/Button.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/Systray.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/Menu.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/MenuItem.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/WindowCreator.ipp"
+#appendString $ZINCFILE "#endif"
+
 if [ "$dotest" == "yes" ]; then
     #########################################################
     # generate unit test files
     ${ZCC} -c ${SRCDIR}/tests/testBasic.zpp
     if [[ $? != 0 ]]; then
         echo Error generating testBasic files.
+        exit
+    fi
+
+    ${ZCC} -c ${SRCDIR}/tests/intTest.zpp
+    if [[ $? != 0 ]]; then
+        echo Error generating intTest files.
         exit
     fi
 
@@ -482,7 +525,7 @@ if [ "$dotest" == "yes" ]; then
 #            exit
 #        fi
     elif [[ $platform == 'Linux' ]]; then
-        # first compile the C files
+        echo Compiling sqlite_unicode
         gcc -c -Os -I${OUTDIR} ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
         if [[ $? != 0 ]]; then
             exit
@@ -491,34 +534,37 @@ if [ "$dotest" == "yes" ]; then
         CFLAGS="-DUNIT_TEST -DZ_EXE -Wall -I${OUTDIR} -O3"
 
         # next compile the zenlang.cpp file as an objective-c++ file.
-        echo CMD test-1
+        echo Compiling zenlang
         gcc -c ${CFLAGS} ${OUTDIR}/zenlang.cpp
         if [[ $? != 0 ]]; then
             exit
         fi
 
-        # now compile the test file
-        echo CMD test-2
+        echo Compiling testBasic
         g++ ${CFLAGS} -o test sqlite3_unicode.o zenlang.o testBasic.cpp -lsqlite3
         if [[ $? != 0 ]]; then
             exit
         fi
 
-        # run the test file
-        echo CMD test-3
+        echo Running testBasic
         ./test > test.log
         if [[ $? != 0 ]]; then
             exit
         fi
 
-        #now compile the test file
-        #echo GUI test-1
+        echo Compiling intTest
+        g++ ${CFLAGS} -o intTest sqlite3_unicode.o zenlang.o intTest.cpp -lsqlite3
+        if [[ $? != 0 ]]; then
+            exit
+        fi
+
+        #echo Compiling zenlang(GUI)
         #gcc -c ${CFLAGS} -DGUI ${OUTDIR}/zenlang.cpp
         #if [[ $? != 0 ]]; then
         #    exit
         #fi
 
-        #echo GUI test-2
+        #echo Compiling guiTest
         #g++ ${CFLAGS} -DGUI -O3 -o test.osx -L${SDKDIR}/lib sqlite3_unicode.o zenlang.o guiTest.cpp -lc++ -lsqlite3
         #if [[ $? != 0 ]]; then
         #    exit

@@ -1,18 +1,19 @@
-include z::Widget public;
-include z::Window public;
-namespace Systray;
+import z::Widget public;
+import z::Window public;
 
-public struct Definition : Window::Definition {
-    auto tooltip = "";
-    auto iconFile = "";
+public interface Systray {
+    struct Definition : Window::Definition {
+        auto tooltip = "";
+        auto iconFile = "";
+    };
+
+    event(const widget& systray) native => function void OnActivation();
+    event(const widget& systray) native => function void OnContextMenu();
+
+    function widget Create(const widget& parentWin, const Definition& defn) native;
+
+    function void SetTooltip(const widget& handle, const string& text) native;
+    function void SetIconfile(const widget& handle, const string& filename) native;
+    function void Show(const widget& handle) native;
+    function void Hide(const widget& handle) native;
 };
-
-public event(const widget& systray) native => function void OnActivation();
-public event(const widget& systray) native => function void OnContextMenu();
-
-public function widget Create(const widget& parentWin, const Definition& defn) native;
-
-public function void SetTooltip(const widget& handle, const string& text) native;
-public function void SetIconfile(const widget& handle, const string& filename) native;
-public function void Show(const widget& handle) native;
-public function void Hide(const widget& handle) native;

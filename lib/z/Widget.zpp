@@ -1,6 +1,6 @@
-namespace Widget;
-
-public struct Definition abstract {
-    auto name = "";
-    list< pointer<Widget::Definition> > childList;
+public interface Widget {
+    struct Definition abstract {
+        auto name = "";
+        list< pointer<Widget::Definition> > childList;
+    };
 };

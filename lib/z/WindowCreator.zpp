@@ -1,13 +1,10 @@
-include z::WindowImpl native;
 import z::Window public;
-include z::Mainframe public;
-include z::Button;
-include z::TextEdit;
-include z::Systray;
-include z::Menu;
-include z::MenuItem;
-
-namespace WindowCreator;
+import z::Mainframe public;
+import z::Button;
+import z::TextEdit;
+import z::Systray;
+import z::Menu;
+import z::MenuItem;
 
 routine const widget& processWindow(widget& win, const Window::Definition& defn);
 
@@ -54,8 +51,10 @@ routine const widget& processWindow(widget& win, const Window::Definition& defn)
     return win;
 }
 
-public function widget Create(const MainFrame::Definition defn) {
-    auto w = MainFrame::Create(defn);
-    processWindow(w.wnd, defn);
-    return (w.wnd);
-}
+public interface WindowCreator {
+    function widget Create(const MainFrame::Definition defn) {
+        auto w = MainFrame::Create(defn);
+        processWindow(w.wnd, defn);
+        return (w.wnd);
+    }
+};

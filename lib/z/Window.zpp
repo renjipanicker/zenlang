@@ -1,47 +1,48 @@
-include WindowImpl native;
+//include WindowImpl native;
 import z::Widget public;
-namespace Window;
 
-public enum Style {
-    Normal;
-    Dialog;
+public interface Window {
+    enum Style {
+        Normal;
+        Dialog;
+    };
+
+    struct Position {
+        auto x = -1;
+        auto y = -1;
+        auto w = -1;
+        auto h = -1;
+    };
+
+    struct Anchor {
+        widget wnd;
+        string target;
+        auto margin = 0;
+    };
+
+    struct Definition : Widget::Definition abstract {
+        auto title = "";
+        auto position = Window::Position();
+        auto style = Style.Normal;
+        auto border = 1;
+        auto visible = true;
+        Anchor left;
+        Anchor right;
+        Anchor top;
+        Anchor bottom;
+    };
+
+    routine Position getWindowPosition(const widget& wnd) native;
+    routine Position getChildPosition(const widget& wnd) native;
+
+    function void Delete(const widget& wnd) native;
+    function void SetTitle(const widget& wnd, const string& title) native;
+    function void SetFocus(const widget& frame, const widget& wnd) native;
+    function void Show(const widget& wnd) native;
+    function void Hide(const widget& wnd) native;
+    function void Move(const widget& wnd, const Position& position) native;
+    function void Size(const widget& wnd, const int& w, const int& h) native;
+
+    event(const widget& wnd) native => function void OnResize();
+    event(const widget& wnd) native => function void OnClose();
 };
-
-public struct Position {
-    auto x = -1;
-    auto y = -1;
-    auto w = -1;
-    auto h = -1;
-};
-
-public struct Anchor {
-    widget wnd;
-    string target;
-    auto margin = 0;
-};
-
-public struct Definition : Widget::Definition abstract {
-    auto title = "";
-    auto position = Window::Position();
-    auto style = Style.Normal;
-    auto border = 1;
-    auto visible = true;
-    Anchor left;
-    Anchor right;
-    Anchor top;
-    Anchor bottom;
-};
-
-public routine Position getWindowPosition(const widget& wnd) native;
-public routine Position getChildPosition(const widget& wnd) native;
-
-public function void Delete(const widget& wnd) native;
-public function void SetTitle(const widget& wnd, const string& title) native;
-public function void SetFocus(const widget& frame, const widget& wnd) native;
-public function void Show(const widget& wnd) native;
-public function void Hide(const widget& wnd) native;
-public function void Move(const widget& wnd, const Position& position) native;
-public function void Size(const widget& wnd, const int& w, const int& h) native;
-
-public event(const widget& wnd) native => function void OnResize();
-public event(const widget& wnd) native => function void OnClose();

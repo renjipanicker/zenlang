@@ -20,6 +20,7 @@ void z::Ast::ChildFunctionDecl::visit(Visitor& visitor) const {visitor.visit(z::
 void z::Ast::RootFunctionDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::ChildFunctionDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::FunctionRetn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::RootInterfaceDefn::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::EventDecl::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::Namespace::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::Root::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}

@@ -1,7 +1,6 @@
 import z::Socket;
 import z::Request;
 import z::Response;
-namespace FastCGI;
 
 enum MessageType {
     TYPE_BEGIN_REQUEST     =  1;
@@ -76,11 +75,7 @@ struct RequestData : Request::Data {
 
 typedef RequestMap dict<uint, RequestData>;
 
-public event(const socket& s) => function void OnRequest(const socket& cs, const Request::Data& req);
-
-private routine void OnRequestReceived(const socket& s, const socket& cs, const Request::Data& req) {
-    raise OnRequest(s: cs, req);
-}
+routine void OnRequestReceived(const socket& s, const socket& cs, const Request::Data& req);
 
 routine Header CreateHeader(const MessageType& t, const uint& mid, const uint& len) {
     auto h = Header {
@@ -227,44 +222,64 @@ routine size processRequest(const socket& s, const socket& cs, const data& bfr, 
     return sizeof(Header) + len + h.hPaddingLength;
 }
 
-/// \brief Start the FastCGI server on specified port.
-public function socket Create(const int& port) {
-    auto s = Socket::InitServer(port);
-    Socket::OnConnect(s) => {
-        print "onconnect";
-        Socket::OnRecv(cs) => [; data bfr, RequestMap requestMap] {
-            print "on recv";
-            bfr += d;
-            while( length(bfr) >= sizeof(Header) ) {
-                auto l = processRequest(s, cs, bfr, requestMap);
-                if(l == 0) {
-                    clear(bfr);
-                    break;
-                }
-                bfr = bfr[ l : 0];
-            }
-        };
-    };
-    return(s);
-}
-
-public function void SendResponse(const Request::Data& req, const socket& s, const Response::Data& res) {
-    auto h1 = CreateHeader(MessageType.TYPE_STDOUT, req.rid, length(res.body));
+routine void SendString(const Request::Data& req, const socket& s, const string& d) {
+    auto h1 = CreateHeader(MessageType.TYPE_STDOUT, req.rid, length(d));
     auto d1 = raw(h1);
     Socket::SendData(s, d1);
-    Socket::SendString(s, res.body);
-
-    auto h2 = CreateHeader(MessageType.TYPE_STDOUT, req.rid, 0u);
-    auto d2 = raw(h2);
-    Socket::SendData(s, d2);
-
-    auto h3 = CreateEndRequest(MessageType.TYPE_END_REQUEST, req.rid, 0u, FastCGI::ProtocolStatus.REQUEST_COMPLETE);
-    auto d3 = raw(h3);
-    Socket::SendData(s, d3);
-    Socket::Close(s);
+    Socket::SendString(s, d);
 }
 
-public function void Start(const socket& s) {
-    Socket::StartServer(s);
-    return();
+public interface FastCGI {
+    event(const socket& s) => function void OnRequest(const socket& cs, const Request::Data& req);
+
+    /// \brief Start the FastCGI server on specified port.
+    function socket Create(const int& port) {
+        auto s = Socket::InitServer(port);
+        Socket::OnConnect(s) => {
+            print "onconnect";
+            Socket::OnRecv(cs) => [; data bfr, RequestMap requestMap] {
+                print "on recv";
+                bfr += d;
+                while( length(bfr) >= sizeof(Header) ) {
+                    auto l = processRequest(s, cs, bfr, requestMap);
+                    if(l == 0) {
+                        clear(bfr);
+                        break;
+                    }
+                    bfr = bfr[ l : 0];
+                }
+            };
+        };
+        return(s);
+    }
+
+    function void SendResponse(const Request::Data& req, const socket& s, const Response::Data& res) {
+        if(length(res.headerList) > 0) {
+            foreach(k,v in res.headerList) {
+                auto h = k + ": " + v + "\r\n";
+                SendString(req, s, h);
+            }
+            SendString(req, s, "\r\n");
+        }
+
+        SendString(req, s, res.body);
+
+        auto h2 = CreateHeader(MessageType.TYPE_STDOUT, req.rid, 0u);
+        auto d2 = raw(h2);
+        Socket::SendData(s, d2);
+
+        auto h3 = CreateEndRequest(MessageType.TYPE_END_REQUEST, req.rid, 0u, ProtocolStatus.REQUEST_COMPLETE);
+        auto d3 = raw(h3);
+        Socket::SendData(s, d3);
+        Socket::Close(s);
+    }
+
+    function void Start(const socket& s) {
+        Socket::StartServer(s);
+        return();
+    }
+};
+
+routine void OnRequestReceived(const socket& s, const socket& cs, const Request::Data& req) {
+    raise FastCGI::OnRequest(s: cs, req);
 }

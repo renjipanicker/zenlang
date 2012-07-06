@@ -2,8 +2,7 @@
 #include "gui/Window.hpp"
 #include "WidgetImpl.hpp"
 
-namespace Window {
-namespace Native {
+namespace WindowImpl {
 
 #if defined(WIN32)
 inline z::widget impl(HWND hwnd) {
@@ -57,5 +56,4 @@ z::widget::impl& createChildWindow(const Window::Definition& def, const z::widge
 #else
 #endif
 
-}
 }

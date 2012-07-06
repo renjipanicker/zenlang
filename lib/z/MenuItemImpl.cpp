@@ -8,7 +8,7 @@
 #if defined(WIN32)
 namespace zz {
 namespace MenuItemImpl {
-    typedef Window::Native::WidgetMap<UINT> ItemMap;
+    typedef WindowImpl::WidgetMap<UINT> ItemMap;
     static ItemMap itemMap;
 
     static WNDPROC OrigWndProc = 0;
@@ -29,7 +29,7 @@ namespace MenuItemImpl {
 z::widget MenuItem::Create::run(const z::widget& pmenu, const MenuItem::Definition& def) {
 #if defined(WIN32)
     z::widget::impl* impl = new z::widget::impl();
-    uint32_t wm = Window::Native::getNextWmID();
+    uint32_t wm = WindowImpl::getNextWmID();
     ::InsertMenu(pmenu.val()._menu, (UINT)-1, MF_BYPOSITION, wm, z::s2e(def.label).c_str());
     z::ref(impl)._id = wm;
     // set subclass function

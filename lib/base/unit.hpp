@@ -239,6 +239,7 @@ namespace Ast {
         z::Ast::TypeSpec& enterTypeSpec(z::Ast::TypeSpec& typeSpec);
         z::Ast::TypeSpec& leaveTypeSpec(z::Ast::TypeSpec& typeSpec);
         z::Ast::StructDefn& getCurrentStructDefn(const z::Ast::Token& pos);
+        z::Ast::InterfaceDefn& getCurrentInterfaceDefn(const z::Ast::Token& pos);
 
     private:
         const z::Ast::TypeSpec* hasImportRootTypeSpec(const int& level, const z::Ast::Token& name) const;

@@ -352,6 +352,15 @@ z::Ast::StructDefn& z::Ast::Unit::getCurrentStructDefn(const z::Ast::Token& pos)
     return z::ref(sd);
 }
 
+z::Ast::InterfaceDefn& z::Ast::Unit::getCurrentInterfaceDefn(const z::Ast::Token& pos) {
+    z::Ast::TypeSpec& ts = currentTypeSpec();
+    z::Ast::InterfaceDefn* sd = dynamic_cast<z::Ast::InterfaceDefn*>(z::ptr(ts));
+    if(sd == 0) {
+        throw z::Exception("Unit", zfmt(pos, "Internal error: not a Interface type %{s}").arg("s", ts.name()) );
+    }
+    return z::ref(sd);
+}
+
 inline z::string z::Ast::Unit::getExpectedTypeName(const z::Ast::Token& pos, const z::Ast::Unit::ExpectedTypeSpec::Type& exType) {
     switch(exType) {
         case ExpectedTypeSpec::etNone:

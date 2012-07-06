@@ -332,7 +332,6 @@ const char* z::Lexer::Impl::reservedWords[] = {
     "pure"         ,
     "override"     ,
     "implements"   ,
-    "interface"    ,
     "base"         ,
     "parent"       ,
     "extends"      ,

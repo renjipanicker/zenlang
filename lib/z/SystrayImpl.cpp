@@ -7,7 +7,7 @@
 #if defined(WIN32)
 namespace zz {
 namespace SystrayImpl {
-    typedef Window::Native::WidgetMap<UINT> IconMap;
+    typedef WindowImpl::WidgetMap<UINT> IconMap;
     static IconMap iconMap;
 
     static WNDPROC OrigWndProc = 0;
@@ -112,10 +112,10 @@ z::widget Systray::Create::run(const z::widget& parent, const Systray::Definitio
     z::widget::impl* impl = new z::widget::impl();
     z::widget handle(impl);
 #if defined(WIN32)
-    z::ref(impl)._id = Window::Native::getNextWmID();
+    z::ref(impl)._id = WindowImpl::getNextWmID();
     zz::SystrayImpl::iconMap.add(z::ref(impl)._id, impl);
 
-    int res = Window::Native::getNextResID();
+    int res = WindowImpl::getNextResID();
 
     // Fill the NOTIFYICONDATA structure and call Shell_NotifyIcon
     // zero the structure - note:   Some Windows funtions require this but
@@ -128,7 +128,7 @@ z::widget Systray::Create::run(const z::widget& parent, const Systray::Definitio
     //              dubious and I'm not at all sure if the method
     //              bellow is correct
     /// \todo Fix linker error when calling GetDllVersion()
-//    ULONGLONG ullVersion = Window::Native::GetDllVersion(_T("Shell32.dll"));
+//    ULONGLONG ullVersion = WindowImpl::GetDllVersion(_T("Shell32.dll"));
 //    if(ullVersion >= MAKEDLLVERULL(5, 0,0,0))
 //        ref(impl)._ni.cbSize = sizeof(NOTIFYICONDATA);
 //    else

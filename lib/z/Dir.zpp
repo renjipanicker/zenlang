@@ -1,17 +1,18 @@
-namespace Dir;
+public interface Dir {
 
-/// \brief Return cwd
-public routine string CurrentDir() native;
+    /// \brief Return cwd
+    routine string CurrentDir() native;
 
-/// \brief Remove extra /'s and ..'s from the path
-/// \todo Not implemented yet
-public routine string CleanPath(const string& path) native;
+    /// \brief Remove extra /'s and ..'s from the path
+    /// \todo Not implemented yet
+    routine string CleanPath(const string& path) native;
 
-/// \brief Delete the specified path.
-public routine bool RemovePath(const string& path) native;
+    /// \brief Delete the specified path.
+    routine bool RemovePath(const string& path) native;
 
-/// \brief Prepend parent to path
-public routine string ResolveParent(const string& parentpath, const string& path) native;
+    /// \brief Prepend parent to path
+    routine string ResolveParent(const string& parentpath, const string& path) native;
 
-/// \brief get base path of path
-public routine string GetPath(const string& path) native;
+    /// \brief get base path of path
+    routine string GetPath(const string& path) native;
+};

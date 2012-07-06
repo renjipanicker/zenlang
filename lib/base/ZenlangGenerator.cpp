@@ -713,6 +713,22 @@ namespace zg {
             visitChildrenIndent(node);
         }
 
+        inline void visitInterfaceDefn(const z::Ast::InterfaceDefn& node, const z::Ast::InterfaceDefn* base) {
+            if(canWrite(node.accessType())) {
+                _os() << getAccessType(node.pos(), node.accessType()) << "interface " << node.name();
+                if(base) {
+                    _os() << " : " << z::ZenlangNameGenerator().tn(z::ref(base));
+                }
+                _os() << getDefinitionType(node.pos(), node.defType()) << " {" << std::endl;
+                runStatementGenerator(_config, _os, node.block());
+                _os() << "};" << std::endl;
+            }
+        }
+
+        void visit(const z::Ast::RootInterfaceDefn& node) {
+            visitInterfaceDefn(node, 0);
+        }
+
         void visit(const z::Ast::EventDecl& node) {
             if(canWrite(node.accessType())) {
                 _os() << getAccessType(node.pos(), node.accessType())

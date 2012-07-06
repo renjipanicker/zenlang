@@ -206,19 +206,23 @@ rAbstractDefinitionType(L) ::= ABSTRACT. {L = z::Ast::DefinitionType::Abstract;}
 rAbstractDefinitionType(L) ::= . {L = z::Ast::DefinitionType::Abstract;}
 
 //-------------------------------------------------
-// types that are permitted within other types
+// all type def's.
 %type rUserDefinedTypeSpecDef {z::Ast::UserDefinedTypeSpec*}
 rUserDefinedTypeSpecDef(L) ::= rTypeSpecDef(R).    {L = R;}
 rUserDefinedTypeSpecDef(L) ::= rRootStructDefn(R). {L = R;}
 rUserDefinedTypeSpecDef(L) ::= rStructDecl(R).     {L = R;}
 
 //-------------------------------------------------
+// types that can be defined globally but are not permitted within struct's
 %type rTypeSpecDef {z::Ast::UserDefinedTypeSpec*}
 rTypeSpecDef(L) ::= rBasicTypeSpecDef(R).  {L = R;}
+rTypeSpecDef(L) ::= rRoutineDecl(R).       {L = R;}
+rTypeSpecDef(L) ::= rRoutineDefn(R).       {L = R;}
 rTypeSpecDef(L) ::= rRootFunctionDecl(R).  {L = R;}
 rTypeSpecDef(L) ::= rChildFunctionDecl(R). {L = R;}
 rTypeSpecDef(L) ::= rRootFunctionDefn(R).  {L = R;}
 rTypeSpecDef(L) ::= rChildFunctionDefn(R). {L = R;}
+rTypeSpecDef(L) ::= rRootInterfaceDefn(R). {L = R;}
 rTypeSpecDef(L) ::= rEventDecl(R).         {L = R;}
 
 //-------------------------------------------------
@@ -229,7 +233,7 @@ rStructTypeSpecDef(L) ::= rRootStructDefn(R).   {L = R;}
 rStructTypeSpecDef(L) ::= rStructDecl(R).       {L = R;}
 
 //-------------------------------------------------
-// basic types
+// basic types common to rTypeSpecDef and rStructTypeSpecDef
 %type rBasicTypeSpecDef {z::Ast::UserDefinedTypeSpec*}
 rBasicTypeSpecDef(L) ::= rTypedefDecl(R).       {L = R;}
 rBasicTypeSpecDef(L) ::= rTypedefDefn(R).       {L = R;}
@@ -237,8 +241,6 @@ rBasicTypeSpecDef(L) ::= rTemplateDecl(R).      {L = R;}
 rBasicTypeSpecDef(L) ::= rEnumDecl(R).          {L = R;}
 rBasicTypeSpecDef(L) ::= rEnumDefn(R).          {L = R;}
 rBasicTypeSpecDef(L) ::= rChildStructDefn(R).   {L = R;}
-rBasicTypeSpecDef(L) ::= rRoutineDecl(R).       {L = R;}
-rBasicTypeSpecDef(L) ::= rRoutineDefn(R).       {L = R;}
 
 //-------------------------------------------------
 // typedef declaration
@@ -311,6 +313,10 @@ rRootStructDefn(L) ::= rPreRootStructDefn(R) SEMI. {L = R;}
 rPreRootStructDefn(L) ::= rEnterRootStructDefn(S) rStructMemberDefnBlock. {L = z::c2f(pctx).aLeaveRootStructDefn(z::ref(S));}
 
 //-------------------------------------------------
+%type rEnterRootStructDefn {z::Ast::RootStructDefn*}
+rEnterRootStructDefn(L) ::= STRUCT rStructId(name) rExDefinitionType(D). {L = z::c2f(pctx).aEnterRootStructDefn(z::t2t(name), D);}
+
+//-------------------------------------------------
 // child struct definitions
 %type rChildStructDefn {z::Ast::ChildStructDefn*}
 rChildStructDefn(L) ::= rPreChildStructDefn(R) SEMI. {L = R;}
@@ -318,10 +324,6 @@ rChildStructDefn(L) ::= rPreChildStructDefn(R) SEMI. {L = R;}
 //-------------------------------------------------
 %type rPreChildStructDefn {z::Ast::ChildStructDefn*}
 rPreChildStructDefn(L) ::= rEnterChildStructDefn(S) rStructMemberDefnBlock. {L = z::c2f(pctx).aLeaveChildStructDefn(z::ref(S));}
-
-//-------------------------------------------------
-%type rEnterRootStructDefn {z::Ast::RootStructDefn*}
-rEnterRootStructDefn(L) ::= STRUCT rStructId(name) rExDefinitionType(D). {L = z::c2f(pctx).aEnterRootStructDefn(z::t2t(name), D);}
 
 //-------------------------------------------------
 %type rEnterChildStructDefn {z::Ast::ChildStructDefn*}
@@ -403,6 +405,31 @@ rChildFunctionDefn(L) ::= rEnterChildFunctionDefn(functionImpl) rFunctionBlock(b
 //-------------------------------------------------
 %type rEnterChildFunctionDefn {z::Ast::ChildFunctionDefn*}
 rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rClosureList(cref) rExDefinitionType(defType). {L = z::c2f(pctx).aEnterChildFunctionDefn(z::ref(base), z::t2t(name), defType, cref);}
+
+//-------------------------------------------------
+// interface definition
+%type rRootInterfaceDefn {z::Ast::RootInterfaceDefn*}
+rRootInterfaceDefn(L) ::= rPreRootInterfaceDefn(R) SEMI. {L = R;}
+
+//-------------------------------------------------
+%type rPreRootInterfaceDefn {z::Ast::RootInterfaceDefn*}
+rPreRootInterfaceDefn(L) ::= rEnterRootInterfaceDefn(S) rInterfaceMemberDefnBlock. {L = z::c2f(pctx).aLeaveRootInterfaceDefn(z::ref(S));}
+
+//-------------------------------------------------
+%type rEnterRootInterfaceDefn {z::Ast::RootInterfaceDefn*}
+rEnterRootInterfaceDefn(L) ::= INTERFACE ID(name) rExDefinitionType(D). {L = z::c2f(pctx).aEnterRootInterfaceDefn(z::t2t(name), D);}
+
+//-------------------------------------------------
+rInterfaceMemberDefnBlock ::= LCURLY rInterfaceMemberDefnList RCURLY.
+rInterfaceMemberDefnBlock ::= LCURLY                          RCURLY.
+
+//-------------------------------------------------
+rInterfaceMemberDefnList ::= rInterfaceMemberDefnList rInterfaceMemberDefn.
+rInterfaceMemberDefnList ::=                          rInterfaceMemberDefn.
+
+//-------------------------------------------------
+rInterfaceMemberDefn ::= rUserDefinedTypeSpecDef(R). {z::c2f(pctx).aInterfaceMemberTypeDefn(z::ref(R));}
+
 
 //-------------------------------------------------
 // event declarations

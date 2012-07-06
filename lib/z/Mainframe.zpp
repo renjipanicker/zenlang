@@ -1,9 +1,9 @@
-include z::Window public;
+import z::Window public;
 
-namespace MainFrame;
+public interface MainFrame {
+    struct Definition : Window::Definition {
+        auto iconres = "";
+    };
 
-public struct Definition : Window::Definition {
-    auto iconres = "";
+    function (widget wnd)Create(const Definition& defn) native;
 };
-
-public function (widget wnd)Create(const Definition& defn) native;

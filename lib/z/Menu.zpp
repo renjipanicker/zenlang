@@ -1,10 +1,11 @@
-include z::Widget public;
-include z::Window public;
-namespace Menu;
+import z::Widget public;
+import z::Window public;
 
-public struct Definition : Widget::Definition {
+public interface Menu {
+    struct Definition : Widget::Definition {
+    };
+
+    function widget Create(const widget& parentWin, const Definition& defn) native;
+    function void ShowAt(const widget& handle, const int& x, const int& y) native;
+    function void Show(const widget& handle) native;
 };
-
-public function widget Create(const widget& parentWin, const Definition& defn) native;
-public function void ShowAt(const widget& handle, const int& x, const int& y) native;
-public function void Show(const widget& handle) native;

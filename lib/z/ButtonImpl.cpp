@@ -12,7 +12,7 @@ namespace ButtonImpl {
             case WM_COMMAND: {
                 if(LOWORD(wParam) == BN_CLICKED) {
                     Button::OnClick::Handler::_In in;
-                    Button::OnClick::list().runHandler(Window::Native::impl(hWnd), in);
+                    Button::OnClick::list().runHandler(WindowImpl::impl(hWnd), in);
                 }
                 break;
             }
@@ -26,22 +26,22 @@ namespace ButtonImpl {
 
 z::widget Button::Create::run(const z::widget& parent, const Button::Definition& def) {
 #if defined(WIN32)
-    z::widget::impl& impl = Window::Native::createChildWindow(def, "BUTTON", BS_DEFPUSHBUTTON, 0, parent);
+    z::widget::impl& impl = WindowImpl::createChildWindow(def, "BUTTON", BS_DEFPUSHBUTTON, 0, parent);
     // set subclass function
-    Window::Native::setImpl(impl._val, z::ptr(impl));
+    WindowImpl::setImpl(impl._val, z::ptr(impl));
     zz::ButtonImpl::OrigWndProc = (WNDPROC)SetWindowLong(impl._val, GWL_WNDPROC, (LONG)zz::ButtonImpl::WinProc);
 #elif defined(GTK)
     GtkWidget* hWnd = gtk_button_new_with_label(z::s2e(def.title).c_str());
-    z::widget::impl& impl = Window::Native::createChildWindow(hWnd, def, parent);
+    z::widget::impl& impl = WindowImpl::createChildWindow(hWnd, def, parent);
 #elif defined(QT)
     UNIMPL();
     z::widget::impl* impl = new z::widget::impl();
 #elif defined(OSX)
     NSView* child = 0;
-    z::widget::impl& impl = Window::Native::createChildWindow(def, parent, child);
+    z::widget::impl& impl = WindowImpl::createChildWindow(def, parent, child);
     UNIMPL();
 #elif defined(IOS)
-    z::widget::impl& impl = Window::Native::createChildWindow(def, parent);
+    z::widget::impl& impl = WindowImpl::createChildWindow(def, parent);
     UNIMPL();
 #else
 #error "Unimplemented GUI mode"

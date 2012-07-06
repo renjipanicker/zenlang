@@ -861,23 +861,6 @@ namespace sg {
             visitProperty(node);
         }
 
-        static inline void visitRoutine(z::ofile& os, const z::Ast::Routine& node, const bool& inNS) {
-            os() << z::Indent::get() << StlcppNameGenerator().qtn(node.outType()) << " ";
-            if(inNS) {
-                os() << node.name();
-            } else {
-                os() << StlcppNameGenerator().tn(node);
-            }
-            os() << "(";
-            z::string sep;
-            for(z::Ast::Scope::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
-                const z::Ast::VariableDefn& vdef = it->get();
-                os() << sep << StlcppNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name();
-                sep = ", ";
-            }
-            os() << ")";
-        }
-
         inline void writeScopeMember(const z::Ast::VariableDefn& vdef) {
             _os() << z::Indent::get();
             if(vdef.qTypeSpec().isStrong()) {
@@ -1035,6 +1018,27 @@ namespace sg {
             _os() << z::Indent::get() << "};" << std::endl;
         }
 
+        static inline void visitRoutine(z::ofile& os, const z::Ast::Routine& node, const bool& decl) {
+            const z::Ast::TypeSpec& parent = node.parent();
+            const z::Ast::InterfaceDefn* iface = dynamic_cast<const z::Ast::InterfaceDefn*>(z::ptr(parent));
+            z::string stat = (decl && (iface != 0))?"/**/static ":"";
+
+            os() << z::Indent::get() << stat << StlcppNameGenerator().qtn(node.outType()) << " ";
+            if(decl) {
+                os() << node.name();
+            } else {
+                os() << StlcppNameGenerator().tn(node);
+            }
+            os() << "(";
+            z::string sep;
+            for(z::Ast::Scope::List::const_iterator it = node.in().begin(); it != node.in().end(); ++it) {
+                const z::Ast::VariableDefn& vdef = it->get();
+                os() << sep << StlcppNameGenerator().qtn(vdef.qTypeSpec()) << " " << vdef.name();
+                sep = ", ";
+            }
+            os() << ")";
+        }
+
         void visit(const z::Ast::RoutineDecl& node) {
             visitRoutine(_os, node, true);
             _os() << ";" << std::endl;
@@ -1146,6 +1150,29 @@ namespace sg {
 
             _os() << z::Indent::get() << "};" << std::endl;
             _os() << std::endl;
+        }
+
+        inline void visitInterfaceDefn(const z::Ast::InterfaceDefn& node, const z::Ast::InterfaceDefn* base) {
+            if(node.defType() == z::Ast::DefinitionType::Native) {
+                _os() << z::Indent::get() << "struct " << node.name() << ";" << std::endl;
+                return;
+            }
+
+            _os() << z::Indent::get() << "struct " << node.name();
+            if(base) {
+                _os() << " : public " << StlcppNameGenerator().tn(z::ref(base));
+            }
+
+            _os() << " {" << std::endl;
+
+            GeneratorContext(GeneratorContext::TargetMode::TypeDecl, GeneratorContext::IndentMode::NoBrace).run(_config, _fs, node.block());
+
+            _os() << z::Indent::get() << "};" << std::endl;
+            _os() << std::endl;
+        }
+
+        void visit(const z::Ast::RootInterfaceDefn& node) {
+            visitInterfaceDefn(node, 0);
         }
 
         void visit(const z::Ast::EventDecl& node) {
@@ -1299,6 +1326,10 @@ namespace sg {
             visitChildrenIndent(node);
             visitFunction(node);
             writeSpecialStatic(node);
+        }
+
+        void visit(const z::Ast::RootInterfaceDefn& node) {
+            visitChildrenIndent(node);
         }
 
         void visit(const z::Ast::EventDecl& node) {
@@ -1765,11 +1796,13 @@ inline void z::StlcppGenerator::Impl::run() {
         sg::GeneratorContext(sg::GeneratorContext::TargetMode::TypeDefn, sg::GeneratorContext::IndentMode::WithBrace).run(_config, fs, s);
     }
     z::string fn = ofHdr.name();
-    fn.replace("\\", "_");
+    fn.replace("//", "/");
+    fn.replace("../", "");
     fn.replace(":", "_");
+    fn.replace("\\", "_");
     fn.replace(".", "_");
-    fn.replace("/", "_");
     fn.replace("-", "_");
+    fn.replace("/", "_");
 
     ofSrc() << std::endl;
     ofSrc() << "// Suppress LNK4221" << std::endl;

@@ -546,6 +546,13 @@ z::Ast::PropertyDeclRO* z::Ast::Factory::aStructPropertyDeclRO(const z::Ast::Tok
     return z::ptr(structPropertyDecl);
 }
 
+void z::Ast::Factory::aInterfaceMemberTypeDefn(z::Ast::UserDefinedTypeSpec& typeSpec) {
+    z::Ast::InterfaceDefn& sd = unit().getCurrentInterfaceDefn(typeSpec.name());
+    typeSpec.accessType(z::Ast::AccessType::Parent);
+    z::Ast::Statement* statement = aUserDefinedTypeSpecStatement(typeSpec);
+    sd.block().addStatement(z::ref(statement));
+}
+
 z::Ast::RoutineDecl* z::Ast::Factory::aRoutineDecl(const z::Ast::QualifiedTypeSpec& outType, const z::Ast::Token& name, z::Ast::Scope& in, const z::Ast::DefinitionType::T& defType) {
     z::Ast::RoutineDecl& routineDecl = unit().addNode(new z::Ast::RoutineDecl(unit().currentTypeSpec(), outType, name, in, defType));
     unit().currentTypeSpec().addChild(routineDecl);
@@ -644,6 +651,20 @@ z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterChildFunctionDefn(const z::Ast
     }
     z::Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(unit().currentTypeSpec(), z::ref(function), name, defType, cref);
     return z::ptr(functionDefn);
+}
+
+z::Ast::RootInterfaceDefn* z::Ast::Factory::aLeaveRootInterfaceDefn(z::Ast::RootInterfaceDefn& InterfaceDefn) {
+    unit().leaveTypeSpec(InterfaceDefn);
+    return z::ptr(InterfaceDefn);
+}
+
+z::Ast::RootInterfaceDefn* z::Ast::Factory::aEnterRootInterfaceDefn(const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType) {
+    z::Ast::Scope& list = addScope(name, z::Ast::ScopeType::Member);
+    z::Ast::CompoundStatement& block = unit().addNode(new z::Ast::CompoundStatement(name));
+    z::Ast::RootInterfaceDefn& InterfaceDefn = unit().addNode(new z::Ast::RootInterfaceDefn(unit().currentTypeSpec(), name, defType, list, block));
+    unit().currentTypeSpec().addChild(InterfaceDefn);
+    unit().enterTypeSpec(InterfaceDefn);
+    return z::ptr(InterfaceDefn);
 }
 
 z::Ast::EventDecl* z::Ast::Factory::aEventDecl(const z::Ast::Token& pos, const z::Ast::VariableDefn& in, const z::Ast::DefinitionType::T& eventDefType, const z::Ast::FunctionSig& functionSig, const z::Ast::DefinitionType::T& handlerDefType) {
@@ -1933,7 +1954,15 @@ z::Ast::AnonymousFunctionExpr* z::Ast::Factory::aAnonymousFunctionExpr(z::Ast::C
 }
 
 z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAnonymousFunction(const z::Ast::Function& function, const Ast::ClosureRef& cref) {
-    z::string ns = z::string("_anonymous_%{i}").arg("i", unit().uniqueIdx());
+    z::string fn = _module.filename();
+    fn.replace("//", "/");
+    fn.replace("../", "");
+    fn.replace(":", "_");
+    fn.replace("\\", "_");
+    fn.replace(".", "_");
+    fn.replace("-", "_");
+    fn.replace("/", "_");
+    z::string ns = z::string("%{f}_anonymous_%{i}").arg("f", fn).arg("i", unit().uniqueIdx());
     z::Ast::Token name(filename(), getToken().row(), getToken().col(), ns);
 
     z::Ast::TypeSpec* ts = 0;

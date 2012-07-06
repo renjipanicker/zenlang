@@ -5,8 +5,36 @@
    comment
 */
 
+/* \todo debug this later
 auto i = 10;
 i = 12;
 print i;
 i = 13;
 print i;
+*/
+
+interface MyIntf {
+    function int myfn1(const int& i) {
+        return (2);
+    }
+    function int myfn2(const int& i) abstract;
+    routine int myrtn1(int x) {
+        return 4;
+    }
+};
+
+routine void mymain() {
+    auto xx = MyIntf::myfn1(10);
+    auto yy = MyIntf::myrtn1(10);
+
+    /*
+    auto myintf1 = MyIntf{};
+    auto zz = myintf1.myfn1(1);
+
+    auto myintf2 = MyIntf {
+        myfn2 {
+            return 3;
+        }
+    };
+    */
+}

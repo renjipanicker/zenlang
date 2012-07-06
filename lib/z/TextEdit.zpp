@@ -1,15 +1,16 @@
-include z::Window public;
-namespace TextEdit;
+import z::Window public;
 
-public struct Definition : Window::Definition {
-    auto multiline = false;
-    auto readonly = false;
-    auto wordwrap = true;
+public interface TextEdit {
+    struct Definition : Window::Definition {
+        auto multiline = false;
+        auto readonly = false;
+        auto wordwrap = true;
+    };
+
+    function widget Create(const widget& parentWin, const Definition& defn) native;
+    function void AppendText(const widget& wnd, const string& text) native;
+    function void Clear(const widget& wnd) native;
+    function string GetText(const widget& wnd) native;
+
+    event(const widget& textedit) native => function void OnEnter();
 };
-
-public function widget Create(const widget& parentWin, const Definition& defn) native;
-public function void AppendText(const widget& wnd, const string& text) native;
-public function void Clear(const widget& wnd) native;
-public function string GetText(const widget& wnd) native;
-
-public event(const widget& textedit) native => function void OnEnter();

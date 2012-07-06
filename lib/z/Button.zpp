@@ -1,8 +1,8 @@
-include z::Window public;
-namespace Button;
+import z::Window public;
+public interface Button {
+    struct Definition : Window::Definition {
+    };
 
-public struct Definition : Window::Definition {
+    function widget Create(const widget& parentWin, const Definition& defn) native;
+    event(const widget& button) native => function void OnClick();
 };
-
-public function widget Create(const widget& parentWin, const Definition& defn) native;
-public event(const widget& button) native => function void OnClick();

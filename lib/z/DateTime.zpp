@@ -1,61 +1,61 @@
-namespace DateTime;
+public interface DateTime {
 
-/// \brief Convert datetime to specified format
-public routine string ToFormatString(const datetime& dt, const string& format) native;
+    /// \brief Convert datetime to specified format
+    routine string ToFormatString(const datetime& dt, const string& format) native;
 
-/// \brief Convert datetime to localtime in specified format
-/// Note that this function does not work as expected under cygwin (always returns GMT time).
-public routine string ToFormatStringLocal(const datetime& dt, const string& format) native;
+    /// \brief Convert datetime to localtime in specified format
+    /// Note that this function does not work as expected under cygwin (always returns GMT time).
+    routine string ToFormatStringLocal(const datetime& dt, const string& format) native;
 
-/// \brief Convert datetime to ISO format
-public routine string ToIsoString(const datetime& dt) native;
+    /// \brief Convert datetime to ISO format
+    routine string ToIsoString(const datetime& dt) native;
 
-/// \brief Convert datetime to local time in ISO format
-public routine string ToIsoStringLocal(const datetime& dt) native;
+    /// \brief Convert datetime to local time in ISO format
+    routine string ToIsoStringLocal(const datetime& dt) native;
 
-/// \brief Convert datetime to value string
-public routine string ToValueString(const datetime& dt) native;
+    /// \brief Convert datetime to value string
+    routine string ToValueString(const datetime& dt) native;
 
-/// \brief Create a datetime from a epoch value as string
-public routine datetime FromValueString(const string& val) native;
+    /// \brief Create a datetime from a epoch value as string
+    routine datetime FromValueString(const string& val) native;
 
-/// \brief Parse a datetime from a strng
-public routine datetime FromIsoString(const string& str) native;
+    /// \brief Parse a datetime from a strng
+    routine datetime FromIsoString(const string& str) native;
 
-/// \brief Parse a datetime from a string containing a local time
-public routine datetime FromIsoStringLocal(const string& str) native;
+    /// \brief Parse a datetime from a string containing a local time
+    routine datetime FromIsoStringLocal(const string& str) native;
 
-/// \brief Get current time
-public routine datetime Now() native;
+    /// \brief Get current time
+    routine datetime Now() native;
 
-/// \brief Return year of given datetime
-public routine int Year(const datetime& dt) native;
+    /// \brief Return year of given datetime
+    routine int Year(const datetime& dt) native;
 
-/// \brief Return month of given datetime
-public routine int Month(const datetime& dt) native;
+    /// \brief Return month of given datetime
+    routine int Month(const datetime& dt) native;
 
-/// \brief Return date of given datetime
-public routine int Date(const datetime& dt) native;
+    /// \brief Return date of given datetime
+    routine int Date(const datetime& dt) native;
 
-/// \brief Add years to specified datetime
-public routine datetime AddYears(const datetime& dt, const int& years) native;
+    /// \brief Add years to specified datetime
+    routine datetime AddYears(const datetime& dt, const int& years) native;
 
-/// \brief Add months to specified datetime
-public routine datetime AddMonths(const datetime& dt, const int& months) native;
+    /// \brief Add months to specified datetime
+    routine datetime AddMonths(const datetime& dt, const int& months) native;
 
-/// \brief Add days to specified datetime
-public routine datetime AddDays(const datetime& dt, const int& days) native;
+    /// \brief Add days to specified datetime
+    routine datetime AddDays(const datetime& dt, const int& days) native;
 
-/// \brief Set year to specified value
-public routine datetime SetYear(const datetime& dt, const int& year) native;
+    /// \brief Set year to specified value
+    routine datetime SetYear(const datetime& dt, const int& year) native;
 
-/// \brief Set month to specified value
-public routine datetime SetMonth(const datetime& dt, const int& month) native;
+    /// \brief Set month to specified value
+    routine datetime SetMonth(const datetime& dt, const int& month) native;
 
-/// \brief Set day to specified value
-public routine datetime SetDay(const datetime& dt, const int& day) native;
+    /// \brief Set day to specified value
+    routine datetime SetDay(const datetime& dt, const int& day) native;
 
 
-/// \brief Return difference between two dates
-public routine int DaysDiff(const datetime& dt1, const datetime& dt2) native;
-
+    /// \brief Return difference between two dates
+    routine int DaysDiff(const datetime& dt1, const datetime& dt2) native;
+};

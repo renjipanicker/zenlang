@@ -5,7 +5,7 @@
 
 MainFrame::Create::_Out MainFrame::Create::run(const MainFrame::Definition& def) {
 #if defined(WIN32)
-    z::widget::impl& impl = Window::Native::createMainFrame(def, WS_OVERLAPPEDWINDOW, WS_EX_WINDOWEDGE);
+    z::widget::impl& impl = WindowImpl::createMainFrame(def, WS_OVERLAPPEDWINDOW, WS_EX_WINDOWEDGE);
     ::PostMessage(impl._val, WM_SIZE, 0, 0);
     if(def.iconres.length() > 0) {
         z::string resname = "IDI_" + def.iconres;
@@ -17,7 +17,7 @@ MainFrame::Create::_Out MainFrame::Create::run(const MainFrame::Definition& def)
         ::SendMessage(impl._val, WM_SETICON, ICON_SMALL, (LPARAM)(hIcon));
     }
 #elif defined(GTK)
-    z::widget::impl& impl = Window::Native::createWindow(def, 0);
+    z::widget::impl& impl = WindowImpl::createWindow(def, 0);
     if((def.position.w != -1) && (def.position.h != -1))
         gtk_widget_set_size_request (impl._val, def.position.w, def.position.h);
 
@@ -25,13 +25,13 @@ MainFrame::Create::_Out MainFrame::Create::run(const MainFrame::Definition& def)
     gtk_container_add(GTK_CONTAINER(impl._val), impl._fixed);
     gtk_widget_show(impl._fixed);
 #elif defined(OSX)
-    z::widget::impl& impl = Window::Native::createMainFrame(def);
+    z::widget::impl& impl = WindowImpl::createMainFrame(def);
 #elif defined(QT)
     UNIMPL();
     z::widget::impl& impl = *((z::widget::impl*)(0));
 #elif defined(IOS)
     UNIMPL();
-    z::widget::impl& impl = Window::Native::createMainFrame(def);
+    z::widget::impl& impl = WindowImpl::createMainFrame(def);
 #else
 #error "Unimplemented GUI mode"
 #endif

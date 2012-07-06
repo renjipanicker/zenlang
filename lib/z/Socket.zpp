@@ -1,17 +1,18 @@
-namespace Socket;
+public interface Socket {
+    event(const socket& s) native => function void OnConnect(const socket& cs);
+    event(const socket& s) native => function void OnRecv(const data& d);
+    event(const socket& s) native => function void OnClose();
 
-public event(const socket& s) native => function void OnConnect(const socket& cs);
-public event(const socket& s) native => function void OnRecv(const data& d);
-public event(const socket& s) native => function void OnClose();
+    /// \todo These must not be in the public interface
+    function OnConnectDevice : device[socket s, pointer<Socket::OnConnect::Handler> h] native;
+    function OnRecvDevice : device[socket s, pointer<Socket::OnRecv::Handler> h] native;
 
-private function OnConnectDevice : device[socket s, pointer<OnConnect::Handler> h] native;
-private function OnRecvDevice : device[socket s, pointer<OnRecv::Handler> h] native;
+    routine socket InitServer(const int& port) native;
+    routine socket InitClient(const string& host, const int& port) native;
+    routine void StartServer(const socket& s) native;
+    routine void Close(const socket& s) native;
 
-public routine socket InitServer(const int& port) native;
-public routine socket InitClient(const string& host, const int& port) native;
-public routine void StartServer(const socket& s) native;
-public routine void Close(const socket& s) native;
-public routine ptr<void> PeekPtr(const socket& s) native;
+    routine int SendData(const socket& s, const data& d) native;
+    routine int SendString(const socket& s, const string& d) native;
+};
 
-public routine int SendData(const socket& s, const data& d) native;
-public routine int SendString(const socket& s, const string& d) native;

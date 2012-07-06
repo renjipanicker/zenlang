@@ -106,6 +106,7 @@ re2c:indent:top              = 2;
 <Normal>   "struct"    := send(pctx, ZENTOK_STRUCT); NEXT();
 <Normal>   "routine"   := send(pctx, ZENTOK_ROUTINE); NEXT();
 <Normal>   "function"  := send(pctx, ZENTOK_FUNCTION); NEXT();
+<Normal>   "interface" := send(pctx, ZENTOK_INTERFACE); NEXT();
 <Normal>   "event"     := send(pctx, ZENTOK_EVENT); NEXT();
 
 <Normal>   "property"  := send(pctx, ZENTOK_PROPERTY); NEXT();

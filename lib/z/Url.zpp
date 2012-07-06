@@ -1,31 +1,31 @@
-namespace Url;
+public interface Url {
+    struct url {
+        string fullUrl;
+        string protocol;
+        string host;
+        string port;
+        string path;
+        string querystring;
+    };
 
-public struct url {
-    string fullUrl;
-    string protocol;
-    string host;
-    string port;
-    string path;
-    string querystring;
+    /// \brief Check if the URL exists
+    routine bool Exists(const url& u) native;
+
+    /// \brief Check if the string exists
+    routine bool FileExists(const string& urlstr) native;
+
+    /// \brief Parse the string int the url
+    routine void Parse(url& u, const string& urlstr) native;
+
+    /// \brief Return a parsed URL.
+    routine url Create(const string& urlstr) native;
+
+    /// \brief Open the url-string in default browser
+    routine bool OpenUrlString(const string& u) native;
+
+    /// \brief Open the url in default browser
+    routine bool Open(const url& u) native;
+
+    /// \brief url-encode string
+    routine string Encode(const string& s) native;
 };
-
-/// \brief Check if the URL exists
-public routine bool Exists(const url& u) native;
-
-/// \brief Check if the string exists
-public routine bool FileExists(const string& urlstr) native;
-
-/// \brief Parse the string int the url
-public routine void Parse(url& u, const string& urlstr) native;
-
-/// \brief Return a parsed URL.
-public routine url Create(const string& urlstr) native;
-
-/// \brief Open the url-string in default browser
-public routine bool OpenUrlString(const string& u) native;
-
-/// \brief Open the url in default browser
-public routine bool Open(const url& u) native;
-
-/// \brief url-encode string
-public routine string Encode(const string& s) native;

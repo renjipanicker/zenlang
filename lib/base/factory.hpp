@@ -102,6 +102,9 @@ namespace Ast {
         Ast::RootFunctionDefn*   aEnterRootFunctionDefn(const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref);
         Ast::ChildFunctionDefn*  aChildFunctionDefn(Ast::ChildFunctionDefn& functionImpl, const Ast::CompoundStatement& block);
         Ast::ChildFunctionDefn*  aEnterChildFunctionDefn(const Ast::TypeSpec& base, const Ast::Token& name, const Ast::DefinitionType::T& defType, const Ast::ClosureRef& cref);
+        Ast::RootInterfaceDefn*  aLeaveRootInterfaceDefn(Ast::RootInterfaceDefn& InterfaceDefn);
+        Ast::RootInterfaceDefn*  aEnterRootInterfaceDefn(const Ast::Token& name, const Ast::DefinitionType::T& defType);
+        void                     aInterfaceMemberTypeDefn(Ast::UserDefinedTypeSpec& typeSpec);
         Ast::EventDecl*          aEventDecl(const Ast::Token& pos, const Ast::VariableDefn& in, const Ast::DefinitionType::T& eventDefType, const Ast::FunctionSig& functionSig, const Ast::DefinitionType::T& handlerDefType);
         Ast::FunctionSig*        aFunctionSig(const Ast::Scope& out, const Ast::Token& name, Ast::Scope& in);
         Ast::FunctionSig*        aFunctionSig(const Ast::QualifiedTypeSpec& out, const Ast::Token& name, Ast::Scope& in);

@@ -1,12 +1,3 @@
-import z::Window public;
-import z::Mainframe;
-import z::Button;
-import z::TextEdit;
-import z::Menu;
-import z::MenuItem;
-import z::Systray;
-import z::WindowCreator;
-
 function MyMain : main {
     unused(argl);
     auto defn = MainFrame::Definition {

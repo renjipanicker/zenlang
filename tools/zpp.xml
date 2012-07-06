@@ -20,6 +20,7 @@
 
       <item> routine </item>
       <item> function </item>
+      <item> interface </item>
       <item> event </item>
       <item> native </item>
       <item> abstract </item>
@@ -51,7 +52,9 @@
       <item> export </item>
       <item> false </item>
       <item> for </item>
+      <item> foreach </item>
       <item> if </item>
+      <item> in </item>
       <item> inline </item>
       <item> namespace </item>
       <item> new </item>
@@ -118,6 +121,8 @@
       <item> time </item>
       <item> datetime </item>
       <item> type </item>
+      <item> data </item>
+      <item> socket </item>
 
       <item> test </item>
       <item> main </item>
