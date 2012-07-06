@@ -134,7 +134,7 @@
     #pragma warning (disable:4355)
 
     // assignment operator could not be generated
-    // caused due to const members in struct's and classes. 
+    // caused due to const members in struct's and classes.
     // can disable this because an error will be raised if an actual assignment
     // operation is attempted later on.
     #pragma warning (disable:4512)

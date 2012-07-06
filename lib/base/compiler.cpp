@@ -79,6 +79,7 @@ void z::Compiler::import(z::Ast::Module& module) {
 }
 
 const z::string ifile =
+"namespace z;"
 "typedef void native;\n"
 
 "typedef bool native;\n"

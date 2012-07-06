@@ -534,7 +534,7 @@ if [ "$dotest" == "yes" ]; then
         CFLAGS="-DUNIT_TEST -DZ_EXE -Wall -I${OUTDIR} -O3"
 
         # next compile the zenlang.cpp file as an objective-c++ file.
-        echo Compiling zenlang
+        echo Compiling zenlang/core
         gcc -c ${CFLAGS} ${OUTDIR}/zenlang.cpp
         if [[ $? != 0 ]]; then
             exit
@@ -558,17 +558,17 @@ if [ "$dotest" == "yes" ]; then
             exit
         fi
 
-        #echo Compiling zenlang(GUI)
-        #gcc -c ${CFLAGS} -DGUI ${OUTDIR}/zenlang.cpp
-        #if [[ $? != 0 ]]; then
-        #    exit
-        #fi
+        #echo Compiling zenlang/gui
+        #gcc -c ${CFLAGS} -DGUI `pkg-config --cflags --libs gtk+-3.0` ${OUTDIR}/zenlang.cpp
+        if [[ $? != 0 ]]; then
+            exit
+        fi
 
         #echo Compiling guiTest
-        #g++ ${CFLAGS} -DGUI -O3 -o test.osx -L${SDKDIR}/lib sqlite3_unicode.o zenlang.o guiTest.cpp -lc++ -lsqlite3
-        #if [[ $? != 0 ]]; then
-        #    exit
-        #fi
+        #g++ ${CFLAGS} -DGUI `pkg-config --cflags --libs gtk+-3.0` -O3 -o guiTest -L${SDKDIR}/lib sqlite3_unicode.o zenlang.o guiTest.cpp -lsqlite3
+        if [[ $? != 0 ]]; then
+            exit
+        fi
     else
         echo "unknown platform"
     fi

@@ -108,7 +108,7 @@ void Systray::Hide::run(const z::widget& handle) {
 }
 
 z::widget Systray::Create::run(const z::widget& parent, const Systray::Definition& def) {
-    unused(parent);
+    z::unused_t(parent);
     z::widget::impl* impl = new z::widget::impl();
     z::widget handle(impl);
 #if defined(WIN32)

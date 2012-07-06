@@ -45,7 +45,7 @@ namespace in {
     };
 
     template <> inline ValuePtr::operator int64_t() const {
-        assert(isLong());
+        z::assert_t(isLong());
         const z::Ast::ConstantLongExpr& val = value<z::Ast::ConstantLongExpr>();
         return val.value();
     }
@@ -197,9 +197,9 @@ namespace in {
 
     struct BooleanHasOperator : public BooleanOperator {
         virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
-            unused(lhs);
-            unused(rhs);
-            assert(false);
+            z::unused_t(lhs);
+            z::unused_t(rhs);
+            z::assert_t(false);
             return 0;
         }
     };
@@ -223,7 +223,7 @@ namespace in {
 
     struct BinaryNoopOperator : public BinaryOperator {
         virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
-            unused(lhs);
+            z::unused_t(lhs);
             return (int64_t)rhs;
         }
     };
@@ -478,115 +478,115 @@ namespace in {
         }
 
         virtual void visit(const z::Ast::PostfixIncExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::PostfixDecExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::PrefixNotExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::PrefixPlusExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::PrefixMinusExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::PrefixIncExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::PrefixDecExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::PrefixBitwiseNotExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::SetIndexExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ListExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::DictExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::FormatExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::RoutineCallExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::FunctorCallExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::RunExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::OrderedExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::IndexExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::SpliceExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::SizeofTypeExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::SizeofExprExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::TypeofTypeExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::TypeofExprExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::StaticTypecastExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::DynamicTypecastExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::PointerInstanceExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ValueInstanceExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::MapDataInstanceExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::DeRefInstanceExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::VariableRefExpr& node) {
@@ -603,35 +603,35 @@ namespace in {
         }
 
         virtual void visit(const z::Ast::EnumMemberExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::StructMemberExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::StructInstanceExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::FunctionInstanceExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::AnonymousFunctionExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ConstantNullExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ConstantFloatExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ConstantDoubleExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ConstantBooleanExpr& node) {
@@ -639,11 +639,11 @@ namespace in {
         }
 
         virtual void visit(const z::Ast::ConstantStringExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ConstantCharExpr& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ConstantLongExpr& node) {
@@ -687,25 +687,25 @@ namespace in {
     public:
         inline ExprGenerator(InterpreterContext& ctx) : _ctx(ctx) {}
         inline ~ExprGenerator() {
-            assert(_stack.size() == 0);
+            z::assert_t(_stack.size() == 0);
         }
     };
 
     class StatementGenerator : public z::Ast::Statement::Visitor {
         virtual void visit(const z::Ast::ImportStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::EnterNamespaceStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::LeaveNamespaceStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::UserDefinedTypeSpecStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::StructMemberVariableStatement& node) {
@@ -713,11 +713,11 @@ namespace in {
         }
 
         virtual void visit(const z::Ast::StructInitStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::EmptyStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::AutoStatement& node) {
@@ -736,83 +736,83 @@ namespace in {
         }
 
         virtual void visit(const z::Ast::IfStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::IfElseStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::WhileStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::DoWhileStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ForExprStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ForInitStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ForeachStringStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ForeachListStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ForeachDictStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::CaseExprStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::CaseDefaultStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::SwitchValueStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::SwitchExprStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::BreakStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ContinueStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::AddEventHandlerStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::RoutineReturnStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::FunctionReturnStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::RaiseStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ExitStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::CompoundStatement& node) {

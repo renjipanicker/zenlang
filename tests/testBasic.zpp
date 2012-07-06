@@ -56,8 +56,8 @@ public function testBasicExpr : test {
     auto y = (l[0] == 1);
     verify(y == true);
 
-    auto z = l[0:3];
-    unused(z);
+    auto z1 = l[0:3];
+    unused(z1);
 
     auto d = ["a":1,"b":2,"c":3];
     verify(length(d) == 3);
@@ -165,11 +165,11 @@ public function int testAdvancedExpr(const int& x, const MyStruct& myStruct, con
         return (16);
     }
 
-    auto z = &(MyStruct)p;
-    if((*z).j != 540) {
+    auto z1 = &(MyStruct)p;
+    if((*z1).j != 540) {
         return (17);
     }
-    if((*z).i != 240) {
+    if((*z1).i != 240) {
         return (18);
     }
 

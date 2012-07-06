@@ -1,15 +1,23 @@
 #pragma once
 
-#define unused(x) ((void)(&x))
 #define NULL_PTR_ERROR (false)
 #define NULL_REF_ERROR (false)
 
 namespace z {
     template <typename T>
+    inline void unused_t(const T&) {}
+
+#if defined(DEBUG)
+    inline void assert_t(const bool& cond){assert(cond);}
+#else
+    inline void assert_t(const bool& /*cond*/){}
+#endif
+
+    template <typename T>
     inline T& ref(T* t) {
-        // this if-syntax (instead of assert(t)) makes it easier to set breakpoints for debugging.
+        // this if-syntax (instead of z::assert_t(t)) makes it easier to set breakpoints for debugging.
         if(t == 0) {
-            assert(NULL_PTR_ERROR);
+            z::assert_t(NULL_PTR_ERROR);
         }
         return (*t);
     }
@@ -17,7 +25,7 @@ namespace z {
     template <typename T>
     inline T* ptr(T& t) {
         if((&t) == 0) {
-            assert(NULL_REF_ERROR);
+            z::assert_t(NULL_REF_ERROR);
         }
         return &t;
     }
@@ -25,16 +33,32 @@ namespace z {
     template <typename T>
     inline unsigned long pad(T& t) {
         if((&t) == 0) {
-            assert(NULL_REF_ERROR);
+            z::assert_t(NULL_REF_ERROR);
         }
         return (unsigned long)(&t);
     }
+
+    typedef ::int8_t  int8_t;
+    typedef ::int16_t int16_t;
+    typedef ::int32_t int32_t;
+    typedef ::int64_t int64_t;
+
+    typedef ::uint8_t  uint8_t;
+    typedef ::uint16_t uint16_t;
+    typedef ::uint32_t uint32_t;
+    typedef ::uint64_t uint64_t;
 
     typedef std::size_t size;
 
     typedef char     char08_t;
     typedef uint16_t char16_t;
     typedef uint32_t char32_t;
+
+    typedef void void_t;
+    typedef bool bool_t;
+
+    typedef float float_t;
+    typedef double double_t;
 
     // define char_t as 8, 16 or 32 bit
 #if defined(CHAR_WIDTH_08)
@@ -472,7 +496,7 @@ namespace z {
     public:
         explicit inline Exception(const z::string& src, const z::string& msg) : _msg(msg) {
             elog(src, _msg);
-            assert(false);
+            z::assert_t(false);
         }
     private:
         const z::string _msg;
@@ -488,10 +512,10 @@ namespace z {
         }
         inline bool empty() const {return (_val == 0);}
         inline T* ptr() {return _val;}
-        inline T& get() {assert(!empty()); return z::ref(_val);}
-        inline T* operator->() {assert(!empty()); return ptr();}
+        inline T& get() {z::assert_t(!empty()); return z::ref(_val);}
+        inline T* operator->() {z::assert_t(!empty()); return ptr();}
         inline T& operator*() {return get();}
-        inline T* take() {assert(!empty()); T* v = _val; _val = 0; return v;}
+        inline T* take() {z::assert_t(!empty()); T* v = _val; _val = 0; return v;}
         inline void reset(T* val) {delete _val; _val = val;}
         inline void reset() {reset(0);}
     private:
@@ -520,7 +544,7 @@ namespace z {
             throw Exception("z::map", z::string("%{k} out of bounds\n").arg("k", from));
         }
         const uint8_t* v = d.c_str() + from;
-        assert(v);
+        z::assert_t(v != 0);
         const T* t = reinterpret_cast<const T*>(v);
         return z::ref(t);
     }
@@ -532,7 +556,7 @@ namespace z {
             throw Exception("z::map", z::string("%{k} out of bounds\n").arg("k", from));
         }
         const uint8_t* v = d.c_str() + from;
-        assert(v);
+        z::assert_t(v != 0);
         z::estring es((const char*)v, len);
         z::string r = z::e2s(es);
         return r;
@@ -610,7 +634,7 @@ namespace z {
 
         template <typename DerT>
         struct valueT : public value {
-            inline valueT(const DerT& v) : _v(v) {const V& dummy = v;unused(dummy);}
+            inline valueT(const DerT& v) : _v(v) {const V& dummy = v;z::unused_t(dummy);}
             virtual V& get() {return _v;}
             virtual value* clone() const {return new valueT<DerT>(_v);}
             virtual z::string tname() const {return type_name<DerT>();}
@@ -625,7 +649,7 @@ namespace z {
         inline DerT& getT() const {
             V& v = BaseT::get();
             DerT& r = static_cast<DerT&>(v);
-            const V& dummy = r; unused(dummy); // to check that DerT is a derived class of V
+            const V& dummy = r; z::unused_t(dummy); // to check that DerT is a derived class of V
             return r;
         }
 
@@ -643,7 +667,7 @@ namespace z {
             BaseT::reset();
             if(src.has()) {
                 const DerT& val = src.getT<DerT>();
-                const V& dummy = val; unused(dummy); // to check that DerT acn be derived from V
+                const V& dummy = val; z::unused_t(dummy); // to check that DerT acn be derived from V
                 value* v = new valueT<DerT>(val);
                 BaseT::set(src.tname(), v);
             }
@@ -652,7 +676,7 @@ namespace z {
 
         template <typename VisT>
         inline void visit(VisT& vis) {
-            assert(false);
+            z::assert_t(false);
 //            vis.visit(_v);
         }
 
@@ -665,7 +689,7 @@ namespace z {
         /// This ctor is the one to be invoked when creating a pointer-object.
         template <typename DerT>
         explicit inline pointer(const z::string& tname, const DerT& val) {
-            const V& dummy = val; unused(dummy); // to check that DerT is a derived class of V
+            const V& dummy = val; z::unused_t(dummy); // to check that DerT is a derived class of V
             value* v = new valueT<DerT>(val);
             BaseT::set(type(tname), v);
         }
@@ -704,25 +728,25 @@ namespace z {
         typedef z::container<V, ListT > BaseT;
 
         inline V& front() {
-            assert(BaseT::_list.size() > 0);
+            z::assert_t(BaseT::_list.size() > 0);
             V& v = BaseT::_list.front();
             return v;
         }
 
         inline const V& front() const {
-            assert(BaseT::_list.size() > 0);
+            z::assert_t(BaseT::_list.size() > 0);
             const V& v = BaseT::_list.front();
             return v;
         }
 
         inline V& back() {
-            assert(BaseT::_list.size() > 0);
+            z::assert_t(BaseT::_list.size() > 0);
             V& v = BaseT::_list.back();
             return v;
         }
 
         inline const V& back() const {
-            assert(BaseT::_list.size() > 0);
+            z::assert_t(BaseT::_list.size() > 0);
             const V& v = BaseT::_list.back();
             return v;
         }
@@ -737,13 +761,13 @@ namespace z {
         typedef z::listbase<V, std::list<V> > BaseT;
 
         inline V& top() {
-            assert(BaseT::_list.size() > 0);
+            z::assert_t(BaseT::_list.size() > 0);
             V& v = BaseT::_list.front();
             return v;
         }
 
         inline const V& top() const {
-            assert(BaseT::_list.size() > 0);
+            z::assert_t(BaseT::_list.size() > 0);
             const V& v = BaseT::_list.front();
             return v;
         }
@@ -754,7 +778,7 @@ namespace z {
         }
 
         inline V pop() {
-            assert(BaseT::_list.size() > 0);
+            z::assert_t(BaseT::_list.size() > 0);
             V v = BaseT::_list.front();
             BaseT::_list.pop_front();
             return v;
@@ -771,7 +795,7 @@ namespace z {
         }
 
         inline V dequeue() {
-            assert(BaseT::_list.size() > 0);
+            z::assert_t(BaseT::_list.size() > 0);
             V v = BaseT::_list.front();
             BaseT::_list.pop_front();
             return v;
@@ -1103,7 +1127,7 @@ namespace z {
 
         inline void push(InitT* inst) {
             if(_tail == 0) {
-                assert(_head == 0);
+                z::assert_t(_head == 0);
                 _head = inst;
                 _next = _head;
             } else {
@@ -1274,7 +1298,7 @@ namespace z {
         };
     public:
         inline _Out _run(const _In& _in) {
-            unused(_in);
+            z::unused_t(_in);
             T& t = static_cast<T&>(ref(this));
             TestResult::begin(t.name());
             _Out out = t.run();
@@ -1357,15 +1381,15 @@ namespace z {
 
     ////////////////////////////////////////////////////////////////////////////
     /// \brief Represents a single running application instance.
-    struct Application {
-        // Application object can be instantiated only from an executable
+    struct application {
+        // application object can be instantiated only from an executable
 #if defined(Z_EXE)
     public:
 #else
     private:
 #endif
-        Application(int argc, char** argv);
-        ~Application();
+        application(int argc, char** argv);
+        ~application();
 
     public:
 #if defined(WIN32)
@@ -1398,7 +1422,7 @@ namespace z {
         inline z::string base() const {return _base;}
 
     public:
-        // This Application instance can only be accessed through the app() function below.
+        // This application instance can only be accessed through the app() function below.
         // Since that function returns a const-ref, this ctx() function cannot be called by
         // any outside function other than those in zenlang.cpp
         inline z::GlobalContext& ctx() {return _ctx.get();}
@@ -1425,7 +1449,7 @@ namespace z {
     };
 
     /// \brief Provides read-only access to singleton app-instance
-    const z::Application& app();
+    const z::application& app();
 
     ////////////////////////////////////////////////////////////////////////////
     /// intrinsic types that represent system objects
@@ -1561,4 +1585,4 @@ namespace z {
 #define DISABLE_ASSIGNMENT(c) private: inline c& operator=(const c& /*src*/){throw z::Exception("", z::string(#c));}
 #define DISABLE_COPYCTOR(c) private: inline c(const c& /*src*/){throw z::Exception("", z::string(#c));}
 
-#define UNIMPL() assert(false)
+#define UNIMPL() z::assert_t(false)

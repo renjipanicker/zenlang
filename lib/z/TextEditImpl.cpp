@@ -85,7 +85,7 @@ z::widget TextEdit::Create::run(const z::widget& parent, const TextEdit::Definit
 #endif
     z::widget win(impl);
     Window::Position p = Window::getChildPosition(win);
-    unused(p);
+    z::unused_t(p);
     return win;
 }
 

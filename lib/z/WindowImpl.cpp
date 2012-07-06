@@ -329,7 +329,7 @@ void Window::SetTitle::run(const z::widget& wnd, const z::string& title) {
 
 void Window::SetFocus::run(const z::widget& frame, const z::widget& wnd) {
 #if defined(WIN32)
-    unused(frame);
+    z::unused_t(frame);
     ::SetFocus(wnd.val()._val);
 #elif defined(GTK)
     unused(frame);

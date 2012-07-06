@@ -31,7 +31,7 @@
 //    throw z::exception(z::string::creator("%{err} Stack overflow error").arg(z::any("err"), z::any(z::c2f(pctx).err())).value());
 }
 
-%token_destructor {unused(pctx);z::TokenData::deleteT($$);}
+%token_destructor {z::unused_t(pctx);z::TokenData::deleteT($$);}
 
 %name ZenParser
 

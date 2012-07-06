@@ -1,8 +1,4 @@
 #pragma once
-#include <string.h>
-#include <string>
-#include <assert.h>
-#include <stdio.h>
 
 namespace z {
 struct TokenData {
@@ -34,9 +30,9 @@ public:
     static z::string getText(const char* start, const char* end) {
         z::string txt;
 
-        assert(start > 0);
-        assert(end > 0);
-        assert(start <= end);
+        z::assert_t(start > 0);
+        z::assert_t(end > 0);
+        z::assert_t(start <= end);
 
         for(const char* t = start; t < end; ++t) {
             txt += *t;

@@ -27,13 +27,14 @@
     #endif
 #endif
 
+///////////////////////////////////////////////////////////////
 #if defined(__APPLE__)
 # include <mach-o/dyld.h>
 #endif
 
 ///////////////////////////////////////////////////////////////
 /// \brief Global singleton application instance
-static z::Application* g_app = 0;
+static z::application* g_app = 0;
 
 ////////////////////////////////////////////////////////////////////////////
 void z::writelog(const z::string& src, const z::string& msg) {
@@ -234,7 +235,7 @@ int z::mutex::leave() {
 ////////////////////////////////////////////////////////////////////////////
 void z::regex::compile(const z::string& re) {
 #if defined(WIN32)
-    unused(re);
+    z::unused_t(re);
     UNIMPL();
 #else
     int res = regcomp(&_val, s2e(re).c_str(), 0);
@@ -246,7 +247,7 @@ void z::regex::compile(const z::string& re) {
 
 void z::regex::match(const z::string& str) {
 #if defined(WIN32)
-    unused(str);
+    z::unused_t(str);
     UNIMPL();
 #else
     int res = regexec(&_val, s2e(str).c_str(), 0, 0, 0);
@@ -362,7 +363,7 @@ z::string z::dir::cwd() {
     ::_getcwd( buff, MAXBUF);
 #else
     char* p = ::getcwd( buff, MAXBUF);
-    unused(p);
+    z::unused_t(p);
 #endif
     z::string rv(buff);
     return rv;
@@ -441,7 +442,7 @@ void z::TestResult::begin(const z::string& name) {
 }
 
 void z::TestResult::end(const z::string& name, const bool& passed) {
-    unused(name);
+    z::unused_t(name);
     if(passed)
         ++s_passedTests;
 
@@ -474,7 +475,7 @@ namespace z {
 }
 
 /// \brief Return reference to global application instance.
-const z::Application& z::app() {
+const z::application& z::app() {
     return z::ref(g_app);
 }
 
@@ -504,7 +505,7 @@ void z::RunQueue::add(z::Future* future) {
 }
 
 z::size z::RunQueue::run(const z::size& cnt) {
-    assert(s_tctx != 0);
+    z::assert_t(s_tctx != 0);
     for(z::size i = 0; i < cnt; ++i) {
         if(_list.size() == 0) {
             break;
@@ -601,12 +602,12 @@ z::ThreadContext& z::ctx() {
 }
 
 z::ThreadContext::ThreadContext(z::RunQueue& queue) : _queue(queue) {
-    assert(s_tctx == 0);
+    z::assert_t(s_tctx == 0);
     s_tctx = this;
 }
 
 z::ThreadContext::~ThreadContext() {
-    assert(s_tctx != 0);
+    z::assert_t(s_tctx != 0);
     s_tctx = 0;
 }
 
@@ -641,16 +642,16 @@ int z::win32::getNextResID() {
 }
 
 static void CALLBACK IdleProc(HWND hwnd, UINT uMsg, UINT idEvent, DWORD time) {
-    unused(hwnd);
-    unused(uMsg);
-    unused(idEvent);
-    unused(time);
+    z::unused_t(hwnd);
+    z::unused_t(uMsg);
+    z::unused_t(idEvent);
+    z::unused_t(time);
     pump();
 }
 #endif // WIN32
 #if defined(GTK)
 static gboolean onIdle(gpointer data) {
-    unused(data);
+    z::unused_t(data);
     pump();
     return TRUE;
 }
@@ -751,9 +752,9 @@ QT_END_MOC_NAMESPACE
 #endif // QT/OSX
 #endif // GUI
 
-z::Application::Application(int argc, char** argv) : _argc(argc), _argv(argv), _isExit(false), _log(0) {
+z::application::application(int argc, char** argv) : _argc(argc), _argv(argv), _isExit(false), _log(0) {
     if(g_app != 0) {
-        throw z::Exception("z::Application", z::string("Multiple instances of Application not permitted"));
+        throw z::Exception("z::application", z::string("Multiple instances of application not permitted"));
     }
     g_app = this;
 
@@ -766,17 +767,17 @@ z::Application::Application(int argc, char** argv) : _argc(argc), _argv(argv), _
     DWORD rv = GetModuleFileName(NULL, path, len);
     if(rv == 0) {
         DWORD ec = GetLastError();
-        assert(ec != ERROR_SUCCESS);
-        throw z::Exception("z::Application", z::string("Internal error retrieving process path: %{s}").arg("s", ec));
+        z::assert_t(ec != ERROR_SUCCESS);
+        throw z::Exception("z::application", z::string("Internal error retrieving process path: %{s}").arg("s", ec));
     }
 #elif defined(__APPLE__)
     uint32_t sz = len;
     if(_NSGetExecutablePath(path, &sz) != 0) {
-        throw z::Exception("z::Application", z::string("Internal error retrieving process path: %{s}").arg("s", path));
+        throw z::Exception("z::application", z::string("Internal error retrieving process path: %{s}").arg("s", path));
     }
 #else
     if (readlink ("/proc/self/exe", path, len) == -1) {
-        throw z::Exception("z::Application", z::string("Internal error retrieving process path: %{s}").arg("s", path));
+        throw z::Exception("z::application", z::string("Internal error retrieving process path: %{s}").arg("s", path));
     }
 #endif
     _path = z::string(path);
@@ -794,7 +795,7 @@ z::Application::Application(int argc, char** argv) : _argc(argc), _argv(argv), _
     /// \todo Use SHGetKnownFolderPath for vista and later.
     HRESULT hr = ::SHGetFolderPath(NULL, CSIDL_APPDATA | CSIDL_FLAG_CREATE, NULL, SHGFP_TYPE_CURRENT, chPath);
     if(!SUCCEEDED(hr)) {
-        throw z::Exception("Application", z::string("Internal error retrieving data directory: %{s}").arg("s", hr));
+        throw z::Exception("application", z::string("Internal error retrieving data directory: %{s}").arg("s", hr));
     }
     _data = z::string(chPath);
     _data.replace("\\", "/");
@@ -887,7 +888,7 @@ z::Application::Application(int argc, char** argv) : _argc(argc), _argv(argv), _
     WSADATA wsaData;
     int iResult = WSAStartup(MAKEWORD(2,2), &wsaData);
     if (iResult != 0) {
-        throw z::Exception("z::Application", z::string("WSAStartup failed"));
+        throw z::Exception("z::application", z::string("WSAStartup failed"));
     }
 #endif
 
@@ -896,7 +897,7 @@ z::Application::Application(int argc, char** argv) : _argc(argc), _argv(argv), _
 #endif
 }
 
-z::Application::~Application() {
+z::application::~application() {
 #if defined(WIN32)
     WSACleanup();
 #endif
@@ -908,21 +909,21 @@ z::Application::~Application() {
 
 #if defined(WIN32)
 static HINSTANCE s_hInstance = 0;
-HINSTANCE z::Application::instance() const {
-    assert(0 != s_hInstance);
+HINSTANCE z::application::instance() const {
+    z::assert_t(0 != s_hInstance);
     return s_hInstance;
 }
 #endif
 
-inline int z::Application::execEx() {
+inline int z::application::execEx() {
 #if defined(UNIT_TEST)
-    TestResult tr; unused(tr);
+    TestResult tr; z::unused_t(tr);
 #endif
     int code = 0;
 
     // this is the local context for thread-0.
     // all UI events will run in this context
-    ThreadContext tctx(gctx().at(0)); unused(tctx);
+    ThreadContext tctx(gctx().at(0)); z::unused_t(tctx);
 
 #if defined(GUI)
     // start timer and message pump
@@ -958,7 +959,7 @@ inline int z::Application::execEx() {
 #elif defined(OSX) || defined(IOS)
     // create timer object
     CTimer* ctimer = [[CTimer alloc] initTimer];
-    unused(ctimer);
+    z::unused_t(ctimer);
 #if defined(OSX) //COCOA_NIB
     code = NSApplicationMain(_argc, (const char**)_argv);
 #elif defined(IOS)
@@ -988,12 +989,12 @@ inline int z::Application::execEx() {
     return code;
 }
 
-int z::Application::exec() {
+int z::application::exec() {
     int rv = execEx();
     return rv;
 }
 
-int z::Application::exit(const int& code) const {
+int z::application::exit(const int& code) const {
     // Enqueue all at-exit functions.
     // NOTE: This does not get called under OSX/iOS, because the main loop is terminated
     // using exit(). This leads to memory leaks. The only way to call this would be using _atexit().
@@ -1017,12 +1018,12 @@ int z::Application::exit(const int& code) const {
 #endif
 #endif
 
-    z::Application& self = const_cast<z::Application&>(z::ref(this));
+    z::application& self = const_cast<z::application&>(z::ref(this));
     self._isExit = true;
     return code;
 }
 
-void z::Application::writeLog(const z::string& msg) const {
+void z::application::writeLog(const z::string& msg) const {
     z::ref(_log) << msg << std::endl;
 #if defined(DEBUG) && defined(GUI) && defined(WIN32)
     OutputDebugStringA(z::s2e(msg + "\n").c_str());
@@ -1052,9 +1053,9 @@ void initMain(const z::stringlist& argl) {
 
 #if defined(GUI) && defined(WIN32)
 int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
-    unused(hPrevInstance);unused(lpCmdLine);unused(nCmdShow);
+    z::unused_t(hPrevInstance);z::unused_t(lpCmdLine);z::unused_t(nCmdShow);
     s_hInstance = hInstance;
-    z::Application a(__argc, (char**)__argv);
+    z::application a(__argc, (char**)__argv);
     initMain(a.argl());
     return a.exec();
 }
@@ -1065,7 +1066,7 @@ int main(int argc, char* argv[]) {
     // This cannot be in initMain() since it must have application-level lifetime.
     QApplication qapp(argc, argv);
 #endif
-    z::Application a(argc, argv);
+    z::application a(argc, argv);
     initMain(a.argl());
     return a.exec();
 }

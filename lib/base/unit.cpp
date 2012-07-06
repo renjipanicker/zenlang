@@ -21,8 +21,8 @@ z::Ast::Unit::~Unit() {
         std::cout << ZenlangNameGenerator().qtn(et.typeSpec()) << std::endl;
     }
 
-    assert(_expectedTypeSpecStack.size() == 0);
-    assert(_typeSpecStack.size() == 0);
+    z::assert_t(_expectedTypeSpecStack.size() == 0);
+    z::assert_t(_typeSpecStack.size() == 0);
 }
 
 const z::Ast::QualifiedTypeSpec* z::Ast::Unit::canCoerceX(const z::Ast::QualifiedTypeSpec& lhs, const z::Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const {
@@ -101,7 +101,7 @@ const z::Ast::QualifiedTypeSpec* z::Ast::Unit::canCoerceX(const z::Ast::Qualifie
             const z::Ast::QualifiedTypeSpec& rSubType = z::ref(rtd).at(0);
             CoercionResult::T imode = CoercionResult::None;
             const z::Ast::QualifiedTypeSpec* val = canCoerceX(lSubType, rSubType, imode);
-            unused(val);
+            z::unused_t(val);
             if(imode == CoercionResult::Lhs) {
                 mode = CoercionResult::Lhs;
                 return z::ptr(lhs);
@@ -146,7 +146,7 @@ z::Ast::Scope& z::Ast::Unit::enterScope(const z::Ast::Token& pos) {
 
 void z::Ast::Unit::leaveScope(z::Ast::Scope& scope) {
     z::Ast::Scope& s = _scopeStack.top();
-    assert(z::ptr(s) == z::ptr(scope));
+    z::assert_t(z::ptr(s) == z::ptr(scope));
     if(_scopeCallback) {
         z::ref(_scopeCallback).leavingScope(scope);
     }
@@ -244,7 +244,7 @@ const z::Ast::VariableDefn* z::Ast::Unit::getVariableDef(const z::Ast::Token& na
         const z::Ast::VariableDefn* vref = hasMember(scope, name);
         if(vref != 0) {
             if(refType == z::Ast::RefType::XRef) {
-                assert(scopeList.size() > 0);
+                z::assert_t(scopeList.size() > 0);
                 for(ScopeList::iterator it = scopeList.begin(); it != scopeList.end(); ++it) {
                     z::Ast::Scope& scope = z::ref(*it);
 
@@ -264,7 +264,7 @@ const z::Ast::VariableDefn* z::Ast::Unit::getVariableDef(const z::Ast::Token& na
                 }
             }
 
-            assert(vref);
+            z::assert_t(vref != 0);
             return vref;
         }
     }
@@ -330,15 +330,24 @@ z::Ast::TypeSpec& z::Ast::Unit::enterTypeSpec(z::Ast::TypeSpec& typeSpec) {
 
 z::Ast::TypeSpec& z::Ast::Unit::leaveTypeSpec(z::Ast::TypeSpec& typeSpec) {
     z::Ast::TypeSpec& ct = _typeSpecStack.top();
-    assert(z::ptr(ct) == z::ptr(typeSpec));
+    z::assert_t(z::ptr(ct) == z::ptr(typeSpec));
     _typeSpecStack.pop();
     return ct;
 }
 
 const z::Ast::TypeSpec* z::Ast::Unit::hasRootTypeSpec(const int& level, const z::Ast::Token& name) const {
     const z::Ast::TypeSpec* typeSpec = findTypeSpec(currentTypeSpec(), name);
-    if(typeSpec)
+    if(typeSpec) {
         return typeSpec;
+    }
+
+    const z::Ast::TypeSpec* ztypeSpec = importNS().hasChild<const z::Ast::TypeSpec>("z");
+    if(ztypeSpec) {
+        const z::Ast::TypeSpec* ctypeSpec = z::ref(ztypeSpec).hasChild<const z::Ast::TypeSpec>(name.string());
+        if(ctypeSpec) {
+            return ctypeSpec;
+        }
+    }
 
     return hasImportRootTypeSpec(level, name);
 }
@@ -563,7 +572,7 @@ const z::Ast::StructDefn* z::Ast::Unit::isListOfStructExpected() const {
             const z::Ast::QualifiedTypeSpec& valType = z::ref(td).at(1);
             sd = dynamic_cast<const z::Ast::StructDefn*>(z::ptr(valType.typeSpec()));
         } else {
-            assert(false);
+            z::assert_t(false);
         }
     }
     return sd;
@@ -591,7 +600,7 @@ inline const z::Ast::TypeSpec* z::Ast::Unit::isListOfPointerExpected() const {
                 }
             }
         } else {
-            assert(false);
+            z::assert_t(false);
         }
     }
     return 0;

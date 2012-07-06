@@ -46,8 +46,6 @@ namespace sg {
                 name += "z::dict";
             } else if(z::ref(templateDefn).name().string() == "future") {
                 name += "z::FutureT";
-            } else if(z::ref(templateDefn).name().string() == "map") {
-                name += "z::map";
             } else {
                 name += z::ref(templateDefn).name().string();
             }
@@ -108,75 +106,110 @@ namespace sg {
             return;
         }
 
-        if(typeSpec.name().string() == "size") {
-            name += "z::size";
-            return;
-        }
-
         if(typeSpec.name().string() == "char") {
-            name += "z::char_t";
+            name += "char_t";
             return;
         }
 
-        if(typeSpec.name().string() == "string") {
-            name += "z::string";
+        if(typeSpec.name().string() == "void") {
+            name += "void_t";
             return;
         }
 
-        if(typeSpec.name().string() == "datetime") {
-            name += "z::datetime";
+        if(typeSpec.name().string() == "bool") {
+            name += "bool_t";
             return;
         }
 
-        if(typeSpec.name().string() == "socket") {
-            name += "z::socket";
+        if(typeSpec.name().string() == "float") {
+            name += "float_t";
             return;
         }
 
-        if(typeSpec.name().string() == "file") {
-            name += "z::file";
+        if(typeSpec.name().string() == "double") {
+            name += "double_t";
             return;
         }
 
-        if(typeSpec.name().string() == "widget") {
-            name += "z::widget";
+        if(typeSpec.name().string() == "unused") {
+            name += "unused_t";
             return;
         }
 
-        if(typeSpec.name().string() == "type") {
-            name += "z::type";
+        if(typeSpec.name().string() == "assert") {
+            name += "assert_t";
             return;
         }
 
-        if(typeSpec.name().string() == "stringlist") {
-            name += "z::stringlist";
+        if(typeSpec.name().string() == "verify") {
+            name += "verify_t";
             return;
         }
 
-        if(typeSpec.name().string() == "device") {
-            name += "z::device";
-            return;
-        }
+//        if(typeSpec.name().string() == "size") {
+//            name += "z::size";
+//            return;
+//        }
 
-        if(typeSpec.name().string() == "data") {
-            name += "z::data";
-            return;
-        }
+//        if(typeSpec.name().string() == "string") {
+//            name += "z::string";
+//            return;
+//        }
 
-        if(typeSpec.name().string() == "length") {
-            name += "z::length";
-            return;
-        }
+//        if(typeSpec.name().string() == "datetime") {
+//            name += "z::datetime";
+//            return;
+//        }
 
-        if(typeSpec.name().string() == "remove") {
-            name += "z::remove";
-            return;
-        }
+//        if(typeSpec.name().string() == "socket") {
+//            name += "z::socket";
+//            return;
+//        }
 
-        if(typeSpec.name().string() == "raw") {
-            name += "z::raw";
-            return;
-        }
+//        if(typeSpec.name().string() == "file") {
+//            name += "z::file";
+//            return;
+//        }
+
+//        if(typeSpec.name().string() == "widget") {
+//            name += "z::widget";
+//            return;
+//        }
+
+//        if(typeSpec.name().string() == "type") {
+//            name += "z::type";
+//            return;
+//        }
+
+//        if(typeSpec.name().string() == "stringlist") {
+//            name += "z::stringlist";
+//            return;
+//        }
+
+//        if(typeSpec.name().string() == "device") {
+//            name += "z::device";
+//            return;
+//        }
+
+//        if(typeSpec.name().string() == "data") {
+//            name += "z::data";
+//            return;
+//        }
+
+//        if(typeSpec.name().string() == "length") {
+//            name += "z::length";
+//            return;
+//        }
+
+//        if(typeSpec.name().string() == "remove") {
+//            name += "z::remove";
+//            return;
+//        }
+
+//        if(typeSpec.name().string() == "raw") {
+//            name += "z::raw";
+//            return;
+//        }
 
         name += typeSpec.name().string();
 
@@ -453,18 +486,21 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::RoutineCallExpr& node) {
-            const z::string name = StlcppNameGenerator().tn(node.routine());
-            if((name == "assert") || (name == "unused") || (name == "verify")) {
+            z::string name = StlcppNameGenerator().tn(node.routine());
+            if((name == "z::assert_t") || (name == "z::unused_t") || (name == "z::verify_t")) {
                 z::string sep;
                 for(z::Ast::ExprList::List::const_iterator it = node.exprList().list().begin(); it != node.exprList().list().end(); ++it) {
                     const z::Ast::Expr& expr = it->get();
                     _os() << sep;
-                    if(name == "verify")
-                        _os() << "if(!";
-                    _os() << name << "(";
+                    if(name == "z::verify_t") {
+                        _os() << "if(!verify";
+                    } else {
+                        _os() << name;
+                    }
+                    _os() << "(";
                     ExprGenerator(_os).visitNode(expr);
                     _os() << ")";
-                    if(name == "verify")
+                    if(name == "z::verify_t")
                         _os() << ")return _Out(false)";
                     sep = ";";
                 }
@@ -652,7 +688,7 @@ namespace sg {
         }
 
         inline void visitFunctionTypeInstance(const z::Ast::Function& function, const z::Ast::ExprList& exprList) {
-            unused(exprList); // will be implementing function-type-instantiation with ctor parameters in future.
+            z::unused_t(exprList); // will be implementing function-type-instantiation with ctor parameters in future.
             z::string fname = StlcppNameGenerator().tn(function);
             _os() << fname << "(";
             z::string sep;
@@ -673,7 +709,7 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::ConstantNullExpr& node) {
-            unused(node);
+            z::unused_t(node);
             _os() << "0";
         }
 
@@ -922,7 +958,7 @@ namespace sg {
 
             if(scope.hasPosParam()) {
                 const z::Ast::Scope& posParam = scope.posParam();
-                unused(posParam);
+                z::unused_t(posParam);
                 /// \todo implement positional-param
             }
 
@@ -994,7 +1030,7 @@ namespace sg {
 
                 _os() << z::Indent::get() << "    inline _Out _run(const _In& _in) {";
                 if(node.sig().in().size() == 0) {
-                    _os() << "unused(_in);";
+                    _os() << "z::unused_t(_in);";
                 }
 
                 // if void function, call the function and return default instance of _Out()
@@ -1093,11 +1129,11 @@ namespace sg {
 
         template<typename T>
         inline void enterFunction(const T& node) {
-            if(StlcppNameGenerator().tn(node.base()) == "test") {
+            if(StlcppNameGenerator().tn(node.base()) == "z::test") {
                 _os() << z::Indent::get() << "class " << node.name() << " : public z::test_< " << node.name() << " > {" << std::endl;
                 _os() << z::Indent::get() << "public:" << std::endl;
                 _os() << z::Indent::get() << "    inline const char* name() const {return \"" << StlcppNameGenerator().tn(node) << "\";}" << std::endl;
-            } else if(StlcppNameGenerator().tn(node.base()) == "main") {
+            } else if(StlcppNameGenerator().tn(node.base()) == "z::main") {
                 _os() << z::Indent::get() << "class " << node.name() << " : public z::main_< " << node.name() << " > {" << std::endl;
             } else {
                 _os() << z::Indent::get() << "class " << node.name() << " : public " << StlcppNameGenerator().tn(node.base()) << " {" << std::endl;
@@ -1116,9 +1152,9 @@ namespace sg {
                 _os() << z::Indent::get() << "    virtual " << out1 << " run(";
                 writeScopeParamList(_os, node.sig().inScope(), "p");
                 _os() << ");" << std::endl;
-                if(StlcppNameGenerator().tn(node.base()) == "test") {
+                if(StlcppNameGenerator().tn(node.base()) == "z::test") {
                     _os() << z::Indent::get() << "    static z::TestInstanceT<" << node.name() << "> s_test;" << std::endl;
-                } else if(StlcppNameGenerator().tn(node.base()) == "main") {
+                } else if(StlcppNameGenerator().tn(node.base()) == "z::main") {
                     _os() << z::Indent::get() << "    static z::MainInstanceT<" << node.name() << "> s_main;" << std::endl;
                 }
                 _os() << z::Indent::get() << "};" << std::endl;
@@ -1134,7 +1170,7 @@ namespace sg {
         }
 
         void visit(const z::Ast::ChildFunctionDefn& node) {
-            bool isTest = (StlcppNameGenerator().tn(node.base()) == "test");
+            bool isTest = (StlcppNameGenerator().tn(node.base()) == "z::test");
             if((isTest) && (!_config.test())) {
                 return;
             }
@@ -1142,9 +1178,9 @@ namespace sg {
             enterFunction(node);
             visitFunctionSig(node, false, false, isTest);
 
-            if(StlcppNameGenerator().tn(node.base()) == "test") {
+            if(StlcppNameGenerator().tn(node.base()) == "z::test") {
                 _os() << z::Indent::get() << "    static z::TestInstanceT<" << node.name() << "> s_test;" << std::endl;
-            } else if(StlcppNameGenerator().tn(node.base()) == "main") {
+            } else if(StlcppNameGenerator().tn(node.base()) == "z::main") {
                 _os() << z::Indent::get() << "    static z::MainInstanceT<" << node.name() << "> s_main;" << std::endl;
             }
 
@@ -1281,9 +1317,9 @@ namespace sg {
         template <typename T>
         inline void writeSpecialStatic(const T& node) {
             z::string fname = StlcppNameGenerator().tn(node);
-            if((StlcppNameGenerator().tn(node.base()) == "test")) {
+            if((StlcppNameGenerator().tn(node.base()) == "z::test")) {
                 _os() << "z::TestInstanceT<" << fname << "> " << fname << "::s_test = z::TestInstanceT<" << fname << ">();" << std::endl << std::endl;
-            } else if(StlcppNameGenerator().tn(node.base()) == "main") {
+            } else if(StlcppNameGenerator().tn(node.base()) == "z::main") {
                 _os() << "z::MainInstanceT<" << fname << "> " << fname << "::s_main = z::MainInstanceT<" << fname << ">();" << std::endl << std::endl;
             }
         }
@@ -1318,7 +1354,7 @@ namespace sg {
         }
 
         void visit(const z::Ast::ChildFunctionDefn& node) {
-            bool isTest = (StlcppNameGenerator().tn(node.base()) == "test");
+            bool isTest = (StlcppNameGenerator().tn(node.base()) == "z::test");
             if((isTest) && (!_config.test())) {
                 return;
             }
@@ -1488,7 +1524,7 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::EmptyStatement& node) {
-            unused(node);
+            z::unused_t(node);
             fpDefn()() << ";" << std::endl;
         }
 
@@ -1668,12 +1704,12 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::BreakStatement& node) {
-            unused(node);
+            z::unused_t(node);
             fpDefn()() << z::Indent::get() << "break;" << std::endl;
         }
 
         virtual void visit(const z::Ast::ContinueStatement& node) {
-            unused(node);
+            z::unused_t(node);
             fpDefn()() << z::Indent::get() << "continue;" << std::endl;
         }
 

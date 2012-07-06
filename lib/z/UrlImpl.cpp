@@ -70,7 +70,7 @@ Url::url Url::Create(const z::string& urlstr) {
 bool Url::OpenUrlString(const z::string& u) {
 #if defined(WIN32)
     HINSTANCE rv = ::ShellExecute(NULL, "open", z::s2e(u).c_str(), NULL, NULL, SW_SHOWNORMAL);
-    unused(rv);
+    z::unused_t(rv);
 #elif defined(__APPLE__)
     z::string nu = z::string("open %{u}").arg("u", u);
     system(z::s2e(nu).c_str());

@@ -2,7 +2,7 @@
 #include "base/zenlang.hpp"
 #include "gui/Application.hpp"
 
-void z::Application::onExit() const {
+void z::application::onExit() const {
     ::Application::OnExit::Handler::_In in;
     ::Application::OnExit::list().runHandler(0, in);
 }

@@ -224,15 +224,16 @@ inline z::Ast::VariableDefn& z::Ast::Factory::addVariableDefn(const z::Ast::Qual
 
 inline const z::Ast::TemplateDefn& z::Ast::Factory::getTemplateDefn(const z::Ast::Token& name, const z::Ast::Expr& expr, const z::string& cname, const z::Ast::TemplateDefn::size_type& len) {
     const z::Ast::TypeSpec& typeSpec = expr.qTypeSpec().typeSpec();
-    if(typeSpec.name().string() != cname) {
-        throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (1)").arg("c", cname).arg("t", typeSpec.name() ) );
+    z::string tname = typeSpec.name().string();
+    if(tname != cname) {
+        throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (1)").arg("c", cname).arg("t", tname ) );
     }
     const z::Ast::TemplateDefn* templateDefn = dynamic_cast<const z::Ast::TemplateDefn*>(z::ptr(typeSpec));
     if(templateDefn == 0) {
-        throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (2)").arg("c", cname).arg("t", typeSpec.name() ) );
+        throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (2)").arg("c", cname).arg("t", tname ) );
     }
     if(z::ref(templateDefn).list().size() != len) {
-        throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (3)").arg("c", cname).arg("t", typeSpec.name() ) );
+        throw z::Exception("NodeFactory", zfmt(name, "Expression is not of %{c} type: %{t} (3)").arg("c", cname).arg("t", tname ) );
     }
     return z::ref(templateDefn);
 }
@@ -533,14 +534,14 @@ void z::Ast::Factory::aStructMemberPropertyDefn(z::Ast::PropertyDecl& typeSpec) 
 }
 
 z::Ast::PropertyDeclRW* z::Ast::Factory::aStructPropertyDeclRW(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec& propertyType, const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType) {
-    unused(pos);
+    z::unused_t(pos);
     z::Ast::PropertyDeclRW& structPropertyDecl = unit().addNode(new z::Ast::PropertyDeclRW(unit().currentTypeSpec(), name, defType, propertyType));
     unit().currentTypeSpec().addChild(structPropertyDecl);
     return z::ptr(structPropertyDecl);
 }
 
 z::Ast::PropertyDeclRO* z::Ast::Factory::aStructPropertyDeclRO(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec& propertyType, const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType) {
-    unused(pos);
+    z::unused_t(pos);
     z::Ast::PropertyDeclRO& structPropertyDecl = unit().addNode(new z::Ast::PropertyDeclRO(unit().currentTypeSpec(), name, defType, propertyType));
     unit().currentTypeSpec().addChild(structPropertyDecl);
     return z::ptr(structPropertyDecl);
@@ -702,8 +703,8 @@ z::Ast::FunctionSig* z::Ast::Factory::aFunctionSig(const z::Ast::QualifiedTypeSp
 }
 
 z::Ast::ClosureRef z::Ast::Factory::aClosureList(z::Ast::Scope& xref, z::Ast::Scope& iref) {
-    assert(xref.type() == z::Ast::ScopeType::XRef);
-    assert(iref.type() == z::Ast::ScopeType::IRef);
+    z::assert_t(xref.type() == z::Ast::ScopeType::XRef);
+    z::assert_t(iref.type() == z::Ast::ScopeType::IRef);
     z::Ast::ClosureRef cref;
     cref.xref = z::ptr(xref);
     cref.iref = z::ptr(iref);
@@ -943,7 +944,7 @@ z::Ast::ForeachStatement* z::Ast::Factory::aForeachStatement(z::Ast::ForeachStat
 }
 
 z::Ast::ForeachStatement* z::Ast::Factory::aEnterForeachInit(const z::Ast::Token& valName, const z::Ast::Expr& expr) {
-    if(ZenlangNameGenerator().tn(expr.qTypeSpec().typeSpec()) == "string") {
+    if(ZenlangNameGenerator().tn(expr.qTypeSpec().typeSpec()) == "z::string") {
         const z::Ast::QualifiedTypeSpec& valTypeSpec = getQualifiedTypeSpec(valName, "char");
         const z::Ast::VariableDefn& valDef = addVariableDefn(valTypeSpec, valName);
         z::Ast::Scope& scope = addScope(valName, z::Ast::ScopeType::Local);
@@ -1418,7 +1419,7 @@ inline const z::Ast::Expr& z::Ast::Factory::switchDictKeyValue(const z::Ast::Tok
             const z::Ast::QualifiedTypeSpec& keyType = z::ref(td0).at(idx);
             unit().pushExpectedTypeSpec(pushType, keyType);
         } else {
-            assert(false);
+            z::assert_t(false);
         }
     } else {
         unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etAuto);
@@ -1447,7 +1448,7 @@ const z::Ast::Token& z::Ast::Factory::aEnterList(const z::Ast::Token& pos) {
             const z::Ast::QualifiedTypeSpec& keyType = z::ref(td0).at(0);
             unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etDictKey, keyType);
         } else {
-            assert(false);
+            z::assert_t(false);
         }
     } else {
         unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etAuto);
@@ -1755,11 +1756,11 @@ z::Ast::MemberExpr* z::Ast::Factory::aMemberVariableExpr(const z::Ast::Expr& exp
         qpts = z::ptr(qcts);
     }
 
-    assert(qpts != 0);
+    z::assert_t(qpts != 0);
     const Ast::Expr* expr1 = z::ptr(exprx);
     while(tss.size() > 0) {
         zz::FindMemberVarItem it = tss.pop();
-        assert(z::ref(it.td).name().string() == "ptr");
+        z::assert_t(z::ref(it.td).name().string() == "ptr");
         z::Ast::ExprList& exprList = addExprList(name);
         exprList.addExpr(z::ref(expr1));
         const Ast::DeRefInstanceExpr& drefex = unit().addNode(new z::Ast::DeRefInstanceExpr(name, z::ref(it.qts), z::ref(it.td), z::ref(it.td), exprList));
@@ -1913,7 +1914,7 @@ const z::Ast::VariableDefn* z::Ast::Factory::aEnterStructInitPart(const z::Ast::
 }
 
 void z::Ast::Factory::aLeaveStructInitPart(const z::Ast::Token& pos) {
-    unused(pos);
+    z::unused_t(pos);
 }
 
 z::Ast::StructInitPartList* z::Ast::Factory::aStructInitPartList(z::Ast::StructInitPartList& list, const z::Ast::StructInitPart& part) {
@@ -1980,7 +1981,7 @@ z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAnonymousFunction(const z::Ast
 
     z::Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(z::ref(ts), function, name, z::Ast::DefinitionType::Final, cref);
     z::Ast::Statement* statement = aGlobalTypeSpecStatement(z::Ast::AccessType::Private, functionDefn);
-    unused(statement);
+    z::unused_t(statement);
     return z::ptr(functionDefn);
 }
 

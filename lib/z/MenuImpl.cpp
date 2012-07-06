@@ -5,7 +5,7 @@
 #include "MenuImpl.hpp"
 
 z::widget Menu::Create::run(const z::widget& wnd, const Menu::Definition& def) {
-    unused(def);
+    z::unused_t(def);
 #if defined(WIN32)
     z::widget::impl* impl = new z::widget::impl();
     z::ref(impl)._menu = ::CreatePopupMenu();

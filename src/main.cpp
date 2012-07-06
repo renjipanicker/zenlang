@@ -8,7 +8,7 @@
 #include "base/args.hpp"
 
 static int showHelp(const z::Ast::Config& config) {
-    unused(config);
+    z::unused_t(config);
     std::cout << "zen compiler 0.1a";
 //    std::cout << " ( at: " << project.zexePath() << ")" << std::endl;
     std::cout << std::endl;
@@ -37,7 +37,7 @@ static int showHelp(const z::Ast::Config& config) {
 }
 
 inline void initConfig(z::Ast::Project& project, z::Ast::Config& config) {
-//    assert(config.includeFileList().size() == 0);
+//    z::assert_t(config.includeFileList().size() == 0);
     config.addIncludeFile(config.pch());
     config.addIncludePath(config.apidir());
 
@@ -49,7 +49,7 @@ inline void replaceSlash(z::string& path) {
 #if defined(WIN32)
     path.replace("\\", "/");
 #else
-    unused(path);
+    z::unused_t(path);
 #endif
 }
 
@@ -63,16 +63,16 @@ inline const z::Ast::Expr* resolveTypecast(const z::Ast::Expr& expr) {
 template <typename T>
 inline const T& resolveTypeTo(const z::Ast::Expr& expr) {
     const z::Ast::Expr* ex = resolveTypecast(expr);
-    assert(ex);
+    z::assert_t(ex != 0);
     const T* tex = dynamic_cast<const T*>(ex);
-    assert(tex);
+    z::assert_t(tex != 0);
     return z::ref(tex);
 }
 
 template <typename T>
 inline bool canResolveTypeTo(const z::Ast::Expr& expr) {
     const z::Ast::Expr* ex = resolveTypecast(expr);
-    assert(ex);
+    z::assert_t(ex);
     const T* tex = dynamic_cast<const T*>(ex);
     return(tex != 0);
 }
@@ -224,7 +224,7 @@ inline void readProjectFile(z::Ast::Project& project, z::Ast::Config& config, co
 }
 
 int main(int argc, char* argv[]) {
-    z::Application app(argc, argv);
+    z::application app(argc, argv);
 
     z::Ast::Project project;
     z::Ast::Config& config = project.addConfig("cmd");
@@ -335,7 +335,7 @@ int main(int argc, char* argv[]) {
             p = ".";
             p += sep;
         }
-        
+
         project.zlibPath(p);
     }
 
@@ -377,5 +377,5 @@ int main(int argc, char* argv[]) {
 }
 
 // dummy function
-void z::Application::onExit() const {
+void z::application::onExit() const {
 }

@@ -17,7 +17,7 @@ namespace ButtonImpl {
                 break;
             }
         }
-        assert(OrigWndProc);
+        z::assert_t(OrigWndProc != 0);
         return CallWindowProc(OrigWndProc, hWnd, message, wParam, lParam);
     }
 }

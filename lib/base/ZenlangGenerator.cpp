@@ -432,7 +432,7 @@ namespace zg {
         }
 
         virtual void visit(const z::Ast::ConstantNullExpr& node) {
-            unused(node);
+            z::unused_t(node);
             _os << "null";
         }
 
@@ -794,7 +794,7 @@ namespace zg {
         }
 
         virtual void visit(const z::Ast::LeaveNamespaceStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::UserDefinedTypeSpecStatement& node) {
@@ -808,103 +808,103 @@ namespace zg {
         }
 
         virtual void visit(const z::Ast::StructInitStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::EmptyStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::AutoStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ExprStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::PrintStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::IfStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::IfElseStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::WhileStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::DoWhileStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ForExprStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ForInitStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ForeachStringStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ForeachListStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ForeachDictStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::CaseExprStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::CaseDefaultStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::SwitchValueStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::SwitchExprStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::BreakStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ContinueStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::AddEventHandlerStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::RoutineReturnStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::FunctionReturnStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::RaiseStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::ExitStatement& node) {
-            unused(node);
+            z::unused_t(node);
         }
 
         virtual void visit(const z::Ast::CompoundStatement& node) {

@@ -118,12 +118,17 @@ inline void z::Lexer::Impl::sendId(ParserContext& pctx) {
     z::string txt = getText(false);
     z::Ast::Token tok(pctx.factory.filename(), 0, 0, txt);
 
+    // if this is an ID after a :: check for child token.
     if(_lastToken == ZENTOK_SCOPE) {
         const z::Ast::TypeSpec* child = pctx.factory.unit().currentTypeRefHasChild(tok);
         if(child) {
             if(trySendId(pctx, child))
                 return;
         }
+        // shoudl send ERR token, but that will acuse parser to throw a syntax error.
+        // instead send ID token and let the parser throw a "member-not-found" error.
+        send(pctx, ZENTOK_ID);
+        return;
     }
 
     if(trySendId(pctx, pctx.factory.hasRootTypeSpec(tok)))
@@ -210,7 +215,7 @@ inline z::Lexer::Impl::~Impl() {
 }
 
 inline void z::Lexer::Impl::dump(const z::string& x) const {
-    unused(x);
+    z::unused_t(x);
     //printf("%s: buffer %lu, bufferEnd %lu, start %lu, marker %lu, cursor %lu, limit %lu, limit-cursor %ld, text %lu, text '%s'\n",
     //    z::s2e(x).c_str(), (unsigned long)_buffer, (unsigned long)_bufferEnd, (unsigned long)_start, (unsigned long)_marker, (unsigned long)_cursor, (unsigned long)_limit, _limit - _cursor, (unsigned long)_text, _text);
 }
@@ -271,16 +276,16 @@ void z::Lexer::Impl::push(ParserContext& pctx, const char* input, std::streamsiz
 
     dump("push(2)");
 
-    assert(_buffer <= _limit);
-    assert(_limit <= _bufferEnd);
-    assert((_limit + required) <= _bufferEnd);
+    z::assert_t(_buffer <= _limit);
+    z::assert_t(_limit <= _bufferEnd);
+    z::assert_t((_limit + required) <= _bufferEnd);
     memcpy(_limit, input, (size_t)inputSize);
     _limit += inputSize;
     dump("push(3)");
-    assert(_limit <= _bufferEnd);
+    z::assert_t(_limit <= _bufferEnd);
     memset(_limit, 0, _bufferEnd - _limit + 0);
     _limit += maxFill;
-    assert(_limit <= _bufferEnd);
+    z::assert_t(_limit <= _bufferEnd);
 
     dump("push(4)");
 
