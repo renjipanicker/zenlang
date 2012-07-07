@@ -1057,7 +1057,7 @@ namespace sg {
         static inline void visitRoutine(z::ofile& os, const z::Ast::Routine& node, const bool& decl) {
             const z::Ast::TypeSpec& parent = node.parent();
             const z::Ast::InterfaceDefn* iface = dynamic_cast<const z::Ast::InterfaceDefn*>(z::ptr(parent));
-            z::string stat = (decl && (iface != 0))?"/**/static ":"";
+            z::string stat = (decl && (iface != 0))?"static ":"";
 
             os() << z::Indent::get() << stat << StlcppNameGenerator().qtn(node.outType()) << " ";
             if(decl) {

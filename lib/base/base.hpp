@@ -580,11 +580,11 @@ namespace z {
         z::string _name;
     };
 
-    /// \brief Base class for pointer class
-    /// This class holds the base value pointer
+    /// \brief smart pointer class with typename
+    /// This class manages type-casting to/from derived values
     template <typename V>
-    struct bpointer {
-    protected:
+    struct pointer {
+    private:
         struct value {
         protected:
             inline value(){}
@@ -594,6 +594,18 @@ namespace z {
             virtual V& get() = 0;
             virtual value* clone() const = 0;
             virtual z::string tname() const = 0;
+        };
+
+        template <typename DerT>
+        struct valueT : public value {
+            inline valueT(const DerT& v) : _v(v) {const V& dummy = v;z::unused_t(dummy);}
+            virtual V& get() {return _v;}
+            virtual value* clone() const {return new valueT<DerT>(_v);}
+            virtual z::string tname() const {return type_name<DerT>();}
+            template <typename VisT>
+            inline void visit(VisT& vis) {vis.visit(_v);}
+        private:
+            DerT _v;
         };
 
         inline void reset() {
@@ -617,59 +629,36 @@ namespace z {
             return (v);
         }
 
-        inline bpointer() : _tname(""), _val(0) {}
-        inline ~bpointer() {reset();}
-
-    protected:
+    private:
         type _tname;
         value* _val;
-    };
-
-    /// \brief smart pointer class with typename
-    /// This class manages type-casting to/from derived values
-    template <typename V>
-    struct pointer : public bpointer<V> {
-        typedef bpointer<V> BaseT;
-        typedef typename bpointer<V>::value value;
-
-        template <typename DerT>
-        struct valueT : public value {
-            inline valueT(const DerT& v) : _v(v) {const V& dummy = v;z::unused_t(dummy);}
-            virtual V& get() {return _v;}
-            virtual value* clone() const {return new valueT<DerT>(_v);}
-            virtual z::string tname() const {return type_name<DerT>();}
-            template <typename VisT>
-            inline void visit(VisT& vis) {vis.visit(_v);}
-        private:
-            DerT _v;
-        };
 
     public:
         template <typename DerT>
         inline DerT& getT() const {
-            V& v = BaseT::get();
+            V& v = get();
             DerT& r = static_cast<DerT&>(v);
             const V& dummy = r; z::unused_t(dummy); // to check that DerT is a derived class of V
             return r;
         }
 
         inline pointer& operator=(const pointer& src) {
-            BaseT::reset();
+            reset();
             if(src.has()) {
                 value* v = src.clone();
-                BaseT::set(src.tname(), v);
+                set(src.tname(), v);
             }
             return ref(this);
         }
 
         template <typename DerT>
         inline pointer& operator=(const pointer<DerT>& src) {
-            BaseT::reset();
+            reset();
             if(src.has()) {
                 const DerT& val = src.getT<DerT>();
                 const V& dummy = val; z::unused_t(dummy); // to check that DerT acn be derived from V
                 value* v = new valueT<DerT>(val);
-                BaseT::set(src.tname(), v);
+                set(src.tname(), v);
             }
             return ref(this);
         }
@@ -683,23 +672,30 @@ namespace z {
         /// \brief default-ctor
         /// Required when pointer is used as the value in a dict.
         /// \todo Find out way to avoid it.
-        inline pointer() {}
+        inline pointer() : _tname(""), _val(0) {}
 
         /// \brief The primary ctor
         /// This ctor is the one to be invoked when creating a pointer-object.
         template <typename DerT>
-        explicit inline pointer(const z::string& tname, const DerT& val) {
+        explicit inline pointer(const z::string& tname, const DerT& val) : _tname(""), _val(0) {
             const V& dummy = val; z::unused_t(dummy); // to check that DerT is a derived class of V
             value* v = new valueT<DerT>(val);
-            BaseT::set(type(tname), v);
+            set(type(tname), v);
         }
 
-        inline pointer(const pointer& src) { (*this) = src;}
+        /// \brief default-cctor
+        inline pointer(const pointer& src) : _tname(""), _val(0) { (*this) = src;}
 
+        /// \brief template-cctor
+        /// when copying from an object of a different type
         template <typename DerT>
-        inline pointer(const pointer<DerT>& src) { (*this) = src;}
+        inline pointer(const pointer<DerT>& src) : _tname(""), _val(0) { (*this) = src;}
+
+        /// \brief default-dtor
+        inline ~pointer() {reset();}
     };
 
+    /////////////////////////////////////////////////////////////////
     /// \brief Base class for all container classes
     template <typename V, typename ListT>
     struct container {
