@@ -1,3 +1,4 @@
+namespace z;
 public interface Widget {
     struct Definition abstract {
         auto name = "";

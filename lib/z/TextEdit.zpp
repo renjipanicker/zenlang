@@ -1,4 +1,5 @@
 import z::Window public;
+namespace z;
 
 public interface TextEdit {
     struct Definition : Window::Definition {

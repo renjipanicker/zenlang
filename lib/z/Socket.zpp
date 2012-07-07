@@ -1,3 +1,4 @@
+namespace z;
 public interface Socket {
     event(const socket& s) native => function void OnConnect(const socket& cs);
     event(const socket& s) native => function void OnRecv(const data& d);

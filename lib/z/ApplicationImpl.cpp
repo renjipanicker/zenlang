@@ -1,20 +1,19 @@
-#include "base/pch.hpp"
-#include "base/zenlang.hpp"
-#include "gui/Application.hpp"
+#include "zenlang.hpp"
+#include "z/Application.hpp"
 
 void z::application::onExit() const {
-    ::Application::OnExit::Handler::_In in;
-    ::Application::OnExit::list().runHandler(0, in);
+    z::Application::OnExit::Handler::_In in;
+    z::Application::OnExit::list().runHandler(0, in);
 }
 
-z::string Application::appDir() {
+z::string z::Application::appDir() {
     return z::app().path();
 }
 
-z::string Application::baseDir() {
+z::string z::Application::baseDir() {
     return z::app().base();
 }
 
-z::string Application::dataDir() {
+z::string z::Application::dataDir() {
     return z::app().data();
 }

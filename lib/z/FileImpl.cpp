@@ -1,6 +1,6 @@
 #include "zenlang.hpp"
 
-z::string File::CompleteBasePath(const z::string& path) {
+z::string z::File::CompleteBasePath(const z::string& path) {
     z::string cbase = path;
     z::string::size_type spos = cbase.rfind('/');
     if(spos != z::string::npos) {
@@ -13,7 +13,7 @@ z::string File::CompleteBasePath(const z::string& path) {
     return cbase;
 }
 
-z::file File::Open(const z::string& filename, const z::string& mode) {
+z::file z::File::Open(const z::string& filename, const z::string& mode) {
 #if defined(WIN32)
     FILE* fs = 0;
     errno_t e = fopen_s(&fs, z::s2e(filename).c_str(), z::s2e(mode).c_str());
@@ -29,13 +29,13 @@ z::file File::Open(const z::string& filename, const z::string& mode) {
     return z::file(filename, fs);
 }
 
-void File::ReadEachLine::addHandler(const z::string& s, const z::pointer<Handler>& h) {
+void z::File::ReadEachLine::addHandler(const z::string& s, const z::pointer<Handler>& h) {
     z::file f = Open(s, "r");
     File::ReadLineDevice* d = new File::ReadLineDevice(f, h);
     z::ctx().startPoll(d);
 }
 
-bool File::ReadLineDevice::run(const int& timeout) {
+bool z::File::ReadLineDevice::run(const int& timeout) {
     char b[1024];
     char* rv = fgets(b, 1024, f.val());
     if(rv == 0) {

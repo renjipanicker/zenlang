@@ -1,5 +1,6 @@
 //include WindowImpl native;
 import z::Widget public;
+namespace z;
 
 public interface Window {
     enum Style {

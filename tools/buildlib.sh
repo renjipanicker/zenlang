@@ -116,7 +116,7 @@ appendFile() {
         if [ "$ext" != "ipp" ]; then
             sed 's|#include|//#include|' $src_file | sed 's|#pragma once|//#pragma once|' >> ${dst_file}
         else
-            sed 's|import|//import|' $src_file >> ${dst_file}
+            sed 's|import|//import|' $src_file | sed 's|namespace|//namespace|' >> ${dst_file}
         fi
     else
         # write src file name to dst file.
@@ -126,7 +126,7 @@ appendFile() {
         if [ "$ext" != "ipp" ]; then
             sed 's|#include|//#include|' $src_file | sed 's|#pragma once|//#pragma once|' | sed 's|#line|//#line|' >> ${dst_file}
         else
-            sed 's|import|//import|' $src_file >> ${dst_file}
+            sed 's|import|//import|' $src_file | sed 's|namespace|//namespace|' >> ${dst_file}
         fi
     fi
 
@@ -373,6 +373,7 @@ appendFile $ZSRCFILE "${LIBDIR}/z/MenuItemImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/WindowCreator.cpp"
 appendString $ZSRCFILE "#endif"
 
+appendString $ZINCFILE "namespace z;"
 appendFile $ZINCFILE "${INTDIR}/z/Application.ipp"
 appendFile $ZINCFILE "${INTDIR}/z/String.ipp"
 appendFile $ZINCFILE "${INTDIR}/z/DateTime.ipp"

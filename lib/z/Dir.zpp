@@ -1,3 +1,4 @@
+namespace z;
 public interface Dir {
 
     /// \brief Return cwd

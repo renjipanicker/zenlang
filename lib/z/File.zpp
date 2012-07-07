@@ -1,3 +1,4 @@
+namespace z;
 public interface File {
     routine string CompleteBasePath(const string& path) native;
 

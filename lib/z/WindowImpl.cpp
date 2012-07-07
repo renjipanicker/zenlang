@@ -52,14 +52,14 @@ namespace zz {
         }
         switch (message) {
             case WM_SIZE: {
-                Window::OnResize::Handler::_In in;
-                Window::OnResize::list().runHandler(WindowImpl::impl(hWnd), in);
+                z::Window::OnResize::Handler::_In in;
+                z::Window::OnResize::list().runHandler(WindowImpl::impl(hWnd), in);
                 break;
             }
 
             case WM_CLOSE: {
-                Window::OnClose::Handler::_In in;
-                Window::OnClose::list().runHandler(WindowImpl::impl(hWnd), in);
+                z::Window::OnClose::Handler::_In in;
+                z::Window::OnClose::list().runHandler(WindowImpl::impl(hWnd), in);
                 break;
             }
         }
@@ -99,12 +99,12 @@ namespace zz {
 #endif
 
 #if defined(WIN32)
-z::widget::impl& WindowImpl::createWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, HWND parent) {
-    Window::Position pos = Window::Position()
-            ._x<Window::Position>(CW_USEDEFAULT)
-            ._y<Window::Position>(CW_USEDEFAULT)
-            ._w<Window::Position>(CW_USEDEFAULT)
-            ._h<Window::Position>(CW_USEDEFAULT);
+z::widget::impl& WindowImpl::createWindow(const z::Window::Definition& def, const z::string& className, int style, int xstyle, HWND parent) {
+    z::Window::Position pos = z::Window::Position()
+            ._x<z::Window::Position>(CW_USEDEFAULT)
+            ._y<z::Window::Position>(CW_USEDEFAULT)
+            ._w<z::Window::Position>(CW_USEDEFAULT)
+            ._h<z::Window::Position>(CW_USEDEFAULT);
 
     if(def.position.x != -1)
         pos.x = def.position.x;
@@ -135,19 +135,19 @@ z::widget::impl& WindowImpl::createWindow(const Window::Definition& def, const z
     return z::ref(impl);
 }
 
-z::widget::impl& WindowImpl::createMainFrame(const Window::Definition& def, int style, int xstyle) {
-    HBRUSH brush = (def.style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
+z::widget::impl& WindowImpl::createMainFrame(const z::Window::Definition& def, int style, int xstyle) {
+    HBRUSH brush = (def.style == z::Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
     z::string className = zz::registerClass(brush);
     return createWindow(def, className, style, xstyle, (HWND)NULL);
 }
 
-z::widget::impl& WindowImpl::createChildFrame(const Window::Definition& def, int style, int xstyle, const z::widget &parent) {
-    HBRUSH brush = (def.style == Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
+z::widget::impl& WindowImpl::createChildFrame(const z::Window::Definition& def, int style, int xstyle, const z::widget &parent) {
+    HBRUSH brush = (def.style == z::Window::Style::Dialog)?(HBRUSH)GetSysColorBrush(COLOR_3DFACE):(HBRUSH)GetStockObject(WHITE_BRUSH);
     z::string className = zz::registerClass(brush);
     return createWindow(def, className, style, xstyle, parent.val()._val);
 }
 
-z::widget::impl& WindowImpl::createChildWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, const z::widget& parent) {
+z::widget::impl& WindowImpl::createChildWindow(const z::Window::Definition& def, const z::string& className, int style, int xstyle, const z::widget& parent) {
     style |= WS_CHILD;
     if(def.border == 1) {
         style |= WS_BORDER;
@@ -168,7 +168,7 @@ z::widget::impl& WindowImpl::initWindowImpl(GtkWidget* hwnd) {
     return z::ref(impl);
 }
 
-z::widget::impl& WindowImpl::createWindow(const Window::Definition& def, GtkWidget *parent) {
+z::widget::impl& WindowImpl::createWindow(const z::Window::Definition& def, GtkWidget *parent) {
     unused(def);
     unused(parent);
     GtkWidget* hwnd = gtk_window_new (GTK_WINDOW_TOPLEVEL);
@@ -176,7 +176,7 @@ z::widget::impl& WindowImpl::createWindow(const Window::Definition& def, GtkWidg
     return impl;
 }
 
-z::widget::impl& WindowImpl::createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const z::widget& parent) {
+z::widget::impl& WindowImpl::createChildWindow(GtkWidget* hwnd, const z::Window::Definition& def, const z::widget& parent) {
     gtk_fixed_put (GTK_FIXED (parent.val()._fixed), hwnd, def.position.x, def.position.y);
     z::widget::impl& impl = initWindowImpl(hwnd);
     gtk_widget_show(impl._val);
@@ -185,8 +185,8 @@ z::widget::impl& WindowImpl::createChildWindow(GtkWidget* hwnd, const Window::De
 #elif defined(QT)
 // no functions defined here.
 #elif defined(OSX)
-z::widget::impl& WindowImpl::createMainFrame(const Window::Definition& def) {
-    Window::Position pos = Window::Position();
+z::widget::impl& WindowImpl::createMainFrame(const z::Window::Definition& def) {
+    z::Window::Position pos = z::Window::Position();
     if(def.position.x != -1)
         pos.x = def.position.x;
     if(def.position.y != -1)
@@ -219,7 +219,7 @@ z::widget::impl& WindowImpl::createMainFrame(const Window::Definition& def) {
     return z::ref(impl);
 }
 
-z::widget::impl& WindowImpl::createChildWindow(const Window::Definition& def, const z::widget& parent, NSView* child) {
+z::widget::impl& WindowImpl::createChildWindow(const z::Window::Definition& def, const z::widget& parent, NSView* child) {
     if(child == 0) {
         throw z::Exception("Window", z::string("Unable to create child wnd"));
     }
@@ -229,11 +229,11 @@ z::widget::impl& WindowImpl::createChildWindow(const Window::Definition& def, co
     return z::ref(impl);
 }
 #elif defined(IOS)
-z::widget::impl& WindowImpl::createMainFrame(const Window::Definition& def) {
+z::widget::impl& WindowImpl::createMainFrame(const z::Window::Definition& def) {
     throw z::Exception("Window", z::string("NotImplemented: createMainFrame()"));
 }
 
-z::widget::impl& WindowImpl::createChildWindow(const Window::Definition& def, const z::widget& parent) {
+z::widget::impl& WindowImpl::createChildWindow(const z::Window::Definition& def, const z::widget& parent) {
     throw z::Exception("Window", z::string("NotImplemented: createChildFrame()"));
 }
 #else
@@ -241,65 +241,65 @@ z::widget::impl& WindowImpl::createChildWindow(const Window::Definition& def, co
 #endif
 
 ////////////////////////////////////////////////////////////////////////////////
-Window::Position Window::getWindowPosition(const z::widget& wnd) {
+z::Window::Position z::Window::getWindowPosition(const z::widget& wnd) {
 #if defined(WIN32)
     RECT rc;
     ::GetWindowRect(wnd.val()._val, &rc);
-    const Window::Position pos = Window::Position()
-            ._x<Window::Position>(rc.left)
-            ._y<Window::Position>(rc.top)
-            ._w<Window::Position>(rc.right - rc.left)
-            ._h<Window::Position>(rc.bottom - rc.top);
+    const z::Window::Position pos = z::Window::Position()
+            ._x<z::Window::Position>(rc.left)
+            ._y<z::Window::Position>(rc.top)
+            ._w<z::Window::Position>(rc.right - rc.left)
+            ._h<z::Window::Position>(rc.bottom - rc.top);
 #elif defined(GTK)
     GtkRequisition req;
     gtk_widget_size_request(wnd.val()._val, &req);
-    const Window::Position pos = Window::Position()
-            ._x<Window::Position>(0)
-            ._y<Window::Position>(0)
-            ._w<Window::Position>(req.width)
-            ._h<Window::Position>(req.height);
+    const z::Window::Position pos = z::Window::Position()
+            ._x<z::Window::Position>(0)
+            ._y<z::Window::Position>(0)
+            ._w<z::Window::Position>(req.width)
+            ._h<z::Window::Position>(req.height);
 #elif defined(QT)
     UNIMPL();
-    const Window::Position pos;
+    const z::Window::Position pos;
 #elif defined(OSX)
     UNIMPL();
-    const Window::Position pos;
+    const z::Window::Position pos;
 #elif defined(IOS)
     UNIMPL();
-    const Window::Position pos;
+    const z::Window::Position pos;
 #else
 #error "Unimplemented GUI mode"
 #endif
     return pos;
 }
 
-Window::Position Window::getChildPosition(const z::widget& wnd) {
+z::Window::Position z::Window::getChildPosition(const z::widget& wnd) {
 #if defined(WIN32)
     RECT rc;
     ::GetWindowRect(wnd.val()._val, &rc);
     ::MapWindowPoints(HWND_DESKTOP, ::GetParent(wnd.val()._val), (LPPOINT) &rc, 2);
-    return Window::Position()
-            ._x<Window::Position>(rc.left)
-            ._y<Window::Position>(rc.top)
-            ._w<Window::Position>(rc.right - rc.left)
-            ._h<Window::Position>(rc.bottom - rc.top);
+    return z::Window::Position()
+            ._x<z::Window::Position>(rc.left)
+            ._y<z::Window::Position>(rc.top)
+            ._w<z::Window::Position>(rc.right - rc.left)
+            ._h<z::Window::Position>(rc.bottom - rc.top);
 #elif defined(GTK)
     GtkRequisition req;
     gtk_widget_size_request(wnd.val()._val, &req);
-    return Window::Position()
-            ._x<Window::Position>(0)
-            ._y<Window::Position>(0)
-            ._w<Window::Position>(req.width)
-            ._h<Window::Position>(req.height);
+    return z::Window::Position()
+            ._x<z::Window::Position>(0)
+            ._y<z::Window::Position>(0)
+            ._w<z::Window::Position>(req.width)
+            ._h<z::Window::Position>(req.height);
 #elif defined(QT)
     UNIMPL();
 #elif defined(OSX)
     NSSize sz = wnd.val()._val.frame.size;
-    return Window::Position()
-            ._x<Window::Position>(0)
-            ._y<Window::Position>(0)
-            ._w<Window::Position>(sz.width)
-            ._h<Window::Position>(sz.height);
+    return z::Window::Position()
+            ._x<z::Window::Position>(0)
+            ._y<z::Window::Position>(0)
+            ._w<z::Window::Position>(sz.width)
+            ._h<z::Window::Position>(sz.height);
 #elif defined(IOS)
     UNIMPL();
 #else
@@ -307,11 +307,11 @@ Window::Position Window::getChildPosition(const z::widget& wnd) {
 #endif
 }
 
-void Window::Delete::run(const z::widget& wnd) {
+void z::Window::Delete::run(const z::widget& wnd) {
     wnd.clear();
 }
 
-void Window::SetTitle::run(const z::widget& wnd, const z::string& title) {
+void z::Window::SetTitle::run(const z::widget& wnd, const z::string& title) {
 #if defined(WIN32)
     ::SetWindowText(wnd.val()._val, z::s2e(title).c_str());
 #elif defined(GTK)
@@ -327,7 +327,7 @@ void Window::SetTitle::run(const z::widget& wnd, const z::string& title) {
 #endif
 }
 
-void Window::SetFocus::run(const z::widget& frame, const z::widget& wnd) {
+void z::Window::SetFocus::run(const z::widget& frame, const z::widget& wnd) {
 #if defined(WIN32)
     z::unused_t(frame);
     ::SetFocus(wnd.val()._val);
@@ -346,7 +346,7 @@ void Window::SetFocus::run(const z::widget& frame, const z::widget& wnd) {
 #endif
 }
 
-void Window::Show::run(const z::widget& wnd) {
+void z::Window::Show::run(const z::widget& wnd) {
 #if defined(WIN32)
     ::ShowWindow(wnd.val()._val, SW_SHOW);
 #elif defined(GTK)
@@ -364,7 +364,7 @@ void Window::Show::run(const z::widget& wnd) {
 #endif
 }
 
-void Window::Hide::run(const z::widget& wnd) {
+void z::Window::Hide::run(const z::widget& wnd) {
 #if defined(WIN32)
     ::ShowWindow(wnd.val()._val, SW_HIDE);
 #elif defined(GTK)
@@ -380,7 +380,7 @@ void Window::Hide::run(const z::widget& wnd) {
 #endif
 }
 
-void Window::Move::run(const z::widget& wnd, const Window::Position& position) {
+void z::Window::Move::run(const z::widget& wnd, const z::Window::Position& position) {
 #if defined(WIN32)
     ::MoveWindow(wnd.val()._val, position.x, position.y, position.w, position.h, TRUE);
 #elif defined(GTK)
@@ -398,7 +398,7 @@ void Window::Move::run(const z::widget& wnd, const Window::Position& position) {
 #endif
 }
 
-void Window::Size::run(const z::widget& wnd, const int& w, const int& h) {
+void z::Window::Size::run(const z::widget& wnd, const int& w, const int& h) {
 #if defined(WIN32)
     RECT rc;
     ::GetWindowRect(wnd.val()._val, &rc);
@@ -423,8 +423,8 @@ namespace zz {
     static gboolean onConfigureEvent(GtkWindow* wnd, GdkEvent* event, gpointer phandler) {
         unused(wnd);
         unused(event);
-        Window::OnResize::Handler* handler = static_cast<Window::OnResize::Handler*>(phandler);
-        Window::OnResize::Handler::_In in;
+        z::Window::OnResize::Handler* handler = static_cast<z::Window::OnResize::Handler*>(phandler);
+        z::Window::OnResize::Handler::_In in;
         z::ref(handler)._run(in);
         return FALSE;
     }
@@ -433,13 +433,13 @@ namespace zz {
 
 #if defined(OSX)
 @interface CResizer : NSObject {
-    Window::OnResize::Handler* handler;
+    z::Window::OnResize::Handler* handler;
     NSView* view;
 }
 @end
 
 @implementation CResizer
--(void) initResizer: (Window::OnResize::Handler*) h withView:(NSView*) v {
+-(void) initResizer: (z::Window::OnResize::Handler*) h withView:(NSView*) v {
     handler = h;
     view = v;
 }
@@ -450,13 +450,13 @@ namespace zz {
 @end
 
 @interface CCloser : NSObject {
-    Window::OnClose::Handler* handler;
+    z::Window::OnClose::Handler* handler;
     NSView* view;
 }
 @end
 
 @implementation CCloser
--(void) initCloser: (Window::OnClose::Handler*) h withView:(NSView*) v {
+-(void) initCloser: (z::Window::OnClose::Handler*) h withView:(NSView*) v {
     handler = h;
     view = v;
 }
@@ -467,7 +467,7 @@ namespace zz {
 @end
 #endif
 
-void Window::OnResize::addHandler(const z::widget& wnd, const z::pointer<Handler>& handler) {
+void z::Window::OnResize::addHandler(const z::widget& wnd, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (wnd.val()._val), "configure-event", G_CALLBACK (zz::onConfigureEvent), z::ptr(handler.get()) );
@@ -487,15 +487,15 @@ void Window::OnResize::addHandler(const z::widget& wnd, const z::pointer<Handler
 namespace zz {
     static gboolean onWindowCloseEvent(GtkWindow* wnd, gpointer phandler) {
         unused(wnd);
-        Window::OnClose::Handler* handler = static_cast<Window::OnClose::Handler*>(phandler);
-        Window::OnClose::Handler::_In in;
+        z::Window::OnClose::Handler* handler = static_cast<z::Window::OnClose::Handler*>(phandler);
+        z::Window::OnClose::Handler::_In in;
         z::ref(handler)._run(in);
         return FALSE;
     }
 }
 #endif
 
-void Window::OnClose::addHandler(const z::widget& wnd, const z::pointer<Handler>& handler) {
+void z::Window::OnClose::addHandler(const z::widget& wnd, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (wnd.val()._val), "closed", G_CALLBACK (zz::onWindowCloseEvent), z::ptr(handler.get()) );

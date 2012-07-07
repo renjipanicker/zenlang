@@ -39,20 +39,20 @@ uint32_t getNextWmID();
 uint32_t getNextResID();
 ULONGLONG GetDllVersion(LPCTSTR lpszDllName);
 
-z::widget::impl& createWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, HWND parent);
-z::widget::impl& createMainFrame(const Window::Definition& def, int style, int xstyle);
-z::widget::impl& createChildFrame(const Window::Definition& def, int style, int xstyle, const z::widget &parent);
-z::widget::impl& createChildWindow(const Window::Definition& def, const z::string& className, int style, int xstyle, const z::widget& parent);
+z::widget::impl& createWindow(const z::Window::Definition& def, const z::string& className, int style, int xstyle, HWND parent);
+z::widget::impl& createMainFrame(const z::Window::Definition& def, int style, int xstyle);
+z::widget::impl& createChildFrame(const z::Window::Definition& def, int style, int xstyle, const z::widget &parent);
+z::widget::impl& createChildWindow(const z::Window::Definition& def, const z::string& className, int style, int xstyle, const z::widget& parent);
 #elif defined(GTK)
 z::widget::impl& initWindowImpl(GtkWidget* hwnd);
-z::widget::impl& createWindow(const Window::Definition& def, GtkWidget *parent);
-z::widget::impl& createChildWindow(GtkWidget* hwnd, const Window::Definition& def, const z::widget& parent);
+z::widget::impl& createWindow(const z::Window::Definition& def, GtkWidget *parent);
+z::widget::impl& createChildWindow(GtkWidget* hwnd, const z::Window::Definition& def, const z::widget& parent);
 #elif defined(OSX)
-z::widget::impl& createMainFrame(const Window::Definition& def);
-z::widget::impl& createChildWindow(const Window::Definition& def, const z::widget& parent, NSView* child);
+z::widget::impl& createMainFrame(const z::Window::Definition& def);
+z::widget::impl& createChildWindow(const z::Window::Definition& def, const z::widget& parent, NSView* child);
 #elif defined(IOS)
-z::widget::impl& createMainFrame(const Window::Definition& def);
-z::widget::impl& createChildWindow(const Window::Definition& def, const z::widget& parent);
+z::widget::impl& createMainFrame(const z::Window::Definition& def);
+z::widget::impl& createChildWindow(const z::Window::Definition& def, const z::widget& parent);
 #else
 #endif
 

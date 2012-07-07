@@ -11,8 +11,8 @@ namespace TextEditImpl {
         switch (message) {
             case WM_KEYDOWN: {
                 if(wParam == VK_RETURN) {
-                    TextEdit::OnEnter::Handler::_In in;
-                    TextEdit::OnEnter::list().runHandler(WindowImpl::impl(hWnd), in);
+                    z::TextEdit::OnEnter::Handler::_In in;
+                    z::TextEdit::OnEnter::list().runHandler(WindowImpl::impl(hWnd), in);
                 }
                 break;
             }
@@ -24,7 +24,7 @@ namespace TextEditImpl {
 }
 #endif
 
-z::widget TextEdit::Create::run(const z::widget& parent, const TextEdit::Definition& def) {
+z::widget z::TextEdit::Create::run(const z::widget& parent, const z::TextEdit::Definition& def) {
 #if defined(WIN32)
     int flags = ES_AUTOVSCROLL | WS_VSCROLL;
     if(def.multiline) {
@@ -108,7 +108,7 @@ inline bool isTextField(const z::widget& textedit) {
 }
 #endif
 
-void TextEdit::AppendText::run(const z::widget& wnd, const z::string& text) {
+void z::TextEdit::AppendText::run(const z::widget& wnd, const z::string& text) {
 #if defined(WIN32)
     int len = Edit_GetTextLength(wnd.val()._val);
     Edit_SetSel(wnd.val()._val, len, len);
@@ -137,7 +137,7 @@ void TextEdit::AppendText::run(const z::widget& wnd, const z::string& text) {
 #endif
 }
 
-void TextEdit::Clear::run(const z::widget& wnd) {
+void z::TextEdit::Clear::run(const z::widget& wnd) {
 #if defined(WIN32)
     ::SetWindowText(wnd.val()._val, "");
 #elif defined(GTK)
@@ -153,7 +153,7 @@ void TextEdit::Clear::run(const z::widget& wnd) {
 #endif
 }
 
-z::string TextEdit::GetText::run(const z::widget& wnd) {
+z::string z::TextEdit::GetText::run(const z::widget& wnd) {
 #if defined(WIN32)
     int size = ::GetWindowTextLength(wnd.val()._val);
     char* buf = new char[size+2];
@@ -181,8 +181,8 @@ z::string TextEdit::GetText::run(const z::widget& wnd) {
 #if defined(GTK)
 static void onEnterPressed(GtkMenuItem* item, gpointer phandler) {
     unused(item);
-    TextEdit::OnEnter::Handler* handler = static_cast<TextEdit::OnEnter::Handler*>(phandler);
-    TextEdit::OnEnter::Handler::_In in;
+    z::TextEdit::OnEnter::Handler* handler = static_cast<z::TextEdit::OnEnter::Handler*>(phandler);
+    z::TextEdit::OnEnter::Handler::_In in;
     z::ref(handler)._run(in);
 }
 #elif defined(OSX)
@@ -196,7 +196,7 @@ static void onEnterPressed(GtkMenuItem* item, gpointer phandler) {
 
 #endif
 
-void TextEdit::OnEnter::addHandler(const z::widget& textedit, const z::pointer<Handler>& handler) {
+void z::TextEdit::OnEnter::addHandler(const z::widget& textedit, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (textedit.val()._val), "activate", G_CALLBACK (onEnterPressed), z::ptr(handler.get()) );

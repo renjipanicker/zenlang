@@ -1,5 +1,6 @@
 import z::Widget public;
 import z::Window public;
+namespace z;
 
 public interface Systray {
     struct Definition : Window::Definition {

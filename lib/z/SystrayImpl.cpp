@@ -13,13 +13,13 @@ namespace SystrayImpl {
     static WNDPROC OrigWndProc = 0;
     static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         if(lParam == WM_LBUTTONDOWN) {
-            Systray::OnActivation::Handler::_In in;
-            Systray::OnActivation::list().runHandler(iconMap.impl(message), in);
+            z::Systray::OnActivation::Handler::_In in;
+            z::Systray::OnActivation::list().runHandler(iconMap.impl(message), in);
         }
 
         if((lParam == WM_RBUTTONDOWN) || (lParam == WM_CONTEXTMENU)) {
-            Systray::OnContextMenu::Handler::_In in;
-            Systray::OnContextMenu::list().runHandler(iconMap.impl(message), in);
+            z::Systray::OnContextMenu::Handler::_In in;
+            z::Systray::OnContextMenu::list().runHandler(iconMap.impl(message), in);
         }
 
         assert(OrigWndProc);
@@ -29,7 +29,7 @@ namespace SystrayImpl {
 }
 #endif
 
-void Systray::SetTooltip::run(const z::widget& handle, const z::string& text) {
+void z::Systray::SetTooltip::run(const z::widget& handle, const z::string& text) {
 #if defined(WIN32)
     NOTIFYICONDATA& ni = handle.ni();
     lstrcpyn(ni.szTip, z::s2e(text).c_str(), z::s2e(text).length());
@@ -49,7 +49,7 @@ void Systray::SetTooltip::run(const z::widget& handle, const z::string& text) {
 #endif
 }
 
-void Systray::SetIconfile::run(const z::widget& handle, const z::string& filename) {
+void z::Systray::SetIconfile::run(const z::widget& handle, const z::string& filename) {
 #if defined(WIN32)
     NOTIFYICONDATA& ni = handle.ni();
     ni.hIcon = (HICON)LoadImageA(NULL, z::s2e(filename).c_str(), IMAGE_ICON,
@@ -75,7 +75,7 @@ void Systray::SetIconfile::run(const z::widget& handle, const z::string& filenam
 #endif
 }
 
-void Systray::Show::run(const z::widget& handle) {
+void z::Systray::Show::run(const z::widget& handle) {
 #if defined(WIN32)
     ::Shell_NotifyIcon(NIM_ADD, z::ptr(handle.ni()));
 #elif defined(GTK)
@@ -91,7 +91,7 @@ void Systray::Show::run(const z::widget& handle) {
 #endif
 }
 
-void Systray::Hide::run(const z::widget& handle) {
+void z::Systray::Hide::run(const z::widget& handle) {
 #if defined(WIN32)
     ::Shell_NotifyIcon(NIM_DELETE, z::ptr(handle.ni()));
 #elif defined(GTK)
@@ -107,7 +107,7 @@ void Systray::Hide::run(const z::widget& handle) {
 #endif
 }
 
-z::widget Systray::Create::run(const z::widget& parent, const Systray::Definition& def) {
+z::widget z::Systray::Create::run(const z::widget& parent, const z::Systray::Definition& def) {
     z::unused_t(parent);
     z::widget::impl* impl = new z::widget::impl();
     z::widget handle(impl);
@@ -183,14 +183,14 @@ z::widget Systray::Create::run(const z::widget& parent, const Systray::Definitio
 #if defined(GTK)
 static gboolean onSystrayActivateEvent(GtkStatusIcon* status_icon, gpointer phandler) {
     unused(status_icon);
-    Systray::OnActivation::Handler* handler = static_cast<Systray::OnActivation::Handler*>(phandler);
-    Systray::OnActivation::Handler::_In in;
+    z::Systray::OnActivation::Handler* handler = static_cast<z::Systray::OnActivation::Handler*>(phandler);
+    z::Systray::OnActivation::Handler::_In in;
     z::ref(handler)._run(in);
     return FALSE;
 }
 #endif
 
-void Systray::OnActivation::addHandler(const z::widget& systray, const z::pointer<Handler>& handler) {
+void z::Systray::OnActivation::addHandler(const z::widget& systray, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
     g_signal_connect(G_OBJECT (systray.val()._icon), "activate", G_CALLBACK (onSystrayActivateEvent), z::ptr(handler.get()) );
@@ -211,14 +211,14 @@ static gboolean onSystrayContextMenuEvent(GtkStatusIcon *status_icon, guint butt
     unused(button);
     unused(activate_time);
 
-    Systray::OnContextMenu::Handler* handler = static_cast<Systray::OnContextMenu::Handler*>(phandler);
-    Systray::OnContextMenu::Handler::_In in;
+    z::Systray::OnContextMenu::Handler* handler = static_cast<z::Systray::OnContextMenu::Handler*>(phandler);
+    z::Systray::OnContextMenu::Handler::_In in;
     z::ref(handler)._run(in);
     return FALSE;
 }
 #endif
 
-void Systray::OnContextMenu::addHandler(const z::widget& systray, const z::pointer<Handler>& handler) {
+void z::Systray::OnContextMenu::addHandler(const z::widget& systray, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
     g_signal_connect(G_OBJECT (systray.val()._icon), "popup-menu", G_CALLBACK (onSystrayContextMenuEvent), z::ptr(handler.get()));

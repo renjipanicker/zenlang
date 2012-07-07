@@ -1,6 +1,7 @@
 import z::Widget public;
 import z::Window public;
 import z::Menu public;
+namespace z;
 
 public interface MenuItem {
     struct Definition : Widget::Definition {

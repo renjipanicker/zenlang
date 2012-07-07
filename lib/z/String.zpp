@@ -1,3 +1,4 @@
+namespace z;
 public interface String {
     /// \brief Split the string using specified seperator
     routine list<string> Split(const string& str, const string& sep) native;

@@ -15,8 +15,8 @@ namespace MenuItemImpl {
     static LRESULT CALLBACK WinProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
         switch (message) {
             case WM_COMMAND:
-                MenuItem::OnSelect::Handler::_In in;
-                MenuItem::OnSelect::list().runHandler(itemMap.impl(LOWORD(lParam)), in);
+                z::MenuItem::OnSelect::Handler::_In in;
+                z::MenuItem::OnSelect::list().runHandler(itemMap.impl(LOWORD(lParam)), in);
                 break;
         }
         assert(OrigWndProc);
@@ -26,7 +26,7 @@ namespace MenuItemImpl {
 }
 #endif
 
-z::widget MenuItem::Create::run(const z::widget& pmenu, const MenuItem::Definition& def) {
+z::widget z::MenuItem::Create::run(const z::widget& pmenu, const z::MenuItem::Definition& def) {
 #if defined(WIN32)
     z::widget::impl* impl = new z::widget::impl();
     uint32_t wm = WindowImpl::getNextWmID();
@@ -58,13 +58,13 @@ z::widget MenuItem::Create::run(const z::widget& pmenu, const MenuItem::Definiti
 #if defined(GTK)
 static void onMenuItemSelectClick(GtkMenuItem* item, gpointer phandler) {
     unused(item);
-    MenuItem::OnSelect::Handler* handler = static_cast<MenuItem::OnSelect::Handler*>(phandler);
-    MenuItem::OnSelect::Handler::_In in;
+    z::MenuItem::OnSelect::Handler* handler = static_cast<z::MenuItem::OnSelect::Handler*>(phandler);
+    z::MenuItem::OnSelect::Handler::_In in;
     z::ref(handler)._run(in);
 }
 #endif
 
-void MenuItem::OnSelect::addHandler(const z::widget& menuitem, const z::pointer<Handler>& handler) {
+void z::MenuItem::OnSelect::addHandler(const z::widget& menuitem, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (menuitem.val()._menuItem), "activate", G_CALLBACK (onMenuItemSelectClick), z::ptr(handler.get()) );

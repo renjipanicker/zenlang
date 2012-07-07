@@ -1,16 +1,16 @@
 #include "zenlang.hpp"
 
-bool Url::Exists(const url& u) {
+bool z::Url::Exists(const url& u) {
     struct stat b;
     return (0 == stat(z::s2e(u.path).c_str(), &b));
 }
 
-bool Url::FileExists(const z::string& path) {
-    Url::url u = Create(path);
+bool z::Url::FileExists(const z::string& path) {
+    z::Url::url u = Create(path);
     return Exists(u);
 }
 
-void Url::Parse(Url::url& u, const z::string& urlstr) {
+void z::Url::Parse(Url::url& u, const z::string& urlstr) {
     const z::string::sstringT url_s = urlstr.val();
     z::string::sstringT protocol;
     z::string::sstringT host;
@@ -61,13 +61,13 @@ void Url::Parse(Url::url& u, const z::string& urlstr) {
     u._querystring<url>(query);
 }
 
-Url::url Url::Create(const z::string& urlstr) {
-    Url::url u;
+z::Url::url z::Url::Create(const z::string& urlstr) {
+    z::Url::url u;
     Parse(u, urlstr);
     return u;
 }
 
-bool Url::OpenUrlString(const z::string& u) {
+bool z::Url::OpenUrlString(const z::string& u) {
 #if defined(WIN32)
     HINSTANCE rv = ::ShellExecute(NULL, "open", z::s2e(u).c_str(), NULL, NULL, SW_SHOWNORMAL);
     z::unused_t(rv);
@@ -80,11 +80,11 @@ bool Url::OpenUrlString(const z::string& u) {
     return true;
 }
 
-bool Url::Open(const url& u) {
+bool z::Url::Open(const url& u) {
     return OpenUrlString(u.fullUrl);
 }
 
-z::string Url::Encode(const z::string& u) {
+z::string z::Url::Encode(const z::string& u) {
     z::string qs;
     for(z::string::const_iterator it = u.begin(); it != u.end(); ++it) {
         const z::string::scharT& ch = *it;

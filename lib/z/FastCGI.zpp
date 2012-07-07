@@ -1,6 +1,7 @@
 import z::Socket;
 import z::Request;
 import z::Response;
+namespace z;
 
 enum MessageType {
     TYPE_BEGIN_REQUEST     =  1;

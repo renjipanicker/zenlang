@@ -11,8 +11,8 @@ namespace ButtonImpl {
         switch (message) {
             case WM_COMMAND: {
                 if(LOWORD(wParam) == BN_CLICKED) {
-                    Button::OnClick::Handler::_In in;
-                    Button::OnClick::list().runHandler(WindowImpl::impl(hWnd), in);
+                    z::Button::OnClick::Handler::_In in;
+                    z::Button::OnClick::list().runHandler(WindowImpl::impl(hWnd), in);
                 }
                 break;
             }
@@ -24,7 +24,7 @@ namespace ButtonImpl {
 }
 #endif
 
-z::widget Button::Create::run(const z::widget& parent, const Button::Definition& def) {
+z::widget z::Button::Create::run(const z::widget& parent, const z::Button::Definition& def) {
 #if defined(WIN32)
     z::widget::impl& impl = WindowImpl::createChildWindow(def, "BUTTON", BS_DEFPUSHBUTTON, 0, parent);
     // set subclass function
@@ -59,7 +59,7 @@ static void onButtonClick(GtkMenuItem* item, gpointer phandler) {
 }
 #endif
 
-void Button::OnClick::addHandler(const z::widget& button, const z::pointer<Handler>& handler) {
+void z::Button::OnClick::addHandler(const z::widget& button, const z::pointer<Handler>& handler) {
 #if defined(WIN32)
 #elif defined(GTK)
     g_signal_connect (G_OBJECT (button.val()._val), "clicked", G_CALLBACK (onButtonClick), z::ptr(handler.get()) );

@@ -3,7 +3,7 @@
 #include "gui/Mainframe.hpp"
 #include "WindowImpl.hpp"
 
-MainFrame::Create::_Out MainFrame::Create::run(const MainFrame::Definition& def) {
+z::MainFrame::Create::_Out z::MainFrame::Create::run(const z::MainFrame::Definition& def) {
 #if defined(WIN32)
     z::widget::impl& impl = WindowImpl::createMainFrame(def, WS_OVERLAPPEDWINDOW, WS_EX_WINDOWEDGE);
     ::PostMessage(impl._val, WM_SIZE, 0, 0);
@@ -38,7 +38,7 @@ MainFrame::Create::_Out MainFrame::Create::run(const MainFrame::Definition& def)
     z::widget win(impl);
 #if !defined(OSX)
     if(def.visible) {
-        Window::Show().run(win);
+        z::Window::Show().run(win);
     }
 #endif
     return _Out(win);

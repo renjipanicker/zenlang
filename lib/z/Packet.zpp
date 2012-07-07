@@ -1,3 +1,4 @@
+namespace z;
 public interface Packet {
     struct Data {
         dict<string, string> cookieList;

@@ -1,4 +1,5 @@
 import z::Packet;
+namespace z;
 
 public interface Request {
     struct Data : Packet::Data {

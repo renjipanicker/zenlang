@@ -5,6 +5,7 @@ import z::TextEdit;
 import z::Systray;
 import z::Menu;
 import z::MenuItem;
+namespace z;
 
 routine const widget& processWindow(widget& win, const Window::Definition& defn);
 

@@ -4,7 +4,7 @@
 #include "WindowImpl.hpp"
 #include "MenuImpl.hpp"
 
-z::widget Menu::Create::run(const z::widget& wnd, const Menu::Definition& def) {
+z::widget z::Menu::Create::run(const z::widget& wnd, const z::Menu::Definition& def) {
     z::unused_t(def);
 #if defined(WIN32)
     z::widget::impl* impl = new z::widget::impl();
@@ -51,7 +51,7 @@ static void getMenuPosition(GtkMenu* menu, gint* x, gint* y, gboolean* push_in, 
 }
 #endif
 
-void Menu::ShowAt::run(const z::widget& handle, const int& x, const int& y) {
+void z::Menu::ShowAt::run(const z::widget& handle, const int& x, const int& y) {
 #if defined(WIN32)
     ::SetForegroundWindow(handle.val()._val);
     ::TrackPopupMenu(handle.val()._menu, TPM_BOTTOMALIGN, x, y, 0, handle.val()._val, NULL );
@@ -70,7 +70,7 @@ void Menu::ShowAt::run(const z::widget& handle, const int& x, const int& y) {
 #endif
 }
 
-void Menu::Show::run(const z::widget& handle) {
+void z::Menu::Show::run(const z::widget& handle) {
 #if defined(WIN32)
     POINT pt;
     ::GetCursorPos(&pt);

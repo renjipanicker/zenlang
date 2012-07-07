@@ -1,3 +1,4 @@
+namespace z;
 public interface DateTime {
 
     /// \brief Convert datetime to specified format

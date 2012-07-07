@@ -1,6 +1,6 @@
 import z::Url public;
 import z::Response public;
-
+namespace z;
 public interface Network {
     /// \brief Retrieve the specified Utl into Response.
     routine bool GetUrl(const Url::url& u, Response::Data& r) native;

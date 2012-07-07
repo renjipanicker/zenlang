@@ -1,3 +1,4 @@
+namespace z;
 public interface Application {
     event(const int& priority) => function void OnExit();
     routine string appDir() native;

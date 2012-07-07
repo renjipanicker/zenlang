@@ -1,6 +1,6 @@
 #include "zenlang.hpp"
 
-z::socket Socket::InitServer(const int& port) {
+z::socket z::Socket::InitServer(const int& port) {
     SOCKET sfd = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(-1 == sfd) {
         throw z::Exception("Socket::InitServer", z::string("Error creating socket"));
@@ -24,14 +24,14 @@ z::socket Socket::InitServer(const int& port) {
     return z::socket(sfd);
 }
 
-void Socket::StartServer(const z::socket& s) {
+void z::Socket::StartServer(const z::socket& s) {
     std::cout << "server starting" << std::endl;
     if(-1 == ::listen(s.val(), 10)) {
         throw z::Exception("Socket::StartServer", z::string("Error listen() failed"));
     }
 }
 
-void Socket::Close(const z::socket& s) {
+void z::Socket::Close(const z::socket& s) {
 #if defined(WIN32)
     if(-1 == ::closesocket(s.val())) {
 #else
@@ -41,7 +41,7 @@ void Socket::Close(const z::socket& s) {
     }
 }
 
-void Socket::OnConnect::addHandler(const z::socket& s, const z::pointer<Handler>& h) {
+void z::Socket::OnConnect::addHandler(const z::socket& s, const z::pointer<Handler>& h) {
     Socket::OnConnectDevice* d = new Socket::OnConnectDevice(s, h);
     z::ctx().startPoll(d);
 }
@@ -65,7 +65,7 @@ namespace zz {
     }
 }
 
-bool Socket::OnConnectDevice::run(const int& timeout) {
+bool z::Socket::OnConnectDevice::run(const int& timeout) {
     if(!zz::isDataAvailable(s, timeout)) {
         return false;
     }
@@ -81,12 +81,12 @@ bool Socket::OnConnectDevice::run(const int& timeout) {
     return false;
 }
 
-void Socket::OnRecv::addHandler(const z::socket& s, const z::pointer<Handler>& h) {
+void z::Socket::OnRecv::addHandler(const z::socket& s, const z::pointer<Handler>& h) {
     Socket::OnRecvDevice* d = new Socket::OnRecvDevice(s, h);
     z::ctx().startPoll(d);
 }
 
-bool Socket::OnRecvDevice::run(const int& timeout) {
+bool z::Socket::OnRecvDevice::run(const int& timeout) {
     if(!zz::isDataAvailable(s, timeout)) {
         return false;
     }
@@ -131,11 +131,11 @@ namespace zz {
     }
 }
 
-int Socket::SendData(const z::socket& s, const z::data& d) {
+int z::Socket::SendData(const z::socket& s, const z::data& d) {
     return zz::SendSocket(s, (const char*)d.c_str(), d.length());
 }
 
-int Socket::SendString(const z::socket& s, const z::string& d) {
+int z::Socket::SendString(const z::socket& s, const z::string& d) {
     z::estring es = z::s2e(d);
     return zz::SendSocket(s, (const char*)es.c_str(), es.length());
 }

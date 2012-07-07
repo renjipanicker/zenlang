@@ -1,6 +1,6 @@
 #include "zenlang.hpp"
 
-z::list<z::string> String::Split(const z::string& str, const z::string& sep) {
+z::list<z::string> z::String::Split(const z::string& str, const z::string& sep) {
     z::list<z::string> sl;
     enum State {
         sInit,
@@ -48,15 +48,15 @@ z::list<z::string> String::Split(const z::string& str, const z::string& sep) {
 
 # include "utils/sqlite3/sqlite3_unicode.h"
 
-z::char_t String::Fold(const z::char_t& ch) {
+z::char_t z::String::Fold(const z::char_t& ch) {
     return sqlite3_unicode_fold((z::char16_t)ch);
 }
 
-z::char_t String::CharToLower(const z::char_t& ch) {
+z::char_t z::String::CharToLower(const z::char_t& ch) {
     return sqlite3_unicode_lower((z::char16_t)ch);
 }
 
-z::string String::StringToLower(const z::string& str) {
+z::string z::String::StringToLower(const z::string& str) {
     z::string rv;
     for(z::string::const_iterator it = str.begin();it != str.end(); ++it) {
         rv += CharToLower(*it);
@@ -64,11 +64,11 @@ z::string String::StringToLower(const z::string& str) {
     return rv;
 }
 
-z::char_t String::CharToUpper(const z::char_t& ch) {
+z::char_t z::String::CharToUpper(const z::char_t& ch) {
     return sqlite3_unicode_upper((z::char16_t)ch);
 }
 
-z::string String::StringToUpper(const z::string& str) {
+z::string z::String::StringToUpper(const z::string& str) {
     z::string rv;
     for(z::string::const_iterator it = str.begin();it != str.end(); ++it) {
         rv += CharToUpper(*it);
@@ -76,7 +76,7 @@ z::string String::StringToUpper(const z::string& str) {
     return rv;
 }
 
-bool String::IsSpaceChar(const z::char_t& ch) {
+bool z::String::IsSpaceChar(const z::char_t& ch) {
     if((ch >= 9) && (ch <=13))
         return true;
 
@@ -88,7 +88,7 @@ bool String::IsSpaceChar(const z::char_t& ch) {
     return false;
 }
 
-z::string String::TrimStringCollect(const z::string& str, z::string& prev, z::string& post) {
+z::string z::String::TrimStringCollect(const z::string& str, z::string& prev, z::string& post) {
     int start = 0;
     int end = str.length() - 1;
     while((start < end) && (String::IsSpaceChar(str[start])))
@@ -107,7 +107,7 @@ z::string String::TrimStringCollect(const z::string& str, z::string& prev, z::st
     return rv;
 }
 
-z::string String::TrimString(const z::string& str) {
+z::string z::String::TrimString(const z::string& str) {
     z::string prev;
     z::string post;
     return String::TrimStringCollect(str, prev, post);
