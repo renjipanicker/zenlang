@@ -246,10 +246,10 @@ namespace Ast {
         Ast::ListItem*            aListItem(const Ast::Expr& valueExpr);
 
         Ast::DictExpr*            aDictExpr(const Ast::Token& pos, const Ast::DictList& list);
-        Ast::DictList*            aDictList(const Ast::Token& pos, Ast::DictList& list, const Ast::DictItem& item);
+        Ast::DictList*            aDictList(const Ast::Token& pos, Ast::DictList& list, const Ast::DictItem& item, const bool& tree);
         Ast::DictList*            aDictList(const Ast::Token& pos, const Ast::DictItem& item);
         Ast::DictList*            aDictList(const Ast::Token& pos, const Ast::QualifiedTypeSpec& qKeyTypeSpec, const Ast::QualifiedTypeSpec& qValueTypeSpec);
-        Ast::DictItem*            aDictItem(const Ast::Token& pos, const Ast::Expr& keyExpr, const Ast::Expr& valueExpr);
+        Ast::DictItem*            aDictItem(const Ast::Token& pos, const Ast::Expr& keyExpr, const Ast::Expr& valueExpr, const bool& tree);
         const Ast::Expr*          aDictKey(const Ast::Expr& keyExpr);
         const Ast::Token&         aEnterList(const Ast::Token& pos);
 

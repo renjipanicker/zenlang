@@ -109,6 +109,7 @@
       <item> size </item>
       <item> char </item>
       <item> string </item>
+
       <item> pointer </item>
       <item> future </item>
       <item> functor </item>
@@ -123,6 +124,13 @@
       <item> type </item>
       <item> data </item>
       <item> socket </item>
+      <item> file </item>
+      <item> dir </item>
+      <item> url </item>
+      <item> mutex </item>
+      <item> mlock </item>
+      <item> application </item>
+      <item> widget </item>
 
       <item> test </item>
       <item> main </item>

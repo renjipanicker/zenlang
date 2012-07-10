@@ -1,10 +1,8 @@
 import z::Packet;
 namespace z;
 
-public interface Request {
-    struct Data : Packet::Data {
-        auto rid = 0u;
-        dict<string, string> paramList;
-        dict<string, string> fieldList;
-    };
+public struct Request : Packet {
+    auto rid = 0u;
+    dict<string, string> paramList;
+    dict<string, string> fieldList;
 };

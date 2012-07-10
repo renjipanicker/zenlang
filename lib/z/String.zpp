@@ -18,6 +18,9 @@ public interface String {
     /// \brief Convert String to uppercase
     routine string StringToUpper(const string& str) native;
 
+    /// \brief Convert String to long
+    routine long StringToLong(const string& str) native;
+
     /// \brief Return true if given char is a space character
     routine bool IsSpaceChar(const char& ch) native;
 
@@ -26,4 +29,7 @@ public interface String {
 
     /// \brief Trim the string.
     routine string TrimString(const string& str) native;
+
+    /// \brief Get a GUID.
+    routine string GetGuid() native;
 };

@@ -1,6 +1,6 @@
 namespace z;
-public interface DateTime {
 
+public interface DateTime {
     /// \brief Convert datetime to specified format
     routine string ToFormatString(const datetime& dt, const string& format) native;
 

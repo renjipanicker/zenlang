@@ -26,6 +26,7 @@ static int showHelp(const z::Ast::Config& config) {
     std::cout << "  -d  --debug     Debug build" << std::endl;
     std::cout << "  -ol --language  Output language" << std::endl;
     std::cout << "  -op --project   Output project" << std::endl;
+    std::cout << "  -id --inc       Include path" << std::endl;
     std::cout << "  -ad --api       API directory" << std::endl;
     std::cout << "  -sd --src       Source directory" << std::endl;
     std::cout << "  -v  --verbose   Display verbose output" << std::endl;
@@ -275,6 +276,10 @@ int main(int argc, char* argv[]) {
         } else if((t == "-op") || (t == "--oproject")) {
             t = argv[i++];
             project.oproject(t);
+        } else if((t == "-id") || (t == "--inc")) {
+            t = argv[i++];
+            replaceSlash(t);
+            config.addIncludePath(t);
         } else if((t == "-ad") || (t == "--api")) {
             t = argv[i++];
             replaceSlash(t);

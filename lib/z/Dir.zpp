@@ -1,6 +1,5 @@
 namespace z;
 public interface Dir {
-
     /// \brief Return cwd
     routine string CurrentDir() native;
 
@@ -16,4 +15,10 @@ public interface Dir {
 
     /// \brief get base path of path
     routine string GetPath(const string& path) native;
+
+    /// \brief return name of tmp dir
+    routine string GetTemp() native;
+
+    /// \brief create and return name of tmp dir
+    routine string GetTmpDir(const string& path, const string& fmt) native;
 };

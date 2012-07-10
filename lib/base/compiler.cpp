@@ -138,6 +138,7 @@ const z::string ifile =
 "template <V> pointer native;\n"
 "template <V> value   native;\n"
 "template <V> ptr     native;\n"
+"template <V> cast    native;\n"
 
 "template <V>   list native;\n"
 "template <V>   stack native;\n"

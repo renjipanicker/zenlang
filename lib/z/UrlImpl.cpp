@@ -6,11 +6,11 @@ bool z::Url::Exists(const url& u) {
 }
 
 bool z::Url::FileExists(const z::string& path) {
-    z::Url::url u = Create(path);
+    z::url u = Create(path);
     return Exists(u);
 }
 
-void z::Url::Parse(Url::url& u, const z::string& urlstr) {
+void z::Url::Parse(z::url& u, const z::string& urlstr) {
     const z::string::sstringT url_s = urlstr.val();
     z::string::sstringT protocol;
     z::string::sstringT host;
@@ -61,8 +61,8 @@ void z::Url::Parse(Url::url& u, const z::string& urlstr) {
     u._querystring<url>(query);
 }
 
-z::Url::url z::Url::Create(const z::string& urlstr) {
-    z::Url::url u;
+z::url z::Url::Create(const z::string& urlstr) {
+    z::url u;
     Parse(u, urlstr);
     return u;
 }
@@ -86,7 +86,7 @@ bool z::Url::Open(const url& u) {
 
 z::string z::Url::Encode(const z::string& u) {
     z::string qs;
-    for(z::string::const_iterator it = u.begin(); it != u.end(); ++it) {
+    for(z::string::const_iterator it = u.begin(), ite = u.end(); it != ite; ++it) {
         const z::string::scharT& ch = *it;
         switch(ch) {
             // reserved characters
@@ -131,6 +131,68 @@ z::string z::Url::Encode(const z::string& u) {
             // default
             default  : qs += ch;    break;
         }
+    }
+    return qs;
+}
+
+z::string z::Url::Decode(const z::string& u) {
+    z::string qs;
+    for(z::string::const_iterator it = u.begin(), ite = u.end(); it != ite; ++it) {
+        const z::string::scharT& ch = *it;
+        if(ch == '+') {
+            qs += ' ';
+            continue;
+        }
+
+        if(ch != '%') {
+            qs += ch;
+            continue;
+        }
+
+        // check first char after %
+        ++it;
+        if(it == ite) {
+            qs += ch;
+            continue;
+        }
+        int v = 0;
+
+        const z::string::scharT& ch1 = *it;
+        if((ch1 >= '0') && (ch1 <= '9')) {
+            v = (v * 16) + (ch1 - '0');
+        } else if((ch1 >= 'A') && (ch1 <= 'F')) {
+            v = (v * 16) + (ch1 - 'A' + 10);
+        } else if((ch1 >= 'a') && (ch1 <= 'f')) {
+            v = (v * 16) + (ch1 - 'a' + 10);
+        } else {
+            qs += ch;
+            qs += ch1;
+            continue;
+        }
+
+        // check next character after %
+        ++it;
+        if(it == ite) {
+            qs += ch;
+            qs += ch1;
+            continue;
+        }
+        const z::string::scharT& ch2 = *it;
+        if((ch2 >= '0') && (ch2 <= '9')) {
+            v = (v * 16) + (ch2 - '0');
+        } else if((ch2 >= 'A') && (ch2 <= 'F')) {
+            v = (v * 16) + (ch2 - 'A' + 10);
+        } else if((ch2 >= 'a') && (ch2 <= 'f')) {
+            v = (v * 16) + (ch2 - 'a' + 10);
+        } else {
+            qs += ch;
+            qs += ch1;
+            qs += ch2;
+            continue;
+        }
+
+        // v contains a valid decoded character
+        qs += v;
     }
     return qs;
 }

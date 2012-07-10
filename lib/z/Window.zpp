@@ -1,4 +1,3 @@
-//include WindowImpl native;
 import z::Widget public;
 namespace z;
 

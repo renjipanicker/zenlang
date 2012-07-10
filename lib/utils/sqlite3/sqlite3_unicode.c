@@ -28,6 +28,10 @@
 ** The following function needs to be called before program exit to correctly uninitialise unicode functionality
 **   * sqlite3_unicode_free();
 */
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
 #include "sqlite3_unicode.h"
 
 #if defined(WIN32)
@@ -2920,3 +2924,6 @@ int __stdcall DllMain(void *hinstDLL, unsigned long fdwReason, void *lpReserved)
 #endif
 
 #endif  /* !defined(SQLITE_CORE) || defined(SQLITE_ENABLE_UNICODE) */
+#if defined(__cplusplus)
+} // extern "C"
+#endif

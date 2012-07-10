@@ -123,6 +123,7 @@
     # include <netinet/in.h>
     # include <netdb.h>
     typedef int SOCKET;
+    const int INVALID_SOCKET = -1;
 #endif
 
 #if defined(WIN32)

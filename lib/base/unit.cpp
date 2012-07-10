@@ -341,9 +341,17 @@ const z::Ast::TypeSpec* z::Ast::Unit::hasRootTypeSpec(const int& level, const z:
         return typeSpec;
     }
 
-    const z::Ast::TypeSpec* ztypeSpec = importNS().hasChild<const z::Ast::TypeSpec>("z");
-    if(ztypeSpec) {
-        const z::Ast::TypeSpec* ctypeSpec = z::ref(ztypeSpec).hasChild<const z::Ast::TypeSpec>(name.string());
+    const z::Ast::TypeSpec* iztypeSpec = importNS().hasChild<const z::Ast::TypeSpec>("z");
+    if(iztypeSpec) {
+        const z::Ast::TypeSpec* ctypeSpec = z::ref(iztypeSpec).hasChild<const z::Ast::TypeSpec>(name.string());
+        if(ctypeSpec) {
+            return ctypeSpec;
+        }
+    }
+
+    const z::Ast::TypeSpec* rztypeSpec = rootNS().hasChild<const z::Ast::TypeSpec>("z");
+    if(rztypeSpec) {
+        const z::Ast::TypeSpec* ctypeSpec = z::ref(rztypeSpec).hasChild<const z::Ast::TypeSpec>(name.string());
         if(ctypeSpec) {
             return ctypeSpec;
         }

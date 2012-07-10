@@ -1,0 +1,17 @@
+public function (int ri, string rs)runFunctionTest(const int& x) abstract {
+    unused(x);
+    return (67890, "run");
+}
+
+public function void myfunc(runFunctionTest& ft) {
+}
+
+public function mymain : main {
+    auto f = runFunctionTest[];
+    auto rv = f(1);
+    print "ri: %{ri}, rs: %{rs}" @ {"ri": rv.ri, "rs": rv.rs};
+    myfunc(runFunctionTest{
+        print x;
+    });
+    return (0);
+}

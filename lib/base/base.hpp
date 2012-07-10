@@ -1561,12 +1561,12 @@ namespace z {
 
     ////////////////////////////////////////////////////////////////////////////
     /// \brief Simple mechanism for tracing function calls.
-    struct Tracer {
-        inline Tracer(const z::string& cName, const z::string& fName) : _cName(cName), _fName(fName) {
+    struct tracer {
+        inline tracer(const z::string& cName, const z::string& fName) : _cName(cName), _fName(fName) {
             z::mlog(_cName, z::string("%{n} enter").arg("n", _fName));
         }
 
-        inline ~Tracer() {
+        inline ~tracer() {
             z::mlog(_cName, z::string("%{n} leave").arg("n", _fName));
         }
 
@@ -1577,8 +1577,7 @@ namespace z {
 
 }
 
-#define _TRACE(c, f) z::Tracer _s_(c, f)
+#define _TRACE(c, f) z::tracer _s_(c, f)
 #define DISABLE_ASSIGNMENT(c) private: inline c& operator=(const c& /*src*/){throw z::Exception("", z::string(#c));}
 #define DISABLE_COPYCTOR(c) private: inline c(const c& /*src*/){throw z::Exception("", z::string(#c));}
-
 #define UNIMPL() z::assert_t(false)

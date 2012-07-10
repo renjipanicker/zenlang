@@ -1,7 +1,6 @@
 namespace z;
-public interface Packet {
-    struct Data {
-        dict<string, string> cookieList;
-        auto body = "";
-    };
+
+public struct Packet {
+    dict<string, string> cookieList;
+    auto body = "";
 };

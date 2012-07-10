@@ -879,14 +879,14 @@ rDictList(L) ::= rDictsList(R)       . {L = R;}
 rDictList(L) ::= rDictsList(R) COMMA . {L = R;}
 
 %type rDictsList {z::Ast::DictList*}
-rDictsList(L)  ::= rDictsList(R) COMMA(B) rDictItem(I). {L = z::c2f(pctx).aDictList(z::t2t(B), z::ref(R), z::ref(I));}
+rDictsList(L)  ::= rDictsList(R) COMMA(B) rDictItem(I). {L = z::c2f(pctx).aDictList(z::t2t(B), z::ref(R), z::ref(I), false);}
 rDictsList(L)  ::=          rEnterList(B) rDictItem(I). {L = z::c2f(pctx).aDictList(z::t2t(B), z::ref(I));}
 
 // first item in list can be a type specifier
 rDictsList(L) ::= rEnterList(B) rQualifiedTypeSpec(K) COLON rQualifiedTypeSpec(V). {L = z::c2f(pctx).aDictList(z::t2t(B), z::ref(K), z::ref(V));}
 
 %type rDictItem {z::Ast::DictItem*}
-rDictItem(L)  ::= rDictKey(K) COLON(B) rExpr(E). {L = z::c2f(pctx).aDictItem(z::t2t(B), z::ref(K), z::ref(E));}
+rDictItem(L)  ::= rDictKey(K) COLON(B) rExpr(E). {L = z::c2f(pctx).aDictItem(z::t2t(B), z::ref(K), z::ref(E), false);}
 
 %type rDictKey {const z::Ast::Expr*}
 rDictKey(L) ::= rExpr(R). {L = z::c2f(pctx).aDictKey(z::ref(R));}
@@ -904,11 +904,11 @@ rTreeList(L) ::= rTreesList(R)       . {L = R;}
 rTreeList(L) ::= rTreesList(R) COMMA . {L = R;}
 
 %type rTreesList {z::Ast::DictList*}
-rTreesList(L)  ::= rTreesList(R) COMMA(B) rTreeItem(I).     {L = z::c2f(pctx).aDictList(z::t2t(B), z::ref(R), z::ref(I));}
-rTreesList(L)  ::=          rEnterTree(B) rTreeItem(I). {L = z::c2f(pctx).aDictList(z::t2t(B), z::ref(I));}
+rTreesList(L)  ::= rTreesList(R) COMMA(B)      rTreeItem(I).     {L = z::c2f(pctx).aDictList(z::t2t(B), z::ref(R), z::ref(I), true);}
+rTreesList(L)  ::=               rEnterTree(B) rTreeItem(I). {L = z::c2f(pctx).aDictList(z::t2t(B), z::ref(I));}
 
 %type rTreeItem {z::Ast::DictItem*}
-rTreeItem(L)  ::= rDictKey(K) COLON(B) rExpr(E). {L = z::c2f(pctx).aDictItem(z::t2t(B), z::ref(K), z::ref(E));}
+rTreeItem(L)  ::= rDictKey(K) COLON(B) rExpr(E). {L = z::c2f(pctx).aDictItem(z::t2t(B), z::ref(K), z::ref(E), true);}
 
 //-------------------------------------------------
 rEnterTree(L)  ::= LCURLY(R). {L = R; z::c2f(pctx).aEnterList(z::t2t(R)); }

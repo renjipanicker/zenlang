@@ -1,14 +1,15 @@
 #include "zenlang.hpp"
 
-z::socket z::Socket::InitServer(const int& port) {
+z::socket z::Socket::OpenServer(const int& port) {
     SOCKET sfd = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
-    if(-1 == sfd) {
+    if(sfd < 0) {
         throw z::Exception("Socket::InitServer", z::string("Error creating socket"));
     }
 
-    char on = 1;
-    if(::setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, &on, sizeof(on)) < 0) {
-        //throw z::Exception("Socket::InitServer", z::string("Error setsocketopt() failed"));
+    int on = 1;
+    if(::setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(on)) < 0) {
+        throw z::Exception("Socket::InitServer", z::string("Error setsocketopt() failed"));
+//        z::mlog("Socket::OpenServer", z::string("Error setsocketopt() failed"));
     }
 
     sockaddr_in sa;
@@ -18,9 +19,35 @@ z::socket z::Socket::InitServer(const int& port) {
     sa.sin_port = htons((short)port);
     sa.sin_addr.s_addr = INADDR_ANY;
 
-    if(-1 == ::bind(sfd,(sockaddr *)&sa, sizeof(sa))) {
+    if(::bind(sfd,(sockaddr *)&sa, sizeof(sa)) < 0) {
         throw z::Exception("Socket::InitServer", z::string("Error bind() failed"));
     }
+
+    return z::socket(sfd);
+}
+
+z::socket z::Socket::OpenClient(const z::string& host, const z::string& portstr) {
+    SOCKET sfd = ::socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+    if(sfd < 0) {
+        throw z::Exception("Socket::InitClient", z::string("Error creating socket"));
+    }
+
+    ::hostent* server = ::gethostbyname(z::s2e(host).c_str());
+    if (server == NULL) {
+        throw z::Exception("Socket::InitClient", z::string("Error: No such host: %{s}").arg("s", host));
+    }
+
+    int port = atoi(z::s2e(portstr).c_str());
+
+    ::sockaddr_in sa;
+    memset((char *) &sa, 0, sizeof(sa));
+    sa.sin_family = AF_INET;
+    memcpy((char *)&sa.sin_addr.s_addr, (char *)server->h_addr, server->h_length);
+    sa.sin_port = htons((u_short)port);
+    if (::connect(sfd, (::sockaddr*) &sa,sizeof(sa)) < 0) {
+        throw z::Exception("Socket::InitClient", z::string("Error: Error connecting to host: %{s}").arg("s", host));
+    }
+
     return z::socket(sfd);
 }
 

@@ -1,6 +1,7 @@
 import z::Socket;
 import z::Request;
 import z::Response;
+import z::Url;
 namespace z;
 
 enum MessageType {
@@ -29,7 +30,7 @@ enum Flags {
     FLAG_KEEP_CONN  = 1;
 };
 
-public enum ProtocolStatus {
+enum ProtocolStatus {
     REQUEST_COMPLETE = 0;
     CANT_MPX_CONN    = 1;
     OVERLOADED       = 2;
@@ -69,14 +70,14 @@ struct EndRequest : Header {
     ubyte reserved3;
 };
 
-struct RequestData : Request::Data {
+struct RequestData : Request {
     auto role = Role.NONE;
     auto keepAlive = false;
 };
 
 typedef RequestMap dict<uint, RequestData>;
 
-routine void OnRequestReceived(const socket& s, const socket& cs, const Request::Data& req);
+routine void OnRequestReceived(const socket& s, const socket& cs, const Request& req);
 
 routine Header CreateHeader(const MessageType& t, const uint& mid, const uint& len) {
     auto h = Header {
@@ -199,6 +200,53 @@ routine size processRequest(const socket& s, const socket& cs, const data& bfr, 
                 i += data_len;
 
                 req.paramList[key] = val;
+                print key + " : " + val;
+                if((key == "HTTP_COOKIE") || (key == "QUERY_STRING")) {
+                    auto sep = ';';
+                    if(key == "QUERY_STRING") {
+                        sep = '&';
+                    }
+                    bool inkey = true;
+                    string k1;
+                    string v1;
+                    foreach(ch in val) {
+                        if(inkey) {
+                            if((length(k1) == 0) && (ch == ' ')) {
+                                // do nothing
+                            } else {
+                                if(ch == '=') {
+                                    inkey = false;
+                                } else {
+                                    k1 += ch;
+                                }
+                            }
+                        } else {
+                            if(ch == sep) {
+                                inkey = true;
+                                if(key == "QUERY_STRING") {
+                                    v1 = Url::Decode(v1);
+                                    req.paramList[k1] = v1;
+                                } else {
+                                    req.cookieList[k1] = v1;
+                                }
+                                print k1 + " : " + v1;
+                                k1 = "";
+                                v1 = "";
+                            } else {
+                                v1 += ch;
+                            }
+                        }
+                    }
+                    if((length(k1) > 0) && (length(v1) > 0)) {
+                        if(key == "QUERY_STRING") {
+                            v1 = Url::Decode(v1);
+                            req.paramList[k1] = v1;
+                        } else {
+                            req.cookieList[k1] = v1;
+                        }
+                        print k1 + " : " + v1;
+                    }
+                }
             }
             break;
         }
@@ -216,6 +264,8 @@ routine size processRequest(const socket& s, const socket& cs, const data& bfr, 
             }
 
             /// \todo: store stdin into req
+            auto val = map<string>(bfr, sizeof(Header), len);
+            print val;
             break;
         }
     }
@@ -223,7 +273,7 @@ routine size processRequest(const socket& s, const socket& cs, const data& bfr, 
     return sizeof(Header) + len + h.hPaddingLength;
 }
 
-routine void SendString(const Request::Data& req, const socket& s, const string& d) {
+routine void SendString(const Request& req, const socket& s, const string& d) {
     auto h1 = CreateHeader(MessageType.TYPE_STDOUT, req.rid, length(d));
     auto d1 = raw(h1);
     Socket::SendData(s, d1);
@@ -231,11 +281,11 @@ routine void SendString(const Request::Data& req, const socket& s, const string&
 }
 
 public interface FastCGI {
-    event(const socket& s) => function void OnRequest(const socket& cs, const Request::Data& req);
+    event(const socket& s) => function void OnRequest(const socket& cs, const Request& req);
 
     /// \brief Start the FastCGI server on specified port.
     function socket Create(const int& port) {
-        auto s = Socket::InitServer(port);
+        auto s = Socket::OpenServer(port);
         Socket::OnConnect(s) => {
             print "onconnect";
             Socket::OnRecv(cs) => [; data bfr, RequestMap requestMap] {
@@ -254,7 +304,7 @@ public interface FastCGI {
         return(s);
     }
 
-    function void SendResponse(const Request::Data& req, const socket& s, const Response::Data& res) {
+    function void SendResponse(const Request& req, const socket& s, const Response& res) {
         if(length(res.headerList) > 0) {
             foreach(k,v in res.headerList) {
                 auto h = k + ": " + v + "\r\n";
@@ -281,6 +331,6 @@ public interface FastCGI {
     }
 };
 
-routine void OnRequestReceived(const socket& s, const socket& cs, const Request::Data& req) {
+routine void OnRequestReceived(const socket& s, const socket& cs, const Request& req) {
     raise FastCGI::OnRequest(s: cs, req);
 }

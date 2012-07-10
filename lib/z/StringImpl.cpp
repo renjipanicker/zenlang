@@ -76,6 +76,10 @@ z::string z::String::StringToUpper(const z::string& str) {
     return rv;
 }
 
+int64_t z::String::StringToLong(const z::string& str) {
+    return str.to<int64_t>();
+}
+
 bool z::String::IsSpaceChar(const z::char_t& ch) {
     if((ch >= 9) && (ch <=13))
         return true;
@@ -112,3 +116,8 @@ z::string z::String::TrimString(const z::string& str) {
     z::string post;
     return String::TrimStringCollect(str, prev, post);
 }
+
+z::string z::String::GetGuid() {
+    return "";
+}
+

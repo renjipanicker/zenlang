@@ -2,7 +2,7 @@
 
 namespace zz {
 struct OnDataReceivedHandler {
-    inline OnDataReceivedHandler(z::Response::Data& r) : _ps(psProtocol), _inHeader(true), _r(r) {}
+    inline OnDataReceivedHandler(z::Response& r) : _ps(psProtocol), _inHeader(true), _r(r) {}
 private:
     enum ParseState {
         psProtocol,
@@ -18,7 +18,7 @@ private:
     z::string _token1;
     ParseState _ps;
     bool _inHeader;
-    z::Response::Data& _r;
+    z::Response& _r;
     inline size_t contentLength() const {
         z::dict<z::string,z::string>::const_iterator it = _r.headerList.find("Content-Length");
         if(it == _r.headerList.end()) {
@@ -118,12 +118,8 @@ public:
     }
 };
 
-static bool queryHttpText(const z::Url::url& u, zz::OnDataReceivedHandler& drh) {
-#if defined(WIN32)
+static bool queryHttpText(const z::url& u, zz::OnDataReceivedHandler& drh) {
     SOCKET sockfd;
-#else
-    int sockfd;
-#endif
     int portno, n;
     struct sockaddr_in serv_addr;
     struct hostent *server;
@@ -196,9 +192,9 @@ static bool queryHttpText(const z::Url::url& u, zz::OnDataReceivedHandler& drh) 
 #endif
     return true;
 }
-} // namespace z
+} // namespace zz
 
-bool z::Network::GetUrl(const z::Url::url& u, z::Response::Data& req) {
+bool z::Network::GetUrl1(const z::url& u, z::Response& req) {
     zz::OnDataReceivedHandler drh(req);
     zz::queryHttpText(u, drh);
     return false;

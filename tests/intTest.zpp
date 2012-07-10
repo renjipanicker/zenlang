@@ -26,6 +26,7 @@ interface MyIntf {
 routine void mymain() {
     auto xx = MyIntf::myfn1(10);
     auto yy = MyIntf::myrtn1(10);
+    unused(xx,yy);
 
     /*
     auto myintf1 = MyIntf{};

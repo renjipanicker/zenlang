@@ -1381,10 +1381,10 @@ z::Ast::DictExpr* z::Ast::Factory::aDictExpr(const z::Ast::Token& pos, const z::
     return z::ptr(expr);
 }
 
-z::Ast::DictList* z::Ast::Factory::aDictList(const z::Ast::Token& pos, z::Ast::DictList& list, const z::Ast::DictItem& item) {
+z::Ast::DictList* z::Ast::Factory::aDictList(const z::Ast::Token& pos, z::Ast::DictList& list, const z::Ast::DictItem& item, const bool& tree) {
     list.addItem(item);
     const z::Ast::QualifiedTypeSpec& keyType = unit().coerce(pos, list.keyType(), item.keyExpr().qTypeSpec());
-    const z::Ast::QualifiedTypeSpec& valType = unit().coerce(pos, list.valueType(), item.valueExpr().qTypeSpec());
+    const z::Ast::QualifiedTypeSpec& valType = tree ? item.valueExpr().qTypeSpec() : unit().coerce(pos, list.valueType(), item.valueExpr().qTypeSpec());
 
     list.keyType(keyType);
     list.valueType(valType);
@@ -1427,8 +1427,8 @@ inline const z::Ast::Expr& z::Ast::Factory::switchDictKeyValue(const z::Ast::Tok
     return expr;
 }
 
-z::Ast::DictItem* z::Ast::Factory::aDictItem(const z::Ast::Token& pos, const z::Ast::Expr& keyExpr, const z::Ast::Expr& valueExpr) {
-    const z::Ast::Expr& expr = switchDictKeyValue(pos, Unit::ExpectedTypeSpec::etDictVal, Unit::ExpectedTypeSpec::etDictKey, 0, valueExpr);
+z::Ast::DictItem* z::Ast::Factory::aDictItem(const z::Ast::Token& pos, const z::Ast::Expr& keyExpr, const z::Ast::Expr& valueExpr, const bool& tree) {
+    const z::Ast::Expr& expr = tree ? valueExpr : switchDictKeyValue(pos, Unit::ExpectedTypeSpec::etDictVal, Unit::ExpectedTypeSpec::etDictKey, 0, valueExpr);
     z::Ast::DictItem& item = unit().addNode(new z::Ast::DictItem(pos, keyExpr, expr));
     return z::ptr(item);
 }
@@ -1551,10 +1551,18 @@ z::Ast::OrderedExpr* z::Ast::Factory::aOrderedExpr(const z::Ast::Token& pos, con
 
 z::Ast::IndexExpr* z::Ast::Factory::aIndexExpr(const z::Ast::Token& pos, const z::Ast::Expr& expr, const z::Ast::Expr& index) {
     const z::Ast::TypeSpec* listTypeSpec = resolveTypedef(expr.qTypeSpec().typeSpec());
-    if(z::ref(listTypeSpec).name().string() == "data") {
-        const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "ubyte");
-        z::Ast::IndexExpr& indexExpr = unit().addNode(new z::Ast::IndexExpr(pos, qTypeSpec, expr, index));
-        return z::ptr(indexExpr);
+    if(listTypeSpec) {
+        z::string tn = ZenlangNameGenerator().tn(z::ref(listTypeSpec));
+        if(tn == "z::data") {
+            const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "ubyte");
+            z::Ast::IndexExpr& indexExpr = unit().addNode(new z::Ast::IndexExpr(pos, qTypeSpec, expr, index));
+            return z::ptr(indexExpr);
+        }
+        if(tn == "z::string") {
+            const z::Ast::QualifiedTypeSpec& qTypeSpec = getQualifiedTypeSpec(pos, "string");
+            z::Ast::IndexExpr& indexExpr = unit().addNode(new z::Ast::IndexExpr(pos, qTypeSpec, expr, index));
+            return z::ptr(indexExpr);
+        }
     }
 
     if(z::ref(listTypeSpec).name().string() == "widget") {
@@ -1572,7 +1580,7 @@ z::Ast::IndexExpr* z::Ast::Factory::aIndexExpr(const z::Ast::Token& pos, const z
         }
 
         if(z::ref(td).name().string() == "dict") {
-            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, z::ref(td).at(1).isConst(), z::ref(td).at(1).typeSpec(), true, false);
+            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, expr.qTypeSpec().isConst(), z::ref(td).at(1).typeSpec(), true, false);
             z::Ast::IndexExpr& indexExpr = unit().addNode(new z::Ast::IndexExpr(pos, qTypeSpec, expr, index));
             return z::ptr(indexExpr);
         }
@@ -1594,10 +1602,13 @@ z::Ast::IndexExpr* z::Ast::Factory::aIndexExpr(const z::Ast::Token& pos, const z
 z::Ast::SpliceExpr* z::Ast::Factory::aSpliceExpr(const z::Ast::Token& pos, const z::Ast::Expr& expr, const z::Ast::Expr& from, const z::Ast::Expr& to) {
     const z::Ast::TypeSpec* listTypeSpec = resolveTypedef(expr.qTypeSpec().typeSpec());
 
-    if((listTypeSpec) && (z::ref(listTypeSpec).name().string() == "data")) {
-        const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, expr.qTypeSpec().typeSpec(), false, false);
-        z::Ast::SpliceExpr& spliceExpr = unit().addNode(new z::Ast::SpliceExpr(pos, qTypeSpec, expr, from, to));
-        return z::ptr(spliceExpr);
+    if(listTypeSpec) {
+        z::string tn = ZenlangNameGenerator().tn(z::ref(listTypeSpec));
+        if((tn == "z::data") || (tn == "z::string")) {
+            const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(pos, false, expr.qTypeSpec().typeSpec(), false, false);
+            z::Ast::SpliceExpr& spliceExpr = unit().addNode(new z::Ast::SpliceExpr(pos, qTypeSpec, expr, from, to));
+            return z::ptr(spliceExpr);
+        }
     }
 
     const z::Ast::TemplateDefn* td = dynamic_cast<const z::Ast::TemplateDefn*>(listTypeSpec);

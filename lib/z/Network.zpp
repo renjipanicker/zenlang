@@ -1,7 +1,129 @@
+import z::String public;
 import z::Url public;
 import z::Response public;
+import z::Socket public;
 namespace z;
+enum ParseState {
+    psProtocol;
+    psStatus;
+    psMessage;
+    psKey;
+    psVal;
+    psBody;
+    psDone;
+};
+
+routine size contentLength(const Response& r) {
+    if(r.headerList has "Content-Length") {
+        auto v = r.headerList["Content-Length"];
+        return String::StringToLong(v);
+    }
+    return 0;
+}
+
 public interface Network {
-    /// \brief Retrieve the specified Utl into Response.
-    routine bool GetUrl(const Url::url& u, Response::Data& r) native;
+    /// \brief Retrieve the specified Url into Response.
+    routine bool GetUrl1(const url& u, Response& r) native;
+
+    /// \brief Retrieve the specified Url into Response.
+    routine bool GetUrl(const url& u, Response& r) {
+        socket s = Socket::OpenClient(u.host, u.port);
+        Socket::OnRecv(s) => [;string token0, string token1, ParseState ps, bool inHdr] {
+            print "on recv";
+            assert(ps != ParseState.psDone);
+            auto b = map<string>(d, 0, length(d));
+            if(b[0:4] != "HTTP") {
+                ps = ParseState.psBody; /// \todo Ugly hack to handle IIS 7.5 sometimes not sending any headers at all(?)
+            }
+            foreach(ch in b) {
+                if(inHdr && (ch == '\r')) {
+                    continue;
+                }
+                switch(ps) {
+                    case ParseState.psProtocol: {
+                        if(ch == ' ') {
+                            r.protocol = token0;
+                            token0 = "";
+                            ps = ParseState.psStatus;
+                        } else {
+                            token0 += ch;
+                        }
+                        break;
+                    }
+                    case ParseState.psStatus: {
+                        if(ch == ' ') {
+                            r.status = token0;
+                            token0 = "";
+                            ps = ParseState.psMessage;
+                        } else {
+                            token0 += ch;
+                        }
+                        break;
+                    }
+                    case ParseState.psMessage: {
+                        if(ch == '\n') {
+                            r.message = token0;
+                            token0 = "";
+                            ps = ParseState.psKey;
+                        } else {
+                            token0 += ch;
+                        }
+                        break;
+                    }
+                    case ParseState.psKey: {
+                        if(ch == '\n') {
+                            inHdr = false;
+                            if(contentLength(r) > 0) {
+                                ps = ParseState.psBody;
+    //                            r.openCacheFile();
+    //                            if(r.isCached()) {
+    //                                r.writeBody(buffer.c_str()+i+1, buffer.length()-i-1);
+    //                                i = buffer.length() - 1; // exit the for loop
+    //                            }
+                            } else {
+                                ps = ParseState.psDone;
+                            }
+                        } else {
+                            if(ch == ':') {
+                                ps = ParseState.psVal;
+                            } else {
+                                token0 += ch;
+                            }
+                        }
+                        break;
+                    }
+                    case ParseState.psVal: {
+                        if(ch == '\n') {
+                        r.headerList[token0] = token1[1:-1];
+                            token0 = "";
+                            token1 = "";
+                            ps = ParseState.psKey;
+                        } else {
+                            token1 += ch;
+                        }
+                        break;
+                    }
+                    case ParseState.psBody: {
+                        r.body += ch;
+                        if((contentLength(r) > 0) && (length(r.body) >= contentLength(r))) {
+                            ps = ParseState.psDone;
+                        }
+                        break;
+                    }
+                    case ParseState.psDone: {
+                        Socket::Close(s);
+                        break;
+                    }
+                }
+            }
+        };
+
+        string hdr;
+        hdr += "GET %{@p}%{@qs} HTTP/1.1\n" @ {@p:u.path, @qs:u.querystring};
+        hdr += "Accept: text/plain, text/html, */*\n";
+        hdr += "User-Agent: Mozilla/5.0+(compatible)\n";
+        hdr += "Host: %{@h}\n" @ {@h:u.host};
+        Socket::SendString(s, hdr);
+        return false;
+    }
 };

@@ -8,8 +8,8 @@ public interface Socket {
     function OnConnectDevice : device[socket s, pointer<Socket::OnConnect::Handler> h] native;
     function OnRecvDevice : device[socket s, pointer<Socket::OnRecv::Handler> h] native;
 
-    routine socket InitServer(const int& port) native;
-    routine socket InitClient(const string& host, const int& port) native;
+    routine socket OpenServer(const int& port) native;
+    routine socket OpenClient(const string& host, const string& port) native;
     routine void StartServer(const socket& s) native;
     routine void Close(const socket& s) native;
 

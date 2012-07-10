@@ -1,15 +1,15 @@
 namespace z;
 
-public interface Url {
-    struct url {
-        string fullUrl;
-        string protocol;
-        string host;
-        string port;
-        string path;
-        string querystring;
-    };
+public struct url {
+    string fullUrl;
+    string protocol;
+    string host;
+    string port;
+    string path;
+    string querystring;
+};
 
+public interface Url {
     /// \brief Check if the URL exists
     routine bool Exists(const url& u) native;
 
@@ -30,4 +30,7 @@ public interface Url {
 
     /// \brief url-encode string
     routine string Encode(const string& s) native;
+
+    /// \brief url-decode string
+    routine string Decode(const string& s) native;
 };
