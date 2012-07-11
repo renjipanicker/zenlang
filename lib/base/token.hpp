@@ -30,9 +30,9 @@ public:
     static z::string getText(const char* start, const char* end) {
         z::string txt;
 
-        z::assert_t(start > 0);
-        z::assert_t(end > 0);
-        z::assert_t(start <= end);
+        assert(start > 0);
+        assert(end > 0);
+        assert(start <= end);
 
         for(const char* t = start; t < end; ++t) {
             txt += *t;

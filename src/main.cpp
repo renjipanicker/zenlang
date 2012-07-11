@@ -38,7 +38,7 @@ static int showHelp(const z::Ast::Config& config) {
 }
 
 inline void initConfig(z::Ast::Project& project, z::Ast::Config& config) {
-//    z::assert_t(config.includeFileList().size() == 0);
+//    assert(config.includeFileList().size() == 0);
     config.addIncludeFile(config.pch());
     config.addIncludePath(config.apidir());
 
@@ -64,16 +64,16 @@ inline const z::Ast::Expr* resolveTypecast(const z::Ast::Expr& expr) {
 template <typename T>
 inline const T& resolveTypeTo(const z::Ast::Expr& expr) {
     const z::Ast::Expr* ex = resolveTypecast(expr);
-    z::assert_t(ex != 0);
+    assert(ex != 0);
     const T* tex = dynamic_cast<const T*>(ex);
-    z::assert_t(tex != 0);
+    assert(tex != 0);
     return z::ref(tex);
 }
 
 template <typename T>
 inline bool canResolveTypeTo(const z::Ast::Expr& expr) {
     const z::Ast::Expr* ex = resolveTypecast(expr);
-    z::assert_t(ex);
+    assert(ex);
     const T* tex = dynamic_cast<const T*>(ex);
     return(tex != 0);
 }

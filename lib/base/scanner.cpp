@@ -27,17 +27,17 @@ z::string z::Scanner::text(const int& id, const std::string& in) {
 
 std::string z::Scanner::token() const {
     size_t idx = _start - _buffer.begin();
-    z::assert_t(_cursor >= _start);
+    assert(_cursor >= _start);
     size_t len = _cursor - _start;
     if(_tokenMode == tmExtended) {
-        z::assert_t(_text >= _buffer.begin());
-        z::assert_t(_text < _cursor);
+        assert(_text >= _buffer.begin());
+        assert(_text < _cursor);
         idx = _text - _buffer.begin();
         len = _cursor - _text - 1;
     }
 
     std::string rv = _textbfr + _buffer.substr(idx, len);
-    z::assert_t(rv.length() == len);
+    assert(rv.length() == len);
     return rv;
 }
 
@@ -56,7 +56,7 @@ void z::Scanner::send(const int& id) {
 void z::Scanner::append(const std::string& in) {
     std::string::const_iterator start = _start;
     if(_tokenMode == tmExtended) {
-        z::assert_t(_text <= start);
+        assert(_text <= start);
         start = _text;
     }
 
@@ -68,11 +68,11 @@ void z::Scanner::append(const std::string& in) {
         start = _sol;
     }
 
-    z::assert_t(start >= _buffer.begin());
+    assert(start >= _buffer.begin());
     size_t shiftIndex  = start  - _buffer.begin();
 
     size_t startIndex = 0;
-    z::assert_t(start >= start);
+    assert(start >= start);
     if(_start > start) {
         startIndex = _start - start;
     }
@@ -83,19 +83,19 @@ void z::Scanner::append(const std::string& in) {
     }
 
     size_t markerIndex = 0;
-    z::assert_t(_marker >= start);
+    assert(_marker >= start);
     if(_marker > start) {
         markerIndex = _marker - start;
     }
 
     size_t cursorIndex = 0;
-    z::assert_t(_cursor >= start);
+    assert(_cursor >= start);
     if(_cursor > start) {
         cursorIndex = _cursor - start;
     }
 
     size_t solIndex = 0;
-    z::assert_t(_sol >= start);
+    assert(_sol >= start);
     if(_sol > start) {
         solIndex = _sol - start;
     }
@@ -114,9 +114,9 @@ void z::Scanner::append(const std::string& in) {
     _limit  = _buffer.end();
     _sol    = _buffer.begin() + solIndex;
 
-    z::assert_t(_cursor >= _start);
+    assert(_cursor >= _start);
     if(_tokenMode == tmExtended) {
-        z::assert_t(_text >= _buffer.begin());
+        assert(_text >= _buffer.begin());
     }
 }
 

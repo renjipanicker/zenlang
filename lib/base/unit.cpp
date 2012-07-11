@@ -21,8 +21,8 @@ z::Ast::Unit::~Unit() {
         std::cout << ZenlangNameGenerator().qtn(et.typeSpec()) << std::endl;
     }
 
-    z::assert_t(_expectedTypeSpecStack.size() == 0);
-    z::assert_t(_typeSpecStack.size() == 0);
+    assert(_expectedTypeSpecStack.size() == 0);
+    assert(_typeSpecStack.size() == 0);
 }
 
 const z::Ast::QualifiedTypeSpec* z::Ast::Unit::canCoerceX(const z::Ast::QualifiedTypeSpec& lhs, const z::Ast::QualifiedTypeSpec& rhs, CoercionResult::T& mode) const {
@@ -146,7 +146,7 @@ z::Ast::Scope& z::Ast::Unit::enterScope(const z::Ast::Token& pos) {
 
 void z::Ast::Unit::leaveScope(z::Ast::Scope& scope) {
     z::Ast::Scope& s = _scopeStack.top();
-    z::assert_t(z::ptr(s) == z::ptr(scope));
+    assert(z::ptr(s) == z::ptr(scope));
     if(_scopeCallback) {
         z::ref(_scopeCallback).leavingScope(scope);
     }
@@ -244,7 +244,7 @@ const z::Ast::VariableDefn* z::Ast::Unit::getVariableDef(const z::Ast::Token& na
         const z::Ast::VariableDefn* vref = hasMember(scope, name);
         if(vref != 0) {
             if(refType == z::Ast::RefType::XRef) {
-                z::assert_t(scopeList.size() > 0);
+                assert(scopeList.size() > 0);
                 for(ScopeList::iterator it = scopeList.begin(); it != scopeList.end(); ++it) {
                     z::Ast::Scope& scope = z::ref(*it);
 
@@ -264,7 +264,7 @@ const z::Ast::VariableDefn* z::Ast::Unit::getVariableDef(const z::Ast::Token& na
                 }
             }
 
-            z::assert_t(vref != 0);
+            assert(vref != 0);
             return vref;
         }
     }
@@ -330,7 +330,7 @@ z::Ast::TypeSpec& z::Ast::Unit::enterTypeSpec(z::Ast::TypeSpec& typeSpec) {
 
 z::Ast::TypeSpec& z::Ast::Unit::leaveTypeSpec(z::Ast::TypeSpec& typeSpec) {
     z::Ast::TypeSpec& ct = _typeSpecStack.top();
-    z::assert_t(z::ptr(ct) == z::ptr(typeSpec));
+    assert(z::ptr(ct) == z::ptr(typeSpec));
     _typeSpecStack.pop();
     return ct;
 }
@@ -580,7 +580,7 @@ const z::Ast::StructDefn* z::Ast::Unit::isListOfStructExpected() const {
             const z::Ast::QualifiedTypeSpec& valType = z::ref(td).at(1);
             sd = dynamic_cast<const z::Ast::StructDefn*>(z::ptr(valType.typeSpec()));
         } else {
-            z::assert_t(false);
+            assert(false);
         }
     }
     return sd;
@@ -608,7 +608,7 @@ inline const z::Ast::TypeSpec* z::Ast::Unit::isListOfPointerExpected() const {
                 }
             }
         } else {
-            z::assert_t(false);
+            assert(false);
         }
     }
     return 0;

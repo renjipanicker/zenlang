@@ -141,6 +141,7 @@ const z::string ifile =
 "template <V> cast    native;\n"
 
 "template <V>   list native;\n"
+"template <V>   olist native;\n"
 "template <V>   stack native;\n"
 "template <V>   queue native;\n"
 "template <K,V> dict native;\n"

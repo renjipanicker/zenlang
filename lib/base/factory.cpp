@@ -38,29 +38,15 @@ inline const z::Ast::Expr& z::Ast::Factory::getDefaultValue(const z::Ast::TypeSp
             z::Ast::PointerInstanceExpr& expr = unit().addNode(new z::Ast::PointerInstanceExpr(name, qTypeSpec, z::ref(td), z::ref(td), exprList));
             return expr;
         }
-        if((tdName == "list") || (tdName == "stack") || (tdName == "queue")) {
+        if((tdName == "list") || (tdName == "olist") || (tdName == "stack") || (tdName == "queue")) {
             z::Ast::Token value(name.filename(), name.row(), name.col(), "0");
             z::Ast::ConstantNullExpr& expr = aConstantNullExpr(value);
             return expr;
-            //const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false, false);
-            //z::Ast::ListList& llist = unit().addNode(new z::Ast::ListList(name));
-            //const z::Ast::QualifiedTypeSpec& qlType = z::ref(td).list().at(0);
-            //llist.valueType(qlType);
-            //z::Ast::ListExpr& expr = unit().addNode(new z::Ast::ListExpr(name, qTypeSpec, llist));
-            //return expr;
         }
         if(tdName == "dict") {
             z::Ast::Token value(name.filename(), name.row(), name.col(), "0");
             z::Ast::ConstantNullExpr& expr = aConstantNullExpr(value);
             return expr;
-            //const z::Ast::QualifiedTypeSpec& qTypeSpec = addQualifiedTypeSpec(name, false, z::ref(td), false, false);
-            //z::Ast::DictList& llist = unit().addNode(new z::Ast::DictList(name));
-            //const z::Ast::QualifiedTypeSpec& qlType = z::ref(td).list().at(0);
-            //const z::Ast::QualifiedTypeSpec& qrType = z::ref(td).list().at(1);
-            //llist.keyType(qlType);
-            //llist.valueType(qrType);
-            //z::Ast::DictExpr& expr = unit().addNode(new z::Ast::DictExpr(name, qTypeSpec, llist));
-            //return expr;
         }
         if(tdName == "ptr") {
             z::Ast::Token value(name.filename(), name.row(), name.col(), "0");
@@ -703,8 +689,8 @@ z::Ast::FunctionSig* z::Ast::Factory::aFunctionSig(const z::Ast::QualifiedTypeSp
 }
 
 z::Ast::ClosureRef z::Ast::Factory::aClosureList(z::Ast::Scope& xref, z::Ast::Scope& iref) {
-    z::assert_t(xref.type() == z::Ast::ScopeType::XRef);
-    z::assert_t(iref.type() == z::Ast::ScopeType::IRef);
+    assert(xref.type() == z::Ast::ScopeType::XRef);
+    assert(iref.type() == z::Ast::ScopeType::IRef);
     z::Ast::ClosureRef cref;
     cref.xref = z::ptr(xref);
     cref.iref = z::ptr(iref);
@@ -1419,7 +1405,7 @@ inline const z::Ast::Expr& z::Ast::Factory::switchDictKeyValue(const z::Ast::Tok
             const z::Ast::QualifiedTypeSpec& keyType = z::ref(td0).at(idx);
             unit().pushExpectedTypeSpec(pushType, keyType);
         } else {
-            z::assert_t(false);
+            assert(false);
         }
     } else {
         unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etAuto);
@@ -1448,7 +1434,7 @@ const z::Ast::Token& z::Ast::Factory::aEnterList(const z::Ast::Token& pos) {
             const z::Ast::QualifiedTypeSpec& keyType = z::ref(td0).at(0);
             unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etDictKey, keyType);
         } else {
-            z::assert_t(false);
+            assert(false);
         }
     } else {
         unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etAuto);
@@ -1767,11 +1753,11 @@ z::Ast::MemberExpr* z::Ast::Factory::aMemberVariableExpr(const z::Ast::Expr& exp
         qpts = z::ptr(qcts);
     }
 
-    z::assert_t(qpts != 0);
+    assert(qpts != 0);
     const Ast::Expr* expr1 = z::ptr(exprx);
     while(tss.size() > 0) {
         zz::FindMemberVarItem it = tss.pop();
-        z::assert_t(z::ref(it.td).name().string() == "ptr");
+        assert(z::ref(it.td).name().string() == "ptr");
         z::Ast::ExprList& exprList = addExprList(name);
         exprList.addExpr(z::ref(expr1));
         const Ast::DeRefInstanceExpr& drefex = unit().addNode(new z::Ast::DeRefInstanceExpr(name, z::ref(it.qts), z::ref(it.td), z::ref(it.td), exprList));

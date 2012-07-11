@@ -514,7 +514,7 @@ z::datetime z::DateTime::FromIsoString(const z::string& str) {
     z::estring estr = z::s2e(str);
     zz::parsetime(estr.c_str(), zz::isoFormat, &tm);
     time_t nt = ::mktime(&tm);
-    z::assert_t(0 < nt);
+    assert(0 < nt);
     return z::datetime(nt);
 }
 
@@ -525,7 +525,7 @@ z::datetime z::DateTime::FromIsoStringLocal(const z::string& str) {
     z::estring estr = z::s2e(str);
     zz::parsetime(estr.c_str(), zz::isoFormat, &tm);
     time_t nt = ::mktime(&tm);
-    z::assert_t(0 < nt);
+    assert(0 < nt);
     return z::datetime(nt);
 }
 
@@ -553,7 +553,7 @@ z::datetime z::DateTime::AddYears(const z::datetime& dt, const int& years) {
     std::tm tm = zz::getTm(dt);
     tm.tm_year += years;
     time_t nt = ::mktime(&tm);
-    z::assert_t(nt > 0);
+    assert(nt > 0);
     return z::datetime(nt);
 }
 
@@ -561,13 +561,13 @@ z::datetime z::DateTime::AddMonths(const z::datetime& dt, const int& months) {
     std::tm tm = zz::getTm(dt);
     tm.tm_mon += months;
     time_t nt = ::mktime(&tm);
-    z::assert_t(nt > 0);
+    assert(nt > 0);
     return z::datetime(nt);
 }
 
 z::datetime z::DateTime::AddDays(const z::datetime& dt, const int& days) {
     time_t nt = dt.val() + (days * 60 * 60 * 24);
-    z::assert_t(nt > 0);
+    assert(nt > 0);
     return z::datetime(nt);
 }
 
@@ -575,7 +575,7 @@ z::datetime z::DateTime::SetYear(const z::datetime& dt, const int& year) {
     std::tm tm = zz::getTm(dt);
     tm.tm_year = year;
     time_t nt = ::mktime(&tm);
-    z::assert_t(nt > 0);
+    assert(nt > 0);
     return z::datetime(nt);
 }
 
@@ -583,7 +583,7 @@ z::datetime z::DateTime::SetMonth(const z::datetime& dt, const int& month) {
     std::tm tm = zz::getTm(dt);
     tm.tm_mon = month - 1;
     time_t nt = ::mktime(&tm);
-    z::assert_t(nt > 0);
+    assert(nt > 0);
     return z::datetime(nt);
 }
 
@@ -591,7 +591,7 @@ z::datetime z::DateTime::SetDay(const z::datetime& dt, const int& day) {
     std::tm tm = zz::getTm(dt);
     tm.tm_mday = day - 1;
     time_t nt = ::mktime(&tm);
-    z::assert_t(nt > 0);
+    assert(nt > 0);
     return z::datetime(nt);
 }
 

@@ -54,7 +54,7 @@ inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::C
         os() << "            ConfigurationType=\"4\"" << std::endl;
         break;
     case z::Ast::Config::BuildMode::Compile:
-        z::assert_t(false);
+        assert(false);
         break;
     }
     os() << "            CharacterSet=\"1\"" << std::endl;
@@ -146,7 +146,7 @@ inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::C
         os() << "            />" << std::endl;
         break;
     case z::Ast::Config::BuildMode::Compile:
-        z::assert_t(false);
+        assert(false);
         break;
     }
     os() << "        </Configuration>" << std::endl;
@@ -343,7 +343,7 @@ void z::MsvcGenerator::Impl::run() {
             } else if(z::dir::getExtention(f) == "re") {
                 os() << "                        CommandLine='" << nfn(_project.zlibPath()) << "\\re2c.exe -f -u -c -i -o $(InputName).cpp \"$(InputPath)\"'" << std::endl;
             } else {
-                z::assert_t(false);
+                assert(false);
             }
             os() << "                        Outputs=\" $(InputName).cpp;\"" << std::endl;
             os() << "                    />" << std::endl;

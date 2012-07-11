@@ -140,7 +140,7 @@ namespace z
 
     inline const int& ClParser::getCommand() const
     {
-        z::assert_t(_cmdMap.size() > 0);
+        assert(_cmdMap.size() > 0);
         return _command;
     }
 
@@ -159,7 +159,7 @@ namespace z
 
     inline void ClParser::addCommand(const z::string& cmd, int value, const z::string& desc)
     {
-        z::assert_t(_cmdMap.find(cmd) == _cmdMap.end());
+        assert(_cmdMap.find(cmd) == _cmdMap.end());
         _hasCommands = true;
         Command& cmdd = getCommandMap(cmd);
         cmdd._desc = desc;
@@ -179,7 +179,7 @@ namespace z
     template <typename T>
     inline void ClParser::add(const z::string& cmd, const z::string& sname, const z::string& lname, const z::string& desc, T& val)
     {
-        z::assert_t(_hasCommands);
+        assert(_hasCommands);
         Command& cmdd = _cmdMap.at(cmd);
         addMap(cmdd, sname, lname, desc, val);
     }
@@ -187,7 +187,7 @@ namespace z
     template <typename T>
     inline void ClParser::add(const z::string& sname, const z::string& lname, const z::string& desc, T& val)
     {
-        z::assert_t(!_hasCommands);
+        assert(!_hasCommands);
         Command& cmd = getCommandMap("");
         addMap(cmd, sname, lname, desc, val);
     }
@@ -256,7 +256,7 @@ namespace z
             }
             // else fall-thru...
         }
-        z::assert_t(_cmdMap.has(""));
+        assert(_cmdMap.has(""));
         return _cmdMap.at("");
     }
 

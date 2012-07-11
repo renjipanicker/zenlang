@@ -45,7 +45,7 @@ namespace in {
     };
 
     template <> inline ValuePtr::operator int64_t() const {
-        z::assert_t(isLong());
+        assert(isLong());
         const z::Ast::ConstantLongExpr& val = value<z::Ast::ConstantLongExpr>();
         return val.value();
     }
@@ -199,7 +199,7 @@ namespace in {
         virtual int64_t runLong(const int64_t& lhs, const int64_t& rhs) const {
             z::unused_t(lhs);
             z::unused_t(rhs);
-            z::assert_t(false);
+            assert(false);
             return 0;
         }
     };
@@ -687,7 +687,7 @@ namespace in {
     public:
         inline ExprGenerator(InterpreterContext& ctx) : _ctx(ctx) {}
         inline ~ExprGenerator() {
-            z::assert_t(_stack.size() == 0);
+            assert(_stack.size() == 0);
         }
     };
 

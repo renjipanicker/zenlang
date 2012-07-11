@@ -135,9 +135,9 @@ namespace Ast {
         inline reverse_iterator rbegin() {return _list.rbegin();}
         inline reverse_iterator rend() {return _list.rend();}
         inline T& front() const {return _list.front().get();}
-        inline T& at(const size_type& idx) const {z::assert_t(idx < _list.size()); return _list.at(idx).get();}
+        inline T& at(const size_type& idx) const {assert(idx < _list.size()); return _list.at(idx).get();}
         inline size_type size() const {return _list.size();}
-        inline T& top() const {z::assert_t(_list.size() > 0); return _list.back().get();}
+        inline T& top() const {assert(_list.size() > 0); return _list.back().get();}
 
         inline ItemT& add(T& val) {
             _list.push_back(ItemT(val));
@@ -203,7 +203,7 @@ namespace Ast {
     protected:
         inline Node(const Token& pos) : _pos(pos), _refCount(0) {}
         virtual ~Node() {
-            z::assert_t(_refCount == 0);
+            assert(_refCount == 0);
         }
 
     private:
@@ -237,8 +237,8 @@ namespace Ast {
             /// check for its absence before adding it. \todo Find out way to ensure that we are not creating
             /// a different type.
             //ChildTypeSpecMap::const_iterator it = _childTypeSpecMap.find(typeSpec.name().string());
-            //z::assert_t(it == _childTypeSpecMap.end());
-            z::assert_t(z::ptr(typeSpec.parent()) == this);
+            //assert(it == _childTypeSpecMap.end());
+            assert(z::ptr(typeSpec.parent()) == this);
 
             Ptr<ChildTypeSpec>& sptr = _childTypeSpecList.add(typeSpec);
             _childTypeSpecMap[typeSpec.name().string()] = z::ptr(sptr.get());
@@ -302,7 +302,7 @@ namespace Ast {
         inline const List& list() const {return _list;}
         inline void posParam(const Scope& val) {_posParam.reset(val);}
         inline bool hasPosParam() const {return false;}
-        inline const Scope& posParam() const {z::assert_t(false); return _posParam.get();}
+        inline const Scope& posParam() const {assert(false); return _posParam.get();}
         inline void isTuple(const bool& val) {_isTuple = val;}
         inline const bool& isTuple() const {return _isTuple;}
     private:

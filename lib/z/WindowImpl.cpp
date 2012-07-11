@@ -293,6 +293,7 @@ z::Window::Position z::Window::getChildPosition(const z::widget& wnd) {
             ._h<z::Window::Position>(req.height);
 #elif defined(QT)
     UNIMPL();
+    return z::Window::Position();
 #elif defined(OSX)
     NSSize sz = wnd.val()._val.frame.size;
     return z::Window::Position()

@@ -276,16 +276,16 @@ void z::Lexer::Impl::push(ParserContext& pctx, const char* input, std::streamsiz
 
     dump("push(2)");
 
-    z::assert_t(_buffer <= _limit);
-    z::assert_t(_limit <= _bufferEnd);
-    z::assert_t((_limit + required) <= _bufferEnd);
+    assert(_buffer <= _limit);
+    assert(_limit <= _bufferEnd);
+    assert((_limit + required) <= _bufferEnd);
     memcpy(_limit, input, (size_t)inputSize);
     _limit += inputSize;
     dump("push(3)");
-    z::assert_t(_limit <= _bufferEnd);
+    assert(_limit <= _bufferEnd);
     memset(_limit, 0, _bufferEnd - _limit + 0);
     _limit += maxFill;
-    z::assert_t(_limit <= _bufferEnd);
+    assert(_limit <= _bufferEnd);
 
     dump("push(4)");
 

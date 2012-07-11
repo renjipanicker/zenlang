@@ -15,9 +15,9 @@ namespace z {
 
     template <typename T>
     inline T& ref(T* t) {
-        // this if-syntax (instead of z::assert_t(t)) makes it easier to set breakpoints for debugging.
+        // this if-syntax (instead of assert(t)) makes it easier to set breakpoints for debugging.
         if(t == 0) {
-            z::assert_t(NULL_PTR_ERROR);
+            assert(NULL_PTR_ERROR);
         }
         return (*t);
     }
@@ -25,7 +25,7 @@ namespace z {
     template <typename T>
     inline T* ptr(T& t) {
         if((&t) == 0) {
-            z::assert_t(NULL_REF_ERROR);
+            assert(NULL_REF_ERROR);
         }
         return &t;
     }
@@ -33,7 +33,7 @@ namespace z {
     template <typename T>
     inline unsigned long pad(T& t) {
         if((&t) == 0) {
-            z::assert_t(NULL_REF_ERROR);
+            assert(NULL_REF_ERROR);
         }
         return (unsigned long)(&t);
     }
@@ -496,7 +496,7 @@ namespace z {
     public:
         explicit inline Exception(const z::string& src, const z::string& msg) : _msg(msg) {
             elog(src, _msg);
-            z::assert_t(false);
+            assert(false);
         }
     private:
         const z::string _msg;
@@ -512,10 +512,10 @@ namespace z {
         }
         inline bool empty() const {return (_val == 0);}
         inline T* ptr() {return _val;}
-        inline T& get() {z::assert_t(!empty()); return z::ref(_val);}
-        inline T* operator->() {z::assert_t(!empty()); return ptr();}
+        inline T& get() {assert(!empty()); return z::ref(_val);}
+        inline T* operator->() {assert(!empty()); return ptr();}
         inline T& operator*() {return get();}
-        inline T* take() {z::assert_t(!empty()); T* v = _val; _val = 0; return v;}
+        inline T* take() {assert(!empty()); T* v = _val; _val = 0; return v;}
         inline void reset(T* val) {delete _val; _val = val;}
         inline void reset() {reset(0);}
     private:
@@ -544,7 +544,7 @@ namespace z {
             throw Exception("z::map", z::string("%{k} out of bounds\n").arg("k", from));
         }
         const uint8_t* v = d.c_str() + from;
-        z::assert_t(v != 0);
+        assert(v != 0);
         const T* t = reinterpret_cast<const T*>(v);
         return z::ref(t);
     }
@@ -556,7 +556,7 @@ namespace z {
             throw Exception("z::map", z::string("%{k} out of bounds\n").arg("k", from));
         }
         const uint8_t* v = d.c_str() + from;
-        z::assert_t(v != 0);
+        assert(v != 0);
         z::estring es((const char*)v, len);
         z::string r = z::e2s(es);
         return r;
@@ -665,7 +665,7 @@ namespace z {
 
         template <typename VisT>
         inline void visit(VisT& vis) {
-            z::assert_t(false);
+            assert(false);
 //            vis.visit(_v);
         }
 
@@ -724,25 +724,25 @@ namespace z {
         typedef z::container<V, ListT > BaseT;
 
         inline V& front() {
-            z::assert_t(BaseT::_list.size() > 0);
+            assert(BaseT::_list.size() > 0);
             V& v = BaseT::_list.front();
             return v;
         }
 
         inline const V& front() const {
-            z::assert_t(BaseT::_list.size() > 0);
+            assert(BaseT::_list.size() > 0);
             const V& v = BaseT::_list.front();
             return v;
         }
 
         inline V& back() {
-            z::assert_t(BaseT::_list.size() > 0);
+            assert(BaseT::_list.size() > 0);
             V& v = BaseT::_list.back();
             return v;
         }
 
         inline const V& back() const {
-            z::assert_t(BaseT::_list.size() > 0);
+            assert(BaseT::_list.size() > 0);
             const V& v = BaseT::_list.back();
             return v;
         }
@@ -757,13 +757,13 @@ namespace z {
         typedef z::listbase<V, std::list<V> > BaseT;
 
         inline V& top() {
-            z::assert_t(BaseT::_list.size() > 0);
+            assert(BaseT::_list.size() > 0);
             V& v = BaseT::_list.front();
             return v;
         }
 
         inline const V& top() const {
-            z::assert_t(BaseT::_list.size() > 0);
+            assert(BaseT::_list.size() > 0);
             const V& v = BaseT::_list.front();
             return v;
         }
@@ -774,7 +774,7 @@ namespace z {
         }
 
         inline V pop() {
-            z::assert_t(BaseT::_list.size() > 0);
+            assert(BaseT::_list.size() > 0);
             V v = BaseT::_list.front();
             BaseT::_list.pop_front();
             return v;
@@ -791,7 +791,7 @@ namespace z {
         }
 
         inline V dequeue() {
-            z::assert_t(BaseT::_list.size() > 0);
+            assert(BaseT::_list.size() > 0);
             V v = BaseT::_list.front();
             BaseT::_list.pop_front();
             return v;
@@ -1123,7 +1123,7 @@ namespace z {
 
         inline void push(InitT* inst) {
             if(_tail == 0) {
-                z::assert_t(_head == 0);
+                assert(_head == 0);
                 _head = inst;
                 _next = _head;
             } else {
@@ -1580,4 +1580,4 @@ namespace z {
 #define _TRACE(c, f) z::tracer _s_(c, f)
 #define DISABLE_ASSIGNMENT(c) private: inline c& operator=(const c& /*src*/){throw z::Exception("", z::string(#c));}
 #define DISABLE_COPYCTOR(c) private: inline c(const c& /*src*/){throw z::Exception("", z::string(#c));}
-#define UNIMPL() z::assert_t(false)
+#define UNIMPL() assert(false)

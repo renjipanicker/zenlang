@@ -38,6 +38,8 @@ namespace sg {
                 name += "z::pointer";
             } else if(z::ref(templateDefn).name().string() == "list") {
                 name += "z::list";
+            } else if(z::ref(templateDefn).name().string() == "olist") {
+                name += "z::olist";
             } else if(z::ref(templateDefn).name().string() == "stack") {
                 name += "z::stack";
             } else if(z::ref(templateDefn).name().string() == "queue") {

@@ -495,26 +495,24 @@ private:
     typedef z::queue<z::Future*> InvocationList;
     InvocationList _list;
 public:
-    z::size run(const z::size& cnt);
-    void add(Future* future);
+    inline z::size run(const z::size& cnt) {
+        assert(s_tctx != 0);
+        for(z::size i = 0; i < cnt; ++i) {
+            if(_list.size() == 0) {
+                break;
+            }
+            z::autoptr<z::Future> ptr(_list.dequeue());
+            ptr->run();
+        }
+        return _list.size();
+    }
+
+    inline void add(Future* future) {
+        _list.enqueue(future);
+    }
+
     inline size_t size() const {return _list.size();}
 };
-
-void z::RunQueue::add(z::Future* future) {
-    _list.enqueue(future);
-}
-
-z::size z::RunQueue::run(const z::size& cnt) {
-    z::assert_t(s_tctx != 0);
-    for(z::size i = 0; i < cnt; ++i) {
-        if(_list.size() == 0) {
-            break;
-        }
-        z::autoptr<z::Future> ptr(_list.dequeue());
-        ptr->run();
-    }
-    return _list.size();
-}
 
 ///////////////////////////////////////////////////////////////
 /// \brief Maintains the run queue's
@@ -602,12 +600,12 @@ z::ThreadContext& z::ctx() {
 }
 
 z::ThreadContext::ThreadContext(z::RunQueue& queue) : _queue(queue) {
-    z::assert_t(s_tctx == 0);
+    assert(s_tctx == 0);
     s_tctx = this;
 }
 
 z::ThreadContext::~ThreadContext() {
-    z::assert_t(s_tctx != 0);
+    assert(s_tctx != 0);
     s_tctx = 0;
 }
 
@@ -767,7 +765,7 @@ z::application::application(int argc, char** argv) : _argc(argc), _argv(argv), _
     DWORD rv = GetModuleFileName(NULL, path, len);
     if(rv == 0) {
         DWORD ec = GetLastError();
-        z::assert_t(ec != ERROR_SUCCESS);
+        assert(ec != ERROR_SUCCESS);
         throw z::Exception("z::application", z::string("Internal error retrieving process path: %{s}").arg("s", ec));
     }
 #elif defined(__APPLE__)
@@ -910,7 +908,7 @@ z::application::~application() {
 #if defined(WIN32)
 static HINSTANCE s_hInstance = 0;
 HINSTANCE z::application::instance() const {
-    z::assert_t(0 != s_hInstance);
+    assert(0 != s_hInstance);
     return s_hInstance;
 }
 #endif
