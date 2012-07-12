@@ -188,22 +188,22 @@ rGlobalDefaultStatement ::= DEFAULT rTypeSpec(T) ASSIGNEQUAL rExpr(E) SEMI. {z::
 
 //-------------------------------------------------
 // definition specifiers
-%type rDefinitionType {z::Ast::DefinitionType::T}
-rDefinitionType(L) ::= NATIVE. {L = z::Ast::DefinitionType::Native;}
-rDefinitionType(L) ::= FINAL.  {L = z::Ast::DefinitionType::Final;}
-rDefinitionType(L) ::= .       {L = z::Ast::DefinitionType::Final;}
+%type rDefinitionType {int}
+rDefinitionType(L) ::= rDefinitionType(R) NATIVE. {L = R | z::Ast::DefinitionType::tNative;}
+rDefinitionType(L) ::= rDefinitionType(R) FINAL.  {L = R | z::Ast::DefinitionType::tFinal;}
+rDefinitionType(L) ::= .                          {L = 0; } //(z::Ast::DefinitionType::T);}
 
 //-------------------------------------------------
-// definition specifiers
-%type rExDefinitionType {z::Ast::DefinitionType::T}
-rExDefinitionType(L) ::= ABSTRACT. {L = z::Ast::DefinitionType::Abstract;}
-rExDefinitionType(L) ::= rDefinitionType(R). {L = R;}
+// definition specifiers for structs and functions
+%type rExDefinitionType {int}
+rExDefinitionType(L) ::= rDefinitionType(R)  ABSTRACT. {L = R | z::Ast::DefinitionType::tAbstract;}
+rExDefinitionType(L) ::= rDefinitionType(R).           {L = R;}
 
 //-------------------------------------------------
-// definition specifiers
-%type rAbstractDefinitionType {z::Ast::DefinitionType::T}
-rAbstractDefinitionType(L) ::= ABSTRACT. {L = z::Ast::DefinitionType::Abstract;}
-rAbstractDefinitionType(L) ::= . {L = z::Ast::DefinitionType::Abstract;}
+// definition specifiers for structs
+%type rStructDefinitionType {int}
+rStructDefinitionType(L) ::= rExDefinitionType(R)  NOCOPY. {L = R | z::Ast::DefinitionType::tNoCopy;}
+rStructDefinitionType(L) ::= rExDefinitionType(R).         {L = R;}
 
 //-------------------------------------------------
 // all type def's.
@@ -314,7 +314,7 @@ rPreRootStructDefn(L) ::= rEnterRootStructDefn(S) rStructMemberDefnBlock. {L = z
 
 //-------------------------------------------------
 %type rEnterRootStructDefn {z::Ast::RootStructDefn*}
-rEnterRootStructDefn(L) ::= STRUCT rStructId(name) rExDefinitionType(D). {L = z::c2f(pctx).aEnterRootStructDefn(z::t2t(name), D);}
+rEnterRootStructDefn(L) ::= STRUCT rStructId(name) rStructDefinitionType(D). {L = z::c2f(pctx).aEnterRootStructDefn(z::t2t(name), D);}
 
 //-------------------------------------------------
 // child struct definitions
@@ -327,7 +327,7 @@ rPreChildStructDefn(L) ::= rEnterChildStructDefn(S) rStructMemberDefnBlock. {L =
 
 //-------------------------------------------------
 %type rEnterChildStructDefn {z::Ast::ChildStructDefn*}
-rEnterChildStructDefn(L) ::= STRUCT rStructId(name) COLON rStructTypeSpec(B) rExDefinitionType(D). {L = z::c2f(pctx).aEnterChildStructDefn(z::t2t(name), z::ref(B), D);}
+rEnterChildStructDefn(L) ::= STRUCT rStructId(name) COLON rStructTypeSpec(B) rStructDefinitionType(D). {L = z::c2f(pctx).aEnterChildStructDefn(z::t2t(name), z::ref(B), D);}
 
 //-------------------------------------------------
 rStructId(L) ::= STRUCT_TYPE(R). {L = R;}
@@ -360,7 +360,7 @@ rRoutineDecl(L) ::= rPreRoutineDecl(R) SEMI. {L = R;}
 //-------------------------------------------------
 %type rPreRoutineDecl {z::Ast::RoutineDecl*}
 rPreRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) rInParamsList(in) rDefinitionType(D). {L = z::c2f(pctx).aRoutineDecl(z::ref(out), z::t2t(name), z::ref(in), D);}
-rPreRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) LBRACKET ELIPSIS RBRACKET NATIVE. {L = z::c2f(pctx).aVarArgRoutineDecl(z::ref(out), z::t2t(name), z::Ast::DefinitionType::Native);}
+rPreRoutineDecl(L) ::= ROUTINE rQualifiedTypeSpec(out) rRoutineId(name) LBRACKET ELIPSIS RBRACKET NATIVE. {L = z::c2f(pctx).aVarArgRoutineDecl(z::ref(out), z::t2t(name), z::Ast::DefinitionType().isNative());}
 
 //-------------------------------------------------
 // routine definition
@@ -434,7 +434,7 @@ rInterfaceMemberDefn ::= rUserDefinedTypeSpecDef(R). {z::c2f(pctx).aInterfaceMem
 //-------------------------------------------------
 // event declarations
 %type rEventDecl {z::Ast::EventDecl*}
-rEventDecl(L) ::= EVENT(B) LBRACKET rVariableDefn(in) RBRACKET rDefinitionType(ED) LINK rFunctionSig(functionSig) rAbstractDefinitionType(HD) SEMI. {L = z::c2f(pctx).aEventDecl(z::t2t(B), z::ref(in), ED, z::ref(functionSig), HD);}
+rEventDecl(L) ::= EVENT(B) LBRACKET rVariableDefn(in) RBRACKET rDefinitionType(ED) LINK rFunctionSig(functionSig) SEMI. {L = z::c2f(pctx).aEventDecl(z::t2t(B), z::ref(in), ED, z::ref(functionSig), z::Ast::DefinitionType().isHandler());}
 
 //-------------------------------------------------
 // function signature.

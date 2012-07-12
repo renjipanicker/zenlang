@@ -116,7 +116,11 @@
       <item> value </item>
       <item> ptr </item>
       <item> list </item>
+      <item> olist </item>
+      <item> rlist </item>
       <item> dict </item>
+      <item> odict </item>
+      <item> rdict </item>
       <item> tree </item>
       <item> date </item>
       <item> time </item>

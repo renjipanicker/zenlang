@@ -786,7 +786,7 @@ namespace sg {
         }
 
         void visit(const z::Ast::TypedefDecl& node) {
-            if(node.defType() == z::Ast::DefinitionType::Native) {
+            if(node.defType().native()) {
                 _os() << z::Indent::get() << "// typedef " << node.name() << " native;" << std::endl;
             } else {
                 throw z::Exception("StlcppGenerator", z::zfmt(node.pos(), "Internal error: '%{s}'").arg("s", node.name()) );
@@ -794,13 +794,13 @@ namespace sg {
         }
 
         void visit(const z::Ast::TypedefDefn& node) {
-            if(node.defType() != z::Ast::DefinitionType::Native) {
+            if(!node.defType().native()) {
                 _os() << z::Indent::get() << "typedef " << StlcppNameGenerator().qtn(node.qTypeSpec()) << " " << node.name() << ";" << std::endl;
             }
         }
 
         void visit(const z::Ast::TemplateDecl& node) {
-            if(node.defType() != z::Ast::DefinitionType::Native) {
+            if(!node.defType().native()) {
                 throw z::Exception("StlcppGenerator", z::zfmt(node.pos(), "Internal error: template declaration cannot be generated '%{s}'").arg("s", node.name()) );
             }
         }
@@ -810,13 +810,13 @@ namespace sg {
         }
 
         void visit(const z::Ast::EnumDecl& node) {
-            if(node.defType() != z::Ast::DefinitionType::Native) {
+            if(!node.defType().native()) {
                 throw z::Exception("StlcppGenerator", z::zfmt(node.pos(), "Internal error: enum definition cannot be generated '%{s}'").arg("s", node.name()) );
             }
         }
 
         void visit(const z::Ast::EnumDefn& node) {
-            if(node.defType() != z::Ast::DefinitionType::Native) {
+            if(!node.defType().native()) {
                 _os() << z::Indent::get() << "struct " << node.name() << " {" << std::endl;
                 _os() << z::Indent::get() << "  enum T {" << std::endl;
                 z::string sep = " ";
@@ -848,7 +848,7 @@ namespace sg {
                 // do not return here. We still need to fall-thru and generate the body in the source file.
             }
 
-            if(node.defType() == z::Ast::DefinitionType::Native) {
+            if(node.defType().native()) {
                 _os() << z::Indent::get() << "struct " << node.name() << ";" << std::endl;
                 return;
             }
@@ -861,11 +861,16 @@ namespace sg {
             _os() << " {" << std::endl;
 
             // if abstract type, generate virtual dtor
-            if(node.defType() == z::Ast::DefinitionType::Abstract) {
+            if((node.defType().abstract()) || (node.defType().handler())) {
                 _os() << z::Indent::get() << "    virtual ~" << node.name() << "() {}" << std::endl;
             }
 
             GeneratorContext(GeneratorContext::TargetMode::TypeDecl, GeneratorContext::IndentMode::NoBrace).run(_config, _fs, node.block());
+
+            if(node.defType().nocopy()) {
+                _os() << z::Indent::get() << "private:" << std::endl;
+                _os() << z::Indent::get() << "    inline " << node.name() << "(const " << node.name() << "& /*src*/) {}" << std::endl;
+            }
 
             _os() << z::Indent::get() << "};" << std::endl;
             _os() << std::endl;
@@ -1017,17 +1022,18 @@ namespace sg {
             z::string out1 = getOutType(node);
             _os() << z::Indent::get() << "public: // run-function" << std::endl;
             if(isTest) {
-                _os() << z::Indent::get() << "    " << out1 << " run();" << std::endl;
+                _os() << z::Indent::get() << "    " << out1 << " run();//1" << std::endl;
             } else {
-                if((isDecl) && ((node.defType() == z::Ast::DefinitionType::Final) || (node.defType() == z::Ast::DefinitionType::Abstract))) {
+                if((isDecl) && ((node.defType().final()) || (node.defType().abstract()) || (node.defType().handler()))) {
                     _os() << z::Indent::get() << "    virtual ~" << node.sig().name() << "(){}" << std::endl;
                     _os() << z::Indent::get() << "    virtual " << out1 << " run(";
                     writeScopeParamList(_os, node.sig().inScope(), "p");
                     _os() << ") = 0;" << std::endl;
+                    _os() << "//2: f: " << node.defType().final() << ", ab: " << node.defType().abstract() << ", ha: " << node.defType().handler() << std::endl;
                 } else {
                     _os() << z::Indent::get() << "    " << out1 << " run(";
                     writeScopeParamList(_os, node.sig().inScope(), "p");
-                    _os() << ");" << std::endl;
+                    _os() << "); //3" << std::endl;
                 }
 
                 _os() << z::Indent::get() << "    inline _Out _run(const _In& _in) {";
@@ -1144,7 +1150,7 @@ namespace sg {
 
 
         void visit(const z::Ast::ChildFunctionDecl& node) {
-            if(node.defType() == z::Ast::DefinitionType::Native) {
+            if(node.defType().native()) {
                 z::string out1 = getOutType(node);
 
                 enterFunction(node);
@@ -1191,7 +1197,7 @@ namespace sg {
         }
 
         inline void visitInterfaceDefn(const z::Ast::InterfaceDefn& node, const z::Ast::InterfaceDefn* base) {
-            if(node.defType() == z::Ast::DefinitionType::Native) {
+            if(node.defType().native()) {
                 _os() << z::Indent::get() << "struct " << node.name() << ";" << std::endl;
                 return;
             }
@@ -1328,7 +1334,7 @@ namespace sg {
 
         void visit(const z::Ast::ChildFunctionDecl& node) {
             visitChildrenIndent(node);
-            if(node.defType() == z::Ast::DefinitionType::Native) {
+            if(node.defType().native()) {
                 writeSpecialStatic(node);
             }
         }
@@ -1373,7 +1379,7 @@ namespace sg {
         void visit(const z::Ast::EventDecl& node) {
             visitChildrenIndent(node);
             _os() << StlcppNameGenerator().tn(node) << " " << StlcppNameGenerator().tn(node) << "::instance;" << std::endl;
-            if(node.defType() == z::Ast::DefinitionType::Final) {
+            if(!node.defType().native()) {
                 _os() << "void " << StlcppNameGenerator().tn(node)
                       << "::addHandler(" << StlcppNameGenerator().qtn(node.in().qTypeSpec())
                       << " " << node.in().name() << ", const z::pointer<Handler>& h) {/*actual addition done in base class*/}" << std::endl;

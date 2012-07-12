@@ -18,11 +18,29 @@ namespace Ast {
     /// \brief Outer struct for DefinitionType enumeration.
     struct DefinitionType {
         /// \brief The Definition type for any user-defined TypeSpec.
+        /// Ideally this should be private, but the .y file needs it.
         enum T {
-            Native,     /// TypeSpec is implemented in native code
-            Abstract,   /// TypeSpec is an abstract type (struct and function)
-            Final       /// TypeSpec cannot be overridden and is implemented in zenlang code
+            tNative   = 0x01,     /// TypeSpec is implemented in native code
+            tAbstract = 0x02,     /// TypeSpec is an abstract type (struct and function)
+            tHandler  = 0x04,     /// TypeSpec is a event-handler, specal case of abstract type (function only)
+            tNoCopy   = 0x10,     /// TypeSpec is a struct that cannot be copied
+            tFinal    = 0x20      /// TypeSpec cannot be overridden and is implemented in zenlang code
         };
+    public:
+        inline DefinitionType() : _t(0) {}
+        inline DefinitionType(const int& t) : _t(t) {}
+        inline bool native() const {return (_t & tNative);}
+        inline bool abstract() const {return (_t & tAbstract);}
+        inline bool handler() const {return (_t & tHandler);}
+        inline bool nocopy() const {return (_t & tNoCopy);}
+        inline bool final() const {return (_t & tFinal);}
+        inline DefinitionType& isNative()  {_t |= tNative; return z::ref(this);}
+        inline DefinitionType& isAbstract()  {_t |= tAbstract; return z::ref(this);}
+        inline DefinitionType& isHandler()  {_t |= tHandler; return z::ref(this);}
+        inline DefinitionType& isNoCopy()  {_t |= tNoCopy; return z::ref(this);}
+        inline DefinitionType& isFinal()  {_t |= tFinal; return z::ref(this);}
+//    private:
+        int _t;
     };
 
     /// \brief Outer struct for HeaderType enumeration.
@@ -329,22 +347,22 @@ namespace Ast {
 
     class UserDefinedTypeSpec : public ChildTypeSpec {
     public:
-        inline UserDefinedTypeSpec(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : ChildTypeSpec(parent, name), _defType(defType) {}
-        inline const DefinitionType::T& defType() const {return _defType;}
+        inline UserDefinedTypeSpec(const TypeSpec& parent, const Token& name, const DefinitionType& defType) : ChildTypeSpec(parent, name), _defType(defType) {}
+        inline const DefinitionType& defType() const {return _defType;}
     private:
-        const DefinitionType::T _defType;
+        const DefinitionType _defType;
     };
 
     class TypedefDecl : public UserDefinedTypeSpec {
     public:
-        inline TypedefDecl(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType) {}
+        inline TypedefDecl(const TypeSpec& parent, const Token& name, const DefinitionType& defType) : UserDefinedTypeSpec(parent, name, defType) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class TypedefDefn : public UserDefinedTypeSpec {
     public:
-        inline TypedefDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::QualifiedTypeSpec& qTypeSpec) : UserDefinedTypeSpec(parent, name, defType), _qTypeSpec(qTypeSpec) {}
+        inline TypedefDefn(const TypeSpec& parent, const Token& name, const DefinitionType& defType, const Ast::QualifiedTypeSpec& qTypeSpec) : UserDefinedTypeSpec(parent, name, defType), _qTypeSpec(qTypeSpec) {}
         inline const Ast::QualifiedTypeSpec& qTypeSpec() const {return _qTypeSpec.get();}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -366,7 +384,7 @@ namespace Ast {
 
     class TemplateDecl : public UserDefinedTypeSpec {
     public:
-        inline TemplateDecl(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const TemplatePartList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
+        inline TemplateDecl(const TypeSpec& parent, const Token& name, const DefinitionType& defType, const TemplatePartList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
     public:
         inline const TemplatePartList::List& list() const {return _list.get().list();}
     private:
@@ -391,7 +409,7 @@ namespace Ast {
     public:
         typedef TemplateTypePartList::List::size_type size_type;
     public:
-        inline TemplateDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const TemplateDecl& templateDecl, const TemplateTypePartList& list)
+        inline TemplateDefn(const TypeSpec& parent, const Token& name, const DefinitionType& defType, const TemplateDecl& templateDecl, const TemplateTypePartList& list)
             : UserDefinedTypeSpec(parent, name, defType), _templateDecl(templateDecl), _list(list) {}
     public:
         inline const TemplateTypePartList::List& list() const {return _list.get().list();}
@@ -406,19 +424,19 @@ namespace Ast {
 
     class EnumBase : public UserDefinedTypeSpec {
     public:
-        inline EnumBase(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType) {}
+        inline EnumBase(const TypeSpec& parent, const Token& name, const DefinitionType& defType) : UserDefinedTypeSpec(parent, name, defType) {}
     };
 
     class EnumDecl : public EnumBase {
     public:
-        inline EnumDecl(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : EnumBase(parent, name, defType) {}
+        inline EnumDecl(const TypeSpec& parent, const Token& name, const DefinitionType& defType) : EnumBase(parent, name, defType) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class EnumDefn : public EnumBase {
     public:
-        inline EnumDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Scope& list) : EnumBase(parent, name, defType), _list(list) {}
+        inline EnumDefn(const TypeSpec& parent, const Token& name, const DefinitionType& defType, const Scope& list) : EnumBase(parent, name, defType), _list(list) {}
         inline const Scope::List& list() const {return _list.get().list();}
         inline const Ast::Scope& scope() const {return _list.get();}
     private:
@@ -430,7 +448,7 @@ namespace Ast {
     class CompoundStatement;
     class PropertyDecl : public UserDefinedTypeSpec {
     protected:
-        inline PropertyDecl(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::QualifiedTypeSpec& propertyType) : UserDefinedTypeSpec(parent, name, defType), _propertyType(propertyType) {}
+        inline PropertyDecl(const TypeSpec& parent, const Token& name, const DefinitionType& defType, const Ast::QualifiedTypeSpec& propertyType) : UserDefinedTypeSpec(parent, name, defType), _propertyType(propertyType) {}
     public:
         inline const Ast::QualifiedTypeSpec& qTypeSpec() const {return _propertyType.get();}
     public:
@@ -443,7 +461,7 @@ namespace Ast {
 
     class PropertyDeclRW : public PropertyDecl {
     public:
-        inline PropertyDeclRW(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::QualifiedTypeSpec& propertyType) : PropertyDecl(parent, name, defType, propertyType) {}
+        inline PropertyDeclRW(const TypeSpec& parent, const Token& name, const DefinitionType& defType, const Ast::QualifiedTypeSpec& propertyType) : PropertyDecl(parent, name, defType, propertyType) {}
     public:
         inline const Ast::CompoundStatement& setBlock() const {return _setBlock.get();}
         inline void setSetBlock(const Ast::CompoundStatement& val) {_setBlock.reset(val);}
@@ -455,14 +473,14 @@ namespace Ast {
 
     class PropertyDeclRO : public PropertyDecl {
     public:
-        inline PropertyDeclRO(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, const Ast::QualifiedTypeSpec& propertyType) : PropertyDecl(parent, name, defType, propertyType) {}
+        inline PropertyDeclRO(const TypeSpec& parent, const Token& name, const DefinitionType& defType, const Ast::QualifiedTypeSpec& propertyType) : PropertyDecl(parent, name, defType, propertyType) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class StructDecl : public UserDefinedTypeSpec {
     public:
-        inline StructDecl(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType) {}
+        inline StructDecl(const TypeSpec& parent, const Token& name, const DefinitionType& defType) : UserDefinedTypeSpec(parent, name, defType) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
@@ -471,7 +489,7 @@ namespace Ast {
     public:
         typedef SLst<const PropertyDecl> PropertyList;
     protected:
-        inline StructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, Ast::Scope& list, Ast::CompoundStatement& block) : UserDefinedTypeSpec(parent, name, defType), _list(list), _block(block) {}
+        inline StructDefn(const TypeSpec& parent, const Token& name, const DefinitionType& defType, Ast::Scope& list, Ast::CompoundStatement& block) : UserDefinedTypeSpec(parent, name, defType), _list(list), _block(block) {}
     public:
         inline const PropertyList& propertyList() const {return _propertyList;}
         inline const Ast::Scope::List& list() const {return _list.get().list();}
@@ -488,14 +506,14 @@ namespace Ast {
 
     class RootStructDefn : public StructDefn {
     public:
-        inline RootStructDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, Ast::Scope& list, Ast::CompoundStatement& block) : StructDefn(parent, name, defType, list, block) {}
+        inline RootStructDefn(const TypeSpec& parent, const Token& name, const DefinitionType& defType, Ast::Scope& list, Ast::CompoundStatement& block) : StructDefn(parent, name, defType, list, block) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class ChildStructDefn : public StructDefn {
     public:
-        inline ChildStructDefn(const TypeSpec& parent, const StructDefn& base, const Token& name, const DefinitionType::T& defType, Ast::Scope& list, Ast::CompoundStatement& block) : StructDefn(parent, name, defType, list, block), _base(base) {}
+        inline ChildStructDefn(const TypeSpec& parent, const StructDefn& base, const Token& name, const DefinitionType& defType, Ast::Scope& list, Ast::CompoundStatement& block) : StructDefn(parent, name, defType, list, block), _base(base) {}
         inline const StructDefn& base() const {return _base.get();}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -505,7 +523,7 @@ namespace Ast {
 
     class Routine : public UserDefinedTypeSpec {
     protected:
-        inline Routine(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _outType(outType), _in(in) {}
+        inline Routine(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const DefinitionType& defType) : UserDefinedTypeSpec(parent, name, defType), _outType(outType), _in(in) {}
     public:
         inline const Ast::QualifiedTypeSpec& outType() const {return _outType.get();}
         inline const Ast::Scope::List& in()  const {return _in.get().list();}
@@ -518,14 +536,14 @@ namespace Ast {
 
     class RoutineDecl : public Routine {
     public:
-        inline RoutineDecl(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const DefinitionType::T& defType) : Routine(parent, outType, name, in, defType) {}
+        inline RoutineDecl(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const DefinitionType& defType) : Routine(parent, outType, name, in, defType) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class RoutineDefn : public Routine {
     public:
-        inline RoutineDefn(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const DefinitionType::T& defType)
+        inline RoutineDefn(const TypeSpec& parent, const Ast::QualifiedTypeSpec& outType, const Ast::Token& name, Ast::Scope& in, const DefinitionType& defType)
             : Routine(parent, outType, name, in, defType) {}
     public:
         inline const Ast::CompoundStatement& block() const {return _block.get();}
@@ -553,7 +571,7 @@ namespace Ast {
 
     class Function : public UserDefinedTypeSpec {
     public:
-        inline Function(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref) : UserDefinedTypeSpec(parent, name, defType), _xref(xref), _iref(iref), _sig(sig) {}
+        inline Function(const TypeSpec& parent, const Ast::Token& name, const DefinitionType& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref) : UserDefinedTypeSpec(parent, name, defType), _xref(xref), _iref(iref), _sig(sig) {}
         inline const Ast::Scope::List& xref() const {return _xref.get().list();}
         inline Ast::Scope& xrefScope()  const {return _xref.get();}
         inline const Ast::Scope::List& iref() const {return _iref.get().list();}
@@ -567,13 +585,13 @@ namespace Ast {
 
     class FunctionDecl : public Function {
     protected:
-        inline FunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref)
+        inline FunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref)
             : Function(parent, name, defType, sig, xref, iref) {}
     };
 
     class RootFunctionDecl : public FunctionDecl {
     public:
-        inline RootFunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref)
+        inline RootFunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref)
             : FunctionDecl(parent, name, defType, sig, xref, iref) {}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -581,7 +599,7 @@ namespace Ast {
 
     class ChildFunctionDecl : public FunctionDecl {
     public:
-        inline ChildFunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref, const Ast::Function& base)
+        inline ChildFunctionDecl(const TypeSpec& parent, const Ast::Token& name, const DefinitionType& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref, const Ast::Function& base)
             : FunctionDecl(parent, name, defType, sig, xref, iref), _base(base) {}
         inline const Ast::Function& base() const {return _base.get();}
     private:
@@ -592,7 +610,7 @@ namespace Ast {
 
     class FunctionDefn : public Function {
     protected:
-        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref)
+        inline FunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref)
             : Function(parent, name, defType, sig, xref, iref) {}
     public:
         inline const Ast::CompoundStatement& block() const {return _block.get();}
@@ -603,7 +621,7 @@ namespace Ast {
 
     class RootFunctionDefn : public FunctionDefn {
     public:
-        inline RootFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref)
+        inline RootFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref)
             : FunctionDefn(parent, name, defType, sig, xref, iref) {}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -611,7 +629,7 @@ namespace Ast {
 
     class ChildFunctionDefn : public FunctionDefn {
     public:
-        inline ChildFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType::T& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref, const Ast::Function& base)
+        inline ChildFunctionDefn(const TypeSpec& parent, const Ast::Token& name, const DefinitionType& defType, const Ast::FunctionSig& sig, Ast::Scope& xref, Ast::Scope& iref, const Ast::Function& base)
             : FunctionDefn(parent, name, defType, sig, xref, iref), _base(base) {}
         inline const Ast::Function& base() const {return _base.get();}
     private:
@@ -633,7 +651,7 @@ namespace Ast {
 
     class InterfaceDefn : public UserDefinedTypeSpec {
     protected:
-        inline InterfaceDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, Ast::Scope& list, Ast::CompoundStatement& block) : UserDefinedTypeSpec(parent, name, defType), _list(list), _block(block) {}
+        inline InterfaceDefn(const TypeSpec& parent, const Token& name, const DefinitionType& defType, Ast::Scope& list, Ast::CompoundStatement& block) : UserDefinedTypeSpec(parent, name, defType), _list(list), _block(block) {}
     public:
         inline const Ast::Scope::List& list() const {return _list.get().list();}
         inline const Ast::Scope& scope() const {return _list.get();}
@@ -646,14 +664,14 @@ namespace Ast {
 
     class RootInterfaceDefn : public InterfaceDefn {
     public:
-        inline RootInterfaceDefn(const TypeSpec& parent, const Token& name, const DefinitionType::T& defType, Ast::Scope& list, Ast::CompoundStatement& block) : InterfaceDefn(parent, name, defType, list, block) {}
+        inline RootInterfaceDefn(const TypeSpec& parent, const Token& name, const DefinitionType& defType, Ast::Scope& list, Ast::CompoundStatement& block) : InterfaceDefn(parent, name, defType, list, block) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class EventDecl : public UserDefinedTypeSpec {
     public:
-        inline EventDecl(const TypeSpec& parent, const Ast::Token& name, const Ast::FunctionSig& sig, const Ast::VariableDefn& in, const DefinitionType::T& defType) : UserDefinedTypeSpec(parent, name, defType), _sig(sig), _in(in) {}
+        inline EventDecl(const TypeSpec& parent, const Ast::Token& name, const Ast::FunctionSig& sig, const Ast::VariableDefn& in, const DefinitionType& defType) : UserDefinedTypeSpec(parent, name, defType), _sig(sig), _in(in) {}
     public:
         inline const Ast::VariableDefn& in()  const {return _in.get();}
     public:
@@ -1801,12 +1819,12 @@ namespace Ast {
     public:
         typedef std::list<Token> Part;
     public:
-        inline ImportStatement(const Token& pos, const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType::T& defType, Ast::NamespaceList& list)
+        inline ImportStatement(const Token& pos, const Ast::AccessType::T& accessType, const Ast::HeaderType::T& headerType, const Ast::DefinitionType& defType, Ast::NamespaceList& list)
             : Statement(pos), _accessType(accessType), _headerType(headerType), _defType(defType), _list(list) {}
     public:
         inline const AccessType::T& accessType() const {return _accessType;}
         inline const HeaderType::T& headerType() const {return _headerType;}
-        inline const DefinitionType::T& defType() const {return _defType;}
+        inline const DefinitionType& defType() const {return _defType;}
     public:
         inline const NamespaceList::List& list() const {return _list.get().list();}
     private:
@@ -1814,7 +1832,7 @@ namespace Ast {
     private:
         const AccessType::T _accessType;
         const HeaderType::T _headerType;
-        const DefinitionType::T _defType;
+        const DefinitionType _defType;
         const Ptr<const NamespaceList> _list;
     };
 

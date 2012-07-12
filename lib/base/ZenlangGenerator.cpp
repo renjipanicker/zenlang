@@ -4,16 +4,14 @@
 #include "base/ZenlangGenerator.hpp"
 
 namespace zg {
-    inline z::string getDefinitionType(const z::Ast::Token& pos, const z::Ast::DefinitionType::T& defType) {
-        switch(defType) {
-            case z::Ast::DefinitionType::Final:
-                return "";
-            case z::Ast::DefinitionType::Native:
-                return " native";
-            case z::Ast::DefinitionType::Abstract:
-                return " abstract";
+    inline z::string getDefinitionType(const z::Ast::Token& pos, const z::Ast::DefinitionType& defType) {
+        z::unused_t(pos);
+        if(defType.native()) {
+            return " native";
+        } else if(defType.abstract()) {
+            return " abstract";
         }
-        throw z::Exception("ZenlangGenerator", z::zfmt(pos, "Internal error: Unknown Definition Type '%{s}'").arg("s", defType ));
+        return "";
     }
 
     inline z::string getAccessType(const z::Ast::Token& pos, const z::Ast::AccessType::T& accessType) {
@@ -771,7 +769,7 @@ namespace zg {
                 sep = "::";
             }
 
-            if(node.defType() == z::Ast::DefinitionType::Native) {
+            if(node.defType().native()) {
                 _os() << " native";
             }
 

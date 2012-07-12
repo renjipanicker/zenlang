@@ -169,7 +169,7 @@ inline z::Ast::ExprList& z::Ast::Factory::addExprList(const z::Ast::Token& pos) 
 inline z::Ast::TemplateDefn& z::Ast::Factory::createTemplateDefn(const z::Ast::Token& pos, const z::string& name, const z::Ast::TemplateTypePartList& list) {
     z::Ast::Token token(pos.filename(), pos.row(), pos.col(), name);
     const z::Ast::TemplateDecl& templateDecl = unit().getRootTypeSpec<z::Ast::TemplateDecl>(_module.level(), token);
-    z::Ast::TemplateDefn& templateDefn = unit().addNode(new z::Ast::TemplateDefn(unit().anonymousNS(), token, z::Ast::DefinitionType::Final, templateDecl, list));
+    z::Ast::TemplateDefn& templateDefn = unit().addNode(new z::Ast::TemplateDefn(unit().anonymousNS(), token, z::Ast::DefinitionType().isFinal(), templateDecl, list));
     unit().addAnonymous(templateDefn);
     return templateDefn;
 }
@@ -224,7 +224,7 @@ inline const z::Ast::TemplateDefn& z::Ast::Factory::getTemplateDefn(const z::Ast
     return z::ref(templateDefn);
 }
 
-inline z::Ast::RootFunctionDecl& z::Ast::Factory::addRootFunctionDecl(const z::Ast::TypeSpec& parent, const z::Ast::FunctionSig& functionSig, const z::Ast::DefinitionType::T& defType, const z::Ast::ClosureRef& cref) {
+inline z::Ast::RootFunctionDecl& z::Ast::Factory::addRootFunctionDecl(const z::Ast::TypeSpec& parent, const z::Ast::FunctionSig& functionSig, const z::Ast::DefinitionType& defType, const z::Ast::ClosureRef& cref) {
     const z::Ast::Token& name = functionSig.name();
     z::Ast::RootFunctionDecl& functionDecl = unit().addNode(new z::Ast::RootFunctionDecl(parent, name, defType, functionSig, z::ref(cref.xref), z::ref(cref.iref)));
     z::Ast::Token token1(name.filename(), name.row(), name.col(), "_Out");
@@ -233,7 +233,7 @@ inline z::Ast::RootFunctionDecl& z::Ast::Factory::addRootFunctionDecl(const z::A
     return functionDecl;
 }
 
-inline z::Ast::ChildFunctionDecl& z::Ast::Factory::addChildFunctionDecl(const z::Ast::TypeSpec& parent, const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType, const z::Ast::TypeSpec& base, const z::Ast::ClosureRef& cref) {
+inline z::Ast::ChildFunctionDecl& z::Ast::Factory::addChildFunctionDecl(const z::Ast::TypeSpec& parent, const z::Ast::Token& name, const z::Ast::DefinitionType& defType, const z::Ast::TypeSpec& base, const z::Ast::ClosureRef& cref) {
     const z::Ast::Function* function = dynamic_cast<const z::Ast::Function*>(z::ptr(base));
     if(function == 0) {
         throw z::Exception("NodeFactory", zfmt(name, "Base type is not a function '%{s}'").arg("s", base.name() ));
@@ -270,11 +270,11 @@ void z::Ast::Factory::aUnitStatementList(const z::Ast::EnterNamespaceStatement& 
     unit().leaveNamespace();
 }
 
-z::Ast::Module::Level_t z::Ast::Factory::aImportStatement(const z::Ast::Token& pos, const z::Ast::AccessType::T& accessType, const z::Ast::HeaderType::T& headerType, const z::Ast::DefinitionType::T& defType, z::Ast::NamespaceList& list, z::string& filename) {
+z::Ast::Module::Level_t z::Ast::Factory::aImportStatement(const z::Ast::Token& pos, const z::Ast::AccessType::T& accessType, const z::Ast::HeaderType::T& headerType, const z::Ast::DefinitionType& defType, z::Ast::NamespaceList& list, z::string& filename) {
     z::Ast::ImportStatement& statement = unit().addNode(new z::Ast::ImportStatement(pos, accessType, headerType, defType, list));
     _module.addGlobalStatement(statement);
 
-    if(statement.defType() != z::Ast::DefinitionType::Native) {
+    if(!statement.defType().native()) {
         filename = "";
         z::string sep = "";
         for(z::Ast::NamespaceList::List::const_iterator it = statement.list().begin(); it != statement.list().end(); ++it) {
@@ -385,18 +385,18 @@ inline void z::Ast::Factory::setDefaultDummyValue(const z::Ast::Token& name, z::
     unit().addDefaultValue(typeSpec, expr);
 }
 
-z::Ast::TypedefDecl* z::Ast::Factory::aTypedefDecl(const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType) {
+z::Ast::TypedefDecl* z::Ast::Factory::aTypedefDecl(const z::Ast::Token& name, const z::Ast::DefinitionType& defType) {
     z::Ast::TypedefDecl& typedefDefn = unit().addNode(new z::Ast::TypedefDecl(unit().currentTypeSpec(), name, defType));
     unit().currentTypeSpec().addChild(typedefDefn);
     // if this is a native-typedef-decl, add dummy coercion and default-value = (void)0
     // unless this is the native-typedef-decl for void itself
-    if((defType == z::Ast::DefinitionType::Native) && (name.string() != "void")) {
+    if((defType.native()) && (name.string() != "void")) {
         setDefaultDummyValue(name, typedefDefn);
     }
     return z::ptr(typedefDefn);
 }
 
-z::Ast::TypedefDefn* z::Ast::Factory::aTypedefDefn(const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType, const z::Ast::QualifiedTypeSpec& qTypeSpec) {
+z::Ast::TypedefDefn* z::Ast::Factory::aTypedefDefn(const z::Ast::Token& name, const z::Ast::DefinitionType& defType, const z::Ast::QualifiedTypeSpec& qTypeSpec) {
     z::Ast::TypedefDefn& typedefDefn = unit().addNode(new z::Ast::TypedefDefn(unit().currentTypeSpec(), name, defType, qTypeSpec));
     unit().currentTypeSpec().addChild(typedefDefn);
     return z::ptr(typedefDefn);
@@ -413,19 +413,19 @@ z::Ast::TemplatePartList* z::Ast::Factory::aTemplatePartList(const z::Ast::Token
     return z::ptr(list);
 }
 
-z::Ast::TemplateDecl* z::Ast::Factory::aTemplateDecl(const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType, const z::Ast::TemplatePartList& list) {
+z::Ast::TemplateDecl* z::Ast::Factory::aTemplateDecl(const z::Ast::Token& name, const z::Ast::DefinitionType& defType, const z::Ast::TemplatePartList& list) {
     z::Ast::TemplateDecl& templateDefn = unit().addNode(new z::Ast::TemplateDecl(unit().currentTypeSpec(), name, defType, list));
     unit().currentTypeSpec().addChild(templateDefn);
     return z::ptr(templateDefn);
 }
 
-z::Ast::EnumDefn* z::Ast::Factory::aEnumDefn(const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType, const z::Ast::Scope& list) {
+z::Ast::EnumDefn* z::Ast::Factory::aEnumDefn(const z::Ast::Token& name, const z::Ast::DefinitionType& defType, const z::Ast::Scope& list) {
     z::Ast::EnumDefn& enumDefn = unit().addNode(new z::Ast::EnumDefn(unit().currentTypeSpec(), name, defType, list));
     unit().currentTypeSpec().addChild(enumDefn);
     return z::ptr(enumDefn);
 }
 
-z::Ast::EnumDecl* z::Ast::Factory::aEnumDecl(const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType) {
+z::Ast::EnumDecl* z::Ast::Factory::aEnumDecl(const z::Ast::Token& name, const z::Ast::DefinitionType& defType) {
     z::Ast::EnumDecl& enumDecl = unit().addNode(new z::Ast::EnumDecl(unit().currentTypeSpec(), name, defType));
     unit().currentTypeSpec().addChild(enumDecl);
     return z::ptr(enumDecl);
@@ -453,12 +453,12 @@ z::Ast::VariableDefn* z::Ast::Factory::aEnumMemberDefn(const z::Ast::Token& name
     return z::ptr(variableDefn);
 }
 
-z::Ast::StructDecl* z::Ast::Factory::aStructDecl(const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType) {
+z::Ast::StructDecl* z::Ast::Factory::aStructDecl(const z::Ast::Token& name, const z::Ast::DefinitionType& defType) {
     z::Ast::StructDecl& structDecl = unit().addNode(new z::Ast::StructDecl(unit().currentTypeSpec(), name, defType));
     unit().currentTypeSpec().addChild(structDecl);
 
     // if this is a native struct decl, add int=>struct-decl coercion and default-value = 0
-    if(defType == z::Ast::DefinitionType::Native) {
+    if(defType.native()) {
         setDefaultDummyValue(name, structDecl);
     }
     return z::ptr(structDecl);
@@ -478,7 +478,7 @@ z::Ast::ChildStructDefn* z::Ast::Factory::aLeaveChildStructDefn(z::Ast::ChildStr
     return z::ptr(structDefn);
 }
 
-z::Ast::RootStructDefn* z::Ast::Factory::aEnterRootStructDefn(const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType) {
+z::Ast::RootStructDefn* z::Ast::Factory::aEnterRootStructDefn(const z::Ast::Token& name, const z::Ast::DefinitionType& defType) {
     z::Ast::Scope& list = addScope(name, z::Ast::ScopeType::Member);
     z::Ast::CompoundStatement& block = unit().addNode(new z::Ast::CompoundStatement(name));
     z::Ast::RootStructDefn& structDefn = unit().addNode(new z::Ast::RootStructDefn(unit().currentTypeSpec(), name, defType, list, block));
@@ -487,8 +487,8 @@ z::Ast::RootStructDefn* z::Ast::Factory::aEnterRootStructDefn(const z::Ast::Toke
     return z::ptr(structDefn);
 }
 
-z::Ast::ChildStructDefn* z::Ast::Factory::aEnterChildStructDefn(const z::Ast::Token& name, const z::Ast::StructDefn& base, const z::Ast::DefinitionType::T& defType) {
-    //@if(base.defType() == z::Ast::DefinitionType::Final) {
+z::Ast::ChildStructDefn* z::Ast::Factory::aEnterChildStructDefn(const z::Ast::Token& name, const z::Ast::StructDefn& base, const z::Ast::DefinitionType& defType) {
+    //@if(base.defType().final()) {
     //    throw z::Exception("NodeFactory", zfmt(name, "Base struct is not abstract '%{s}'").arg("s", base.name() ));
     //}
     z::Ast::Scope& list = addScope(name, z::Ast::ScopeType::Member);
@@ -519,14 +519,14 @@ void z::Ast::Factory::aStructMemberPropertyDefn(z::Ast::PropertyDecl& typeSpec) 
     sd.addProperty(typeSpec);
 }
 
-z::Ast::PropertyDeclRW* z::Ast::Factory::aStructPropertyDeclRW(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec& propertyType, const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType) {
+z::Ast::PropertyDeclRW* z::Ast::Factory::aStructPropertyDeclRW(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec& propertyType, const z::Ast::Token& name, const z::Ast::DefinitionType& defType) {
     z::unused_t(pos);
     z::Ast::PropertyDeclRW& structPropertyDecl = unit().addNode(new z::Ast::PropertyDeclRW(unit().currentTypeSpec(), name, defType, propertyType));
     unit().currentTypeSpec().addChild(structPropertyDecl);
     return z::ptr(structPropertyDecl);
 }
 
-z::Ast::PropertyDeclRO* z::Ast::Factory::aStructPropertyDeclRO(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec& propertyType, const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType) {
+z::Ast::PropertyDeclRO* z::Ast::Factory::aStructPropertyDeclRO(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec& propertyType, const z::Ast::Token& name, const z::Ast::DefinitionType& defType) {
     z::unused_t(pos);
     z::Ast::PropertyDeclRO& structPropertyDecl = unit().addNode(new z::Ast::PropertyDeclRO(unit().currentTypeSpec(), name, defType, propertyType));
     unit().currentTypeSpec().addChild(structPropertyDecl);
@@ -540,13 +540,13 @@ void z::Ast::Factory::aInterfaceMemberTypeDefn(z::Ast::UserDefinedTypeSpec& type
     sd.block().addStatement(z::ref(statement));
 }
 
-z::Ast::RoutineDecl* z::Ast::Factory::aRoutineDecl(const z::Ast::QualifiedTypeSpec& outType, const z::Ast::Token& name, z::Ast::Scope& in, const z::Ast::DefinitionType::T& defType) {
+z::Ast::RoutineDecl* z::Ast::Factory::aRoutineDecl(const z::Ast::QualifiedTypeSpec& outType, const z::Ast::Token& name, z::Ast::Scope& in, const z::Ast::DefinitionType& defType) {
     z::Ast::RoutineDecl& routineDecl = unit().addNode(new z::Ast::RoutineDecl(unit().currentTypeSpec(), outType, name, in, defType));
     unit().currentTypeSpec().addChild(routineDecl);
     return z::ptr(routineDecl);
 }
 
-z::Ast::RoutineDecl* z::Ast::Factory::aVarArgRoutineDecl(const z::Ast::QualifiedTypeSpec& outType, const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType) {
+z::Ast::RoutineDecl* z::Ast::Factory::aVarArgRoutineDecl(const z::Ast::QualifiedTypeSpec& outType, const z::Ast::Token& name, const z::Ast::DefinitionType& defType) {
     z::Ast::Scope& in = addScope(name, z::Ast::ScopeType::VarArg);
     z::Ast::RoutineDecl& routineDecl = unit().addNode(new z::Ast::RoutineDecl(unit().currentTypeSpec(), outType, name, in, defType));
     unit().currentTypeSpec().addChild(routineDecl);
@@ -561,7 +561,7 @@ z::Ast::RoutineDefn* z::Ast::Factory::aRoutineDefn(z::Ast::RoutineDefn& routineD
     return z::ptr(routineDefn);
 }
 
-z::Ast::RoutineDefn* z::Ast::Factory::aEnterRoutineDefn(const z::Ast::QualifiedTypeSpec& outType, const z::Ast::Token& name, z::Ast::Scope& in, const z::Ast::DefinitionType::T& defType) {
+z::Ast::RoutineDefn* z::Ast::Factory::aEnterRoutineDefn(const z::Ast::QualifiedTypeSpec& outType, const z::Ast::Token& name, z::Ast::Scope& in, const z::Ast::DefinitionType& defType) {
     z::Ast::RoutineDefn& routineDefn = unit().addNode(new z::Ast::RoutineDefn(unit().currentTypeSpec(), outType, name, in, defType));
     unit().currentTypeSpec().addChild(routineDefn);
     unit().enterScope(in);
@@ -569,13 +569,13 @@ z::Ast::RoutineDefn* z::Ast::Factory::aEnterRoutineDefn(const z::Ast::QualifiedT
     return z::ptr(routineDefn);
 }
 
-z::Ast::RootFunctionDecl* z::Ast::Factory::aRootFunctionDecl(const z::Ast::FunctionSig& functionSig, const z::Ast::DefinitionType::T& defType, const z::Ast::ClosureRef& cref) {
+z::Ast::RootFunctionDecl* z::Ast::Factory::aRootFunctionDecl(const z::Ast::FunctionSig& functionSig, const z::Ast::DefinitionType& defType, const z::Ast::ClosureRef& cref) {
     z::Ast::RootFunctionDecl& functionDecl = addRootFunctionDecl(unit().currentTypeSpec(), functionSig, defType, cref);
     unit().currentTypeSpec().addChild(functionDecl);
     return z::ptr(functionDecl);
 }
 
-z::Ast::ChildFunctionDecl* z::Ast::Factory::aChildFunctionDecl(const z::Ast::TypeSpec& base, const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType, const z::Ast::ClosureRef& cref) {
+z::Ast::ChildFunctionDecl* z::Ast::Factory::aChildFunctionDecl(const z::Ast::TypeSpec& base, const z::Ast::Token& name, const z::Ast::DefinitionType& defType, const z::Ast::ClosureRef& cref) {
     z::Ast::ChildFunctionDecl& functionDecl = addChildFunctionDecl(unit().currentTypeSpec(), name, defType, base, cref);
     unit().currentTypeSpec().addChild(functionDecl);
     return z::ptr(functionDecl);
@@ -591,7 +591,7 @@ z::Ast::RootFunctionDefn* z::Ast::Factory::aRootFunctionDefn(z::Ast::RootFunctio
     return z::ptr(functionDefn);
 }
 
-z::Ast::RootFunctionDefn* z::Ast::Factory::aEnterRootFunctionDefn(const z::Ast::FunctionSig& functionSig, const z::Ast::DefinitionType::T& defType, const z::Ast::ClosureRef& cref) {
+z::Ast::RootFunctionDefn* z::Ast::Factory::aEnterRootFunctionDefn(const z::Ast::FunctionSig& functionSig, const z::Ast::DefinitionType& defType, const z::Ast::ClosureRef& cref) {
     const z::Ast::Token& name = functionSig.name();
     z::Ast::RootFunctionDefn& functionDefn = unit().addNode(new z::Ast::RootFunctionDefn(unit().currentTypeSpec(), name, defType, functionSig, z::ref(cref.xref), z::ref(cref.iref)));
     unit().currentTypeSpec().addChild(functionDefn);
@@ -617,8 +617,8 @@ z::Ast::ChildFunctionDefn* z::Ast::Factory::aChildFunctionDefn(z::Ast::ChildFunc
     return z::ptr(functionDefn);
 }
 
-inline z::Ast::ChildFunctionDefn& z::Ast::Factory::createChildFunctionDefn(z::Ast::TypeSpec& parent, const z::Ast::Function& base, const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType, const z::Ast::ClosureRef& cref) {
-    if(base.defType() == z::Ast::DefinitionType::Final) {
+inline z::Ast::ChildFunctionDefn& z::Ast::Factory::createChildFunctionDefn(z::Ast::TypeSpec& parent, const z::Ast::Function& base, const z::Ast::Token& name, const z::Ast::DefinitionType& defType, const z::Ast::ClosureRef& cref) {
+    if(base.defType().final()) {
         throw z::Exception("NodeFactory", zfmt(name, "Base struct is not abstract '%{s}'").arg("s", base.name() ));
     }
 
@@ -631,7 +631,7 @@ inline z::Ast::ChildFunctionDefn& z::Ast::Factory::createChildFunctionDefn(z::As
     return functionDefn;
 }
 
-z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterChildFunctionDefn(const z::Ast::TypeSpec& base, const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType, const z::Ast::ClosureRef& cref) {
+z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterChildFunctionDefn(const z::Ast::TypeSpec& base, const z::Ast::Token& name, const z::Ast::DefinitionType& defType, const z::Ast::ClosureRef& cref) {
     const z::Ast::Function* function = dynamic_cast<const z::Ast::Function*>(z::ptr(base));
     if(function == 0) {
         throw z::Exception("NodeFactory", zfmt(name, "Base type is not a function '%{s}'").arg("s", base.name() ));
@@ -645,7 +645,7 @@ z::Ast::RootInterfaceDefn* z::Ast::Factory::aLeaveRootInterfaceDefn(z::Ast::Root
     return z::ptr(InterfaceDefn);
 }
 
-z::Ast::RootInterfaceDefn* z::Ast::Factory::aEnterRootInterfaceDefn(const z::Ast::Token& name, const z::Ast::DefinitionType::T& defType) {
+z::Ast::RootInterfaceDefn* z::Ast::Factory::aEnterRootInterfaceDefn(const z::Ast::Token& name, const z::Ast::DefinitionType& defType) {
     z::Ast::Scope& list = addScope(name, z::Ast::ScopeType::Member);
     z::Ast::CompoundStatement& block = unit().addNode(new z::Ast::CompoundStatement(name));
     z::Ast::RootInterfaceDefn& InterfaceDefn = unit().addNode(new z::Ast::RootInterfaceDefn(unit().currentTypeSpec(), name, defType, list, block));
@@ -654,7 +654,7 @@ z::Ast::RootInterfaceDefn* z::Ast::Factory::aEnterRootInterfaceDefn(const z::Ast
     return z::ptr(InterfaceDefn);
 }
 
-z::Ast::EventDecl* z::Ast::Factory::aEventDecl(const z::Ast::Token& pos, const z::Ast::VariableDefn& in, const z::Ast::DefinitionType::T& eventDefType, const z::Ast::FunctionSig& functionSig, const z::Ast::DefinitionType::T& handlerDefType) {
+z::Ast::EventDecl* z::Ast::Factory::aEventDecl(const z::Ast::Token& pos, const z::Ast::VariableDefn& in, const z::Ast::DefinitionType& eventDefType, const z::Ast::FunctionSig& functionSig, const z::Ast::DefinitionType& handlerDefType) {
     const z::Ast::Token& name = functionSig.name();
 
     z::Ast::Token eventName(pos.filename(), pos.row(), pos.col(), name.string());
@@ -844,7 +844,7 @@ const z::Ast::TypeSpec* z::Ast::Factory::aTypeSpec(const z::Ast::TypeSpec& TypeS
 }
 
 const z::Ast::TemplateDefn* z::Ast::Factory::aTemplateDefnTypeSpec(const z::Ast::TemplateDecl& typeSpec, const z::Ast::TemplateTypePartList& list) {
-    z::Ast::TemplateDefn& templateDefn = unit().addNode(new z::Ast::TemplateDefn(unit().anonymousNS(), typeSpec.name(), z::Ast::DefinitionType::Final, typeSpec, list));
+    z::Ast::TemplateDefn& templateDefn = unit().addNode(new z::Ast::TemplateDefn(unit().anonymousNS(), typeSpec.name(), z::Ast::DefinitionType().isFinal(), typeSpec, list));
     unit().addAnonymous(templateDefn);
     return z::ptr(templateDefn);
 }
@@ -1976,7 +1976,7 @@ z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAnonymousFunction(const z::Ast
         throw z::Exception("NodeFactory", zfmt(name, "Internal error: Unable to find parent for anonymous function  %{s}").arg("s", ZenlangNameGenerator().tn(function) ));
     }
 
-    z::Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(z::ref(ts), function, name, z::Ast::DefinitionType::Final, cref);
+    z::Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(z::ref(ts), function, name, z::Ast::DefinitionType().isFinal(), cref);
     z::Ast::Statement* statement = aGlobalTypeSpecStatement(z::Ast::AccessType::Private, functionDefn);
     z::unused_t(statement);
     return z::ptr(functionDefn);

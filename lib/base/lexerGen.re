@@ -116,6 +116,7 @@ re2c:indent:top              = 2;
 <Normal>   "native"    := send(pctx, ZENTOK_NATIVE); NEXT();
 <Normal>   "abstract"  := send(pctx, ZENTOK_ABSTRACT); NEXT();
 <Normal>   "final"     := send(pctx, ZENTOK_FINAL); NEXT();
+<Normal>   "nocopy"    := send(pctx, ZENTOK_NOCOPY); NEXT();
 <Normal>   "const"     := send(pctx, ZENTOK_CONST); NEXT();
 
 <Normal>   "coerce"    := send(pctx, ZENTOK_COERCE); NEXT();
