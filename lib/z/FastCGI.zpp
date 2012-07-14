@@ -288,7 +288,7 @@ public interface FastCGI {
         auto s = Socket::OpenServer(port);
         Socket::OnConnect(s) => {
             print "onconnect";
-            Socket::OnRecv(cs) => [; data bfr, RequestMap requestMap] {
+            Socket::OnRecv(cs) => {|; data bfr, RequestMap requestMap|} {
                 print "on recv";
                 bfr += d;
                 while( length(bfr) >= sizeof(Header) ) {

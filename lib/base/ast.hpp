@@ -29,11 +29,11 @@ namespace Ast {
     public:
         inline DefinitionType() : _t(0) {}
         inline DefinitionType(const int& t) : _t(t) {}
-        inline bool native() const {return (_t & tNative);}
-        inline bool abstract() const {return (_t & tAbstract);}
-        inline bool handler() const {return (_t & tHandler);}
-        inline bool nocopy() const {return (_t & tNoCopy);}
-        inline bool final() const {return (_t & tFinal);}
+        inline bool native() const {return ((_t & tNative) != 0);}
+        inline bool abstract() const {return ((_t & tAbstract) != 0);}
+        inline bool handler() const {return ((_t & tHandler) != 0);}
+        inline bool nocopy() const {return ((_t & tNoCopy) != 0);}
+        inline bool final() const {return ((_t & tFinal) != 0);}
         inline DefinitionType& isNative()  {_t |= tNative; return z::ref(this);}
         inline DefinitionType& isAbstract()  {_t |= tAbstract; return z::ref(this);}
         inline DefinitionType& isHandler()  {_t |= tHandler; return z::ref(this);}

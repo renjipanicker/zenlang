@@ -5,8 +5,8 @@ public interface Socket {
     event(const socket& s) native => function void OnClose();
 
     /// \todo These must not be in the public interface
-    function OnConnectDevice : device[socket s, pointer<Socket::OnConnect::Handler> h] native;
-    function OnRecvDevice : device[socket s, pointer<Socket::OnRecv::Handler> h] native;
+    function OnConnectDevice : device native {|socket s, pointer<Socket::OnConnect::Handler> h|};
+    function OnRecvDevice : device native {|socket s, pointer<Socket::OnRecv::Handler> h|};
 
     routine socket OpenServer(const int& port) native;
     routine socket OpenClient(const string& host, const string& port) native;

@@ -1084,8 +1084,8 @@ void z::Ast::Factory::aEnterFunctionBlock(const z::Ast::Token& pos) {
     return aEnterCompoundStatement(pos);
 }
 
-void z::Ast::Factory::aLeaveFunctionBlock() {
-    unit().popExpectedTypeSpec(getToken(), z::Ast::Unit::ExpectedTypeSpec::etNone);
+void z::Ast::Factory::aLeaveFunctionBlock(const Ast::Token& pos) {
+    unit().popExpectedTypeSpec(pos, z::Ast::Unit::ExpectedTypeSpec::etNone);
     return aLeaveCompoundStatement();
 }
 
@@ -1434,7 +1434,7 @@ const z::Ast::Token& z::Ast::Factory::aEnterList(const z::Ast::Token& pos) {
             const z::Ast::QualifiedTypeSpec& keyType = z::ref(td0).at(0);
             unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etDictKey, keyType);
         } else {
-            assert(false);
+            throw z::Exception("NodeFactory", zfmt(pos, "Unknown expected template type: '%{s}'").arg("s", ZenlangNameGenerator().tn(z::ref(td0)) ));
         }
     } else {
         unit().pushExpectedTypeSpec(Unit::ExpectedTypeSpec::etAuto);
@@ -1982,11 +1982,20 @@ z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAnonymousFunction(const z::Ast
     return z::ptr(functionDefn);
 }
 
-z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAutoAnonymousFunction(const z::Ast::Token& pos, const Ast::ClosureRef& cref) {
+z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAutoAnonymousFunctionClosure(const z::Ast::Token& pos, const Ast::ClosureRef& cref) {
     const z::Ast::Function* function = unit().isFunctionExpected();
     if(function == 0) {
         throw z::Exception("NodeFactory", zfmt(pos, "Internal error: no function type expected") );
     }
+    return aEnterAnonymousFunction(z::ref(function), cref);
+}
+
+z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAutoAnonymousFunction(const z::Ast::Token& pos) {
+    const z::Ast::Function* function = unit().isFunctionExpected();
+    if(function == 0) {
+        throw z::Exception("NodeFactory", zfmt(pos, "Internal error: no function type expected") );
+    }
+    z::Ast::ClosureRef cref = aClosureList();
     return aEnterAnonymousFunction(z::ref(function), cref);
 }
 

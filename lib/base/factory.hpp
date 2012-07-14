@@ -182,7 +182,7 @@ namespace Ast {
         void                               aEnterCompoundStatement(const Ast::Token& pos);
         void                               aLeaveCompoundStatement();
         void                               aEnterFunctionBlock(const Ast::Token& pos);
-        void                               aLeaveFunctionBlock();
+        void                               aLeaveFunctionBlock(const Ast::Token& pos);
         Ast::ExprList*                     aExprList(Ast::ExprList& list, const Ast::Expr& expr);
         Ast::ExprList*                     aExprList(const Ast::Expr& expr);
         Ast::ExprList*                     aExprList();
@@ -297,7 +297,8 @@ namespace Ast {
         Ast::FunctionInstanceExpr*  aFunctionInstanceExpr(const Ast::Token& pos, const Ast::TypeSpec& typeSpec, const Ast::ExprList& exprList);
         Ast::AnonymousFunctionExpr* aAnonymousFunctionExpr(Ast::ChildFunctionDefn& functionDefn, const Ast::CompoundStatement& compoundStatement);
         Ast::ChildFunctionDefn*   aEnterAnonymousFunction(const Ast::Function& function, const Ast::ClosureRef& closureRef);
-        Ast::ChildFunctionDefn*   aEnterAutoAnonymousFunction(const Ast::Token& pos, const Ast::ClosureRef& closureRef);
+        Ast::ChildFunctionDefn*   aEnterAutoAnonymousFunctionClosure(const Ast::Token& pos, const Ast::ClosureRef& closureRef);
+        Ast::ChildFunctionDefn*   aEnterAutoAnonymousFunction(const Ast::Token& pos);
         Ast::ChildFunctionDefn*   aEnterAnonymousFunctionExpr(const Ast::Function& function);
 
         Ast::ConstantNullExpr&    aConstantNullExpr(const Ast::Token& value);

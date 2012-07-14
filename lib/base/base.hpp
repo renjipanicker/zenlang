@@ -122,9 +122,17 @@ namespace z {
         }
 
         inline void append08(const char* str) {
-            for(const char* c = str; *c != 0; ++c) {
-                _val.push_back((z::char_t)(*c));
+            size_t len = ::strlen(str);
+            charT* b = (charT*)::malloc((len + 1) * sizeof(charT));
+            for(size_t i = 0;i < len; ++i) {
+                b[i] = str[i];
             }
+            b[len] = 0; // valid because we malloc'ed len+1 size.
+            _val.append(b);
+            ::free(b);
+            //for(const char* c = str; *c != 0; ++c) {
+            //    _val.push_back((z::char_t)(*c));
+            //}
         }
 
         inline void append(const charT& rhs) {_val += rhs;}

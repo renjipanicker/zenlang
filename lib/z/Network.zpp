@@ -28,7 +28,7 @@ public interface Network {
     /// \brief Retrieve the specified Url into Response.
     routine bool GetUrl(const url& u, Response& r) {
         socket s = Socket::OpenClient(u.host, u.port);
-        Socket::OnRecv(s) => [;string token0, string token1, ParseState ps, bool inHdr] {
+        Socket::OnRecv(s) => {|;string token0, string token1, ParseState ps, bool inHdr|} {
             print "on recv";
             assert(ps != ParseState.psDone);
             auto b = map<string>(d, 0, length(d));

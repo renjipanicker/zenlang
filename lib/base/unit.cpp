@@ -76,18 +76,25 @@ const z::Ast::QualifiedTypeSpec* z::Ast::Unit::canCoerceX(const z::Ast::Qualifie
         }
     }
 
-    const z::Ast::FunctionDefn* lfd = dynamic_cast<const z::Ast::FunctionDefn*>(z::ptr(lts));
-    const z::Ast::FunctionDefn* rfd = dynamic_cast<const z::Ast::FunctionDefn*>(z::ptr(rts));
-    if((lfd != 0) && (rfd != 0)) {
-        for(FunctionBaseIterator fbi(lfd); fbi.hasNext(); fbi.next()) {
-            if(z::ptr(fbi.get()) == rfd) {
-                mode = CoercionResult::Rhs;
-                return z::ptr(rhs);
+    // check if LHS is a base function of RHS
+    const z::Ast::Function* lfd1 = dynamic_cast<const z::Ast::Function*>(z::ptr(lts));
+    const z::Ast::FunctionDefn* rfd1 = dynamic_cast<const z::Ast::FunctionDefn*>(z::ptr(rts));
+    if((lfd1 != 0) && (rfd1 != 0)) {
+        for(FunctionBaseIterator fbi(rfd1); fbi.hasNext(); fbi.next()) {
+            if(z::ptr(fbi.get()) == lfd1) {
+                mode = CoercionResult::Lhs;
+                return z::ptr(lhs);
             }
         }
-        for(FunctionBaseIterator fbi(rfd); fbi.hasNext(); fbi.next()) {
-            if(z::ptr(fbi.get()) == lfd) {
-                mode = CoercionResult::Lhs;
+    }
+
+    // check if RHS is a base function of LHS
+    const z::Ast::FunctionDefn* lfd2 = dynamic_cast<const z::Ast::FunctionDefn*>(z::ptr(lts));
+    const z::Ast::Function* rfd2 = dynamic_cast<const z::Ast::Function*>(z::ptr(rts));
+    if((lfd2 != 0) && (rfd2 != 0)) {
+        for(FunctionBaseIterator fbi(lfd2); fbi.hasNext(); fbi.next()) {
+            if(z::ptr(fbi.get()) == rfd2) {
+                mode = CoercionResult::Rhs;
                 return z::ptr(lhs);
             }
         }
@@ -381,7 +388,7 @@ z::Ast::InterfaceDefn& z::Ast::Unit::getCurrentInterfaceDefn(const z::Ast::Token
 inline z::string z::Ast::Unit::getExpectedTypeName(const z::Ast::Token& pos, const z::Ast::Unit::ExpectedTypeSpec::Type& exType) {
     switch(exType) {
         case ExpectedTypeSpec::etNone:
-            break;
+            return "etNone";
         case ExpectedTypeSpec::etAuto:
             return "etAuto";
         case ExpectedTypeSpec::etVarArg:
@@ -520,21 +527,6 @@ const z::Ast::StructDefn* z::Ast::Unit::isStructExpected() const {
     return sd;
 }
 
-const z::Ast::Function* z::Ast::Unit::isFunctionExpected() const {
-    const z::Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny();
-    if(qts == 0) {
-        return 0;
-    }
-
-    const z::Ast::TypeSpec& ts = z::ref(qts).typeSpec();
-    const z::Ast::Function* ed = dynamic_cast<const z::Ast::Function*>(z::ptr(ts));
-    if(ed == 0) {
-        return 0;
-    }
-
-    return ed;
-}
-
 const z::Ast::TemplateDefn* z::Ast::Unit::isPointerExpected() const {
     const z::Ast::TemplateDefn* td = isEnteringTemplate();
     if(td) {
@@ -545,11 +537,34 @@ const z::Ast::TemplateDefn* z::Ast::Unit::isPointerExpected() const {
     return 0;
 }
 
+const z::Ast::Function* z::Ast::Unit::isFunctionExpected() const {
+    const z::Ast::QualifiedTypeSpec* qts = getExpectedTypeSpecIfAny();
+    if(qts == 0) {
+        return 0;
+    }
+
+    const z::Ast::TypeSpec& ts = z::ref(qts).typeSpec();
+    const z::Ast::Function* ed = dynamic_cast<const z::Ast::Function*>(z::ptr(ts));
+    if(ed != 0) {
+        return ed;
+    }
+
+    const z::Ast::TemplateDefn* td = isPointerExpected();
+    if(td) {
+        assert(z::ref(td).name().string() == "pointer");
+        const z::Ast::TypeSpec& innerTs = z::ref(td).at(0).typeSpec();
+        const z::Ast::Function* ed = dynamic_cast<const z::Ast::Function*>(z::ptr(innerTs));
+        if(ed != 0) {
+            return ed;
+        }
+    }
+    return 0;
+}
+
 const z::Ast::TemplateDefn* z::Ast::Unit::isPointerToExprExpected(const z::Ast::Expr& expr) const {
     const z::Ast::TemplateDefn* ts = isPointerExpected();
     if(ts) {
         const z::Ast::QualifiedTypeSpec& innerQts = z::ref(ts).at(0);
-
         Unit::CoercionResult::T mode = Unit::CoercionResult::None;
         const z::Ast::QualifiedTypeSpec* qts = canCoerceX(innerQts, expr.qTypeSpec(), mode);
         if(qts && (mode == Unit::CoercionResult::Lhs)) {

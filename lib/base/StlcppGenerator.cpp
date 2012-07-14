@@ -1695,13 +1695,13 @@ namespace sg {
                 const z::Ast::CaseExprStatement* ce = dynamic_cast<const z::Ast::CaseExprStatement*>(z::ptr(s));
                 const z::Ast::CaseDefaultStatement* cd = dynamic_cast<const z::Ast::CaseDefaultStatement*>(z::ptr(s));
                 if(ce) {
-                    fpDefn()() << z::Indent::get() << ifstr << "(" << std::endl;
+                    fpDefn()() << z::Indent::get() << ifstr << "(";
                     ExprGenerator(fpDefn()).visitNode(z::ref(ce).expr());
-                    fpDefn()() << ")" << std::endl;
+                    fpDefn()() << ") ";
                     visitNode(z::ref(ce).block());
                     ifstr = "else if";
                 } else if(cd) {
-                    fpDefn()() << z::Indent::get() << "else" << std::endl;
+                    fpDefn()() << z::Indent::get() << "else ";
                     visitNode(z::ref(cd).block());
                     break;
                 } else {
