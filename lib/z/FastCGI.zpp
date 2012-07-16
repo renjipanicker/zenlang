@@ -200,7 +200,6 @@ routine size processRequest(const socket& s, const socket& cs, const data& bfr, 
                 i += data_len;
 
                 req.paramList[key] = val;
-                print key + " : " + val;
                 if((key == "HTTP_COOKIE") || (key == "QUERY_STRING")) {
                     auto sep = ';';
                     if(key == "QUERY_STRING") {
@@ -229,7 +228,6 @@ routine size processRequest(const socket& s, const socket& cs, const data& bfr, 
                                 } else {
                                     req.cookieList[k1] = v1;
                                 }
-                                print k1 + " : " + v1;
                                 k1 = "";
                                 v1 = "";
                             } else {
@@ -244,7 +242,6 @@ routine size processRequest(const socket& s, const socket& cs, const data& bfr, 
                         } else {
                             req.cookieList[k1] = v1;
                         }
-                        print k1 + " : " + v1;
                     }
                 }
             }
@@ -265,7 +262,7 @@ routine size processRequest(const socket& s, const socket& cs, const data& bfr, 
 
             /// \todo: store stdin into req
             auto val = map<string>(bfr, sizeof(Header), len);
-            print val;
+            print "**" + val;
             break;
         }
     }
@@ -287,9 +284,7 @@ public interface FastCGI {
     function socket Create(const int& port) {
         auto s = Socket::OpenServer(port);
         Socket::OnConnect(s) => {
-            print "onconnect";
             Socket::OnRecv(cs) => {|; data bfr, RequestMap requestMap|} {
-                print "on recv";
                 bfr += d;
                 while( length(bfr) >= sizeof(Header) ) {
                     auto l = processRequest(s, cs, bfr, requestMap);

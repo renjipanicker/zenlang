@@ -1,5 +1,17 @@
 #include "zenlang.hpp"
 
+namespace zz {
+    inline z::string geterror() {
+#if defined(WIN32)
+        char buf[1024];
+        ::strerror_s(buf, 1024, errno);
+        return buf;
+#else
+        return ::strerror(errno);
+#endif
+    }
+}
+
 z::socket z::Socket::OpenServer(const int& port) {
     SOCKET sfd = ::socket(PF_INET, SOCK_STREAM, IPPROTO_TCP);
     if(sfd < 0) {
@@ -9,7 +21,6 @@ z::socket z::Socket::OpenServer(const int& port) {
     int on = 1;
     if(::setsockopt(sfd, SOL_SOCKET, SO_REUSEADDR, (const char*)&on, sizeof(on)) < 0) {
         throw z::Exception("Socket::InitServer", z::string("Error setsocketopt() failed"));
-//        z::mlog("Socket::OpenServer", z::string("Error setsocketopt() failed"));
     }
 
     sockaddr_in sa;
@@ -119,17 +130,12 @@ bool z::Socket::OnRecvDevice::run(const int& timeout) {
     }
 
     char buf[4*1024];
-#if defined(WIN32)
     ssize_t rc = ::recv(s.val(), buf, sizeof(buf), 0);
-#else
-    ssize_t rc = ::recv(s.val(), buf, sizeof(buf), 0);
-//    int rc = ::read(s.val(), buf, sizeof(buf));
-#endif
     if (rc <= 0) {
         if (rc < 0) {
             /// \todo invoke error-handler
             //DWORD e = ::WSAGetLastError();
-            z::mlog("Socket::OnrecvDevice", z::string("recv() error: %{e}").arg("e", rc));
+            //z::mlog("Socket::OnrecvDevice", z::string("recv() error: %{e}").arg("e", rc));
         }
         return true;
     }
@@ -141,16 +147,10 @@ bool z::Socket::OnRecvDevice::run(const int& timeout) {
 
 namespace zz {
     inline int SendSocket(const z::socket& s, const char* bfr, const size_t& len) {
-#if defined(WIN32)
         ssize_t rc = ::send(s.val(), bfr, len, 0);
-#else
-        ssize_t rc = ::send(s.val(), bfr, len, 0);
-//    int rc = ::write(s.val(), (const char*)d.c_str(), d.length());
-#endif
         if (rc <= 0) {
             if (rc < 0) {
-                z::mlog("zz::SendSocket", z::string("send() error: %{e}").arg("e", rc));
-                //throw z::Exception("Socket::SendString", z::string("Error send() failed: socket: %{s}").arg("s", s.val()));
+                throw z::Exception("Socket::SendString", z::string("Error send() failed: socket: %{s}").arg("s", geterror()));
             }
             return rc;
         }

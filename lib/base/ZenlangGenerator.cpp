@@ -6,12 +6,25 @@
 namespace zg {
     inline z::string getDefinitionType(const z::Ast::Token& pos, const z::Ast::DefinitionType& defType) {
         z::unused_t(pos);
+        z::string rv;
+
         if(defType.native()) {
-            return " native";
-        } else if(defType.abstract()) {
+            rv += " native";
+        }
+
+        if(defType.nocopy()) {
+            rv += " nocopy";
+        }
+
+        if(defType.final()) {
+            rv += " final";
+        }
+
+        if(defType.abstract()) {
             return " abstract";
         }
-        return "";
+
+        return rv;
     }
 
     inline z::string getAccessType(const z::Ast::Token& pos, const z::Ast::AccessType::T& accessType) {

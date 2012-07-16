@@ -21,4 +21,7 @@ public interface Dir {
 
     /// \brief create and return name of tmp dir
     routine string GetTmpDir(const string& path, const string& fmt) native;
+
+    /// \brief Return true if file/directory exists
+    routine bool Exists(const string& filename) native;
 };

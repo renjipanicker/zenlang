@@ -76,6 +76,11 @@ inline const z::Ast::Expr& z::Ast::Factory::getDefaultValue(const z::Ast::TypeSp
 
     const z::Ast::StructDefn* sd = dynamic_cast<const z::Ast::StructDefn*>(ts);
     if(sd != 0) {
+        if(z::ref(sd).defType().nocopy()) {
+            z::Ast::Token value(name.filename(), name.row(), name.col(), "0");
+            z::Ast::ConstantNullExpr& expr = aConstantNullExpr(value);
+            return expr;
+        }
         z::Ast::StructInstanceExpr* expr = aStructInstanceExpr(name, z::ref(sd));
         return z::ref(expr);
     }

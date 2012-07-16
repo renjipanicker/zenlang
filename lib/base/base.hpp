@@ -130,9 +130,6 @@ namespace z {
             b[len] = 0; // valid because we malloc'ed len+1 size.
             _val.append(b);
             ::free(b);
-            //for(const char* c = str; *c != 0; ++c) {
-            //    _val.push_back((z::char_t)(*c));
-            //}
         }
 
         inline void append(const charT& rhs) {_val += rhs;}
