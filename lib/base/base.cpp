@@ -108,7 +108,7 @@ z::string08 z::c32to08(const z::string32& in) {
 z::string32 z::c08to32(const z::string08& in) {
     z::string32 rv;
     for(z::string08::size_type i = 0; i < in.size();) {
-        char32_t ch;
+        int64_t ch;
         if(((uint64_t)in.at(i) & MASK6BYTES) == MASK6BYTES) {
             // 1111110x 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx 10xxxxxx
             ch = ((in.at(i) & 0x01) << 30) | ((in[i+1] & MASKBITS) << 24) | ((in[i+2] & MASKBITS) << 18) | ((in[i+3] & MASKBITS) << 12) | ((in[i+4] & MASKBITS) << 6) | (in[i+5] & MASKBITS);
@@ -134,7 +134,7 @@ z::string32 z::c08to32(const z::string08& in) {
             ch = in.at(i);
             i += 1;
         }
-        rv.append(ch);
+        rv.append((char32_t)ch);
     }
     return rv;
 }

@@ -660,7 +660,7 @@ namespace z {
         inline pointer& operator=(const pointer<DerT>& src) {
             reset();
             if(src.has()) {
-                const DerT& val = src.getT<DerT>();
+                const DerT& val = src.template getT<DerT>();
                 const V& dummy = val; z::unused_t(dummy); // to check that DerT acn be derived from V
                 value* v = new valueT<DerT>(val);
                 set(src.tname(), v);
@@ -1053,13 +1053,13 @@ namespace z {
     /////////////////////////////
     // slice helpers
     template <typename T>
-    inline T slice(const T& t, const int32_t& from, const int32_t& len) {
-        int32_t f = from;
+    inline T slice(const T& t, const int64_t& from, const int64_t& len) {
+        int64_t f = from;
         while(f < 0) {
             f = t.size() + f;
         }
 
-        int32_t l = len;
+        int64_t l = len;
         while(l < 0) {
             l = t.size() + l;
         }

@@ -48,7 +48,7 @@ void z::Scanner::send(const int& id) {
         _text = _buffer.begin();
     }
     _textbfr = "";
-    z::Token* t = new Token(text(id, rv), _row, _cursor - _sol - rv.length());
+    z::Token* t = new Token(text(id, rv), _row, (int)(_cursor - _sol - rv.length()));
     _tokenList.add(t);
     parse(id, t);
 }
@@ -121,7 +121,7 @@ void z::Scanner::append(const std::string& in) {
 }
 
 void z::Scanner::done() {
-    z::Token* t = new Token("", _row, _cursor - _sol);
+    z::Token* t = new Token("", _row, (int)(_cursor - _sol));
     _tokenList.add(t);
     parse(_eofTok, t);
 }

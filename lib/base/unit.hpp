@@ -160,7 +160,7 @@ namespace Ast {
         StructInitStack _structInitStack;
 
     public: // everything related to current typespec
-        template <typename T> inline const T* setCurrentRootTypeRef(const int& level, const z::Ast::Token& name) {
+        template <typename T> inline const T* setCurrentRootTypeRef(const size_t& level, const z::Ast::Token& name) {
             const T& td = getRootTypeSpec<T>(level, name);
             _currentTypeRef = z::ptr(td);
             _currentImportedTypeRef = hasImportRootTypeSpec(level, name);
@@ -213,13 +213,13 @@ namespace Ast {
         const z::Ast::TypeSpec* _currentImportedTypeRef;
 
     public: // everything related to typespec-stack
-        z::Ast::Root& getRootNamespace(const int& level);
-        const z::Ast::TypeSpec* hasRootTypeSpec(const int& level, const z::Ast::Token& name) const;
+        z::Ast::Root& getRootNamespace(const size_t& level);
+        const z::Ast::TypeSpec* hasRootTypeSpec(const size_t& level, const z::Ast::Token& name) const;
         inline TypeSpecStack& typeSpecStack() {return _typeSpecStack;}
         inline const TypeSpecStack& typeSpecStack() const {return _typeSpecStack;}
 
     public:
-        template <typename T> const T& getRootTypeSpec(const int& level, const z::Ast::Token& name) const {
+        template <typename T> const T& getRootTypeSpec(const size_t& level, const z::Ast::Token& name) const {
             const z::Ast::TypeSpec* typeSpec = hasRootTypeSpec(level, name);
             if(!typeSpec) {
                 throw z::Exception("Unit", zfmt(name, "Unknown root type '%{s}'").arg("s", name ));
@@ -242,7 +242,7 @@ namespace Ast {
         z::Ast::InterfaceDefn& getCurrentInterfaceDefn(const z::Ast::Token& pos);
 
     private:
-        const z::Ast::TypeSpec* hasImportRootTypeSpec(const int& level, const z::Ast::Token& name) const;
+        const z::Ast::TypeSpec* hasImportRootTypeSpec(const size_t& level, const z::Ast::Token& name) const;
     private:
         TypeSpecStack _typeSpecStack;
 

@@ -130,7 +130,7 @@ bool z::Socket::OnRecvDevice::run(const int& timeout) {
     }
 
     char buf[4*1024];
-    ssize_t rc = ::recv(s.val(), buf, sizeof(buf), 0);
+    long rc = ::recv(s.val(), buf, sizeof(buf), 0);
     if (rc <= 0) {
         if (rc < 0) {
             /// \todo invoke error-handler
@@ -146,23 +146,24 @@ bool z::Socket::OnRecvDevice::run(const int& timeout) {
 }
 
 namespace zz {
-    inline int SendSocket(const z::socket& s, const char* bfr, const size_t& len) {
-        ssize_t rc = ::send(s.val(), bfr, len, 0);
+    inline size_t SendSocket(const z::socket& s, const char* bfr, const size_t& len) {
+        long rc = ::send(s.val(), bfr, len, 0);
         if (rc <= 0) {
             if (rc < 0) {
                 throw z::Exception("Socket::SendString", z::string("Error send() failed: socket: %{s}").arg("s", geterror()));
             }
+            assert(rc == 0);
             return rc;
         }
         return rc;
     }
 }
 
-int z::Socket::SendData(const z::socket& s, const z::data& d) {
+size_t z::Socket::SendData(const z::socket& s, const z::data& d) {
     return zz::SendSocket(s, (const char*)d.c_str(), d.length());
 }
 
-int z::Socket::SendString(const z::socket& s, const z::string& d) {
+size_t z::Socket::SendString(const z::socket& s, const z::string& d) {
     z::estring es = z::s2e(d);
     return zz::SendSocket(s, (const char*)es.c_str(), es.length());
 }

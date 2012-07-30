@@ -286,11 +286,11 @@ void z::Ast::Unit::leaveNamespace() {
     }
 }
 
-z::Ast::Root& z::Ast::Unit::getRootNamespace(const int& level) {
+z::Ast::Root& z::Ast::Unit::getRootNamespace(const size_t& level) {
     return (level == 0)?rootNS():importNS();
 }
 
-const z::Ast::TypeSpec* z::Ast::Unit::hasImportRootTypeSpec(const int& level, const z::Ast::Token& name) const {
+const z::Ast::TypeSpec* z::Ast::Unit::hasImportRootTypeSpec(const size_t& level, const z::Ast::Token& name) const {
     if(level == 0) {
         const z::Ast::TypeSpec* typeSpec = importNS().hasChild<const z::Ast::TypeSpec>(name.string());
         if(typeSpec)
@@ -342,7 +342,7 @@ z::Ast::TypeSpec& z::Ast::Unit::leaveTypeSpec(z::Ast::TypeSpec& typeSpec) {
     return ct;
 }
 
-const z::Ast::TypeSpec* z::Ast::Unit::hasRootTypeSpec(const int& level, const z::Ast::Token& name) const {
+const z::Ast::TypeSpec* z::Ast::Unit::hasRootTypeSpec(const size_t& level, const z::Ast::Token& name) const {
     const z::Ast::TypeSpec* typeSpec = findTypeSpec(currentTypeSpec(), name);
     if(typeSpec) {
         return typeSpec;

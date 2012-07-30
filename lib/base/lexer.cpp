@@ -73,7 +73,7 @@ z::string z::Lexer::Impl::getText(const bool& rw) {
 
 z::TokenData z::Lexer::Impl::token(ParserContext& pctx, const int& id, const bool& rw) {
     z::string txt = getText(rw);
-    return TokenData::createT(pctx.factory.filename(), id, _row, _cursor-_sol, txt);
+    return TokenData::createT(pctx.factory.filename(), id, _row, (int)(_cursor-_sol), txt);
 }
 
 void z::Lexer::Impl::send(ParserContext& pctx, const int& id) {

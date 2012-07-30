@@ -103,17 +103,17 @@ static const char *ampm[] = {
 static int
 match_string (const char **buf, const char **strs)
 {
-    int i = 0;
+    size_t i = 0;
 
     for (i = 0; strs[i] != NULL; ++i) {
-    int len = strlen (strs[i]);
+    size_t len = strlen (strs[i]);
 #ifdef WIN32
     if (_strnicmp (*buf, strs[i], len) == 0) {
 #else
     if (strncasecmp (*buf, strs[i], len) == 0) {
 #endif
         *buf += len;
-        return i;
+        return (int)i;
     }
     }
     return -1;
@@ -247,7 +247,7 @@ parsetime (const char *buf, const char *format, struct tm *timeptr)
         timeptr->tm_mon = ret;
         break;
         case 'C' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         timeptr->tm_year = (ret * 100) - tm_year_base;
@@ -263,7 +263,7 @@ parsetime (const char *buf, const char *format, struct tm *timeptr)
         break;
         case 'd' :
         case 'e' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         timeptr->tm_mday = ret;
@@ -271,7 +271,7 @@ parsetime (const char *buf, const char *format, struct tm *timeptr)
         break;
         case 'H' :
         case 'k' :
-        ret = strtol (buf, &s, 10);
+                ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         timeptr->tm_hour = ret;
@@ -279,7 +279,7 @@ parsetime (const char *buf, const char *format, struct tm *timeptr)
         break;
         case 'I' :
         case 'l' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         if (ret == 12)
@@ -289,21 +289,21 @@ parsetime (const char *buf, const char *format, struct tm *timeptr)
         buf = s;
         break;
         case 'j' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         timeptr->tm_yday = ret - 1;
         buf = s;
         break;
         case 'm' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         timeptr->tm_mon = ret - 1;
         buf = s;
         break;
         case 'M' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         timeptr->tm_min = ret;
@@ -338,7 +338,7 @@ parsetime (const char *buf, const char *format, struct tm *timeptr)
         buf = s;
         break;
         case 'S' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         timeptr->tm_sec = ret;
@@ -358,35 +358,35 @@ parsetime (const char *buf, const char *format, struct tm *timeptr)
         buf = s;
         break;
         case 'u' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         timeptr->tm_wday = ret - 1;
         buf = s;
         break;
         case 'w' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         timeptr->tm_wday = ret;
         buf = s;
         break;
         case 'U' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         set_week_number_sun (timeptr, ret);
         buf = s;
         break;
         case 'V' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         set_week_number_mon4 (timeptr, ret);
         buf = s;
         break;
         case 'W' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         set_week_number_mon (timeptr, ret);
@@ -399,7 +399,7 @@ parsetime (const char *buf, const char *format, struct tm *timeptr)
         buf = s;
         break;
         case 'y' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         if (ret < 70)
@@ -409,7 +409,7 @@ parsetime (const char *buf, const char *format, struct tm *timeptr)
         buf = s;
         break;
         case 'Y' :
-        ret = strtol (buf, &s, 10);
+        ret = (int)strtol (buf, &s, 10);
         if (s == buf)
             return NULL;
         timeptr->tm_year = ret - tm_year_base;

@@ -13,7 +13,7 @@ public interface Socket {
     routine void StartServer(const socket& s) native;
     routine void Close(const socket& s) native;
 
-    routine int SendData(const socket& s, const data& d) native;
-    routine int SendString(const socket& s, const string& d) native;
+    routine size SendData(const socket& s, const data& d) native;
+    routine size SendString(const socket& s, const string& d) native;
 };
 

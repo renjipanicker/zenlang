@@ -120,7 +120,8 @@ public:
 
 static bool queryHttpText(const z::url& u, zz::OnDataReceivedHandler& drh) {
     SOCKET sockfd;
-    int portno, n;
+    int portno;
+    long n;
     struct sockaddr_in serv_addr;
     struct hostent *server;
 
@@ -168,7 +169,7 @@ static bool queryHttpText(const z::url& u, zz::OnDataReceivedHandler& drh) {
     hdr += ("User-Agent: Mozilla/5.0+(compatible)\n");
     hdr += ("Host: " + u.host + "\n");
     sprintf(buffer, "GET %s%s HTTP/1.1\n%s\n", z::s2e(u.path).c_str(), z::s2e(qs).c_str(), z::s2e(hdr).c_str());
-    n = send(sockfd,buffer,strlen(buffer), 0);
+    n = ::send(sockfd,buffer,strlen(buffer), 0);
     if (n < 0) {
         std::cout << "ERROR writing to socket" << std::endl;
         return false;
@@ -176,7 +177,7 @@ static bool queryHttpText(const z::url& u, zz::OnDataReceivedHandler& drh) {
     bool done = false;
     do {
         memset(buffer, 0, BLEN);
-        n = recv(sockfd, buffer, BLEN-1, 0);
+        n = ::recv(sockfd, buffer, BLEN-1, 0);
         if (n < 0) {
             std::cout << "ERROR reading from socket" << std::endl;
             break;

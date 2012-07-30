@@ -439,15 +439,7 @@ if [ "$dotest" == "yes" ]; then
         CFLAGS="/Ox /DWIN32 /DUNIT_TEST /DZ_EXE /EHsc /I${OUTDIR} /W4"
 
         if [ "$dotest" == "max" ]; then
-            "${CC}" ${CFLAGS} -c ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
-            if [[ $? != 0 ]]; then
-                echo Error compiling library files.
-                exit
-            fi
-        fi
-
-        if [ "$dotest" == "max" ]; then
-            "${CC}" ${CFLAGS} /FetestBasic.exe sqlite3.obj sqlite3_unicode.obj ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
+            "${CC}" ${CFLAGS} /FetestBasic.exe sqlite3.obj ${OUTDIR}/zenlang.cpp testBasic.cpp ws2_32.lib shell32.lib
             if [[ $? != 0 ]]; then
                 echo Error compiling testBasic files.
                 exit
@@ -460,7 +452,7 @@ if [ "$dotest" == "yes" ]; then
         fi
 
         if [ "$dotest" == "max" ]; then
-            "${CC}" ${CFLAGS} /FetestFcgi.exe /DSERVER sqlite3.obj sqlite3_unicode.obj ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/zenlang.cpp testFcgi.cpp ws2_32.lib shell32.lib
+            "${CC}" ${CFLAGS} /FetestFcgi.exe /DSERVER sqlite3.obj ${OUTDIR}/utils/fcgi/fastcgi.cpp ${OUTDIR}/zenlang.cpp testFcgi.cpp ws2_32.lib shell32.lib
             if [[ $? != 0 ]]; then
                 echo Error compiling testFcgi files.
                 exit
@@ -476,7 +468,7 @@ if [ "$dotest" == "yes" ]; then
         fi
 
         if [ "$dotest" == "max" ]; then
-            "${CC}" ${CFLAGS} /DGUI /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
+            "${CC}" ${CFLAGS} /DGUI /FetestGui.exe ${OUTDIR}/utils/sqlite3/sqlite3.c ${OUTDIR}/zenlang.cpp guiTest.cpp user32.lib gdi32.lib comctl32.lib shell32.lib ws2_32.lib
             if [[ $? != 0 ]]; then
                 echo Error compiling testGui files.
                 exit
@@ -484,11 +476,6 @@ if [ "$dotest" == "yes" ]; then
         fi
     elif [[ $platform == 'Darwin' ]]; then
         # first compile the C files
-        gcc -c -Os -I${SDKDIR}/include -I${OUTDIR} ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
-        if [[ $? != 0 ]]; then
-            exit
-        fi
-
         CFLAGS="-DOSX -DUNIT_TEST -DZ_EXE -Wall -I${OUTDIR} -framework Cocoa -O3"
 
         # next compile the zenlang.cpp file as an objective-c++ file.
@@ -501,7 +488,7 @@ if [ "$dotest" == "yes" ]; then
 
         # now compile the test file
         echo CMD test-2
-        g++ ${CFLAGS} -o test.osx sqlite3_unicode.o zenlang.o testBasic.cpp -lc++ -lsqlite3
+        g++ ${CFLAGS} -o test.osx zenlang.o testBasic.cpp -lc++ -lsqlite3
         if [[ $? != 0 ]]; then
             exit
         fi
@@ -521,17 +508,11 @@ if [ "$dotest" == "yes" ]; then
 #        fi
 
 #        echo GUI test-2
-#        g++ ${CFLAGS} -DGUI -O3 -o test.osx -L${SDKDIR}/lib sqlite3_unicode.o zenlang.o guiTest.cpp -lc++ -lsqlite3
+#        g++ ${CFLAGS} -DGUI -O3 -o test.osx -L${SDKDIR}/lib zenlang.o guiTest.cpp -lc++ -lsqlite3
 #        if [[ $? != 0 ]]; then
 #            exit
 #        fi
     elif [[ $platform == 'Linux' ]]; then
-        echo Compiling sqlite_unicode
-        gcc -c -Os -I${OUTDIR} ${OUTDIR}/utils/sqlite3/sqlite3_unicode.c
-        if [[ $? != 0 ]]; then
-            exit
-        fi
-
         CFLAGS="-DUNIT_TEST -DZ_EXE -Wall -I${OUTDIR} -O3"
 
         # next compile the zenlang.cpp file as an objective-c++ file.
@@ -542,7 +523,7 @@ if [ "$dotest" == "yes" ]; then
         fi
 
         echo Compiling testBasic
-        g++ ${CFLAGS} -o test sqlite3_unicode.o zenlang.o testBasic.cpp -lsqlite3
+        g++ ${CFLAGS} -o test zenlang.o testBasic.cpp -lsqlite3
         if [[ $? != 0 ]]; then
             exit
         fi
@@ -554,7 +535,7 @@ if [ "$dotest" == "yes" ]; then
         fi
 
         echo Compiling intTest
-        g++ ${CFLAGS} -o intTest sqlite3_unicode.o zenlang.o intTest.cpp -lsqlite3
+        g++ ${CFLAGS} -o intTest zenlang.o intTest.cpp -lsqlite3
         if [[ $? != 0 ]]; then
             exit
         fi
@@ -566,7 +547,7 @@ if [ "$dotest" == "yes" ]; then
         fi
 
         #echo Compiling guiTest
-        #g++ ${CFLAGS} -DGUI `pkg-config --cflags --libs gtk+-3.0` -O3 -o guiTest -L${SDKDIR}/lib sqlite3_unicode.o zenlang.o guiTest.cpp -lsqlite3
+        #g++ ${CFLAGS} -DGUI `pkg-config --cflags --libs gtk+-3.0` -O3 -o guiTest -L${SDKDIR}/lib zenlang.o guiTest.cpp -lsqlite3
         if [[ $? != 0 ]]; then
             exit
         fi
