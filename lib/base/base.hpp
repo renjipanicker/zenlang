@@ -107,12 +107,15 @@ namespace z {
 
         inline stringT slice(const size_type& from, const size_type& len) const {return substr(from, len);}
 
+        inline size_type find(const charT& s, const size_type& from) const {return _val.find(s, from);}
         inline size_type find(const charT& s) const {return _val.find(s);}
         inline size_type find(const stringT& s) const {return _val.find(s._val);}
         inline size_type find(const stringT& s, const size_type& from) const {return _val.find(s._val, from);}
+
         inline size_type rfind(const charT& s) const {return _val.rfind(s);}
         inline size_type rfind(const stringT& s) const {return _val.rfind(s._val);}
-        inline stringT   replace(const size_type& from, const size_type& len, const stringT& to) {return _val.replace(from, len, to._val);}
+
+        inline stringT replace(const size_type& from, const size_type& len, const stringT& to) {return _val.replace(from, len, to._val);}
 
         inline void replace(const stringT& search, const stringT& replace) {
             for(typename sstringT::size_type next = _val.find(search._val); next != sstringT::npos;next = _val.find(search._val, next)) {
