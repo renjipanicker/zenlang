@@ -249,9 +249,7 @@ void z::MsvcGenerator::Impl::run() {
     os() << "            >" << std::endl;
 
     writeLibFile(_project, os, _project.zlibPath() + "/zenlang.cpp", (_pch == "zenlang.hpp"));
-    writeLibFile(_project, os, _project.zlibPath() + "/utils/fcgi/fastcgi.cpp", false);
     writeLibFile(_project, os, _project.zlibPath() + "/utils/sqlite3/sqlite3.c", false);
-    writeLibFile(_project, os, _project.zlibPath() + "/utils/sqlite3/sqlite3_unicode.c", false);
     writeLibFile(_project, os, _project.zlibPath() + "/utils/base64.cpp", false);
     writeLibFile(_project, os, _project.zlibPath() + "/utils/cJSON.c", false);
 
