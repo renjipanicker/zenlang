@@ -79,7 +79,8 @@ typedef RequestMap dict<uint, RequestData>;
 
 routine void OnRequestReceived(const socket& s, const socket& cs, const Request& req);
 
-routine Header CreateHeader(const MessageType& t, const uint& mid, const uint& len) {
+routine Header CreateHeader(const MessageType& t, const uint& mid, const size& lens) {
+    uint len = (uint)lens;
     auto h = Header {
         hType            : (ubyte)t;
         hRequestIdB1     : (ubyte)(mid >> 8);

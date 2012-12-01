@@ -795,6 +795,10 @@ namespace in {
             z::unused_t(node);
         }
 
+        virtual void visit(const z::Ast::SkipStatement& node) {
+            z::unused_t(node);
+        }
+
         virtual void visit(const z::Ast::AddEventHandlerStatement& node) {
             z::unused_t(node);
         }

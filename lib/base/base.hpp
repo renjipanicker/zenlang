@@ -96,6 +96,7 @@ namespace z {
         inline size_type size() const {return _val.size();}
         inline size_type length() const {return _val.length();}
 
+        inline int compare(const stringT& rhs) const {return _val.compare(rhs._val);}
         inline bool operator==(const stringT& rhs) const {return (_val.compare(rhs._val) == 0);}
         inline bool operator!=(const stringT& rhs) const {return (_val.compare(rhs._val) != 0);}
         inline bool operator< (const stringT& rhs) const {return (_val.compare(rhs._val) < 0);}
@@ -309,18 +310,26 @@ namespace z {
     template <typename charT, typename stringT>
     template <typename T>
     inline stringT& z::bstring<charT, stringT>::arg(const stringT& key, const T& value) {
-        // first stream the key:val pair into a regular std::stringstream
-        std::stringstream skey;
-        skey << "%{" << s2e(key) << "}";
+        // first stream the val into a regular std::stringstream
         std::stringstream sval;
         sval << value;
 
-        // then use e2s to convert it to current string width
-        stringT sk = e2s(skey.str());
+        // then use e2s to convert it to current string type
         stringT sv = e2s(sval.str());
 
-        // and replace
+        std::stringstream skey;
+
+        // replace %{X}
+        skey << "%{" << s2e(key) << "}";
+        stringT sk = e2s(skey.str());
         replace(sk, sv);
+
+        // replace %X
+        std::stringstream skey2;
+        skey2 << "%" << s2e(key);
+        sk = e2s(skey2.str());
+        replace(sk, sv);
+
         return z::ref(static_cast<stringT*>(this));
     }
 
@@ -446,6 +455,10 @@ namespace z {
         return s.size();
     }
 
+    inline int compare(const z::string& lhs, const z::string& rhs) {
+        return lhs.compare(rhs);
+    }
+
     ////////////////////////////////////////////////////////////////////////////
     struct datetime {
         inline datetime() : _val(0) {}
@@ -495,9 +508,14 @@ namespace z {
         return type_name<T>();
     }
 
-    void writelog(const z::string& src, const z::string& msg);
+    void writelog(const z::string& msg);
+    inline void writelog(const z::string& src, const z::string& msg) {
+        writelog(src + ":" + msg);
+    }
 
+    inline void mlog(const z::string& msg)                       {writelog(msg);}
     inline void mlog(const z::string& src, const z::string& msg) {writelog(src, msg);}
+    inline void elog(const z::string& msg)                       {writelog(msg);}
     inline void elog(const z::string& src, const z::string& msg) {writelog(src, msg);}
 
     class Exception /*  : public std::runtime_error */ { /// \todo:
@@ -506,10 +524,16 @@ namespace z {
             elog(src, _msg);
             assert(false);
         }
+        explicit inline Exception(const z::string& msg) : _msg(msg) {
+            elog(_msg);
+            assert(false);
+        }
     private:
         const z::string _msg;
     };
 
+    ////////////////////////////////////////////////////////////////////////////
+    /// \brief simple smart pointer
     template <typename T>
     struct autoptr {
         inline autoptr() : _val(0) {}
@@ -755,6 +779,18 @@ namespace z {
             return v;
         }
 
+        inline V& add(const V& v) {
+            BaseT::_list.push_back(v);
+            return back();
+        }
+
+        inline void append(const listbase& src) {
+            for(typename BaseT::const_iterator it = src._list.begin(); it != src._list.end(); ++it) {
+                const V& iv = *it;
+                add(iv);
+            }
+        }
+
         inline typename BaseT::iterator last() {return --BaseT::_list.end();}
         inline typename BaseT::iterator erase(typename BaseT::iterator& it) {return BaseT::_list.erase(it);}
     };
@@ -766,36 +802,37 @@ namespace z {
 
         inline V& top() {
             assert(BaseT::_list.size() > 0);
-            V& v = BaseT::_list.front();
+            V& v = BaseT::_list.back();
             return v;
         }
 
         inline const V& top() const {
             assert(BaseT::_list.size() > 0);
-            const V& v = BaseT::_list.front();
+            const V& v = BaseT::_list.back();
             return v;
         }
 
         inline V& push(const V& v) {
-            BaseT::_list.push_front(v);
+            BaseT::_list.push_back(v);
             return top();
         }
 
         inline V pop() {
             assert(BaseT::_list.size() > 0);
-            V v = BaseT::_list.front();
-            BaseT::_list.pop_front();
+            V v = BaseT::_list.back();
+            BaseT::_list.pop_back();
             return v;
         }
     };
 
     /// \brief Queue class
     template <typename V>
-    struct queue : public z::listbase<V, std::deque<V> > {
-        typedef z::listbase<V, std::deque<V> > BaseT;
+    struct queue : public z::listbase<V, std::list<V> > {
+        typedef z::listbase<V, std::list<V> > BaseT;
 
-        inline void enqueue(const V& v) {
+        inline V& enqueue(const V& v) {
             BaseT::_list.push_back(v);
+            return BaseT::_list.back();
         }
 
         inline V dequeue() {
@@ -808,14 +845,18 @@ namespace z {
 
     /// \brief List class
     template <typename V>
-    struct list : public z::listbase<V, std::vector<V> > {
-        typedef z::listbase<V, std::vector<V> > BaseT;
+    struct list : public z::listbase<V, std::list<V> > {
+        typedef z::listbase<V, std::list<V> > BaseT;
 
+        /// \todo This function is inefficient
         inline V at(const typename BaseT::size_type& k) const {
             if(k >= BaseT::_list.size()) {
                 throw Exception("z::list", z::string("%{k} out of list bounds\n").arg("k", k));
             }
-            return BaseT::_list.at(k);
+            typename BaseT::const_iterator it = BaseT::_list.begin();
+            std::advance(it, k);
+            return *it;
+//            return BaseT::_list.at(k);
         }
 
         inline bool has(const V& v) const {
@@ -831,19 +872,10 @@ namespace z {
             if(k >= BaseT::_list.size()) {
                 BaseT::_list.resize(k+4);
             }
-            BaseT::_list.at(k) = v;
-        }
-
-        inline V& add(const V& v) {
-            BaseT::_list.push_back(v);
-            return BaseT::back();
-        }
-
-        inline void append(const list<V>& src) {
-            for(typename BaseT::const_iterator it = src._list.begin(); it != src._list.end(); ++it) {
-                const V& iv = *it;
-                add(iv);
-            }
+            typename BaseT::iterator it = BaseT::_list.begin();
+            std::advance(it, k);
+            BaseT::_list.insert(it, v);
+//            BaseT::_list.at(k) = v;
         }
 
         template <typename CmpFnT>
@@ -853,8 +885,10 @@ namespace z {
 
         inline list<V> slice(const typename BaseT::size_type& from, const typename BaseT::size_type& len) const {
             list<V> nl;
-            for(typename BaseT::size_type i = from; i < len; ++i) {
-                const V& v = BaseT::_list.at(i);
+            typename BaseT::const_iterator it = BaseT::_list.begin();
+            std::advance(it, from);
+            for(typename BaseT::size_type i = 0; i < len; ++i, ++it) {
+                const V& v = *it;
                 nl.add(v);
             }
             return nl;
@@ -954,7 +988,7 @@ namespace z {
         inline const V& at(const K& k) const {
             typename BaseT::const_iterator it = BaseT::_list.find(k);
             if(it == BaseT::_list.end()) {
-                throw Exception("dict", z::string("%{k} not found\n").arg("k", k));
+                throw Exception("dict", z::string("key: %{k} not found").arg("k", k));
             }
             return it->second;
         }
@@ -972,10 +1006,13 @@ namespace z {
             return (it != BaseT::_list.end());
         }
 
-        inline void clone(const dict& src) {
+        inline void append(const dict& src) {
             for(typename BaseT::const_iterator it = src._list.begin(); it != src._list.end(); ++it) {
                 const K& k = it->first;
                 const V& v = it->second;
+//                if(BaseT::_list.find(k) == BaseT::_list.end()) {
+//                    throw Exception("dict", z::string("Duplicate key: %{k}").arg("k", k));
+//                }
                 set(k, v);
             }
         }
@@ -1070,7 +1107,7 @@ namespace z {
         if(l == 0)
             l = t.size() - 1;
 
-        return t.slice(f, l);
+        return t.slice((size_t)f, (size_t)l);
     }
 
     /////////////////////////////
@@ -1093,7 +1130,68 @@ namespace z {
     }
 
     template <typename V>
+    inline V& append(list<V>& l, const V& v) {
+        return l.add(v);
+    }
+
+    template <typename T>
+    inline void append(T& l, const T& r) {
+        return l.append(r);
+    }
+
+    template <typename V>
     inline typename list<V>::size_type length(const list<V>& l) {
+        return l.size();
+    }
+
+    template <typename V>
+    inline V& first(list<V>& l) {
+        return *(l.first());
+    }
+
+    template <typename V>
+    inline V& last(list<V>& l) {
+        typename list<V>::iterator it = l.last();
+        return *it;
+    }
+
+    template <typename V>
+    inline V& push(stack<V>& l, const V& v) {
+        return l.push(v);
+    }
+
+    template <typename V>
+    inline V& top(stack<V>& l) {
+        return l.top();
+    }
+
+    template <typename V>
+    inline V pop(stack<V>& l) {
+        return l.pop();
+    }
+
+    template <typename V>
+    inline V& enqueue(queue<V>& l, const V& v) {
+        return l.enqueue(v);
+    }
+
+    template <typename V>
+    inline V& head(queue<V>& l) {
+        return l.front();
+    }
+
+    template <typename V>
+    inline V dequeue(queue<V>& l) {
+        return l.dequeue();
+    }
+
+    template <typename V>
+    inline typename stack<V>::size_type length(const stack<V>& l) {
+        return l.size();
+    }
+
+    template <typename V>
+    inline typename queue<V>::size_type length(const queue<V>& l) {
         return l.size();
     }
 
@@ -1112,6 +1210,11 @@ namespace z {
     template <typename K, typename V>
     inline typename dict<K,V>::size_type length(const dict<K, V>& l) {
         return l.size();
+    }
+
+    template <typename K, typename V>
+    inline void append(dict<K, V>& l, const dict<K, V>& v) {
+        return l.append(v);
     }
 
     template <typename K, typename V>
@@ -1433,7 +1536,7 @@ namespace z {
 
     private:
         /// \brief runs the main loop, throws exceptions
-        inline int execEx();
+        inline int execExx();
 
         /// \brief Called on exit
         /// This function is implemented in ApplicationImpl.cpp

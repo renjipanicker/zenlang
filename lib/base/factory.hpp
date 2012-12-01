@@ -17,6 +17,7 @@ namespace Ast {
         inline const Unit& unit() const {return _module.unit();}
         inline Unit& unit() {return _module.unit();}
         inline const z::string& filename() const {return _module.filename();}
+        inline void setLastToken(const int& row, const int& col, const z::string& val) {_lastToken = Token(filename(), row, col, val);}
         inline const Ast::TypeSpec* hasRootTypeSpec(const Ast::Token& name) const {return unit().hasRootTypeSpec(_module.level(), name);}
     private:
         inline const Ast::TemplateDefn& getTemplateDefn(const Ast::Token& name, const Ast::Expr& expr, const z::string& cname, const Ast::TemplateDefn::size_type& len);
@@ -39,6 +40,7 @@ namespace Ast {
         inline const Ast::FunctionRetn& getFunctionRetn(const Ast::Token& pos, const Ast::Function& function);
         inline Ast::TemplateDefn& createTemplateDefn(const Ast::Token& pos, const z::string& name, const Ast::TemplateTypePartList& list);
         inline void setDefaultDummyValue(const Ast::Token& name, Ast::TypeSpec& typeSpec);
+        inline const z::Ast::QualifiedTypeSpec* getIndexTypeSpec(const z::Ast::Token& pos, const z::Ast::Expr& expr);
 
     private:
         template <typename T> inline Ast::Expr& createBooleanExpr(const Ast::Token& op, const Ast::Expr& lhs, const Ast::Expr& rhs);
@@ -75,7 +77,7 @@ namespace Ast {
         Ast::TypedefDefn*        aTypedefDefn(const Ast::Token& name, const Ast::DefinitionType& defType, const Ast::QualifiedTypeSpec& qTypeSpec);
         Ast::TemplatePartList*   aTemplatePartList(Ast::TemplatePartList& list, const Ast::Token& name);
         Ast::TemplatePartList*   aTemplatePartList(const Ast::Token& name);
-        Ast::TemplateDecl*       aTemplateDecl(const Ast::Token& name, const Ast::DefinitionType& defType, const Ast::TemplatePartList& list);
+        Ast::TemplateDecl*       aTemplateDecl(const UserDefinedTypeSpec& typeSpec, const Ast::TemplatePartList& list);
         Ast::EnumDefn*           aEnumDefn(const Ast::Token& name, const Ast::DefinitionType& defType, const Ast::Scope& list);
         Ast::EnumDecl*           aEnumDecl(const Ast::Token& name, const Ast::DefinitionType& defType);
         Ast::Scope*              aEnumMemberDefnList(Ast::Scope& list, const Ast::VariableDefn& variableDefn);
@@ -86,7 +88,7 @@ namespace Ast {
         Ast::RootStructDefn*     aLeaveRootStructDefn(Ast::RootStructDefn& structDefn);
         Ast::ChildStructDefn*    aLeaveChildStructDefn(Ast::ChildStructDefn& structDefn);
         Ast::RootStructDefn*     aEnterRootStructDefn(const Ast::Token& name, const Ast::DefinitionType& defType);
-        Ast::ChildStructDefn*    aEnterChildStructDefn(const Ast::Token& name, const Ast::StructDefn& base, const Ast::DefinitionType& defType);
+        Ast::ChildStructDefn*    aEnterChildStructDefn(const Ast::Token& name, const Ast::Struct& base, const Ast::DefinitionType& defType);
         void                     aStructMemberVariableDefn(const Ast::VariableDefn& vdef);
         void                     aStructMemberTypeDefn(Ast::UserDefinedTypeSpec& typeSpec);
         void                     aStructMemberPropertyDefn(Ast::PropertyDecl& typeSpec);
@@ -127,9 +129,9 @@ namespace Ast {
         const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
         const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::Token& name);
         const Ast::TemplateDecl* aTemplateTypeSpec(const Ast::TemplateDecl& templateDecl);
-        const Ast::StructDefn*   aStructTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
-        const Ast::StructDefn*   aStructTypeSpec(const Ast::Token& name);
-        const Ast::StructDefn*   aStructTypeSpec(const Ast::StructDefn& structDefn);
+        const Ast::Struct*       aStructTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
+        const Ast::Struct*       aStructTypeSpec(const Ast::Token& name);
+        const Ast::Struct*       aStructTypeSpec(const Ast::Struct& struct1);
         const Ast::Routine*      aRoutineTypeSpec(const Ast::TypeSpec& parent, const Ast::Token& name);
         const Ast::Routine*      aRoutineTypeSpec(const Ast::Token& name);
         const Ast::Routine*      aRoutineTypeSpec(const Ast::Routine& routine);
@@ -160,16 +162,20 @@ namespace Ast {
         Ast::ForStatement*                 aForStatement(const Ast::Token& pos, const Ast::VariableDefn& init, const Ast::Expr& expr, const Ast::Expr& incr, const Ast::CompoundStatement& block);
         const Ast::VariableDefn*           aEnterForInit(const Ast::VariableDefn& init);
         Ast::ForeachStatement*             aForeachStatement(Ast::ForeachStatement& statement, const Ast::CompoundStatement& block);
+        Ast::ForeachStatement*             aEnterForeachInit(const Ast::Token& valName, const Ast::Expr& expr, const Ast::Token& idxName);
         Ast::ForeachStatement*             aEnterForeachInit(const Ast::Token& valName, const Ast::Expr& expr);
+        Ast::ForeachDictStatement*         aEnterForeachInit(const Ast::Token& keyName, const Ast::Token& valName, const Ast::Expr& expr, const Ast::Token& idxName);
         Ast::ForeachDictStatement*         aEnterForeachInit(const Ast::Token& keyName, const Ast::Token& valName, const Ast::Expr& expr);
         Ast::SwitchValueStatement*         aSwitchStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& list);
         Ast::SwitchExprStatement*          aSwitchStatement(const Ast::Token& pos, const Ast::CompoundStatement& list);
         Ast::CompoundStatement*            aCaseList(Ast::CompoundStatement& list, const Ast::CaseStatement& stmt);
         Ast::CompoundStatement*            aCaseList(const Ast::CaseStatement& stmt);
         Ast::CaseStatement*                aCaseStatement(const Ast::Token& pos, const Ast::Expr& expr, const Ast::CompoundStatement& block);
+        Ast::CaseStatement*                aCaseStatement(const Ast::Token& pos, const Ast::Expr& expr);
         Ast::CaseStatement*                aCaseStatement(const Ast::Token& pos, const Ast::CompoundStatement& block);
         Ast::BreakStatement*               aBreakStatement(const Ast::Token& pos);
         Ast::ContinueStatement*            aContinueStatement(const Ast::Token& pos);
+        Ast::SkipStatement*                aSkipStatement(const Ast::Token& pos, const Ast::Expr& expr);
         Ast::AddEventHandlerStatement*     aAddEventHandlerStatement(const Ast::Token& pos, const Ast::EventDecl& event, const Ast::Expr& source, Ast::FunctionTypeInstanceExpr& functor);
         const Ast::EventDecl*              aEnterAddEventHandler(const Ast::EventDecl& eventDecl);
         Ast::RoutineReturnStatement*       aRoutineReturnStatement(const Ast::Token& pos);
@@ -286,7 +292,7 @@ namespace Ast {
         Ast::StructInstanceExpr*  aStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn);
         Ast::Expr*                aAutoStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn, const Ast::StructInitPartList& list);
         Ast::Expr*                aAutoStructInstanceExpr(const Ast::Token& pos, const Ast::StructDefn& structDefn);
-        const Ast::StructDefn*    aEnterStructInstanceExpr(const Ast::StructDefn& structDefn);
+        const Ast::StructDefn*    aEnterStructInstanceExpr(const Ast::Struct& structDefn);
         const Ast::StructDefn*    aEnterAutoStructInstanceExpr(const Ast::Token& pos);
         void                      aLeaveStructInstanceExpr();
         const Ast::VariableDefn*  aEnterStructInitPart(const Ast::Token& name);

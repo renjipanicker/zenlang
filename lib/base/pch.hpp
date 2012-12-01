@@ -92,6 +92,14 @@
 # include <sys/stat.h>
 # include <assert.h>
 
+#if !defined(NOSQLITE3)
+#if defined(WIN32)
+# include <utils/sqlite3/sqlite3.h>
+#else
+# include <sqlite3.h>
+#endif
+#endif
+
 #if defined(WIN32)
     # include <direct.h>
     # include <process.h>

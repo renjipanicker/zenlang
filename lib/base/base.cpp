@@ -27,6 +27,21 @@
     #endif
 #endif
 
+// all webcontrol header files are included here.
+#if defined(GUI)
+    #if defined(WIN32)
+        # include <exdisp.h>
+        # include <mshtml.h>
+        # include <mshtmhst.h>
+        # include <ExDispId.h>
+    #elif defined(GTK)
+        # include <webkit/webkit.h>
+    #elif defined(QT)
+    #elif defined(OSX)
+    #else
+    #endif
+#endif
+
 ///////////////////////////////////////////////////////////////
 #if defined(__APPLE__)
 # include <mach-o/dyld.h>
@@ -37,20 +52,14 @@
 static z::application* g_app = 0;
 
 ////////////////////////////////////////////////////////////////////////////
-void z::writelog(const z::string& src, const z::string& msg) {
-    z::string s;
-    if(src.length() > 0) {
-        s += src;
-        s += " : ";
-    }
-    s += msg;
+void z::writelog(const z::string& msg) {
 #if defined(OSX) || defined(IOS)
-    std::cout << s << std::endl;
+    std::cout << msg << std::endl;
 #endif
     if(g_app) {
-        z::app().writeLog(s);
+        z::app().writeLog(msg);
     } else {
-        std::cout << s << std::endl;
+        std::cout << msg << std::endl;
     }
 }
 
@@ -915,7 +924,7 @@ HINSTANCE z::application::instance() const {
 }
 #endif
 
-inline int z::application::execEx() {
+inline int z::application::execExx() {
 #if defined(UNIT_TEST)
     TestResult tr; z::unused_t(tr);
 #endif
@@ -990,7 +999,7 @@ inline int z::application::execEx() {
 }
 
 int z::application::exec() {
-    int rv = execEx();
+    int rv = execExx();
     return rv;
 }
 
@@ -1052,7 +1061,7 @@ void initMain(const z::stringlist& argl) {
 }
 
 #if defined(GUI) && defined(WIN32)
-int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
+int APIENTRY _tWinMain1(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
     z::unused_t(hPrevInstance);z::unused_t(lpCmdLine);z::unused_t(nCmdShow);
     s_hInstance = hInstance;
     z::application a(__argc, (char**)__argv);
@@ -1061,7 +1070,7 @@ int APIENTRY _tWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCm
 }
 #else // GUI && WIN32
 #if !defined(ZPP_EXE) // special case for ZPP compiler, which defines its own main()
-int main(int argc, char* argv[]) {
+int main1(int argc, char* argv[]) {
 #if defined(GUI) && defined(QT)
     // This cannot be in initMain() since it must have application-level lifetime.
     QApplication qapp(argc, argv);
@@ -1073,3 +1082,565 @@ int main(int argc, char* argv[]) {
 #endif // ZPP_EXE
 #endif // GUI && WIN32
 #endif // Z_EXE
+
+#if defined(GUI)
+#if defined(WIN32)
+#define MUST_BE_IMPLEMENTED(f) return E_NOTIMPL;
+class Storage : public IStorage {
+    HRESULT STDMETHODCALLTYPE QueryInterface( REFIID /*riid*/, LPVOID FAR* /*ppvObj*/) { MUST_BE_IMPLEMENTED("QueryInterface"); }
+    ULONG   STDMETHODCALLTYPE AddRef() { return(1); }
+    ULONG   STDMETHODCALLTYPE Release() { return(1); }
+    HRESULT STDMETHODCALLTYPE CreateStream(const WCHAR* /*pwcsName*/, DWORD /*grfMode*/, DWORD /*reserved1*/, DWORD /*reserved2*/, IStream** /*ppstm*/ ) { MUST_BE_IMPLEMENTED("CreateStream"); }
+    HRESULT STDMETHODCALLTYPE OpenStream(const WCHAR* /*pwcsName*/, void* /*reserved1*/, DWORD /*grfMode*/, DWORD /*reserved2*/, IStream** /*ppstm*/) { MUST_BE_IMPLEMENTED("OpenStream"); }
+    HRESULT STDMETHODCALLTYPE CreateStorage(const WCHAR* /*pwcsName*/, DWORD /*grfMode*/, DWORD /*reserved1*/, DWORD /*reserved2*/, IStorage** /*ppstg*/) {MUST_BE_IMPLEMENTED("CreateStorage"); }
+    HRESULT STDMETHODCALLTYPE OpenStorage(const WCHAR* /*pwcsName*/, IStorage* /*pstgPriority*/, DWORD /*grfMode*/, SNB /*snbExclude*/, DWORD  /*reserved*/, IStorage** /*ppstg*/) { MUST_BE_IMPLEMENTED("OpenStorage"); }
+    HRESULT STDMETHODCALLTYPE CopyTo(DWORD /*ciidExclude*/, IID const* /*rgiidExclude*/, SNB /*snbExclude*/,IStorage* /*pstgDest*/){ MUST_BE_IMPLEMENTED("CopyTo"); }
+    HRESULT STDMETHODCALLTYPE MoveElementTo(const OLECHAR* /*pwcsName*/, IStorage* /*pstgDest*/, const OLECHAR* /*pwcsNewName*/, DWORD /*grfFlags*/) { MUST_BE_IMPLEMENTED("MoveElementTo"); }
+    HRESULT STDMETHODCALLTYPE Commit(DWORD /*grfCommitFlags*/) { MUST_BE_IMPLEMENTED("Commit"); }  
+    HRESULT STDMETHODCALLTYPE Revert() { MUST_BE_IMPLEMENTED("Revert"); }
+    HRESULT STDMETHODCALLTYPE EnumElements(DWORD /*reserved1*/, void* /*reserved2*/, DWORD /*reserved3*/, IEnumSTATSTG** /*ppenum*/) { MUST_BE_IMPLEMENTED("EnumElements"); }
+    HRESULT STDMETHODCALLTYPE DestroyElement(const OLECHAR* /*pwcsName*/) { MUST_BE_IMPLEMENTED("DestroyElement"); }
+    HRESULT STDMETHODCALLTYPE RenameElement(const WCHAR* /*pwcsOldName*/, const WCHAR* /*pwcsNewName*/) { MUST_BE_IMPLEMENTED("RenameElement"); }
+    HRESULT STDMETHODCALLTYPE SetElementTimes(const WCHAR* /*pwcsName*/, FILETIME const* /*pctime*/, FILETIME const* /*patime*/, FILETIME const* /*pmtime*/) { MUST_BE_IMPLEMENTED("SetElementTimes") }
+    HRESULT STDMETHODCALLTYPE SetClass(REFCLSID /*clsid*/) {return S_OK;}
+    HRESULT STDMETHODCALLTYPE SetStateBits(DWORD /*grfStateBits*/, DWORD /*grfMask*/) { MUST_BE_IMPLEMENTED("SetStateBits"); }
+    HRESULT STDMETHODCALLTYPE Stat(STATSTG* /*pstatstg*/, DWORD /*grfStatFlag*/) { MUST_BE_IMPLEMENTED("Stat"); }
+};
+
+class OleInPlaceFrame : public IOleInPlaceFrame {
+    HWND hwnd_;
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID /*riid*/, LPVOID FAR* /*ppvObj*/) {MUST_BE_IMPLEMENTED("QueryInterface");}
+    ULONG   STDMETHODCALLTYPE AddRef() {return 1;}
+    ULONG   STDMETHODCALLTYPE Release() {return 1;}
+    HRESULT STDMETHODCALLTYPE GetWindow(HWND FAR* lphwnd) {*lphwnd = hwnd_;return S_OK;}
+    HRESULT STDMETHODCALLTYPE ContextSensitiveHelp(BOOL /*fEnterMode*/) { MUST_BE_IMPLEMENTED("ContextSensitiveHelp");}
+    HRESULT STDMETHODCALLTYPE GetBorder(LPRECT /*lprectBorder*/) { MUST_BE_IMPLEMENTED("GetBorder");}
+    HRESULT STDMETHODCALLTYPE RequestBorderSpace(LPCBORDERWIDTHS /*pborderwidths*/) { MUST_BE_IMPLEMENTED("RequestBorderSpace");}
+    HRESULT STDMETHODCALLTYPE SetBorderSpace(LPCBORDERWIDTHS /*pborderwidths*/) { MUST_BE_IMPLEMENTED("SetBorderSpace");}
+    HRESULT STDMETHODCALLTYPE SetActiveObject(IOleInPlaceActiveObject* /*pActiveObject*/, LPCOLESTR /*pszObjName*/) { return S_OK;}
+    HRESULT STDMETHODCALLTYPE InsertMenus(HMENU /*hmenuShared*/, LPOLEMENUGROUPWIDTHS /*lpMenuWidths*/) {MUST_BE_IMPLEMENTED("InsertMenus");}
+    HRESULT STDMETHODCALLTYPE SetMenu(HMENU /*hmenuShared*/, HOLEMENU /*holemenu*/, HWND /*hwndActiveObject*/) { return(S_OK);}
+    HRESULT STDMETHODCALLTYPE RemoveMenus(HMENU /*hmenuShared*/) {MUST_BE_IMPLEMENTED("RemoveMenus");}
+    HRESULT STDMETHODCALLTYPE SetStatusText(LPCOLESTR /*pszStatusText*/) {return S_OK;}
+    HRESULT STDMETHODCALLTYPE EnableModeless(BOOL /*fEnable*/) { return S_OK;}
+    HRESULT STDMETHODCALLTYPE TranslateAccelerator(LPMSG /*lpmsg*/, WORD /*wID*/) {MUST_BE_IMPLEMENTED("TranslateAccelerator");}
+public:
+    inline OleInPlaceFrame(HWND h) : hwnd_(h) {}
+};
+
+class OleClientSite : public IOleClientSite {
+    IOleInPlaceSite* in_place_;
+    IDocHostUIHandler* doc_host_ui_handler_;
+    DWebBrowserEvents2* web_browser_events_;
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void ** ppvObject) {
+        if (!memcmp((const void*) &riid, (const void*)&IID_IUnknown, sizeof(GUID))) {
+            *ppvObject = static_cast<IOleClientSite*>(this);
+            return S_OK;
+        }
+        if (!memcmp((const void*) &riid, (const void*)&IID_IOleClientSite, sizeof(GUID))) {
+            *ppvObject = static_cast<IOleClientSite*>(this);
+            return S_OK;
+        }
+        if (!memcmp((const void*)&riid, &IID_IOleInPlaceSite, sizeof(GUID))) {
+            *ppvObject = in_place_;
+            return S_OK;
+        }
+        if (!memcmp((const void*)&riid, &IID_IDocHostUIHandler, sizeof(GUID))) {
+            *ppvObject = doc_host_ui_handler_;
+            return S_OK;
+        }
+        if (riid == DIID_DWebBrowserEvents2) {
+            *ppvObject = web_browser_events_;
+            return S_OK;
+        }
+        if (riid == IID_IDispatch) {
+            *ppvObject = web_browser_events_;
+            return S_OK;
+        }
+        *ppvObject = 0;
+        return E_NOINTERFACE;
+    }
+    ULONG   STDMETHODCALLTYPE AddRef() {return 1;}
+    ULONG   STDMETHODCALLTYPE Release() {return 1;}
+    HRESULT STDMETHODCALLTYPE SaveObject() {MUST_BE_IMPLEMENTED("SaveObject");}
+    HRESULT STDMETHODCALLTYPE GetMoniker(DWORD /*dwAssign*/, DWORD /*dwWhichMoniker*/, IMoniker** /*ppmk*/) { MUST_BE_IMPLEMENTED("GetMoniker");}
+    HRESULT STDMETHODCALLTYPE GetContainer(LPOLECONTAINER FAR* ppContainer) {*ppContainer = 0;return E_NOINTERFACE;}
+    HRESULT STDMETHODCALLTYPE ShowObject() {return NOERROR;}
+    HRESULT STDMETHODCALLTYPE OnShowWindow(BOOL /*fShow*/) {MUST_BE_IMPLEMENTED("OnShowWindow");}
+    HRESULT STDMETHODCALLTYPE RequestNewObjectLayout() {MUST_BE_IMPLEMENTED("RequestNewObjectLayout");}
+
+public:
+    inline OleClientSite(IOleInPlaceSite* in_place, IDocHostUIHandler* doc_host_ui_handler, DWebBrowserEvents2* web_browser_events) : in_place_(in_place), doc_host_ui_handler_(doc_host_ui_handler), web_browser_events_(web_browser_events ) {}
+};
+
+class DocHostUiHandler : public IDocHostUIHandler {
+    IOleClientSite* ole_client_site_;
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, LPVOID FAR* ppvObj) {
+        if (ole_client_site_ == 0) return E_NOINTERFACE;
+        return ole_client_site_->QueryInterface(riid, ppvObj);
+    }
+
+    ULONG   STDMETHODCALLTYPE AddRef() {return 1;}
+    ULONG   STDMETHODCALLTYPE Release() {return 1;}
+    HRESULT STDMETHODCALLTYPE ShowContextMenu(DWORD /*dwID*/, POINT __RPC_FAR* /*ppt*/, IUnknown __RPC_FAR* /*pcmdtReserved*/, IDispatch __RPC_FAR* /*pdispReserved*/) {return S_OK;}
+    HRESULT STDMETHODCALLTYPE ShowUI(DWORD /*dwID*/, IOleInPlaceActiveObject __RPC_FAR* /*pActiveObject*/, IOleCommandTarget __RPC_FAR* /*pCommandTarget*/, IOleInPlaceFrame __RPC_FAR* /*pFrame*/, IOleInPlaceUIWindow __RPC_FAR* /*pDoc*/) {return S_OK;}
+    HRESULT STDMETHODCALLTYPE GetHostInfo(DOCHOSTUIINFO __RPC_FAR* /*pInfo*/);
+    HRESULT STDMETHODCALLTYPE HideUI() {return S_OK;}
+    HRESULT STDMETHODCALLTYPE UpdateUI() {return S_OK;}
+    HRESULT STDMETHODCALLTYPE EnableModeless(BOOL /*fEnable*/) {return S_OK;}
+    HRESULT STDMETHODCALLTYPE OnDocWindowActivate(BOOL /*fActivate*/) {return S_OK;}
+    HRESULT STDMETHODCALLTYPE OnFrameWindowActivate(BOOL /*fActivate*/) {return S_OK;}
+    HRESULT STDMETHODCALLTYPE ResizeBorder(LPCRECT /*prcBorder*/, IOleInPlaceUIWindow __RPC_FAR* /*pUIWindow*/, BOOL /*fRameWindow*/) {return S_OK;}
+    HRESULT STDMETHODCALLTYPE TranslateAccelerator(LPMSG /*lpMsg*/, const GUID __RPC_FAR* /*pguidCmdGroup*/, DWORD /*nCmdID*/){return S_FALSE;}
+    HRESULT STDMETHODCALLTYPE GetOptionKeyPath(LPOLESTR __RPC_FAR* /*pchKey*/, DWORD /*dw*/) {return S_FALSE;}
+    HRESULT STDMETHODCALLTYPE GetDropTarget(IDropTarget __RPC_FAR* /*pDropTarget*/, IDropTarget __RPC_FAR* __RPC_FAR* /*ppDropTarget*/) {return S_FALSE;}
+    HRESULT STDMETHODCALLTYPE GetExternal(IDispatch __RPC_FAR* __RPC_FAR* ppDispatch) {*ppDispatch = 0;return S_FALSE;}
+    HRESULT STDMETHODCALLTYPE TranslateUrl(DWORD /*dwTranslate*/, OLECHAR __RPC_FAR* /*pchURLIn*/, OLECHAR __RPC_FAR* __RPC_FAR* ppchURLOut) {*ppchURLOut = 0;return S_FALSE;}
+    HRESULT STDMETHODCALLTYPE FilterDataObject(IDataObject __RPC_FAR* /*pDO*/, IDataObject __RPC_FAR* __RPC_FAR* ppDORet) {*ppDORet = 0;return S_FALSE;}
+
+public:
+    inline DocHostUiHandler() : ole_client_site_(0){}
+    virtual ~DocHostUiHandler() {}
+    inline void ClientSite(IOleClientSite* o) {ole_client_site_ = o;}
+};
+
+class OleInPlaceSite : public IOleInPlaceSite {
+    IOleClientSite*   ole_client_site_;
+    IOleInPlaceFrame* ole_in_place_frame_;
+    IOleObject	* browser_object_;
+    HWND              hwnd_;
+
+    HRESULT STDMETHODCALLTYPE QueryInterface( REFIID riid, LPVOID FAR* ppvObj) {return ole_client_site_->QueryInterface(riid, ppvObj);}
+    ULONG   STDMETHODCALLTYPE AddRef() { return(1); }
+    ULONG   STDMETHODCALLTYPE Release() { return(1); }
+    HRESULT STDMETHODCALLTYPE GetWindow( HWND FAR* lphwnd) {*lphwnd = hwnd_;return(S_OK);}
+    HRESULT STDMETHODCALLTYPE ContextSensitiveHelp(BOOL /* fEnterMode*/) {MUST_BE_IMPLEMENTED("ContextSensitiveHelp");}
+    HRESULT STDMETHODCALLTYPE CanInPlaceActivate() {return S_OK;}
+    HRESULT STDMETHODCALLTYPE OnInPlaceActivate() {return S_OK;}
+    HRESULT STDMETHODCALLTYPE OnUIActivate() {return(S_OK);}
+    HRESULT STDMETHODCALLTYPE GetWindowContext(LPOLEINPLACEFRAME FAR* lplpFrame, LPOLEINPLACEUIWINDOW FAR* lplpDoc, LPRECT /*lprcPosRect*/, LPRECT /*lprcClipRect*/, LPOLEINPLACEFRAMEINFO lpFrameInfo) {
+        *lplpFrame = ole_in_place_frame_;
+        *lplpDoc = 0;
+        lpFrameInfo->fMDIApp       = FALSE;
+        lpFrameInfo->hwndFrame     = hwnd_;
+        lpFrameInfo->haccel        = 0;
+        lpFrameInfo->cAccelEntries = 0;
+        return S_OK;
+    }
+
+    HRESULT STDMETHODCALLTYPE Scroll(SIZE /*scrollExtent*/) { MUST_BE_IMPLEMENTED("Scroll");}
+    HRESULT STDMETHODCALLTYPE OnUIDeactivate(BOOL /*fUndoable*/) { return(S_OK);}
+    HRESULT STDMETHODCALLTYPE OnInPlaceDeactivate() { return(S_OK);}
+    HRESULT STDMETHODCALLTYPE DiscardUndoState() {MUST_BE_IMPLEMENTED("DiscardUndoState");}
+    HRESULT STDMETHODCALLTYPE DeactivateAndUndo() {MUST_BE_IMPLEMENTED("DeactivateAndUndo");}
+
+    // Called when the position of the browser object is changed
+    HRESULT STDMETHODCALLTYPE OnPosRectChange(LPCRECT lprcPosRect) {
+        IOleInPlaceObject* inplace = 0;
+        if (browser_object_->QueryInterface(IID_IOleInPlaceObject, (void**)&inplace) == S_OK) {
+            inplace->SetObjectRects(lprcPosRect, lprcPosRect);
+        }
+        return(S_OK);
+    }
+
+public:
+    inline OleInPlaceSite( IOleInPlaceFrame* ole_in_place_frame, HWND h) : ole_client_site_(0), ole_in_place_frame_(ole_in_place_frame), browser_object_(0), hwnd_(h) {}
+    void BrowserObject(IOleObject* o){browser_object_ = o;}
+    void ClientSite(IOleClientSite* o) {ole_client_site_ = o;}
+};
+
+class HTMLWindow : public virtual DWebBrowserEvents2 {
+    IStorage*          storage_;
+    IOleObject*        browserObject_;
+    OleClientSite*     ole_client_site_;
+    OleInPlaceSite*    ole_in_place_site_;
+    OleInPlaceFrame*   ole_in_place_frame_;
+    DocHostUiHandler*  doc_host_ui_handler_;
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void ** ppvObject);
+    ULONG   STDMETHODCALLTYPE AddRef()  {return 1;}
+    ULONG   STDMETHODCALLTYPE Release() {return 1;}
+    HRESULT STDMETHODCALLTYPE GetTypeInfoCount(unsigned int* /*pctinfo*/) {MUST_BE_IMPLEMENTED("GetTypeInfoCount");}
+    HRESULT STDMETHODCALLTYPE GetTypeInfo(unsigned int /*iTInfo*/,LCID /*lcid*/, ITypeInfo** /*ppTInfo*/) {MUST_BE_IMPLEMENTED("GetTypeInfo");}
+    HRESULT STDMETHODCALLTYPE GetIDsOfNames(REFIID /*riid*/, OLECHAR** /*rgszNames*/, unsigned int /*cNames*/, LCID /*lcid*/, DISPID * /*rgDispId*/) {MUST_BE_IMPLEMENTED("GetIDsOfNames");}
+    HRESULT STDMETHODCALLTYPE Invoke(DISPID dispIdMember, REFIID riid, LCID lcid, WORD /*wFlags*/, DISPPARAMS* /*pDispParams*/, VARIANT* /*pVarResult*/, EXCEPINFO* /*pExcepInfo*/, unsigned int* /*puArgErr*/);
+public:
+    long EmbedBrowserObject(HWND hwnd_);
+    void UnEmbedBrowserObject();
+    void ResizeBrowser(DWORD width, DWORD height);
+    long DisplayHTMLPage(const z::string16& url);
+};
+
+HRESULT DocHostUiHandler::GetHostInfo(DOCHOSTUIINFO __RPC_FAR *pInfo) {
+    pInfo->cbSize = sizeof(DOCHOSTUIINFO);
+    pInfo->dwFlags = DOCHOSTUIFLAG_NO3DBORDER | DOCHOSTUIFLAG_NO3DOUTERBORDER;
+    pInfo->dwDoubleClick = DOCHOSTUIDBLCLK_DEFAULT;
+    return S_OK ;
+}
+
+HRESULT HTMLWindow::QueryInterface(REFIID riid, void ** ppvObject) {
+    if (!memcmp((const void*) &riid, (const void*)&IID_IUnknown,          sizeof(GUID)) || 
+        !memcmp((const void*) &riid, (const void*)&IID_IDispatch,         sizeof(GUID)) ||
+        !memcmp((const void*) &riid, (const void*)&IID_IDocHostUIHandler, sizeof(GUID))) {
+            *ppvObject = doc_host_ui_handler_;
+            return S_OK;
+    }
+
+    ppvObject = 0;
+    return E_NOINTERFACE;
+}
+
+HRESULT HTMLWindow::Invoke(DISPID dispIdMember, REFIID /*riid*/, LCID /*lcid*/, WORD /*wFlags */, DISPPARAMS FAR* pDispParams, VARIANT FAR* /*pVarResult*/, EXCEPINFO FAR* /*pExcepInfo*/, unsigned int FAR* /*puArgErr*/) {
+    switch (dispIdMember) {
+        case DISPID_BEFORENAVIGATE     :   // this is sent before navigation to give a chance to abort
+            return S_OK;
+        case DISPID_NAVIGATECOMPLETE   :   // in async, this is sent when we have enough to show
+            return S_OK;
+        case DISPID_STATUSTEXTCHANGE   :
+        case DISPID_QUIT               :
+        case DISPID_DOWNLOADCOMPLETE: 
+            return S_OK;
+        case DISPID_COMMANDSTATECHANGE :
+            return S_OK;
+        case DISPID_DOWNLOADBEGIN      :
+            return S_OK;
+        case DISPID_NEWWINDOW          :   // sent when a new window should be created
+        case DISPID_PROGRESSCHANGE     :   // sent when download progress is updated
+        case DISPID_WINDOWMOVE         :   // sent when main window has been moved
+        case DISPID_WINDOWRESIZE       :   // sent when main window has been sized
+        case DISPID_WINDOWACTIVATE     :   // sent when main window has been activated
+        case DISPID_PROPERTYCHANGE     : {   // sent when the PutProperty method is called
+            //VARIANT a = pDispParams->rgvarg[0];
+            return S_OK;
+        }
+        case DISPID_TITLECHANGE        :   // sent when the document title changes
+        case DISPID_TITLEICONCHANGE    :   // sent when the top level window icon may have changed.
+        case DISPID_FRAMEBEFORENAVIGATE    :
+        case DISPID_FRAMENAVIGATECOMPLETE  :
+        case DISPID_FRAMENEWWINDOW         :
+            return S_OK;
+
+        case DISPID_BEFORENAVIGATE2: {   // hyperlink clicked on
+            return S_OK;
+         }
+        case DISPID_NEWWINDOW2:          
+            return S_OK;
+        case DISPID_NAVIGATECOMPLETE2:       // UIActivate new document
+            return S_OK;
+            break;
+        case DISPID_ONQUIT               :
+        case DISPID_ONVISIBLE            :   // sent when the window goes visible/hidden
+        case DISPID_ONTOOLBAR            :   // sent when the toolbar should be shown/hidden
+        case DISPID_ONMENUBAR            :   // sent when the menubar should be shown/hidden
+        case DISPID_ONSTATUSBAR          :   // sent when the statusbar should be shown/hidden
+        case DISPID_ONFULLSCREEN         :   // sent when kiosk mode should be on/off
+        case DISPID_DOCUMENTCOMPLETE     :   // new document goes ReadyState_Complete
+            //AddSink();
+            return S_OK;
+        case DISPID_ONTHEATERMODE        :   // sent when theater mode should be on/off
+        case DISPID_ONADDRESSBAR         :   // sent when the address bar should be shown/hidden
+        case DISPID_WINDOWSETRESIZABLE   :   // sent to set the style of the host window frame
+        case DISPID_WINDOWCLOSING        :   // sent before script window.close closes the window 
+        case DISPID_WINDOWSETLEFT        :   // sent when the put_left method is called on the WebOC
+        case DISPID_WINDOWSETTOP         :   // sent when the put_top method is called on the WebOC
+        case DISPID_WINDOWSETWIDTH       :   // sent when the put_width method is called on the WebOC
+        case DISPID_WINDOWSETHEIGHT      :   // sent when the put_height method is called on the WebOC 
+        case DISPID_CLIENTTOHOSTWINDOW   :   // sent during window.open to request conversion of dimensions
+        case DISPID_SETSECURELOCKICON    :   // sent to suggest the appropriate security icon to show
+        case DISPID_FILEDOWNLOAD         :   // Fired to indicate the File Download dialog is opening
+            return S_OK;
+        case DISPID_PRIVACYIMPACTEDSTATECHANGE   :  // Fired when the user's browsing experience is impacted
+        case DISPID_NAVIGATEERROR: {   // Fired to indicate the a binding error has occured
+            return S_OK;
+       }
+    }
+    return DISP_E_MEMBERNOTFOUND;
+}
+
+long HTMLWindow::EmbedBrowserObject(HWND hwnd_) {
+    storage_            = new Storage;
+    ole_in_place_frame_ = new OleInPlaceFrame(hwnd_);
+    ole_in_place_site_  = new OleInPlaceSite(ole_in_place_frame_, hwnd_);
+    doc_host_ui_handler_= new DocHostUiHandler();
+
+    ole_client_site_ = new OleClientSite(ole_in_place_site_, doc_host_ui_handler_, static_cast<DWebBrowserEvents2*>(this));
+    doc_host_ui_handler_->ClientSite(ole_client_site_);
+    ole_in_place_site_  ->ClientSite(ole_client_site_);
+
+    HRESULT hr = ::OleCreate(CLSID_WebBrowser, IID_IOleObject, OLERENDER_DRAW, 0, ole_client_site_, storage_, (void**)&browserObject_);
+    if(hr != S_OK) {
+        return -2 ;
+    }
+
+    ole_in_place_site_->BrowserObject(browserObject_);
+    browserObject_ -> SetHostNames(L"Some_host_name", 0);
+
+    RECT rect;
+    ::GetClientRect(hwnd_, &rect);
+
+    IWebBrowser2    *webBrowser2;
+    if (! ::OleSetContainedObject(static_cast<IUnknown*>(browserObject_), TRUE) && !browserObject_->DoVerb(OLEIVERB_SHOW, NULL, ole_client_site_, -1, hwnd_, &rect) && !browserObject_->QueryInterface(IID_IWebBrowser2, reinterpret_cast<void**> (&webBrowser2))) {
+        webBrowser2->put_Left  (0);
+        webBrowser2->put_Top   (0);
+        webBrowser2->put_Width (rect.right);
+        webBrowser2->put_Height(rect.bottom);
+        webBrowser2->Release();
+        return 0;
+    }
+    return(-3);
+}
+
+void HTMLWindow::ResizeBrowser(DWORD width, DWORD height) {
+	IWebBrowser2* webBrowser2 = 0;
+	if (browserObject_->QueryInterface(IID_IWebBrowser2, (void**)&webBrowser2) != S_OK)
+        return;
+	webBrowser2->put_Width(width);
+	webBrowser2->put_Height(height);
+	webBrowser2->Release();
+}
+
+void HTMLWindow::UnEmbedBrowserObject() {
+	browserObject_->Close(OLECLOSE_NOSAVE);
+	browserObject_->Release();
+    browserObject_ = 0;
+}
+
+long HTMLWindow::DisplayHTMLPage(const z::string16& url) {
+	IWebBrowser2	*webBrowser2;
+	VARIANT			myURL;
+
+    if (browserObject_->QueryInterface(IID_IWebBrowser2, (void**)&webBrowser2) != S_OK) {
+	    return(-5);
+    }
+	VariantInit(&myURL);
+	myURL.vt = VT_BSTR;
+    assert(sizeof(z::char16_t) == sizeof(OLECHAR));
+	myURL.bstrVal = SysAllocString((OLECHAR*)url.c_str());
+	if (!myURL.bstrVal) {
+    	webBrowser2->Release();
+		return(-6);
+	}
+
+	// Call the Navigate2() function to actually display the page.
+	webBrowser2->Navigate2(&myURL, 0, 0, 0, 0);
+	VariantClear(&myURL);
+	webBrowser2->Release();
+	return(0);
+}
+
+//////////////////////////////////////////////////////////////////////////////
+LPCTSTR szWindowClass = "zenlang_webwin";
+HTMLWindow browserWindow;
+
+LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam) {
+//	int wmId, wmEvent;
+	switch (message) {
+		case WM_CREATE:
+			if (browserWindow.EmbedBrowserObject(hWnd))
+                return(-1);
+            browserWindow.DisplayHTMLPage("http://www.google.com");
+            break;
+		case WM_SIZE:
+			browserWindow.ResizeBrowser(LOWORD(lParam), HIWORD(lParam));
+            break;
+	    case WM_COMMAND:
+	        return DefWindowProc(hWnd, message, wParam, lParam);
+		    //wmId    = LOWORD(wParam);
+		    //wmEvent = HIWORD(wParam);
+		    //switch (wmId) {
+		    //    //case IDM_EXIT:
+			   //    // DestroyWindow(hWnd);
+			   //    // break;
+		    //    default:
+			   //     return DefWindowProc(hWnd, message, wParam, lParam);
+		    //}
+		    //break;
+	    case WM_DESTROY:
+		    browserWindow.UnEmbedBrowserObject();
+		    PostQuitMessage(0);
+		    break;
+	    default:
+		    return DefWindowProc(hWnd, message, wParam, lParam);
+	}
+	return 0;
+}
+
+ATOM MyRegisterClass(HINSTANCE hInstance) {
+	WNDCLASSEX wcex;
+	wcex.cbSize = sizeof(WNDCLASSEX);
+	wcex.style			= CS_HREDRAW | CS_VREDRAW;
+	wcex.lpfnWndProc	= WndProc;
+	wcex.cbClsExtra		= 0;
+	wcex.cbWndExtra		= 0;
+	wcex.hInstance		= hInstance;
+	wcex.hIcon			= 0; //LoadIcon(hInstance, MAKEINTRESOURCE(IDI_MINIE));
+	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
+	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
+	wcex.lpszMenuName	= ""; //MAKEINTRESOURCE(IDC_MINIE);
+	wcex.lpszClassName	= szWindowClass;
+	wcex.hIconSm		= 0 ;//LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+	return RegisterClassEx(&wcex);
+}
+
+BOOL InitInstance(HINSTANCE hInstance, int nCmdShow) {
+   HWND hWnd = CreateWindow(szWindowClass, "Zenlang", WS_OVERLAPPEDWINDOW, CW_USEDEFAULT, 0, CW_USEDEFAULT, 0, NULL, NULL, hInstance, NULL);
+   if (!hWnd) {
+      return FALSE;
+   }
+
+   ShowWindow(hWnd, nCmdShow);
+   UpdateWindow(hWnd);
+   return TRUE;
+}
+
+int APIENTRY WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPTSTR lpCmdLine, int nCmdShow) {
+	UNREFERENCED_PARAMETER(hPrevInstance);
+	UNREFERENCED_PARAMETER(lpCmdLine);
+    if (::OleInitialize(NULL) != S_OK) {
+        return 1;
+    }
+
+	MyRegisterClass(hInstance);
+	if (!InitInstance (hInstance, nCmdShow)) {
+		return FALSE;
+	}
+
+    MSG msg;
+	HACCEL hAccelTable = 0; //LoadAccelerators(hInstance, MAKEINTRESOURCE(IDC_MINIE));
+	while (GetMessage(&msg, NULL, 0, 0)) {
+		if (!TranslateAccelerator(msg.hwnd, hAccelTable, &msg)) {
+			TranslateMessage(&msg);
+			DispatchMessage(&msg);
+		}
+	}
+
+    ::OleUninitialize();
+	return msg.wParam;
+}
+#elif defined(GTK)
+static void destroyWindowCb(GtkWidget* widget, GtkWidget* window) {
+    gtk_main_quit();
+}
+
+static gboolean closeWebViewCb(WebKitWebView* webView, GtkWidget* window) {
+    gtk_widget_destroy(window);
+    return TRUE;
+}
+
+int main(int argc, char* argv[]) {
+    // Initialize GTK+
+    gtk_init(&argc, &argv);
+
+    // Create an 800x600 window that will contain the browser instance
+    GtkWidget *main_window = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    gtk_window_set_default_size(GTK_WINDOW(main_window), 800, 600);
+
+    // Create a browser instance
+    WebKitWebView *webView = WEBKIT_WEB_VIEW(webkit_web_view_new());
+
+    // Create a scrollable area, and put the browser instance into it
+    GtkWidget *scrolledWindow = gtk_scrolled_window_new(NULL, NULL);
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(scrolledWindow),
+            GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+    gtk_container_add(GTK_CONTAINER(scrolledWindow), GTK_WIDGET(webView));
+
+    // Set up callbacks so that if either the main window or the browser instance is
+    // closed, the program will exit
+    g_signal_connect(main_window, "destroy", G_CALLBACK(destroyWindowCb), NULL);
+    g_signal_connect(webView, "close-web-view", G_CALLBACK(closeWebViewCb), main_window);
+
+    // Put the scrollable area into the main window
+    gtk_container_add(GTK_CONTAINER(main_window), scrolledWindow);
+
+    // Load a web page into the browser instance
+    webkit_web_view_load_uri(webView, "http://www.webkitgtk.org/");
+
+    // Make sure that when the browser area becomes visible, it will get mouse
+    // and keyboard events
+    gtk_widget_grab_focus(GTK_WIDGET(webView));
+
+    // Make sure the main window and all its contents are visible
+    gtk_widget_show_all(main_window);
+
+    // Run the main GTK+ event loop
+    gtk_main();
+
+    return 0;
+}
+#elif defined(OSX)
+#import <WebKit/WebKit.h>
+@interface AppDelegate : NSObject <NSApplicationDelegate, NSWindowDelegate> {
+    NSWindow * window;
+}
+@end
+
+@implementation AppDelegate : NSObject
+- (void)applicationWillFinishLaunching:(NSNotification *)notification {
+    NSRect rc = NSMakeRect(0, 0, 200, 200);
+    //NSRect rc = [[NSScreen mainScreen] frame];
+    int styleMask = NSTitledWindowMask | NSMiniaturizableWindowMask | NSResizableWindowMask | NSClosableWindowMask;
+    window = [[NSWindow alloc] initWithContentRect:rc styleMask:styleMask backing:NSBackingStoreBuffered defer:false];
+    [window setBackgroundColor:[NSColor blueColor]];
+
+    WebView* v = [[WebView alloc] initWithFrame:rc];
+    [[v mainFrame] loadHTMLString:@"<html><body>Hello</body></html>" baseURL:nil];
+    [window setContentView:v];
+
+    [window makeKeyAndOrderFront:window];
+}
+
+@end
+
+int main(int argc, char * argv[]) {
+    [NSApplication sharedApplication];
+
+    AppDelegate * appDelegate = [[AppDelegate alloc] init];
+    [NSApp setDelegate:appDelegate];
+
+    [NSApp run];
+
+    return EXIT_SUCCESS;
+}
+#elif defined(IOS)
+@interface AppDelegate : UIResponder <UIApplicationDelegate, UIWebViewDelegate>
+@end
+@implementation AppDelegate
+- (BOOL)application:(UIApplication *)application didFinishLaunchingWithOptions:(NSDictionary *)launchOptions
+{
+    self.window = [[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]];
+    self.window.rootViewController = [[UIViewController alloc] init];
+
+    self.window.rootViewController.view.backgroundColor = [UIColor greenColor];
+
+    CGRect rc = [[UIScreen mainScreen] bounds];
+    rc = CGRectInset(rc, 10, 10);
+    UIWebView* webView = [[UIWebView alloc] initWithFrame:rc];
+    webView.delegate = self;
+    webView.scalesPageToFit = YES;
+    webView.userInteractionEnabled = YES;
+    webView.backgroundColor = [UIColor redColor];
+
+    NSURL* url = [NSURL URLWithString:@"http://www.google.com"];
+    NSURLRequest* req = [NSURLRequest requestWithURL:url];
+    [webView loadRequest:req];
+
+    [self.window.rootViewController.view addSubview:webView];
+    [self.window makeKeyAndVisible];
+    return YES;
+}
+-(void)webView:(UIWebView*)webView didFailLoadWithError:(NSError *)error
+{
+    NSLog(@"Error: %@", error);
+}
+@end
+
+int main(int argc, char *argv[])
+{
+    @autoreleasepool {
+        return UIApplicationMain(argc, argv, nil, NSStringFromClass([AppDelegate class]));
+    }
+}
+#endif
+#else // defined(GUI) /* console mode init goes here */
+#if !defined(ZPP_EXE) // special case for ZPP compiler, which defines its own main()
+#endif
+#endif

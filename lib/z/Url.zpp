@@ -1,12 +1,14 @@
 namespace z;
 
+public typedef QueryList dict<string,string>;
+
 public struct url {
     string fullUrl;
     string protocol;
     string host;
     string port;
     string path;
-    string querystring;
+    QueryList queryList;
 };
 
 public interface Url {
@@ -16,8 +18,18 @@ public interface Url {
     /// \brief Check if the string exists
     routine bool FileExists(const string& urlstr) native;
 
-    /// \brief Parse the string int the url
+    /// \brief Parse the string into the url
     routine void Parse(url& u, const string& urlstr) native;
+
+    /// \brief Parse the string into the url
+    routine url ParseUrl(const string& urlstr) {
+        url u;
+        Parse(u, urlstr);
+        return u;
+    }
+
+    /// \brief Parse the string into the query list
+    routine void ParseQueryString(QueryList& ql, const string& queryStr) native;
 
     /// \brief Return a parsed URL.
     routine url Create(const string& urlstr) native;
@@ -33,4 +45,32 @@ public interface Url {
 
     /// \brief url-decode string
     routine string Decode(const string& s) native;
+
+    /// \brief get query string from url
+    routine string GetQueryString(const url& u) {
+        auto r = "";
+        auto sep = "";
+        if(length(u.queryList) > 0) {
+            sep = "?";
+        }
+        foreach(k,v in u.queryList) {
+            r += (sep + k + "=" + v);
+            sep = ",";
+        }
+        return r;
+    }
+
+    /// \brief Return a string from URL.
+    routine string GetFullUrl(const url& u) {
+        string r = u.protocol + "://" + u.host;
+        if(length(u.port) > 0) {
+            r += ":" + u.port;
+        }
+        if(length(u.path) > 0) {
+            r += "/" + u.path;
+        }
+        r += GetQueryString(u);
+        return r;
+    }
+
 };

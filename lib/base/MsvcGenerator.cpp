@@ -10,6 +10,7 @@ public:
     void run();
 private:
     inline void generateConfig(z::ofile& os, const z::Ast::Config& config);
+    inline void writeLibFile(const z::Ast::Project& project, z::ofile& os, const z::string& filename);
 private:
     const z::Ast::Project& _project;
 private:
@@ -31,11 +32,8 @@ inline z::string nfn(const z::string& filename) {
 inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::Config& config) {
     z::Compiler compiler(_project, config);
     compiler.compile();
-    if(config.buildMode() == z::Ast::Config::BuildMode::Compile) {
-        return;
-    }
-
     if(config.abstract()) {
+        std::cout << "2" << std::endl;
         return;
     }
 
@@ -98,6 +96,7 @@ inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::C
         throw z::Exception("MsvcGenerator", z::string("PCH source filename must be same in all configurations"));
     }
 
+    std::cout << "** " << config.pch() << std::endl;
     if(config.pch() != "zenlang.hpp") {
         _pch = config.pch();
     }
@@ -168,7 +167,7 @@ inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::C
     }
 }
 
-inline void writeLibFile(const z::Ast::Project& project, z::ofile& os, const z::string& filename, const bool& usepch) {
+inline void z::MsvcGenerator::Impl::writeLibFile(const z::Ast::Project& project, z::ofile& os, const z::string& filename) {
     os() << "            <File RelativePath=\"" << nfn(filename) << "\" >" << std::endl;
     for(z::Ast::Project::ConfigList::const_iterator it = project.configList().begin(); it != project.configList().end(); ++it) {
         const z::Ast::Config& config = z::ref(it->second);
@@ -176,10 +175,9 @@ inline void writeLibFile(const z::Ast::Project& project, z::ofile& os, const z::
             continue;
         os() << "               <FileConfiguration Name=\"" << config.name() << "|Win32\">" << std::endl;
         os() << "                       <Tool Name=\"VCCLCompilerTool\"" << std::endl;
-        os() << "                           WarningLevel=\"3\"" << std::endl;
-        if(!usepch) {
-            os() << "                           UsePrecompiledHeader=\"0\"" << std::endl;
-        }
+        os() << "                           WarningLevel=\"4\"" << std::endl;
+        os() << "                           UsePrecompiledHeader=\"0\"" << std::endl;
+        os() << "                           PrecompiledHeaderThrough=\"" + _pch + "\"" << std::endl;
         os() << "                       />" << std::endl;
         os() << "               </FileConfiguration>" << std::endl;
     }
@@ -205,7 +203,7 @@ void z::MsvcGenerator::Impl::run() {
     os() << "    </Platforms>" << std::endl;
 
     os() << "    <Configurations>" << std::endl;
-    for(z::Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
+    for(z::Ast::Project::ConfigList::const_iterator it = _project.configList().begin(), ite = _project.configList().end(); it != ite; ++it) {
         const z::Ast::Config& config = z::ref(it->second);
         generateConfig(os, config);
     }
@@ -230,7 +228,7 @@ void z::MsvcGenerator::Impl::run() {
     os() << "            >" << std::endl;
 
     // PCH header file
-    os() << "            <File RelativePath=\"" << nfn(_pch) << "\" >" << std::endl;
+    os() << "            <File RelativePath=\"" + _pch + "\" >" << std::endl;
     os() << "            </File>" << std::endl;
 
     // All .hpp files
@@ -248,13 +246,13 @@ void z::MsvcGenerator::Impl::run() {
     os() << "            UniqueIdentifier=\"{4FC737F1-C7A5-4376-A066-2A32D752A2FF}\"" << std::endl;
     os() << "            >" << std::endl;
 
-    writeLibFile(_project, os, _project.zlibPath() + "/zenlang.cpp", (_pch == "zenlang.hpp"));
-    writeLibFile(_project, os, _project.zlibPath() + "/utils/sqlite3/sqlite3.c", false);
-    writeLibFile(_project, os, _project.zlibPath() + "/utils/base64.cpp", false);
-    writeLibFile(_project, os, _project.zlibPath() + "/utils/cJSON.c", false);
+    writeLibFile(_project, os, _project.zlibPath() + "/zenlang.cpp");
+    writeLibFile(_project, os, _project.zlibPath() + "/utils/sqlite3/sqlite3.c");
+    writeLibFile(_project, os, _project.zlibPath() + "/utils/base64.cpp");
+    writeLibFile(_project, os, _project.zlibPath() + "/utils/cJSON.c");
 
     //PCH source file
-    os() << "            <File RelativePath=\"" << nfn(_pchfile) << "\" >" << std::endl;
+    os() << "            <File RelativePath=\"stdafx.cpp\" >" << std::endl;
     for(z::Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
         const z::Ast::Config& cfg = z::ref(it->second);
         if(cfg.abstract())
@@ -266,19 +264,21 @@ void z::MsvcGenerator::Impl::run() {
     os() << "            </File>" << std::endl;
     os() << "        </Filter>" << std::endl;
 
-    // All source files
-    os() << "        <Filter" << std::endl;
-    os() << "            Name=\"Source Files\"" << std::endl;
-    os() << "            Filter=\"cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx\"" << std::endl;
-    os() << "            UniqueIdentifier=\"{4FC737F1-C7A5-4376-A066-2A32D752A2FF}\"" << std::endl;
-    os() << "            >" << std::endl;
+    if(_cppFileList.size() > 0) {
+        // All source files
+        os() << "        <Filter" << std::endl;
+        os() << "            Name=\"Source Files\"" << std::endl;
+        os() << "            Filter=\"cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx\"" << std::endl;
+        os() << "            UniqueIdentifier=\"{4FC737F1-C7A5-4376-A066-2A32D752A2FF}\"" << std::endl;
+        os() << "            >" << std::endl;
 
-    // All .cpp files
-    for(FileList::const_iterator it = _cppFileList.begin(); it != _cppFileList.end(); ++it) {
-        const z::string& f = *it;
-        os() << "            <File RelativePath=\"" << nfn(f) << "\" />" << std::endl;
+        // All .cpp files
+        for(FileList::const_iterator it = _cppFileList.begin(); it != _cppFileList.end(); ++it) {
+            const z::string& f = *it;
+            os() << "            <File RelativePath=\"" << nfn(f) << "\" />" << std::endl;
+        }
+        os() << "        </Filter>" << std::endl;
     }
-    os() << "        </Filter>" << std::endl;
 
     // all .zpp source files
     // TODO: vcbuild compiles custom files in reverse order, bottom to top.
@@ -324,50 +324,54 @@ void z::MsvcGenerator::Impl::run() {
     }
     os() << "        </Filter>" << std::endl;
 
-    os() << "        <Filter Name=\"Other Files\" Filter=\"y;re;\" ParseFiles=\"false\" >" << std::endl;
-    for(FileList::const_iterator it = _otherFileList.begin(); it != _otherFileList.end(); ++it) {
-        const z::string& f = *it;
-        os() << "            <File RelativePath=\"" << nfn(f) << "\" >" << std::endl;
-        for(z::Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
-            const z::Ast::Config& cfg = z::ref(it->second);
-            if(cfg.abstract())
-                continue;
-            os() << "                <FileConfiguration Name=\"" << cfg.name() << "|Win32\" >" << std::endl;
-            os() << "                    <Tool" << std::endl;
-            os() << "                        Name=\"VCCustomBuildTool\"" << std::endl;
-            os() << "                        Description=\"Compiling $(InputPath)\"" << std::endl;
-            if(z::dir::getExtention(f) == "y") {
-                os() << "                        CommandLine='" << nfn(_project.zlibPath()) << "\\lemon.exe o=.cpp -q \"$(InputPath)\"'" << std::endl;
-            } else if(z::dir::getExtention(f) == "re") {
-                os() << "                        CommandLine='" << nfn(_project.zlibPath()) << "\\re2c.exe -f -u -c -i -o $(InputName).cpp \"$(InputPath)\"'" << std::endl;
-            } else {
-                assert(false);
+    if(_otherFileList.size() > 0) {
+        os() << "        <Filter Name=\"Other Files\" Filter=\"y;re;\" ParseFiles=\"false\" >" << std::endl;
+        for(FileList::const_iterator it = _otherFileList.begin(), ite = _otherFileList.end(); it != ite; ++it) {
+            const z::string& f = *it;
+            os() << "            <File RelativePath=\"" << nfn(f) << "\" >" << std::endl;
+            for(z::Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
+                const z::Ast::Config& cfg = z::ref(it->second);
+                if(cfg.abstract())
+                    continue;
+                os() << "                <FileConfiguration Name=\"" << cfg.name() << "|Win32\" >" << std::endl;
+                os() << "                    <Tool" << std::endl;
+                os() << "                        Name=\"VCCustomBuildTool\"" << std::endl;
+                os() << "                        Description=\"Compiling $(InputPath)\"" << std::endl;
+                if(z::dir::getExtention(f) == "y") {
+                    os() << "                        CommandLine='" << nfn(_project.zlibPath()) << "\\lemon.exe o=.cpp -q \"$(InputPath)\"'" << std::endl;
+                } else if(z::dir::getExtention(f) == "re") {
+                    os() << "                        CommandLine='" << nfn(_project.zlibPath()) << "\\re2c.exe -f -u -c -i -o $(InputName).cpp \"$(InputPath)\"'" << std::endl;
+                } else {
+                    assert(false);
+                }
+                os() << "                        Outputs=\" $(InputName).cpp;\"" << std::endl;
+                os() << "                    />" << std::endl;
+                os() << "                </FileConfiguration>" << std::endl;
             }
-            os() << "                        Outputs=\" $(InputName).cpp;\"" << std::endl;
-            os() << "                    />" << std::endl;
-            os() << "                </FileConfiguration>" << std::endl;
+            os() << "            </File>" << std::endl;
         }
-        os() << "            </File>" << std::endl;
+        os() << "        </Filter>" << std::endl;
     }
-    os() << "        </Filter>" << std::endl;
 
-    // the project file itself
-    // TODO: we need the name of the original .zproj file.
-    os() << "        <Filter Name=\"Zen Project File\" Filter=\"zproj\" ParseFiles=\"false\" >" << std::endl;
-    //os() << "            <File RelativePath=\"" << nfn(filename) << "\" >" << std::endl;
-    //for(z::Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
-    //    const z::Ast::Config& cfg = z::ref(it->second);
-    //    os() << "                <FileConfiguration Name=\"" << cfg.name() << "|Win32\" >" << std::endl;
-    //    os() << "                    <Tool" << std::endl;
-    //    os() << "                        Name=\"VCCustomBuildTool\"" << std::endl;
-    //    os() << "                        Description=\"Compiling $(InputPath)\"" << std::endl;
-    //    os() << "                        CommandLine=\"" << _project.zexePath() << " -ip $(InputPath)\"" << std::endl;
-    //    os() << "                        Outputs=\" $(InputName).vcproj;\"" << std::endl;
-    //    os() << "                    />" << std::endl;
-    //    os() << "                </FileConfiguration>" << std::endl;
-    //}
-    //os() << "            </File>" << std::endl;
-    os() << "        </Filter>" << std::endl;
+    if(false) {
+        // the project file itself
+        // TODO: we need the name of the original .zproj file.
+        os() << "        <Filter Name=\"Zen Project File\" Filter=\"zproj\" ParseFiles=\"false\" >" << std::endl;
+        //os() << "            <File RelativePath=\"" << nfn(filename) << "\" >" << std::endl;
+        //for(z::Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
+        //    const z::Ast::Config& cfg = z::ref(it->second);
+        //    os() << "                <FileConfiguration Name=\"" << cfg.name() << "|Win32\" >" << std::endl;
+        //    os() << "                    <Tool" << std::endl;
+        //    os() << "                        Name=\"VCCustomBuildTool\"" << std::endl;
+        //    os() << "                        Description=\"Compiling $(InputPath)\"" << std::endl;
+        //    os() << "                        CommandLine=\"" << _project.zexePath() << " -ip $(InputPath)\"" << std::endl;
+        //    os() << "                        Outputs=\" $(InputName).vcproj;\"" << std::endl;
+        //    os() << "                    />" << std::endl;
+        //    os() << "                </FileConfiguration>" << std::endl;
+        //}
+        //os() << "            </File>" << std::endl;
+        os() << "        </Filter>" << std::endl;
+    }
 
     os() << "        <Filter Name=\"Generated Files\" >" << std::endl;
 
@@ -381,7 +385,7 @@ void z::MsvcGenerator::Impl::run() {
         // TODO: Figure out how to add them to project.
         os() << "            <File RelativePath=\".\\" << basename << ".ipp" << "\" />" << std::endl;
         os() << "            <File RelativePath=\".\\" << basename << ".hpp" << "\" />" << std::endl;
-        os() << "            <File RelativePath=\".\\" << basename << ".cpp" << "\" />" << std::endl;
+        writeLibFile(_project, os, basename + ".cpp");
     }
 
     for(FileList::const_iterator it = _otherFileList.begin(); it != _otherFileList.end(); ++it) {
@@ -393,6 +397,9 @@ void z::MsvcGenerator::Impl::run() {
 
     os() << "    </Files>" << std::endl;
     os() << "</VisualStudioProject>" << std::endl;
+
+    z::ofile pch("stdafx.cpp");
+    pch() << "#include \"" << _pch << "\"" << std::endl;
 }
 
 z::MsvcGenerator::MsvcGenerator(const z::Ast::Project& project) : _impl(0) {_impl = new Impl(project);}

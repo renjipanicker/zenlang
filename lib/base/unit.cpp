@@ -18,7 +18,12 @@ z::Ast::Unit::Unit() : _scopeCallback(0), _currentTypeRef(0), _currentImportedTy
 z::Ast::Unit::~Unit() {
     for(ExpectedTypeSpecStack::const_iterator it = _expectedTypeSpecStack.begin(); it != _expectedTypeSpecStack.end(); ++it) {
         const ExpectedTypeSpec& et = *it;
-        std::cout << ZenlangNameGenerator().qtn(et.typeSpec()) << std::endl;
+        std::cout << "E: " << ZenlangNameGenerator().qtn(et.typeSpec()) << std::endl;
+    }
+
+    for(TypeSpecStack::const_iterator it = _typeSpecStack.begin(); it != _typeSpecStack.end(); ++it) {
+        const z::Ast::TypeSpec& et = (*it).get();
+        std::cout << "X: " << ZenlangNameGenerator().tn(et) << std::endl;
     }
 
     assert(_expectedTypeSpecStack.size() == 0);
@@ -59,19 +64,34 @@ const z::Ast::QualifiedTypeSpec* z::Ast::Unit::canCoerceX(const z::Ast::Qualifie
         }
     }
 
-    const z::Ast::StructDefn* lsd = dynamic_cast<const z::Ast::StructDefn*>(z::ptr(lts));
-    const z::Ast::StructDefn* rsd = dynamic_cast<const z::Ast::StructDefn*>(z::ptr(rts));
-    if((lsd != 0) && (rsd != 0)) {
-        for(StructBaseIterator sbi(lsd); sbi.hasNext(); sbi.next()) {
-            if(z::ptr(sbi.get()) == rsd) {
-                mode = CoercionResult::Rhs;
-                return z::ptr(rhs);
-            }
+    // check if LHS is a base struct of RHS
+    const z::Ast::Struct* lsd1 = dynamic_cast<const z::Ast::Struct*>(z::ptr(lts));
+    const z::Ast::StructDefn* rsd1 = dynamic_cast<const z::Ast::StructDefn*>(z::ptr(rts));
+    if((lsd1 != 0) && (rsd1 != 0)) {
+        if(rsd1->decl() == lsd1) {
+            mode = CoercionResult::Lhs;
+            return z::ptr(rhs);
         }
-        for(StructBaseIterator sbi(rsd); sbi.hasNext(); sbi.next()) {
-            if(z::ptr(sbi.get()) == lsd) {
+        for(StructBaseIterator sbi(rsd1); sbi.hasNext(); sbi.next()) {
+            if(z::ptr(sbi.get()) == lsd1) {
                 mode = CoercionResult::Lhs;
                 return z::ptr(lhs);
+            }
+        }
+    }
+
+    // check if RHS is a base struct of LHS
+    const z::Ast::StructDefn* lsd2 = dynamic_cast<const z::Ast::StructDefn*>(z::ptr(lts));
+    const z::Ast::Struct* rsd2 = dynamic_cast<const z::Ast::Struct*>(z::ptr(rts));
+    if((lsd2 != 0) && (rsd2 != 0)) {
+        if(lsd2->decl() == rsd2) {
+            mode = CoercionResult::Lhs; // Note: We are returning Lhs here. StructDecl and StructDefn are equivalent and assignable.
+            return z::ptr(lhs);
+        }
+        for(StructBaseIterator sbi(lsd2); sbi.hasNext(); sbi.next()) {
+            if(z::ptr(sbi.get()) == rsd2) {
+                mode = CoercionResult::Rhs;
+                return z::ptr(rhs);
             }
         }
     }

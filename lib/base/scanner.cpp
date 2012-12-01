@@ -2,7 +2,7 @@
 #include "base/base.hpp"
 #include "base/scanner.hpp"
 
-z::Scanner::Scanner(const int& eofTok) : _eofTok(eofTok), _tokenMode(tmNormal), _cond(0), _state(0), _yych(0), _yyaccept(0), _row(1) {
+z::Scanner::Scanner(const int& eofTok) : _eofTok(eofTok), _tokenMode(tmNormal), _cond(0), _state(-1), _yych(0), _yyaccept(0), _row(1) {
     _buffer = "";
     _start   = _buffer.begin();
     _text    = _buffer.begin();
@@ -48,7 +48,7 @@ void z::Scanner::send(const int& id) {
         _text = _buffer.begin();
     }
     _textbfr = "";
-    z::Token* t = new Token(text(id, rv), _row, (int)(_cursor - _sol - rv.length()));
+    z::Token* t = new Token(id, text(id, rv), _row, (int)(_cursor - _sol - rv.length()));
     _tokenList.add(t);
     parse(id, t);
 }
@@ -121,7 +121,7 @@ void z::Scanner::append(const std::string& in) {
 }
 
 void z::Scanner::done() {
-    z::Token* t = new Token("", _row, (int)(_cursor - _sol));
+    z::Token* t = new Token(0, "", _row, (int)(_cursor - _sol));
     _tokenList.add(t);
     parse(_eofTok, t);
 }

@@ -1081,6 +1081,15 @@ bool z::String::IsSpaceChar(const z::char_t& ch) {
     return false;
 }
 
+size_t z::String::GetCharIndex(const z::string& str, const z::char_t& ch) {
+    z::string::size_type n = str.find(ch);
+    if(n == z::string::npos) {
+        return (size_t)z::String::Constant::MAXPOS;
+    }
+    return n;
+}
+
+
 z::string z::String::TrimStringCollect(const z::string& str, z::string& prev, z::string& post) {
     size_t start = 0;
     size_t end = str.length() - 1;

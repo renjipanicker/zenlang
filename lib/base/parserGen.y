@@ -16,7 +16,7 @@
 %token_prefix ZENTOK_
 
 %syntax_error {
-    throw z::Exception("Parser", z::zfmt(z::t2t(TOKEN), "Syntax error at token: %{d} (%{s})").arg("d",TOKEN.id()).arg("s", TOKEN.text()));
+    throw z::Exception(z::zfmt(z::t2t(TOKEN), "Syntax error at token: %{d} (%{s})").arg("d",TOKEN.id()).arg("s", TOKEN.text()));
 }
 
 %parse_accept {
@@ -159,12 +159,13 @@ rGlobalStatement ::= rGlobalDefaultStatement.
 
 //-------------------------------------------------
 %type rGlobalTypeSpecStatement {z::Ast::Statement*}
-rGlobalTypeSpecStatement(L) ::= rAccessType(accessType)   rTypeSpecDef(typeSpec).  {L = z::c2f(pctx).aGlobalTypeSpecStatement(accessType, z::ref(typeSpec));}
-rGlobalTypeSpecStatement(L) ::= rAccessType(accessType) rRootStructDefn(typeSpec). {L = z::c2f(pctx).aGlobalTypeSpecStatement(accessType, z::ref(typeSpec));}
-rGlobalTypeSpecStatement(L) ::= PROTECTED rRootStructDefn(typeSpec).               {L = z::c2f(pctx).aGlobalTypeSpecStatement(z::Ast::AccessType::Protected, z::ref(typeSpec));}
-rGlobalTypeSpecStatement(L) ::= rAccessType(accessType) rStructDecl(typeSpec).     {L = z::c2f(pctx).aGlobalTypeSpecStatement(accessType, z::ref(typeSpec));}
-rGlobalTypeSpecStatement(L) ::= PROTECTED rStructDecl(typeSpec).                   {L = z::c2f(pctx).aGlobalTypeSpecStatement(z::Ast::AccessType::Protected, z::ref(typeSpec));}
-rGlobalTypeSpecStatement(L) ::= rInnerStatement(R).                                {L = z::c2f(pctx).aGlobalStatement(z::ref(R));}
+rGlobalTypeSpecStatement(L) ::= rAccessType(accessType)   rTypeSpecDef(typeSpec).       {L = z::c2f(pctx).aGlobalTypeSpecStatement(accessType, z::ref(typeSpec));}
+rGlobalTypeSpecStatement(L) ::= rAccessType(accessType) rRootStructDefn(typeSpec).      {L = z::c2f(pctx).aGlobalTypeSpecStatement(accessType, z::ref(typeSpec));}
+rGlobalTypeSpecStatement(L) ::= PROTECTED rRootStructDefn(typeSpec).                    {L = z::c2f(pctx).aGlobalTypeSpecStatement(z::Ast::AccessType::Protected, z::ref(typeSpec));}
+rGlobalTypeSpecStatement(L) ::= rAccessType(accessType) rStructDecl(typeSpec).          {L = z::c2f(pctx).aGlobalTypeSpecStatement(accessType, z::ref(typeSpec));}
+rGlobalTypeSpecStatement(L) ::= PROTECTED rStructDecl(typeSpec).                        {L = z::c2f(pctx).aGlobalTypeSpecStatement(z::Ast::AccessType::Protected, z::ref(typeSpec));}
+rGlobalTypeSpecStatement(L) ::= rOptionalAccessType(accessType) rSchemaDefStatement(R). {z::unused_t(L);z::unused_t(accessType);z::unused_t(R);} //{L = z::c2f(pctx).aGlobalStatement(z::ref(R));}
+rGlobalTypeSpecStatement(L) ::= rInnerStatement(R).                                     {L = z::c2f(pctx).aGlobalStatement(z::ref(R));}
 
 //-------------------------------------------------
 // access specifiers
@@ -189,26 +190,12 @@ rGlobalDefaultStatement ::= DEFAULT rTypeSpec(T) ASSIGNEQUAL rExpr(E) SEMI. {z::
 //-------------------------------------------------
 // definition specifiers
 %type rDefinitionType {int}
-rDefinitionType(L) ::= rDefinitionType(R) NATIVE. {L = R | z::Ast::DefinitionType::tNative;}
-rDefinitionType(L) ::= rDefinitionType(R) FINAL.  {L = R | z::Ast::DefinitionType::tFinal;}
-rDefinitionType(L) ::= .                          {L = 0; }
-
-//-------------------------------------------------
-// definition specifiers for structs and functions
-%type rExDefinitionType {int}
-rExDefinitionType(L) ::= rDefinitionType(R)  ABSTRACT. {L = R | z::Ast::DefinitionType::tAbstract;}
-rExDefinitionType(L) ::= rDefinitionType(R).           {L = R;}
-
-//-------------------------------------------------
-// definition specifiers for structs
-%type rStructDefinitionType {int}
-rStructDefinitionType(L) ::= rExDefinitionType(R)  NOCOPY. {L = R | z::Ast::DefinitionType::tNoCopy;}
-rStructDefinitionType(L) ::= rExDefinitionType(R).         {L = R;}
-
-//-------------------------------------------------
-// definition specifiers for functions
-%type rFunctionDefinitionType {int}
-rFunctionDefinitionType(L) ::= rExDefinitionType(R). {L = R;}
+rDefinitionType(L) ::= rDefinitionType(R) NOCOPY.   {L = R | z::Ast::DefinitionType::tNoCopy;}   // struct
+rDefinitionType(L) ::= rDefinitionType(R) PIMPL.    {L = R | z::Ast::DefinitionType::tPimpl;}    // struct
+rDefinitionType(L) ::= rDefinitionType(R) ABSTRACT. {L = R | z::Ast::DefinitionType::tAbstract;} // interface, struct, function
+rDefinitionType(L) ::= rDefinitionType(R) NATIVE.   {L = R | z::Ast::DefinitionType::tNative;}   // all
+rDefinitionType(L) ::= rDefinitionType(R) FINAL.    {L = R | z::Ast::DefinitionType::tFinal;}    // all
+rDefinitionType(L) ::= .                            {L = 0; }
 
 //-------------------------------------------------
 // all type def's.
@@ -268,11 +255,11 @@ rPreTypedefDefn(L) ::= TYPEDEF ID(name) rQualifiedTypeSpec(Q) rDefinitionType(D)
 //-------------------------------------------------
 // template declarations
 %type rTemplateDecl {z::Ast::TemplateDecl*}
-rTemplateDecl(L) ::= rPreTemplateDecl(R) SEMI. {L = R;}
+rTemplateDecl(L) ::= rPreTemplateDecl(R). {L = R;}
 
 //-------------------------------------------------
 %type rPreTemplateDecl {z::Ast::TemplateDecl*}
-rPreTemplateDecl(L) ::= TEMPLATE LT rTemplatePartList(list) GT ID(name) rDefinitionType(D). {L = z::c2f(pctx).aTemplateDecl(z::t2t(name), D, z::ref(list));}
+rPreTemplateDecl(L) ::= TEMPLATE LT rTemplatePartList(list) GT rUserDefinedTypeSpecDef(D). {L = z::c2f(pctx).aTemplateDecl(z::ref(D), z::ref(list));}
 
 //-------------------------------------------------
 %type rTemplatePartList {z::Ast::TemplatePartList*}
@@ -319,7 +306,7 @@ rPreRootStructDefn(L) ::= rEnterRootStructDefn(S) rStructMemberDefnBlock. {L = z
 
 //-------------------------------------------------
 %type rEnterRootStructDefn {z::Ast::RootStructDefn*}
-rEnterRootStructDefn(L) ::= STRUCT rStructId(name) rStructDefinitionType(D). {L = z::c2f(pctx).aEnterRootStructDefn(z::t2t(name), D);}
+rEnterRootStructDefn(L) ::= STRUCT rStructId(name) rDefinitionType(D). {L = z::c2f(pctx).aEnterRootStructDefn(z::t2t(name), D);}
 
 //-------------------------------------------------
 // child struct definitions
@@ -332,7 +319,7 @@ rPreChildStructDefn(L) ::= rEnterChildStructDefn(S) rStructMemberDefnBlock. {L =
 
 //-------------------------------------------------
 %type rEnterChildStructDefn {z::Ast::ChildStructDefn*}
-rEnterChildStructDefn(L) ::= STRUCT rStructId(name) COLON rStructTypeSpec(B) rStructDefinitionType(D). {L = z::c2f(pctx).aEnterChildStructDefn(z::t2t(name), z::ref(B), D);}
+rEnterChildStructDefn(L) ::= STRUCT rStructId(name) COLON rStructTypeSpec(B) rDefinitionType(D). {L = z::c2f(pctx).aEnterChildStructDefn(z::t2t(name), z::ref(B), D);}
 
 //-------------------------------------------------
 rStructId(L) ::= STRUCT_TYPE(R). {L = R;}
@@ -386,12 +373,12 @@ rRoutineId(L) ::= ROUTINE_TYPE(R). {L = R;}
 //-------------------------------------------------
 // root function definition
 %type rRootFunctionDecl {z::Ast::RootFunctionDecl*}
-rRootFunctionDecl(L) ::= rFunctionSig(functionSig) rFunctionDefinitionType(defType) rClosureList(cref) SEMI. {L = z::c2f(pctx).aRootFunctionDecl(z::ref(functionSig), defType, cref);}
+rRootFunctionDecl(L) ::= rFunctionSig(functionSig) rDefinitionType(defType) rClosureList(cref) SEMI. {L = z::c2f(pctx).aRootFunctionDecl(z::ref(functionSig), defType, cref);}
 
 //-------------------------------------------------
 // child function definition
 %type rChildFunctionDecl {z::Ast::ChildFunctionDecl*}
-rChildFunctionDecl(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rFunctionDefinitionType(defType) rClosureList(cref) SEMI. {L = z::c2f(pctx).aChildFunctionDecl(z::ref(base), z::t2t(name), defType, cref);}
+rChildFunctionDecl(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rDefinitionType(defType) rClosureList(cref) SEMI. {L = z::c2f(pctx).aChildFunctionDecl(z::ref(base), z::t2t(name), defType, cref);}
 
 //-------------------------------------------------
 // root function declarations
@@ -400,7 +387,7 @@ rRootFunctionDefn(L) ::= rEnterRootFunctionDefn(functionDefn) rFunctionBlock(blo
 
 //-------------------------------------------------
 %type rEnterRootFunctionDefn {z::Ast::RootFunctionDefn*}
-rEnterRootFunctionDefn(L) ::= rFunctionSig(functionSig) rFunctionDefinitionType(defType) rClosureList(cref). {L = z::c2f(pctx).aEnterRootFunctionDefn(z::ref(functionSig), defType, cref);}
+rEnterRootFunctionDefn(L) ::= rFunctionSig(functionSig) rDefinitionType(defType) rClosureList(cref). {L = z::c2f(pctx).aEnterRootFunctionDefn(z::ref(functionSig), defType, cref);}
 
 //-------------------------------------------------
 // child function declaration
@@ -409,7 +396,7 @@ rChildFunctionDefn(L) ::= rEnterChildFunctionDefn(functionImpl) rFunctionBlock(b
 
 //-------------------------------------------------
 %type rEnterChildFunctionDefn {z::Ast::ChildFunctionDefn*}
-rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rFunctionDefinitionType(defType) rClosureList(cref). {L = z::c2f(pctx).aEnterChildFunctionDefn(z::ref(base), z::t2t(name), defType, cref);}
+rEnterChildFunctionDefn(L) ::= FUNCTION ID(name) COLON rFunctionTypeSpec(base) rDefinitionType(defType) rClosureList(cref). {L = z::c2f(pctx).aEnterChildFunctionDefn(z::ref(base), z::t2t(name), defType, cref);}
 
 //-------------------------------------------------
 // interface definition
@@ -422,7 +409,7 @@ rPreRootInterfaceDefn(L) ::= rEnterRootInterfaceDefn(S) rInterfaceMemberDefnBloc
 
 //-------------------------------------------------
 %type rEnterRootInterfaceDefn {z::Ast::RootInterfaceDefn*}
-rEnterRootInterfaceDefn(L) ::= INTERFACE ID(name) rExDefinitionType(D). {L = z::c2f(pctx).aEnterRootInterfaceDefn(z::t2t(name), D);}
+rEnterRootInterfaceDefn(L) ::= INTERFACE ID(name) rDefinitionType(D). {L = z::c2f(pctx).aEnterRootInterfaceDefn(z::t2t(name), D);}
 
 //-------------------------------------------------
 rInterfaceMemberDefnBlock ::= LCURLY rInterfaceMemberDefnList RCURLY.
@@ -542,7 +529,7 @@ rTemplateTypePartList(L) ::=                                rQualifiedTypeSpec(P
 rTemplateTypeSpec(L) ::= rPreTemplateTypeSpec(R). {L = z::c2f(pctx).aTemplateTypeSpec(z::ref(R));}
 
 //-------------------------------------------------
-%type rStructTypeSpec {const z::Ast::StructDefn*}
+%type rStructTypeSpec {const z::Ast::Struct*}
 rStructTypeSpec(L) ::= rPreStructTypeSpec(R). {L = z::c2f(pctx).aStructTypeSpec(z::ref(R));}
 
 //-------------------------------------------------
@@ -573,7 +560,7 @@ rPreTemplateTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE TEMPLATE_TYPE(name). {L =
 rPreTemplateTypeSpec(L) ::=                            TEMPLATE_TYPE(name). {L = z::c2f(pctx).aTemplateTypeSpec(z::t2t(name));}
 
 //-------------------------------------------------
-%type rPreStructTypeSpec {const z::Ast::StructDefn*}
+%type rPreStructTypeSpec {const z::Ast::Struct*}
 rPreStructTypeSpec(L) ::= rPreTypeSpec(parent) SCOPE STRUCT_TYPE(name). {L = z::c2f(pctx).aStructTypeSpec(z::ref(parent), z::t2t(name));}
 rPreStructTypeSpec(L) ::=                            STRUCT_TYPE(name). {L = z::c2f(pctx).aStructTypeSpec(z::t2t(name));}
 
@@ -614,6 +601,7 @@ rInnerStatement(L) ::= rForeachStatement(R).             {L = R;}
 rInnerStatement(L) ::= rSwitchStatement(R).              {L = R;}
 rInnerStatement(L) ::= rBreakStatement(R).               {L = R;}
 rInnerStatement(L) ::= rContinueStatement(R).            {L = R;}
+rInnerStatement(L) ::= rSkipStatement(R).                {L = R;}
 rInnerStatement(L) ::= rAddEventHandlerStatement(R).     {L = R;}
 rInnerStatement(L) ::= rRoutineReturnStatement(R).       {L = R;}
 rInnerStatement(L) ::= rFunctionReturnStatement(R).      {L = R;}
@@ -671,7 +659,9 @@ rForeachStatement(L) ::= FOREACH LBRACKET rEnterForeachInit(vdef) RBRACKET rComp
 
 %type rEnterForeachInit {z::Ast::ForeachStatement*}
 rEnterForeachInit(L) ::= ID(I) IN rExpr(list). {L = z::c2f(pctx).aEnterForeachInit(z::t2t(I), z::ref(list));}
+rEnterForeachInit(L) ::= ID(I) IN rExpr(list) SEMI ID(X). {L = z::c2f(pctx).aEnterForeachInit(z::t2t(I), z::ref(list), z::t2t(X));}
 rEnterForeachInit(L) ::= ID(K) COMMA ID(V) IN rExpr(list). {L = z::c2f(pctx).aEnterForeachInit(z::t2t(K), z::t2t(V), z::ref(list));}
+rEnterForeachInit(L) ::= ID(K) COMMA ID(V) IN rExpr(list) SEMI ID(X). {L = z::c2f(pctx).aEnterForeachInit(z::t2t(K), z::t2t(V), z::ref(list), z::t2t(X));}
 
 //-------------------------------------------------
 %type rSwitchStatement {z::Ast::SwitchStatement*}
@@ -686,6 +676,7 @@ rCaseList(L) ::=              rCaseStatement(S). {L = z::c2f(pctx).aCaseList(z::
 //-------------------------------------------------
 %type rCaseStatement {z::Ast::CaseStatement*}
 rCaseStatement(L) ::= CASE(B) rExpr(expr) COLON rCompoundStatement(block). {L = z::c2f(pctx).aCaseStatement(z::t2t(B), z::ref(expr), z::ref(block));}
+rCaseStatement(L) ::= CASE(B) rExpr(expr) COLON                          . {L = z::c2f(pctx).aCaseStatement(z::t2t(B), z::ref(expr));}
 rCaseStatement(L) ::= DEFAULT(B)          COLON rCompoundStatement(block). {L = z::c2f(pctx).aCaseStatement(z::t2t(B), z::ref(block));}
 
 //-------------------------------------------------
@@ -695,6 +686,10 @@ rBreakStatement(L) ::= BREAK(B) SEMI. {L = z::c2f(pctx).aBreakStatement(z::t2t(B
 //-------------------------------------------------
 %type rContinueStatement {z::Ast::ContinueStatement*}
 rContinueStatement(L) ::= CONTINUE(B) SEMI. {L = z::c2f(pctx).aContinueStatement(z::t2t(B));}
+
+//-------------------------------------------------
+%type rSkipStatement {z::Ast::SkipStatement*}
+rSkipStatement(L) ::= SKIP(B) rExpr(E) SEMI. {L = z::c2f(pctx).aSkipStatement(z::t2t(B), z::ref(E));}
 
 //-------------------------------------------------
 %type rAddEventHandlerStatement {z::Ast::AddEventHandlerStatement*}
@@ -730,6 +725,27 @@ rRaiseStatement(L) ::= RAISE(B) rEventTypeSpec(E) LBRACKET rExpr(S) COLON rExprL
 //-------------------------------------------------
 %type rExitStatement {z::Ast::ExitStatement*}
 rExitStatement(L) ::= EXIT(B) rExpr(S) SEMI. {L = z::c2f(pctx).aExitStatement(z::t2t(B), z::ref(S));}
+
+//-------------------------------------------------
+//%type rSchemaDefStatement {z::Ast::SchemaStatement*}
+rSchemaDefStatement(L) ::= SCHEMA(B) ID(I) LCURLY rSchemaStatementList RCURLY SEMI. {z::unused_t(L);z::unused_t(B);z::unused_t(I);} // {L = z::c2f(pctx).aSchemaStatement(z::t2t(B));}
+
+rSchemaStatementList ::= rSchemaStatementList rSchemaStatement.
+rSchemaStatementList ::= rSchemaStatement.
+
+rSchemaStatement ::= TABLE rStructTypeSpec SEMI.
+rSchemaStatement ::= TABLE rStructTypeSpec LCURLY rSchemaFieldList RCURLY SEMI.
+
+rSchemaFieldList ::= rSchemaFieldList rSchemaField.
+rSchemaFieldList ::= rSchemaField.
+
+rSchemaField ::= FIELD ID rSchemaFieldDefList SEMI.
+
+rSchemaFieldDefList ::= rSchemaFieldDefList rSchemaFieldDef.
+rSchemaFieldDefList ::= rSchemaFieldDef.
+
+rSchemaFieldDef ::= LAZY.
+rSchemaFieldDef ::= TRANSIENT.
 
 //-------------------------------------------------
 // simple list of statements
@@ -1085,8 +1101,13 @@ rConstantExpr(L) ::= FLOAT_CONST  (value).  {L = z::ptr(z::c2f(pctx).aConstantFl
 rConstantExpr(L) ::= DOUBLE_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantDoubleExpr(z::t2t(value)));}
 rConstantExpr(L) ::= TRUE_CONST   (value).  {L = z::ptr(z::c2f(pctx).aConstantBooleanExpr(z::t2t(value)));}
 rConstantExpr(L) ::= FALSE_CONST  (value).  {L = z::ptr(z::c2f(pctx).aConstantBooleanExpr(z::t2t(value)));}
-rConstantExpr(L) ::= STRING_CONST (value).  {L = z::ptr(z::c2f(pctx).aConstantStringExpr(z::t2t(value)));}
 rConstantExpr(L) ::= CHAR_CONST   (value).  {L = z::ptr(z::c2f(pctx).aConstantCharExpr(z::t2t(value)));}
+
+rConstantExpr(L) ::= rConstantStringExpr(R).  {L = R;}
+
+%type rConstantStringExpr {z::Ast::ConstantStringExpr*}
+rConstantStringExpr(L) ::= rConstantStringExpr(R) STRING_CONST(value).  {z::ref(R).append(value.text()); L = R;}
+rConstantStringExpr(L) ::=                        STRING_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantStringExpr(z::t2t(value)));}
 
 rConstantExpr(L) ::= LHEXINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantLongExpr(z::t2t(value), 'x'));}
 rConstantExpr(L) ::= LDECINT_CONST(value).  {L = z::ptr(z::c2f(pctx).aConstantLongExpr(z::t2t(value), 'd'));}

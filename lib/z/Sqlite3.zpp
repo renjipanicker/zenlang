@@ -1,0 +1,71 @@
+namespace z;
+
+public interface Sqlite3 {
+    /// \brief A database instance
+    struct Database native pimpl {
+    };
+
+    /// \brief Create a new database
+    routine void Create(Database& db, const string& filename) native;
+
+    /// \brief Open a database
+    routine void Open(Database& db, const string& filename) native;
+
+    /// \brief Check if database is open
+    routine bool isOpen(Database& db) native;
+
+    /// \brief Close a database
+    routine void Close(Database& db) native;
+
+    //////////////////////////////////////////////////////
+    /// \brief An Sqlite3 transaction
+    struct Transaction native pimpl {
+    };
+
+    /// \brief Begin transaction
+    routine void Begin(Database& db, Transaction& tr) native;
+
+    /// \brief Commit transaction
+    routine void Commit(Transaction& tr) native;
+
+    /// \brief Rollback transaction
+    routine void Rollback(Transaction& tr) native;
+
+    //////////////////////////////////////////////////////
+    /// \brief An Sqlite3 statement
+    struct Statement native pimpl {
+    };
+
+    /// \brief Prepare statement
+    routine int PrepareStatement(const Database& db, Statement& stmt, const string& sql) native;
+
+    /// \brief Reset a prepared statement
+    routine int ResetStatement(const Statement& stmt) native;
+
+    /// \brief Close a statement
+    routine int CloseStatement(const Statement& stmt) native;
+
+    /// \brief Execuet a statement
+    routine int ExecuteStatement(const Database& db, const string& stmt) native;
+
+    /// \brief Insert an object
+    routine long Insert(const Database& db, const Statement& stmt) native;
+
+    /// \brief Update an object
+    routine bool Update(const Database& db, const Statement& stmt) native;
+
+    /// \brief Set int parameter for statement
+    routine int SetParamInt(const Statement& stmt, const string& key, const long& v) native;
+
+    /// \brief Set string parameter for statement
+    routine int SetParamText(const Statement& stmt, const string& key, const string& v) native;
+
+    /// \brief Select next row
+    routine bool Select(const Database& db, const Statement& stmt) native;
+
+    /// \brief Get int column from statement result
+    routine long GetColumnInt(const Statement& stmt, const int& idx) native;
+
+    /// \brief Get string column from statement result
+    routine string GetColumnText(const Statement& stmt, const int& idx) native;
+};

@@ -1,7 +1,10 @@
 namespace z;
 public interface String {
+    enum Constant {
+        MAXPOS = (size)-1;
+    };
     /// \brief Split the string using specified seperator
-    routine list<string> Split(const string& str, const string& sep) native;
+    routine stringlist Split(const string& str, const string& sep) native;
 
     /// \brief Fold the given string
     routine char Fold(const char& ch) native;
@@ -23,6 +26,9 @@ public interface String {
 
     /// \brief Return true if given char is a space character
     routine bool IsSpaceChar(const char& ch) native;
+
+    /// \brief Return true if given char is a space character
+    routine size GetCharIndex(const string& str, const char& ch) native;
 
     /// \brief Trim the string, return the trimmed parts
     routine string TrimStringCollect(const string& str, string& prev, string& post) native;

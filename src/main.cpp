@@ -224,12 +224,17 @@ inline void readProjectFile(z::Ast::Project& project, z::Ast::Config& config, co
     }
 }
 
+enum GenMode {
+    gmProject,
+    gmInterpreter,
+    gmCompile
+};
+
 int main(int argc, char* argv[]) {
     z::application app(argc, argv);
 
     z::Ast::Project project;
     z::Ast::Config& config = project.addConfig("cmd");
-    config.abstract(true);
 
     z::string p = z::app().path();
     replaceSlash(p);
@@ -240,7 +245,7 @@ int main(int argc, char* argv[]) {
         return showHelp(config);
     }
 
-    bool interpreterMode = false;
+    GenMode genMode = gmProject;
     int i = 1;
     z::string ptype;
     while(i < argc) {
@@ -249,11 +254,12 @@ int main(int argc, char* argv[]) {
             return showHelp(config);
         } else if(t == "-c") {
             config.buildMode(z::Ast::Config::BuildMode::Compile);
+            genMode = gmCompile;
         } else if((t == "-p") || (t == "--project")) {
             t = argv[i++];
             ptype = t;
         } else if(t == "-i") {
-            interpreterMode = true;
+            genMode = gmInterpreter;
         } else if((t == "-n") || (t == "--name")) {
             t = argv[i++];
             project.name(t);
@@ -270,6 +276,7 @@ int main(int argc, char* argv[]) {
         } else if((t == "-ip") || (t == "--inputProject")) {
             t = argv[i++];
             readProjectFile(project, config, t);
+            config.abstract(true);
         } else if((t == "-ol") || (t == "--olanguage")) {
             t = argv[i++];
             config.olanguage(t);
@@ -363,10 +370,10 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if(interpreterMode) {
+    if(genMode == gmInterpreter) {
         z::Interpreter intp(project, config);
         intp.run();
-    } else {
+    } else if(genMode == gmProject) {
         if(project.oproject() == "cmake") {
 #if defined(WIN32)
             z::MsvcGenerator progen(project);
@@ -377,6 +384,11 @@ int main(int argc, char* argv[]) {
         } else {
             throw z::Exception("Main", z::string("Unknown project generator %{s}").arg("s", project.oproject()));
         }
+    } else if(genMode == gmCompile) {
+        z::Compiler compiler(project, config);
+        compiler.compile();
+    } else {
+        assert(false);
     }
     return 0;
 }

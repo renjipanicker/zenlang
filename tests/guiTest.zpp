@@ -41,7 +41,7 @@ function MyMain : main {
                                 name    : @inputBox;
                                 title   : "Input";
                                 position: {x:10;y:120;w:60;h:22;};
-                                left    : {target:@parent;margin:10;};
+                                aleft    : {target:@parent;margin:10;};
                               },
                             ];
                 };

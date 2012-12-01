@@ -26,10 +26,10 @@ public interface Window {
         auto style = Style.Normal;
         auto border = 1;
         auto visible = true;
-        Anchor left;
-        Anchor right;
-        Anchor top;
-        Anchor bottom;
+        Anchor aleft;
+        Anchor aright;
+        Anchor atop;
+        Anchor abottom;
     };
 
     routine Position getWindowPosition(const widget& wnd) native;

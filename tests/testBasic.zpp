@@ -559,3 +559,20 @@ function testProtectedStruct : test {
     unused(aps0);
     return (true);
 }
+
+struct PreStruct;
+
+struct PreStruct {
+    auto a = 10;
+};
+
+routine void PreStructFn(PreStruct& s) {
+    auto a = s.a;
+    unused(a);
+}
+
+
+routine void callPreStructFn() {
+    PreStruct ps;
+    PreStructFn(ps);
+}

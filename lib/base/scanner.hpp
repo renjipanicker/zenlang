@@ -2,7 +2,8 @@
 
 namespace z {
     struct Token {
-        inline Token(const z::string& t, const int& r, const int& c) : text(t), row(r), col(c) {}
+        inline Token(const int& i, const z::string& t, const int& r, const int& c) : id(i), text(t), row(r), col(c) {}
+        int id;
         z::string text;
         size_t row;
         size_t col;

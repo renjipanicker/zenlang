@@ -21,6 +21,7 @@ namespace Ast {
         typedef std::list<Token> NsPartList;
         typedef std::map<z::string, int> HeaderFileList;
         typedef size_t UniqueId_t;
+        typedef z::stack<const Ast::ForeachStatement*> ForeachStack;
 
     public:
         Unit();
@@ -224,11 +225,23 @@ namespace Ast {
             if(!typeSpec) {
                 throw z::Exception("Unit", zfmt(name, "Unknown root type '%{s}'").arg("s", name ));
             }
+
+            // check if type is expected type
             const T* tTypeSpec = dynamic_cast<const T*>(typeSpec);
-            if(!tTypeSpec) {
-                throw z::Exception("Unit", zfmt(name, "Type mismatch '%{s}'").arg("s", name ));
+            if(tTypeSpec) {
+                return z::ref(tTypeSpec);
             }
-            return z::ref(tTypeSpec);
+
+            // check if type is a templated type
+            const z::Ast::TemplateDecl* td1 = dynamic_cast<const z::Ast::TemplateDecl*>(typeSpec);
+            if(td1 != 0) {
+                const z::Ast::TypeSpec* innerTypeSpec = z::ptr(z::ref(td1).typeSpec());
+                const T* tInnerTypeSpec = dynamic_cast<const T*>(innerTypeSpec);
+                if(tInnerTypeSpec != 0) {
+                    return z::ref(tInnerTypeSpec);
+                }
+            }
+            throw z::Exception("Unit", zfmt(name, "Type mismatch '%{s}' (%{t})").arg("s", name).arg("t", typeid(*typeSpec).name()));
         }
 
     private:
@@ -335,6 +348,14 @@ namespace Ast {
     private:
         /// \brief unique id value
         UniqueId_t _uniqueIdx;
+
+    public:
+        inline const Ast::ForeachStatement* getForeach() const {if(_foreachStack.size() == 0) return 0; return _foreachStack.top();}
+        inline void enterForeach(const Ast::ForeachStatement& stmt) {_foreachStack.push(z::ptr(stmt));}
+        inline void leaveForeach(const Ast::ForeachStatement& stmt) {assert(_foreachStack.size() > 0); assert(_foreachStack.top() == z::ptr(stmt)); _foreachStack.pop();}
+    private:
+        /// \brief stack of nested foreach statements
+        ForeachStack _foreachStack;
     };
 
     //////////////////////////////////////////////////////////////////

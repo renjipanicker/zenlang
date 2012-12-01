@@ -158,12 +158,7 @@ static bool queryHttpText(const z::url& u, zz::OnDataReceivedHandler& drh) {
     }
 
     memset(buffer, 0, BLEN);
-    z::string qs;
-    z::string q = u.querystring;
-    if(q.length() > 0) {
-        qs = "?";
-        qs += q;
-    }
+    z::string qs = z::Url::GetQueryString(u);
     z::string hdr;
     hdr += ("Accept: text/plain, text/html, */*\n");
     hdr += ("User-Agent: Mozilla/5.0+(compatible)\n");

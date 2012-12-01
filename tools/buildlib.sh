@@ -245,6 +245,7 @@ CZPPLST="${CZPPLST} $LIBDIR/z/Response.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/z/Socket.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/z/Network.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/z/FastCGI.zpp"
+CZPPLST="${CZPPLST} $LIBDIR/z/Sqlite3.zpp"
 
 CZPPLST="${CZPPLST} $LIBDIR/z/Widget.zpp"
 CZPPLST="${CZPPLST} $LIBDIR/z/Window.zpp"
@@ -296,6 +297,8 @@ appendFile $ZHDRFILE "${INTDIR}/z/Response.hpp"
 appendFile $ZHDRFILE "${INTDIR}/z/Socket.hpp"
 appendFile $ZHDRFILE "${INTDIR}/z/Network.hpp"
 appendFile $ZHDRFILE "${INTDIR}/z/FastCGI.hpp"
+appendFile $ZHDRFILE "${INTDIR}/z/Sqlite3.hpp"
+appendFile $ZHDRFILE "${LIBDIR}/z/Sqlite3Native.hpp"
 
 appendString $ZHDRFILE "#if defined(GUI)"
 appendFile $ZHDRFILE "${INTDIR}/z/Widget.hpp"
@@ -352,6 +355,8 @@ appendFile $ZSRCFILE "${INTDIR}/Network.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/z/NetworkImpl.cpp"
 appendFile $ZSRCFILE "${INTDIR}/FastCGI.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/z/FastCGIImpl.cpp"
+appendFile $ZSRCFILE "${INTDIR}/Sqlite3.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/z/Sqlite3Impl.cpp"
 
 appendString $ZSRCFILE "#if defined(GUI)"
 appendFile $ZSRCFILE "${INTDIR}/Widget.cpp"
@@ -386,6 +391,7 @@ appendFile $ZINCFILE "${INTDIR}/z/Response.ipp"
 appendFile $ZINCFILE "${INTDIR}/z/Socket.ipp"
 appendFile $ZINCFILE "${INTDIR}/z/Network.ipp"
 appendFile $ZINCFILE "${INTDIR}/z/FastCGI.ipp"
+appendFile $ZINCFILE "${INTDIR}/z/Sqlite3.ipp"
 
 #appendString $ZINCFILE "#if defined(GUI)"
 appendFile $ZINCFILE "${INTDIR}/z/Widget.ipp"
@@ -558,3 +564,4 @@ if [ "$dotest" == "yes" ]; then
     # display test result summary
     cat test.log | grep "PASSED"
 fi
+date

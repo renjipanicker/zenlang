@@ -80,6 +80,7 @@ void z::Lexer::Impl::send(ParserContext& pctx, const int& id) {
     TokenData td = token(pctx, id, true);
     _parser.feed(pctx, td);
     _lastToken = td.id();
+    pctx.factory.setLastToken(td.row(), td.col(), td.text());
 }
 
 inline bool z::Lexer::Impl::trySendId(ParserContext& pctx, const z::Ast::TypeSpec* typeSpec) {
@@ -87,10 +88,20 @@ inline bool z::Lexer::Impl::trySendId(ParserContext& pctx, const z::Ast::TypeSpe
         return false;
 
     if(dynamic_cast<const z::Ast::TemplateDecl*>(typeSpec) != 0) {
+        const z::Ast::TemplateDecl* td1 = dynamic_cast<const z::Ast::TemplateDecl*>(typeSpec);
+        const z::Ast::TypeSpec* innerTypeSpec = z::ptr(z::ref(td1).typeSpec());
+        if(dynamic_cast<const z::Ast::Routine*>(innerTypeSpec) != 0) {
+            send(pctx, ZENTOK_ROUTINE_TYPE);
+            return true;
+        }
         send(pctx, ZENTOK_TEMPLATE_TYPE);
         return true;
     }
 
+    if(dynamic_cast<const z::Ast::StructDecl*>(typeSpec) != 0) {
+        send(pctx, ZENTOK_STRUCT_TYPE);
+        return true;
+    }
     if(dynamic_cast<const z::Ast::StructDefn*>(typeSpec) != 0) {
         send(pctx, ZENTOK_STRUCT_TYPE);
         return true;
@@ -369,7 +380,6 @@ const char* z::Lexer::Impl::reservedWords[] = {
     "quit"         ,
     "link"         ,
     "join"         ,
-    "id"           ,
     "assign"       ,
     "query"        ,
     "scope"        ,

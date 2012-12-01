@@ -24,7 +24,8 @@ namespace Ast {
             tAbstract = 0x02,     /// TypeSpec is an abstract type (struct and function)
             tHandler  = 0x04,     /// TypeSpec is a event-handler, specal case of abstract type (function only)
             tNoCopy   = 0x10,     /// TypeSpec is a struct that cannot be copied
-            tFinal    = 0x20      /// TypeSpec cannot be overridden and is implemented in zenlang code
+            tPimpl    = 0x20,     /// TypeSpec is a struct with a private-implementation structure
+            tFinal    = 0x40      /// TypeSpec cannot be overridden and is implemented in zenlang code
         };
     public:
         inline DefinitionType() : _t(0) {}
@@ -33,11 +34,13 @@ namespace Ast {
         inline bool abstract() const {return ((_t & tAbstract) != 0);}
         inline bool handler() const {return ((_t & tHandler) != 0);}
         inline bool nocopy() const {return ((_t & tNoCopy) != 0);}
+        inline bool pimpl() const {return ((_t & tPimpl) != 0);}
         inline bool final() const {return ((_t & tFinal) != 0);}
         inline DefinitionType& isNative()  {_t |= tNative; return z::ref(this);}
         inline DefinitionType& isAbstract()  {_t |= tAbstract; return z::ref(this);}
         inline DefinitionType& isHandler()  {_t |= tHandler; return z::ref(this);}
         inline DefinitionType& isNoCopy()  {_t |= tNoCopy; return z::ref(this);}
+        inline DefinitionType& isPimpl()  {_t |= tPimpl; return z::ref(this);}
         inline DefinitionType& isFinal()  {_t |= tFinal; return z::ref(this);}
 //    private:
         int _t;
@@ -190,10 +193,10 @@ namespace Ast {
         inline const int& col() const {return _col;}
         inline const z::string& string() const {return _text;}
     private:
-        const z::string _filename;
-        const int _row;
-        const int _col;
-        const z::string _text;
+        z::string _filename;
+        int _row;
+        int _col;
+        z::string _text;
     };
 
     inline std::ostream& operator << (std::ostream& os, const Ast::Token& val) {
@@ -269,6 +272,14 @@ namespace Ast {
                 return 0;
             }
             return dynamic_cast<T*>(it->second);
+        }
+
+        inline void delChild(const z::string& name) {
+            ChildTypeSpecMap::iterator it = _childTypeSpecMap.find(name);
+            if(it == _childTypeSpecMap.end()) {
+                throw z::Exception("", z::string("Child does not exist"));
+            }
+            _childTypeSpecMap.erase(it);
         }
 
     public:
@@ -384,13 +395,15 @@ namespace Ast {
 
     class TemplateDecl : public UserDefinedTypeSpec {
     public:
-        inline TemplateDecl(const TypeSpec& parent, const Token& name, const DefinitionType& defType, const TemplatePartList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list) {}
+        inline TemplateDecl(const TypeSpec& parent, const Token& name, const UserDefinedTypeSpec& typeSpec, const DefinitionType& defType, const TemplatePartList& list) : UserDefinedTypeSpec(parent, name, defType), _list(list), _typeSpec(typeSpec) {}
     public:
         inline const TemplatePartList::List& list() const {return _list.get().list();}
+        inline const UserDefinedTypeSpec& typeSpec() const {return _typeSpec;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
         Ptr<const TemplatePartList> _list;
+        const UserDefinedTypeSpec& _typeSpec;
     };
 
     class TemplateTypePartList : public Node {
@@ -478,18 +491,28 @@ namespace Ast {
         virtual void visit(Visitor& visitor) const;
     };
 
-    class StructDecl : public UserDefinedTypeSpec {
+    class Struct : public UserDefinedTypeSpec {
     public:
-        inline StructDecl(const TypeSpec& parent, const Token& name, const DefinitionType& defType) : UserDefinedTypeSpec(parent, name, defType) {}
-    private:
-        virtual void visit(Visitor& visitor) const;
+        inline Struct(const TypeSpec& parent, const Token& name, const DefinitionType& defType) : UserDefinedTypeSpec(parent, name, defType) {}
     };
 
-    class StructDefn : public UserDefinedTypeSpec {
+    class StructDefn;
+    class StructDecl : public Struct {
+    public:
+        inline StructDecl(const TypeSpec& parent, const Token& name, const DefinitionType& defType) : Struct(parent, name, defType), _defn(0) {}
+        inline void setDefn(const StructDefn* defn) {assert(_defn == 0); _defn = defn;}
+        inline const StructDefn* defn() const {return _defn;}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const StructDefn* _defn;
+    };
+
+    class StructDefn : public Struct {
     public:
         typedef SLst<const PropertyDecl> PropertyList;
     protected:
-        inline StructDefn(const TypeSpec& parent, const Token& name, const DefinitionType& defType, Ast::Scope& list, Ast::CompoundStatement& block) : UserDefinedTypeSpec(parent, name, defType), _list(list), _block(block) {}
+        inline StructDefn(const TypeSpec& parent, const Token& name, const DefinitionType& defType, Ast::Scope& list, Ast::CompoundStatement& block) : Struct(parent, name, defType), _list(list), _block(block), _decl(0) {}
     public:
         inline const PropertyList& propertyList() const {return _propertyList;}
         inline const Ast::Scope::List& list() const {return _list.get().list();}
@@ -498,10 +521,13 @@ namespace Ast {
         inline const Ast::CompoundStatement& block() const {return _block.get();}
         inline void addVariable(const VariableDefn& val) { _list.get().addVariableDef(val);}
         inline void addProperty(const PropertyDecl& val) { _propertyList.add(val);}
+        inline void setDecl(const StructDecl* decl) {assert(_decl == 0); _decl = decl;}
+        inline const StructDecl* decl() const {return _decl;}
     private:
         const Ptr<Ast::Scope> _list;
         PropertyList _propertyList;
         const Ptr<Ast::CompoundStatement> _block;
+        const StructDecl* _decl;
     };
 
     class RootStructDefn : public StructDefn {
@@ -1594,10 +1620,11 @@ namespace Ast {
     public:
         inline ConstantStringExpr(const Token& pos, const QualifiedTypeSpec& qTypeSpec, const z::string& value) : ConstantExpr(pos, qTypeSpec), _value(value) {}
         inline const z::string& value() const {return _value;}
+        inline void append(const z::string& v) {_value += v;}
     private:
         virtual void visit(Visitor& visitor) const;
     private:
-        const z::string _value;
+        z::string _value;
     };
 
     class ConstantCharExpr : public ConstantExpr {
@@ -2015,35 +2042,37 @@ namespace Ast {
 
     class ForeachStatement : public Statement {
     protected:
-        inline ForeachStatement(const Token& pos, const Ast::VariableDefn& valDef, const Expr& expr) : Statement(pos), _valDef(valDef), _expr(expr) {}
+        inline ForeachStatement(const Token& pos, const Ast::VariableDefn& valDef, const Expr& expr, const Ast::Token& idxName) : Statement(pos), _valDef(valDef), _expr(expr), _idxName(idxName) {}
     public:
         inline const VariableDefn& valDef() const {return _valDef.get();}
         inline const Expr& expr() const {return _expr.get();}
         inline const CompoundStatement& block() const {return _block.get();}
         inline void setBlock(const CompoundStatement& val) {_block.reset(val);}
+        inline const Ast::Token& idxName() const {return _idxName;}
     private:
         const Ptr<const VariableDefn> _valDef;
         const Ptr<const Expr> _expr;
         Ptr<const CompoundStatement> _block;
+        const Ast::Token _idxName;
     };
 
     class ForeachStringStatement : public ForeachStatement {
     public:
-        inline ForeachStringStatement(const Token& pos, const Ast::VariableDefn& valDef, const Expr& expr) : ForeachStatement(pos, valDef, expr) {}
+        inline ForeachStringStatement(const Token& pos, const Ast::VariableDefn& valDef, const Expr& expr, const Ast::Token& idxName) : ForeachStatement(pos, valDef, expr, idxName) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class ForeachListStatement : public ForeachStatement {
     public:
-        inline ForeachListStatement(const Token& pos, const Ast::VariableDefn& valDef, const Expr& expr) : ForeachStatement(pos, valDef, expr) {}
+        inline ForeachListStatement(const Token& pos, const Ast::VariableDefn& valDef, const Expr& expr, const Ast::Token& idxName) : ForeachStatement(pos, valDef, expr, idxName) {}
     private:
         virtual void visit(Visitor& visitor) const;
     };
 
     class ForeachDictStatement : public ForeachStatement {
     public:
-        inline ForeachDictStatement(const Token& pos, const Ast::VariableDefn& keyDef, const Ast::VariableDefn& valDef, const Expr& expr) : ForeachStatement(pos, valDef, expr), _keyDef(keyDef) {}
+        inline ForeachDictStatement(const Token& pos, const Ast::VariableDefn& keyDef, const Ast::VariableDefn& valDef, const Expr& expr, const Ast::Token& idxName) : ForeachStatement(pos, valDef, expr, idxName), _keyDef(keyDef) {}
         inline const VariableDefn& keyDef() const {return _keyDef.get();}
     private:
         virtual void visit(Visitor& visitor) const;
@@ -2117,6 +2146,18 @@ namespace Ast {
         inline ContinueStatement(const Token& pos) : Statement(pos) {}
     private:
         virtual void visit(Visitor& visitor) const;
+    };
+
+    class SkipStatement : public Statement {
+    public:
+        inline SkipStatement(const Token& pos, const ForeachStatement& stmt, const Ast::Expr& expr) : Statement(pos), _stmt(stmt), _expr(expr) {}
+        inline const Ast::ForeachStatement& stmt() const {return _stmt.get();}
+        inline const Ast::Expr& expr() const {return _expr.get();}
+    private:
+        virtual void visit(Visitor& visitor) const;
+    private:
+        const Ptr<const Ast::ForeachStatement> _stmt;
+        const Ptr<const Ast::Expr> _expr;
     };
 
     class AddEventHandlerStatement : public Statement {
@@ -2229,6 +2270,7 @@ namespace Ast {
         virtual void visit(const SwitchExprStatement& node) = 0;
         virtual void visit(const BreakStatement& node) = 0;
         virtual void visit(const ContinueStatement& node) = 0;
+        virtual void visit(const SkipStatement& node) = 0;
         virtual void visit(const AddEventHandlerStatement& node) = 0;
         virtual void visit(const RoutineReturnStatement& node) = 0;
         virtual void visit(const FunctionReturnStatement& node) = 0;

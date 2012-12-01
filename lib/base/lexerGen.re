@@ -117,8 +117,16 @@ re2c:indent:top              = 2;
 
 <Normal>   "native"    := send(pctx, ZENTOK_NATIVE); NEXT();
 <Normal>   "abstract"  := send(pctx, ZENTOK_ABSTRACT); NEXT();
-<Normal>   "final"     := send(pctx, ZENTOK_FINAL); NEXT();
 <Normal>   "nocopy"    := send(pctx, ZENTOK_NOCOPY); NEXT();
+<Normal>   "pimpl"     := send(pctx, ZENTOK_PIMPL); NEXT();
+<Normal>   "final"     := send(pctx, ZENTOK_FINAL); NEXT();
+
+<Normal>   "schema"    := send(pctx, ZENTOK_SCHEMA); NEXT();
+<Normal>   "table"     := send(pctx, ZENTOK_TABLE); NEXT();
+<Normal>   "field"     := send(pctx, ZENTOK_FIELD); NEXT();
+<Normal>   "lazy"      := send(pctx, ZENTOK_LAZY); NEXT();
+<Normal>   "transient" := send(pctx, ZENTOK_TRANSIENT); NEXT();
+
 <Normal>   "const"     := send(pctx, ZENTOK_CONST); NEXT();
 
 <Normal>   "coerce"    := send(pctx, ZENTOK_COERCE); NEXT();
@@ -141,6 +149,7 @@ re2c:indent:top              = 2;
 <Normal>   "case"      := send(pctx, ZENTOK_CASE); NEXT();
 <Normal>   "break"     := send(pctx, ZENTOK_BREAK); NEXT();
 <Normal>   "continue"  := send(pctx, ZENTOK_CONTINUE); NEXT();
+<Normal>   "skip"      := send(pctx, ZENTOK_SKIP); NEXT();
 <Normal>   "run"       := send(pctx, ZENTOK_RUN); NEXT();
 <Normal>   "raise"     := send(pctx, ZENTOK_RAISE); NEXT();
 <Normal>   "exit"      := send(pctx, ZENTOK_EXIT); NEXT();
@@ -155,7 +164,6 @@ re2c:indent:top              = 2;
 id_seq = [a-zA-Z][a-zA-Z0-9_]*;
 <Normal>   "@" id_seq := send(pctx, ZENTOK_KEY_CONST); NEXT();
 <Normal>       id_seq := sendId(pctx); NEXT();
-
 
 dec_digit = [0-9];
 dec_seq = dec_digit+;

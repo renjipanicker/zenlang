@@ -13,7 +13,7 @@ enum ParseState {
     psDone;
 };
 
-routine size contentLength(const Response& r) {
+routine long contentLength(const Response& r) {
     if(r.headerList has "Content-Length") {
         auto v = r.headerList["Content-Length"];
         return String::StringToLong(v);
@@ -119,7 +119,7 @@ public interface Network {
         };
 
         string hdr;
-        hdr += "GET %{@p}%{@qs} HTTP/1.1\n" @ {@p:u.path, @qs:u.querystring};
+        hdr += "GET %{@p}%{@qs} HTTP/1.1\n" @ {@p:u.path, @qs: Url::GetQueryString(u)};
         hdr += "Accept: text/plain, text/html, */*\n";
         hdr += "User-Agent: Mozilla/5.0+(compatible)\n";
         hdr += "Host: %{@h}\n" @ {@h:u.host};

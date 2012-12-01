@@ -24,6 +24,8 @@
       <item> event </item>
       <item> native </item>
       <item> abstract </item>
+      <item> nocopy </item>
+      <item> pimpl </item>
 
       <item> coerce </item>
       <item> run </item>
@@ -32,17 +34,32 @@
       <item> static </item>
       <item> const </item>
 
+      <item> compare </item>
+      <item> append </item>
+      <item> remove </item>
+      <item> push </item>
+      <item> top </item>
+      <item> pop </item>
+      <item> first </item>
+      <item> last </item>
+      <item> clear </item>
+      <item> enqueue </item>
+      <item> dequeue </item>
+      <item> head </item>
+
       <item> assert </item>
       <item> unused </item>
       <item> verify </item>
       <item> sizeof </item>
       <item> length </item>
 
+      <item> print </item>
       <item> break </item>
       <item> case </item>
       <item> catch </item>
       <item> class </item>
       <item> continue </item>
+      <item> skip </item>
       <item> default </item>
       <item> delete </item>
       <item> do </item>
@@ -109,18 +126,22 @@
       <item> size </item>
       <item> char </item>
       <item> string </item>
+      <item> stringlist </item>
 
       <item> pointer </item>
       <item> future </item>
       <item> functor </item>
       <item> value </item>
       <item> ptr </item>
+      <item> autoptr </item>
       <item> list </item>
       <item> olist </item>
       <item> rlist </item>
       <item> dict </item>
       <item> odict </item>
       <item> rdict </item>
+      <item> stack </item>
+      <item> queue </item>
       <item> tree </item>
       <item> date </item>
       <item> time </item>
@@ -133,6 +154,7 @@
       <item> url </item>
       <item> mutex </item>
       <item> mlock </item>
+      <item> database </item>
       <item> application </item>
       <item> widget </item>
 

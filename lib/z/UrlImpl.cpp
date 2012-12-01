@@ -10,6 +10,9 @@ bool z::Url::FileExists(const z::string& path) {
     return Exists(u);
 }
 
+void z::Url::ParseQueryString(z::QueryList& ql, const z::string& queryStr) {
+}
+
 void z::Url::Parse(z::url& u, const z::string& urlstr) {
     const z::string::sstringT url_s = urlstr.val();
     z::string::sstringT protocol;
@@ -58,7 +61,8 @@ void z::Url::Parse(z::url& u, const z::string& urlstr) {
     u._host<url>(host);
     u._port<url>(port);
     u._path<url>(path);
-    u._querystring<url>(query);
+    ParseQueryString(u.queryList, query);
+//    u._querystring<url>(query);
 }
 
 z::url z::Url::Create(const z::string& urlstr) {
@@ -75,13 +79,16 @@ bool z::Url::OpenUrlString(const z::string& u) {
     z::string nu = z::string("open %{u}").arg("u", u);
     system(z::s2e(nu).c_str());
 #else
-    assert(false);
+    z::string nu = z::string("xdg-open %{u}").arg("u", u);
+    int r = system(z::s2e(nu).c_str());
+    z::unused_t(r);
 #endif
     return true;
 }
 
 bool z::Url::Open(const url& u) {
-    return OpenUrlString(u.fullUrl);
+    z::string s = GetFullUrl(u);
+    return OpenUrlString(s);
 }
 
 z::string z::Url::Encode(const z::string& u) {

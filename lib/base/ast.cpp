@@ -134,6 +134,7 @@ void z::Ast::SwitchValueStatement::visit(Visitor& visitor) const {visitor.visit(
 void z::Ast::SwitchExprStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::BreakStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::ContinueStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
+void z::Ast::SkipStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::AddEventHandlerStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::RoutineReturnStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}
 void z::Ast::FunctionReturnStatement::visit(Visitor& visitor) const {visitor.visit(z::ref(this));}

@@ -16,6 +16,10 @@ namespace zg {
             rv += " nocopy";
         }
 
+        if(defType.pimpl()) {
+            rv += " pimpl";
+        }
+
         if(defType.final()) {
             rv += " final";
         }
@@ -524,7 +528,7 @@ namespace zg {
 
         void visit(const z::Ast::TypedefDecl& node) {
             if(canWrite(node.accessType())) {
-                _os() << getAccessType(node.pos(), node.accessType()) << "typedef " << node.name() << getDefinitionType(node.pos(), node.defType()) << std::endl;
+                _os() << getAccessType(node.pos(), node.accessType()) << "typedef " << node.name() << getDefinitionType(node.pos(), node.defType()) << ";" << std::endl;
             }
             visitChildrenIndent(node);
         }
@@ -586,6 +590,10 @@ namespace zg {
 
         inline void visitStructDefn(const z::Ast::StructDefn& node, const z::Ast::StructDefn* base) {
             if(node.accessType() == z::Ast::AccessType::Protected) {
+                _os() << getAccessType(node.pos(), node.accessType()) << "struct " << node.name() << ";" << std::endl;
+                return;
+            }
+            if((node.defType().native()) || (node.defType().pimpl())) {
                 _os() << getAccessType(node.pos(), node.accessType()) << "struct " << node.name() << ";" << std::endl;
                 return;
             }
@@ -769,24 +777,26 @@ namespace zg {
     struct StatementGenerator : public z::Ast::Statement::Visitor {
     private:
         virtual void visit(const z::Ast::ImportStatement& node) {
-            if(node.headerType() == z::Ast::HeaderType::Import) {
-                _os() << "import ";
-            } else {
-                _os() << "include ";
-            }
+            if(node.accessType() == z::Ast::AccessType::Public) {
+                if(node.headerType() == z::Ast::HeaderType::Import) {
+                    _os() << "import ";
+                } else {
+                    _os() << "include ";
+                }
 
-            z::string sep = "";
-            for(z::Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
-                const z::Ast::Token& name = it->get().name();
-                _os() << sep << name;
-                sep = "::";
-            }
+                z::string sep = "";
+                for(z::Ast::NamespaceList::List::const_iterator it = node.list().begin(); it != node.list().end(); ++it) {
+                    const z::Ast::Token& name = it->get().name();
+                    _os() << sep << name;
+                    sep = "::";
+                }
 
-            if(node.defType().native()) {
-                _os() << " native";
-            }
+                if(node.defType().native()) {
+                    _os() << " native";
+                }
 
-            _os() << ";" << std::endl;
+                _os() << ";" << std::endl;
+            }
         }
 
         virtual void visit(const z::Ast::EnterNamespaceStatement& node) {
@@ -895,6 +905,10 @@ namespace zg {
         }
 
         virtual void visit(const z::Ast::ContinueStatement& node) {
+            z::unused_t(node);
+        }
+
+        virtual void visit(const z::Ast::SkipStatement& node) {
             z::unused_t(node);
         }
 
