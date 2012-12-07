@@ -156,11 +156,11 @@ int z::Sqlite3::CloseStatement(const z::Sqlite3::Statement& stmt) {
     return stmt.impl().close();
 }
 
-z::int32_t z::Sqlite3::ExecuteStatement(const z::Sqlite3::Database& db, const z::string& stmt) {
+int32_t z::Sqlite3::ExecuteStatement(const z::Sqlite3::Database& db, const z::string& stmt) {
     return zz::execRaw(db, stmt);
 }
 
-z::int64_t z::Sqlite3::Insert(const z::Sqlite3::Database& db, const z::Sqlite3::Statement& stmt) {
+int64_t z::Sqlite3::Insert(const z::Sqlite3::Database& db, const z::Sqlite3::Statement& stmt) {
     int rc = zz::execStmt(db, stmt);
     if(rc != SQLITE_DONE) {
         throw z::Exception("Sqlite3", z::string("Insert(): %{s}").arg("s", zz::error(db)));
@@ -168,7 +168,7 @@ z::int64_t z::Sqlite3::Insert(const z::Sqlite3::Database& db, const z::Sqlite3::
     return sqlite3_last_insert_rowid(db.impl()._db);
 }
 
-int z::Sqlite3::SetParamInt(const z::Sqlite3::Statement& stmt, const z::string& key, const z::int64_t& v) {
+int32_t z::Sqlite3::SetParamInt(const z::Sqlite3::Statement& stmt, const z::string& key, const int64_t& v) {
     int idx = sqlite3_bind_parameter_index(stmt.impl()._stmt, z::s2e(key).c_str());
     if(idx == 0) {
         throw z::Exception("Sqlite3", z::string("SetParamInt(): unknown key: %{s}").arg("s", key));
@@ -177,7 +177,7 @@ int z::Sqlite3::SetParamInt(const z::Sqlite3::Statement& stmt, const z::string& 
     return sqlite3_bind_int(stmt.impl()._stmt, idx, (int)v);
 }
 
-int z::Sqlite3::SetParamText(const z::Sqlite3::Statement& stmt, const z::string& key, const z::string& v) {
+int32_t z::Sqlite3::SetParamText(const z::Sqlite3::Statement& stmt, const z::string& key, const z::string& v) {
     int idx = sqlite3_bind_parameter_index(stmt.impl()._stmt, z::s2e(key).c_str());
     if(idx == 0) {
         throw z::Exception("Sqlite3", z::string("SetParamString(): unknown key: %{s}").arg("s", key));
@@ -188,21 +188,21 @@ int z::Sqlite3::SetParamText(const z::Sqlite3::Statement& stmt, const z::string&
 }
 
 bool z::Sqlite3::Select(const z::Sqlite3::Database& db, const z::Sqlite3::Statement& stmt) {
-    int rc = zz::execStmt(db, stmt);
+    int32_t rc = zz::execStmt(db, stmt);
     return (rc == SQLITE_ROW);
 }
 
 bool z::Sqlite3::Update(const z::Sqlite3::Database& db, const z::Sqlite3::Statement& stmt) {
-    int rc = zz::execStmt(db, stmt);
+    int32_t rc = zz::execStmt(db, stmt);
     return (rc == SQLITE_ROW);
 }
 
-z::int64_t z::Sqlite3::GetColumnInt(const z::Sqlite3::Statement& stmt, const int& idx) {
-    int value = sqlite3_column_int(stmt.impl()._stmt, idx);
+int64_t z::Sqlite3::GetColumnInt(const z::Sqlite3::Statement& stmt, const int32_t& idx) {
+    int32_t value = sqlite3_column_int(stmt.impl()._stmt, idx);
     return value;
 }
 
-z::string z::Sqlite3::GetColumnText(const z::Sqlite3::Statement& stmt, const int& idx) {
+z::string z::Sqlite3::GetColumnText(const z::Sqlite3::Statement& stmt, const int32_t& idx) {
     const char* str = (const char*)sqlite3_column_text(stmt.impl()._stmt, idx);
     z::estring value(str);
     return z::e2s(value);

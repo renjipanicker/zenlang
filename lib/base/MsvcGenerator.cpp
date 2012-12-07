@@ -51,9 +51,6 @@ inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::C
     case z::Ast::Config::BuildMode::Static:
         os() << "            ConfigurationType=\"4\"" << std::endl;
         break;
-    case z::Ast::Config::BuildMode::Compile:
-        assert(false);
-        break;
     }
     os() << "            CharacterSet=\"1\"" << std::endl;
     os() << "            >" << std::endl;
@@ -143,9 +140,6 @@ inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::C
         os() << "                Name=\"VCLibrarianTool\"" << std::endl;
         //os() << "                OutputFile=\"$(OutDir)\\$(ProjectName)" << config.getSuffix() << _project.getExt(config) << "\"" << std::endl;
         os() << "            />" << std::endl;
-        break;
-    case z::Ast::Config::BuildMode::Compile:
-        assert(false);
         break;
     }
     os() << "        </Configuration>" << std::endl;

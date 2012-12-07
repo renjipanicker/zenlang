@@ -134,6 +134,7 @@ const z::string ifile =
         "struct socket native;\n"
         "struct file native;\n"
         "struct widget native;\n"
+        "struct window native;\n"
 
         "template <F> struct future  native;\n"
         "template <V> struct pointer native;\n"

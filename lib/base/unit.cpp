@@ -128,7 +128,7 @@ const z::Ast::QualifiedTypeSpec* z::Ast::Unit::canCoerceX(const z::Ast::Qualifie
             const z::Ast::QualifiedTypeSpec& rSubType = z::ref(rtd).at(0);
             CoercionResult::T imode = CoercionResult::None;
             const z::Ast::QualifiedTypeSpec* val = canCoerceX(lSubType, rSubType, imode);
-            z::unused_t(val);
+            unused(val);
             if(imode == CoercionResult::Lhs) {
                 mode = CoercionResult::Lhs;
                 return z::ptr(lhs);

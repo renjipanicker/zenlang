@@ -20,13 +20,17 @@ inline void z::CmakeGenerator::Impl::generateProject(const z::Ast::Config& confi
     os() << "PROJECT(" << _project.name() << ")\n";
     os() << "SET(ZEN_ROOT \"" << _project.zlibPath() << "\")" << std::endl;
     if(config.gui()) {
-        os() << "SET(ZEN_GUI 1)" << std::endl;
+        os() << "INCLUDE(FindPkgConfig)" << std::endl;
+        os() << "pkg_check_modules(WEBKIT REQUIRED webkit-1.0)" << std::endl;
+        os() << "INCLUDE_DIRECTORIES(${WEBKIT_INCLUDE_DIRS})" << std::endl;
+        os() << "LINK_DIRECTORIES(${WEBKIT_LIBRARY_DIRS})" << std::endl;
+        os() << "ADD_DEFINITIONS( \"-DGUI\" )" << std::endl;
     }
-    os() << "INCLUDE(${ZEN_ROOT}/tools/SetupZL.cmake)" << std::endl;
+    os() << "INCLUDE(${ZEN_ROOT}/SetupZL.cmake)" << std::endl;
     os() << std::endl;
 
-    os() << "INCLUDE_DIRECTORIES(\"${ZEN_ROOT}/include/\")" << std::endl;
-    os() << "LINK_DIRECTORIES(\"${ZEN_ROOT}/lib/\")" << std::endl;
+    os() << "INCLUDE_DIRECTORIES(\"${ZEN_ROOT}\")" << std::endl;
+    os() << "LINK_DIRECTORIES(\"${ZEN_ROOT}\")" << std::endl;
 
     os() << "IF(CMAKE_COMPILER_IS_GNUCXX)" << std::endl;
     os() << "    ADD_DEFINITIONS( \"-Wall\" )" << std::endl;
@@ -50,7 +54,7 @@ inline void z::CmakeGenerator::Impl::generateProject(const z::Ast::Config& confi
     }
     os() << std::endl;
 
-    os() << "SET(project_SOURCES ${project_SOURCES} ${ZEN_ROOT}/include/base/zenlang.cpp)" << std::endl;
+    os() << "SET(project_SOURCES ${project_SOURCES} ${ZEN_ROOT}/zenlang.cpp)" << std::endl;
 
     z::string zexePath = _project.zexePath();
     zexePath.replace("\\", "/");
@@ -97,8 +101,6 @@ inline void z::CmakeGenerator::Impl::generateProject(const z::Ast::Config& confi
             os() << "ADD_DEFINITIONS( \"-DZ_LIB\" )" << std::endl;
             os() << "ADD_LIBRARY(" << _project.name() << " STATIC ${project_SOURCES})" << std::endl;
             break;
-        case z::Ast::Config::BuildMode::Compile:
-            throw z::Exception("CmakeGenerator", zfmt(z::Ast::Token("", 0, 0, ""), z::string("Compile mode not allowed during project generation")));
     }
 
     for(z::Ast::Config::PathList::const_iterator it = config.linkFileList().begin(); it != config.linkFileList().end(); ++it) {
@@ -107,6 +109,7 @@ inline void z::CmakeGenerator::Impl::generateProject(const z::Ast::Config& confi
     }
 
     if(config.gui()) {
+        os() << "TARGET_LINK_LIBRARIES(" << _project.name() << " ${WEBKIT_LIBRARIES})" << std::endl;
         os() << "TARGET_LINK_LIBRARIES(" << _project.name() << " ${ZENLANG_LIBRARIES})" << std::endl;
         os() << std::endl;
     }
@@ -115,11 +118,9 @@ inline void z::CmakeGenerator::Impl::generateProject(const z::Ast::Config& confi
 inline void z::CmakeGenerator::Impl::generateConfig(const z::Ast::Config& config) {
     z::Compiler compiler(_project, config);
     compiler.compile();
-    if(config.buildMode() != z::Ast::Config::BuildMode::Compile) {
-        z::dir::mkpath(config.srcdir() + "/");
-        z::ofile osPro(config.srcdir() + "/" + "CMakeLists.txt");
-        generateProject(config, osPro);
-    }
+    z::dir::mkpath(config.srcdir() + "/");
+    z::ofile osPro(config.srcdir() + "/" + "CMakeLists.txt");
+    generateProject(config, osPro);
 }
 
 void z::CmakeGenerator::Impl::run() {

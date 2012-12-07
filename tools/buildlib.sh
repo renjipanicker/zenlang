@@ -230,6 +230,7 @@ cp -v "${SRCDIR}/tools/lemon"     ${OUTDIR}/lemon.linux
 cp -v "${SRCDIR}/tools/re2c.exe"  ${OUTDIR}/
 cp -v "${SRCDIR}/tools/re2c.osx"  ${OUTDIR}/
 cp -v "${SRCDIR}/tools/re2c"      ${OUTDIR}/re2c.linux
+cp -v "${SRCDIR}/tools/SetupZL.cmake" ${OUTDIR}/
 
 #############################################################
 #generate all library files
@@ -283,6 +284,9 @@ appendFile $ZHDRFILE "${LIBDIR}/base/generator.hpp"
 appendFile $ZHDRFILE "${LIBDIR}/base/ZenlangGenerator.hpp"
 appendFile $ZHDRFILE "${LIBDIR}/base/StlcppGenerator.hpp"
 appendFile $ZHDRFILE "${LIBDIR}/base/CMakeGenerator.hpp"
+appendFile $ZHDRFILE "${LIBDIR}/base/MsvcGenerator.hpp"
+appendFile $ZHDRFILE "${LIBDIR}/base/QtcGenerator.hpp"
+appendFile $ZHDRFILE "${LIBDIR}/base/XcodeGenerator.hpp"
 appendFile $ZHDRFILE "${LIBDIR}/base/Interpreter.hpp"
 
 appendFile $ZHDRFILE "${INTDIR}/z/Application.hpp"
@@ -303,13 +307,13 @@ appendFile $ZHDRFILE "${LIBDIR}/z/Sqlite3Native.hpp"
 appendString $ZHDRFILE "#if defined(GUI)"
 appendFile $ZHDRFILE "${INTDIR}/z/Widget.hpp"
 appendFile $ZHDRFILE "${INTDIR}/z/Window.hpp"
-appendFile $ZHDRFILE "${INTDIR}/z/MainFrame.hpp"
-appendFile $ZHDRFILE "${INTDIR}/z/TextEdit.hpp"
-appendFile $ZHDRFILE "${INTDIR}/z/Button.hpp"
-appendFile $ZHDRFILE "${INTDIR}/z/Systray.hpp"
-appendFile $ZHDRFILE "${INTDIR}/z/Menu.hpp"
-appendFile $ZHDRFILE "${INTDIR}/z/MenuItem.hpp"
-appendFile $ZHDRFILE "${INTDIR}/z/WindowCreator.hpp"
+#appendFile $ZHDRFILE "${INTDIR}/z/MainFrame.hpp"
+#appendFile $ZHDRFILE "${INTDIR}/z/TextEdit.hpp"
+#appendFile $ZHDRFILE "${INTDIR}/z/Button.hpp"
+#appendFile $ZHDRFILE "${INTDIR}/z/Systray.hpp"
+#appendFile $ZHDRFILE "${INTDIR}/z/Menu.hpp"
+#appendFile $ZHDRFILE "${INTDIR}/z/MenuItem.hpp"
+#appendFile $ZHDRFILE "${INTDIR}/z/WindowCreator.hpp"
 appendString $ZHDRFILE "#endif"
 
 #############################################################
@@ -330,6 +334,9 @@ appendFile $ZSRCFILE "${LIBDIR}/base/generator.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/base/ZenlangGenerator.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/base/StlcppGenerator.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/base/CMakeGenerator.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/base/MsvcGenerator.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/base/QtcGenerator.cpp"
+appendFile $ZSRCFILE "${LIBDIR}/base/XcodeGenerator.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/base/Interpreter.cpp"
 
 appendFile $ZSRCFILE "${INTDIR}/Application.cpp"
@@ -363,19 +370,19 @@ appendFile $ZSRCFILE "${INTDIR}/Widget.cpp"
 appendFile $ZSRCFILE "${INTDIR}/Window.cpp"
 appendFile $ZSRCFILE "${LIBDIR}/z/WindowImpl.hpp"
 appendFile $ZSRCFILE "${LIBDIR}/z/WindowImpl.cpp"
-appendFile $ZSRCFILE "${INTDIR}/MainFrame.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/z/MainFrameImpl.cpp"
-appendFile $ZSRCFILE "${INTDIR}/TextEdit.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/z/TextEditImpl.cpp"
-appendFile $ZSRCFILE "${INTDIR}/Button.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/z/ButtonImpl.cpp"
-appendFile $ZSRCFILE "${INTDIR}/Systray.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/z/SystrayImpl.cpp"
-appendFile $ZSRCFILE "${INTDIR}/Menu.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/z/MenuImpl.cpp"
-appendFile $ZSRCFILE "${INTDIR}/MenuItem.cpp"
-appendFile $ZSRCFILE "${LIBDIR}/z/MenuItemImpl.cpp"
-appendFile $ZSRCFILE "${INTDIR}/WindowCreator.cpp"
+#appendFile $ZSRCFILE "${INTDIR}/MainFrame.cpp"
+#appendFile $ZSRCFILE "${LIBDIR}/z/MainFrameImpl.cpp"
+#appendFile $ZSRCFILE "${INTDIR}/TextEdit.cpp"
+#appendFile $ZSRCFILE "${LIBDIR}/z/TextEditImpl.cpp"
+#appendFile $ZSRCFILE "${INTDIR}/Button.cpp"
+#appendFile $ZSRCFILE "${LIBDIR}/z/ButtonImpl.cpp"
+#appendFile $ZSRCFILE "${INTDIR}/Systray.cpp"
+#appendFile $ZSRCFILE "${LIBDIR}/z/SystrayImpl.cpp"
+#appendFile $ZSRCFILE "${INTDIR}/Menu.cpp"
+#appendFile $ZSRCFILE "${LIBDIR}/z/MenuImpl.cpp"
+#appendFile $ZSRCFILE "${INTDIR}/MenuItem.cpp"
+#appendFile $ZSRCFILE "${LIBDIR}/z/MenuItemImpl.cpp"
+#appendFile $ZSRCFILE "${INTDIR}/WindowCreator.cpp"
 appendString $ZSRCFILE "#endif"
 
 appendString $ZINCFILE "namespace z;"
@@ -396,13 +403,13 @@ appendFile $ZINCFILE "${INTDIR}/z/Sqlite3.ipp"
 #appendString $ZINCFILE "#if defined(GUI)"
 appendFile $ZINCFILE "${INTDIR}/z/Widget.ipp"
 appendFile $ZINCFILE "${INTDIR}/z/Window.ipp"
-appendFile $ZINCFILE "${INTDIR}/z/MainFrame.ipp"
-appendFile $ZINCFILE "${INTDIR}/z/TextEdit.ipp"
-appendFile $ZINCFILE "${INTDIR}/z/Button.ipp"
-appendFile $ZINCFILE "${INTDIR}/z/Systray.ipp"
-appendFile $ZINCFILE "${INTDIR}/z/Menu.ipp"
-appendFile $ZINCFILE "${INTDIR}/z/MenuItem.ipp"
-appendFile $ZINCFILE "${INTDIR}/z/WindowCreator.ipp"
+#appendFile $ZINCFILE "${INTDIR}/z/MainFrame.ipp"
+#appendFile $ZINCFILE "${INTDIR}/z/TextEdit.ipp"
+#appendFile $ZINCFILE "${INTDIR}/z/Button.ipp"
+#appendFile $ZINCFILE "${INTDIR}/z/Systray.ipp"
+#appendFile $ZINCFILE "${INTDIR}/z/Menu.ipp"
+#appendFile $ZINCFILE "${INTDIR}/z/MenuItem.ipp"
+#appendFile $ZINCFILE "${INTDIR}/z/WindowCreator.ipp"
 #appendString $ZINCFILE "#endif"
 
 if [ "$dotest" == "yes" ]; then
@@ -426,11 +433,11 @@ if [ "$dotest" == "yes" ]; then
         exit
     fi
 
-    ${ZCC} -c ${SRCDIR}/tests/guiTest.zpp
-    if [[ $? != 0 ]]; then
-        echo Error generating guiTest files.
-        exit
-    fi
+#    ${ZCC} -c ${SRCDIR}/tests/guiTest.zpp
+#    if [[ $? != 0 ]]; then
+#        echo Error generating guiTest files.
+#        exit
+#    fi
 
     #########################################################
     echo Running unit tests...

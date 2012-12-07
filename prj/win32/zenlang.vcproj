@@ -318,6 +318,14 @@
 			>
 		</File>
 		<File
+			RelativePath="..\..\lib\base\QtcGenerator.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\lib\base\QtcGenerator.hpp"
+			>
+		</File>
+		<File
 			RelativePath="..\..\lib\base\StlcppGenerator.cpp"
 			>
 		</File>
@@ -343,6 +351,14 @@
 		</File>
 		<File
 			RelativePath="..\..\lib\base\unit.hpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\lib\base\XcodeGenerator.cpp"
+			>
+		</File>
+		<File
+			RelativePath="..\..\lib\base\XcodeGenerator.hpp"
 			>
 		</File>
 		<File

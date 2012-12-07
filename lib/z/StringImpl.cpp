@@ -1038,11 +1038,11 @@ z::list<z::string> z::String::Split(const z::string& str, const z::string& sep) 
 }
 
 z::char_t z::String::Fold(const z::char_t& ch) {
-    return zz::unicode_fold((z::char16_t)ch);
+    return zz::unicode_fold((char16_t)ch);
 }
 
 z::char_t z::String::CharToLower(const z::char_t& ch) {
-    return zz::unicode_lower((z::char16_t)ch);
+    return zz::unicode_lower((char16_t)ch);
 }
 
 z::string z::String::StringToLower(const z::string& str) {
@@ -1054,7 +1054,7 @@ z::string z::String::StringToLower(const z::string& str) {
 }
 
 z::char_t z::String::CharToUpper(const z::char_t& ch) {
-    return zz::unicode_upper((z::char16_t)ch);
+    return zz::unicode_upper((char16_t)ch);
 }
 
 z::string z::String::StringToUpper(const z::string& str) {

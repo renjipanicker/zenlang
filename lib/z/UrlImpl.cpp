@@ -74,14 +74,14 @@ z::url z::Url::Create(const z::string& urlstr) {
 bool z::Url::OpenUrlString(const z::string& u) {
 #if defined(WIN32)
     HINSTANCE rv = ::ShellExecute(NULL, "open", z::s2e(u).c_str(), NULL, NULL, SW_SHOWNORMAL);
-    z::unused_t(rv);
+    unused(rv);
 #elif defined(__APPLE__)
     z::string nu = z::string("open %{u}").arg("u", u);
     system(z::s2e(nu).c_str());
 #else
     z::string nu = z::string("xdg-open %{u}").arg("u", u);
     int r = system(z::s2e(nu).c_str());
-    z::unused_t(r);
+    unused(r);
 #endif
     return true;
 }

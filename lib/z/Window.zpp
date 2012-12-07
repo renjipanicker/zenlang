@@ -45,4 +45,6 @@ public interface Window {
 
     event(const widget& wnd) native => function void OnResize();
     event(const widget& wnd) native => function void OnClose();
+
+    function window Open(const string& page) native;
 };

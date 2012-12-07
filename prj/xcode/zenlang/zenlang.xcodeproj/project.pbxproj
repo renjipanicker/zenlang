@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		A45C9E68166C822B00627337 /* QtcGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A45C9E64166C822B00627337 /* QtcGenerator.cpp */; };
+		A45C9E69166C822B00627337 /* XcodeGenerator.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A45C9E66166C822B00627337 /* XcodeGenerator.cpp */; };
 		A487BF581553A5D500C93C69 /* main.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A487BF571553A5D500C93C69 /* main.cpp */; };
 		A492BCB515539B780027F69C /* zenlang.1 in CopyFiles */ = {isa = PBXBuildFile; fileRef = A492BCB415539B780027F69C /* zenlang.1 */; };
 		A492BCE015539BA50027F69C /* ast.cpp in Sources */ = {isa = PBXBuildFile; fileRef = A492BCBC15539BA50027F69C /* ast.cpp */; };
@@ -40,6 +42,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		A45C9E64166C822B00627337 /* QtcGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = QtcGenerator.cpp; path = ../../../lib/base/QtcGenerator.cpp; sourceTree = "<group>"; };
+		A45C9E65166C822B00627337 /* QtcGenerator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = QtcGenerator.hpp; path = ../../../lib/base/QtcGenerator.hpp; sourceTree = "<group>"; };
+		A45C9E66166C822B00627337 /* XcodeGenerator.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = XcodeGenerator.cpp; path = ../../../lib/base/XcodeGenerator.cpp; sourceTree = "<group>"; };
+		A45C9E67166C822B00627337 /* XcodeGenerator.hpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.h; name = XcodeGenerator.hpp; path = ../../../lib/base/XcodeGenerator.hpp; sourceTree = "<group>"; };
 		A487BF571553A5D500C93C69 /* main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = main.cpp; path = ../../../src/main.cpp; sourceTree = "<group>"; };
 		A492BCAE15539B780027F69C /* zenlang */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = zenlang; sourceTree = BUILT_PRODUCTS_DIR; };
 		A492BCB415539B780027F69C /* zenlang.1 */ = {isa = PBXFileReference; lastKnownFileType = text.man; path = zenlang.1; sourceTree = "<group>"; };
@@ -95,6 +101,10 @@
 		A492BCA315539B780027F69C = {
 			isa = PBXGroup;
 			children = (
+				A45C9E64166C822B00627337 /* QtcGenerator.cpp */,
+				A45C9E65166C822B00627337 /* QtcGenerator.hpp */,
+				A45C9E66166C822B00627337 /* XcodeGenerator.cpp */,
+				A45C9E67166C822B00627337 /* XcodeGenerator.hpp */,
 				A487BF571553A5D500C93C69 /* main.cpp */,
 				A492BCBB15539BA50027F69C /* args.hpp */,
 				A492BCBC15539BA50027F69C /* ast.cpp */,
@@ -255,6 +265,8 @@
 				A492BCEE15539BA50027F69C /* unit.cpp in Sources */,
 				A492BCEF15539BA50027F69C /* ZenlangGenerator.cpp in Sources */,
 				A487BF581553A5D500C93C69 /* main.cpp in Sources */,
+				A45C9E68166C822B00627337 /* QtcGenerator.cpp in Sources */,
+				A45C9E69166C822B00627337 /* XcodeGenerator.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

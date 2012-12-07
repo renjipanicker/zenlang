@@ -38,16 +38,22 @@
         #if defined(QT_GUI_LIB)
             #define QT 1
         #elif defined(__APPLE__)
-            #if !defined(IOS)
+            #if TARGET_OS_IPHONE
+                #define IOS 1
+            #else
                 #define OSX 1
             #endif
         #else
-            #define GTK 1
+//            #define GTK 1
         #endif
     #endif
 #endif
 
-// validation. one and exactly one of the 3 must be defined in GUI mode
+#if defined(GTK)
+#error GTK not supported
+#endif
+
+// validation. one and exactly one of the 5 must be defined in GUI mode
 #if defined(GUI)
 #if defined(WIN32)
     #if defined(GTK) || defined(QT) || defined(OSX) || defined(IOS)
@@ -134,6 +140,16 @@
     const int INVALID_SOCKET = -1;
 #endif
 
+#if defined(GUI) && (defined(OSX) || defined(IOS))
+    typedef char     char08_t;
+//    typedef uint16_t char16_t;
+//    typedef uint32_t char32_t;
+#else
+    typedef char     char08_t;
+    typedef uint16_t char16_t;
+    typedef uint32_t char32_t;
+#endif
+
 #if defined(WIN32)
     #define sprintf sprintf_s
 
@@ -144,7 +160,7 @@
 
     // assignment operator could not be generated
     // caused due to const members in struct's and classes.
-    // can disable this because an error will be raised if an actual assignment
+    // can disable this because a compiler error will be raised if an actual assignment
     // operation is attempted later on.
     #pragma warning (disable:4512)
 #else

@@ -2328,7 +2328,6 @@ namespace Ast {
     public:
         struct BuildMode {
             enum T {
-                Compile,
                 Executable,
                 Shared,
                 Static
@@ -2428,7 +2427,7 @@ namespace Ast {
         };
 
     public:
-        inline Project() : _name("main"), _oproject("cmake"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;"), _verbosity(Verbosity::Normal), _zlibPath("") {}
+        inline Project() : _name("main"), _oproject("cmake"), _hppExt(".h;.hpp;"), _cppExt(".c;.cpp;"), _zppExt(".zpp;"), _htmExt(".htm;.html"), _verbosity(Verbosity::Normal), _zlibPath("") {}
         inline ~Project() {
             for(ConfigList::iterator it = _configList.begin(); it != _configList.end(); ++it) {
                 Config* cfg = it->second;
@@ -2476,6 +2475,7 @@ namespace Ast {
         inline const z::string& hppExt() const {return _hppExt;}
         inline const z::string& cppExt() const {return _cppExt;}
         inline const z::string& zppExt() const {return _zppExt;}
+        inline const z::string& htmExt() const {return _htmExt;}
     private:
         z::string _name;
         z::string _oproject;
@@ -2484,6 +2484,7 @@ namespace Ast {
         z::string _hppExt;
         z::string _cppExt;
         z::string _zppExt;
+        z::string _htmExt;
         Verbosity::T _verbosity;
         z::string _zexePath;
         z::string _zlibPath;

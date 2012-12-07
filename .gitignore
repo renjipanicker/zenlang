@@ -2,6 +2,8 @@
 *~
 *.old
 
+.DS_Store
+
 lib/base/lexerGen.hpp
 lib/base/parserGen.hpp
 lib/base/parserGen.h
@@ -22,6 +24,8 @@ prj/xcode/zenlang/zenlang.xcodeproj/project.xcworkspace/
 prj/qt/zenlang.pro.user
 prj/zenlang-build-desktop-Qt_4_8_1_in_PATH__System__Debug/
 prj/zenlang-build-desktop-Qt_4_8_1_in_PATH__System__Release/
+prj/zenlang-build-desktop-Qt_4_8_1_for_GCC__Qt_SDK__Debug/
+prj/zenlang-build-desktop-Qt_4_8_1_for_GCC__Qt_SDK__Release/
 
 # Compiled Object files
 *.slo

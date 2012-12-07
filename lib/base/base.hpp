@@ -3,16 +3,10 @@
 #define NULL_PTR_ERROR (false)
 #define NULL_REF_ERROR (false)
 
+template <typename T>
+inline void unused(const T&) {}
+
 namespace z {
-    template <typename T>
-    inline void unused_t(const T&) {}
-
-#if defined(DEBUG)
-    inline void assert_t(const bool& cond){assert(cond);}
-#else
-    inline void assert_t(const bool& /*cond*/){}
-#endif
-
     template <typename T>
     inline T& ref(T* t) {
         // this if-syntax (instead of assert(t)) makes it easier to set breakpoints for debugging.
@@ -37,28 +31,6 @@ namespace z {
         }
         return (unsigned long)(&t);
     }
-
-    typedef ::int8_t  int8_t;
-    typedef ::int16_t int16_t;
-    typedef ::int32_t int32_t;
-    typedef ::int64_t int64_t;
-
-    typedef ::uint8_t  uint8_t;
-    typedef ::uint16_t uint16_t;
-    typedef ::uint32_t uint32_t;
-    typedef ::uint64_t uint64_t;
-
-    typedef std::size_t size;
-
-    typedef char     char08_t;
-    typedef uint16_t char16_t;
-    typedef uint32_t char32_t;
-
-    typedef void void_t;
-    typedef bool bool_t;
-
-    typedef float float_t;
-    typedef double double_t;
 
     // define char_t as 8, 16 or 32 bit
 #if defined(CHAR_WIDTH_08)
@@ -630,7 +602,7 @@ namespace z {
 
         template <typename DerT>
         struct valueT : public value {
-            inline valueT(const DerT& v) : _v(v) {const V& dummy = v;z::unused_t(dummy);}
+            inline valueT(const DerT& v) : _v(v) {const V& dummy = v;unused(dummy);}
             virtual V& get() {return _v;}
             virtual value* clone() const {return new valueT<DerT>(_v);}
             virtual z::string tname() const {return type_name<DerT>();}
@@ -670,7 +642,7 @@ namespace z {
         inline DerT& getT() const {
             V& v = get();
             DerT& r = static_cast<DerT&>(v);
-            const V& dummy = r; z::unused_t(dummy); // to check that DerT is a derived class of V
+            const V& dummy = r; unused(dummy); // to check that DerT is a derived class of V
             return r;
         }
 
@@ -688,7 +660,7 @@ namespace z {
             reset();
             if(src.has()) {
                 const DerT& val = src.template getT<DerT>();
-                const V& dummy = val; z::unused_t(dummy); // to check that DerT acn be derived from V
+                const V& dummy = val; unused(dummy); // to check that DerT acn be derived from V
                 value* v = new valueT<DerT>(val);
                 set(src.tname(), v);
             }
@@ -710,7 +682,7 @@ namespace z {
         /// This ctor is the one to be invoked when creating a pointer-object.
         template <typename DerT>
         explicit inline pointer(const z::string& tname, const DerT& val) : _tname(""), _val(0) {
-            const V& dummy = val; z::unused_t(dummy); // to check that DerT is a derived class of V
+            const V& dummy = val; unused(dummy); // to check that DerT is a derived class of V
             value* v = new valueT<DerT>(val);
             set(type(tname), v);
         }
@@ -1332,7 +1304,7 @@ namespace z {
         void stopPoll(z::device& device);
 
     public:
-        z::size wait();
+        size_t wait();
 
     private:
         void add(z::Future* future);
@@ -1405,7 +1377,7 @@ namespace z {
         };
     public:
         inline _Out _run(const _In& _in) {
-            z::unused_t(_in);
+            unused(_in);
             T& t = static_cast<T&>(ref(this));
             TestResult::begin(t.name());
             _Out out = t.run();
@@ -1665,6 +1637,18 @@ namespace z {
         NOTIFYICONDATA& ni() const;
     #endif
         inline bool operator<(const widget& rhs) const {return (_val < rhs._val);}
+    private:
+        mutable impl* _val;
+    };
+    ////////////////////////////////////////////////////////////////////////////
+    struct window {
+        struct impl;
+    public:
+        inline window() : _val(0) {}
+        inline window(impl* i) : _val(i) {}
+        inline const impl& val() const {return z::ref(_val);}
+    public:
+        inline bool operator<(const window& rhs) const {return (_val < rhs._val);}
     private:
         mutable impl* _val;
     };

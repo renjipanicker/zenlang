@@ -105,7 +105,7 @@ public interface Network {
                     }
                     case ParseState.psBody: {
                         r.body += ch;
-                        if((contentLength(r) > 0) && (length(r.body) >= contentLength(r))) {
+                        if((contentLength(r) > 0) && (length(r.body) >= (size)contentLength(r))) {
                             ps = ParseState.psDone;
                         }
                         break;

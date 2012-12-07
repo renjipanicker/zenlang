@@ -31,7 +31,7 @@
 //    throw z::exception(z::string::creator("%{err} Stack overflow error").arg(z::any("err"), z::any(z::c2f(pctx).err())).value());
 }
 
-%token_destructor {z::unused_t(pctx);z::TokenData::deleteT($$);}
+%token_destructor {unused(pctx);z::TokenData::deleteT($$);}
 
 %name ZenParser
 
@@ -164,7 +164,7 @@ rGlobalTypeSpecStatement(L) ::= rAccessType(accessType) rRootStructDefn(typeSpec
 rGlobalTypeSpecStatement(L) ::= PROTECTED rRootStructDefn(typeSpec).                    {L = z::c2f(pctx).aGlobalTypeSpecStatement(z::Ast::AccessType::Protected, z::ref(typeSpec));}
 rGlobalTypeSpecStatement(L) ::= rAccessType(accessType) rStructDecl(typeSpec).          {L = z::c2f(pctx).aGlobalTypeSpecStatement(accessType, z::ref(typeSpec));}
 rGlobalTypeSpecStatement(L) ::= PROTECTED rStructDecl(typeSpec).                        {L = z::c2f(pctx).aGlobalTypeSpecStatement(z::Ast::AccessType::Protected, z::ref(typeSpec));}
-rGlobalTypeSpecStatement(L) ::= rOptionalAccessType(accessType) rSchemaDefStatement(R). {z::unused_t(L);z::unused_t(accessType);z::unused_t(R);} //{L = z::c2f(pctx).aGlobalStatement(z::ref(R));}
+rGlobalTypeSpecStatement(L) ::= rOptionalAccessType(accessType) rSchemaDefStatement(R). {unused(L);unused(accessType);unused(R);} //{L = z::c2f(pctx).aGlobalStatement(z::ref(R));}
 rGlobalTypeSpecStatement(L) ::= rInnerStatement(R).                                     {L = z::c2f(pctx).aGlobalStatement(z::ref(R));}
 
 //-------------------------------------------------
@@ -728,7 +728,7 @@ rExitStatement(L) ::= EXIT(B) rExpr(S) SEMI. {L = z::c2f(pctx).aExitStatement(z:
 
 //-------------------------------------------------
 //%type rSchemaDefStatement {z::Ast::SchemaStatement*}
-rSchemaDefStatement(L) ::= SCHEMA(B) ID(I) LCURLY rSchemaStatementList RCURLY SEMI. {z::unused_t(L);z::unused_t(B);z::unused_t(I);} // {L = z::c2f(pctx).aSchemaStatement(z::t2t(B));}
+rSchemaDefStatement(L) ::= SCHEMA(B) ID(I) LCURLY rSchemaStatementList RCURLY SEMI. {unused(L);unused(B);unused(I);} // {L = z::c2f(pctx).aSchemaStatement(z::t2t(B));}
 
 rSchemaStatementList ::= rSchemaStatementList rSchemaStatement.
 rSchemaStatementList ::= rSchemaStatement.

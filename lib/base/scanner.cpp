@@ -21,7 +21,7 @@ void z::Scanner::newLine() {
 }
 
 z::string z::Scanner::text(const int& id, const std::string& in) {
-    z::unused_t(id);
+    unused(id);
     return z::e2s(in);
 }
 

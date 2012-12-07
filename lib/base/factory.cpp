@@ -572,14 +572,14 @@ void z::Ast::Factory::aStructMemberPropertyDefn(z::Ast::PropertyDecl& typeSpec) 
 }
 
 z::Ast::PropertyDeclRW* z::Ast::Factory::aStructPropertyDeclRW(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec& propertyType, const z::Ast::Token& name, const z::Ast::DefinitionType& defType) {
-    z::unused_t(pos);
+    unused(pos);
     z::Ast::PropertyDeclRW& structPropertyDecl = unit().addNode(new z::Ast::PropertyDeclRW(unit().currentTypeSpec(), name, defType, propertyType));
     unit().currentTypeSpec().addChild(structPropertyDecl);
     return z::ptr(structPropertyDecl);
 }
 
 z::Ast::PropertyDeclRO* z::Ast::Factory::aStructPropertyDeclRO(const z::Ast::Token& pos, const z::Ast::QualifiedTypeSpec& propertyType, const z::Ast::Token& name, const z::Ast::DefinitionType& defType) {
-    z::unused_t(pos);
+    unused(pos);
     z::Ast::PropertyDeclRO& structPropertyDecl = unit().addNode(new z::Ast::PropertyDeclRO(unit().currentTypeSpec(), name, defType, propertyType));
     unit().currentTypeSpec().addChild(structPropertyDecl);
     return z::ptr(structPropertyDecl);
@@ -2048,7 +2048,7 @@ const z::Ast::VariableDefn* z::Ast::Factory::aEnterStructInitPart(const z::Ast::
 }
 
 void z::Ast::Factory::aLeaveStructInitPart(const z::Ast::Token& pos) {
-    z::unused_t(pos);
+    unused(pos);
 }
 
 z::Ast::StructInitPartList* z::Ast::Factory::aStructInitPartList(z::Ast::StructInitPartList& list, const z::Ast::StructInitPart& part) {
@@ -2115,7 +2115,7 @@ z::Ast::ChildFunctionDefn* z::Ast::Factory::aEnterAnonymousFunction(const z::Ast
 
     z::Ast::ChildFunctionDefn& functionDefn = createChildFunctionDefn(z::ref(ts), function, name, z::Ast::DefinitionType().isFinal(), cref);
     z::Ast::Statement* statement = aGlobalTypeSpecStatement(z::Ast::AccessType::Private, functionDefn);
-    z::unused_t(statement);
+    unused(statement);
     return z::ptr(functionDefn);
 }
 

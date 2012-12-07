@@ -83,42 +83,42 @@ namespace sg {
         }
 
         if(typeSpec.name().string() == "long") {
-            name += "int64_t";
+            name = "int64_t";
             return;
         }
 
         if(typeSpec.name().string() == "int") {
-            name += "int32_t";
+            name = "int32_t";
             return;
         }
 
         if(typeSpec.name().string() == "short") {
-            name += "int16_t";
+            name = "int16_t";
             return;
         }
 
         if(typeSpec.name().string() == "byte") {
-            name += "int8_t";
+            name = "int8_t";
             return;
         }
 
         if(typeSpec.name().string() == "ulong") {
-            name += "uint64_t";
+            name = "uint64_t";
             return;
         }
 
         if(typeSpec.name().string() == "uint") {
-            name += "uint32_t";
+            name = "uint32_t";
             return;
         }
 
         if(typeSpec.name().string() == "ushort") {
-            name += "uint16_t";
+            name = "uint16_t";
             return;
         }
 
         if(typeSpec.name().string() == "ubyte") {
-            name += "uint8_t";
+            name = "uint8_t";
             return;
         }
 
@@ -128,37 +128,42 @@ namespace sg {
         }
 
         if(typeSpec.name().string() == "void") {
-            name += "void_t";
+            name = "void";
             return;
         }
 
         if(typeSpec.name().string() == "bool") {
-            name += "bool_t";
+            name = "bool";
             return;
         }
 
         if(typeSpec.name().string() == "float") {
-            name += "float_t";
+            name = "float";
             return;
         }
 
         if(typeSpec.name().string() == "double") {
-            name += "double_t";
+            name = "double";
             return;
         }
 
         if(typeSpec.name().string() == "unused") {
-            name += "unused_t";
+            name = "unused";
             return;
         }
 
         if(typeSpec.name().string() == "assert") {
-            name += "assert_t";
+            name = "assert";
             return;
         }
 
         if(typeSpec.name().string() == "verify") {
-            name += "verify_t";
+            name = "verify";
+            return;
+        }
+
+        if(typeSpec.name().string() == "size") {
+            name = "size_t";
             return;
         }
 
@@ -440,14 +445,14 @@ namespace sg {
 
         virtual void visit(const z::Ast::RoutineCallExpr& node) {
             z::string name = StlcppNameGenerator().tn(node.routine());
-            if((name == "z::assert_t") || (name == "z::unused_t") || (name == "z::verify_t")) {
+            if((name == "assert") || (name == "unused") || (name == "verify")) {
                 z::string sep;
                 for(z::Ast::ExprList::List::const_iterator it = node.exprList().list().begin(); it != node.exprList().list().end(); ++it) {
                     const z::Ast::Expr& expr = it->get();
                     _os() << sep;
-                    if(name == "z::verify_t") {
+                    if(name == "verify") {
                         _os() << "if(!verify";
-                    } else if(name == "z::assert_t") {
+                    } else if(name == "assert") {
                         _os() << "assert";
                     } else {
                         _os() << name;
@@ -455,7 +460,7 @@ namespace sg {
                     _os() << "(";
                     ExprGenerator(_os).visitNode(expr);
                     _os() << ")";
-                    if(name == "z::verify_t")
+                    if(name == "verify")
                         _os() << ")return _Out(false)";
                     sep = ";";
                 }
@@ -667,7 +672,7 @@ namespace sg {
         }
 
         inline void visitFunctionTypeInstance(const z::Ast::Function& function, const z::Ast::ExprList& exprList) {
-            z::unused_t(exprList); // will be implementing function-type-instantiation with ctor parameters in future.
+            unused(exprList); // will be implementing function-type-instantiation with ctor parameters in future.
             z::string fname = StlcppNameGenerator().tn(function);
             _os() << fname << "(";
             z::string sep;
@@ -688,7 +693,7 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::ConstantNullExpr& node) {
-            z::unused_t(node);
+            unused(node);
             _os() << "0";
         }
 
@@ -963,7 +968,7 @@ namespace sg {
 
             if(scope.hasPosParam()) {
                 const z::Ast::Scope& posParam = scope.posParam();
-                z::unused_t(posParam);
+                unused(posParam);
                 /// \todo implement positional-param
             }
 
@@ -1035,7 +1040,7 @@ namespace sg {
 
                 _os() << z::Indent::get() << "    inline _Out _run(_In& _in) {";
                 if(node.sig().in().size() == 0) {
-                    _os() << "z::unused_t(_in);";
+                    _os() << "unused(_in);";
                 }
 
                 // if void function, call the function and return default instance of _Out()
@@ -1575,7 +1580,7 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::EmptyStatement& node) {
-            z::unused_t(node);
+            unused(node);
             fpDefn()() << ";" << std::endl;
         }
 
@@ -1764,12 +1769,12 @@ namespace sg {
         }
 
         virtual void visit(const z::Ast::BreakStatement& node) {
-            z::unused_t(node);
+            unused(node);
             fpDefn()() << z::Indent::get() << "break;" << std::endl;
         }
 
         virtual void visit(const z::Ast::ContinueStatement& node) {
-            z::unused_t(node);
+            unused(node);
             fpDefn()() << z::Indent::get() << "continue;" << std::endl;
         }
 

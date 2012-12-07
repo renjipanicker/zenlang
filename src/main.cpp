@@ -2,13 +2,15 @@
 #include "base/base.hpp"
 #include "base/CmakeGenerator.hpp"
 #include "base/MsvcGenerator.hpp"
+#include "base/QtcGenerator.hpp"
+#include "base/XcodeGenerator.hpp"
 #include "base/Interpreter.hpp"
 #include "base/unit.hpp"
 #include "base/compiler.hpp"
 #include "base/args.hpp"
 
 static int showHelp(const z::Ast::Config& config) {
-    z::unused_t(config);
+    unused(config);
     std::cout << "zen compiler 0.1a";
 //    std::cout << " ( at: " << project.zexePath() << ")" << std::endl;
     std::cout << std::endl;
@@ -50,7 +52,7 @@ inline void replaceSlash(z::string& path) {
 #if defined(WIN32)
     path.replace("\\", "/");
 #else
-    z::unused_t(path);
+    unused(path);
 #endif
 }
 
@@ -239,11 +241,18 @@ int main(int argc, char* argv[]) {
     z::string p = z::app().path();
     replaceSlash(p);
     project.zexePath(p);
-    config.addLinkFile("core");
 
     if (argc < 2) {
         return showHelp(config);
     }
+
+#if defined(WIN32)
+    project.oproject("msvc");
+#elif defined(__APPLE__)
+    project.oproject("xcode");
+#else
+    project.oproject("cmake");
+#endif
 
     GenMode genMode = gmProject;
     int i = 1;
@@ -253,7 +262,6 @@ int main(int argc, char* argv[]) {
         if((t == "-h") || (t == "--help")) {
             return showHelp(config);
         } else if(t == "-c") {
-            config.buildMode(z::Ast::Config::BuildMode::Compile);
             genMode = gmCompile;
         } else if((t == "-p") || (t == "--project")) {
             t = argv[i++];
@@ -374,12 +382,17 @@ int main(int argc, char* argv[]) {
         z::Interpreter intp(project, config);
         intp.run();
     } else if(genMode == gmProject) {
-        if(project.oproject() == "cmake") {
-#if defined(WIN32)
+        if(project.oproject() == "msvc") {
             z::MsvcGenerator progen(project);
-#else
+            progen.run();
+        } else if(project.oproject() == "cmake") {
             z::CmakeGenerator progen(project);
-#endif
+            progen.run();
+        } else if(project.oproject() == "qtc") {
+            z::QtcGenerator progen(project);
+            progen.run();
+        } else if(project.oproject() == "xcode") {
+            z::XcodeGenerator progen(project);
             progen.run();
         } else {
             throw z::Exception("Main", z::string("Unknown project generator %{s}").arg("s", project.oproject()));
