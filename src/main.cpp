@@ -24,7 +24,8 @@ static int showHelp(const z::Ast::Config& config) {
     std::cout << "  -pd --dll       Shared library project" << std::endl;
     std::cout << "  -pl --lib       Static library project" << std::endl;
     std::cout << "  -n  --name      Project name" << std::endl;
-//    std::cout << "  -g  --gui       GUI application" << std::endl; /// \todo To be kept undocumented.
+    std::cout << "  -g  --gui       GUI application" << std::endl;
+    std::cout << "  -gf --guifile   GUI file(s)" << std::endl;
     std::cout << "  -d  --debug     Debug build" << std::endl;
     std::cout << "  -ol --language  Output language" << std::endl;
     std::cout << "  -op --project   Output project" << std::endl;
@@ -278,6 +279,10 @@ int main(int argc, char* argv[]) {
         } else if((t == "-pl") || (t == "--lib")) {
             config.buildMode(z::Ast::Config::BuildMode::Static);
         } else if((t == "-g") || (t == "--gui")) {
+            config.gui(true);
+        } else if((t == "-gf") || (t == "--guifile")) {
+            t = argv[i++];
+            config.addGuiFile(t);
             config.gui(true);
         } else if((t == "-d") || (t == "--debug")) {
             config.debug(true);

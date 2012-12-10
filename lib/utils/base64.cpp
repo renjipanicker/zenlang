@@ -90,7 +90,8 @@ z::string base64_decode(z::string const& encoded_string) {
   z::string ret;
 
   while (in_len-- && ( encoded_string[in_] != '=') && is_base64(encoded_string[in_])) {
-    char_array_4[i++] = encoded_string[in_]; in_++;
+    char_array_4[i++] = (char)encoded_string[in_];
+    in_++;
     if (i ==4) {
       for (i = 0; i <4; i++)
         char_array_4[i] = static_cast<unsigned char>(base64_chars.find(char_array_4[i]));

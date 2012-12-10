@@ -2345,6 +2345,8 @@ namespace Ast {
     public:
         inline Config& gui(const bool& val) { _gui = val; return z::ref(this);}
         inline const bool& gui() const {return _gui;}
+        inline Config& addGuiFile(const z::string& val) { _guiFileList.add(val); return z::ref(this);}
+        inline const PathList& guiFileList() const {return _guiFileList;}
         inline Config& debug(const bool& val) { _debug = val; return z::ref(this);}
         inline const bool& debug() const {return _debug;}
         inline Config& test(const bool& val) { _test = val; return z::ref(this);}
@@ -2400,6 +2402,7 @@ namespace Ast {
         z::string _name;
         BuildMode::T _buildMode;
         bool _gui;
+        PathList _guiFileList;
         bool _debug;
         bool _test;
         bool _abstract;

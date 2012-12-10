@@ -11,6 +11,7 @@ public:
 private:
     inline void generateConfig(z::ofile& os, const z::Ast::Config& config);
     inline void writeLibFile(const z::Ast::Project& project, z::ofile& os, const z::string& filename);
+    inline void generateGui();
 private:
     const z::Ast::Project& _project;
 private:
@@ -19,6 +20,7 @@ private:
     FileList _cppFileList;
     FileList _zppFileList;
     FileList _otherFileList;
+    FileList _guiFileList;
     z::string _pch;
     z::string _pchfile;
 };
@@ -29,11 +31,18 @@ inline z::string nfn(const z::string& filename) {
     return fn;
 }
 
+inline void z::MsvcGenerator::Impl::generateGui() {
+    z::ofile os("gui.rc");
+    for(FileList::const_iterator it = _guiFileList.begin(), ite = _guiFileList.end(); it != ite; ++it) {
+        const z::string& f = *it;
+        os() << z::dir::getFilename(f) << " HTML DISCARDABLE \"" << f << "\"" << std::endl;
+    }
+}
+
 inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::Config& config) {
     z::Compiler compiler(_project, config);
     compiler.compile();
     if(config.abstract()) {
-        std::cout << "2" << std::endl;
         return;
     }
 
@@ -158,6 +167,10 @@ inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::C
         } else {
             std::cout << "Unknown file type: " << p << std::endl;
         }
+    }
+    for(z::Ast::Config::PathList::const_iterator it = config.guiFileList().begin(), ite = config.guiFileList().end(); it != ite; ++it) {
+        const z::string& p = *it;
+        _guiFileList.insert(p);
     }
 }
 
@@ -301,16 +314,17 @@ void z::MsvcGenerator::Impl::run() {
             os() << "                        CommandLine='" << _project.zexePath() << zppflags << " \"$(InputPath)\"'" << std::endl;
             os() << "                        Outputs=\" $(InputName).hpp; $(InputName).cpp;\"" << std::endl;
 
-            //if(unit.getDepList().size() > 0) {
-            //    os() << "                        AdditionalDependencies=\"";
-            //    for(z::stringlist::iterator it(unit.getDepList()); !it.end(); ++it) {
-            //        const z::string& dep = *it;
-            //        z::fileinfo fi(dep);
-            //        os() << _project.getAbsoluteDirPath(gcv(cfg, _project.getBldDir())) << "\\" << fi.getBaseName() << ".cpp;";
-            //    }
-            //    os() << "\"" << std::endl;
-            //}
-
+#if 0
+            if(unit.getDepList().size() > 0) {
+                os() << "                        AdditionalDependencies=\"";
+                for(z::stringlist::iterator it(unit.getDepList()); !it.end(); ++it) {
+                    const z::string& dep = *it;
+                    z::fileinfo fi(dep);
+                    os() << _project.getAbsoluteDirPath(gcv(cfg, _project.getBldDir())) << "\\" << fi.getBaseName() << ".cpp;";
+                }
+                os() << "\"" << std::endl;
+            }
+#endif
             os() << "                    />" << std::endl;
             os() << "                </FileConfiguration>" << std::endl;
         }
@@ -347,25 +361,27 @@ void z::MsvcGenerator::Impl::run() {
         os() << "        </Filter>" << std::endl;
     }
 
+#if 0
     if(false) {
         // the project file itself
         // TODO: we need the name of the original .zproj file.
         os() << "        <Filter Name=\"Zen Project File\" Filter=\"zproj\" ParseFiles=\"false\" >" << std::endl;
-        //os() << "            <File RelativePath=\"" << nfn(filename) << "\" >" << std::endl;
-        //for(z::Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
-        //    const z::Ast::Config& cfg = z::ref(it->second);
-        //    os() << "                <FileConfiguration Name=\"" << cfg.name() << "|Win32\" >" << std::endl;
-        //    os() << "                    <Tool" << std::endl;
-        //    os() << "                        Name=\"VCCustomBuildTool\"" << std::endl;
-        //    os() << "                        Description=\"Compiling $(InputPath)\"" << std::endl;
-        //    os() << "                        CommandLine=\"" << _project.zexePath() << " -ip $(InputPath)\"" << std::endl;
-        //    os() << "                        Outputs=\" $(InputName).vcproj;\"" << std::endl;
-        //    os() << "                    />" << std::endl;
-        //    os() << "                </FileConfiguration>" << std::endl;
-        //}
-        //os() << "            </File>" << std::endl;
+        os() << "            <File RelativePath=\"" << nfn(filename) << "\" >" << std::endl;
+        for(z::Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
+            const z::Ast::Config& cfg = z::ref(it->second);
+            os() << "                <FileConfiguration Name=\"" << cfg.name() << "|Win32\" >" << std::endl;
+            os() << "                    <Tool" << std::endl;
+            os() << "                        Name=\"VCCustomBuildTool\"" << std::endl;
+            os() << "                        Description=\"Compiling $(InputPath)\"" << std::endl;
+            os() << "                        CommandLine=\"" << _project.zexePath() << " -ip $(InputPath)\"" << std::endl;
+            os() << "                        Outputs=\" $(InputName).vcproj;\"" << std::endl;
+            os() << "                    />" << std::endl;
+            os() << "                </FileConfiguration>" << std::endl;
+        }
+        os() << "            </File>" << std::endl;
         os() << "        </Filter>" << std::endl;
     }
+#endif
 
     os() << "        <Filter Name=\"Generated Files\" >" << std::endl;
 
@@ -386,6 +402,11 @@ void z::MsvcGenerator::Impl::run() {
         const z::string& f = *it;
         const z::string basename = z::dir::getBaseName(f);
         os() << "            <File RelativePath=\".\\" << basename << ".cpp" << "\" />" << std::endl;
+    }
+
+    if(_guiFileList.size() > 0) {
+        generateGui();
+        os() << "            <File RelativePath=\".\\gui.rc" << "\" />" << std::endl;
     }
     os() << "        </Filter>" << std::endl;
 

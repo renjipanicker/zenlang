@@ -1622,25 +1622,6 @@ namespace z {
 
 #if defined(GUI)
     ////////////////////////////////////////////////////////////////////////////
-    struct widget {
-        struct impl;
-    public:
-        inline widget() : _val(0) {}
-        inline widget(impl* i) : _val(i) {}
-        inline widget(impl& i) : _val(&i) {}
-        inline const impl& val() const {return z::ref(_val);}
-        void clear() const;
-        void set(const z::string& key, const z::widget& v);
-        z::widget at(const z::string& key) const;
-    public:
-    #if defined(WIN32)
-        NOTIFYICONDATA& ni() const;
-    #endif
-        inline bool operator<(const widget& rhs) const {return (_val < rhs._val);}
-    private:
-        mutable impl* _val;
-    };
-    ////////////////////////////////////////////////////////////////////////////
     struct window {
         struct impl;
     public:

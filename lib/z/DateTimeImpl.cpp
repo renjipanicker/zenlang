@@ -462,7 +462,7 @@ inline std::tm getLocalTm(const z::datetime& dt) {
 #if defined(WIN32)
     std::tm tm;
     errno_t eno = ::localtime_s(&tm, &t);
-    z::unused_t(eno);
+    unused(eno);
     return tm;
 #else
     std::tm* tm = ::localtime(&t);
