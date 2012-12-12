@@ -211,6 +211,7 @@ const z::string ifile =
         "    list<string> includePathList;\n"
         "    list<string> includeFileList;\n"
         "    list<SourceFile> sourceFileList;\n"
+        "    list<SourceFile> guiFileList;\n"
         "    list<string> linkFileList;\n"
         "};\n"
 
@@ -230,7 +231,7 @@ const z::string ifile =
         "};\n"
 ;
 
-void z::Compiler::initContext(z::Ast::Unit& unit) {
+void z::Compiler::initContext(z::Ast::Unit& unit, const bool& isprj) {
     // import core.ipp. This is a string constant
     {
         z::Ast::Module module(unit, "core.ipp", 1);
@@ -240,7 +241,7 @@ void z::Compiler::initContext(z::Ast::Unit& unit) {
     }
 
     // import zenlang.ipp. This is a generated file
-    {
+    if(!isprj) {
         z::Ast::Module module(unit, "zenlang.ipp", 1);
         import(module);
     }
@@ -255,7 +256,7 @@ void z::Compiler::compile() {
         }
         std::cout << "Compiling " << filename << std::endl;
         z::Ast::Unit unit;
-        initContext(unit);
+        initContext(unit, false);
 
         z::Ast::Module module(unit, filename, 0);
         if(!compileFile(module, filename, "Compiling"))

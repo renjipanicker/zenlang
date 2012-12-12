@@ -2345,8 +2345,6 @@ namespace Ast {
     public:
         inline Config& gui(const bool& val) { _gui = val; return z::ref(this);}
         inline const bool& gui() const {return _gui;}
-        inline Config& addGuiFile(const z::string& val) { _guiFileList.add(val); return z::ref(this);}
-        inline const PathList& guiFileList() const {return _guiFileList;}
         inline Config& debug(const bool& val) { _debug = val; return z::ref(this);}
         inline const bool& debug() const {return _debug;}
         inline Config& test(const bool& val) { _test = val; return z::ref(this);}
@@ -2380,6 +2378,10 @@ namespace Ast {
         inline Config& addSourceFileList(const z::stringlist& list) { _sourceFileList.append(list); return z::ref(this);}
         inline const PathList& sourceFileList() const {return _sourceFileList;}
     public:
+        inline Config& addGuiFile(const z::string& file) { _guiFileList.add(file); return z::ref(this);}
+        inline Config& addGuiFileList(const z::stringlist& list) { _guiFileList.append(list); return z::ref(this);}
+        inline const PathList& guiFileList() const {return _guiFileList;}
+    public:
         inline Config& addLinkFile(const z::string& file) { _linkFileList.add(file); return z::ref(this);}
         inline Config& addLinkFileList(const z::stringlist& list) { _linkFileList.append(list); return z::ref(this);}
         inline const PathList& linkFileList() const {return _linkFileList;}
@@ -2402,7 +2404,6 @@ namespace Ast {
         z::string _name;
         BuildMode::T _buildMode;
         bool _gui;
-        PathList _guiFileList;
         bool _debug;
         bool _test;
         bool _abstract;
@@ -2415,6 +2416,7 @@ namespace Ast {
         PathList _includePathList;
         PathList _includeFileList;
         PathList _sourceFileList;
+        PathList _guiFileList;
         PathList _linkFileList;
     };
 
@@ -2457,7 +2459,7 @@ namespace Ast {
         inline Config& config(const z::string& name) {
             ConfigList::iterator it = _configList.find(name);
             if(it == _configList.end()) {
-                throw z::Exception("Config", z::string("Config does not exist"));
+                throw z::Exception("Config", z::string("Config does not exist: %{c}").arg("c", name));
             }
             return z::ref(it->second);
         }
@@ -2465,7 +2467,7 @@ namespace Ast {
         inline Config& addConfig(const z::string& name) {
             ConfigList::iterator it = _configList.find(name);
             if(it != _configList.end()) {
-                throw z::Exception("Config", z::string("Config already exists"));
+                throw z::Exception("Config", z::string("Config already exists: %{c}").arg("c", name));
             }
             _configList[name] = new Config();
             Config& cfg = z::ref(_configList[name]);

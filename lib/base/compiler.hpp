@@ -6,7 +6,7 @@ namespace z {
 class Compiler {
 public:
     inline Compiler(const Ast::Project& project, const Ast::Config& config) : _project(project), _config(config) {}
-    void initContext(Ast::Unit& unit);
+    void initContext(Ast::Unit& unit, const bool& isprj);
     void compile();
     void import(Ast::Module& module);
     void compileString(Ast::Module& module, Lexer& lexer, const z::string& data, const bool& isEof);

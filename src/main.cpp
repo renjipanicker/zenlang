@@ -28,6 +28,7 @@ static int showHelp(const z::Ast::Config& config) {
     std::cout << "  -gf --guifile   GUI file(s)" << std::endl;
     std::cout << "  -d  --debug     Debug build" << std::endl;
     std::cout << "  -ol --language  Output language" << std::endl;
+    std::cout << "  -pf --projectFile Project File" << std::endl;
     std::cout << "  -op --project   Output project" << std::endl;
     std::cout << "  -id --inc       Include path" << std::endl;
     std::cout << "  -ad --api       API directory" << std::endl;
@@ -40,13 +41,15 @@ static int showHelp(const z::Ast::Config& config) {
     return 0;
 }
 
-inline void initConfig(z::Ast::Project& project, z::Ast::Config& config) {
+inline void initConfig(z::Ast::Project& /*project*/, z::Ast::Config& config) {
 //    assert(config.includeFileList().size() == 0);
     config.addIncludeFile(config.pch());
     config.addIncludePath(config.apidir());
+}
 
-    // add lib path to include path list
-    config.addIncludePath(project.zlibPath());
+inline void initProjectConfig(z::Ast::Project& project, z::Ast::Config& config, const z::string& path) {
+    initConfig(project, config);
+    config.addIncludePath(path);
 }
 
 inline void replaceSlash(z::string& path) {
@@ -133,7 +136,7 @@ inline void readProjectFile(z::Ast::Project& project, z::Ast::Config& config, co
     z::Ast::Unit unit;
     z::Ast::Module module(unit, filename, 1);
     z::Compiler compiler(project, config);
-    compiler.initContext(unit);
+    compiler.initContext(unit, true);
     compiler.compileFile(module, filename, "project file");
     for(z::Ast::CompoundStatement::List::const_iterator it = module.globalStatementList().list().begin(); it != module.globalStatementList().list().end(); ++it) {
         const z::Ast::Statement& s = it->get();
@@ -203,13 +206,15 @@ inline void readProjectFile(z::Ast::Project& project, z::Ast::Config& config, co
                                         nconfig.addIncludeFileList(getStringList(cval, path));
                                     } else if (ckey == "sourceFileList") {
                                         nconfig.addSourceFileList(getSourceFileList(cval, path));
+                                    } else if (ckey == "guiFileList") {
+                                        nconfig.addGuiFileList(getSourceFileList(cval, path));
                                     } else if (ckey == "linkFileList") {
                                         nconfig.addLinkFileList(getStringList(cval, path));
                                     } else {
                                         std::cout << "Unknown config key: " << ckey << std::endl;
                                     }
                                 }
-                                initConfig(project, nconfig);
+                                initProjectConfig(project, nconfig, path);
                             } else {
                                 std::cout << "Unknown struct: " << cname << std::endl;
                             }
@@ -252,7 +257,7 @@ int main(int argc, char* argv[]) {
 #elif defined(__APPLE__)
     project.oproject("xcode");
 #else
-    project.oproject("cmake");
+    project.oproject("qtc");
 #endif
 
     GenMode genMode = gmProject;
@@ -286,7 +291,7 @@ int main(int argc, char* argv[]) {
             config.gui(true);
         } else if((t == "-d") || (t == "--debug")) {
             config.debug(true);
-        } else if((t == "-ip") || (t == "--inputProject")) {
+        } else if((t == "-pf") || (t == "--projectFile")) {
             t = argv[i++];
             readProjectFile(project, config, t);
             config.abstract(true);
@@ -391,6 +396,7 @@ int main(int argc, char* argv[]) {
             z::MsvcGenerator progen(project);
             progen.run();
         } else if(project.oproject() == "cmake") {
+            assert(false);
             z::CmakeGenerator progen(project);
             progen.run();
         } else if(project.oproject() == "qtc") {

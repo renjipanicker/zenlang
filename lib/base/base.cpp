@@ -14,6 +14,7 @@
         # include <QtGui/QApplication>
         # include <QtCore/QTimer>
         # include <QtWebKit/QWebView>
+        # include <QtGui/QCloseEvent>
     #elif defined(OSX)
         // Note that this is import, not include. Which is why this must be here, not in pch.hpp
         // In OSX mode, this file *must* be compiled as a Obj-C++ file, not C++ file. In Xcode, go to
@@ -1429,9 +1430,23 @@ namespace zz {
 } // namespace zz
 #elif defined(QT)
 namespace zz {
+    class MainWindow : public QWebView {
+        void closeEvent(QCloseEvent* ev) {
+            z::ref(QApplication::instance()).exit(0);
+            z::ref(ev).ignore();
+        }
+    private slots:
+        void onLoadFinished(bool ok) {
+            assert(ok);
+        }
+    public:
+        inline MainWindow() : QWebView(0) {
+            connect(this, SIGNAL(loadFinished(bool)), this, SLOT(onLoadFinished(bool)));
+        }
+    };
     void OpenWindow() {
-        QWebView* view = new QWebView();
-        view->load(QUrl("http://www.google.com"));
+        MainWindow* view = new MainWindow();
+        view->load(QUrl("qrc:/res/index.html"));
         view->show();
     }
 } // namespace zz

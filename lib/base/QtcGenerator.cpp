@@ -3,52 +3,77 @@
 #include "base/QtcGenerator.hpp"
 #include "base/compiler.hpp"
 
-class z::QtcGenerator::Impl {
+class z::QtcGenerator::Impl : public z::Generator::Impl {
 public:
-    inline Impl(const z::Ast::Project& project) : _project(project) {}
+    inline Impl(const z::Ast::Project& project) : Generator::Impl(project) {}
 public:
     void run();
 private:
-    inline void generateConfig(const z::Ast::Config& config);
+    inline void generateConfig(const z::Ast::Config& config, ofile& os);
     inline void generateProject(const z::Ast::Config& config, z::ofile& os);
-private:
-    const z::Ast::Project& _project;
 };
 
 inline void z::QtcGenerator::Impl::generateProject(const z::Ast::Config& config, z::ofile& os) {
+    if(config.abstract()) {
+        return;
+    }
+
+    std::string s = z::s2e(config.name()).c_str();
+    std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+    assert((s == "debug") || (s == "release"));
+    os() << "CONFIG(" << s << ", debug|release)" << " {" << std::endl;
+    z::string ind = "    ";
     if(config.gui()) {
-        os() << "QT += webkit" << std::endl;
+        os() << ind << "QT += gui webkit" << std::endl;
     } else {
-        os() << "QT -= core gui" << std::endl;
+        os() << ind << "QT -= core gui" << std::endl;
     }
     switch(config.buildMode()) {
         case z::Ast::Config::BuildMode::Executable:
-            os() << "TEMPLATE = app" << std::endl;
+            os() << ind << "TEMPLATE = app" << std::endl;
+            os() << ind << "DEFINES += Z_EXE" << std::endl;
             break;
         case z::Ast::Config::BuildMode::Shared:
-            os() << "TEMPLATE = lib" << std::endl;
-            os() << "CONFIG += shared" << std::endl;
+            os() << ind << "TEMPLATE = lib" << std::endl;
+            os() << ind << "CONFIG += shared" << std::endl;
             break;
         case z::Ast::Config::BuildMode::Static:
-            os() << "TEMPLATE = lib" << std::endl;
+            os() << ind << "TEMPLATE = lib" << std::endl;
             break;
     }
-    os() << "TARGET = " << _project.name() << std::endl;
     if(config.gui()) {
-//        os() << "CONFIG += link_pkgconfig" << std::endl;
-//        os() << "PKGCONFIG = webkit-1.0" << std::endl;
-        os() << "DEFINES += GUI" << std::endl;
-        os() << "DEFINES += QT" << std::endl;
+        os() << ind << "DEFINES += GUI" << std::endl;
     } else {
-        os() << "CONFIG += console" << std::endl;
+        os() << ind << "CONFIG += console" << std::endl;
     }
-    os() << "CONFIG -= app_bundle" << std::endl;
+    os() << ind << "CONFIG -= app_bundle" << std::endl;
 
-    os() << "CONFIG(debug, debug|release) {" << std::endl;
-    os() << "    DEFINES += DEBUG" << std::endl;
+    if(config.debug()) {
+        os() << ind << "DEFINES += DEBUG" << std::endl;
+    } else {
+        os() << ind << "DEFINES += REL" << std::endl;
+    }
+
+    for(z::Ast::Config::PathList::const_iterator it = config.includePathList().begin(), ite = config.includePathList().end(); it != ite; ++it) {
+        const z::string& dir = *it;
+        os() << ind << "INCLUDEPATH += " << dir << std::endl;
+    }
+    os() << std::endl;
     os() << "}" << std::endl;
+}
 
-    os() << "DEFINES += Z_EXE" << std::endl;
+inline void z::QtcGenerator::Impl::generateConfig(const z::Ast::Config& config, z::ofile& os) {
+    z::Compiler compiler(_project, config);
+    compiler.compile();
+    generateProject(config, os);
+}
+
+void z::QtcGenerator::Impl::run() {
+//    z::dir::mkpath(config.srcdir() + "/");
+//    z::ofile osPro(config.srcdir() + "/" + _project.name() + ".pro");
+
+    z::ofile os(_project.name() + ".pro");
+    os() << "TARGET = " << _project.name() << std::endl;
 
     os() << "ZENLANG_SRC_DIR=" << _project.zlibPath() << std::endl;
     os() << "ZEN_CC=$$ZENLANG_SRC_DIR/zenlang" << std::endl;
@@ -58,6 +83,7 @@ inline void z::QtcGenerator::Impl::generateProject(const z::Ast::Config& config,
     os() << "HEADERS += $$ZENLANG_SRC_DIR/zenlang.hpp" << std::endl;
     os() << "SOURCES += $$ZENLANG_SRC_DIR/zenlang.cpp" << std::endl;
     os() << std::endl;
+
     os() << "zenlang.name = zenlang" << std::endl;
     os() << "zenlang.input = ZENLANG_SOURCES" << std::endl;
     os() << "zenlang.commands = $$ZEN_CC -v -c ${QMAKE_FILE_IN}" << std::endl;
@@ -67,43 +93,73 @@ inline void z::QtcGenerator::Impl::generateProject(const z::Ast::Config& config,
     os() << "QMAKE_EXTRA_COMPILERS += zenlang" << std::endl;
     os() << std::endl;
 
-    for(z::Ast::Config::PathList::const_iterator it = config.includePathList().begin(); it != config.includePathList().end(); ++it) {
-        const z::string& dir = *it;
-        os() << "INCLUDEPATH += " << dir << std::endl;
-    }
+    os() << "re2c.name = re2c" << std::endl;
+    os() << "re2c.input = RE2C_SOURCES" << std::endl;
+    os() << "re2c.commands = $$RE2C_CC -f -u -c -i -o ${QMAKE_FILE_BASE}.cpp ${QMAKE_FILE_IN}" << std::endl;
+    os() << "re2c.output = ${QMAKE_FILE_BASE}.cpp" << std::endl;
+    os() << "re2c.variable_out = SOURCES" << std::endl;
+    os() << "re2c.CONFIG += target_predeps" << std::endl;
+    os() << "QMAKE_EXTRA_COMPILERS += re2c" << std::endl;
     os() << std::endl;
 
-    for(z::Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
-        const z::string& filename = *it;
-        z::string ext = z::dir::getExtention(filename);
+    os() << "lemon.name = lemon" << std::endl;
+    os() << "lemon.input = LEMON_SOURCES" << std::endl;
+    os() << "lemon.commands = $$LEMON_CC -o.cpp -q ${QMAKE_FILE_IN}" << std::endl;
+    os() << "lemon.output = ${QMAKE_FILE_BASE}.cpp" << std::endl;
+    os() << "lemon.variable_out = SOURCES" << std::endl;
+    os() << "lemon.CONFIG += target_predeps" << std::endl;
+    os() << "QMAKE_EXTRA_COMPILERS += lemon" << std::endl;
+    os() << std::endl;
 
-        if(_project.hppExt().find(ext) != z::string::npos) {
-            os() << "HEADERS += " << filename << std::endl;
-        } else if(_project.cppExt().find(ext) != z::string::npos) {
-            os() << "SOURCES += " << filename << std::endl;
-        } else if(_project.zppExt().find(ext) != z::string::npos) {
-            os() << "ZENLANG_SOURCES += " << filename << std::endl;
-            os() << "OTHER_FILES += " << filename << std::endl;
-        } else {
-            throw z::Exception("QtcGenerator", zfmt(z::Ast::Token(filename, 0, 0, ""), "Unknown file type for: %{s}").arg("s", filename));
-        }
-    }
-    os() << "unix:LIBS += -lsqlite3" << std::endl;
-}
-
-inline void z::QtcGenerator::Impl::generateConfig(const z::Ast::Config& config) {
-    z::Compiler compiler(_project, config);
-    compiler.compile();
-    z::dir::mkpath(config.srcdir() + "/");
-    z::ofile osPro(config.srcdir() + "/" + _project.name() + ".pro");
-    generateProject(config, osPro);
-}
-
-void z::QtcGenerator::Impl::run() {
     for(z::Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
         const z::Ast::Config& config = z::ref(it->second);
-        generateConfig(config);
+        generateConfig(config, os);
     }
+
+    for(FileList::const_iterator it = _hppFileList.begin(), ite = _hppFileList.end(); it != ite; ++it) {
+        const z::string& f = *it;
+        os() << "HEADERS += " << f << std::endl;
+    }
+
+    for(FileList::const_iterator it = _cppFileList.begin(), ite = _cppFileList.end(); it != ite; ++it) {
+        const z::string& f = *it;
+        os() << "SOURCES += " << f << std::endl;
+    }
+
+    for(FileList::const_iterator it = _zppFileList.begin(), ite = _zppFileList.end(); it != ite; ++it) {
+        const z::string& f = *it;
+        os() << "ZENLANG_SOURCES += " << f << std::endl;
+        os() << "OTHER_FILES += " << f << std::endl;
+    }
+
+    for(FileList::const_iterator it = _otherFileList.begin(), ite = _otherFileList.end(); it != ite; ++it) {
+        const z::string& f = *it;
+        if(z::dir::getExtention(f) == "re") {
+            os() << "RE2C_SOURCES += " << f << std::endl;
+            os() << "OTHER_FILES += " << f << std::endl;
+        } else if(z::dir::getExtention(f) == "y") {
+            os() << "LEMON_SOURCES += " << f << std::endl;
+            os() << "OTHER_FILES += " << f << std::endl;
+        } else {
+            assert(false);
+        }
+    }
+    if(_guiFileList.size() > 0) {
+        os() << "RESOURCES += res.qrc" << std::endl;
+        z::ofile gos("res.qrc");
+        gos() << "<RCC>" << std::endl;
+        gos() << "    <qresource prefix=\"/res\">" << std::endl;
+        for(FileList::const_iterator it = _guiFileList.begin(), ite = _guiFileList.end(); it != ite; ++it) {
+            const z::string& f = *it;
+            const z::string filename = z::dir::getFilename(f);
+            gos() << "        <file alias=\"" << filename << "\">" << f << "</file>" << std::endl;
+        }
+        gos() << "    </qresource>" << std::endl;
+        gos() << "</RCC>" << std::endl;
+    }
+
+    os() << std::endl;
+    os() << "unix:LIBS += -lsqlite3" << std::endl;
 }
 
 z::QtcGenerator::QtcGenerator(const z::Ast::Project& project) : _impl(0) {_impl = new Impl(project);}

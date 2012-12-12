@@ -3,26 +3,15 @@
 #include "base/MsvcGenerator.hpp"
 #include "base/compiler.hpp"
 
-class z::MsvcGenerator::Impl {
+class z::MsvcGenerator::Impl : public z::Generator::Impl {
 public:
-    inline Impl(const z::Ast::Project& project) : _project(project) {}
+    inline Impl(const z::Ast::Project& project) : Generator::Impl(project) {}
 public:
     void run();
 private:
     inline void generateConfig(z::ofile& os, const z::Ast::Config& config);
     inline void writeLibFile(const z::Ast::Project& project, z::ofile& os, const z::string& filename);
     inline void generateGui();
-private:
-    const z::Ast::Project& _project;
-private:
-    typedef std::set<z::string> FileList;
-    FileList _hppFileList;
-    FileList _cppFileList;
-    FileList _zppFileList;
-    FileList _otherFileList;
-    FileList _guiFileList;
-    z::string _pch;
-    z::string _pchfile;
 };
 
 inline z::string nfn(const z::string& filename) {
@@ -42,6 +31,7 @@ inline void z::MsvcGenerator::Impl::generateGui() {
 inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::Config& config) {
     z::Compiler compiler(_project, config);
     compiler.compile();
+
     if(config.abstract()) {
         return;
     }
@@ -65,8 +55,10 @@ inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::C
     os() << "            >" << std::endl;
     os() << "            <Tool" << std::endl;
     os() << "                Name=\"VCCLCompilerTool\"" << std::endl;
-    os() << "                AdditionalIncludeDirectories=\"" << nfn(_project.zlibPath()) << ";";
+    os() << "                AdditionalIncludeDirectories=\"";
 
+    os() << nfn(_project.zlibPath()) << ";";
+    os() << nfn(_project.zlibPath()) << "\\utils\\sqlite3\\;";
     for(z::stringlist::const_iterator it = config.includePathList().begin(); it != config.includePathList().end(); ++it) {
         const z::string& p = *it;
         os() << nfn(p) << ";";
@@ -92,23 +84,6 @@ inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::C
         os() << "                EnableIntrinsicFunctions=\"true\"" << std::endl;
         os() << "                RuntimeLibrary=\"2\"" << std::endl;
         os() << "                DebugInformationFormat=\"3\"" << std::endl;
-    }
-
-    if((_pch.length() > 0) && (_pch != config.pch()) && (config.pch() != "zenlang.hpp")) {
-        throw z::Exception("MsvcGenerator", z::string("PCH header filename must be same in all configurations"));
-    }
-
-    if((_pchfile.length() > 0) && (_pchfile != config.pchfile()) && (config.pchfile() != "zenlang.cpp")) {
-        throw z::Exception("MsvcGenerator", z::string("PCH source filename must be same in all configurations"));
-    }
-
-    std::cout << "** " << config.pch() << std::endl;
-    if(config.pch() != "zenlang.hpp") {
-        _pch = config.pch();
-    }
-
-    if(config.pchfile() != "zenlang.cpp") {
-        _pchfile = config.pchfile();
     }
 
     os() << "                UsePrecompiledHeader=\"2\"" << std::endl;
@@ -152,26 +127,6 @@ inline void z::MsvcGenerator::Impl::generateConfig(z::ofile& os, const z::Ast::C
         break;
     }
     os() << "        </Configuration>" << std::endl;
-
-    for(z::Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
-        const z::string& p = *it;
-        const z::string ext = z::dir::getExtention(p);
-        if(ext == "zpp") {
-            _zppFileList.insert(p);
-        } else if ((ext == "h") || (ext == "hpp") || (ext == "inl")) {
-            _hppFileList.insert(p);
-        } else if ((ext == "c") || (ext == "cpp") || (ext == "rc")) {
-            _cppFileList.insert(p);
-        } else if ((ext == "y") || (ext == "re")) {
-            _otherFileList.insert(p);
-        } else {
-            std::cout << "Unknown file type: " << p << std::endl;
-        }
-    }
-    for(z::Ast::Config::PathList::const_iterator it = config.guiFileList().begin(), ite = config.guiFileList().end(); it != ite; ++it) {
-        const z::string& p = *it;
-        _guiFileList.insert(p);
-    }
 }
 
 inline void z::MsvcGenerator::Impl::writeLibFile(const z::Ast::Project& project, z::ofile& os, const z::string& filename) {
@@ -216,14 +171,6 @@ void z::MsvcGenerator::Impl::run() {
     }
 
     os() << "    </Configurations>" << std::endl;
-
-    if(_pch.length() == 0) {
-        _pch = "zenlang.hpp";
-    }
-
-    if(_pchfile.length() == 0) {
-        _pchfile = "zenlang.cpp";
-    }
 
     // All files
     os() << "    <Files>" << std::endl;

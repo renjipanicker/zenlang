@@ -94,7 +94,7 @@ namespace in {
             : _config(config), _c(project, config) {
             _unit.setScopeCallback(this);
 #if !defined(DBGMODE)
-            _c.initContext(_unit);
+            _c.initContext(_unit, false);
 #endif
             _unit.enterScope(pos);
         }
