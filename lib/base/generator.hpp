@@ -5,7 +5,7 @@ namespace z {
     struct Generator {
         virtual void run() = 0;
         struct Impl {
-            inline Impl(const z::Ast::Project& project) : _project(project) {init();}
+            inline Impl(const z::Ast::Project& project) : _project(project), _gendir(".") {init();}
         private:
             void init();
         protected:
@@ -18,6 +18,7 @@ namespace z {
             FileList _guiFileList;
             z::string _pch;
             z::string _pchfile;
+            z::string _gendir;
         };
     };
 

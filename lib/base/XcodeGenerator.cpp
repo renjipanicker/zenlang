@@ -3,329 +3,30 @@
 #include "base/XcodeGenerator.hpp"
 #include "base/compiler.hpp"
 
-class z::XcodeGenerator::Impl {
+class z::XcodeGenerator::Impl : public z::Generator::Impl {
 public:
-    inline Impl(const z::Ast::Project& project) : _project(project) {}
+    inline Impl(const z::Ast::Project& project) : Generator::Impl(project) {}
 public:
     void run();
 private:
-    inline void generateConfig(const z::Ast::Config& config);
-    inline void generateProject(const z::Ast::Config& config, z::ofile& os);
-    inline void generatePCHFile(const z::Ast::Config& config);
-    inline void generatePListFile(const z::Ast::Config& config);
-private:
-    const z::Ast::Project& _project;
+    inline void generateConfig(const z::Ast::Config& config, z::ofile& os);
+    inline void generateProject();
+    inline void generatePCHFile();
+    inline void generatePListFile();
 };
 
-inline void z::XcodeGenerator::Impl::generateProject(const z::Ast::Config& config, z::ofile& os) {
-    os() << "// !$*UTF8*$!" << std::endl;
-    os() << "{" << std::endl;
-    os() << "	archiveVersion = 1;" << std::endl;
-    os() << "	classes = {" << std::endl;
-    os() << "	};" << std::endl;
-    os() << "	objectVersion = 46;" << std::endl;
-    os() << "	objects = {" << std::endl;
-    os() << "" << std::endl;
-    os() << "/* Begin PBXBuildFile section */" << std::endl;
-    os() << "        Sqlite3_OSX_Framework_BuildFile = {isa = PBXBuildFile; fileRef = Sqlite3_OSX_Framework_FileRef; };" << std::endl;
-    os() << "        Sqlite3_IOS_Framework_BuildFile = {isa = PBXBuildFile; fileRef = Sqlite3_IOS_Framework_FileRef; };" << std::endl;
-    os() << "        WebKit_Framework_BuildFile = {isa = PBXBuildFile; fileRef = WebKit_Framework_FileRef; };" << std::endl;
-    os() << "        Cocoa_Framework_BuildFile = {isa = PBXBuildFile; fileRef = Cocoa_Framework_FileRef; };" << std::endl;
-    os() << "        UIKit_Framework_BuildFile = {isa = PBXBuildFile; fileRef = UIKit_Framework_FileRef; };" << std::endl;
-    os() << "        Foundation_Framework_BuildFile = {isa = PBXBuildFile; fileRef = Foundation2_Framework_FileRef; };" << std::endl;
-    os() << "        CoreGraphics_Framework_BuildFile = {isa = PBXBuildFile; fileRef = CoreGraphics_Framework_FileRef ; };" << std::endl;
-    os() << "        zenlang_cpp_BuildFile = {isa = PBXBuildFile; fileRef = zenlang_cpp_FileRef; settings = {COMPILER_FLAGS = \"-x objective-c++\"; }; };" << std::endl;
-    for(z::Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
-        const z::string& filename = *it;
-        z::string basename = z::dir::getBaseName(filename);
-        z::string ext = z::dir::getExtention(filename);
-
-        if(_project.hppExt().find(ext) != z::string::npos) {
-        } else if(_project.cppExt().find(ext) != z::string::npos) {
-            os() << "        " << basename << "_cpp_BuildFile = {isa = PBXBuildFile; fileRef = " << basename << "_cpp_FileRef; };" << std::endl;
-        } else if(_project.zppExt().find(ext) != z::string::npos) {
-            os() << "        " << basename << "_zpp_BuildFile = {isa = PBXBuildFile; fileRef = " << basename << "_zpp_FileRef; };" << std::endl;
-//        } else if(_project.htmExt().find(ext) != z::string::npos) {
-//            os() << "        " << basename << "_htm_BuildFile = {isa = PBXBuildFile; fileRef = " << basename << "_htm_FileRef; };" << std::endl;
-        } else {
-            throw z::Exception("XcodeGenerator", zfmt(z::Ast::Token(filename, 0, 0, ""), "Unknown file type for: %{s}").arg("s", filename));
-        }
-    }
-    os() << "/* End PBXBuildFile section */" << std::endl;
-    os() << "" << std::endl;
-    os() << "/* Begin PBXBuildRule section */" << std::endl;
-    os() << "    zenlang_BuildRule = {" << std::endl;
-    os() << "            isa = PBXBuildRule;" << std::endl;
-    os() << "            compilerSpec = com.apple.compilers.proxy.script;" << std::endl;
-    os() << "            filePatterns = \"*.zpp\";" << std::endl;
-    os() << "            fileType = pattern.proxy;" << std::endl;
-    os() << "            isEditable = 1;" << std::endl;
-    os() << "            outputFiles = (" << std::endl;
-    os() << "                    \"${PROJECT_DIR}/${INPUT_FILE_BASE}.ipp\"," << std::endl;
-    os() << "                    \"${PROJECT_DIR}/${INPUT_FILE_BASE}.hpp\"," << std::endl;
-    os() << "                    \"${PROJECT_DIR}/${INPUT_FILE_BASE}.cpp\"," << std::endl;
-    os() << "            );" << std::endl;
-    os() << "            script = \"" << _project.zexePath() << " -g -c ${INPUT_FILE_PATH}\";" << std::endl;
-    os() << "    };" << std::endl;
-    os() << "/* End PBXBuildRule section */" << std::endl;
-
-    os() << "/* Begin PBXFileReference section */" << std::endl;
-    os() << "        Sqlite3_OSX_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = \"compiled.mach-o.dylib\"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };" << std::endl;
-    os() << "        Sqlite3_IOS_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = \"compiled.mach-o.dylib\"; name = libsqlite3.dylib; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.0.sdk/usr/lib/libsqlite3.dylib; sourceTree = DEVELOPER_DIR; };" << std::endl;
-    os() << "        WebKit_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };" << std::endl;
-    os() << "        Cocoa_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };" << std::endl;
-    os() << "        AppKit_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };" << std::endl;
-    os() << "        CoreData_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };" << std::endl;
-    os() << "        Foundation1_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };" << std::endl;
-    os() << "        UIKit_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };" << std::endl;
-    os() << "        Foundation2_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };" << std::endl;
-    os() << "        CoreGraphics_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = Library/Frameworks/CoreGraphics.framework; sourceTree = DEVELOPER_DIR; };" << std::endl;
-    os() << "        " << _project.name() << "_Univ_Info_FileRef = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = \"" << _project.name() << "-IOS-Info.plist\"; path = \"" << _project.name() << "-IOS-Info.plist\"; sourceTree = \"<group>\"; };" << std::endl;
-    os() << "        " << _project.name() << "_Univ_Prefix_FileRef = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = \"" << _project.name() << "-IOS-Prefix.pch\"; path = \"" << _project.name() << "-IOS-Prefix.pch\"; sourceTree = \"<group>\"; };" << std::endl;
-    os() << "        " << _project.name() << "_app_FileRef = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = " << _project.name() << ".app; sourceTree = BUILT_PRODUCTS_DIR; };" << std::endl;
-    os() << "        " << _project.name() << "_Info_FileRef = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = \"" << _project.name() << "-OSX-Info.plist\"; path = \"" << _project.name() << "-OSX-Info.plist\"; sourceTree = \"<group>\"; };" << std::endl;
-    os() << "        " << _project.name() << "_PCH_FileRef = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = \"" << _project.name() << "-OSX-Prefix.pch\"; path = \"" << _project.name() << "-OSX-Prefix.pch\"; sourceTree = \"<group>\"; };" << std::endl;
-    os() << "        " << _project.name() << "_Univ_app_FileRef = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = \"" << _project.name() << "-univ.app\"; sourceTree = BUILT_PRODUCTS_DIR; };" << std::endl;
-    os() << "        zenlang_cpp_FileRef = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = zenlang.cpp; path = \"" << _project.zlibPath() << "/zenlang.cpp\"; sourceTree = \"<absolute>\"; };" << std::endl;
-//    if(config.gui()) {
-//        os() << "        index_html_FileRef = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = index.html; path = \"" << _project.zlibPath() << "/index.html\"; sourceTree = \"<group>\"; };" << std::endl;
-//    }
-    for(z::Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
-        const z::string& filename = *it;
-        z::string basename = z::dir::getBaseName(filename);
-        z::string ext = z::dir::getExtention(filename);
-
-        if(_project.hppExt().find(ext) != z::string::npos) {
-        } else if(_project.cppExt().find(ext) != z::string::npos) {
-            os() << "        " << basename << "_cpp_FileRef = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = " << basename << "; path = " << filename << "; sourceTree = \"<group>\"; };" << std::endl;
-        } else if(_project.zppExt().find(ext) != z::string::npos) {
-            os() << "        " << basename << "_zpp_FileRef = {isa = PBXFileReference; lastKnownFileType = sourcecode.zpp; name = " << basename << "; path = " << filename << "; sourceTree = \"<group>\"; };" << std::endl;
-//        } else if(_project.htmExt().find(ext) != z::string::npos) {
-//            os() << "        " << basename << "_htm_FileRef = {isa = PBXFileReferencefileEncoding = 4; lastKnownFileType = text.html; name = " << basename << "; path = " << filename << "; sourceTree = \"<group>\"; };" << std::endl;
-        } else {
-            throw z::Exception("XcodeGenerator", zfmt(z::Ast::Token(filename, 0, 0, ""), "Unknown file type for: %{s}").arg("s", filename));
-        }
-    }
-    os() << "/* End PBXFileReference section */" << std::endl;
-    os() << "" << std::endl;
-    os() << "/* Begin PBXFrameworksBuildPhase section */" << std::endl;
-    os() << "        OSX_Frameworks_BuildPhase = {" << std::endl;
-    os() << "			isa = PBXFrameworksBuildPhase;" << std::endl;
-    os() << "			buildActionMask = 2147483647;" << std::endl;
-    os() << "			files = (" << std::endl;
-    os() << "                Sqlite3_OSX_Framework_BuildFile," << std::endl;
-    os() << "                WebKit_Framework_BuildFile," << std::endl;
-    os() << "                Cocoa_Framework_BuildFile," << std::endl;
-    os() << "			);" << std::endl;
-    os() << "			runOnlyForDeploymentPostprocessing = 0;" << std::endl;
-    os() << "		};" << std::endl;
-    os() << "        IOS_Frameworks_BuildPhase = {" << std::endl;
-    os() << "			isa = PBXFrameworksBuildPhase;" << std::endl;
-    os() << "			buildActionMask = 2147483647;" << std::endl;
-    os() << "			files = (" << std::endl;
-    os() << "                Sqlite3_IOS_Framework_BuildFile," << std::endl;
-    os() << "                UIKit_Framework_BuildFile," << std::endl;
-    os() << "                Foundation_Framework_BuildFile," << std::endl;
-    os() << "                CoreGraphics_Framework_BuildFile," << std::endl;
-    os() << "			);" << std::endl;
-    os() << "			runOnlyForDeploymentPostprocessing = 0;" << std::endl;
-    os() << "		};" << std::endl;
-    os() << "/* End PBXFrameworksBuildPhase section */" << std::endl;
-    os() << "" << std::endl;
-    os() << "/* Begin PBXGroup section */" << std::endl;
-    os() << "        Top_Group = {" << std::endl;
-    os() << "			isa = PBXGroup;" << std::endl;
-    os() << "			children = (" << std::endl;
-    os() << "                " << _project.name() << "_Univ_Prefix_FileRef," << std::endl;
-    os() << "                " << _project.name() << "_Univ_Info_FileRef," << std::endl;
-    os() << "                " << _project.name() << "_Info_FileRef," << std::endl;
-    os() << "                zenlang_cpp_FileRef," << std::endl;
-    for(z::Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
-        const z::string& filename = *it;
-        z::string basename = z::dir::getBaseName(filename);
-        z::string ext = z::dir::getExtention(filename);
-
-        if(_project.hppExt().find(ext) != z::string::npos) {
-        } else if(_project.cppExt().find(ext) != z::string::npos) {
-            os() << "        " << basename << "_cpp_FileRef," << std::endl;
-        } else if(_project.zppExt().find(ext) != z::string::npos) {
-            os() << "        " << basename << "_zpp_FileRef," << std::endl;
-//        } else if(_project.htmExt().find(ext) != z::string::npos) {
-//            os() << "        " << basename << "_htm_FileRef," << std::endl;
-        } else {
-            throw z::Exception("XcodeGenerator", zfmt(z::Ast::Token(filename, 0, 0, ""), "Unknown file type for: %{s}").arg("s", filename));
-        }
-    }
-    os() << "                " << _project.name() << "_PCH_FileRef," << std::endl;
-    os() << "                Frameworks_Group," << std::endl;
-    os() << "                Products_Group," << std::endl;
-    os() << "			);" << std::endl;
-    os() << "            sourceTree = \"<group>\";" << std::endl;
-    os() << "		};" << std::endl;
-    os() << "        Products_Group = {" << std::endl;
-    os() << "			isa = PBXGroup;" << std::endl;
-    os() << "			children = (" << std::endl;
-    os() << "                " << _project.name() << "_app_FileRef," << std::endl;
-    os() << "                " << _project.name() << "_Univ_app_FileRef," << std::endl;
-    os() << "			);" << std::endl;
-    os() << "			name = Products;" << std::endl;
-    os() << "            sourceTree = \"<group>\";" << std::endl;
-    os() << "		};" << std::endl;
-    os() << "        Frameworks_Group = {" << std::endl;
-    os() << "			isa = PBXGroup;" << std::endl;
-    os() << "			children = (" << std::endl;
-    os() << "                Sqlite3_OSX_Framework_FileRef," << std::endl;
-    os() << "                Sqlite3_IOS_Framework_FileRef," << std::endl;
-    os() << "                WebKit_Framework_FileRef," << std::endl;
-    os() << "                Cocoa_Framework_FileRef," << std::endl;
-    os() << "                UIKit_Framework_FileRef," << std::endl;
-    os() << "                Foundation2_Framework_FileRef," << std::endl;
-    os() << "                CoreGraphics_Framework_FileRef," << std::endl;
-    os() << "                AppKit_Framework_FileRef," << std::endl;
-    os() << "                CoreData_Framework_FileRef," << std::endl;
-    os() << "                Foundation1_Framework_FileRef," << std::endl;
-    os() << "			);" << std::endl;
-    os() << "			name = Frameworks;" << std::endl;
-    os() << "            sourceTree = \"<group>\";" << std::endl;
-    os() << "		};" << std::endl;
-    os() << "/* End PBXGroup section */" << std::endl;
-    os() << "" << std::endl;
-    os() << "/* Begin PBXNativeTarget section */" << std::endl;
-    os() << "        " << _project.name() << "_OSX_Target = {" << std::endl;
-    os() << "			isa = PBXNativeTarget;" << std::endl;
-    os() << "            buildConfigurationList = OSX_Target_ConfigList;" << std::endl;
-    os() << "			buildPhases = (" << std::endl;
-    os() << "                " << _project.name() << "_OSX_Sources," << std::endl;
-    os() << "                OSX_Frameworks_BuildPhase," << std::endl;
-    os() << "                " << _project.name() << "_OSX_Resources," << std::endl;
-    os() << "			);" << std::endl;
-    os() << "			buildRules = (" << std::endl;
-    os() << "			    zenlang_BuildRule," << std::endl;
-    os() << "			);" << std::endl;
-    os() << "			dependencies = (" << std::endl;
-    os() << "			);" << std::endl;
-    os() << "			name = " << _project.name() << ";" << std::endl;
-    os() << "			productName = " << _project.name() << ";" << std::endl;
-    os() << "            productReference = " << _project.name() << "_app_FileRef;" << std::endl;
-    os() << "            productType = \"com.apple.product-type.application\";" << std::endl;
-    os() << "		};" << std::endl;
-    os() << "        " << _project.name() << "_IOS_Target = {" << std::endl;
-    os() << "			isa = PBXNativeTarget;" << std::endl;
-    os() << "            buildConfigurationList = IOS_Target_ConfigList;" << std::endl;
-    os() << "			buildPhases = (" << std::endl;
-    os() << "                " << _project.name() << "_IOS_Sources," << std::endl;
-    os() << "                IOS_Frameworks_BuildPhase," << std::endl;
-    os() << "                " << _project.name() << "_IOS_Resources," << std::endl;
-    os() << "			);" << std::endl;
-    os() << "			buildRules = (" << std::endl;
-    os() << "			    zenlang_BuildRule," << std::endl;
-    os() << "			);" << std::endl;
-    os() << "			dependencies = (" << std::endl;
-    os() << "			);" << std::endl;
-    os() << "            name = \"" << _project.name() << "-univ\";" << std::endl;
-    os() << "            productName = \"" << _project.name() << "-univ\";" << std::endl;
-    os() << "            productReference = " << _project.name() << "_Univ_app_FileRef;" << std::endl;
-    os() << "            productType = \"com.apple.product-type.application\";" << std::endl;
-    os() << "		};" << std::endl;
-    os() << "/* End PBXNativeTarget section */" << std::endl;
-    os() << "" << std::endl;
-    os() << "/* Begin PBXProject section */" << std::endl;
-    os() << "        " << _project.name() << "_Project = {" << std::endl;
-    os() << "			isa = PBXProject;" << std::endl;
-    os() << "			attributes = {" << std::endl;
-    os() << "				LastUpgradeCheck = 0450;" << std::endl;
-    os() << "                ORGANIZATIONNAME = \"Renji Panicker\";" << std::endl;
-    os() << "			};" << std::endl;
-    os() << "            buildConfigurationList = Project_ConfigList;" << std::endl;
-    os() << "            compatibilityVersion = \"Xcode 3.2\";" << std::endl;
-    os() << "			developmentRegion = English;" << std::endl;
-    os() << "			hasScannedForEncodings = 0;" << std::endl;
-    os() << "			knownRegions = (" << std::endl;
-    os() << "				en," << std::endl;
-    os() << "			);" << std::endl;
-    os() << "            mainGroup = Top_Group;" << std::endl;
-    os() << "            productRefGroup = Products_Group;" << std::endl;
-    os() << "            projectDirPath = \"\";" << std::endl;
-    os() << "            projectRoot = \"\";" << std::endl;
-    os() << "			targets = (" << std::endl;
-    os() << "                " << _project.name() << "_OSX_Target," << std::endl;
-    os() << "                " << _project.name() << "_IOS_Target," << std::endl;
-    os() << "			);" << std::endl;
-    os() << "		};" << std::endl;
-    os() << "/* End PBXProject section */" << std::endl;
-    os() << "" << std::endl;
-    os() << "/* Begin PBXResourcesBuildPhase section */" << std::endl;
-    os() << "        " << _project.name() << "_OSX_Resources = {" << std::endl;
-    os() << "			isa = PBXResourcesBuildPhase;" << std::endl;
-    os() << "			buildActionMask = 2147483647;" << std::endl;
-    os() << "			files = (" << std::endl;
-    os() << "			);" << std::endl;
-    os() << "			runOnlyForDeploymentPostprocessing = 0;" << std::endl;
-    os() << "		};" << std::endl;
-    os() << "        " << _project.name() << "_IOS_Resources = {" << std::endl;
-    os() << "			isa = PBXResourcesBuildPhase;" << std::endl;
-    os() << "			buildActionMask = 2147483647;" << std::endl;
-    os() << "			files = (" << std::endl;
-    os() << "			);" << std::endl;
-    os() << "			runOnlyForDeploymentPostprocessing = 0;" << std::endl;
-    os() << "		};" << std::endl;
-    os() << "/* End PBXResourcesBuildPhase section */" << std::endl;
-    os() << "" << std::endl;
-    os() << "/* Begin PBXSourcesBuildPhase section */" << std::endl;
-    os() << "        " << _project.name() << "_OSX_Sources = {" << std::endl;
-    os() << "			isa = PBXSourcesBuildPhase;" << std::endl;
-    os() << "			buildActionMask = 2147483647;" << std::endl;
-    os() << "			files = (" << std::endl;
-    os() << "                zenlang_cpp_BuildFile," << std::endl;
-    for(z::Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
-        const z::string& filename = *it;
-        z::string basename = z::dir::getBaseName(filename);
-        z::string ext = z::dir::getExtention(filename);
-
-        if(_project.hppExt().find(ext) != z::string::npos) {
-        } else if(_project.cppExt().find(ext) != z::string::npos) {
-            os() << "                " << basename << "_cpp_BuildFile," << std::endl;
-        } else if(_project.zppExt().find(ext) != z::string::npos) {
-            os() << "                " << basename << "_zpp_BuildFile," << std::endl;
-        } else {
-            throw z::Exception("XcodeGenerator", zfmt(z::Ast::Token(filename, 0, 0, ""), "Unknown file type for: %{s}").arg("s", filename));
-        }
-    }
-    os() << "			);" << std::endl;
-    os() << "			runOnlyForDeploymentPostprocessing = 0;" << std::endl;
-    os() << "		};" << std::endl;
-    os() << "        " << _project.name() << "_IOS_Sources = {" << std::endl;
-    os() << "			isa = PBXSourcesBuildPhase;" << std::endl;
-    os() << "			buildActionMask = 2147483647;" << std::endl;
-    os() << "			files = (" << std::endl;
-    os() << "                zenlang_cpp_BuildFile," << std::endl;
-    for(z::Ast::Config::PathList::const_iterator it = config.sourceFileList().begin(); it != config.sourceFileList().end(); ++it) {
-        const z::string& filename = *it;
-        z::string basename = z::dir::getBaseName(filename);
-        z::string ext = z::dir::getExtention(filename);
-
-        if(_project.hppExt().find(ext) != z::string::npos) {
-        } else if(_project.cppExt().find(ext) != z::string::npos) {
-            os() << "                " << basename << "_cpp_BuildFile," << std::endl;
-        } else if(_project.zppExt().find(ext) != z::string::npos) {
-            os() << "                " << basename << "_zpp_BuildFile," << std::endl;
-        } else {
-            throw z::Exception("XcodeGenerator", zfmt(z::Ast::Token(filename, 0, 0, ""), "Unknown file type for: %{s}").arg("s", filename));
-        }
-    }
-    os() << "			);" << std::endl;
-    os() << "			runOnlyForDeploymentPostprocessing = 0;" << std::endl;
-    os() << "		};" << std::endl;
-    os() << "/* End PBXSourcesBuildPhase section */" << std::endl;
-    os() << "" << std::endl;
+inline void z::XcodeGenerator::Impl::generateConfig(const z::Ast::Config& config, z::ofile& os) {
+    z::Compiler compiler(_project, config);
+    compiler.compile();
     os() << "/* Begin XCBuildConfiguration section */" << std::endl;
     os() << "        " << _project.name() << "_Debug_ProjectConfig = {" << std::endl;
     os() << "			isa = XCBuildConfiguration;" << std::endl;
     os() << "			buildSettings = {" << std::endl;
     os() << "				ALWAYS_SEARCH_USER_PATHS = NO;" << std::endl;
-    os() << "                ARCHS = \"$(ARCHS_STANDARD_64_BIT)\";" << std::endl;
-    os() << "                CLANG_CXX_LANGUAGE_STANDARD = \"gnu++0x\";" << std::endl;
-    os() << "                CLANG_CXX_LIBRARY = \"libc++\";" << std::endl;
+    os() << "               ARCHS = \"$(ARCHS_STANDARD_64_BIT)\";" << std::endl;
+    os() << "               CLANG_CXX_LANGUAGE_STANDARD = \"gnu++0x\";" << std::endl;
+//    os() << "               CLANG_CXX_LIBRARY = \"libc++\";" << std::endl;
+    os() << "               CLANG_CXX_LIBRARY = \"libstdc++\";" << std::endl;
     os() << "				CLANG_ENABLE_OBJC_ARC = YES;" << std::endl;
     os() << "				CLANG_WARN_EMPTY_BODY = YES;" << std::endl;
     os() << "				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;" << std::endl;
@@ -359,9 +60,10 @@ inline void z::XcodeGenerator::Impl::generateProject(const z::Ast::Config& confi
     os() << "			isa = XCBuildConfiguration;" << std::endl;
     os() << "			buildSettings = {" << std::endl;
     os() << "				ALWAYS_SEARCH_USER_PATHS = NO;" << std::endl;
-    os() << "                ARCHS = \"$(ARCHS_STANDARD_64_BIT)\";" << std::endl;
-    os() << "                CLANG_CXX_LANGUAGE_STANDARD = \"gnu++0x\";" << std::endl;
-    os() << "                CLANG_CXX_LIBRARY = \"libc++\";" << std::endl;
+    os() << "               ARCHS = \"$(ARCHS_STANDARD_64_BIT)\";" << std::endl;
+    os() << "               CLANG_CXX_LANGUAGE_STANDARD = \"gnu++0x\";" << std::endl;
+//    os() << "               CLANG_CXX_LIBRARY = \"libc++\";" << std::endl;
+    os() << "               CLANG_CXX_LIBRARY = \"libstdc++\";" << std::endl;
     os() << "				CLANG_ENABLE_OBJC_ARC = YES;" << std::endl;
     os() << "				CLANG_WARN_EMPTY_BODY = YES;" << std::endl;
     os() << "				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;" << std::endl;
@@ -470,7 +172,7 @@ inline void z::XcodeGenerator::Impl::generateProject(const z::Ast::Config& confi
     os() << "			);" << std::endl;
     os() << "			defaultConfigurationIsVisible = 0;" << std::endl;
     os() << "			defaultConfigurationName = Release;" << std::endl;
-    os() << "		};" << std::endl;
+    os() << "        };" << std::endl;
     os() << "        OSX_Target_ConfigList = {" << std::endl;
     os() << "			isa = XCConfigurationList;" << std::endl;
     os() << "			buildConfigurations = (" << std::endl;
@@ -479,7 +181,7 @@ inline void z::XcodeGenerator::Impl::generateProject(const z::Ast::Config& confi
     os() << "			);" << std::endl;
     os() << "			defaultConfigurationIsVisible = 0;" << std::endl;
     os() << "			defaultConfigurationName = Release;" << std::endl;
-    os() << "		};" << std::endl;
+    os() << "        };" << std::endl;
     os() << "        IOS_Target_ConfigList = {" << std::endl;
     os() << "			isa = XCConfigurationList;" << std::endl;
     os() << "			buildConfigurations = (" << std::endl;
@@ -488,29 +190,25 @@ inline void z::XcodeGenerator::Impl::generateProject(const z::Ast::Config& confi
     os() << "			);" << std::endl;
     os() << "			defaultConfigurationIsVisible = 0;" << std::endl;
     os() << "			defaultConfigurationName = Release;" << std::endl;
-    os() << "		};" << std::endl;
+    os() << "        };" << std::endl;
     os() << "/* End XCConfigurationList section */" << std::endl;
-    os() << "	};" << std::endl;
-    os() << "    rootObject = " << _project.name() << "_Project;" << std::endl;
-    os() << "}" << std::endl;
-    os() << "" << std::endl;
 }
 
-inline void z::XcodeGenerator::Impl::generatePCHFile(const z::Ast::Config& config) {
-    z::ofile os1(config.srcdir() + "/" + _project.name() + "-OSX-Prefix.pch");
+inline void z::XcodeGenerator::Impl::generatePCHFile() {
+    z::ofile os1(_gendir + "/" + _project.name() + "-OSX-Prefix.pch");
     os1() << "#ifdef __OBJC__" << std::endl;
     os1() << "#import <Cocoa/Cocoa.h>" << std::endl;
     os1() << "#endif" << std::endl;
 
-    z::ofile os2(config.srcdir() + "/" + _project.name() + "-IOS-Prefix.pch");
+    z::ofile os2(_gendir + "/" + _project.name() + "-IOS-Prefix.pch");
     os2() << "#ifdef __OBJC__" << std::endl;
     os2() << "#import <UIKit/UIKit.h>" << std::endl;
     os2() << "#import <Foundation/Foundation.h>" << std::endl;
     os2() << "#endif" << std::endl;
 }
 
-inline void z::XcodeGenerator::Impl::generatePListFile(const z::Ast::Config& config) {
-    z::ofile os1(config.srcdir() + "/" + _project.name() + "-OSX-Info.plist");
+inline void z::XcodeGenerator::Impl::generatePListFile() {
+    z::ofile os1(_gendir + "/" + _project.name() + "-OSX-Info.plist");
     os1() << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
     os1() << "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">" << std::endl;
     os1() << "<plist version=\"1.0\">" << std::endl;
@@ -544,7 +242,7 @@ inline void z::XcodeGenerator::Impl::generatePListFile(const z::Ast::Config& con
     os1() << "</dict>" << std::endl;
     os1() << "</plist>" << std::endl;
 
-    z::ofile os2(config.srcdir() + "/" + _project.name() + "-IOS-Info.plist");
+    z::ofile os2(_gendir + "/" + _project.name() + "-IOS-Info.plist");
 
     os2() << "<?xml version=\"1.0\" encoding=\"UTF-8\"?>" << std::endl;
     os2() << "<!DOCTYPE plist PUBLIC \"-//Apple//DTD PLIST 1.0//EN\" \"http://www.apple.com/DTDs/PropertyList-1.0.dtd\">" << std::endl;
@@ -593,21 +291,434 @@ inline void z::XcodeGenerator::Impl::generatePListFile(const z::Ast::Config& con
     os2() << "</plist>" << std::endl;
 }
 
-inline void z::XcodeGenerator::Impl::generateConfig(const z::Ast::Config& config) {
-    z::Compiler compiler(_project, config);
-    compiler.compile();
-    z::dir::mkpath(config.srcdir() + "/" + _project.name() + ".xcodeproj/");
-    z::ofile osPro(config.srcdir() + "/" + _project.name() + ".xcodeproj/project.pbxproj");
-    generateProject(config, osPro);
-    generatePCHFile(config);
-    generatePListFile(config);
+inline void z::XcodeGenerator::Impl::generateProject() {
+    z::dir::mkpath(_gendir + "/" + _project.name() + ".xcodeproj/");
+    z::ofile os(_gendir + "/" + _project.name() + ".xcodeproj/project.pbxproj");
+    os() << "// !$*UTF8*$!" << std::endl;
+    os() << "{" << std::endl;
+    os() << "	archiveVersion = 1;" << std::endl;
+    os() << "	classes = {" << std::endl;
+    os() << "	};" << std::endl;
+    os() << "	objectVersion = 46;" << std::endl;
+    os() << "	objects = {" << std::endl;
+    os() << "/* Begin PBXBuildFile section */" << std::endl;
+    os() << "        Sqlite3_OSX_Framework_BuildFile = {isa = PBXBuildFile; fileRef = Sqlite3_OSX_Framework_FileRef; };" << std::endl;
+    os() << "        Sqlite3_IOS_Framework_BuildFile = {isa = PBXBuildFile; fileRef = Sqlite3_IOS_Framework_FileRef; };" << std::endl;
+    os() << "        WebKit_Framework_BuildFile = {isa = PBXBuildFile; fileRef = WebKit_Framework_FileRef; };" << std::endl;
+    os() << "        Cocoa_Framework_BuildFile = {isa = PBXBuildFile; fileRef = Cocoa_Framework_FileRef; };" << std::endl;
+    os() << "        UIKit_Framework_BuildFile = {isa = PBXBuildFile; fileRef = UIKit_Framework_FileRef; };" << std::endl;
+    os() << "        Foundation_Framework_BuildFile = {isa = PBXBuildFile; fileRef = Foundation2_Framework_FileRef; };" << std::endl;
+    os() << "        CoreGraphics_Framework_BuildFile = {isa = PBXBuildFile; fileRef = CoreGraphics_Framework_FileRef ; };" << std::endl;
+    os() << "        zenlang_cpp_BuildFile = {isa = PBXBuildFile; fileRef = zenlang_cpp_FileRef; settings = {COMPILER_FLAGS = \"-x objective-c++\"; }; };" << std::endl;
+    for(FileList::const_iterator it = _hppFileList.begin(), ite = _hppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "        " << basename << "_hpp_BuildFile = {isa = PBXBuildFile; fileRef = " << basename << "_hpp_FileRef; };" << std::endl;
+    }
+    for(FileList::const_iterator it = _cppFileList.begin(), ite = _cppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "        " << basename << "_cpp_BuildFile = {isa = PBXBuildFile; fileRef = " << basename << "_cpp_FileRef; };" << std::endl;
+    }
+    for(FileList::const_iterator it = _zppFileList.begin(), ite = _zppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "        " << basename << "_zpp_BuildFile = {isa = PBXBuildFile; fileRef = " << basename << "_zpp_FileRef; };" << std::endl;
+    }
+    for(FileList::const_iterator it = _otherFileList.begin(), ite = _otherFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        z::string ext = z::dir::getExtention(filename);
+        if(ext == "re") {
+            os() << "        " << basename << "_re_BuildFile = {isa = PBXBuildFile; fileRef = " << basename << "_re_FileRef; };" << std::endl;
+        } else if(ext == "y") {
+            os() << "        " << basename << "_y_BuildFile = {isa = PBXBuildFile; fileRef = " << basename << "_y_FileRef; };" << std::endl;
+        } else {
+            throw z::Exception("XcodeGenerator", zfmt(z::Ast::Token(filename, 0, 0, ""), "1-Unknown file type for: %{s}").arg("s", filename));
+        }
+    }
+    for(FileList::const_iterator it = _guiFileList.begin(), ite = _guiFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+            os() << "        " << basename << "_htm_BuildFile = {isa = PBXBuildFile; fileRef = " << basename << "_htm_FileRef; };" << std::endl;
+    }
+    os() << "/* End PBXBuildFile section */" << std::endl;
+    os() << "" << std::endl;
+
+    os() << "/* Begin PBXBuildRule section */" << std::endl;
+    os() << "    lemon_BuildRule = {" << std::endl;
+    os() << "        isa = PBXBuildRule;" << std::endl;
+    os() << "        compilerSpec = com.apple.compilers.proxy.script;" << std::endl;
+    os() << "        filePatterns = \"*.y\";" << std::endl;
+    os() << "        fileType = pattern.proxy;" << std::endl;
+    os() << "        isEditable = 1;" << std::endl;
+    os() << "        outputFiles = (" << std::endl;
+    os() << "            \"${DERIVED_FILE_DIR}/${INPUT_FILE_BASE}.cpp\"," << std::endl;
+    os() << "        );" << std::endl;
+    os() << "        script = \"" << _project.zlibPath() << "/lemon.osx o=.cpp d=${DERIVED_FILE_DIR} -q ${INPUT_FILE_PATH}\";" << std::endl;
+    os() << "    };" << std::endl;
+    os() << "" << std::endl;
+
+    os() << "    re2c_BuildRule = {" << std::endl;
+    os() << "        isa = PBXBuildRule;" << std::endl;
+    os() << "        compilerSpec = com.apple.compilers.proxy.script;" << std::endl;
+    os() << "        filePatterns = \"*.re\";" << std::endl;
+    os() << "        fileType = pattern.proxy;" << std::endl;
+    os() << "        isEditable = 1;" << std::endl;
+    os() << "        outputFiles = (" << std::endl;
+    os() << "            \"${DERIVED_FILE_DIR}/${INPUT_FILE_BASE}.cpp\"," << std::endl;
+    os() << "        );" << std::endl;
+    os() << "        script = \"" << _project.zlibPath() << "/re2c.osx -f -u -c -o ${DERIVED_FILE_DIR}/${INPUT_FILE_BASE}.cpp ${INPUT_FILE_PATH}\";" << std::endl;
+    os() << "    };" << std::endl;
+
+    os() << "    zenlang_BuildRule = {" << std::endl;
+    os() << "            isa = PBXBuildRule;" << std::endl;
+    os() << "            compilerSpec = com.apple.compilers.proxy.script;" << std::endl;
+    os() << "            filePatterns = \"*.zpp\";" << std::endl;
+    os() << "            fileType = pattern.proxy;" << std::endl;
+    os() << "            isEditable = 1;" << std::endl;
+    os() << "            outputFiles = (" << std::endl;
+    os() << "                \"${PROJECT_DIR}/${INPUT_FILE_BASE}.ipp\"," << std::endl;
+    os() << "                \"${PROJECT_DIR}/${INPUT_FILE_BASE}.hpp\"," << std::endl;
+    os() << "                \"${PROJECT_DIR}/${INPUT_FILE_BASE}.cpp\"," << std::endl;
+    os() << "            );" << std::endl;
+    os() << "            script = \"" << _project.zexePath() << " -g -c ${INPUT_FILE_PATH}\";" << std::endl;
+    os() << "    };" << std::endl;
+    os() << "/* End PBXBuildRule section */" << std::endl;
+
+    os() << "/* Begin PBXFileReference section */" << std::endl;
+    os() << "        Sqlite3_OSX_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = \"compiled.mach-o.dylib\"; name = libsqlite3.dylib; path = usr/lib/libsqlite3.dylib; sourceTree = SDKROOT; };" << std::endl;
+    os() << "        Sqlite3_IOS_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = \"compiled.mach-o.dylib\"; name = libsqlite3.dylib; path = Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS6.0.sdk/usr/lib/libsqlite3.dylib; sourceTree = DEVELOPER_DIR; };" << std::endl;
+    os() << "        WebKit_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WebKit.framework; path = System/Library/Frameworks/WebKit.framework; sourceTree = SDKROOT; };" << std::endl;
+    os() << "        Cocoa_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Cocoa.framework; path = System/Library/Frameworks/Cocoa.framework; sourceTree = SDKROOT; };" << std::endl;
+    os() << "        AppKit_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AppKit.framework; path = System/Library/Frameworks/AppKit.framework; sourceTree = SDKROOT; };" << std::endl;
+    os() << "        CoreData_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreData.framework; path = System/Library/Frameworks/CoreData.framework; sourceTree = SDKROOT; };" << std::endl;
+    os() << "        Foundation1_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };" << std::endl;
+    os() << "        UIKit_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = Library/Frameworks/UIKit.framework; sourceTree = DEVELOPER_DIR; };" << std::endl;
+    os() << "        Foundation2_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = Library/Frameworks/Foundation.framework; sourceTree = DEVELOPER_DIR; };" << std::endl;
+    os() << "        CoreGraphics_Framework_FileRef = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreGraphics.framework; path = Library/Frameworks/CoreGraphics.framework; sourceTree = DEVELOPER_DIR; };" << std::endl;
+    os() << "        " << _project.name() << "_Univ_Info_FileRef = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = \"" << _project.name() << "-IOS-Info.plist\"; path = \"" << _project.name() << "-IOS-Info.plist\"; sourceTree = \"<group>\"; };" << std::endl;
+    os() << "        " << _project.name() << "_Univ_Prefix_FileRef = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = \"" << _project.name() << "-IOS-Prefix.pch\"; path = \"" << _project.name() << "-IOS-Prefix.pch\"; sourceTree = \"<group>\"; };" << std::endl;
+    os() << "        " << _project.name() << "_app_FileRef = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = " << _project.name() << ".app; sourceTree = BUILT_PRODUCTS_DIR; };" << std::endl;
+    os() << "        " << _project.name() << "_Info_FileRef = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = \"" << _project.name() << "-OSX-Info.plist\"; path = \"" << _project.name() << "-OSX-Info.plist\"; sourceTree = \"<group>\"; };" << std::endl;
+    os() << "        " << _project.name() << "_PCH_FileRef = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = \"" << _project.name() << "-OSX-Prefix.pch\"; path = \"" << _project.name() << "-OSX-Prefix.pch\"; sourceTree = \"<group>\"; };" << std::endl;
+    os() << "        " << _project.name() << "_Univ_app_FileRef = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = \"" << _project.name() << "-univ.app\"; sourceTree = BUILT_PRODUCTS_DIR; };" << std::endl;
+    os() << "        zenlang_cpp_FileRef = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = zenlang.cpp; path = \"" << _project.zlibPath() << "/zenlang.cpp\"; sourceTree = \"<absolute>\"; };" << std::endl;
+    for(FileList::const_iterator it = _hppFileList.begin(), ite = _hppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "        " << basename << "_hpp_FileRef = {isa = PBXFileReference; lastKnownFileType = sourcecode.hpp.objhpp; name = " << z::dir::getFilename(filename) << "; path = " << filename << "; sourceTree = \"<group>\"; };" << std::endl;
+    }
+    for(FileList::const_iterator it = _cppFileList.begin(), ite = _cppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "        " << basename << "_cpp_FileRef = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.objcpp; name = " << z::dir::getFilename(filename) << "; path = " << filename << "; sourceTree = \"<group>\"; };" << std::endl;
+    }
+    for(FileList::const_iterator it = _zppFileList.begin(), ite = _zppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "        " << basename << "_zpp_FileRef = {isa = PBXFileReference; lastKnownFileType = sourcecode.zpp; name = " << z::dir::getFilename(filename) << "; path = " << filename << "; sourceTree = \"<group>\"; };" << std::endl;
+    }
+    for(FileList::const_iterator it = _otherFileList.begin(), ite = _otherFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        z::string ext = z::dir::getExtention(filename);
+        if(ext == "re") {
+            os() << "        " << basename << "_re_FileRef = {isa = PBXFileReference; lastKnownFileType = sourcecode.re; name = " << z::dir::getFilename(filename) << "; path = " << filename << "; sourceTree = \"<group>\"; };" << std::endl;
+        } else if(ext == "y") {
+            os() << "        " << basename << "_y_FileRef = {isa = PBXFileReference; lastKnownFileType = sourcecode.y; name = " << z::dir::getFilename(filename) << "; path = " << filename << "; sourceTree = \"<group>\"; };" << std::endl;
+        } else {
+            throw z::Exception("XcodeGenerator", zfmt(z::Ast::Token(filename, 0, 0, ""), "1-Unknown file type for: %{s}").arg("s", filename));
+        }
+    }
+    for(FileList::const_iterator it = _guiFileList.begin(), ite = _guiFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "        " << basename << "_htm_FileRef = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.html; name = " << z::dir::getFilename(filename) << "; path = " << filename << "; sourceTree = \"<group>\"; };" << std::endl;
+    }
+    os() << "/* End PBXFileReference section */" << std::endl;
+    os() << "" << std::endl;
+    os() << "/* Begin PBXFrameworksBuildPhase section */" << std::endl;
+    os() << "        OSX_Frameworks_BuildPhase = {" << std::endl;
+    os() << "			isa = PBXFrameworksBuildPhase;" << std::endl;
+    os() << "			buildActionMask = 2147483647;" << std::endl;
+    os() << "			files = (" << std::endl;
+    os() << "                Sqlite3_OSX_Framework_BuildFile," << std::endl;
+    os() << "                WebKit_Framework_BuildFile," << std::endl;
+    os() << "                Cocoa_Framework_BuildFile," << std::endl;
+    os() << "			);" << std::endl;
+    os() << "			runOnlyForDeploymentPostprocessing = 0;" << std::endl;
+    os() << "		};" << std::endl;
+    os() << "        IOS_Frameworks_BuildPhase = {" << std::endl;
+    os() << "			isa = PBXFrameworksBuildPhase;" << std::endl;
+    os() << "			buildActionMask = 2147483647;" << std::endl;
+    os() << "			files = (" << std::endl;
+    os() << "                Sqlite3_IOS_Framework_BuildFile," << std::endl;
+    os() << "                UIKit_Framework_BuildFile," << std::endl;
+    os() << "                Foundation_Framework_BuildFile," << std::endl;
+    os() << "                CoreGraphics_Framework_BuildFile," << std::endl;
+    os() << "			);" << std::endl;
+    os() << "			runOnlyForDeploymentPostprocessing = 0;" << std::endl;
+    os() << "		};" << std::endl;
+    os() << "/* End PBXFrameworksBuildPhase section */" << std::endl;
+    os() << "" << std::endl;
+    os() << "/* Begin PBXGroup section */" << std::endl;
+    os() << "        Top_Group = {" << std::endl;
+    os() << "			isa = PBXGroup;" << std::endl;
+    os() << "			children = (" << std::endl;
+    os() << "                " << _project.name() << "_Univ_Prefix_FileRef," << std::endl;
+    os() << "                " << _project.name() << "_Univ_Info_FileRef," << std::endl;
+    os() << "                " << _project.name() << "_Info_FileRef," << std::endl;
+    os() << "                zenlang_cpp_FileRef," << std::endl;
+    for(FileList::const_iterator it = _hppFileList.begin(), ite = _hppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "        " << basename << "_hpp_FileRef," << std::endl;
+    }
+    for(FileList::const_iterator it = _cppFileList.begin(), ite = _cppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "        " << basename << "_cpp_FileRef," << std::endl;
+    }
+    for(FileList::const_iterator it = _zppFileList.begin(), ite = _zppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "        " << basename << "_zpp_FileRef," << std::endl;
+    }
+    for(FileList::const_iterator it = _otherFileList.begin(), ite = _otherFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        z::string ext = z::dir::getExtention(filename);
+        if(ext == "re") {
+            os() << "        " << basename << "_re_FileRef," << std::endl;
+        } else if(ext == "y") {
+            os() << "        " << basename << "_y_FileRef," << std::endl;
+        } else {
+            throw z::Exception("XcodeGenerator", zfmt(z::Ast::Token(filename, 0, 0, ""), "1-Unknown file type for: %{s}").arg("s", filename));
+        }
+    }
+    for(FileList::const_iterator it = _guiFileList.begin(), ite = _guiFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+            os() << "        " << basename << "_htm_FileRef," << std::endl;
+    }
+    os() << "                " << _project.name() << "_PCH_FileRef," << std::endl;
+    os() << "                Frameworks_Group," << std::endl;
+    os() << "                Products_Group," << std::endl;
+    os() << "			);" << std::endl;
+    os() << "            sourceTree = \"<group>\";" << std::endl;
+    os() << "		};" << std::endl;
+    os() << "        Products_Group = {" << std::endl;
+    os() << "			isa = PBXGroup;" << std::endl;
+    os() << "			children = (" << std::endl;
+    os() << "                " << _project.name() << "_app_FileRef," << std::endl;
+    os() << "                " << _project.name() << "_Univ_app_FileRef," << std::endl;
+    os() << "			);" << std::endl;
+    os() << "			name = Products;" << std::endl;
+    os() << "            sourceTree = \"<group>\";" << std::endl;
+    os() << "		};" << std::endl;
+    os() << "        Frameworks_Group = {" << std::endl;
+    os() << "			isa = PBXGroup;" << std::endl;
+    os() << "			children = (" << std::endl;
+    os() << "                Sqlite3_OSX_Framework_FileRef," << std::endl;
+    os() << "                Sqlite3_IOS_Framework_FileRef," << std::endl;
+    os() << "                WebKit_Framework_FileRef," << std::endl;
+    os() << "                Cocoa_Framework_FileRef," << std::endl;
+    os() << "                UIKit_Framework_FileRef," << std::endl;
+    os() << "                Foundation2_Framework_FileRef," << std::endl;
+    os() << "                CoreGraphics_Framework_FileRef," << std::endl;
+    os() << "                AppKit_Framework_FileRef," << std::endl;
+    os() << "                CoreData_Framework_FileRef," << std::endl;
+    os() << "                Foundation1_Framework_FileRef," << std::endl;
+    os() << "			);" << std::endl;
+    os() << "			name = Frameworks;" << std::endl;
+    os() << "            sourceTree = \"<group>\";" << std::endl;
+    os() << "		};" << std::endl;
+    os() << "/* End PBXGroup section */" << std::endl;
+    os() << "" << std::endl;
+    os() << "/* Begin PBXNativeTarget section */" << std::endl;
+    os() << "        " << _project.name() << "_OSX_Target = {" << std::endl;
+    os() << "			isa = PBXNativeTarget;" << std::endl;
+    os() << "            buildConfigurationList = OSX_Target_ConfigList;" << std::endl;
+    os() << "			buildPhases = (" << std::endl;
+    os() << "                " << _project.name() << "_OSX_Sources," << std::endl;
+    os() << "                OSX_Frameworks_BuildPhase," << std::endl;
+    os() << "                " << _project.name() << "_OSX_Resources," << std::endl;
+    os() << "			);" << std::endl;
+    os() << "			buildRules = (" << std::endl;
+    os() << "			    re2c_BuildRule," << std::endl;
+    os() << "			    lemon_BuildRule," << std::endl;
+    os() << "			    zenlang_BuildRule," << std::endl;
+    os() << "			);" << std::endl;
+    os() << "			dependencies = (" << std::endl;
+    os() << "			);" << std::endl;
+    os() << "			name = " << _project.name() << ";" << std::endl;
+    os() << "			productName = " << _project.name() << ";" << std::endl;
+    os() << "            productReference = " << _project.name() << "_app_FileRef;" << std::endl;
+    os() << "            productType = \"com.apple.product-type.application\";" << std::endl;
+    os() << "		};" << std::endl;
+    os() << "        " << _project.name() << "_IOS_Target = {" << std::endl;
+    os() << "			isa = PBXNativeTarget;" << std::endl;
+    os() << "            buildConfigurationList = IOS_Target_ConfigList;" << std::endl;
+    os() << "			buildPhases = (" << std::endl;
+    os() << "                " << _project.name() << "_IOS_Sources," << std::endl;
+    os() << "                IOS_Frameworks_BuildPhase," << std::endl;
+    os() << "                " << _project.name() << "_IOS_Resources," << std::endl;
+    os() << "			);" << std::endl;
+    os() << "			buildRules = (" << std::endl;
+    os() << "			    re2c_BuildRule," << std::endl;
+    os() << "			    lemon_BuildRule," << std::endl;
+    os() << "			    zenlang_BuildRule," << std::endl;
+    os() << "			);" << std::endl;
+    os() << "			dependencies = (" << std::endl;
+    os() << "			);" << std::endl;
+    os() << "            name = \"" << _project.name() << "-univ\";" << std::endl;
+    os() << "            productName = \"" << _project.name() << "-univ\";" << std::endl;
+    os() << "            productReference = " << _project.name() << "_Univ_app_FileRef;" << std::endl;
+    os() << "            productType = \"com.apple.product-type.application\";" << std::endl;
+    os() << "		};" << std::endl;
+    os() << "/* End PBXNativeTarget section */" << std::endl;
+    os() << "" << std::endl;
+    os() << "/* Begin PBXProject section */" << std::endl;
+    os() << "        " << _project.name() << "_Project = {" << std::endl;
+    os() << "			isa = PBXProject;" << std::endl;
+    os() << "			attributes = {" << std::endl;
+    os() << "				LastUpgradeCheck = 0450;" << std::endl;
+    os() << "                ORGANIZATIONNAME = \"Renji Panicker\";" << std::endl;
+    os() << "			};" << std::endl;
+    os() << "            buildConfigurationList = Project_ConfigList;" << std::endl;
+    os() << "            compatibilityVersion = \"Xcode 3.2\";" << std::endl;
+    os() << "			developmentRegion = English;" << std::endl;
+    os() << "			hasScannedForEncodings = 0;" << std::endl;
+    os() << "			knownRegions = (" << std::endl;
+    os() << "				en," << std::endl;
+    os() << "			);" << std::endl;
+    os() << "            mainGroup = Top_Group;" << std::endl;
+    os() << "            productRefGroup = Products_Group;" << std::endl;
+    os() << "            projectDirPath = \"\";" << std::endl;
+    os() << "            projectRoot = \"\";" << std::endl;
+    os() << "			targets = (" << std::endl;
+    os() << "                " << _project.name() << "_OSX_Target," << std::endl;
+    os() << "                " << _project.name() << "_IOS_Target," << std::endl;
+    os() << "			);" << std::endl;
+    os() << "		};" << std::endl;
+    os() << "/* End PBXProject section */" << std::endl;
+    os() << "" << std::endl;
+    os() << "/* Begin PBXResourcesBuildPhase section */" << std::endl;
+    os() << "        " << _project.name() << "_OSX_Resources = {" << std::endl;
+    os() << "			isa = PBXResourcesBuildPhase;" << std::endl;
+    os() << "			buildActionMask = 2147483647;" << std::endl;
+    os() << "			files = (" << std::endl;
+    for(FileList::const_iterator it = _guiFileList.begin(), ite = _guiFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+            os() << "        " << basename << "_htm_BuildFile," << std::endl;
+    }
+    os() << "			);" << std::endl;
+    os() << "			runOnlyForDeploymentPostprocessing = 0;" << std::endl;
+    os() << "		};" << std::endl;
+    os() << "        " << _project.name() << "_IOS_Resources = {" << std::endl;
+    os() << "			isa = PBXResourcesBuildPhase;" << std::endl;
+    os() << "			buildActionMask = 2147483647;" << std::endl;
+    os() << "			files = (" << std::endl;
+    for(FileList::const_iterator it = _guiFileList.begin(), ite = _guiFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+            os() << "        " << basename << "_htm_BuildFile," << std::endl;
+    }
+    os() << "			);" << std::endl;
+    os() << "			runOnlyForDeploymentPostprocessing = 0;" << std::endl;
+    os() << "		};" << std::endl;
+    os() << "/* End PBXResourcesBuildPhase section */" << std::endl;
+    os() << "" << std::endl;
+    os() << "/* Begin PBXSourcesBuildPhase section */" << std::endl;
+    os() << "        " << _project.name() << "_OSX_Sources = {" << std::endl;
+    os() << "			isa = PBXSourcesBuildPhase;" << std::endl;
+    os() << "			buildActionMask = 2147483647;" << std::endl;
+    os() << "			files = (" << std::endl;
+    os() << "                zenlang_cpp_BuildFile," << std::endl;
+    for(FileList::const_iterator it = _otherFileList.begin(), ite = _otherFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        z::string ext = z::dir::getExtention(filename);
+        if(ext == "re") {
+            os() << "                " << basename << "_re_BuildFile," << std::endl;
+        } else if(ext == "y") {
+            os() << "                " << basename << "_y_BuildFile," << std::endl;
+        } else {
+            throw z::Exception("XcodeGenerator", zfmt(z::Ast::Token(filename, 0, 0, ""), "1-Unknown file type for: %{s}").arg("s", filename));
+        }
+    }
+    for(FileList::const_iterator it = _zppFileList.begin(), ite = _zppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "                " << basename << "_zpp_BuildFile," << std::endl;
+    }
+    for(FileList::const_iterator it = _hppFileList.begin(), ite = _hppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "                " << basename << "_hpp_BuildFile," << std::endl;
+    }
+    for(FileList::const_iterator it = _cppFileList.begin(), ite = _cppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "                " << basename << "_cpp_BuildFile," << std::endl;
+    }
+    os() << "			);" << std::endl;
+    os() << "			runOnlyForDeploymentPostprocessing = 0;" << std::endl;
+    os() << "		};" << std::endl;
+    os() << "        " << _project.name() << "_IOS_Sources = {" << std::endl;
+    os() << "			isa = PBXSourcesBuildPhase;" << std::endl;
+    os() << "			buildActionMask = 2147483647;" << std::endl;
+    os() << "			files = (" << std::endl;
+    os() << "                zenlang_cpp_BuildFile," << std::endl;
+    for(FileList::const_iterator it = _otherFileList.begin(), ite = _otherFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        z::string ext = z::dir::getExtention(filename);
+        if(ext == "re") {
+            os() << "                " << basename << "_re_BuildFile," << std::endl;
+        } else if(ext == "y") {
+            os() << "                " << basename << "_y_BuildFile," << std::endl;
+        } else {
+            throw z::Exception("XcodeGenerator", zfmt(z::Ast::Token(filename, 0, 0, ""), "1-Unknown file type for: %{s}").arg("s", filename));
+        }
+    }
+    for(FileList::const_iterator it = _zppFileList.begin(), ite = _zppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "                " << basename << "_zpp_BuildFile," << std::endl;
+    }
+    for(FileList::const_iterator it = _hppFileList.begin(), ite = _hppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "                " << basename << "_hpp_BuildFile," << std::endl;
+    }
+    for(FileList::const_iterator it = _cppFileList.begin(), ite = _cppFileList.end(); it != ite; ++it) {
+        const z::string& filename = *it;
+        z::string basename = z::dir::getBaseName(filename);
+        os() << "                " << basename << "_cpp_BuildFile," << std::endl;
+    }
+    os() << "			);" << std::endl;
+    os() << "			runOnlyForDeploymentPostprocessing = 0;" << std::endl;
+    os() << "		};" << std::endl;
+    os() << "/* End PBXSourcesBuildPhase section */" << std::endl;
+    os() << "" << std::endl;
+    for(z::Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
+        const z::Ast::Config& config = z::ref(it->second);
+        generateConfig(config, os);
+    }
+    os() << "	};" << std::endl;
+    os() << "   rootObject = " << _project.name() << "_Project;" << std::endl;
+    os() << "}" << std::endl;
+    os() << "" << std::endl;
+
+    generatePCHFile();
+    generatePListFile();
 }
 
 void z::XcodeGenerator::Impl::run() {
-    for(z::Ast::Project::ConfigList::const_iterator it = _project.configList().begin(); it != _project.configList().end(); ++it) {
-        const z::Ast::Config& config = z::ref(it->second);
-        generateConfig(config);
-    }
+    generateProject();
 }
 
 z::XcodeGenerator::XcodeGenerator(const z::Ast::Project& project) : _impl(0) {_impl = new Impl(project);}

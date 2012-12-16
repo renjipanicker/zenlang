@@ -69,10 +69,9 @@ inline void z::QtcGenerator::Impl::generateConfig(const z::Ast::Config& config, 
 }
 
 void z::QtcGenerator::Impl::run() {
-//    z::dir::mkpath(config.srcdir() + "/");
-//    z::ofile osPro(config.srcdir() + "/" + _project.name() + ".pro");
+    z::dir::mkpath(_gendir + "/");
+    z::ofile os(_gendir + "/" + _project.name() + ".pro");
 
-    z::ofile os(_project.name() + ".pro");
     os() << "TARGET = " << _project.name() << std::endl;
 
     os() << "ZENLANG_SRC_DIR=" << _project.zlibPath() << std::endl;
@@ -146,7 +145,7 @@ void z::QtcGenerator::Impl::run() {
     }
     if(_guiFileList.size() > 0) {
         os() << "RESOURCES += res.qrc" << std::endl;
-        z::ofile gos("res.qrc");
+        z::ofile gos(_gendir + "/res.qrc");
         gos() << "<RCC>" << std::endl;
         gos() << "    <qresource prefix=\"/res\">" << std::endl;
         for(FileList::const_iterator it = _guiFileList.begin(), ite = _guiFileList.end(); it != ite; ++it) {

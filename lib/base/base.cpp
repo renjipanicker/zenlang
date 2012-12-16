@@ -1465,8 +1465,7 @@ namespace zz {
 
     WebView* webView = [[WebView alloc] initWithFrame:rc];
 
-//        NSString* fpath = [[NSBundle mainBundle] pathForResource:@"index" ofType:@"html" inDirectory:@"gui"];
-    NSString* fpath = @"http://www.google.com";
+    NSString* fpath = [[NSBundle mainBundle] pathForResource:@"index" ofType:@"html" inDirectory:@""];
     NSURL* url = [NSURL URLWithString:fpath];
     NSURLRequest* req = [NSURLRequest requestWithURL:url];
     [[webView mainFrame] loadRequest:req];
@@ -1499,7 +1498,8 @@ namespace zz {
     webView.userInteractionEnabled = YES;
     webView.backgroundColor = [UIColor redColor];
 
-    NSURL* url = [NSURL URLWithString:@"file:///index.html"];
+    NSString* fpath = [[NSBundle mainBundle] pathForResource:@"index" ofType:@"html" inDirectory:@""];
+    NSURL* url = [NSURL URLWithString:fpath];
     NSURLRequest* req = [NSURLRequest requestWithURL:url];
     [webView loadRequest:req];
 

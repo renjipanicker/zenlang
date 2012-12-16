@@ -21,7 +21,7 @@ inline z::string nfn(const z::string& filename) {
 }
 
 inline void z::MsvcGenerator::Impl::generateGui() {
-    z::ofile os("gui.rc");
+    z::ofile os(_gendir + "/gui.rc");
     for(FileList::const_iterator it = _guiFileList.begin(), ite = _guiFileList.end(); it != ite; ++it) {
         const z::string& f = *it;
         os() << z::dir::getFilename(f) << " HTML DISCARDABLE \"" << f << "\"" << std::endl;
@@ -147,7 +147,7 @@ inline void z::MsvcGenerator::Impl::writeLibFile(const z::Ast::Project& project,
 }
 
 void z::MsvcGenerator::Impl::run() {
-    z::ofile os(_project.name() + ".vcproj");
+    z::ofile os(_gendir + "/" + _project.name() + ".vcproj");
 
     os() << "<?xml version=\"1.0\" encoding=\"Windows-1252\"?>" << std::endl;
     os() << "<VisualStudioProject" << std::endl;
@@ -360,7 +360,7 @@ void z::MsvcGenerator::Impl::run() {
     os() << "    </Files>" << std::endl;
     os() << "</VisualStudioProject>" << std::endl;
 
-    z::ofile pch("stdafx.cpp");
+    z::ofile pch(_gendir + "/stdafx.cpp");
     pch() << "#include \"" << _pch << "\"" << std::endl;
 }
 
